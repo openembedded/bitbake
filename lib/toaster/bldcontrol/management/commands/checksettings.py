@@ -34,6 +34,22 @@ class Command(NoArgsCommand):
                 return ret
         return None
 
+    def _recursive_list_directories(self, startdirectory, level = 0):
+        if level < 0:
+            return []
+        dirs = []
+        try:
+            for i in os.listdir(startdirectory):
+                j = os.path.join(startdirectory, i)
+                if os.path.isdir(j):
+                    dirs.append(j)
+        except OSError:
+            pass
+        for j in dirs:
+                dirs = dirs + self._recursive_list_directories(j, level - 1)
+        return dirs
+
+
     def _get_suggested_sourcedir(self, be):
         if be.betype != BuildEnvironment.TYPE_LOCAL:
             return ""
@@ -67,7 +83,6 @@ class Command(NoArgsCommand):
                 print("Verifying the Build Environment type %s id %d." % (be.get_betype_display(), be.pk))
                 if len(be.sourcedir) == 0:
                     suggesteddir = self._get_suggested_sourcedir(be)
-                    homesourcedir = suggesteddir
                     be.sourcedir = raw_input(" -- Layer sources checkout directory may not be empty [guessed \"%s\"]:" % suggesteddir)
                     if len(be.sourcedir) == 0 and len(suggesteddir) > 0:
                         be.sourcedir = suggesteddir
@@ -94,17 +109,25 @@ class Command(NoArgsCommand):
                     be.save()
 
                 if is_changed and be.betype == BuildEnvironment.TYPE_LOCAL:
-                    baselayerdir = DN(DN(self._find_first_path_for_file(homesourcedir, "toasterconf.json", 3)))
-                    if baselayerdir:
-                        i = raw_input(" -- Do you want to import basic layer configuration from \"%s\" ? (y/N):" % baselayerdir)
-                        if len(i) and i.upper()[0] == 'Y':
-                            from loadconf import Command as LoadConfigCommand
-                            LoadConfigCommand()._import_layer_config(os.path.join(baselayerdir, "meta/conf/toasterconf.json"))
-                            # we run lsupdates after config update
-                            print "Updating information from the layer source, please wait."
-                            from django.core.management import call_command
-                            call_command("lsupdates")
-                        pass
+                    for dirname in self._recursive_list_directories(be.sourcedir,2):
+                        if os.path.exists(os.path.join(dirname, ".templateconf")):
+                            import subprocess
+                            conffilepath, error = subprocess.Popen('bash -c ". '+os.path.join(dirname, ".templateconf")+'; echo \"\$TEMPLATECONF\""', shell=True, stdout=subprocess.PIPE).communicate()
+                            conffilepath = os.path.join(conffilepath.strip(), "toasterconf.json")
+                            candidatefilepath = os.path.join(dirname, conffilepath)
+                            if os.path.exists(candidatefilepath):
+                                i = raw_input(" -- Do you want to import basic layer configuration from \"%s\" ? (y/N):" % candidatefilepath)
+                                if len(i) and i.upper()[0] == 'Y':
+                                    from loadconf import Command as LoadConfigCommand
+
+                                    LoadConfigCommand()._import_layer_config(candidatefilepath)
+                                    # we run lsupdates after config update
+                                    print "Layer configuration imported. Updating information from the layer source, please wait."
+                                    from django.core.management import call_command
+                                    call_command("lsupdates")
+
+                                    # we don't look for any other config files
+                                    return is_changed
 
                 return is_changed
 

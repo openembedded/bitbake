@@ -9,9 +9,9 @@
 {% block projectinfomain %}
                 <div class="page-header">
                     <h1>
-  {% if request.GET.filter and objects.paginator.count >  0 or request.GET.search and objects.paginator.count >  0 %}
-      {{objects.paginator.count}} layer{{objects.paginator.count|pluralize}} found
-  {% elif request.GET.filter and objects.paginator.count ==  0 or request.GET.search and objects.paginator.count == 0 %}
+  {% if request.GET.filter and total_count >  0 or request.GET.search and total_count >  0 %}
+      {{total_count}} layer{{total_count|pluralize}} found
+  {% elif request.GET.filter and total_count ==  0 or request.GET.search and total_count == 0 %}
       No layers found
   {%else%}
       All layers

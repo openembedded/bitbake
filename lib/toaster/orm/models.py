@@ -21,7 +21,6 @@
 
 from django.db import models
 from django.db.models import F
-from django.utils.encoding import python_2_unicode_compatible
 from django.utils import timezone
 
 
@@ -54,9 +53,6 @@ class ToasterSetting(models.Model):
     def __unicode__(self):
         return "Setting %s" % self.name
 
-class ToasterSettingDefaultLayer(models.Model):
-    layer_version = models.ForeignKey('Layer_Version')
-
 class ProjectManager(models.Manager):
     def create_project(self, name, release):
         prj = self.model(name = name, bitbake_version = release.bitbake_version, release = release)
@@ -68,10 +64,10 @@ class ProjectManager(models.Manager):
                 name = name,
                 value = defaultconf.value)
 
-        for layer in map(lambda x: x.layer, ReleaseDefaultLayer.objects.filter(release = release)):
-            for branches in Branch.objects.filter(name = release.branch):
-                for lv in Layer_Version.objects.filter(layer = layer, up_branch = branches ):
-                    ProjectLayer.objects.create( project = prj,
+
+        for rdl in release.releasedefaultlayer_set.all():
+            lv = Layer_Version.objects.filter(layer__name = rdl.layer_name, up_branch__name = release.branch_name)[0].get_equivalents_wpriority(prj)[0]
+            ProjectLayer.objects.create( project = prj,
                         layercommit = lv,
                         optional = False )
 
@@ -84,6 +80,7 @@ class ProjectManager(models.Manager):
         raise Exception("Invalid call to Project.objects.get_or_create. Use Project.objects.create_project() to create a project")
 
 class Project(models.Model):
+    search_allowed_fields = ['name', 'short_description', 'release__name', 'release__branch_name']
     name = models.CharField(max_length=100)
     short_description = models.CharField(max_length=50, blank=True)
     bitbake_version = models.ForeignKey('BitbakeVersion')
@@ -97,6 +94,8 @@ class Project(models.Model):
     user_id     = models.IntegerField(null = True)
     objects     = ProjectManager()
 
+    def __unicode__(self):
+        return "%s (%s, %s)" % (self.name, self.release, self.bitbake_version)
 
     def schedule_build(self):
         from bldcontrol.models import BuildRequest, BRTarget, BRLayer, BRVariable, BRBitbake
@@ -184,7 +183,6 @@ class ProjectTarget(models.Model):
     target = models.CharField(max_length=100)
     task = models.CharField(max_length=100, null=True)
 
-@python_2_unicode_compatible
 class Target(models.Model):
     search_allowed_fields = ['target', 'file_name']
     build = models.ForeignKey(Build)
@@ -196,7 +194,7 @@ class Target(models.Model):
     def package_count(self):
         return Target_Installed_Package.objects.filter(target_id__exact=self.id).count()
 
-    def __str__(self):
+    def __unicode__(self):
         return self.target
 
 class Target_Image_File(models.Model):
@@ -391,10 +389,10 @@ class Package_Dependency(models.Model):
         (TYPE_RREPLACES, "replaces"),
         (TYPE_RCONFLICTS, "conflicts"),
     )
-    ''' Indexed by dep_type, in view order, key for short name and help
+    """ Indexed by dep_type, in view order, key for short name and help
         description which when viewed will be printf'd with the
         package name.
-    '''
+    """
     DEPENDS_DICT = {
         TYPE_RDEPENDS :     ("depends", "%s is required to run %s"),
         TYPE_TRDEPENDS :    ("depends", "%s is required to run %s"),
@@ -509,33 +507,47 @@ class LayerSource(models.Model):
 
     TYPE_LOCAL = 0
     TYPE_LAYERINDEX = 1
+    TYPE_IMPORTED = 2
     SOURCE_TYPE = (
         (TYPE_LOCAL, "local"),
         (TYPE_LAYERINDEX, "layerindex"),
+        (TYPE_IMPORTED, "imported"),
       )
 
-    name = models.CharField(max_length=63)
+    name = models.CharField(max_length=63, unique = True)
     sourcetype = models.IntegerField(choices=SOURCE_TYPE)
     apiurl = models.CharField(max_length=255, null=True, default=None)
+
+    def update(self):
+        """
+            Updates the local database information from the upstream layer source
+        """
+        raise Exception("Abstract, update() must be implemented by all LayerSource-derived classes (object is %s)" % str(vars(self)))
 
     def save(self, *args, **kwargs):
         if isinstance(self, LocalLayerSource):
             self.sourcetype = LayerSource.TYPE_LOCAL
         elif isinstance(self, LayerIndexLayerSource):
             self.sourcetype = LayerSource.TYPE_LAYERINDEX
+        elif isinstance(self, ImportedLayerSource):
+            self.sourcetype = LayerSource.TYPE_IMPORTED
         elif self.sourcetype == None:
-            raise Exception("Invalid LayerSource type")
+            raise Exception("Unknown LayerSource-derived class. If you added a new layer source type, fill out all code stubs.")
         return super(LayerSource, self).save(*args, **kwargs)
 
     def get_object(self):
-        if self.sourcetype is not None:
-            if self.sourcetype == LayerSource.TYPE_LOCAL:
-                self.__class__ = LocalLayerSource
-            if self.sourcetype == LayerSource.TYPE_LAYERINDEX:
-                self.__class__ = LayerIndexLayerSource
+        if self.sourcetype == LayerSource.TYPE_LOCAL:
+            self.__class__ = LocalLayerSource
+        elif self.sourcetype == LayerSource.TYPE_LAYERINDEX:
+            self.__class__ = LayerIndexLayerSource
+        elif self.sourcetype == LayerSource.TYPE_IMPORTED:
+            self.__class__ = ImportedLayerSource
+        else:
+            raise Exception("Unknown LayerSource type. If you added a new layer source type, fill out all code stubs.")
         return self
 
-        return "LS " + self.sourcetype + " " + self.name
+    def __unicode__(self):
+        return "%s (%s)" % (self.name, self.sourcetype)
 
 
 class LocalLayerSource(LayerSource):
@@ -547,10 +559,25 @@ class LocalLayerSource(LayerSource):
         self.sourcetype = LayerSource.TYPE_LOCAL
 
     def update(self):
-        '''
+        """
             Fetches layer, recipe and machine information from local repository
-        '''
+        """
         pass
+
+class ImportedLayerSource(LayerSource):
+    class Meta(LayerSource._meta.__class__):
+        proxy = True
+
+    def __init__(self, *args, **kwargs):
+        super(ImportedLayerSource, self).__init__(args, kwargs)
+        self.sourcetype = LayerSource.TYPE_IMPORTED
+
+    def update(self):
+        """
+            Fetches layer, recipe and machine information from local repository
+        """
+        pass
+
 
 class LayerIndexLayerSource(LayerSource):
     class Meta(LayerSource._meta.__class__):
@@ -566,9 +593,9 @@ class LayerIndexLayerSource(LayerSource):
         return self.apiurl + "../branch/" + branch.name + "/" + objectype + "/?q=" + str(upid)
 
     def update(self):
-        '''
+        """
             Fetches layer, recipe and machine information from remote repository
-        '''
+        """
         assert self.apiurl is not None
         from django.db import IntegrityError
 
@@ -601,7 +628,7 @@ class LayerIndexLayerSource(LayerSource):
             return
 
         # update branches; only those that we already have names listed in the Releases table
-        whitelist_branch_names = map(lambda x: x.branch.name, Release.objects.all())
+        whitelist_branch_names = map(lambda x: x.branch_name, Release.objects.all())
 
         branches_info = _get_json_response(apilinks['branches']
             + "?filter=name:%s" % "OR".join(whitelist_branch_names))
@@ -713,16 +740,31 @@ class BitbakeVersion(models.Model):
 
 
 class Release(models.Model):
+    """ A release is a project template, used to pre-populate Project settings with a configuration set """
     name = models.CharField(max_length=32, unique = True)
     description = models.CharField(max_length=255)
     bitbake_version = models.ForeignKey(BitbakeVersion)
-    branch = models.ForeignKey('Branch')
+    branch_name = models.CharField(max_length=50, default = "")
     helptext = models.TextField(null=True)
+
+    def __unicode__(self):
+        return "%s (%s)" % (self.name, self.branch_name)
+
+class ReleaseLayerSourcePriority(models.Model):
+    """ Each release selects layers from the set up layer sources, ordered by priority """
+    release = models.ForeignKey("Release")
+    layer_source = models.ForeignKey("LayerSource")
+    priority = models.IntegerField(default = 0)
+
+    def __unicode__(self):
+        return "%s-%s:%d" % (self.release.name, self.layer_source.name, self.priority)
+    class Meta:
+        unique_together = (('release', 'layer_source'),)
 
 
 class ReleaseDefaultLayer(models.Model):
     release = models.ForeignKey(Release)
-    layer = models.ForeignKey('Layer')
+    layer_name = models.CharField(max_length=100, default="")
 
 
 # Branch class is synced with layerindex.Branch, branches can only come from remote layer indexes
@@ -760,7 +802,7 @@ class Layer(models.Model):
     description = models.TextField(null = True, default = None)
 
     def __unicode__(self):
-        return "L " + self.name
+        return "%s / %s " % (self.name, self.layer_source)
 
     class Meta:
         unique_together = (("layer_source", "up_id"), ("layer_source", "name"))
@@ -831,9 +873,21 @@ class Layer_Version(models.Model):
             return None
         return self._handle_url_path(self.layer.vcs_web_tree_base_url, '')
 
+    def get_equivalents_wpriority(self, project):
+        """ Returns an ordered layerversion list that satisfies a LayerVersionDependency using the layer name and the current Project Releases' LayerSource priority """
+        def _get_ls_priority(ls):
+            try:
+                return ls.releaselayersourcepriority_set.get(release=project.release).priority
+            except ReleaseLayerSourcePriority.DoesNotExist:
+                raise
+        return sorted(
+                Layer_Version.objects.filter( layer__name = self.layer.name, up_branch__name = self.up_branch.name ),
+                key = lambda x: _get_ls_priority(x.layer_source),
+                reverse = False)
+
 
     def __unicode__(self):
-        return "LV " + str(self.layer) + " " + self.commit
+        return  str(self.layer) + " (" + self.commit +")"
 
     class Meta:
         unique_together = ("layer_source", "up_id")
@@ -852,6 +906,9 @@ class ProjectLayer(models.Model):
     project = models.ForeignKey(Project)
     layercommit = models.ForeignKey(Layer_Version, null=True)
     optional = models.BooleanField(default = True)
+
+    def __unicode__(self):
+        return "%s, %s" % (self.project.name, self.layercommit)
 
     class Meta:
         unique_together = (("project", "layercommit"),)

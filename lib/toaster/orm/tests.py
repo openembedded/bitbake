@@ -1,16 +1,19 @@
 from django.test import TestCase
-from orm.models import LocalLayerSource, LayerIndexLayerSource, LayerSource
+from orm.models import LocalLayerSource, LayerIndexLayerSource, ImportedLayerSource, LayerSource
 from orm.models import Branch
 
 class LayerSourceVerifyInheritanceSaveLoad(TestCase):
     def test_object_creation(self):
         lls = LayerSource.objects.create(name = "a1", sourcetype = LayerSource.TYPE_LOCAL, apiurl = "")
-        lils = LayerSource.objects.create(name = "a1", sourcetype = LayerSource.TYPE_LAYERINDEX, apiurl = "")
+        lils = LayerSource.objects.create(name = "a2", sourcetype = LayerSource.TYPE_LAYERINDEX, apiurl = "")
+        imls = LayerSource.objects.create(name = "a3", sourcetype = LayerSource.TYPE_IMPORTED, apiurl = "")
 
-        print LayerSource.objects.all()
+        import pprint
+        pprint.pprint([(x.__class__,vars(x)) for x in LayerSource.objects.all()])
 
         self.assertTrue(True in map(lambda x: isinstance(x, LocalLayerSource), LayerSource.objects.all()))
         self.assertTrue(True in map(lambda x: isinstance(x, LayerIndexLayerSource), LayerSource.objects.all()))
+        self.assertTrue(True in map(lambda x: isinstance(x, ImportedLayerSource), LayerSource.objects.all()))
 
     def test_duplicate_error(self):
         def duplicate():
@@ -18,7 +21,7 @@ class LayerSourceVerifyInheritanceSaveLoad(TestCase):
             LayerSource.objects.create(name = "a1", sourcetype = LayerSource.TYPE_LOCAL, apiurl = "")
 
         self.assertRaises(Exception, duplicate)
-            
+
 
 
 class LILSUpdateTestCase(TestCase):

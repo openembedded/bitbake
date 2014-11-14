@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand, CommandError
 from orm.models import LayerSource, ToasterSetting, Branch, Layer, Layer_Version
-from orm.models import BitbakeVersion, Release, ReleaseDefaultLayer
+from orm.models import BitbakeVersion, Release, ReleaseDefaultLayer, ReleaseLayerSourcePriority
 import os
 
 from checksettings import DN
@@ -71,17 +71,23 @@ class Command(BaseCommand):
             assert 'name' in lsi
             assert 'branches' in lsi
 
-            if lsi['sourcetype'] == LayerSource.TYPE_LAYERINDEX or lsi['apiurl'].startswith("/"):
+            def _get_id_for_sourcetype(s):
+                for i in LayerSource.SOURCE_TYPE:
+                    if s == i[1]:
+                        return i[0]
+                raise Exception("Could not find definition for sourcetype " + s)
+
+            if _get_id_for_sourcetype(lsi['sourcetype']) == LayerSource.TYPE_LAYERINDEX or lsi['apiurl'].startswith("/"):
                 apiurl = lsi['apiurl']
             else:
                 apiurl = self._reduce_canon_path(os.path.join(DN(filepath), lsi['apiurl']))
 
             try:
-                ls = LayerSource.objects.get(sourcetype = lsi['sourcetype'], apiurl = apiurl)
+                ls = LayerSource.objects.get(sourcetype = _get_id_for_sourcetype(lsi['sourcetype']), apiurl = apiurl)
             except LayerSource.DoesNotExist:
                 ls = LayerSource.objects.create(
                     name = lsi['name'],
-                    sourcetype = lsi['sourcetype'],
+                    sourcetype = _get_id_for_sourcetype(lsi['sourcetype']),
                     apiurl = apiurl
                 )
 
@@ -121,17 +127,20 @@ class Command(BaseCommand):
             bvo = BitbakeVersion.objects.get(name = ri['bitbake'])
             assert bvo is not None
 
-            ro, created = Release.objects.get_or_create(name = ri['name'], bitbake_version = bvo, branch = Branch.objects.get( layer_source__name = ri['layersource'], name=ri['branch']))
+            ro, created = Release.objects.get_or_create(name = ri['name'], bitbake_version = bvo, branch_name = ri['branch'])
             ro.description = ri['description']
             ro.helptext = ri['helptext']
             ro.save()
 
+            # save layer source priority for release
+            for ls_name in ri['layersourcepriority'].keys():
+                rlspo, created = ReleaseLayerSourcePriority.objects.get_or_create(release = ro, layer_source = LayerSource.objects.get(name=ls_name))
+                rlspo.priority = ri['layersourcepriority'][ls_name]
+                rlspo.save()
+
             for dli in ri['defaultlayers']:
-                layer, created = Layer.objects.get_or_create(
-                        layer_source = LayerSource.objects.get(name = ri['layersource']),
-                        name = dli
-                    )
-                ReleaseDefaultLayer.objects.get_or_create( release = ro, layer = layer)
+                # find layers with the same name
+                ReleaseDefaultLayer.objects.get_or_create( release = ro, layer_name = dli)
 
         # set default release
         if ToasterSetting.objects.filter(name = "DEFAULT_RELEASE").count() > 0:

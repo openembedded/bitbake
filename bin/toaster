@@ -126,7 +126,6 @@ function notify_chldexit() {
 }
 
 
-
 # Verify prerequisites
 
 if ! echo "import django; print (1,) == django.VERSION[0:1] and django.VERSION[1:2][0] in (5,6)" | python 2>/dev/null | grep True >/dev/null; then
@@ -138,6 +137,7 @@ if ! echo "import south; print [0,8,4] ==  map(int,south.__version__.split(\".\"
     echo -e "This program needs South 0.8.4. Please install with\n\npip install south==0.8.4"
     return 2
 fi
+
 
 # read command line parameters
 
