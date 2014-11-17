@@ -153,9 +153,14 @@ class BBCooker:
         self.parser = None
 
         signal.signal(signal.SIGTERM, self.sigterm_exception)
+        # Let SIGHUP exit as SIGTERM
+        signal.signal(signal.SIGHUP, self.sigterm_exception)
 
     def sigterm_exception(self, signum, stackframe):
-        bb.warn("Cooker recieved SIGTERM, shutting down...")
+        if signum == signal.SIGTERM:
+            bb.warn("Cooker recieved SIGTERM, shutting down...")
+        elif signum == signal.SIGHUP:
+            bb.warn("Cooker recieved SIGHUP, shutting down...")
         self.state = state.forceshutdown
 
     def setFeatures(self, features):
