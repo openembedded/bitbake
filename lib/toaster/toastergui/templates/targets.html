@@ -39,6 +39,7 @@
 
 {% include "basetable_top.html" %}
     {% for o in objects %}
+    {% if o.name %}
     <tr class="data">
         <td class="target">
                 {{o.name}}
@@ -78,6 +79,7 @@
             </a>
         </td>
     </tr>
+    {% endif %}
     {% endfor %}
 {% include "basetable_bottom.html" %}
 
