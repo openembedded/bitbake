@@ -81,12 +81,12 @@
                         <button id="save-project-button" class="btn" type="button">Save</button>
                         <a href="#" id="cancel-change-project" class="btn btn-link">Cancel</a>
                       </div>
-                      <a id="view-all-projects" href="{% url 'all-projects' %}">View all projects</a>
+                      <p><a id="view-all-projects" href="{% url 'all-projects' %}">View all projects</a></p>
                     </form>
                   </li>
                   <div class="alert" style="display:none">
                     This project's configuration is incomplete,<br/>so you cannot run builds.<br/>
-                    <a href="{% if project.id %}{% url 'project' project.id %}{% endif %}">View project configuration</a>
+                    <p><a href="{% if project.id %}{% url 'project' project.id %}{% endif %}">View project configuration</a></p>
                   </div>
                   <li id="targets-form">
                     <h6>Target(s):</h6>
