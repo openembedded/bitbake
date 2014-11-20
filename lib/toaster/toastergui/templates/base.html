@@ -31,6 +31,7 @@
     ctx.projectBuildUrl = "{% url 'xhr_build' %}";
     ctx.projectPageUrl = "{% url 'project' %}";
     ctx.projectInfoUrl = "{% url 'xhr_projectinfo' %}";
+    ctx.numProjects = {{projects|length}};
     {% if project %}
       ctx.projectId = {{project.id}};
     {% endif %}
