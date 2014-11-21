@@ -599,24 +599,41 @@ class LayerIndexLayerSource(LayerSource):
         assert self.apiurl is not None
         from django.db import IntegrityError
 
-        def _get_json_response(apiurl = self.apiurl):
-            import httplib, urlparse, json
-            parsedurl = urlparse.urlparse(apiurl)
-            try:
-                (host, port) = parsedurl.netloc.split(":")
-            except ValueError:
-                host = parsedurl.netloc
-                port = None
+        import httplib, urlparse, json
+        import os
+        proxy_settings = os.environ.get("http_proxy", None)
 
-            if port is None:
-                port = 80
+        def _get_json_response(apiurl = self.apiurl):
+            conn = None
+            _parsedurl = urlparse.urlparse(apiurl)
+            path = _parsedurl.path
+            query = _parsedurl.query
+            def parse_url(url):
+                parsedurl = urlparse.urlparse(url)
+                try:
+                    (host, port) = parsedurl.netloc.split(":")
+                except ValueError:
+                    host = parsedurl.netloc
+                    port = None
+
+                if port is None:
+                    port = 80
+                else:
+                    port = int(port)
+                return (host, port)
+
+            if proxy_settings is None:
+                host, port = parse_url(apiurl)
+                conn = httplib.HTTPConnection(host, port)
+                conn.request("GET", path + "?" + query)
             else:
-                port = int(port)
-            conn = httplib.HTTPConnection(host, port)
-            conn.request("GET", parsedurl.path + "?" + parsedurl.query)
+                host, port = parse_url(proxy_settings)
+                conn = httplib.HTTPConnection(host, port)
+                conn.request("GET", apiurl)
+
             r = conn.getresponse()
             if r.status != 200:
-                raise Exception("Failed to read " + parsedurl.path + ": %d %s" % (r.status, r.reason))
+                raise Exception("Failed to read " + path + ": %d %s" % (r.status, r.reason))
             return json.loads(r.read())
 
         # verify we can get the basic api
@@ -624,6 +641,8 @@ class LayerIndexLayerSource(LayerSource):
             apilinks = _get_json_response()
         except Exception as e:
             import traceback
+            if proxy_settings is not None:
+                print "EE: Using proxy ", proxy_settings
             print "EE: could not connect to %s, skipping update: %s\n%s" % (self.apiurl, e, traceback.format_exc(e))
             return
 
