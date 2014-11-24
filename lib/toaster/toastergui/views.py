@@ -1935,7 +1935,21 @@ if toastermain.settings.MANAGED:
 
         raise Exception("Invalid HTTP method for this page")
 
+    # returns a queryset of compatible layers for a project
+    def _compatible_layerversions_for_project(prj, release = None, layer_name = None):
+        if release == None:
+            release = prj.release
+        # layers on the same branch or layers specifically set for this project
+        return Layer_Version.objects.filter((Q(up_branch__name = release.branch_name) & Q(project = None)) | Q(project = prj))
 
+
+    # returns the equivalence group for all the layers currently set in the project
+    def _project_equivalent_layerversions(prj):
+        return reduce(lambda x, y: list(x) + list(y),
+                    # take all equivalent layers for each entry
+                    map(lambda x: x.layercommit.get_equivalents_wpriority(prj), prj.projectlayer_set.all()) , [])
+
+    # returns a list for most recent builds; for use in the Project page, xhr_ updates,  and other places, as needed
     def _project_recent_build_list(prj):
         return map(lambda x: {
                 "id":  x.pk,
@@ -2101,7 +2115,7 @@ if toastermain.settings.MANAGED:
                 for i in prj.projectlayer_set.all():
                     # find and add a similarly-named layer on the new branch
                     try:
-                        lv = Layer_Version.objects.filter(layer__name = i.layercommit.layer.name, up_branch__name = prj.release.branch_name)[0].get_equivalents_wpriority(prj)[0]
+                        lv = _compatible_layerversions_for_project(prj).filter(layer__name = i.layer.name).get_equivalents_wpriority(prj)[0]
                         ProjectLayer.objects.get_or_create(project = prj, layercommit = lv)
                     except IndexError:
                         pass
@@ -2140,30 +2154,32 @@ if toastermain.settings.MANAGED:
 			else:
 				raise Exception("No valid project selected")
 
-            # returns layers for current project release that are not in the project set
+
+            def _lv_to_dict(x):
+                return {"id": x.pk, "name": x.layer.name, 
+                        "detail": "(" + x.layer.vcs_url + (")" if x.up_branch == None else " | "+x.up_branch.name+")"),
+                        "giturl": x.layer.vcs_url, "layerdetailurl" : reverse('layerdetails', args=(x.pk,))}
+
+
+            # returns layers for current project release that are not in the project set, matching the name
             if request.GET['type'] == "layers":
-                queryset_all = Layer_Version.objects.filter(layer__name__icontains=request.GET.get('value',''))
-                queryset_all = queryset_all.filter(up_branch__name= prj.release.branch_name).exclude(pk__in = [x.id for x in reduce(lambda x, y: list(x) + list(y), map(lambda x: x.layercommit.get_equivalents_wpriority(prj), prj.projectlayer_set.all()))])
+                queryset_all = _compatible_layerversions_for_project(prj).filter(layer__name__icontains=request.GET.get('value',''))
+
+                queryset_all = queryset_all.exclude(pk__in = [x.id for x in _project_equivalent_layerversions(prj)])
 
                 queryset_all = set([x.get_equivalents_wpriority(prj)[0] for x in queryset_all[:8]])
 
-                return HttpResponse(jsonfilter( { "error":"ok",
-                    "list" : map( lambda x: {"id": x.pk, "name": "%s" % (x.layer.name, ), "detail": "(" + x.layer.vcs_url + (")" if x.up_branch == None else " | "+x.up_branch.name+")")},
-                            queryset_all)
-                    }), content_type = "application/json")
+                return HttpResponse(jsonfilter( { "error":"ok",  "list" : map( _lv_to_dict, queryset_all) }), content_type = "application/json")
 
 
             # returns layer dependencies for a layer, excluding current project layers
             if request.GET['type'] == "layerdeps":
                 queryset_all = LayerVersionDependency.objects.filter(layer_version_id = request.GET['value'])
-                queryset_all = queryset_all.exclude(depends_on__in = reduce(lambda x, y: list(x) + list(y), map(lambda x: x.layercommit.get_equivalents_wpriority(prj), prj.projectlayer_set.all())))
+                queryset_all = queryset_all.exclude(depends_on__in = _project_equivalent_layerversions(prj))
                 queryset_all.order_by("-up_id");
 
                 return HttpResponse(jsonfilter( { "error":"ok",
-                    "list" : map(
-                        lambda x: {"id": x.pk, "name": x.layer.name, "detail": "(" + x.layer.layer_source.name + (")" if x.up_branch == None else " | "+x.up_branch.name+")"),
-                                   "giturl": x.layer.vcs_url, "layerdetailurl" : reverse('layerdetails', args=(x.pk,))},
-                        map(lambda x: x.depends_on.get_equivalents_wpriority(prj)[0], queryset_all))
+                    "list" : map( _lv_to_dict,  map(lambda x: x.depends_on.get_equivalents_wpriority(prj)[0], queryset_all))
                     }), content_type = "application/json")
 
 
@@ -2174,20 +2190,20 @@ if toastermain.settings.MANAGED:
 
                 retval = []
                 for i in prj.projectlayer_set.all():
-                    lv = Layer_Version.objects.filter(layer__name = i.layercommit.layer.name, up_branch__name = Release.objects.get(pk=request.GET['value']).branch_name)
-                    if lv.count() < 1:     # there is no layer_version with the new release id, and the same name
+                    lv = _compatible_layerversions_for_project(prj, release = Release.objects.get(pk=request.GET['value']))
+                    # there is no layer_version with the new release id, and the same name
+                    if lv.count() < 1:
                         retval.append(i)
 
                 return HttpResponse(jsonfilter( {"error":"ok",
-                    "list": map(
-                        lambda x: {"id": x.layercommit.pk, "name": x.layercommit.layer.name, "detail": "(" + x.layercommit.layer.layer_source.name + (")" if x.layercommit.up_branch == None else " | "+x.layercommit.up_branch.name+")")},
-                        retval) }), content_type = "application/json")
+                    "list" : map( _lv_to_dict,  map(lambda x: x.layercommit, retval ))
+                    }), content_type = "application/json")
 
 
             # returns targets provided by current project layers
             if request.GET['type'] == "targets":
                 queryset_all = Recipe.objects.all()
-                queryset_all = queryset_all.filter(layer_version__in = reduce(lambda x, y: list(x) + list(y), map(lambda x: x.layercommit.get_equivalents_wpriority(prj), ProjectLayer.objects.filter(project = prj))))
+                queryset_all = queryset_all.filter(layer_version__in = reduce(lambda x, y: list(x) + list(y), map(lambda x: x.layercommit.get_equivalents_wpriority(prj), prj.projectlayer_set.all()), []))
                 return HttpResponse(jsonfilter({ "error":"ok",
                     "list" : map ( lambda x: {"id": x.pk, "name": x.name, "detail":"[" + x.layer_version.layer.name+ (" | " + x.layer_version.up_branch.name + "]" if x.layer_version.up_branch is not None else "]")},
                         queryset_all.filter(name__icontains=request.GET.get('value',''))[:8]),
@@ -2243,10 +2259,9 @@ if toastermain.settings.MANAGED:
         # for that object type. copypasta for all needed table searches
         (filter_string, search_term, ordering_string) = _search_tuple(request, Layer_Version)
 
-        queryset_all = Layer_Version.objects.all()
-
         prj = Project.objects.get(pk = request.session['project_id'])
-        queryset_all = queryset_all.filter(up_branch__name = prj.release.branch_name)
+
+        queryset_all = _compatible_layerversions_for_project(prj)
 
         queryset_all = _get_queryset(Layer_Version, queryset_all, filter_string, search_term, ordering_string, '-layer__name')
 

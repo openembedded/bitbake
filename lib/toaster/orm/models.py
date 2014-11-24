@@ -843,6 +843,8 @@ class Layer_Version(models.Model):
     dirpath = models.CharField(max_length=255, null = True, default = None)          # LayerBranch.vcs_subdir
     priority = models.IntegerField(default = 0)         # if -1, this is a default layer
 
+    project = models.ForeignKey('Project', null = True, default = None)   # Set if this layer is project-specific; always set for imported layers, and project-set branches
+
     # code lifted, with adaptations, from the layerindex-web application https://git.yoctoproject.org/cgit/cgit.cgi/layerindex-web/
     def _handle_url_path(self, base_url, path):
         import re
@@ -902,7 +904,7 @@ class Layer_Version(models.Model):
         return sorted(
                 Layer_Version.objects.filter( layer__name = self.layer.name, up_branch__name = self.up_branch.name ),
                 key = lambda x: _get_ls_priority(x.layer_source),
-                reverse = False)
+                reverse = True)
 
 
     def __unicode__(self):
