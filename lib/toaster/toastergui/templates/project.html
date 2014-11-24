@@ -178,8 +178,24 @@ vim: expandtab tabstop=2
                  {[b.build[0].completed_on|date:'dd/MM/yy HH:mm']}
               </ngif>
             </div>
-            <div class="span2"><span><a href="{[b.build[0].build_page_url]}#errors" class="lead error" ng-if="b.build[0].errors">{[b.build[0].errors]}</a></span></div>
-            <div class="span2"><span><a href="{[b.build[0].build_page_url]}#warnings" class="lead warning" ng-if="b.build[0].warnings">{[b.build[0].warnings]}</a></span></div>
+            <div class="span2">
+              <ngif ng-if="b.build[0].errors">
+                <span>
+                  <i class="icon-minus-sign red lead"></i>
+                  <a href="{[b.build[0].build_page_url]}#errors" class="lead error">{[b.build[0].errors]}
+                  <ng-pluralize count="b.build[0].errors" when="{'1':'error','other':'errors'}"></ng-pluralize></a>
+                </span>
+              </ngif>
+            </div>
+            <div class="span2">
+              <ngif ng-if="b.build[0].warnings">
+                <span>
+                  <i class="icon-warning-sign yellow lead"></i>
+                  <a href="{[b.build[0].build_page_url]}#warnings" class="lead warning">{[b.build[0].warnings]}
+                  <ng-pluralize count="b.build[0].warnings" when="{'1':'warning','other':'warnings'}"></ng-pluralize></a>
+                </span>
+              </ngif>
+            </div>
             <div> <span class="lead">Build time: <a href="{[b.build[0].build_time_page_url]}">{[b.build[0].build_time|timediff]}</a></span>
                 <button class="btn pull-right" ng-class="{'Succeeded':  'btn-success', 'Failed': 'btn-danger'}[b.build[0].status]"
                     ng-click="targetExistingBuild(b.targets)">Run again</button>
