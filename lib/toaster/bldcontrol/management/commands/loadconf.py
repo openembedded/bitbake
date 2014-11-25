@@ -5,20 +5,29 @@ import os
 
 from checksettings import DN
 
+def _reduce_canon_path(path):
+    components = []
+    for c in path.split("/"):
+        if c == "..":
+            del components[-1]
+        elif c == ".":
+            pass
+        else:
+            components.append(c)
+    if len(components) < 2:
+        components.append('')
+    return "/".join(components)
+
+def _get_id_for_sourcetype(s):
+    for i in LayerSource.SOURCE_TYPE:
+        if s == i[1]:
+            return i[0]
+    raise Exception("Could not find definition for sourcetype " + s)
+
 class Command(BaseCommand):
     help = "Loads a toasterconf.json file in the database"
     args = "filepath"
 
-    def _reduce_canon_path(self, path):
-        components = []
-        for c in path.split("/"):
-            if c == "..":
-                del components[-1]
-            elif c == ".":
-                pass
-            else:
-                components.append(c)
-        return "/".join(components)
 
 
     def _import_layer_config(self, filepath):
@@ -71,16 +80,13 @@ class Command(BaseCommand):
             assert 'name' in lsi
             assert 'branches' in lsi
 
-            def _get_id_for_sourcetype(s):
-                for i in LayerSource.SOURCE_TYPE:
-                    if s == i[1]:
-                        return i[0]
-                raise Exception("Could not find definition for sourcetype " + s)
 
             if _get_id_for_sourcetype(lsi['sourcetype']) == LayerSource.TYPE_LAYERINDEX or lsi['apiurl'].startswith("/"):
                 apiurl = lsi['apiurl']
             else:
-                apiurl = self._reduce_canon_path(os.path.join(DN(filepath), lsi['apiurl']))
+                apiurl = _reduce_canon_path(os.path.join(DN(os.path.abspath(filepath)), lsi['apiurl']))
+
+            assert ((_get_id_for_sourcetype(lsi['sourcetype']) == LayerSource.TYPE_LAYERINDEX) or apiurl.startswith("/")), (lsi['sourcetype'],apiurl)
 
             try:
                 ls = LayerSource.objects.get(sourcetype = _get_id_for_sourcetype(lsi['sourcetype']), apiurl = apiurl)
@@ -102,7 +108,7 @@ class Command(BaseCommand):
                     if layerinfo['local_path'].startswith("/"):
                         lo.local_path = layerinfo['local_path']
                     else:
-                        lo.local_path = self._reduce_canon_path(os.path.join(DN(DN(DN(filepath))), layerinfo['local_path']))
+                        lo.local_path = _reduce_canon_path(os.path.join(ls.apiurl, layerinfo['local_path']))
 
                     if not os.path.exists(lo.local_path):
                         raise Exception("Local layer path %s must exists." % lo.local_path)
@@ -110,6 +116,8 @@ class Command(BaseCommand):
                     lo.vcs_url = layerinfo['vcs_url']
                     if layerinfo['vcs_url'].startswith("remote:"):
                         lo.vcs_url = _read_git_url_from_local_repository(layerinfo['vcs_url'])
+                    else:
+                        lo.vcs_url = layerinfo['vcs_url']
 
                     if 'layer_index_url' in layerinfo:
                         lo.layer_index_url = layerinfo['layer_index_url']
