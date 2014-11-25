@@ -136,6 +136,10 @@ select { width: auto; }
 .new-build .alert { margin-top: 10px; }
 .new-build .alert p { margin-top: 10px; }
 
+/* styles for showing the project name in build mode */
+.project-name { padding-top: 0; }
+.project-name .label { font-weight: normal; margin-bottom: 5px; margin-left: -15px; padding: 5px; }
+
 /* Remove bottom margin for forms inside modal dialogs */
 #dependencies_modal_form { margin-bottom: 0px; }
 

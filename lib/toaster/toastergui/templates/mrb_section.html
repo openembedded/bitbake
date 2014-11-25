@@ -12,9 +12,9 @@
   </div>
   <div id="latest-builds">
   {% for build in mru %}
-    <div class="alert {%if build.outcome == build.SUCCEEDED%}alert-success{%elif build.outcome == build.FAILED%}alert-error{%else%}alert-info{%endif%}" style="padding-top: 0;">
+    <div class="alert {%if build.outcome == build.SUCCEEDED%}alert-success{%elif build.outcome == build.FAILED%}alert-error{%else%}alert-info{%endif%} {% if MANAGED and build.project %}project-name{% endif %} ">
     {% if MANAGED and build.project %}
-       <span class="label {%if build.outcome == build.SUCCEEDED%}label-success{%elif build.outcome == build.FAILED%}label-danger{%else%}label-info{%endif%}" style="font-weight: normal; margin-bottom: 5px; margin-left:-15px; padding-top:5px;"> {{build.project.name}} </span>
+       <span class="label {%if build.outcome == build.SUCCEEDED%}label-success{%elif build.outcome == build.FAILED%}label-danger{%else%}label-info{%endif%}"> {{build.project.name}} </span>
     {% endif %}
 
         <div class="row-fluid">
