@@ -178,6 +178,11 @@ class Build(models.Model):
         tgts = Target.objects.filter(build_id = self.id).order_by( 'target' );
         return( tgts );
 
+    @property
+    def toaster_exceptions(self):
+        return self.logmessage_set.filter(level=LogMessage.EXCEPTION)
+
+
 class ProjectTarget(models.Model):
     project = models.ForeignKey(Project)
     target = models.CharField(max_length=100)
@@ -966,13 +971,15 @@ class HelpText(models.Model):
     text = models.TextField()
 
 class LogMessage(models.Model):
+    EXCEPTION = -1      # used to signal self-toaster-exceptions
     INFO = 0
     WARNING = 1
     ERROR = 2
 
     LOG_LEVEL = ( (INFO, "info"),
             (WARNING, "warn"),
-            (ERROR, "error") )
+            (ERROR, "error"),
+            (EXCEPTION, "toaster exception"))
 
     build = models.ForeignKey(Build)
     task  = models.ForeignKey(Task, blank = True, null=True)

@@ -39,6 +39,14 @@
             <span class="pull-right">Build time: <a href="{% url 'buildtime' build.pk %}">{{ build.timespent|sectohms }}</a></span>
 {%endif%}
     </div>
+    {% if build.toaster_exceptions.count > 0 %}
+    <div class="row">
+        <small class="pull-right">
+		<i class="icon-question-sign get-help get-help-blue" title="" data-original-title="Toaster exceptions do not affect your build: only the operation of Toaster"></i>
+		<a class="show-exceptions" href="#exceptions">Toaster threw {{build.toaster_exceptions.count}} exception{{build.toaster_exceptions.count|pluralize}}</a>
+	</small>
+    </div>
+    {% endif %}
   </div>
 </div>
 
@@ -216,6 +224,33 @@
               <pre>{{warning.message}}</pre>
             </div>
           {% endif %}{% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+
+{% if build.toaster_exceptions.count > 0 %}
+<div class="accordion span10 pull-right" id="exceptions">
+  <div class="accordion-group">
+    <div class="accordion-heading">
+      <a class="accordion-toggle exception toggle-exceptions">
+        <h2 id="exception-toggle">
+          <i class="icon-warning-sign"></i>
+          {{build.toaster_exceptions.count}} Toaster exception{{build.toaster_exceptions.count|pluralize}}
+        </h2>
+      </a>
+    </div>
+    <div class="accordion-body collapse" id="collapse-exceptions">
+      <div class="accordion-inner">
+        <div class="span10">
+          {% for exception in build.toaster_exceptions %}
+            <div class="alert alert-exception">
+              <pre>{{exception.message}}</pre>
+            </div>
+          {% endfor %}
         </div>
       </div>
     </div>

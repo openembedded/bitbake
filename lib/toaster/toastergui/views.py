@@ -461,7 +461,7 @@ def builddashboard( request, build_id ):
     template = "builddashboard.html"
     if Build.objects.filter( pk=build_id ).count( ) == 0 :
         return redirect( builds )
-    build = Build.objects.filter( pk = build_id )[ 0 ];
+    build = Build.objects.get( pk = build_id );
     layerVersionId = Layer_Version.objects.filter( build = build_id );
     recipeCount = Recipe.objects.filter( layer_version__id__in = layerVersionId ).count( );
     tgts = Target.objects.filter( build_id = build_id ).order_by( 'target' );

@@ -299,12 +299,13 @@ def main(server, eventHandler, params ):
             logger.error(e)
             import traceback
             exception_data = traceback.format_exc()
+            print(exception_data)
 
             # save them to database, if possible; if it fails, we already logged to console.
             try:
-                buildinfohelper.store_log_error("%s\n%s" % (str(e), exception_data))
-            except Exception:
-                pass
+                buildinfohelper.store_log_exception("%s\n%s" % (str(e), exception_data))
+            except Exception as ce:
+                print("CRITICAL: failed to to save toaster exception to the database: %s" % str(ce))
 
             pass
 

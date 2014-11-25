@@ -381,7 +381,7 @@ class ORMWrapper(object):
                 searchname = pkgpnmap[p]['OPKGN']
 
             packagedict[p]['object'], created = Package.objects.get_or_create( build = build_obj, name = searchname )
-            if created or package[p]['object'].size == -1:    # save the data anyway we can, not just if it was not created here; bug [YOCTO #6887]
+            if created or packagedict[p]['object'].size == -1:    # save the data anyway we can, not just if it was not created here; bug [YOCTO #6887]
                 # fill in everything we can from the runtime-reverse package data
                 try:
                     packagedict[p]['object'].recipe = recipes[pkgpnmap[p]['PN']]
@@ -462,7 +462,7 @@ class ORMWrapper(object):
         if 'OPKGN' in package_info.keys():
             pname = package_info['OPKGN']
 
-        bp_object = Package.objects.create( build = build_obj,
+        bp_object, created = Package.objects.get_or_create( build = build_obj,
                                        name = pname )
 
         bp_object.installed_name = package_info['PKG']
@@ -1043,6 +1043,15 @@ class BuildInfoHelper(object):
         mockevent.lineno = -1
         self.store_log_event(mockevent)
 
+    def store_log_exception(self, text, backtrace = ""):
+        mockevent = MockEvent()
+        mockevent.levelno = -1
+        mockevent.msg = text
+        mockevent.pathname = backtrace
+        mockevent.lineno = -1
+        self.store_log_event(mockevent)
+
+
     def store_log_event(self, event):
         if event.levelno < format.WARNING:
             return
@@ -1078,6 +1087,8 @@ class BuildInfoHelper(object):
             log_information['level'] = LogMessage.ERROR
         elif event.levelno == format.WARNING:
             log_information['level'] = LogMessage.WARNING
+        elif event.levelno == -1:   # toaster self-logging
+            log_information['level'] = -1
         else:
             log_information['level'] = LogMessage.INFO
 
