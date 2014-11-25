@@ -13,7 +13,7 @@
   <div id="latest-builds">
   {% for build in mru %}
     <div class="alert {%if build.outcome == build.SUCCEEDED%}alert-success{%elif build.outcome == build.FAILED%}alert-error{%else%}alert-info{%endif%}" style="padding-top: 0;">
-    {% if build.project %}
+    {% if MANAGED and build.project %}
        <span class="label {%if build.outcome == build.SUCCEEDED%}label-success{%elif build.outcome == build.FAILED%}label-danger{%else%}label-info{%endif%}" style="font-weight: normal; margin-bottom: 5px; margin-left:-15px; padding-top:5px;"> {{build.project.name}} </span>
     {% endif %}
 
@@ -40,10 +40,10 @@
       {% endif %}
             </div>
             <div class="lead ">
-              <span class="lead{%if not build.project%} pull-right{%endif%}">
+              <span class="lead{%if not MANAGED or not build.project%} pull-right{%endif%}">
                 Build time: <a href="{% url 'buildtime' build.pk %}">{{ build.timespent|sectohms }}</a>
               </span>
-          {% if build.project %}
+          {% if MANAGED and build.project %}
               <a class="btn {%if build.outcome == build.SUCCEEDED%}btn-success{%elif build.outcome == build.FAILED%}btn-danger{%else%}btn-info{%endif%} pull-right" onclick="scheduleBuild({% url 'xhr_projectbuild' build.project.id as bpi%}{{bpi|json}}, {{build.project.name|json}}, {{build.get_sorted_target_list|mapselect:'target'|json}})">Run again</a>
           {% endif %}
             </div>
