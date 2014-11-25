@@ -117,15 +117,14 @@ class ORMWrapper(object):
 
         if brbe is not None:
             from bldcontrol.models import BuildEnvironment, BuildRequest
-            try:
-                br, be = brbe.split(":")
-                buildrequest = BuildRequest.objects.get(pk = br)
-                buildrequest.build = build
-                buildrequest.save()
-                build.project_id = buildrequest.project_id
-                build.save()
-            except BuildRequest.DoesNotExist:
-                pass
+            br, be = brbe.split(":")
+
+            buildrequest = BuildRequest.objects.get(pk = br)
+            buildrequest.build = build
+            buildrequest.save()
+
+            build.project_id = buildrequest.project_id
+            build.save()
         return build
 
     def create_target_objects(self, target_info):
@@ -250,17 +249,30 @@ class ORMWrapper(object):
 
         return layer_version_object
 
-    def get_update_layer_object(self, layer_information):
+    def get_update_layer_object(self, layer_information, brbe):
         assert 'name' in layer_information
         assert 'local_path' in layer_information
         assert 'layer_index_url' in layer_information
 
-        layer_object, created = Layer.objects.get_or_create(
+        if brbe is None:
+            layer_object, created = Layer.objects.get_or_create(
                                 name=layer_information['name'],
                                 local_path=layer_information['local_path'],
                                 layer_index_url=layer_information['layer_index_url'])
+            return layer_object
+        else:
+            # we are under managed mode; we must match the layer used in the Project Layer
+            from bldcontrol.models import BuildEnvironment, BuildRequest
+            br, be = brbe.split(":")
 
-        return layer_object
+            buildrequest = BuildRequest.objects.get(pk = br)
+
+            # we might have a race condition here, as the project layers may change between the build trigger and the actual build execution
+            # but we can only match on the layer name, so the worst thing can happen is a mis-identification of the layer, not a total failure
+            layer_object = buildrequest.project.projectlayer_set.get(layercommit__layer__name=layer_information['name']).layercommit.layer
+
+            return layer_object
+
 
     def save_target_file_information(self, build_obj, target_obj, filedata):
         assert isinstance(build_obj, Build)
@@ -689,7 +701,7 @@ class BuildInfoHelper(object):
         layerinfos = event._localdata
         self.internal_state['lvs'] = {}
         for layer in layerinfos:
-            self.internal_state['lvs'][self.orm_wrapper.get_update_layer_object(layerinfos[layer])] = layerinfos[layer]['version']
+            self.internal_state['lvs'][self.orm_wrapper.get_update_layer_object(layerinfos[layer], self.brbe)] = layerinfos[layer]['version']
 
 
     def store_started_build(self, event):
