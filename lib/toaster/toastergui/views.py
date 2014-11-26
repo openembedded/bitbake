@@ -1894,9 +1894,12 @@ if toastermain.settings.MANAGED:
             'email': request.user.email if request.user.is_authenticated() else '',
             'username': request.user.username if request.user.is_authenticated() else '',
             'releases': Release.objects.order_by("id"),
-            'defaultbranch': ToasterSetting.objects.get(name = "DEFAULT_RELEASE").value,
         }
 
+        try:
+            context['defaultbranch'] = ToasterSetting.objects.get(name = "DEFAULT_RELEASE").value
+        except ToasterSetting.DoesNotExist:
+            pass
 
         if request.method == "GET":
             # render new project page
@@ -2156,7 +2159,7 @@ if toastermain.settings.MANAGED:
 
 
             def _lv_to_dict(x):
-                return {"id": x.pk, "name": x.layer.name, 
+                return {"id": x.pk, "name": x.layer.name,
                         "detail": "(" + x.layer.vcs_url + (")" if x.up_branch == None else " | "+x.up_branch.name+")"),
                         "giturl": x.layer.vcs_url, "layerdetailurl" : reverse('layerdetails', args=(x.pk,))}
 

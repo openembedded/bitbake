@@ -3,35 +3,91 @@
 {% load humanize %}
 {% block pagecontent %}
 <div class="row-fluid">
-				<div class="span6">
-				<div class="page-header">
-					<h1>Create a new project</h1>
-				</div>
-				<div class="container-fluid">
-		{% if alert %}
-			<div class="alert alert-error row-fluid" role="alert">{{alert}}</div>
-		{% endif %}
-				</div>
-					<form method="POST">{% csrf_token %}
-						<fieldset>
-							<label>Project name <span class="muted">(required)</span></label>
-							<input type="text" class="input-xlarge" required name="projectname" value="{{projectname}}">
-							<label class="project-form">
-								Yocto Project version
-								<i class="icon-question-sign get-help" title="This sets the branch for the Yocto Project core layers (meta, meta-yocto and meta-yocto-bsp), and for the layers you use from the OpenEmbedded Metadata Index"></i>
-							</label>
-							<select name="projectversion" id="projectversion">
-	{% for release in releases %}
-		<option value="{{release.id}}"{%if projectversion == release.id %} selected{%endif%}>{{release.name}} ({{release.description}})</option>
-	{% endfor %}
-							</select>
-						</fieldset>
+    <div class="page-header">
+          <h1>Create a new project</h1>
+        </div>
+        <div class="container-fluid">
+    {% if alert %}
+      <div class="alert alert-error row-fluid" role="alert">{{alert}}</div>
+    {% endif %}
+        </div>
+    {% if releases.count > 0 %}
+        <form method="POST">{% csrf_token %}
+            <fieldset>
+              <label>Project name <span class="muted">(required)</span></label>
+              <input type="text" class="input-xlarge" required id="new-project-name" name="projectname">
+       {% if releases.count > 1 %}
+              <label class="project-form">
+                Release version
+                <i class="icon-question-sign get-help" title="The version of the build system you want to use"></i>
+              </label>
+              <select name="projectversion" id="projectversion">
+  {% for release in releases %}
+    <option value="{{release.id}}"{%if projectversion == release.id %} selected{%endif%}>{{release.description}} ({{release.name}})</option>
+  {% endfor %}
+              </select>
+  {% for release in releases %}
+    <div class="row-fluid helptext" id="description-{{release.id}}" style="display: none">
+        <span class="help-block span5">{{release.helptext|safe}}</span>
+    </div>
+  {% endfor %}
+       {% else %}
+    <input type="hidden" name="projectversion" value="{{releases.0.id}}"/>
+       {% endif %}
+            </fieldset>
 
-						<div class="form-actions">
-							<input type="submit" class="btn btn-primary btn-large" value="Create project"/>
-						</div>
-					</form>
-				</div>
-			</div>
-		</div>
+            <div class="form-actions">
+              <input type="submit" class="btn btn-primary btn-large" value="Create project"></input>
+              <span class="help-inline" style="vertical-align:middle;">To create a project, you need to enter a project name</span>
+            </div>
+        </form>
+    {% else %}
+    <br/>
+    <div class="alert alert-warning row-fluid span6">
+    <h3>No releases configured</h3>
+    <p>
+    It looks like Toaster releases have not been configured properly. Contact the person who set up Toaster, and tell them about it.
+    </p>
+    <p>
+    If you are the Toaster administrator, we are sorry: setting up Toaster is not easy.
+    <ul>
+    <li><a href="{% url 'admin:orm_release_changelist' %}">Log in to the Django administration interface</a> and check  the "Releases" section.</li>
+    <li>Check out the <a href="https://wiki.yoctoproject.org/wiki/Setting_up_a_hosted_managed_mode_for_Toaster#Releases">documentation about configuring releases</a></li>
+    </ul>
+    </p>
+    </div>
+    {% endif %}
+
+    </div>
+    <script type="text/javascript">
+        $(document).ready(function () {
+            // hide the new project button
+            $("#new-project-button").hide();
+            $('.btn-primary').attr('disabled', 'disabled');
+
+            // enable submit button when all required fields are populated
+            $("input#new-project-name").keyup(function() {
+                if ($("input#new-project-name").val().length > 0 ){
+                    $('.btn-primary').removeAttr('disabled');
+                    $(".help-inline").css('visibility','hidden');
+                }
+                else {
+                    $('.btn-primary').attr('disabled', 'disabled');
+                    $(".help-inline").css('visibility','visible');
+                }
+            });
+
+            // show relevant help text for the selected release
+            var selected_release = $('select').val();
+            $("#description-" + selected_release).show();
+
+
+			$('select').change(function(){
+				var new_release = $('select').val();
+                $(".helptext").hide();
+				$('#description-' + new_release).fadeIn();
+			});
+        })
+    </script>
+</div>
 {% endblock %}
