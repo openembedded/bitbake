@@ -695,10 +695,19 @@ class BuildInfoHelper(object):
 
     ################################
     ## external available methods to store information
+    @staticmethod
+    def _get_data_from_event(event):
+        evdata = None
+        if '_localdata' in vars(event):
+            evdata = event._localdata
+        elif 'data' in vars(event):
+            evdata = event.data
+        else:
+            raise Exception("Event with neither _localdata or data properties")
+        return evdata
 
     def store_layer_info(self, event):
-        assert '_localdata' in vars(event)
-        layerinfos = event._localdata
+        layerinfos = BuildInfoHelper._get_data_from_event(event)
         self.internal_state['lvs'] = {}
         for layer in layerinfos:
             self.internal_state['lvs'][self.orm_wrapper.get_update_layer_object(layerinfos[layer], self.brbe)] = layerinfos[layer]['version']
@@ -732,15 +741,16 @@ class BuildInfoHelper(object):
         return self.brbe
 
 
-
     def update_target_image_file(self, event):
         image_fstypes = self.server.runCommand(["getVariable", "IMAGE_FSTYPES"])[0]
+        evdata = BuildInfoHelper._get_data_from_event(event)
+
         for t in self.internal_state['targets']:
             if t.is_image == True:
-                output_files = list(event._localdata.viewkeys())
+                output_files = list(evdata.viewkeys())
                 for output in output_files:
                     if t.target in output and output.split('.rootfs.')[1] in image_fstypes:
-                        self.orm_wrapper.save_target_image_file_information(t, output, event._localdata[output])
+                        self.orm_wrapper.save_target_image_file_information(t, output, evdata[output])
 
     def update_build_information(self, event, errors, warnings, taskfailures):
         if 'build' in self.internal_state:
@@ -748,8 +758,8 @@ class BuildInfoHelper(object):
 
 
     def store_license_manifest_path(self, event):
-        deploy_dir = event._localdata['deploy_dir']
-        image_name =  event._localdata['image_name']
+        deploy_dir = BuildInfoHelper._get_data_from_event(event)['deploy_dir']
+        image_name = BuildInfoHelper._get_data_from_event(event)['image_name']
         path = deploy_dir + "/licenses/" + image_name + "/"
         for target in self.internal_state['targets']:
             if target.target in image_name:
@@ -797,7 +807,7 @@ class BuildInfoHelper(object):
 
 
     def store_tasks_stats(self, event):
-        for (taskfile, taskname, taskstats, recipename) in event._localdata:
+        for (taskfile, taskname, taskstats, recipename) in BuildInfoHelper._get_data_from_event(event):
             localfilepath = taskfile.split(":")[-1]
             assert localfilepath.startswith("/")
 
@@ -812,7 +822,8 @@ class BuildInfoHelper(object):
             task_information['task_name'] = taskname
             task_information['cpu_usage'] = taskstats['cpu_usage']
             task_information['disk_io'] = taskstats['disk_io']
-            task_information['elapsed_time'] = taskstats['elapsed_time']
+            if 'elapsed_time' in taskstats:
+                task_information['elapsed_time'] = taskstats['elapsed_time']
             task_obj = self.orm_wrapper.get_update_task_object(task_information, True)  # must exist
 
     def update_and_store_task(self, event):
@@ -870,7 +881,7 @@ class BuildInfoHelper(object):
 
 
     def store_missed_state_tasks(self, event):
-        for (fn, taskname, taskhash, sstatefile) in event._localdata['missed']:
+        for (fn, taskname, taskhash, sstatefile) in BuildInfoHelper._get_data_from_event(event)['missed']:
 
             identifier = fn + taskname + "_setscene"
             recipe_information = self._get_recipe_information_from_taskfile(fn)
@@ -888,7 +899,7 @@ class BuildInfoHelper(object):
 
             self.orm_wrapper.get_update_task_object(task_information)
 
-        for (fn, taskname, taskhash, sstatefile) in event._localdata['found']:
+        for (fn, taskname, taskhash, sstatefile) in BuildInfoHelper._get_data_from_event(event)['found']:
 
             identifier = fn + taskname + "_setscene"
             recipe_information = self._get_recipe_information_from_taskfile(fn)
@@ -904,15 +915,14 @@ class BuildInfoHelper(object):
 
 
     def store_target_package_data(self, event):
-        assert '_localdata' in vars(event)
         # for all image targets
         for target in self.internal_state['targets']:
             if target.is_image:
                 try:
-                    pkgdata = event._localdata['pkgdata']
-                    imgdata = event._localdata['imgdata'][target.target]
+                    pkgdata = BuildInfoHelper._get_data_from_event(event)['pkgdata']
+                    imgdata = BuildInfoHelper._get_data_from_event(event)['imgdata'][target.target]
                     self.orm_wrapper.save_target_package_information(self.internal_state['build'], target, imgdata, pkgdata, self.internal_state['recipes'])
-                    filedata = event._localdata['filedata'][target.target]
+                    filedata = BuildInfoHelper._get_data_from_event(event)['filedata'][target.target]
                     self.orm_wrapper.save_target_file_information(self.internal_state['build'], target, filedata)
                 except KeyError:
                     # we must have not got the data for this image, nothing to save
@@ -1026,8 +1036,7 @@ class BuildInfoHelper(object):
 
 
     def store_build_package_information(self, event):
-        assert '_localdata' in vars(event)
-        package_info = event._localdata
+        package_info = BuildInfoHelper._get_data_from_event(event)
         self.orm_wrapper.save_build_package_information(self.internal_state['build'],
                             package_info,
                             self.internal_state['recipes'],

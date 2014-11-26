@@ -296,10 +296,9 @@ def main(server, eventHandler, params ):
             pass
         except Exception as e:
             # print errors to log
-            logger.error(e)
             import traceback
             exception_data = traceback.format_exc()
-            print(exception_data)
+            logger.error("%s\n%s" % (e, exception_data))
 
             # save them to database, if possible; if it fails, we already logged to console.
             try:
