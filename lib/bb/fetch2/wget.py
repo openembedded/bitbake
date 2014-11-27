@@ -365,8 +365,6 @@ class Wget(FetchMethod):
         else:
             newuri = newpath
 
-        # generate the new uri with the appropriate latest directory
-        newuri = regex_uri or bb.fetch.encodeurl([ud.type, ud.host, newpath, ud.user, ud.pswd, {}])
         newversion = self._check_latest_version(newuri, package,
                         current_version, ud, d)
         while not newversion:
