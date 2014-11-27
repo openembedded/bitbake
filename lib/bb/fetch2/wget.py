@@ -192,7 +192,7 @@ class Wget(FetchMethod):
     def _check_latest_dir(self, url, versionstring, ud, d):
         """
         Return the name of the directory with the greatest package version
-        If error or no version, return ""
+        If error or no version, return None
         """
         bb.debug(3, "DirURL: %s, %s" % (url, versionstring))
         soup = BeautifulSoup(self._fetch_index(url, ud, d))
@@ -230,7 +230,7 @@ class Wget(FetchMethod):
     def _check_latest_version(self, url, package, current_version, ud, d):
         """
         Return the latest version of a package inside a given directory path
-        If error or no version, return ""
+        If error or no version, return None
         """
         valid = 0
         version = ('', '', '')
@@ -243,7 +243,6 @@ class Wget(FetchMethod):
 
         pn_regex = d.getVar('REGEX', True)
         if pn_regex:
-            testversion = version
             pn_regex = re.compile(pn_regex)
             bb.debug(3, "pn_regex = '%s'" % (pn_regex.pattern))
             
