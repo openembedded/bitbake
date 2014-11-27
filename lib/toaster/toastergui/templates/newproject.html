@@ -18,12 +18,12 @@
               <input type="text" class="input-xlarge" required id="new-project-name" name="projectname">
        {% if releases.count > 1 %}
               <label class="project-form">
-                Release version
+                Release
                 <i class="icon-question-sign get-help" title="The version of the build system you want to use"></i>
               </label>
               <select name="projectversion" id="projectversion">
   {% for release in releases %}
-    <option value="{{release.id}}"{%if projectversion == release.id %} selected{%endif%}>{{release.description}} ({{release.name}})</option>
+    <option value="{{release.id}}"{%if projectversion == release.id %} selected{%endif%}>{{release.description}}</option>
   {% endfor %}
               </select>
   {% for release in releases %}

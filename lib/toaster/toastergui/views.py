@@ -1893,7 +1893,7 @@ if toastermain.settings.MANAGED:
         context = {
             'email': request.user.email if request.user.is_authenticated() else '',
             'username': request.user.username if request.user.is_authenticated() else '',
-            'releases': Release.objects.order_by("id"),
+            'releases': Release.objects.order_by("description"),
         }
 
         try:
@@ -2016,7 +2016,7 @@ if toastermain.settings.MANAGED:
                     prj.projectlayer_set.all().order_by("id")),
             "targets" : map(lambda x: {"target" : x.target, "task" : x.task, "pk": x.pk}, prj.projecttarget_set.all()),
             "freqtargets": freqtargets,
-            "releases": map(lambda x: {"id": x.pk, "name": x.name}, Release.objects.all()),
+            "releases": map(lambda x: {"id": x.pk, "name": x.name, "description":x.description}, Release.objects.all()),
         }
         try:
             context["machine"] = {"name": prj.projectvariable_set.get(name="MACHINE").value}

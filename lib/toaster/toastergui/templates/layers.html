@@ -52,7 +52,14 @@
             <a target="_blank" href="{{ o.get_vcs_dirpath_link_url }}"><i class="icon-share get-info"></i></a>
                 {% endif %}
         </td>
-            <td class="branch">{% if o.branch %}{{o.branch}}{% else %}{{o.up_branch.name}}{% endif %}</td>
+            <td class="branch">
+                {% if o.branch %}
+                    {{o.branch}}
+                {% else %}
+                    {{o.up_branch.name}}
+                    <i class="icon-question-sign get-help hover-help" title="Your builds will use the tip of the branch you have cloned or downloaded to your computer, so nothing will be fetched"></i>
+                {% endif %}
+            </td>
             <td class="dependencies">
         {% with ods=o.dependencies.all%}
             {% if ods.count %}

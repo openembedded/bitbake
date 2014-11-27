@@ -350,13 +350,13 @@ vim: expandtab tabstop=2
       <i class="icon-question-sign get-help heading-help" title="The version of the build system you want to use"></i>
     </h3>
     <p class="lead" id="change-project-version-opposite">
-      <span id="project-version">{[project.release.name]}</span>
+      <span id="project-version">{[project.release.desc]}</span>
       <i id="change-version" class="icon-pencil" ng-click="toggle('#change-project-version')" ></i>
     </p>
     <div class="div-inline" id="change-project-version" style="display:none;">
       <form ng-submit="test('#change-project-version')" class="input-append">
         <select id="select-version" ng-model="projectVersion">
-          <option ng-repeat="r in releases" value="{[r.id]}" ng-selected="r.id == project.release.id">{[r.name]}</option>
+          <option ng-repeat="r in releases" value="{[r.id]}" ng-selected="r.id == project.release.id">{[r.description]}</option>
         </select>
         <input type="submit" class="btn" style="margin-left:5px;" value="Save" ng-disabled="project.release.id == projectVersion"/>
         <input type="reset"  class="btn btn-link" value="Cancel" ng-click="toggle('#change-project-version')" ng-disabled="project.release.id == projectVersion"/>
