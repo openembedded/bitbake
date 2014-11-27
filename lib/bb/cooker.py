@@ -165,13 +165,13 @@ class BBCooker:
 
     def setFeatures(self, features):
         # we only accept a new feature set if we're in state initial, so we can reset without problems
-        if self.state != state.initial:
+        if self.state != state.initial and self.state != state.error:
             raise Exception("Illegal state for feature set change")
         original_featureset = list(self.featureset)
         for feature in features:
             self.featureset.setFeature(feature)
         bb.debug(1, "Features set %s (was %s)" % (original_featureset, list(self.featureset)))
-        if (original_featureset != list(self.featureset)):
+        if (original_featureset != list(self.featureset)) and self.state != state.error:
             self.reset()
 
     def initConfigurationData(self):
