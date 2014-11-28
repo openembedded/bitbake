@@ -253,8 +253,8 @@ class Wget(FetchMethod):
             if pn_regex:
                 m = pn_regex.search(line['href'])
                 if m:
-                    bb.debug(3, "Name = '%s', Pver = '%s'" % (m.group('name'), m.group('pver')))
-                    newver = (m.group('name'), m.group('pver'), '')
+                    bb.debug(3, "Pver = '%s'" % (m.group('pver')))
+                    newver = ('', m.group('pver'), '')
                 else:
                     continue
             else:
