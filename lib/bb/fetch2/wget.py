@@ -197,7 +197,7 @@ class Wget(FetchMethod):
         bb.debug(3, "DirURL: %s, %s" % (url, versionstring))
         soup = BeautifulSoup(self._fetch_index(url, ud, d))
         if not soup:
-            return ""
+            return None
 
         valid = 0
         prefix = ''
@@ -225,21 +225,21 @@ class Wget(FetchMethod):
             return prefix+version[1]
         else:
             bb.debug(3, "Not Valid")
-            return ""
+            return None
 
-    def _check_latest_version(self, url, packagename, ud, d):
+    def _check_latest_version(self, url, package, ud, d):
         """
         Return the latest version of a package inside a given directory path
         If error or no version, return ""
         """
         valid = 0
-        version = self._parse_path(self.package_regex_comp, packagename)
+        version = self._parse_path(self.package_regex_comp, package)
 
         bb.debug(3, "VersionURL: %s" % (url))
         soup = BeautifulSoup(self._fetch_index(url, ud, d))
         if not soup:
-            bb.debug(3, "*** %s NO SOUP" % (packagename))
-            return ""
+            bb.debug(3, "*** %s NO SOUP" % (package))
+            return None
 
         pn_regex = d.getVar('REGEX', True)
         if pn_regex:
@@ -269,9 +269,11 @@ class Wget(FetchMethod):
             version = ('', '', '')
         if not pn_regex:
             testversion = ('', '', '')
-        bb.debug(3, "*** %s -> %s (TestVersion = %s)" % (packagename, version[1], testversion[1]))
+        bb.debug(3, "*** %s -> %s (TestVersion = %s)" % (package, version[1], testversion[1]))
         if valid and version:
             return re.sub('_', '.', version[1])
+
+        return None
 
     def _init_regexes(self):
         """
@@ -321,36 +323,37 @@ class Wget(FetchMethod):
 
         sanity check to ensure same name and type.
         """
+        package = ud.path.split("/")[-1]
         regex_uri = d.getVar("REGEX_URI", True)
-        newpath = ud.path
+        newpath = regex_uri or ud.path
         pupver = ""
 
         self._init_regexes()
 
-        m = self.dirver_regex_comp.search(ud.path)
-        bb.debug(3, "path = %s" % (ud.path))
-        bb.debug(3, "Regex: %s" % (self.package_regex_comp.pattern))
-        if m and not regex_uri:
-            dirver = m.group('dirver')
-            # generate the new uri after removing version directory name
-            newuri = bb.fetch.encodeurl([ud.type, ud.host, ud.path.split(dirver)[0], ud.user, ud.pswd, {}])
-            newversion = self._check_latest_dir(newuri, dirver, ud, d)
-            if newversion and dirver != newversion:
-                newpath = ud.path.replace(dirver, newversion, True)
+        if not regex_uri:
+            # generate the new uri with the appropriate latest directory
+            m = self.dirver_regex_comp.search(ud.path)
+            if m:
+                dirver = m.group('dirver')
+                newuri = bb.fetch.encodeurl([ud.type, ud.host,
+                            ud.path.split(dirver)[0], ud.user, ud.pswd, {}])
+                new_dirver = self._check_latest_dir(newuri, dirver, ud, d)
+                if new_dirver and dirver != new_dirver:
+                    newpath = ud.path.replace(dirver, new_dirver, True)
 
-        # try to acquire all remote files in current directory
-        packagename = newpath.split("/")[-1]            # current package name
-        newpath = newpath.split(packagename)[0] or "/"  # path to directory
+            newpath = newpath.split(package)[0] or "/"  # path to directory
+            newuri = bb.fetch.encodeurl([ud.type, ud.host, newpath, ud.user, ud.pswd, {}])
+        else:
+            newuri = newpath
 
         # generate the new uri with the appropriate latest directory
         newuri = regex_uri or bb.fetch.encodeurl([ud.type, ud.host, newpath, ud.user, ud.pswd, {}])
-        newversion = self._check_latest_version(newuri, packagename, ud, d)
+        newversion = self._check_latest_version(newuri, package, ud, d)
         while not newversion:
             # maybe it's hiding in a download directory so try there
             newuri = "/".join(newuri.split("/")[0:-2]) + "/download"
             if newuri == "/download" or newuri == "http://download":
                 break
-            newversion = self._check_latest_version(newuri, packagename, ud, d)
+            newversion = self._check_latest_version(newuri, package, ud, d)
 
-        return newversion
-
+        return newversion or ""
