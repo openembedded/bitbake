@@ -233,7 +233,7 @@ class Wget(FetchMethod):
         If error or no version, return ""
         """
         valid = 0
-        version = self._parse_path(self.package_regex_comp, package)
+        version = self._parse_path(self.package_custom_regex_comp, package)
 
         bb.debug(3, "VersionURL: %s" % (url))
         soup = BeautifulSoup(self._fetch_index(url, ud, d))
@@ -258,7 +258,7 @@ class Wget(FetchMethod):
                 else:
                     continue
             else:
-                newver = self._parse_path(self.package_regex_comp, line['href'])
+                newver = self._parse_path(self.package_custom_regex_comp, line['href'])
             valid = 1
             if newver and self._vercmp(version, newver) == True:
                 version = newver
@@ -275,7 +275,7 @@ class Wget(FetchMethod):
 
         return None
 
-    def _init_regexes(self):
+    def _init_regexes(self, package):
         """
         Match as many patterns as possible such as:
                 gnome-common-2.20.0.tar.gz (most common format)
@@ -317,6 +317,13 @@ class Wget(FetchMethod):
         # "5.7" in http://download.gnome.org/sources/${PN}/5.7/${PN}-${PV}.tar.gz
         self.dirver_regex_comp = re.compile("(?P<dirver>[^/]*(\d+\.)*\d+([\-_]r\d+)*)/")
 
+        # get current version and make custom regex for search in uri's
+        version = self._parse_path(self.package_regex_comp, package)
+        if version:
+            self.package_custom_regex_comp = re.compile(
+                "(?P<name>%s)(?P<ver>%s)(?P<arch>%s)?[\.\-](?P<type>%s)$" %
+                (version[0], pver_regex, parch_regex, psuffix_regex))
+
     def latest_versionstring(self, ud, d):
         """
         Manipulate the URL and try to obtain the latest package version
@@ -328,7 +335,7 @@ class Wget(FetchMethod):
         newpath = regex_uri or ud.path
         pupver = ""
 
-        self._init_regexes()
+        self._init_regexes(package)
 
         if not regex_uri:
             # generate the new uri with the appropriate latest directory
