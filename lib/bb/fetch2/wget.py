@@ -256,9 +256,14 @@ class Wget(FetchMethod):
                     bb.debug(3, "Pver = '%s'" % (m.group('pver')))
                     newver = ('', m.group('pver'), '')
                 else:
-                    continue
+                    m = pn_regex.search(str(line))
+                    if m:
+                        bb.debug(3, "Pver = '%s'" % (m.group('pver')))
+                        newver = ('', m.group('pver'), '')
             else:
                 newver = self._parse_path(self.package_custom_regex_comp, line['href'])
+                if not newver:
+                    newver = self._parse_path(self.package_custom_regex_comp, str(line))
 
             if newver:
                 bb.debug(3, "Upstream version found: %s" % newver[1])
