@@ -227,18 +227,18 @@ class Wget(FetchMethod):
             bb.debug(3, "Not Valid")
             return None
 
-    def _check_latest_version(self, url, package, ud, d):
+    def _check_latest_version(self, url, package, current_version, ud, d):
         """
         Return the latest version of a package inside a given directory path
         If error or no version, return ""
         """
         valid = 0
-        version = self._parse_path(self.package_custom_regex_comp, package)
+        version = ('', '', '')
 
         bb.debug(3, "VersionURL: %s" % (url))
         soup = BeautifulSoup(self._fetch_index(url, ud, d))
         if not soup:
-            bb.debug(3, "*** %s NO SOUP" % (package))
+            bb.debug(3, "*** %s NO SOUP" % (url))
             return None
 
         pn_regex = d.getVar('REGEX', True)
@@ -248,7 +248,7 @@ class Wget(FetchMethod):
             bb.debug(3, "pn_regex = '%s'" % (pn_regex.pattern))
             
         for line in soup.find_all('a', href=True):
-            newver = ('', '', '')
+            newver = None
             bb.debug(3, "line = '%s'" % (line['href']))
             if pn_regex:
                 m = pn_regex.search(line['href'])
@@ -259,17 +259,19 @@ class Wget(FetchMethod):
                     continue
             else:
                 newver = self._parse_path(self.package_custom_regex_comp, line['href'])
-            valid = 1
-            if newver and self._vercmp(version, newver) == True:
-                version = newver
+
+            if newver:
+                bb.debug(3, "Upstream version found: %s" % newver[1])
+                if valid == 0:
+                    version = newver
+                    valid = 1
+                elif self._vercmp(version, newver) == True:
+                    version = newver
                 
         # check whether a valid package and version were found
+        bb.debug(3, "*** %s -> UpstreamVersion = %s (CurrentVersion = %s)" %
+                (package, version[1] or "N/A", current_version[1]))
 
-        if not valid:
-            version = ('', '', '')
-        if not pn_regex:
-            testversion = ('', '', '')
-        bb.debug(3, "*** %s -> %s (TestVersion = %s)" % (package, version[1], testversion[1]))
         if valid and version:
             return re.sub('_', '.', version[1])
 
@@ -336,6 +338,11 @@ class Wget(FetchMethod):
         pupver = ""
 
         self._init_regexes(package)
+        current_version = ('', d.getVar('PV', True), '')
+
+        """possible to have no version in pkg name, such as spectrum-fw"""
+        if not re.search("\d+", package):
+            return re.sub('_', '.', current_version[1])
 
         if not regex_uri:
             # generate the new uri with the appropriate latest directory
@@ -355,12 +362,14 @@ class Wget(FetchMethod):
 
         # generate the new uri with the appropriate latest directory
         newuri = regex_uri or bb.fetch.encodeurl([ud.type, ud.host, newpath, ud.user, ud.pswd, {}])
-        newversion = self._check_latest_version(newuri, package, ud, d)
+        newversion = self._check_latest_version(newuri, package,
+                        current_version, ud, d)
         while not newversion:
             # maybe it's hiding in a download directory so try there
             newuri = "/".join(newuri.split("/")[0:-2]) + "/download"
             if newuri == "/download" or newuri == "http://download":
                 break
-            newversion = self._check_latest_version(newuri, package, ud, d)
+            newversion = self._check_latest_version(newuri, package,
+                            current_version, ud, d)
 
         return newversion or ""
