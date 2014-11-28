@@ -30,6 +30,7 @@ from orm.models import Task_Dependency, Recipe_Dependency, Package, Package_File
 from orm.models import Target_Installed_Package, Target_File, Target_Image_File, BuildArtifact
 from django.views.decorators.cache import cache_control
 from django.core.urlresolvers import reverse
+from django.core.exceptions import MultipleObjectsReturned
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.http import HttpResponseBadRequest, HttpResponseNotFound
 from django.utils import timezone
@@ -2016,8 +2017,9 @@ if toastermain.settings.MANAGED:
                         "name" : x.layercommit.layer.name,
                         "giturl": x.layercommit.layer.vcs_url,
                         "url": x.layercommit.layer.layer_index_url,
-                        "layerdetailurl": reverse("layerdetails", args=(x.layercommit.layer.pk,)),
-                        "branch" : { "name" : x.layercommit.up_branch.name, "layersource" : x.layercommit.up_branch.layer_source.name}},
+                        "layerdetailurl": reverse("layerdetails", args=(x.layercommit.pk,)),
+                # This branch name is actually the release
+                        "branch" : { "name" : x.layercommit.commit, "layersource" : x.layercommit.up_branch.layer_source.name}},
                     prj.projectlayer_set.all().order_by("id")),
             "targets" : map(lambda x: {"target" : x.target, "task" : x.task, "pk": x.pk}, prj.projecttarget_set.all()),
             "freqtargets": freqtargets,
@@ -2164,7 +2166,7 @@ if toastermain.settings.MANAGED:
 
 
             def _lv_to_dict(x):
-                return {"id": x.pk, "name": x.layer.name,
+                return {"id": x.pk, "name": x.layer.name, "tooltip": x.layer.vcs_url+" | "+x.commit,
                         "detail": "(" + x.layer.vcs_url + (")" if x.up_branch == None else " | "+x.up_branch.name+")"),
                         "giturl": x.layer.vcs_url, "layerdetailurl" : reverse('layerdetails', args=(x.pk,))}
 
@@ -2174,8 +2176,9 @@ if toastermain.settings.MANAGED:
                 # all layers for the current project
                 queryset_all = prj.compatible_layerversions().filter(layer__name__icontains=request.GET.get('value',''))
 
-                # but not layers with equivalent layers already in project
-                queryset_all = queryset_all.exclude(pk__in = [x.id for x in prj.projectlayer_equivalent_set()])[:8]
+                # but not layers with equivalent layers already in project               
+                if not request.GET.has_key('include_added'):
+                    queryset_all = queryset_all.exclude(pk__in = [x.id for x in prj.projectlayer_equivalent_set()])[:8]
 
                 # and show only the selected layers for this project
                 final_list = set([x.get_equivalents_wpriority(prj)[0] for x in queryset_all])
@@ -2241,6 +2244,100 @@ if toastermain.settings.MANAGED:
             raise Exception("Unknown request! " + request.GET.get('type', "No parameter supplied"))
         except Exception as e:
             return HttpResponse(jsonfilter({"error":str(e) + "\n" + traceback.format_exc()}), content_type = "application/json")
+
+
+    def xhr_importlayer(request):
+        if (not request.POST.has_key('vcs_url') or
+            not request.POST.has_key('name') or
+            not request.POST.has_key('git_ref') or
+            not request.POST.has_key('project_id')):
+          return HttpResponse(jsonfilter({"error": "Missing parameters; requires vcs_url, name, git_ref and project_id"}), content_type = "application/json")
+
+        # Rudimentary check for any possible html tags
+        if "<" in request.POST:
+          return HttpResponse(jsonfilter({"error": "Invalid character <"}), content_type = "application/json")
+
+        prj = Project.objects.get(pk=request.POST['project_id'])
+
+        # Strip trailing/leading whitespace from all values
+        # put into a new dict because POST one is immutable
+        post_data = dict()
+        for key,val in request.POST.iteritems():
+          post_data[key] = val.strip()
+
+
+        # We need to know what release the current project is so that we
+        # can set the imported layer's up_branch_id
+        prj_branch_name = Release.objects.get(pk=prj.release_id).branch_name
+        up_branch, branch_created = Branch.objects.get_or_create(name=prj_branch_name, layer_source_id=LayerSource.TYPE_IMPORTED)
+
+        layer_source = LayerSource.objects.get(sourcetype=LayerSource.TYPE_IMPORTED)
+        try:
+            layer, layer_created = Layer.objects.get_or_create(name=post_data['name'])
+        except MultipleObjectsReturned:
+            return HttpResponse(jsonfilter({"error": "hint-layer-exists"}), content_type = "application/json")
+
+        if layer:
+            if layer_created:
+                layer.layer_source = layer_source
+                layer.vcs_url = post_data['vcs_url']
+                if post_data.has_key('summary'):
+                    layer.summary = layer.description = post_data['summary']
+
+                layer.up_date = timezone.now()
+                layer.save()
+            else:
+                # We have an existing layer by this name, let's see if the git
+                # url is the same, if it is then we can just create a new layer
+                # version for this layer. Otherwise we need to bail out.
+                if layer.vcs_url != post_data['vcs_url']:
+                    return HttpResponse(jsonfilter({"error": "hint-layer-exists-with-different-url" , "current_url" : layer.vcs_url, "current_id": layer.id }), content_type = "application/json")
+
+
+            layer_version, version_created = Layer_Version.objects.get_or_create(layer_source=layer_source, layer=layer, project=prj, up_branch_id=up_branch.id,branch=post_data['git_ref'],  commit=post_data['git_ref'], dirpath=post_data['dir_path'])
+
+            if layer_version:
+                if not version_created:
+                    return HttpResponse(jsonfilter({"error": "hint-layer-version-exists", "existing_layer_version": layer_version.id }), content_type = "application/json")
+
+                layer_version.up_date = timezone.now()
+                layer_version.save()
+
+                # Add the dependencies specified for this new layer
+                if (post_data.has_key("layer_deps") and
+                    version_created and
+                    len(post_data["layer_deps"]) > 0):
+                    for layer_dep_id in post_data["layer_deps"].split(","):
+
+                        layer_dep_obj = Layer_Version.objects.get(pk=layer_dep_id)
+                        LayerVersionDependency.objects.get_or_create(layer_version=layer_version, depends_on=layer_dep_obj)
+                        # Now add them to the project, we could get an execption
+                        # if the project now contains the exact
+                        # dependency already (like modified on another page)
+                        try:
+                            ProjectLayer.objects.get_or_create(layercommit=layer_dep_obj, project=prj)
+                        except:
+                            pass
+
+
+                # If an old layer version exists in our project then remove it
+                for prj_layers in ProjectLayer.objects.filter(project=prj):
+                    dup_layer_v = Layer_Version.objects.filter(id=prj_layers.layercommit_id, layer_id=layer.id)
+                    if len(dup_layer_v) >0 :
+                        prj_layers.delete()
+
+                # finally add the imported layer (version id) to the project
+                ProjectLayer.objects.create(layercommit=layer_version, project=prj,optional=1)
+
+            else:
+                # We didn't create a layer version so back out now and clean up.
+                if layer_created:
+                    layer.delete()
+
+                return HttpResponse(jsonfilter({"error": "Uncaught error: Could not create layer version"}), content_type = "application/json")
+
+
+        return HttpResponse(jsonfilter({"error": "ok"}), content_type = "application/json")
 
 
 
