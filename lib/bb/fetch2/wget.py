@@ -273,12 +273,9 @@ class Wget(FetchMethod):
         if valid and version:
             return re.sub('_', '.', version[1])
 
-    def latest_versionstring(self, ud, d):
+    def _init_regexes(self):
         """
-        Manipulate the URL and try to obtain the latest package version
-
-        sanity check to ensure same name and type. Match as many patterns as possible
-        such as:
+        Match as many patterns as possible such as:
                 gnome-common-2.20.0.tar.gz (most common format)
                 gtk+-2.90.1.tar.gz
                 xf86-input-synaptics-12.6.9.tar.gz
@@ -310,9 +307,17 @@ class Wget(FetchMethod):
         # match name, version and archive type of a package
         self.name_version_type_regex = re.compile("(?P<name>%s?)\.?v?(?P<ver>%s)(\-source)?[\.\-](?P<type>%s$)" % (self.pn_regex, version_regex, suffixlist))
 
+    def latest_versionstring(self, ud, d):
+        """
+        Manipulate the URL and try to obtain the latest package version
+
+        sanity check to ensure same name and type.
+        """
         regex_uri = d.getVar("REGEX_URI", True)
         newpath = ud.path
         pupver = ""
+
+        self._init_regexes()
 
         # search for version matches on folders inside the path, like:
         # "5.7" in http://download.gnome.org/sources/${PN}/5.7/${PN}-${PV}.tar.gz
