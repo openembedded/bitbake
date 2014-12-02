@@ -36,7 +36,7 @@
                 {% include "layers_dep_modal.html" %}
                 <form>
         {% if project %}
-                    <span class="help-block" style="padding-left:19px;">The layer you are importing must be compatible with {{project.release.name}} ({{project.release.description}}), which is the release you are using in this project.</span>
+                    <span class="help-block" style="padding-left:19px;">The layer you are importing must be compatible with <strong>{{project.release.description}}</strong>, which is the release you are using in this project.</span>
           {% endif %}
                    <fieldset class="air">
                       <legend>Layer repository information</legend>
@@ -60,7 +60,7 @@
 
                       </div>
 
-                        <label>
+                        <label for="layer-git-repo-url" class="project-form">
                             Git repository URL
                             <span class="icon-question-sign get-help" title="Fetch/clone URL of the repository. Currently, Toaster only supports Git repositories." />
                         </label>
@@ -85,9 +85,9 @@
 
                           <label class="project-form" for="layer-description">Layer description
                             <span class="muted">(optional)</span>
-                            <span class="icon-question-sign get-help" title="Short description for for the layer" />
+                            <span class="icon-question-sign get-help" title="A short layer explanation" />
                           </label>
-                          <input id="layer-description" type="text" class="input-xxlarge" />
+                          <textarea id="layer-description" class="input-xxlarge"></textarea>
 
                     </fieldset>
                     <fieldset class="air">
