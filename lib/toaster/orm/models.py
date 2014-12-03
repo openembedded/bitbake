@@ -20,7 +20,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 from django.db import models
-from django.db.models import F
+from django.db.models import F, Q
 from django.utils import timezone
 
 
@@ -97,6 +97,25 @@ class Project(models.Model):
 
     def __unicode__(self):
         return "%s (%s, %s)" % (self.name, self.release, self.bitbake_version)
+
+    # returns a queryset of compatible layers for a project
+    def compatible_layerversions(self, release = None, layer_name = None):
+        if release == None:
+            release = self.release
+        # layers on the same branch or layers specifically set for this project
+        queryset = Layer_Version.objects.filter((Q(up_branch__name = release.branch_name) & Q(project = None)) | Q(project = self))
+        if layer_name is not None:
+            # we select only a layer name
+            queryset = queryset.filter(layer__name = layer_name)
+
+        # order by layer version priority
+        queryset = queryset.filter(layer_source__releaselayersourcepriority__release = release).order_by("-layer_source__releaselayersourcepriority__priority")
+
+        return queryset
+
+    # returns a set of layer-equivalent set of layers already in project
+    def projectlayer_equivalent_set(self):
+        return [j for i in [x.layercommit.get_equivalents_wpriority(self) for x in self.projectlayer_set.all()] for j in i]
 
     def schedule_build(self):
         from bldcontrol.models import BuildRequest, BRTarget, BRLayer, BRVariable, BRBitbake
