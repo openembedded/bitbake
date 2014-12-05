@@ -27,7 +27,7 @@ from django.db import IntegrityError
 from django.shortcuts import render, redirect
 from orm.models import Build, Target, Task, Layer, Layer_Version, Recipe, LogMessage, Variable
 from orm.models import Task_Dependency, Recipe_Dependency, Package, Package_File, Package_Dependency
-from orm.models import Target_Installed_Package, Target_File, Target_Image_File
+from orm.models import Target_Installed_Package, Target_File, Target_Image_File, BuildArtifact
 from django.views.decorators.cache import cache_control
 from django.core.urlresolvers import reverse
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
@@ -421,30 +421,36 @@ def builds(request):
                  'ordericon':_get_toggle_order_icon(request, "timespent"),
                  'orderkey' : 'timespent',
                 },
-                {'name': 'Log',
-                 'dclass': "span4",
-                 'qhelp': "Path to the build main log file",
-                 'clclass': 'log', 'hidden': 1,
-                 'orderfield': _get_toggle_order(request, "cooker_log_path"),
-                 'ordericon':_get_toggle_order_icon(request, "cooker_log_path"),
-                 'orderkey' : 'cooker_log_path',
-                },
-                {'name': 'Output', 'clclass': 'output',
+                {'name': 'Image files', 'clclass': 'output',
                  'qhelp': "The root file system types produced by the build. You can find them in your <code>/build/tmp/deploy/images/</code> directory",
                     # TODO: compute image fstypes from Target_Image_File
                 },
                 ]
             }
 
+    if not toastermain.settings.MANAGED:
+        context['tablecols'].insert(-2,
+                {'name': 'Log1',
+                 'dclass': "span4",
+                 'qhelp': "Path to the build main log file",
+                 'clclass': 'log', 'hidden': 1,
+                 'orderfield': _get_toggle_order(request, "cooker_log_path"),
+                 'ordericon':_get_toggle_order_icon(request, "cooker_log_path"),
+                 'orderkey' : 'cooker_log_path',
+                }
+        )
+
+
     if toastermain.settings.MANAGED:
         context['tablecols'].append(
-            {'name': 'Project', 'clclass': 'project',
-             'filter': {'class': 'project',
+                {'name': 'Project', 'clclass': 'project',
+                 'filter': {'class': 'project',
                         'label': 'Project:',
                         'options':  map(lambda x: (x.name,'',x.build_set.filter(outcome__lt=Build.IN_PROGRESS).count()), Project.objects.all()),
 
                        }
-            })
+                }
+        )
 
 
     response = render(request, template, context)
@@ -481,12 +487,8 @@ def builddashboard( request, build_id ):
             hasImages = True
         npkg = 0
         pkgsz = 0
-        pid= 0
-        tp = Target_Installed_Package.objects.filter( target_id = t.id )
         package = None
-        for p in tp:
-            pid = p.package_id
-            package = Package.objects.get( pk = p.package_id )
+        for package in Package.objects.filter(id__in = [x.package_id for x in t.target_installed_package_set.all()]):
             pkgsz = pkgsz + package.size
             if ( package.installed_name ):
                 npkg = npkg + 1
@@ -499,7 +501,7 @@ def builddashboard( request, build_id ):
             if ( ndx < 0 ):
                 ndx = 0;
             f = i.file_name[ ndx + 1: ]
-            imageFiles.append({ 'path': f, 'size' : i.file_size })
+            imageFiles.append({ 'id': i.id, 'path': f, 'size' : i.file_size })
         if ( t.is_image and
              (( len( imageFiles ) <= 0 ) or ( len( t.license_manifest_path ) <= 0 ))):
             targetHasNoImages = True
@@ -517,6 +519,8 @@ def builddashboard( request, build_id ):
         if ( p.installed_name ):
             packageCount = packageCount + 1
 
+    logmessages = list(LogMessage.objects.filter( build = build_id ))
+
     context = {
             'build'           : build,
             'hasImages'       : hasImages,
@@ -524,7 +528,7 @@ def builddashboard( request, build_id ):
             'targets'         : targets,
             'recipecount'     : recipeCount,
             'packagecount'    : packageCount,
-            'logmessages'     : LogMessage.objects.filter( build = build_id ),
+            'logmessages'     : logmessages,
     }
     return render( request, template, context )
 
@@ -637,6 +641,9 @@ def target_common( request, build_id, target_id, variant ):
             Package, queryset, filter_string, search_term, ordering_string, 'name' )
     packages = _build_page_range( Paginator(queryset, pagesize), request.GET.get( 'page', 1 ))
 
+
+    build = Build.objects.get( pk = build_id )
+
     # bring in package dependencies
     for p in packages.object_list:
         p.runtime_dependencies = p.package_dependencies_source.filter(
@@ -697,8 +704,7 @@ eans multiple licenses exist that cover different parts of the source',
         tc_dependencies[ "hidden" ] = 1
     tc_rdependencies = {
         'name'       : 'Reverse dependencies',
-        'qhelp'      : 'Package run-time reverse dependencies (i.e. which other packages depend on t\
-his package',
+        'qhelp'      : 'Package run-time reverse dependencies (i.e. which other packages depend on this package',
         'clclass'    : 'brought_in_by',
         }
     if ( variant == 'target' ):
@@ -741,18 +747,10 @@ his package',
         'clclass'    : 'layer_commit',
         'hidden'     : 1,
         }
-    tc_layerDir = {
-        'name':'Layer directory',
-        'qhelp':'Location in disk of the layer providing the recipe that builds the package',
-        'orderfield' : _get_toggle_order( request, "recipe__layer_version__layer__local_path" ),
-        'ordericon'  : _get_toggle_order_icon( request, "recipe__layer_version__layer__local_path" )\
-,
-        'clclass'    : 'layer_directory',
-        'hidden'     : 1,
-        }
+
     context = {
         'objectname': variant,
-        'build'                : Build.objects.filter( pk = build_id )[ 0 ],
+        'build'                : build,
         'target'               : Target.objects.filter( pk = target_id )[ 0 ],
         'objects'              : packages,
         'packages_sum'         : packages_sum[ 'installed_size__sum' ],
@@ -771,9 +769,20 @@ his package',
                     tc_layer,
                     tc_layerBranch,
                     tc_layerCommit,
-                    tc_layerDir,
                 ]
         }
+
+    if not toastermain.settings.MANAGED or build.project is None:
+
+        tc_layerDir = {
+            'name':'Layer directory',
+            'qhelp':'Location in disk of the layer providing the recipe that builds the package',
+            'orderfield' : _get_toggle_order( request, "recipe__layer_version__layer__local_path" ),
+            'ordericon'  : _get_toggle_order_icon( request, "recipe__layer_version__layer__local_path" ),
+            'clclass'    : 'layer_directory',
+            'hidden'     : 1,
+        }
+        context['tablecols'].append(tc_layerDir)
 
     response = render(request, template, context)
     _save_parameters_cookies(response, pagesize, orderby, request)
@@ -1136,12 +1145,13 @@ def tasks_common(request, build_id, variant, task_anchor):
     }
     if   'diskio' == variant: tc_diskio['hidden']='0'; del tc_diskio['clclass']; tc_cache['hidden']='1';
 
+    build = Build.objects.get(pk=build_id)
 
     context = { 'objectname': variant,
                 'object_search_display': object_search_display,
                 'filter_search_display': filter_search_display,
                 'title': title_variant,
-                'build': Build.objects.get(pk=build_id),
+                'build': build,
                 'objects': tasks,
                 'default_orderby' : orderby,
                 'search_term': search_term,
@@ -1157,8 +1167,11 @@ def tasks_common(request, build_id, variant, task_anchor):
                     tc_time,
                     tc_cpu,
                     tc_diskio,
-                    tc_log,
                 ]}
+
+
+    if not toastermain.settings.MANAGED or build.project is None:
+        context['tablecols'].append(tc_log)
 
     response = render(request, template, context)
     _save_parameters_cookies(response, pagesize, orderby, request)
@@ -1206,9 +1219,11 @@ def recipes(request, build_id):
             revlist.append(recipe_dep)
         revs[recipe.id] = revlist
 
+    build = Build.objects.get(pk=build_id)
+
     context = {
         'objectname': 'recipes',
-        'build': Build.objects.get(pk=build_id),
+        'build': build,
         'objects': recipes,
         'default_orderby' : 'name:+',
         'recipe_deps' : deps,
@@ -1279,6 +1294,11 @@ def recipes(request, build_id):
                 'qhelp':'The Git commit of the layer providing the recipe',
                 'clclass': 'layer_version__layer__commit', 'hidden': 1,
             },
+            ]
+        }
+
+    if not toastermain.settings.MANAGED or build.project is None:
+        context['tablecols'].append(
             {
                 'name':'Layer directory',
                 'qhelp':'Path to the layer prodiving the recipe',
@@ -1286,9 +1306,8 @@ def recipes(request, build_id):
                 'ordericon':_get_toggle_order_icon(request, "layer_version__layer__local_path"),
                 'orderkey' : 'layer_version__layer__local_path',
                 'clclass': 'layer_version__layer__local_path', 'hidden': 1,
-            },
-            ]
-        }
+            })
+
 
     response = render(request, template, context)
     _save_parameters_cookies(response, pagesize, orderby, request)
@@ -2685,41 +2704,53 @@ if toastermain.settings.MANAGED:
         return render(request, template, context)
 
 
+    def _file_name_for_artifact(b, artifact_type, artifact_id):
+        file_name = None
+        # Target_Image_File file_name
+        if artifact_type == "imagefile":
+            file_name = Target_Image_File.objects.get(target__build = b, pk = artifact_id).file_name
+
+        elif artifact_type == "cookerlog":
+            file_name = b.cooker_log_path
+
+        elif artifact_type == "buildartifact":
+            file_name = BuildArtifact.objects.get(build = b, pk = artifact_id).file_name
+
+        elif artifact_type ==  "licensemanifest":
+            file_name = Target.objects.get(build = b, pk = artifact_id).license_manifest_path
+
+        elif artifact_type == "tasklogfile":
+            file_name = Task.objects.get(build = b, pk = artifact_id).logfile
+
+        elif artifact_type == "logmessagefile":
+            file_name = LogMessage.objects.get(build = b, pk = artifact_id).pathname
+        else:
+            raise Exception("FIXME: artifact type %s not implemented" % (artifact_type))
+
+        return file_name
+
 
     def build_artifact(request, build_id, artifact_type, artifact_id):
-        try:
-            b = Build.objects.get(pk=build_id)
-            if b.buildrequest is None or b.buildrequest.environment is None:
-                raise Exception("Cannot download file")
+        b = Build.objects.get(pk=build_id)
+        if b.buildrequest is None or b.buildrequest.environment is None:
+            raise Exception("Artifact not available for download (missing build request or build environment)")
 
-            file_name = None
-            fsock = None
-            content_type='application/force-download'
-            # Target_Image_File file_name
-            # Task logfile
-            if artifact_type == "tasklogfile":
-                file_name = Task.objects.get(build = b, pk = artifact_id).logfile
+        file_name = _file_name_for_artifact(b, artifact_type, artifact_id)
+        fsock = None
+        content_type='application/force-download'
 
-            # Task path_to_sstate_obj
-            # Package_File path
-            # Recipe file_path
-            # VariableHistory file_name
-            # LogMessage pathname
-            if artifact_type == "logmessagefile":
-                file_name = LogMessage.objects.get(build = b, pk = artifact_id).pathname
+        if file_name is None:
+            raise Exception("Could not handle artifact %s id %s" % (artifact_type, artifact_id))
+        else:
+            content_type = b.buildrequest.environment.get_artifact_type(file_name)
+            fsock = b.buildrequest.environment.get_artifact(file_name)
+            file_name = os.path.basename(file_name) # we assume that the build environment system has the same path conventions as host
 
-            if file_name is not None:
-                content_type = b.buildrequest.environment.get_artifact_type(file_name)
-                fsock = b.buildrequest.environment.get_artifact(file_name)
-                file_name = os.path.basename(file_name)
+        response = HttpResponse(fsock, content_type = content_type)
 
-            response = HttpResponse(fsock, content_type = content_type)
-
-            # returns a file from the environment
-            response['Content-Disposition'] = 'attachment; filename=' + file_name
-            return response
-        except:
-            raise
+        # returns a file from the environment
+        response['Content-Disposition'] = 'attachment; filename=' + file_name
+        return response
 
 
 
@@ -2855,4 +2886,7 @@ else:
         raise Exception("page not available in interactive mode")
 
     def projects(request):
+        raise Exception("page not available in interactive mode")
+
+    def xhr_importlayer(request):
         raise Exception("page not available in interactive mode")

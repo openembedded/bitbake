@@ -98,8 +98,11 @@
                 {{recipe.layer_version.commit|truncatechars:13}}
             </a>
         </td>
-        <!-- Layer directory -->
-        <td class="layer_version__layer__local_path">{{recipe.layer_version.layer.local_path}}</td>
+
+        {% if not MANAGED or not build.project %}
+            <!-- Layer directory -->
+            <td class="layer_version__layer__local_path">{{recipe.layer_version.layer.local_path}}</td>
+        {% endif %}
     </tr>
 
     {% endfor %}

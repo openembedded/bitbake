@@ -52,16 +52,19 @@
                     Layer
                 </dt>
                 <dd>{{layer.name}}</dd>
+
+          {% if not MANAGED or not build.project %}
                 <dt>
                     <i class="icon-question-sign get-help" title="Path to the layer providing the recipe"></i>
                     Layer directory
                 </dt>
                 <dd><code>{{layer.local_path}}</code></dd>
+          {% endif %}
                 <dt>
                     <i class="icon-question-sign get-help" title="Path to the recipe .bb file"></i>
                     Recipe file
                 </dt>
-                <dd><code>{{object.file_path}}</code></dd>
+                <dd><code>{{object.get_local_path}}</code></dd>
                 {% if layer_version.branch %}
                 <dt>
                     <i class="icon-question-sign get-help" title="The Git branch of the layer providing the recipe"></i>
@@ -126,6 +129,12 @@
                     <td>
                         {% ifnotequal task.sstate_result task.SSTATE_NA %}
                         <a {{ task|task_color }} href="{% url "task" build.pk task.pk %}">{{task.get_sstate_result_display}}</a>
+                    {% if MANAGED and build.project and task.outcome = task.OUTCOME_FAILED %}
+                        <a href="{% url 'build_artifact' build.pk "tasklogfile" task.pk %}">
+                            <i class="icon-download-alt" title="" data-original-title="Download task log file"></i>
+                        </a>
+                    {% endif %}
+
                         {% endifnotequal %}
                     </td>
 

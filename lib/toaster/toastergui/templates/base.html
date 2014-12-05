@@ -3,14 +3,14 @@
 <html lang="en">
     <head>
         <title>{% if objectname %} {{objectname|title}} - {% endif %}Toaster</title>
-<link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}" type="text/css">
-<link rel="stylesheet" href="{% static 'css/bootstrap-responsive.min.css' %}" type='text/css'>
-<link rel="stylesheet" href="{% static 'css/font-awesome.min.css' %}" type='text/css'>
-<link rel="stylesheet" href="{% static 'css/prettify.css' %}" type='text/css'>
-<link rel="stylesheet" href="{% static 'css/default.css' %}" type='text/css'>
+<link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}" type="text/css"/>
+<link rel="stylesheet" href="{% static 'css/bootstrap-responsive.min.css' %}" type='text/css'/>
+<link rel="stylesheet" href="{% static 'css/font-awesome.min.css' %}" type='text/css'/>
+<link rel="stylesheet" href="{% static 'css/prettify.css' %}" type='text/css'/>
+<link rel="stylesheet" href="{% static 'css/default.css' %}" type='text/css'/>
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+<meta http-equiv="Content-Type" content="text/html;charset=UTF-8" />
 <script src="{% static 'js/jquery-2.0.3.min.js' %}">
 </script>
 <script src="{% static 'js/jquery.cookie.js' %}">
@@ -64,7 +64,7 @@
             </div>
             <!-- New build popover -->
             <div class="btn-group pull-right" id="new-build-button">
-              <button class="btn dropdown-toggle" data-toggle="dropdown" href="#">
+              <button class="btn dropdown-toggle" data-toggle="dropdown">
                 New build
                 <i class="icon-caret-down"></i>
               </button>
@@ -78,7 +78,7 @@
                   </span>
                   <form id="change-project-form" style="display:none;">
                     <div class="input-append">
-                      <input type="text" class="input-medium" id="project-name-input" placeholder="Type a project name" autocomplete="off" data-minLength="1" data-autocomplete="off" data-provide="typeahead">
+                      <input type="text" class="input-medium" id="project-name-input" placeholder="Type a project name" autocomplete="off" data-minLength="1" data-autocomplete="off" data-provide="typeahead"/>
                         <button id="save-project-button" class="btn" type="button">Save</button>
                         <a href="#" id="cancel-change-project" class="btn btn-link">Cancel</a>
                       </div>
@@ -92,7 +92,7 @@
                   <li id="targets-form">
                     <h6>Target(s):</h6>
                     <form>
-                      <input type="text" class="input-xlarge" id="build-target-input" placeholder="Type a target name" autocomplete="off" data-minLength="1" data-autocomplete="off" data-provide="typeahead" >
+                      <input type="text" class="input-xlarge" id="build-target-input" placeholder="Type a target name" autocomplete="off" data-minLength="1" data-autocomplete="off" data-provide="typeahead" />
                       <div>
                         <a class="btn btn-primary" id="build-button" disabled="disabled" data-project-id="{{project.id}}">Build</a>
                       </div>

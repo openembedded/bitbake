@@ -42,9 +42,9 @@
     {% if build.toaster_exceptions.count > 0 %}
     <div class="row">
         <small class="pull-right">
-		<i class="icon-question-sign get-help get-help-blue" title="" data-original-title="Toaster exceptions do not affect your build: only the operation of Toaster"></i>
-		<a class="show-exceptions" href="#exceptions">Toaster threw {{build.toaster_exceptions.count}} exception{{build.toaster_exceptions.count|pluralize}}</a>
-	</small>
+        <i class="icon-question-sign get-help get-help-blue" title="" data-original-title="Toaster exceptions do not affect your build: only the operation of Toaster"></i>
+        <a class="show-exceptions" href="#exceptions">Toaster threw {{build.toaster_exceptions.count}} exception{{build.toaster_exceptions.count|pluralize}}</a>
+    </small>
     </div>
     {% endif %}
   </div>
@@ -54,6 +54,9 @@
 <div class="accordion span10 pull-right" id="errors">
   <div class="accordion-group">
     <div class="accordion-heading">
+      {% if MANAGED and build.project %}
+          <a class="btn btn-large pull-right" href="{% url 'build_artifact' build.id "cookerlog" build.id %}" style="margin:15px;">Download build log</a>
+      {% endif %}
       <a class="accordion-toggle error toggle-errors">
          <h2 id="error-toggle">
            <i class="icon-minus-sign"></i>
@@ -66,13 +69,10 @@
         <div class="span10">
           {% for error in logmessages %}{% if error.level == 2 %}
             <div class="alert alert-error">
-	    {% if MANAGED and error.pathname %}
-	      <pre><a href="{% url 'build_artifact' build.pk 'logmessagefile' error.pk %}" target="_blanc">{{error.message}}</pre>
-	    {% else %}
               <pre>{{error.message}}</pre>
-	    {% endif %}
             </div>
-          {% endif %}{% endfor %}
+          {% endif %}
+          {% endfor %}
         </div>
       </div>
     </div>
@@ -84,21 +84,21 @@
 <!-- built images -->
 {% if hasImages %}
 <div class="row-fluid span10 pull-right">
-	<h2>Images</h2>
-	{% for target in targets %}
+    <h2>Images</h2>
+    {% for target in targets %}
         {% if target.target.is_image %}
-	<div class="well dashboard-section">
-		<h3><a href="{% url 'target' build.pk target.target.pk %}">{{target.target}}</a>
+    <div class="well dashboard-section">
+        <h3><a href="{% url 'target' build.pk target.target.pk %}">{{target.target}}</a>
                 </h3>
-		<dl class="dl-horizontal">
-			<dt>Packages included</dt>
-			<dd><a href="{% url 'target' build.pk target.target.pk %}">{{target.npkg}}</a></dd>
-			<dt>Total package size</dt>
-			<dd>{{target.pkgsz|filtered_filesizeformat}}</dd>
+        <dl class="dl-horizontal">
+            <dt>Packages included</dt>
+            <dd><a href="{% url 'target' build.pk target.target.pk %}">{{target.npkg}}</a></dd>
+            <dt>Total package size</dt>
+            <dd>{{target.pkgsz|filtered_filesizeformat}}</dd>
                         {% if target.targetHasNoImages %}
-				</dl>
-				<div class="row-fluid">
-					<div class="alert alert-info span7">
+                </dl>
+                <div class="row-fluid">
+                    <div class="alert alert-info span7">
                     <p>
                                     <b>This build did not create any image files</b>
                                   </p>
@@ -111,30 +111,45 @@
                                       license manifest information</a> in Toaster.
                                   </p>
                     </div>
-				</div>
+                </div>
                         {% else %}
-			<dt>
-				<i class="icon-question-sign get-help" title="The location in disk of the license manifest, a document listing all packages installed in your image and their licenses"></i>
-				<a href="{% url 'targetpkg' build.pk target.target.pk %}">License manifest</a>
-			</dt>
-			<dd><code>{{target.target.license_manifest_path}}</code></dd>
-			<dt>
-				<i class="icon-question-sign get-help" title="Image files are stored in <code>/build/tmp/deploy/images/</code>"></i>
-				Image files
-			</dt>
-			<dd>
-				<ul>
+            <dt>
+                <i class="icon-question-sign get-help" title="The location in disk of the license manifest, a document listing all packages installed in your image and their licenses"></i>
+
+            {% if MANAGED and build.project %}
+                License manifest
+            {% else %}
+                <a href="{% url 'targetpkg' build.pk target.target.pk %}">License manifest</a>
+            {% endif %}
+            </dt>
+            {% if MANAGED and build.project %}
+            <dd>
+                <a href="{% url 'targetpkg' build.pk target.target.pk %}">View in Toaster</a> |
+                <a href="{% url 'build_artifact' build.pk 'licensemanifest' target.target.pk %}">Download</a></dd>
+            {% else %}
+            <dd><code>{{target.target.license_manifest_path}}</code></dd>
+            {% endif %}
+            <dt>
+                <i class="icon-question-sign get-help" title="Image files are stored in <code>/build/tmp/deploy/images/</code>"></i>
+                Image files
+            </dt>
+            <dd>
+                <ul>
                                   {% for i in target.imageFiles %}
-					<li>{{i.path}}
-					({{i.size|filtered_filesizeformat}})</li>
+            {% if build.project %}
+                    <li><a href="{% url 'build_artifact' build.pk 'imagefile' i.id %}">{{i.path}}</a>
+            {% else %}
+                    <li>{{i.path}}
+            {% endif %}
+                    ({{i.size|filtered_filesizeformat}})</li>
                                   {% endfor %}
-				</ul>
-			</dd>
-		</dl>
+                </ul>
+            </dd>
+        </dl>
                         {% endif %}
-	</div>
+    </div>
         {% endif %}
-	{% endfor %}
+    {% endfor %}
 </div>
 {% endif %}
 
@@ -142,6 +157,35 @@
 <!-- error dump -->
 {%endif%}
 
+<!-- other artifacts -->
+{% if build.buildartifact_set.all.count > 0 %}
+<div class="row-fluid span10 pull-right">
+<h2>Other artifacts</h2>
+
+    <div class="well dashboard-section">
+        <dl class="dl-horizontal">
+            <dt>
+                <i class="icon-question-sign get-help" title="Build artifacts discovered in <i>tmp/deploy/images</i>. Usually kernel images and kernel modules."></i>
+                Other artifacts</dt>
+            <dd><div>
+              {% for ba in build.buildartifact_set.all|dictsort:"file_name" %}
+                {% if MANAGED and build.project %}
+                <a href="{%url 'build_artifact' build.id 'buildartifact' ba.id %}">
+                {% endif %}
+                    {{ba.get_local_file_name}}
+                {% if MANAGED and build.project %}
+                </a>
+                {% endif %}
+
+                ({{ba.file_size|filtered_filesizeformat}}) <br/>
+              {% endfor %}
+                </div>
+            </dd>
+
+    </div>
+
+</div>
+{% endif %}
 <!-- build summary -->
 <div class="row-fluid span10 pull-right">
 <h2>Build summary</h2>
@@ -158,12 +202,19 @@
             <dl>
             {% query build.task_build outcome=4 order__gt=0 as exectask%}
             {% if exectask.count > 0 %}
-                <dt>Failed tasks</td>
+                <dt>Failed tasks</dt>
                 <dd>
                 {% if exectask.count == 1 %}
                     <a class="error" href="{% url "task" build.id exectask.0.id %}">
                         {{exectask.0.recipe.name}}
                         <span class="task-name">{{exectask.0.task_name}}</span>
+
+                      {% if MANAGED and build.project %}
+                        <a href="{% url 'build_artifact' build.id "tasklogfile" exectask.0.id %}">
+                            <i class="icon-download-alt" title="" data-original-title="Download task log file"></i>
+                        </a>
+                      {% endif %}
+
                     </a>
                 {% elif exectask.count > 1%}
                     <a class="error" href="{% url "tasks" build.id %}?filter=outcome%3A4">{{exectask.count}}</a>

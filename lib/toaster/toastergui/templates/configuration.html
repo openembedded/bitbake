@@ -50,7 +50,9 @@
           <th>Layer</th>
           <th>Layer branch</th>
           <th>Layer commit</th>
-          <th>Layer directory</th>
+          {% if not MANAGED or not build.project %}
+              <th>Layer directory</th>
+          {% endif %}
         </tr>
       </thead>
       <tbody>{% for lv in build.layer_version_build.all|dictsort:"layer.name" %}
@@ -61,7 +63,9 @@
                 <li>{{lv.commit}}</li> </ul>">
                     {{lv.commit|truncatechars:13}}
                 </a></td>
+          {% if not MANAGED or not build.project %}
             <td>{{lv.layer.local_path}}</td>
+          {% endif %}
         </tr>{% endfor %}
       </tbody>
     </table>
