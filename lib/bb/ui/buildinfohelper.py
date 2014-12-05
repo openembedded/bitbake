@@ -26,7 +26,7 @@ os.environ["DJANGO_SETTINGS_MODULE"] = "toaster.toastermain.settings"
 
 import toaster.toastermain.settings as toaster_django_settings
 from toaster.orm.models import Build, Task, Recipe, Layer_Version, Layer, Target, LogMessage, HelpText
-from toaster.orm.models import Target_Image_File
+from toaster.orm.models import Target_Image_File, BuildArtifact
 from toaster.orm.models import Variable, VariableHistory
 from toaster.orm.models import Package, Package_File, Target_Installed_Package, Target_File
 from toaster.orm.models import Task_Dependency, Package_Dependency
@@ -156,8 +156,7 @@ class ORMWrapper(object):
         build.outcome = outcome
         build.save()
 
-    def update_target_object(self, target, license_manifest_path):
-
+    def update_target_set_license_manifest(self, target, license_manifest_path):
         target.license_manifest_path = license_manifest_path
         target.save()
 
@@ -447,7 +446,17 @@ class ORMWrapper(object):
         target_image_file = Target_Image_File.objects.create( target = target_obj,
                             file_name = file_name,
                             file_size = file_size)
-        target_image_file.save()
+
+    def save_artifact_information(self, build_obj, file_name, file_size):
+        # we skip the image files from other builds
+        if Target_Image_File.objects.filter(file_name = file_name).count() > 0:
+            return
+
+        # do not update artifacts found in other builds
+        if BuildArtifact.objects.filter(file_name = file_name).count() > 0:
+            return
+
+        BuildArtifact.objects.create(build = build_obj, file_name = file_name, file_size = file_size)
 
     def create_logmessage(self, log_information):
         assert 'build' in log_information
@@ -752,6 +761,11 @@ class BuildInfoHelper(object):
                     if t.target in output and output.split('.rootfs.')[1] in image_fstypes:
                         self.orm_wrapper.save_target_image_file_information(t, output, evdata[output])
 
+    def update_artifact_image_file(self, event):
+        evdata = BuildInfoHelper._get_data_from_event(event)
+        for artifact_path in evdata.keys():
+            self.orm_wrapper.save_artifact_information(self.internal_state['build'], artifact_path, evdata[artifact_path])
+
     def update_build_information(self, event, errors, warnings, taskfailures):
         if 'build' in self.internal_state:
             self.orm_wrapper.update_build_object(self.internal_state['build'], errors, warnings, taskfailures)
@@ -760,10 +774,10 @@ class BuildInfoHelper(object):
     def store_license_manifest_path(self, event):
         deploy_dir = BuildInfoHelper._get_data_from_event(event)['deploy_dir']
         image_name = BuildInfoHelper._get_data_from_event(event)['image_name']
-        path = deploy_dir + "/licenses/" + image_name + "/"
+        path = deploy_dir + "/licenses/" + image_name + "/license.manifest"
         for target in self.internal_state['targets']:
             if target.target in image_name:
-                self.orm_wrapper.update_target_object(target, path)
+                self.orm_wrapper.update_target_set_license_manifest(target, path)
 
 
     def store_started_task(self, event):

@@ -261,8 +261,12 @@ def main(server, eventHandler, params ):
                     buildinfohelper.store_missed_state_tasks(event)
                 elif event.type == "ImageFileSize":
                     buildinfohelper.update_target_image_file(event)
+                elif event.type == "ArtifactFileSize":
+                    buildinfohelper.update_artifact_image_file(event)
                 elif event.type == "LicenseManifestPath":
                     buildinfohelper.store_license_manifest_path(event)
+                else:
+                    logger.error("Unprocessed MetadataEvent %s " % str(event))
                 continue
 
             if isinstance(event, bb.cooker.CookerExit):
