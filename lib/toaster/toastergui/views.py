@@ -2253,6 +2253,8 @@ if toastermain.settings.MANAGED:
             not request.POST.has_key('project_id')):
           return HttpResponse(jsonfilter({"error": "Missing parameters; requires vcs_url, name, git_ref and project_id"}), content_type = "application/json")
 
+        layers_added = [];
+
         # Rudimentary check for any possible html tags
         if "<" in request.POST:
           return HttpResponse(jsonfilter({"error": "Invalid character <"}), content_type = "application/json")
@@ -2315,9 +2317,12 @@ if toastermain.settings.MANAGED:
                         # if the project now contains the exact
                         # dependency already (like modified on another page)
                         try:
-                            ProjectLayer.objects.get_or_create(layercommit=layer_dep_obj, project=prj)
+                            prj_layer, prj_layer_created = ProjectLayer.objects.get_or_create(layercommit=layer_dep_obj, project=prj)
                         except:
-                            pass
+                            continue
+
+                        if prj_layer_created:
+                            layers_added.append(Layer.objects.get(id=layer_dep_obj.layer_id).name)
 
 
                 # If an old layer version exists in our project then remove it
@@ -2337,7 +2342,7 @@ if toastermain.settings.MANAGED:
                 return HttpResponse(jsonfilter({"error": "Uncaught error: Could not create layer version"}), content_type = "application/json")
 
 
-        return HttpResponse(jsonfilter({"error": "ok"}), content_type = "application/json")
+        return HttpResponse(jsonfilter({"error": "ok", "layers_added": layers_added}), content_type = "application/json")
 
 
 
