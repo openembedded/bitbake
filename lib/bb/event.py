@@ -55,6 +55,7 @@ def get_class_handlers():
     return _handlers
 
 def set_class_handlers(h):
+    global _handlers
     _handlers = h
 
 def clean_class_handlers():
