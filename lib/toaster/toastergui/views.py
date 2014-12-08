@@ -2322,7 +2322,7 @@ if toastermain.settings.MANAGED:
                             continue
 
                         if prj_layer_created:
-                            layers_added.append(Layer.objects.get(id=layer_dep_obj.layer_id).name)
+                            layers_added.append({'id': layer_dep_obj.id, 'name': Layer.objects.get(id=layer_dep_obj.layer_id).name})
 
 
                 # If an old layer version exists in our project then remove it
@@ -2342,7 +2342,7 @@ if toastermain.settings.MANAGED:
                 return HttpResponse(jsonfilter({"error": "Uncaught error: Could not create layer version"}), content_type = "application/json")
 
 
-        return HttpResponse(jsonfilter({"error": "ok", "layers_added": layers_added}), content_type = "application/json")
+        return HttpResponse(jsonfilter({"error": "ok", "imported_layer" : { "name" : layer.name, "id": layer_version.id },  "deps_added": layers_added }), content_type = "application/json")
 
 
 
