@@ -219,6 +219,13 @@ def emit_var(var, o=sys.__stdout__, d = init(), all=False):
 
     val = str(val)
 
+    if varExpanded.startswith("BASH_FUNC_"):
+        varExpanded = varExpanded[10:-2]
+        val = val[3:] # Strip off "() "
+        o.write("%s() %s\n" % (varExpanded, val))
+        o.write("export -f %s\n" % (varExpanded))
+        return 1
+
     if func:
         # NOTE: should probably check for unbalanced {} within the var
         o.write("%s() {\n%s\n}\n" % (varExpanded, val))
