@@ -1064,7 +1064,7 @@ class RunQueue:
             retval = self.rqexe.execute()
 
         if self.state is runQueueCleanUp:
-           self.rqexe.finish()
+            retval = self.rqexe.finish()
 
         if (self.state is runQueueComplete or self.state is runQueueFailed) and self.rqexe:
             self.teardown_workers()
@@ -1306,15 +1306,14 @@ class RunQueueExecute:
         if self.stats.active > 0:
             bb.event.fire(runQueueExitWait(self.stats.active), self.cfgData)
             self.rq.read_workers()
-
-            return
+            return self.rq.active_fds()
 
         if len(self.failed_fnids) != 0:
             self.rq.state = runQueueFailed
-            return
+            return True
 
         self.rq.state = runQueueComplete
-        return
+        return True
 
     def check_dependencies(self, task, taskdeps, setscene = False):
         if not self.rq.depvalidate:
