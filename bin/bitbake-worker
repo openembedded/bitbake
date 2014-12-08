@@ -156,8 +156,11 @@ def fork_off_task(cfg, data, workerdata, fn, task, taskname, appends, taskdepdat
             bb.event.worker_fire = worker_child_fire
             worker_pipe = pipeout
 
-            # Make the child the process group leader
-            os.setpgid(0, 0)
+            # Make the child the process group leader and ensure no
+            # child process will be controlled by the current terminal
+            # This ensures signals sent to the controlling terminal like Ctrl+C
+            # don't stop the child processes.
+            os.setsid()
             # No stdin
             newsi = os.open(os.devnull, os.O_RDWR)
             os.dup2(newsi, sys.stdin.fileno())
