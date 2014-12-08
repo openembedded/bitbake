@@ -51,29 +51,41 @@ class Local(FetchMethod):
         """
         Return the local filename of a given url assuming a successful fetch.
         """
+        return self.localpaths(urldata, d)[-1]
+
+    def localpaths(self, urldata, d):
+        """
+        Return the local filename of a given url assuming a successful fetch.
+        """
+        searched = []
         path = urldata.decodedurl
         newpath = path
-        if path[0] != "/":
-            filespath = data.getVar('FILESPATH', d, True)
-            if filespath:
-                logger.debug(2, "Searching for %s in paths:\n    %s" % (path, "\n    ".join(filespath.split(":"))))
-                newpath = bb.utils.which(filespath, path)
-            if not newpath:
-                filesdir = data.getVar('FILESDIR', d, True)
-                if filesdir:
-                    logger.debug(2, "Searching for %s in path: %s" % (path, filesdir))
-                    newpath = os.path.join(filesdir, path)
-            if (not newpath or not os.path.exists(newpath)) and path.find("*") != -1:
-                # For expressions using '*', best we can do is take the first directory in FILESPATH that exists
-                newpath = bb.utils.which(filespath, ".")
-                logger.debug(2, "Searching for %s in path: %s" % (path, newpath))
-                return newpath
-            if not os.path.exists(newpath):
-                dldirfile = os.path.join(d.getVar("DL_DIR", True), path)
-                logger.debug(2, "Defaulting to %s for %s" % (dldirfile, path))
-                bb.utils.mkdirhier(os.path.dirname(dldirfile))
-                return dldirfile
-        return newpath
+        if path[0] == "/":
+            return [path]
+        filespath = data.getVar('FILESPATH', d, True)
+        if filespath:
+            logger.debug(2, "Searching for %s in paths:\n    %s" % (path, "\n    ".join(filespath.split(":"))))
+            newpath, hist = bb.utils.which(filespath, path, history=True)
+            searched.extend(hist)
+        if not newpath:
+            filesdir = data.getVar('FILESDIR', d, True)
+            if filesdir:
+                logger.debug(2, "Searching for %s in path: %s" % (path, filesdir))
+                newpath = os.path.join(filesdir, path)
+                searched.append(newpath)
+        if (not newpath or not os.path.exists(newpath)) and path.find("*") != -1:
+            # For expressions using '*', best we can do is take the first directory in FILESPATH that exists
+            newpath, hist = bb.utils.which(filespath, ".", history=True)
+            searched.extend(hist)
+            logger.debug(2, "Searching for %s in path: %s" % (path, newpath))
+            return searched
+        if not os.path.exists(newpath):
+            dldirfile = os.path.join(d.getVar("DL_DIR", True), path)
+            logger.debug(2, "Defaulting to %s for %s" % (dldirfile, path))
+            bb.utils.mkdirhier(os.path.dirname(dldirfile))
+            searched.append(dldirfile)
+            return searched
+        return searched
 
     def need_update(self, ud, d):
         if ud.url.find("*") != -1:
