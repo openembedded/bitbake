@@ -535,7 +535,7 @@ def verify_checksum(ud, d):
 
     """
 
-    if not ud.method.supports_checksum(ud):
+    if ud.ignore_checksums or not ud.method.supports_checksum(ud):
         return
 
     md5data = bb.utils.md5_file(ud.localpath)
@@ -1041,6 +1041,7 @@ class FetchData(object):
             self.sha256_expected = None
         else:
             self.sha256_expected = d.getVarFlag("SRC_URI", self.sha256_name)
+        self.ignore_checksums = False
 
         self.names = self.parm.get("name",'default').split(',')
 
