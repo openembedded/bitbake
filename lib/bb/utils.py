@@ -893,3 +893,25 @@ def multiprocessingpool(*args, **kwargs):
 
     return multiprocessing.Pool(*args, **kwargs)
 
+def exec_flat_python_func(func, *args, **kwargs):
+    """Execute a flat python function (defined with def funcname(args):...)"""
+    # Prepare a small piece of python code which calls the requested function
+    # To do this we need to prepare two things - a set of variables we can use to pass
+    # the values of arguments into the calling function, and the list of arguments for
+    # the function being called
+    context = {}
+    funcargs = []
+    # Handle unnamed arguments
+    aidx = 1
+    for arg in args:
+        argname = 'arg_%s' % aidx
+        context[argname] = arg
+        funcargs.append(argname)
+        aidx += 1
+    # Handle keyword arguments
+    context.update(kwargs)
+    funcargs.extend(['%s=%s' % (arg, arg) for arg in kwargs.iterkeys()])
+    code = 'retval = %s(%s)' % (func, ', '.join(funcargs))
+    comp = bb.utils.better_compile(code, '<string>', '<string>')
+    bb.utils.better_exec(comp, context, code, '<string>')
+    return context['retval']
