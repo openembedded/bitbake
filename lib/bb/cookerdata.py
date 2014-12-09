@@ -139,6 +139,7 @@ class CookerConfiguration(object):
         self.dry_run = False
         self.tracking = False
         self.interface = []
+        self.writeeventlog = False
 
         self.env = {}
 

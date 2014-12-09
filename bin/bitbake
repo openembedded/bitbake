@@ -196,6 +196,9 @@ class BitBakeConfigParameters(cookerdata.ConfigParameters):
         parser.add_option("", "--status-only", help = "Check the status of the remote bitbake server.",
                    action = "store_true", dest = "status_only", default = False)
 
+        parser.add_option("-w", "--write-log", help = "Writes the event log of the build to a bitbake event json file. Use '' (empty string) to assign the name automatically.",
+                   action = "store", dest = "writeeventlog")
+
         options, targets = parser.parse_args(sys.argv)
 
         # some environmental variables set also configuration options
@@ -205,6 +208,14 @@ class BitBakeConfigParameters(cookerdata.ConfigParameters):
 
         if "BBTOKEN" in os.environ:
             options.xmlrpctoken = os.environ["BBTOKEN"]
+
+        if "BBEVENTLOG" is os.environ:
+            options.writeeventlog = os.environ["BBEVENTLOG"]
+
+        # fill in proper log name if not supplied
+        if options.writeeventlog is not None and len(options.writeeventlog) == 0:
+            import datetime
+            options.writeeventlog = "bitbake_eventlog_%s.json" % datetime.datetime.now().strftime("%Y%m%d%H%M%S")
 
         # if BBSERVER says to autodetect, let's do that
         if options.remote_server:
@@ -264,7 +275,6 @@ def start_server(servermodule, configParams, configuration, features):
         raise exc_info[1], None, exc_info[2]
     server.detach()
     return server
-
 
 
 def main():

@@ -309,7 +309,7 @@ def main(server, eventHandler, params ):
             try:
                 buildinfohelper.store_log_exception("%s\n%s" % (str(e), exception_data))
             except Exception as ce:
-                print("CRITICAL: failed to to save toaster exception to the database: %s" % str(ce))
+                logger.error("CRITICAL - Failed to to save toaster exception to the database: %s" % str(ce))
 
             pass
 
