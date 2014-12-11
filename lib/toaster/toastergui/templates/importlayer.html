@@ -12,19 +12,20 @@
                   <script src="{% static 'js/importlayer.js' %}"></script>
                   <script>
                     $(document).ready(function (){
-                      var ctx = {};
-                      ctx.xhrDataTypeaheadUrl = "{% url 'xhr_datatypeahead' %}";
-                      ctx.layerDetailsUrl = "{% url 'layerdetails' %}";
-                      ctx.xhrImportLayerUrl = "{% url 'xhr_importlayer' %}";
-                      ctx.xhrEditProjectUrl = "{% url 'xhr_projectedit' project.id %}";
-                      ctx.projectPageUrl = "{% url 'project' project.id %}";
-                      ctx.projectId = {{project.id}};
+                      var ctx = {
+                        xhrDataTypeaheadUrl : "{% url 'xhr_datatypeahead' %}",
+                        layerDetailsUrl : "{% url 'layerdetails' %}",
+                        xhrImportLayerUrl : "{% url 'xhr_importlayer' %}",
+                        xhrEditProjectUrl : "{% url 'xhr_projectedit' project.id %}",
+                        projectPageUrl : "{% url 'project' project.id %}",
+                        projectId : {{project.id}}
+                      };
 
                       try {
                         importLayerPageInit(ctx);
-                      } catch(e) {
-                        document.write(e.stack);
-                        console.log(e);
+                      } catch (e) {
+                        document.write("Sorry, An error has occurred loading this page");
+                        console.warn(e);
                       }
                     });
                   </script>
