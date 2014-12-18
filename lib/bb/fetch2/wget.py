@@ -227,7 +227,7 @@ class Wget(FetchMethod):
             bb.debug(3, "Not Valid")
             return None
 
-    def _check_latest_version(self, url, package, current_version, ud, d):
+    def _check_latest_version(self, url, package, package_regex, current_version, ud, d):
         """
         Return the latest version of a package inside a given directory path
         If error or no version, return None
@@ -260,9 +260,9 @@ class Wget(FetchMethod):
                         bb.debug(3, "Pver = '%s'" % (m.group('pver')))
                         newver = ('', m.group('pver'), '')
             else:
-                newver = self._parse_path(self.package_custom_regex_comp, line['href'])
+                newver = self._parse_path(package_regex, line['href'])
                 if not newver:
-                    newver = self._parse_path(self.package_custom_regex_comp, str(line))
+                    newver = self._parse_path(package_regex, str(line))
 
             if newver:
                 bb.debug(3, "Upstream version found: %s" % newver[1])
@@ -323,12 +323,15 @@ class Wget(FetchMethod):
         # "5.7" in http://download.gnome.org/sources/${PN}/5.7/${PN}-${PV}.tar.gz
         self.dirver_regex_comp = re.compile("(?P<dirver>[^/]*(\d+\.)*\d+([\-_]r\d+)*)/")
 
-        # get current version and make custom regex for search in uri's
+        # make custom regex for search in uri's
+        package_custom_regex_comp = None
         version = self._parse_path(self.package_regex_comp, package)
         if version:
-            self.package_custom_regex_comp = re.compile(
+            package_custom_regex_comp = re.compile(
                 "(?P<name>%s)(?P<ver>%s)(?P<arch>%s)?[\.\-](?P<type>%s)$" %
                 (version[0], pver_regex, parch_regex, psuffix_regex))
+
+        return package_custom_regex_comp
 
     def latest_versionstring(self, ud, d):
         """
@@ -341,7 +344,8 @@ class Wget(FetchMethod):
         newpath = regex_uri or ud.path
         pupver = ""
 
-        self._init_regexes(package)
+        package_custom_regex_comp = self._init_regexes(package)
+
         current_version = ('', d.getVar('PV', True), '')
 
         """possible to have no version in pkg name, such as spectrum-fw"""
@@ -364,14 +368,6 @@ class Wget(FetchMethod):
         else:
             newuri = newpath
 
-        newversion = self._check_latest_version(newuri, package,
-                        current_version, ud, d)
-        while not newversion:
-            # maybe it's hiding in a download directory so try there
-            newuri = "/".join(newuri.split("/")[0:-2]) + "/download"
-            if newuri == "/download" or newuri == "http://download":
-                break
-            newversion = self._check_latest_version(newuri, package,
-                            current_version, ud, d)
-
-        return newversion or ""
+        return self._check_latest_version(newuri, package,
+                        package_custom_regex_comp or package_regex_comp,
+                        current_version, ud, d) or ""
