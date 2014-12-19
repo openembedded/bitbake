@@ -1385,7 +1385,7 @@ class BBCooker:
                 raise bb.BBHandledException()
             self.show_appends_with_no_recipes()
             self.handlePrefProviders()
-            self.recipecache.bbfile_priority = self.collection.collection_priorities(self.recipecache.pkg_fn)
+            self.recipecache.bbfile_priority = self.collection.collection_priorities(self.recipecache.pkg_fn, self.data)
             self.state = state.running
             return None
 
@@ -1610,7 +1610,7 @@ class CookerCollectFiles(object):
                     filelist.append(filename)
         return filelist
 
-    def collection_priorities(self, pkgfns):
+    def collection_priorities(self, pkgfns, d):
 
         priorities = {}
 
@@ -1639,7 +1639,8 @@ class CookerCollectFiles(object):
 
         for collection, pattern, regex, _ in self.bbfile_config_priorities:
             if regex in unmatched:
-                collectlog.warn("No bb files matched BBFILE_PATTERN_%s '%s'" % (collection, pattern))
+                if d.getVar('BBFILE_PATTERN_IGNORE_EMPTY_%s' % collection, True) != '1':
+                    collectlog.warn("No bb files matched BBFILE_PATTERN_%s '%s'" % (collection, pattern))
 
         return priorities
 
