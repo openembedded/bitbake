@@ -361,13 +361,13 @@ class NCursesUI:
                 shutdown = shutdown + 1
                 pass
 
-def main(server, eventHandler):
+def main(server, eventHandler, params):
     if not os.isatty(sys.stdout.fileno()):
         print("FATAL: Unable to run 'ncurses' UI without a TTY.")
         return
     ui = NCursesUI()
     try:
-        curses.wrapper(ui.main, server, eventHandler)
+        curses.wrapper(ui.main, server, eventHandler, params)
     except:
         import traceback
         traceback.print_exc()
