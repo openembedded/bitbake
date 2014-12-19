@@ -187,6 +187,12 @@ class SignatureGeneratorBasic(SignatureGenerator):
                 self.file_checksum_values[k][f] = cs
                 data = data + cs
 
+        taskdep = dataCache.task_deps[fn]
+        if 'nostamp' in taskdep and task in taskdep['nostamp']:
+            # Nostamp tasks need an implicit taint so that they force any dependent tasks to run
+            import uuid
+            data = data + str(uuid.uuid4())
+
         taint = self.read_taint(fn, task, dataCache.stamp[fn])
         if taint:
             data = data + taint
