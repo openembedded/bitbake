@@ -103,6 +103,60 @@ class Commands(cmd.Cmd):
             logger.plain("%s  %s  %d" % (layername.ljust(20), layerdir.ljust(40), layerpri))
 
 
+    def do_add_layer(self, dirname):
+        """Add a layer to bblayers.conf
+
+usage: add-layer <layerdir>
+"""
+        if not dirname:
+            sys.stderr.write("Please specify the layer directory to add\n")
+            return
+
+        layerdir = os.path.abspath(dirname)
+        if not os.path.exists(layerdir):
+            sys.stderr.write("Specified layer directory doesn't exist\n")
+            return
+
+        layer_conf = os.path.join(layerdir, 'conf', 'layer.conf')
+        if not os.path.exists(layer_conf):
+            sys.stderr.write("Specified layer directory doesn't contain a conf/layer.conf file\n")
+            return
+
+        bblayers_conf = os.path.join('conf', 'bblayers.conf')
+        if not os.path.exists(bblayers_conf):
+            sys.stderr.write("Unable to find bblayers.conf\n")
+            return
+
+        (notadded, _) = bb.utils.edit_bblayers_conf(bblayers_conf, layerdir, None)
+        if notadded:
+            for item in notadded:
+                sys.stderr.write("Specified layer %s not in BBLAYERS\n" % item)
+
+
+    def do_remove_layer(self, dirname):
+        """Remove a layer from bblayers.conf
+
+usage: remove-layer <layerdir>
+"""
+        if not dirname:
+            sys.stderr.write("Please specify the layer directory to remove\n")
+            return
+
+        bblayers_conf = os.path.join('conf', 'bblayers.conf')
+        if not os.path.exists(bblayers_conf):
+            sys.stderr.write("Unable to find bblayers.conf\n")
+            return
+
+        if dirname.startswith('*'):
+            layerdir = dirname
+        else:
+            layerdir = os.path.abspath(dirname)
+        (_, notremoved) = bb.utils.edit_bblayers_conf(bblayers_conf, None, layerdir)
+        if notremoved:
+            for item in notremoved:
+                sys.stderr.write("No layers matching %s found in BBLAYERS\n" % item)
+
+
     def version_str(self, pe, pv, pr = None):
         verstr = "%s" % pv
         if pr:
