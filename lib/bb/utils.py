@@ -915,3 +915,130 @@ def exec_flat_python_func(func, *args, **kwargs):
     comp = bb.utils.better_compile(code, '<string>', '<string>')
     bb.utils.better_exec(comp, context, code, '<string>')
     return context['retval']
+
+def edit_metadata_file(meta_file, variables, func):
+    """Edit a recipe or config file and modify one or more specified
+    variable values set in the file using a specified callback function.
+    The file is only written to if the value(s) actually change.
+    """
+    var_res = {}
+    for var in variables:
+        var_res[var] = re.compile(r'^%s[ \t]*[?=]+' % var)
+
+    updated = False
+    varset_start = ''
+    newlines = []
+    in_var = None
+    full_value = ''
+
+    def handle_var_end():
+        (newvalue, indent, minbreak) = func(in_var, full_value)
+        if newvalue != full_value:
+            if isinstance(newvalue, list):
+                intentspc = ' ' * indent
+                if minbreak:
+                    # First item on first line
+                    if len(newvalue) == 1:
+                        newlines.append('%s "%s"\n' % (varset_start, newvalue[0]))
+                    else:
+                        newlines.append('%s "%s\\\n' % (varset_start, newvalue[0]))
+                        for item in newvalue[1:]:
+                            newlines.append('%s%s \\\n' % (intentspc, item))
+                        newlines.append('%s"\n' % indentspc)
+                else:
+                    # No item on first line
+                    newlines.append('%s " \\\n' % varset_start)
+                    for item in newvalue:
+                        newlines.append('%s%s \\\n' % (intentspc, item))
+                    newlines.append('%s"\n' % intentspc)
+            else:
+                newlines.append('%s "%s"\n' % (varset_start, newvalue))
+            return True
+        return False
+
+    with open(meta_file, 'r') as f:
+        for line in f:
+            if in_var:
+                value = line.rstrip()
+                full_value += value[:-1]
+                if value.endswith('"') or value.endswith("'"):
+                    if handle_var_end():
+                        updated = True
+                    in_var = None
+            else:
+                matched = False
+                for (varname, var_re) in var_res.iteritems():
+                    if var_re.match(line):
+                        splitvalue = line.split('"', 1)
+                        varset_start = splitvalue[0].rstrip()
+                        value = splitvalue[1].rstrip()
+                        if value.endswith('\\'):
+                            value = value[:-1]
+                        full_value = value
+                        if value.endswith('"') or value.endswith("'"):
+                            if handle_var_end():
+                                updated = True
+                        else:
+                            in_var = varname
+                        matched = True
+                        break
+                if not matched:
+                    newlines.append(line)
+    if updated:
+        with open(meta_file, 'w') as f:
+            f.writelines(newlines)
+
+def edit_bblayers_conf(bblayers_conf, add, remove):
+    """Edit bblayers.conf, adding and/or removing layers"""
+
+    import fnmatch
+
+    def remove_trailing_sep(pth):
+        if pth and pth[-1] == os.sep:
+            pth = pth[:-1]
+        return pth
+
+    def layerlist_param(value):
+        if not value:
+            return []
+        elif isinstance(value, list):
+            return [remove_trailing_sep(x) for x in value]
+        else:
+            return [remove_trailing_sep(value)]
+
+    notadded = []
+    notremoved = []
+
+    addlayers = layerlist_param(add)
+    removelayers = layerlist_param(remove)
+
+    def handle_bblayers(varname, origvalue):
+        updated = False
+        bblayers = [remove_trailing_sep(x) for x in origvalue.split()]
+        if removelayers:
+            for removelayer in removelayers:
+                matched = False
+                for layer in bblayers:
+                    if fnmatch.fnmatch(layer, removelayer):
+                        updated = True
+                        matched = True
+                        bblayers.remove(layer)
+                        break
+                if not matched:
+                    notremoved.append(removelayer)
+        if addlayers:
+            for addlayer in addlayers:
+                if addlayer not in bblayers:
+                    updated = True
+                    bblayers.append(addlayer)
+                else:
+                    notadded.append(addlayer)
+
+        if updated:
+            return (bblayers, 2, False)
+        else:
+            return (origvalue, 2, False)
+
+    edit_metadata_file(bblayers_conf, ['BBLAYERS'], handle_bblayers)
+    return (notadded, notremoved)
+
