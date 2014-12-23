@@ -740,12 +740,16 @@ class DataSmart(MutableMapping):
                 yield key
 
     def __iter__(self):
+        deleted = set()
         def keylist(d):        
             klist = set()
             for key in d:
                 if key == "_data":
                     continue
+                if key in deleted:
+                    continue
                 if not d[key]:
+                    deleted.add(key)
                     continue
                 klist.add(key)
 
