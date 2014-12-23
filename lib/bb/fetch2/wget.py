@@ -174,7 +174,7 @@ class Wget(FetchMethod):
         """
         Run fetch checkstatus to get directory information
         """
-        f = tempfile.NamedTemporaryFile(dir="/tmp/s/", delete=False)
+        f = tempfile.NamedTemporaryFile()
 
         agent = "Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9.2.12) Gecko/20101027 Ubuntu/9.10 (karmic) Firefox/3.6.12"
         fetchcmd = self.basecmd
@@ -186,7 +186,6 @@ class Wget(FetchMethod):
             fetchresult = ""
 
         f.close()
-        # os.unlink(f.name)
         return fetchresult
 
     def _check_latest_dir(self, url, versionstring, ud, d):
