@@ -121,6 +121,12 @@ class DataExpansions(unittest.TestCase):
         keys = self.d.keys()
         self.assertEqual(keys, ['value_of_foo', 'foo', 'bar'])
 
+    def test_keys_deletion(self):
+        newd = bb.data.createCopy(self.d)
+        newd.delVar("bar")
+        keys = newd.keys()
+        self.assertEqual(keys, ['value_of_foo', 'foo'])
+
 class TestNestedExpansions(unittest.TestCase):
     def setUp(self):
         self.d = bb.data.init()
