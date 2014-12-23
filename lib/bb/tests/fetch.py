@@ -624,23 +624,23 @@ class FetchMethodTest(FetcherTest):
         ("db", "http://download.oracle.com/berkeley-db/db-5.3.21.tar.gz", "http://www.oracle.com/technetwork/products/berkeleydb/downloads/index-082944.html", "http://download.oracle.com/otn/berkeley-db/(?P<name>db-)(?P<pver>((\d+[\.\-_]*)+))\.tar\.gz")
             : "6.1.19",
     }
+    if os.environ.get("BB_SKIP_NETTESTS") == "yes":
+        print("Unset BB_SKIP_NETTESTS to run network tests")
+    else:
+        def test_git_latest_versionstring(self):
+            for k, v in self.test_git_uris.items():
+                self.d.setVar("SRCREV", k[2])
+                self.d.setVar("GITTAGREGEX", k[3])
+                ud = bb.fetch2.FetchData(k[1], self.d)
+                verstring = ud.method.latest_versionstring(ud, self.d)
+                r = bb.utils.vercmp_string(v, verstring)
+                self.assertTrue(r == -1 or r == 0, msg="Package %s, version: %s <= %s" % (k[0], v, verstring))
 
-    def test_git_latest_versionstring(self):
-        for k, v in self.test_git_uris.items():
-            self.d.setVar("SRCREV", k[2])
-            self.d.setVar("GITTAGREGEX", k[3])
-            ud = bb.fetch2.FetchData(k[1], self.d)
-            verstring = ud.method.latest_versionstring(ud, self.d)
-            print("Package %s, version: %s <= %s" % (k[0], v, verstring))
-            r = bb.utils.vercmp_string(v, verstring)
-            self.assertTrue(r == -1 or r == 0)
-
-    def test_wget_latest_versionstring(self):
-        for k, v in self.test_wget_uris.items():
-            self.d.setVar("REGEX_URI", k[2])
-            self.d.setVar("REGEX", k[3])
-            ud = bb.fetch2.FetchData(k[1], self.d)
-            verstring = ud.method.latest_versionstring(ud, self.d)
-            print("Package %s, version: %s <= %s" % (k[0], v, verstring))
-            r = bb.utils.vercmp_string(v, verstring)
-            self.assertTrue(r == -1 or r == 0)
+        def test_wget_latest_versionstring(self):
+            for k, v in self.test_wget_uris.items():
+                self.d.setVar("REGEX_URI", k[2])
+                self.d.setVar("REGEX", k[3])
+                ud = bb.fetch2.FetchData(k[1], self.d)
+                verstring = ud.method.latest_versionstring(ud, self.d)
+                r = bb.utils.vercmp_string(v, verstring)
+                self.assertTrue(r == -1 or r == 0, msg="Package %s, version: %s <= %s" % (k[0], v, verstring))
