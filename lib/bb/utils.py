@@ -923,7 +923,7 @@ def edit_metadata_file(meta_file, variables, func):
     """
     var_res = {}
     for var in variables:
-        var_res[var] = re.compile(r'^%s[ \t]*[?=]+' % var)
+        var_res[var] = re.compile(r'^%s[ \t]*[?+]*=' % var)
 
     updated = False
     varset_start = ''
