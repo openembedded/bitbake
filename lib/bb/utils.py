@@ -1012,7 +1012,11 @@ def edit_bblayers_conf(bblayers_conf, add, remove):
     addlayers = layerlist_param(add)
     removelayers = layerlist_param(remove)
 
+    # Need to use a list here because we can't set non-local variables from a callback in python 2.x
+    bblayercalls = []
+
     def handle_bblayers(varname, origvalue):
+        bblayercalls.append(varname)
         updated = False
         bblayers = [remove_trailing_sep(x) for x in origvalue.split()]
         if removelayers:
@@ -1040,5 +1044,9 @@ def edit_bblayers_conf(bblayers_conf, add, remove):
             return (origvalue, 2, False)
 
     edit_metadata_file(bblayers_conf, ['BBLAYERS'], handle_bblayers)
+
+    if not bblayercalls:
+        raise Exception('Unable to find BBLAYERS in %s' % bblayers_conf)
+
     return (notadded, notremoved)
 

@@ -130,7 +130,7 @@ usage: add-layer <layerdir>
         (notadded, _) = bb.utils.edit_bblayers_conf(bblayers_conf, layerdir, None)
         if notadded:
             for item in notadded:
-                sys.stderr.write("Specified layer %s not in BBLAYERS\n" % item)
+                sys.stderr.write("Specified layer %s is already in BBLAYERS\n" % item)
 
 
     def do_remove_layer(self, dirname):
