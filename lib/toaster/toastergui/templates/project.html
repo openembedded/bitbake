@@ -89,9 +89,9 @@ vim: expandtab tabstop=2
 
   <!-- build form -->
   <div class="well">
-    <form class="build-form" ng-submit="targetNamedBuild()">
+    <form class="build-form" ng-submit="buildNamedTarget()">
       <div class="input-append controls">
-        <input type="text" class="huge span7" placeholder="Type the target(s) you want to build" autocomplete="off" ng-model="targetName" typeahead="e.name for e in getSuggestions('targets', $viewValue)|filter:$viewValue" typeahead-template-url="suggestion_details" ng-disabled="!layers.length"/>
+        <input type="text" class="huge span7" placeholder="Type the target(s) you want to build" autocomplete="off" ng-model="targetName" typeahead="e.name for e in getAutocompleteSuggestions('targets', $viewValue)|filter:$viewValue" typeahead-template-url="suggestion_details" ng-disabled="!layers.length"/>
         <button type="submit" id="build-button" class="btn btn-large btn-primary" ng-disabled="!targetName.length">
         Build
         </button>
@@ -108,6 +108,9 @@ vim: expandtab tabstop=2
     </form>
   </div>
 
+
+  <!-- latest builds list -->
+
   <a id="buildslist"></a>
   <h2 class="air" ng-if="builds.length">Latest builds</h2>
   <div class="animate-repeat alert"  ng-repeat="b in builds track by b.id" ng-class="{'queued':'alert-info', 'deleted':'alert-info', 'in progress': 'alert-info', 'failed':'alert-error', 'completed':{'In Progress':'alert-info', 'Succeeded':'alert-success', 'Failed':'alert-error'}[b.build[0].status]}[b.status]">
@@ -116,9 +119,27 @@ vim: expandtab tabstop=2
 
           <case ng-switch-when="failed">
             <div class="lead span3"> <span ng-repeat="t in b.targets" ng-include src="'target_display'"></span></div>
+            <div >
+                <button class="btn pull-right btn-danger" ng-click="buildExistingTarget(b.targets)">Run again</button>
+            </div>
             <div class="row-fluid">
               <div class="air well" ng-repeat="e in b.errors">
-                Error type {[e.type]}: <pre>{[e.msg]}</pre>
+                    <pre>{[e.msg]}</pre>
+                  <ngif ng-if="e.msg.indexOf('Nothin') == 0">
+                    <div ng-repeat="t in getTargetNameFromErrorMsg(e.msg)">
+                     <p class="lead">The target <strong>{[t]}</strong> is not provided by any of your project layers.</p>
+                     <p> Your build has failed because the target <strong>{[t]}</strong> is not provided by any of your project layers.</p>
+                     <ngif ng-if="layersForTargets[t].length > 0">
+                       <p>The following layers provide this target. You could add one of them to your project.</p>
+                       <button class="btn btn-danger add-layer-with-dependencies" ng-repeat="l in layersForTargets[t]" ng-click="layerAddById(l.id)">Add {[l.name]}</button>
+                     </ngif>
+                    </div>
+                  </ngif>
+                  <ngif ng-if="e.msg.indexOf('Nothin') != 0">
+                    <p>
+                    Please contact your system administrator to help troubleshoot this error.
+                    </p>
+                  </ngif>
               </div>
             </div>
           </case>
@@ -128,7 +149,7 @@ vim: expandtab tabstop=2
             <div class="span4 lead" >Build queued
               <i title="This build will start as soon as a build server is available" class="icon-question-sign get-help get-help-blue heading-help" data-toggle="tooltip"></i>
             </div>
-            <button class="btn pull-right btn-info" ng-click="buildCancel(b.id)">Cancel</button>
+            <button class="btn pull-right btn-info" ng-click="buildCancel(b)">Cancel</button>
           </case>
 
           <case ng-switch-when="created">
@@ -136,7 +157,7 @@ vim: expandtab tabstop=2
             <div class="span6" >
               <span class="lead">Creating build</span>
             </div>
-            <button class="btn pull-right btn-info" ng-click="buildCancel(b.id)">Cancel</button>
+            <button class="btn pull-right btn-info" ng-click="buildCancel(b)">Cancel</button>
           </case>
 
           <case ng-switch-when="deleted">
@@ -144,7 +165,7 @@ vim: expandtab tabstop=2
             <div class="span6" id="{[b.id]}-deleted" >
               <span class="lead">Build deleted</span>
             </div>
-            <button class="btn pull-right btn-info" ng-click="buildDelete(b.id)">Close</button>
+            <button class="btn pull-right btn-info" ng-click="buildDelete(b)">Close</button>
           </case>
 
 
@@ -198,7 +219,7 @@ vim: expandtab tabstop=2
             </div>
             <div> <span class="lead">Build time: <a href="{[b.build[0].build_time_page_url]}">{[b.build[0].build_time|timediff]}</a></span>
                 <button class="btn pull-right" ng-class="{'Succeeded':  'btn-success', 'Failed': 'btn-danger'}[b.build[0].status]"
-                    ng-click="targetExistingBuild(b.targets)">Run again</button>
+                    ng-click="buildExistingTarget(b.targets)">Run again</button>
 
             </div>
           </case>
@@ -244,7 +265,7 @@ vim: expandtab tabstop=2
       </div>
       <form ng-submit="layerAdd()">
         <div class="input-append">
-          <input type="text" class="input-xlarge" id="layer" autocomplete="off" placeholder="Type a layer name" data-minLength="1" ng-model="layerAddName" typeahead="e.name for e in getSuggestions('layers', $viewValue)|filter:$viewValue" typeahead-template-url="suggestion_details" typeahead-on-select="onLayerSelect($item, $model, $label)" typeahead-editable="false" ng-class="{ 'has-error': layerAddName.$invalid }" />
+          <input type="text" class="input-xlarge" id="layer" autocomplete="off" placeholder="Type a layer name" data-minLength="1" ng-model="layerAddName" typeahead="e.name for e in getAutocompleteSuggestions('layers', $viewValue)|filter:$viewValue" typeahead-template-url="suggestion_details" typeahead-on-select="onLayerSelect($item, $model, $label)" typeahead-editable="false" ng-class="{ 'has-error': layerAddName.$invalid }" />
           <input type="submit" id="add-layer" class="btn" value="Add" ng-disabled="!layerAddName.length"/>
         </div>
         {% csrf_token %}
@@ -265,9 +286,9 @@ vim: expandtab tabstop=2
         Targets
         <i class="icon-question-sign get-help heading-help" title="What you build, often a recipe producing a root file system file (an image). Something like <code>core-image-minimal</code> or <code>core-image-sato</code>"></i>
       </h3>
-        <form ng-submit="targetNamedBuild()">
+        <form ng-submit="buildNamedTarget()">
           <div class="input-append">
-            <input type="text" class="input-xlarge" placeholder="Type the target(s) you want to build" autocomplete="off" data-minLength="1"  ng-model="targetName1" typeahead="e.name for e in getSuggestions('targets', $viewValue)|filter:$viewValue" typeahead-template-url="suggestion_details" ng-disabled="!layers.length">
+            <input type="text" class="input-xlarge" placeholder="Type the target(s) you want to build" autocomplete="off" data-minLength="1"  ng-model="targetName1" typeahead="e.name for e in getAutocompleteSuggestions('targets', $viewValue)|filter:$viewValue" typeahead-template-url="suggestion_details" ng-disabled="!layers.length">
             <button type="submit" id="build-button" class="btn btn-primary" ng-disabled="!targetName1.length">
               Build </button>
           </div>
@@ -304,8 +325,8 @@ vim: expandtab tabstop=2
           <strong>Machine changes have a big impact on build outcome.</strong>
               You cannot really compare the builds for the new machine with the previous ones.
         </div>
-        <form ng-submit="edit('#select-machine')" class="input-append">
-              <input type="text" id="machine" autocomplete="off" ng-model="machineName" typeahead="m.name for m in getSuggestions('machines', $viewValue)"/>
+        <form ng-submit="editProjectSettings('#select-machine')" class="input-append">
+              <input type="text" id="machine" autocomplete="off" ng-model="machineName" typeahead="m.name for m in getAutocompleteSuggestions('machines', $viewValue)"/>
               <input type="submit" id="apply-change-machine" class="btn" type="button" ng-disabled="machineName == machine.name || machineName.length == 0" value="Save"></input>
               <input type="reset" id="cancel-machine" class="btn btn-link" ng-click="toggle('#select-machine')" value="Cancel"></input>
               {% csrf_token %}
@@ -337,7 +358,7 @@ vim: expandtab tabstop=2
       <i class="icon-pencil" ng-click="toggle('#change-project-name')" ></i>
     </p>
     <div id="change-project-name" style="display:none;">
-      <form ng-submit="edit('#change-project-name')" class="input-append">
+      <form ng-submit="editProjectSettings('#change-project-name')" class="input-append">
         <input type="text" class="input-xlarge" id="type-project-name" ng-model="projectName">
         <input type="submit" class="btn" value="Save" ng-disabled="project.name == projectName"/>
         <input type="reset" class="btn btn-link" value="Cancel" ng-click="toggle('#change-project-name')">
@@ -354,7 +375,7 @@ vim: expandtab tabstop=2
       <i id="change-version" class="icon-pencil" ng-click="toggle('#change-project-version')" ></i>
     </p>
     <div class="div-inline" id="change-project-version" style="display:none;">
-      <form ng-submit="test('#change-project-version')" class="input-append">
+      <form ng-submit="testProjectSettingsChange('#change-project-version')" class="input-append">
         <select id="select-version" ng-model="projectVersion">
           <option ng-repeat="r in releases" value="{[r.id]}" ng-selected="r.id == project.release.id">{[r.description]}</option>
         </select>
@@ -404,6 +425,7 @@ angular.element(document).ready(function() {
   scope.updateDisplayWithCommands();
   scope.validateData();
 
+  scope.init();
   scope.$digest();
 
   });

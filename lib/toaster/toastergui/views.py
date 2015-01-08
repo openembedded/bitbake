@@ -40,7 +40,6 @@ from django.utils import formats
 from toastergui.templatetags.projecttags import json as jsonfilter
 import json
 
-
 # all new sessions should come through the landing page;
 # determine in which mode we are running in, and redirect appropriately
 def landing(request):
@@ -52,37 +51,25 @@ def landing(request):
 
     return render(request, 'landing.html')
 
+# returns a list for most recent builds; for use in the Project page, xhr_ updates,  and other places, as needed
 def _project_recent_build_list(prj):
-        # build requests not yet started
-        return (map(lambda x: {
-                "id":  x.pk,
-                "targets" : map(lambda y: {"target": y.target }, x.brtarget_set.all()),
-                "status": x.get_state_display(),
-            }, prj.buildrequest_set.filter(state__lt = BuildRequest.REQ_INPROGRESS).order_by("-pk")) +
-        # build requests started, but with no build yet
-            map(lambda x: {
-                "id":  x.pk,
-                "targets" : map(lambda y: {"target": y.target }, x.brtarget_set.all()),
-                "status": x.get_state_display(),
-            }, prj.buildrequest_set.filter(state = BuildRequest.REQ_INPROGRESS, build = None).order_by("-pk")) +
-        # build requests that failed
-            map(lambda x: {
-                "id":  x.pk,
-                "targets" : map(lambda y: {"target": y.target }, x.brtarget_set.all()),
-                "status": x.get_state_display(),
-                "errors": map(lambda y: {"type": y.errtype, "msg": y.errmsg, "tb": y.traceback}, x.brerror_set.all()),
-            }, prj.buildrequest_set.filter(state = BuildRequest.REQ_FAILED).order_by("-pk")) +
-        # and already made builds
-            map(lambda x: {
-                "id": x.pk,
-                "targets": map(lambda y: {"target": y.target }, x.target_set.all()),
-                "status": x.get_outcome_display(),
-                "completed_on" : x.completed_on.strftime('%s')+"000",
-                "build_time" : (x.completed_on - x.started_on).total_seconds(),
-                "build_page_url" : reverse('builddashboard', args=(x.pk,)),
-                "completeper": x.completeper(),
-                "eta": x.eta().ctime(),
-            }, prj.build_set.all()))
+    return map(lambda x: {
+            "id":  x.pk,
+            "targets" : map(lambda y: {"target": y.target, "task": y.task }, x.brtarget_set.all()),
+            "status": x.get_state_display(),
+            "errors": map(lambda y: {"type": y.errtype, "msg": y.errmsg, "tb": y.traceback}, x.brerror_set.exclude(errmsg__contains="Command Failed")),
+            "build" : map( lambda y: {"id": y.pk,
+                        "status": y.get_outcome_display(),
+                        "completed_on" : y.completed_on.strftime('%s')+"000",
+                        "build_time" : (y.completed_on - y.started_on).total_seconds(),
+                        "build_page_url" : reverse('builddashboard', args=(y.pk,)),
+                        'build_time_page_url': reverse('buildtime', args=(y.pk,)),
+                        "errors": y.errors_no,
+                        "warnings": y.warnings_no,
+                        "completeper": y.completeper(),
+                        "eta": y.eta().strftime('%s')+"000"}, Build.objects.filter(buildrequest = x)),
+        }, list(prj.buildrequest_set.filter(Q(state__lt=BuildRequest.REQ_COMPLETED) or Q(state=BuildRequest.REQ_DELETED)).order_by("-pk")) +
+            list(prj.buildrequest_set.filter(state__in=[BuildRequest.REQ_COMPLETED, BuildRequest.REQ_FAILED]).order_by("-pk")[:3]))
 
 
 def _build_page_range(paginator, index = 1):
@@ -1959,25 +1946,6 @@ if toastermain.settings.MANAGED:
 
         raise Exception("Invalid HTTP method for this page")
 
-    # returns a list for most recent builds; for use in the Project page, xhr_ updates,  and other places, as needed
-    def _project_recent_build_list(prj):
-        return map(lambda x: {
-                "id":  x.pk,
-                "targets" : map(lambda y: {"target": y.target, "task": y.task }, x.brtarget_set.all()),
-                "status": x.get_state_display(),
-                "errors": map(lambda y: {"type": y.errtype, "msg": y.errmsg, "tb": y.traceback}, x.brerror_set.all()),
-                "build" : map( lambda y: {"id": y.pk,
-                            "status": y.get_outcome_display(),
-                            "completed_on" : y.completed_on.strftime('%s')+"000",
-                            "build_time" : (y.completed_on - y.started_on).total_seconds(),
-                            "build_page_url" : reverse('builddashboard', args=(y.pk,)),
-                            'build_time_page_url': reverse('buildtime', args=(y.pk,)),
-                            "errors": y.errors_no,
-                            "warnings": y.warnings_no,
-                            "completeper": y.completeper(),
-                            "eta": y.eta().strftime('%s')+"000"}, Build.objects.filter(buildrequest = x)),
-            }, list(prj.buildrequest_set.filter(Q(state__lt=BuildRequest.REQ_COMPLETED) or Q(state=BuildRequest.REQ_DELETED)).order_by("-pk")) +
-                list(prj.buildrequest_set.filter(state__in=[BuildRequest.REQ_COMPLETED, BuildRequest.REQ_FAILED]).order_by("-pk")[:3]))
 
 
     # Shows the edit project page
@@ -2177,7 +2145,7 @@ if toastermain.settings.MANAGED:
                 # all layers for the current project
                 queryset_all = prj.compatible_layerversions().filter(layer__name__icontains=request.GET.get('value',''))
 
-                # but not layers with equivalent layers already in project               
+                # but not layers with equivalent layers already in project
                 if not request.GET.has_key('include_added'):
                     queryset_all = queryset_all.exclude(pk__in = [x.id for x in prj.projectlayer_equivalent_set()])[:8]
 
@@ -2192,7 +2160,9 @@ if toastermain.settings.MANAGED:
                 queryset = prj.compatible_layerversions().exclude(pk__in = [x.id for x in prj.projectlayer_equivalent_set()]).filter(
                     layer__name__in = [ x.depends_on.layer.name for x in LayerVersionDependency.objects.filter(layer_version_id = request.GET['value'])])
 
-                return HttpResponse(jsonfilter( { "error":"ok", "list" : map( _lv_to_dict, queryset) }), content_type = "application/json")
+                final_list = set([x.get_equivalents_wpriority(prj)[0] for x in queryset])
+
+                return HttpResponse(jsonfilter( { "error":"ok", "list" : map( _lv_to_dict, final_list) }), content_type = "application/json")
 
 
 
@@ -2213,16 +2183,36 @@ if toastermain.settings.MANAGED:
                     }), content_type = "application/json")
 
 
+            # returns layer versions that provide the named targets
+            if request.GET['type'] == "layers4target":
+                # we returnd ata only if the recipe can't be provided by the current project layer set
+                if reduce(lambda x, y: x + y, [x.recipe_layer_version.filter(name="anki").count() for x in prj.projectlayer_equivalent_set()], 0):
+                    final_list = []
+                else:
+                    queryset_all = prj.compatible_layerversions().filter(recipe_layer_version__name = request.GET.get('value', '__none__'))
+
+                    # exclude layers in the project
+                    queryset_all = queryset_all.exclude(pk__in = [x.id for x in prj.projectlayer_equivalent_set()])
+
+                    # and show only the selected layers for this project
+                    final_list = set([x.get_equivalents_wpriority(prj)[0] for x in queryset_all])
+
+                return HttpResponse(jsonfilter( { "error":"ok",  "list" : map( _lv_to_dict, final_list) }), content_type = "application/json")
+
             # returns targets provided by current project layers
             if request.GET['type'] == "targets":
                 queryset_all = Recipe.objects.all()
-                queryset_all = queryset_all.filter(layer_version__in =  prj.projectlayer_equivalent_set())
+                layer_equivalent_set = []
+                for i in prj.projectlayer_set.all():
+                    layer_equivalent_set += i.layercommit.get_equivalents_wpriority(prj)
+                queryset_all = queryset_all.filter(layer_version__in =  layer_equivalent_set)
                 return HttpResponse(jsonfilter({ "error":"ok",
                     "list" : map ( lambda x: {"id": x.pk, "name": x.name, "detail":"[" + x.layer_version.layer.name+ (" | " + x.layer_version.up_branch.name + "]" if x.layer_version.up_branch is not None else "]")},
                         queryset_all.filter(name__icontains=request.GET.get('value',''))[:8]),
 
                     }), content_type = "application/json")
 
+            # returns machines provided by the current project layers
             if request.GET['type'] == "machines":
                 queryset_all = Machine.objects.all()
                 if 'project_id' in request.session:
@@ -2234,6 +2224,7 @@ if toastermain.settings.MANAGED:
 
                     }), content_type = "application/json")
 
+            # returns all projects
             if request.GET['type'] == "projects":
                 queryset_all = Project.objects.all()
                 ret = { "error": "ok",
