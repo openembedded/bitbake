@@ -740,7 +740,7 @@ class LayerIndexLayerSource(LayerSource):
             lv.up_date = lbi['updated']
             lv.up_branch = Branch.objects.get(layer_source = self, up_id = lbi['branch'])
             lv.branch = lbi['actual_branch']
-            lv.commit = lbi['vcs_last_rev']
+            lv.commit = lbi['actual_branch']
             lv.dirpath = lbi['vcs_subdir']
             lv.save()
 
@@ -960,6 +960,12 @@ class Layer_Version(models.Model):
                 key = lambda x: _get_ls_priority(x.layer_source),
                 reverse = True)
 
+    def get_vcs_reference(self):
+        if self.commit is not None and len(self.commit) > 0:
+            return self.commit
+        if self.branch is not None and len(self.branch) > 0:
+            return self.branch
+        return self.up_branch.name
 
     def __unicode__(self):
         return  str(self.layer) + " (" + self.commit +")"
