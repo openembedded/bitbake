@@ -126,15 +126,15 @@ function _makeXHREditCall(data, onsuccess, onfail) {
         headers: { 'X-CSRFToken' : $.cookie('csrftoken')},
         success: function (_data) {
             if (_data.error != "ok") {
-                alert(_data.error);
+                console.warn(_data.error);
             } else {
                 updateButtons(_data.layers.map(function (e) {return e.id}));
                 if (onsuccess != undefined) onsuccess(_data);
             }
         },
         error: function (_data) {
-            alert("Call failed");
-            console.log(_data);
+            console.warn("Call failed");
+            console.warn(_data);
         }
     });
 }
@@ -215,7 +215,7 @@ function layerAdd(layerId, layerName, layerURL) {
         data: {'type': 'layerdeps','value':layerId},
         success: function(_data) {
                 if (_data.error != "ok") {
-                    alert(_data.error);
+                    console.warn(_data.error);
                 } else {
                     updateLayerCountLabels(_data.list.length+1);
 

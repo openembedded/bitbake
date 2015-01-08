@@ -79,21 +79,21 @@ function _makeXHRBuildCall(url, data, onsuccess, onfail) {
         headers: { 'X-CSRFToken' : $.cookie('csrftoken')},
         success: function (_data) {
             if (_data.error != "ok") {
-                alert(_data.error);
+                console.warn(_data.error);
             } else {
                 if (onsuccess != undefined) onsuccess(_data);
             }
         },
         error: function (_data) {
-            alert("Call failed");
-            console.log(_data);
+            console.warn("Call failed");
+            console.warn(_data);
             if (onfail) onfail(data);
         } });
 }
 
 
 function scheduleBuild(url, projectName, buildlist) {
-  console.log("scheduleBuild");
+  console.warn("scheduleBuild");
   _makeXHRBuildCall(url, {targets: buildlist.join(" ")}, function (_data) {
 
       $('#latest-builds').prepend('<div class="alert alert-info" style="padding-top:0px">' + '<span class="label label-info" style="font-weight: normal; margin-bottom: 5px; margin-left:-15px; padding-top:5px;">'+projectName+'</span><div class="row-fluid">' +

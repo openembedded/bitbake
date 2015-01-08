@@ -1898,7 +1898,8 @@ if toastermain.settings.MANAGED:
     def managedcontextprocessor(request):
         ret = {
             "projects": Project.objects.all(),
-            "MANAGED" : toastermain.settings.MANAGED
+            "MANAGED" : toastermain.settings.MANAGED,
+            "DEBUG" : toastermain.settings.DEBUG
         }
         if 'project_id' in request.session:
             try:
@@ -2923,7 +2924,8 @@ else:
     def managedcontextprocessor(request):
         return {
             "projects": [],
-            "MANAGED" : toastermain.settings.MANAGED
+            "MANAGED" : toastermain.settings.MANAGED,
+            "DEBUG" : toastermain.settings.DEBUG
         }
 
     def newproject(request):

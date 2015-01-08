@@ -21,6 +21,11 @@
 </script>
 <script src="{% static 'js/libtoaster.js' %}">
 </script>
+{% if DEBUG %}
+<script>
+  libtoaster.debug = true;
+ </script>
+{% endif %}
 <script src="{% static 'js/base.js' %}"></script>
 {%if MANAGED %}
 <script>
