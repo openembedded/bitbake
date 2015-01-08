@@ -226,6 +226,8 @@ class ExportFuncsNode(AstNode):
             if data.getVarFlag(calledfunc, "python"):
                 data.setVar(func, "    bb.build.exec_func('" + calledfunc + "', d)\n")
             else:
+                if "-" in self.classname:
+                   bb.fatal("The classname %s contains a dash character and is calling an sh function %s using EXPORT_FUNCTIONS. Since a dash is illegal in sh function names, this cannot work, please rename the class or don't use EXPORT_FUNCTIONS." % (self.classname, calledfunc))
                 data.setVar(func, "    " + calledfunc + "\n")
             data.setVarFlag(func, 'export_func', '1')
 
