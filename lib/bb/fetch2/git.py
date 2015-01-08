@@ -340,12 +340,19 @@ class Git(FetchMethod):
         """
         Compute the HEAD revision for the url
         """
+        output = self._lsremote(ud, d, "")
+        # Tags of the form ^{} may not work, need to fallback to other form
         if ud.unresolvedrev[name][:5] == "refs/":
-            search = "%s %s^{}" % (ud.unresolvedrev[name], ud.unresolvedrev[name])
+            head = ud.unresolvedrev[name]
+            tag = ud.unresolvedrev[name]
         else:
-            search = "refs/heads/%s refs/tags/%s^{}" % (ud.unresolvedrev[name], ud.unresolvedrev[name])
-        output = self._lsremote(ud, d, search)
-        return output.split()[0]
+            head = "refs/heads/%s" % ud.unresolvedrev[name]
+            tag = "refs/tags/%s" % ud.unresolvedrev[name]
+        for s in [head, tag + "^{}", tag]:
+            for l in output.split('\n'):
+                if s in l:
+                    return l.split()[0]
+        raise bb.fetch2.FetchError("Unable to resolve '%s' in upstream git repository in git ls-remote output" % ud.unresolvedrev[name])
 
     def latest_versionstring(self, ud, d):
         """
