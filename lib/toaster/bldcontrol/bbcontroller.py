@@ -135,6 +135,11 @@ class BuildEnvironmentController(object):
         bblayerconffile.write("# line added by toaster build control\nBBLAYERS = \"" + " ".join(layerlist) + "\"")
         bblayerconffile.close()
 
+    def writePreConfFile(self, variable_list):
+        prefilepath = os.path.join(self.be.builddir, "conf/toaster-pre.conf")
+        with open(prefilepath, "w") as prefile:
+            for i in variable_list:
+                prefile.write("%s=\"%s\"\n" % (i.name, i.value))
 
 
     def startBBServer(self, brbe):

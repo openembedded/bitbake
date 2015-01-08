@@ -53,13 +53,10 @@ class Command(NoArgsCommand):
 
             # set up the buid environment with the needed layers
             bec.setLayers(br.brbitbake_set.all(), br.brlayer_set.all())
+            bec.writePreConfFile(br.brvariable_set.all())
 
             # get the bb server running with the build req id and build env id
             bbctrl = bec.getBBController("%d:%d" % (br.pk, bec.be.pk))
-
-            # set the build configuration
-            for variable in br.brvariable_set.all():
-                bbctrl.setVariable(variable.name, variable.value)
 
             # trigger the build command
             task = reduce(lambda x, y: x if len(y)== 0 else y, map(lambda y: y.task, br.brtarget_set.all()))

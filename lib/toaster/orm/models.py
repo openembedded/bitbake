@@ -529,6 +529,7 @@ class Recipe_Dependency(models.Model):
 
 
 class Machine(models.Model):
+    search_allowed_fields = ["name", "description"]
     layer_source = models.ForeignKey('LayerSource', default = None, null = True)  # from where did we get this machine
     up_id = models.IntegerField(null = True, default = None)                      # id of entry in the source
     up_date = models.DateTimeField(null = True, default = None)
