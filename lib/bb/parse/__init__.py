@@ -73,6 +73,11 @@ def update_mtime(f):
     __mtime_cache[f] = os.stat(f)[stat.ST_MTIME]
     return __mtime_cache[f]
 
+def update_cache(f):
+    if f in __mtime_cache:
+        logger.debug(1, "Updating mtime cache for %s" % f)
+        update_mtime(f)
+
 def mark_dependency(d, f):
     if f.startswith('./'):
         f = "%s/%s" % (os.getcwd(), f[2:])
