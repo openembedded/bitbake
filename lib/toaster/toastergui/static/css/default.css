@@ -38,7 +38,7 @@ dd code, .alert code { white-space: pre-wrap; word-break: break-all; word-wrap: 
 dd ul { list-style-type: none; margin: 0px; }
 dt, dd  {line-height: 25px; }
 dd li { line-height: 25px; }
-dd p { line-height: 20px; }
+.item-info dd { line-height: 20px; margin-bottom: 10px; }
 
 /* Style the filter modal dialogs */
 .modal { width: 800px; margin-left: -400px; }
@@ -200,7 +200,6 @@ dl textarea { resize: vertical; }
 .lead .help-block { font-size: 14px; line-height: 20px; font-weight: normal; }
 .button-place  .btn { margin: 0 0 20px 0; }
 .tooltip-inner { max-width: 250px; }
-dd > span { line-height: 20px; }
 .new-build { padding: 20px; }
 .new-build li { line-height: 30px; }
 .new-build h6 { margin: 10px 0 0 0; color: #5a5a5a; }

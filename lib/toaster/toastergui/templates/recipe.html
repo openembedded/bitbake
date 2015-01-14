@@ -250,14 +250,14 @@
 
 <div class="row span4 well">
     <h2>About {{object.name}}</h2>
-    <dl>
+    <dl class="item-info">
         {% if object.summary %}
             <dt>Summary</dt>
-            <dd><p>{{object.summary}}</p></dd>
+            <dd>{{object.summary}}</dd>
         {% endif %}
         {% if object.description %}
             <dt>Description</dt>
-            <dd><p>{{object.description}}</dd>
+            <dd>{{object.description}}</dd>
         {% endif %}
         {% if object.homepage %}
             <dt>Homepage</dt>
