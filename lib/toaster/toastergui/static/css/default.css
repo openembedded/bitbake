@@ -232,3 +232,4 @@ dd > span { line-height: 20px; }
 .animate-repeat.ng-enter.ng-enter-active {
   opacity:1;
 }
+.tab-pane table { margin-top: 10px; }

@@ -2336,6 +2336,50 @@ if toastermain.settings.MANAGED:
 
         return HttpResponse(jsonfilter({"error": "ok", "imported_layer" : { "name" : layer.name, "id": layer_version.id },  "deps_added": layers_added }), content_type = "application/json")
 
+    def xhr_updatelayer(request):
+
+        def error_response(error):
+            return HttpResponse(jsonfilter({"error": error}), content_type = "application/json")
+
+        if not request.POST.has_key("layer_version_id"):
+            return error_response("Please specify a layer version id")
+        try:
+            layer_version_id = request.POST["layer_version_id"]
+            layer_version = Layer_Version.objects.get(id=layer_version_id)
+        except:
+            return error_response("Cannot find layer to update")
+
+
+        if request.POST.has_key("vcs_url"):
+            layer_version.layer.vcs_url = request.POST["vcs_url"]
+        if request.POST.has_key("dirpath"):
+            layer_version.dirpath = request.POST["dirpath"]
+        if request.POST.has_key("commit"):
+            layer_version.commit = request.POST["commit"]
+        if request.POST.has_key("up_branch"):
+            layer_version.up_branch_id = int(request.POST["up_branch"])
+
+        if request.POST.has_key("add_dep"):
+            lvd = LayerVersionDependency(layer_version=layer_version, depends_on_id=request.POST["add_dep"])
+            lvd.save()
+
+        if request.POST.has_key("rm_dep"):
+            rm_dep = LayerVersionDependency.objects.get(layer_version=layer_version, depends_on_id=request.POST["rm_dep"])
+            rm_dep.delete()
+
+        if request.POST.has_key("summary"):
+            layer_version.layer.summary = request.POST["summary"]
+        if request.POST.has_key("description"):
+            layer_version.layer.description = request.POST["description"]
+
+        try:
+            layer_version.layer.save()
+            layer_version.save()
+        except:
+            return error_response("Could not update layer version entry")
+
+        return HttpResponse(jsonfilter({"error": "ok",}), content_type = "application/json")
+
 
 
     def importlayer(request):
@@ -2439,8 +2483,53 @@ if toastermain.settings.MANAGED:
 
     def layerdetails(request, layerid):
         template = "layerdetails.html"
+        limit = 10
+
+        if request.GET.has_key("limit"):
+            request.session['limit'] = request.GET['limit']
+
+        if request.session.has_key('limit'):
+            limit = request.session['limit']
+
+        layer_version = Layer_Version.objects.get(pk = layerid)
+
+        # Targets tab query functionality
+        if request.GET.has_key('targets_search'):
+            targets = Paginator(Recipe.objects.filter(layer_version=layer_version,name__icontains=request.GET['targets_search']).order_by("name"), limit)
+        else:
+            targets = Paginator(Recipe.objects.filter(layer_version=layer_version).order_by("name"), limit)
+
+        if request.GET.has_key("tpage"):
+          try:
+              targets = targets.page(request.GET['tpage'])
+          except EmptyPage:
+              targets = targets.page(targets.num_pages)
+        else:
+            targets = targets.page(1)
+
+        # Machines tab query functionality
+        if request.GET.has_key('machines_search'):
+          machines = Paginator(Machine.objects.filter(layer_version=layer_version,name__icontains=request.GET['machines_search']).order_by("name"), limit)
+        else:
+          machines = Paginator(Machine.objects.filter(layer_version=layer_version).order_by("name"), limit)
+
+        if request.GET.has_key("mpage"):
+          try:
+            machines = machines.page(request.GET['mpage'])
+          except EmptyPage:
+            machines = machines.page(machines.num_pages)
+        else:
+            machines = machines.page(1)
+
         context = {
-            'layerversion': Layer_Version.objects.get(pk = layerid),
+            'layerversion': layer_version,
+            'layer_in_project' : ProjectLayer.objects.filter(project_id=request.session['project_id'],layercommit=layerid).count(),
+            'yocto_compat': Branch.objects.filter(layer_source=layer_version.layer_source),
+            'machines': machines,
+            'targets': targets,
+            'total_targets': Recipe.objects.filter(layer_version=layer_version).count(),
+
+            'total_machines': Machine.objects.filter(layer_version=layer_version).count(),
         }
         return render(request, template, context)
 
@@ -2971,4 +3060,7 @@ else:
         raise Exception("page not available in interactive mode")
 
     def xhr_importlayer(request):
+        raise Exception("page not available in interactive mode")
+
+    def xhr_updatelayer(request):
         raise Exception("page not available in interactive mode")

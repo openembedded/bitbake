@@ -1,159 +1,505 @@
 {% extends "baseprojectpage.html" %}
 {% load projecttags %}
 {% load humanize %}
-
+{% load static %}
 {% block localbreadcrumb %}
-<li>Layer Details</li>
+<li><a href="{% url 'layers' %}">All Layers</a></li>
+<li>
+  {{layerversion.layer.name}} ({{layerversion.commit|truncatechars:13}})
+</li>
 {% endblock %}
-
 {% block projectinfomain %}
-<div class="page-header">
-    <h1>Layer Details</h1>
-</div>
 
- <div class="row-fluid span7 tabbable">
-       <ul class="nav nav-pills">
-       <li class="active">
-           <a data-toggle="tab" href="#information">Layer details</a>
-       </li>
-       <li>
-           <a data-toggle="tab" href="#targets">Targets (0)</a>
-       </li>
-       <li>
-           <a data-toggle="tab" href="#machines">Machines (0)</a>
-       </li>
-       <li>
-           <a data-toggle="tab" href="#classes">Classes (0)</a>
-       </li>
-       <li>
-           <a data-toggle="tab" href="#bbappends">bbappends (0)</a>
-       </li>
-       </ul>
-       <div class="tab-content">
-               <div name="information" id="information" class="tab-pane active">
-        <dl class="dl-horizontal">
-        <dt class="">
-            <i class="icon-question-sign get-help" title="Fetch/clone URL of the repository"></i>
-            Repository URL
-        </dt>
-        <dd>
-            <form id="change-repo-form" class="control-group">
-            <div class="input-append">
-            <input type="text" class="input-xlarge" id="type-repo" value="{{layerversion.layer.vcs_url}}">
-            <button id="apply-change-repo" class="btn" type="button">Change</button>
-            <!--a href="#" id="cancel-change-repo" class="btn btn-link">Cancel</a-->
-            </div>
-            <span class="help-block">Cloning this Git repository failed</span>
-            </form>
-        </dd>
-        <dt>
-            <i class="icon-question-sign get-help" title="Subdirectory within the repository where the layer is located, if not in the root (usually only used if the repository contains more than one layer)"></i>
-            Repository subdirectory
-        </dt>
-        <dd>
-            <span id="subdir">{{layerversion.dirpath}}</span>
-            <i id="change-subdir" class="icon-pencil"></i>
-            <i id="delete-subdir" class="icon-trash"></i>
-            <form id="change-subdir-form" style="display:none;">
-            <div class="input-append">
-            <input type="text" id="type-subdir" value="meta-acer">
-            <button id="apply-change-subdir" class="btn" type="button">Change</button>
-            <a href="#" id="cancel-change-subdir" class="btn btn-link">Cancel</a>
-            </div>
-            </form>
-        </dd>
-        <dt>Brach, tag or commit</dt>
-        <dd>
-            {{layerversion.up_branch.name}}
-            <i class="icon-pencil"></i>
-        </dd>
-        <dt>
-            <i class="icon-question-sign get-help" title="The Yocto Project versions with which this layer is compatible. Currently Toaster supports Yocto Project 1.6 and 1.7"></i>
-            Yocto Project compatibility
-        </dt>
-        <dd>
-            <i class="icon-pencil"></i>
-        </dd>
-        <dt>
-            <i class="icon-question-sign get-help" title="Other layers this layer depends upon"></i>
-            Layer dependencies
-        </dt>
-        <dd>
-            <ul class="unstyled">
-            {% for ld in layer.dependencies.all %}
-            <li>
-                <a href="#">openembedded core (meta)</a>
-                <i class="icon-trash"></i>
-            </li>
-            {% endfor %}
-            </ul>
-            <div class="input-append">
-            <input type="text" autocomplete="off" data-minLength="1" data-autocomplete="off"
-            data-provide="typeahead"  data-source='
-            '
-            placeholder="Type a layer name" id="layer-dependency">
-            <a class="btn" type="button" id="add-layer-dependency" disabled>
-            Add layer
-            </a>
-            </div>
-            <span class="help-block">You can only add layers Toaster knows about</span>
-        </dd>
-        </dl>
-        </div>
-        <div name="targets" id="targets" class="tab-pane">
-        <div class="alert alert-info">
-        <strong>There is no target data for {{layerversion.layer.name}} ... yet</strong> <br />
-        Toaster learns about layers as they are built. Once you have used {{layerversion.layer.name}} in a build, Toaster will show you
-        here the targets it provides.
-        </div>
-        </div>
-        <div name="machines" id="machines" class="tab-pane">
-        <div class="alert alert-info">
-        <strong>There is no machine data for {{layerversion.layer.name}} ... yet</strong> <br />
-        Toaster learns about layers as they are built. Once you have used {{layerversion.layer.name}} in a build, Toaster will show you
-        here the machines it provides.
-        </div>
-        </div>
+
+<script src="{% static 'js/layerdetails.js' %}"></script>
+<script>
+
+  $(document).ready(function (){
+    var ctx = {
+      projectBuildUrl : "{% url 'xhr_build' %}",
+      layerDetailsUrl : "{% url 'layerdetails' %}",
+      projectPageUrl : "{% url 'project' project.id %}",
+      xhrEditProjectUrl : "{% url 'xhr_projectedit' project.id %}",
+      xhrDataTypeaheadUrl : "{% url 'xhr_datatypeahead' %}",
+      xhrUpdateLayerUrl : "{% url 'xhr_updatelayer' %}",
+      projectId : {{project.id}},
+      numTargets : {{total_targets}},
+      numMachines: {{machines|length}},
+      layerVersion : {
+        name : "{{layerversion.layer.name}}",
+        id : {{layerversion.id}},
+        commit: "{{layerversion.commit}}",
+        inCurrentPrj : {{layer_in_project}},
+        url : "{% url 'layerdetails' layerversion.id  %}",
+        sourceId: {{layerversion.layer_source_id}},
+      }
+    };
+
+    try {
+      layerDetailsPageInit(ctx);
+    } catch (e) {
+      document.write("Sorry, An error has occurred loading this page");
+      console.warn(e);
+    }
+  });
+</script>
+
+{# If this is not an imported layer then hide the edit ui #}
+{% if layerversion.layer_source_id != 3 %}
+<style>
+ .icon-pencil {
+   display:none;
+ }
+.delete-current-value{
+  display: none;
+}
+ li .icon-trash {
+   display:none;
+ }
+ .add-deps {
+   display:none;
+ }
+</style>
+{% endif %}
+
+{% include "layers_dep_modal.html" %}
+ <div class="container-fluid top-padded">
+  <div class="row-fluid">
+    <div class="span11">
+      <div class="page-header">
+        <h1>{{layerversion.layer.name}} <small class="commit" data-toggle="tooltip" title="{{layerversion.commit}}">({{layerversion.commit|truncatechars:13}})</small></h1>
+      </div>
     </div>
-</div>
-<div class="row span4 well">
-<h2>About {{layerversion.layer.name}}</h2>
-<dl>
+  </div>
 
-    <dt>
-    Summary
-    <i class="icon-question-sign get-help" title="One-line description of the layer"></i>
-    </dt>
-    <dd>
-    <span >{{layerversion.layer.summary}}</span>
-    <i class="icon-pencil"></i>
-    </dd>
-    <!--form>
-    <textarea class="span12" rows="2"></textarea>
-    <button class="btn" type="button">Change</button>
-    <a href="#" class="btn btn-link">Cancel</a>
-    </form-->
-    <dt>
-    Description
-    </dt>
-    <dd>
-    <span >{{layerversion.layer.description}}</span>
-    <i class="icon-pencil"></i>
-    </dd>
-    <!--form>
-    <textarea class="span12" rows="6"></textarea>
-    <button class="btn" type="button">Change</button>
-    <a href="#" class="btn btn-link">Cancel</a>
-    </form-->
-    <dt>
-    Maintainer(s)
-    </dt>
-    <dd>
-    <span class="muted">Not set</span>
-    <i class="icon-pencil"></i>
-    </dd>
-</dl>
-</div>
+    <div class="row-fluid">
+    <div class="span7">
+      <div class="tabbable">
+        <div class="alert alert-info lead" id="alert-area" style="display:none">
+          <button type="button" class="close" id="dismiss-alert" data-dismiss="alert">&times;</button>
+          <span id="alert-msg"></span>
+          <p style="margin-top:10px;"><a href="{% url 'project' project.id %}">Go to project configuration</a></p>
+        </div>
+        <ul class="nav nav-pills">
+          <li class="active">
+            <a data-toggle="tab" href="#information" id="details-tab">Layer details</a>
+          </li>
+          <li>
+            <a data-toggle="tab" href="#targets" id="targets-tab">Targets ({{total_targets}})</a>
+          </li>
+          <li>
+            <a data-toggle="tab" href="#machines" id="machines-tab">Machines ({{total_machines}})</a>
+          </li>
+        </ul>
+      </div>
+      <div class="tab-content">
+        <span class="button-place">
+          {% if layer_in_project == 0 %}
+          <button id="add-remove-layer-btn" data-directive="add" class="btn btn-large btn-block">
+            <span class="icon-plus"></span>
+            Add the {{layerversion.layer.name}} layer to your project
+          </button>
+          {% else %}
+          <button id="add-remove-layer-btn" data-directive="remove" class="btn btn-block btn-large btn-danger">
+            <span class="icon-trash"></span>
+            Delete the {{layerversion.layer.name}} layer from your project
+          </button>
+          {% endif %}
+        </span>
+
+        <!-- layer details pane -->
+        <div name="information" id="information" class="tab-pane active">
+          <dl class="dl-horizontal">
+            <dt class="">
+              <i class="icon-question-sign get-help" title="Fetch/clone URL of the repository"></i>
+              Repository URL
+            </dt>
+            <dd>
+              <span class="current-value">{{layerversion.layer.vcs_url}}</span>
+              {% if layerversion.get_vcs_link_url %}
+                <a href="{{layerversion.get_vcs_link_url}}/" class="icon-share get-info"></a>
+              {% endif %}
+              <form id="change-repo-form" class="control-group" style="display:none">
+                <div class="input-append">
+                  <input type="text" class="input-xlarge" value="{{layerversion.layer.vcs_url}}">
+                    <button data-layer-prop="vcs_url" class="btn change-btn" type="button">Save</button>
+                    <a href="#" style="display:none" class="btn btn-link cancel">Cancel</a>
+                  </div>
+                </form>
+                <i class="icon-pencil" ></i>
+              </dd>
+              <dt>
+                <i class="icon-question-sign get-help" title="Subdirectory within the repository where the layer is located, if not in the root (usually only used if the repository contains more than one layer)"></i>
+                Repository subdirectory
+              </dt>
+              <dd>
+                <span class="muted" style="display:none">Not set</span>
+                <span class="current-value">{{layerversion.dirpath}}</span>
+                {% if layerversion.get_vcs_dirpath_link_url %}
+                  <a href="{{layerversion.get_vcs_dirpath_link_url}}" class="icon-share get-info"></a>
+                {% endif %}
+                <form id="change-subdir-form" style="display:none;">
+                  <div class="input-append">
+                    <input type="text" value="{{layerversion.dirpath}}">
+                      <button data-layer-prop="dirpath" class="btn change-btn" type="button">Save</button>
+                      <a href="#" style="display:none" class="btn btn-link cancel">Cancel</a>
+                    </div>
+                  </form>
+                  <i id="change-subdir" class="icon-pencil"></i>
+                  <span class="icon-trash delete-current-value" data-toggle="tooltip" title="Delete"></span>
+                </dd>
+                <dt>Brach, tag or commit</dt>
+                <dd>
+                  <span class="current-value">{{layerversion.commit}}</span>
+                  <form style="display:none;">
+                    <div class="input-append">
+                      <input type="text" value="{{layerversion.commit}}">
+                        <button  data-layer-prop="commit" class="btn change-btn" type="button">Save</button>
+                        <a href="#" style="display:none" class="btn btn-link cancel">Cancel</a>
+                      </div>
+                    </form>
+                    <i class="icon-pencil"></i>
+                  </dd>
+                  <dt>
+                    <i class="icon-question-sign get-help" title="The Yocto Project versions with which this layer is compatible. Currently Toaster supports Yocto Project 1.6 and 1.7"></i>
+                    Yocto Project compatibility
+                  </dt>
+                  <dd>
+                    <span class="current-value">{{layerversion.up_branch.name}}</span>
+                    <form style="display:none">
+                      <div class="input-append">
+                        <select name="projectversion" id="projectversion">
+                          {% for compat in yocto_compat %}
+                          <option value="{{compat.id}}" {%if layerversion.up_branch.id == compat.id %} selected{%endif%}>{{compat.name}}</option>
+                          {% endfor %}
+                        </select>
+                        <button  data-layer-prop="up_branch" class="btn change-btn" type="button">Save</button>
+                        <a href="#" style="display:none" class="btn btn-link cancel">Cancel</a>
+                      </div>
+                    </form>
+                    <i class="icon-pencil"></i>
+                  </dd>
+                  <dt>
+                    <i class="icon-question-sign get-help" title="Other layers this layer depends upon"></i>
+                    Layer dependencies
+                  </dt>
+                  <dd>
+                    <ul class="unstyled" id="layer-deps-list">
+                      {% for ld in layerversion.dependencies.all %}
+                      <span class="current-value">
+                      <li data-layer-id="{{ld.depends_on.id}}">
+                        <!-- TODO use ld.depends_on.get_vcs_reference instead of commit -->
+                        <a data-toggle="tooltip" title="{{ld.depends_on.layer.vcs_url}} | {{ld.depends_on.commit}}" href="{% url 'layerdetails' ld.depends_on.id %}">{{ld.depends_on.layer.name}}</a>
+                        <span class="icon-trash " data-toggle="tooltip" title="Delete"></span>
+                      </li>
+                      </span>
+                      {% endfor %}
+                    </ul>
+                    <div class="input-append add-deps">
+                      <input type="text" autocomplete="off" data-minLength="1" data-autocomplete="off"  placeholder="Type a layer name" id="layer-dep-input">
+                        <a class="btn" type="button" id="add-layer-dependency-btn" disabled>
+                          Add layer
+                        </a>
+                      </div>
+                      <span class="help-block add-deps">You can only add layers Toaster knows about</span>
+                    </dd>
+                  </dl>
+                </div>
+                <!-- targets tab -->
+                <div name="targets" id="targets" class="tab-pane">
+                  {% if total_targets == 0 %}
+                  <div class="alert alert-info">
+                    <strong>There is no target data for {{layerversion.layer.name}} ... yet</strong> <br />
+                    Toaster learns about layers as they are built. Once you have used {{layerversion.layer.name}} in a build, Toaster will show you
+                    here the targets it provides.
+                  </div>
+                  {% else %}
+
+                  <div class="row-fluid">
+
+                  {% if targets.paginator.count == 0 %}
+                  <div class="alert">
+                    <h3>No targets found</h3>
+                  {% endif %}
+
+                {# only show the search form if we have more than 10 results #}
+                  {% if targets.paginator.count > 10 or request.GET.targets_search %}
+                    {% if targets.paginator.count == 0 %}
+                      <form class="input-append">
+                    {% else %}
+                      <form class="navbar-search input-append pull-left">
+                    {% endif %}
+
+                      <input type="text" id="target-search" name="targets_search" placeholder="Search targets" class="input-xlarge" value="{{request.GET.targets_search}}">
+                        {% if request.GET.targets_search %}
+                        <a class="add-on btn" id="target-search-clear">
+                          <i class="icon-remove"></i>
+                        </a>
+                        {% endif %}
+                        <button type="submit" class="btn">Search</button>
+                      </form>
+                    {% endif %}
+
+                    {% if targets.paginator.count == 0 %}
+                      <!-- end alert -->
+                     </div>
+                     <!-- end row-fluid -->
+                     </div>
+                    {% else %}
+
+                    <div class="pull-right">
+                      <span class="help-inline" style="padding-top:5px;">Show rows:</span>
+                      <select style="margin-top:5px;margin-bottom:0px;" class="pagesize">
+                        {% with "10 25 50 100 150" as list%}
+                        {% for i in list.split %}
+                        {% if request.session.limit == i %}
+                        <option value="{{i}}" selected>{{i}}</option>
+                        {% else %}
+                        <option value="{{i}}">{{i}}</option>
+                        {% endif %}
+                        {% endfor %}
+                      {% endwith %}
+                    </select>
+                  </div>
+                </div>
+
+                <table class="table table-bordered table-hover">
+                  <thead>
+                    <tr>
+                      <th>
+                          <i class="icon-question-sign get-help" title="Information about a single piece of software, including where to download the source, configuration options, how to compile the source files and how to package the compiled output"></i>
+                          Target
+                          {% if request.GET.targets_search %}
+                            <span class="badge badge-info">{{targets.paginator.count}}</span>
+                          {% endif %}
+                        </th>
+                        <th>
+                          <i class="icon-question-sign get-help" title="The recipe version and revision"></i>
+                          Target version
+                        </th>
+                        <th class="span4">Description</th>
+                        <th>Build target</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% for target in targets %}
+                      <tr>
+                        <td>
+                          {{target.name}}
+                          {% if target.up_id %}
+                          <a href="http://layers.openembedded.org/layerindex/recipe/{{target.up_id}}/" class="icon-share get-info"></a>
+                          {% endif %}
+                        </td>
+                        <td>{{target.version}}</td>
+                        <td>{{target.summary}}</td>
+                        <td><button class="btn btn-block build-target-btn" data-target-name="{{target.name}}" {% if layer_in_project == 0 %}disabled="disabled"{% endif %} >Build Target</button></td>
+                      </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+
+                  <!-- Show pagination controls -->
+                  <div class="pagination">
+                    <ul>
+                      {%if targets.has_previous %}
+                      <li><a href="?tpage={{targets.previous_page_number}}{{request.GET.limit}}#targets">&laquo;</a></li>
+                      {%else%}
+                      <li class="disabled"><a href="#">&laquo;</a></li>
+                      {%endif%}
+                      {% for i in targets.paginator.page_range %}
+                      <li {%if i == targets.number %} class="active" {%endif%}><a href="?tpage={{i}}#targets">{{i}}</a></li>
+                      {% endfor %}
+                      {%if targets.has_next%}
+                      <li><a href="?tpage={{targets.next_page_number}}#targets">&raquo;</a></li>
+                      {%else%}
+                      <li class="disabled"><a href="#">&raquo;</a></li>
+                      {%endif%}
+                    </ul>
+                    <div class="pull-right">
+                      <span class="help-inline" style="padding-top:5px;">Show rows:</span>
+                      <select style="margin-top:5px;margin-bottom:0px;" class="pagesize">
+                        {% with "10 25 50 100 150" as list%}
+                        {% for i in list.split %}
+                        {% if request.session.limit == i %}
+                        <option value="{{i}}" selected>{{i}}</option>
+                        {% else %}
+                        <option value="{{i}}">{{i}}</option>
+                        {% endif %}
+                        {% endfor %}
+                        {% endwith %}
+                      </select>
+                    </div>
+                  </div>
+                  {% endif %}
+                  {% endif %}
+                </div>
 
 
+                <div name="machines" id="machines" class="tab-pane">
+                  {% if total_machines == 0 %}
+                  <div class="alert alert-info">
+                    <strong>There is no machine data for {{layerversion.layer.name}} ... yet</strong> <br />
+                    Toaster learns about layers as they are built. Once you have used {{layerversion.layer.name}} in a build, Toaster will show you
+                    here the machines it provides.
+                  </div>
+                  {% else %}
+
+                  <div class="row-fluid">
+
+                  {% if machines.paginator.count == 0 %}
+                  <div class="alert">
+                    <h3>No machines found</h3>
+                  {% endif %}
+
+                {# only show the search form if we have more than 10 results #}
+                  {% if machines.paginator.count > 10 or request.GET.machines_search %}
+                    {% if machines.paginator.count == 0 %}
+                      <form class="input-append">
+                    {% else %}
+                      <form class="navbar-search input-append pull-left">
+                    {% endif %}
+
+                      <input type="text" id="machine-search" name="machines_search" placeholder="Search machines" class="input-xlarge" value="{{request.GET.machines_search}}">
+                        {% if request.GET.machines_search %}
+                        <a class="add-on btn" id="machine-search-clear">
+                          <i class="icon-remove"></i>
+                        </a>
+                        {% endif %}
+                        <button type="submit" class="btn">Search</button>
+                      </form>
+                    {% endif %}
+
+                    {% if machines.paginator.count == 0 %}
+                      <!-- end alert -->
+                     </div>
+                     <!-- end row-fluid -->
+                     </div>
+                    {% else %}
+
+                    <div class="pull-right">
+                      <span class="help-inline" style="padding-top:5px;">Show rows:</span>
+                      <select style="margin-top:5px;margin-bottom:0px;" class="pagesize">
+                        {% with "10 25 50 100 150" as list%}
+                        {% for i in list.split %}
+                        {% if request.session.limit == i %}
+                        <option value="{{i}}" selected>{{i}}</option>
+                        {% else %}
+                        <option value="{{i}}">{{i}}</option>
+                        {% endif %}
+                        {% endfor %}
+                      {% endwith %}
+                    </select>
+                  </div>
+                </div>
+
+                <table class="table table-bordered table-hover">
+                  <thead>
+                      <tr>
+                        <th>
+                          <i class="icon-question-sign get-help" title="The machine is the hardware for which you are building"></i>
+                          Machine
+                          {% if request.GET.machines_search %}
+                          <span class="badge badge-info">{{machines.paginator.count}}</span>
+                          {% endif %}
+                        </th>
+                        <th>Description</th>
+                        <th>Select machine</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% for machine in machines %}
+                      <tr>
+                        <td>{{machine.name}}</td>
+                        <td>{{machine.description}}</td>
+                        <td><button class="btn btn-block select-machine-btn" data-machine-name="{{machine.name}}" {% if layer_in_project == 0 %}disabled="disabled"{% endif %}}>Select machine</button></td>
+                      </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+
+                  <!-- Show pagination controls -->
+                  <div class="pagination">
+                    <ul>
+                      {%if machines.has_previous %}
+                      <li><a href="?mpage={{machines.previous_page_number}}{{request.GET.limit}}#machines">&laquo;</a></li>
+                      {%else%}
+                      <li class="disabled"><a href="#">&laquo;</a></li>
+                      {%endif%}
+                      {% for i in machines.paginator.page_range %}
+                      <li {%if i == machines.number %} class="active" {%endif%}><a href="?mpage={{i}}#machines">{{i}}</a></li>
+                      {% endfor %}
+                      {%if machines.has_next%}
+                      <li><a href="?mpage={{machines.next_page_number}}#machines">&raquo;</a></li>
+                      {%else%}
+                      <li class="disabled"><a href="#">&raquo;</a></li>
+                      {%endif%}
+                    </ul>
+                    <div class="pull-right">
+                      <span class="help-inline" style="padding-top:5px;">Show rows:</span>
+                      <select style="margin-top:5px;margin-bottom:0px;" class="pagesize">
+                        {% with "10 25 50 100 150" as list%}
+                        {% for i in list.split %}
+                        {% if request.session.limit == i %}
+                        <option value="{{i}}" selected>{{i}}</option>
+                        {% else %}
+                        <option value="{{i}}">{{i}}</option>
+                        {% endif %}
+                        {% endfor %}
+                        {% endwith %}
+                      </select>
+                    </div>
+                  </div>
+                  {% endif %}
+                  {% endif %}
+                  </div>
+              </div>
+            </div>
+            <div class="row span4 well">
+              <h2>About {{layerversion.layer.name}}</h2>
+              <dl>
+
+                <dt>
+                  Summary
+                  <i class="icon-question-sign get-help" title="One-line description of the layer"></i>
+                </dt>
+                <dd>
+                  <span class="muted" style="display:none">Not set</span>
+                  <span class="current-value">{{layerversion.layer.summary}}</span>
+                  <form style="display:none; margin-bottom:20px">
+                    <textarea class="span12" rows="2">{% if layerversion.layer.summary %}{{layerversion.layer.summary}}{% endif %}</textarea>
+                    <button class="btn change-btn" data-layer-prop="summary" type="button">Save</button>
+                    <a href="#" class="btn btn-link cancel">Cancel</a>
+                  </form>
+                  <i class="icon-pencil"></i>
+                  <span class="icon-trash delete-current-value" data-toggle="tooltip" title="Delete"></span>
+                </dd>
+                <dt>
+                  Description
+                </dt>
+                <dd>
+                  <span class="muted" style="display:none">Not set</span>
+                  <span class="current-value">{{layerversion.layer.description}}</span>
+                  <form style="display:none; margin-bottom:20px">
+                    <textarea class="span12" rows="6">{% if layerversion.layer.description %}{{layerversion.layer.description}}{% endif %}</textarea>
+                    <button class="btn change-btn" data-layer-prop="description" type="button" >Save</button>
+                    <a href="#" class="btn btn-link cancel">Cancel</a>
+                  </form>
+                  <i class="icon-pencil"></i>
+                  <span class="icon-trash delete-current-value" data-toggle="tooltip" title="Delete"></span>
+                </dd>
+                </dd>
+                {% if layerversion.layer.up_id %}
+                <dt>Layer index</dt>
+                <dd>
+                  <a href="http://layers.openembedded.org/layerindex/branch/{{layerversion.up_branch.name}}/layer/{{layerversion.layer.name}}"/>layer index link</a>
+
+                </dd>
+                {% endif %}
+
+           </dl>
+         </div>
+
+          </div>
+       </div>
+   </div>
 {% endblock %}
