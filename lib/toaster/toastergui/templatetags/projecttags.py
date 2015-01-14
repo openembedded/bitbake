@@ -65,6 +65,25 @@ def query(qs, **kwargs):
     """
     return qs.filter(**kwargs)
 
+
+@register.filter("whitespace_slice")
+def whitespace_space_filter(value, arg):
+    try:
+        bits = []
+        for x in arg.split(":"):
+            if len(x) == 0:
+                bits.append(None)
+            else:
+                # convert numeric value to the first whitespace after
+                first_whitespace = value.find(" ", int(x))
+                if first_whitespace == -1:
+                    bits.append(int(x))
+                else:
+                    bits.append(first_whitespace)
+        return value[slice(*bits)]
+    except (ValueError, TypeError):
+        raise
+
 @register.filter
 def divide(value, arg):
     if int(arg) == 0:

@@ -255,197 +255,6 @@ def _save_parameters_cookies(response, pagesize, orderby, request):
     return response
 
 
-
-# shows the "all builds" page
-def builds(request):
-    template = 'build.html'
-    # define here what parameters the view needs in the GET portion in order to
-    # be able to display something.  'count' and 'page' are mandatory for all views
-    # that use paginators.
-    (pagesize, orderby) = _get_parameters_values(request, 10, 'completed_on:-')
-    mandatory_parameters = { 'count': pagesize,  'page' : 1, 'orderby' : orderby }
-    retval = _verify_parameters( request.GET, mandatory_parameters )
-    if retval:
-        return _redirect_parameters( 'all-builds', request.GET, mandatory_parameters)
-
-    # boilerplate code that takes a request for an object type and returns a queryset
-    # for that object type. copypasta for all needed table searches
-    (filter_string, search_term, ordering_string) = _search_tuple(request, Build)
-    queryset_all = Build.objects.exclude(outcome = Build.IN_PROGRESS)
-    queryset_with_search = _get_queryset(Build, queryset_all, None, search_term, ordering_string, '-completed_on')
-    queryset = _get_queryset(Build, queryset_all, filter_string, search_term, ordering_string, '-completed_on')
-
-    # retrieve the objects that will be displayed in the table; builds a paginator and gets a page range to display
-    build_info = _build_page_range(Paginator(queryset, pagesize), request.GET.get('page', 1))
-
-    # build view-specific information; this is rendered specifically in the builds page, at the top of the page (i.e. Recent builds)
-    build_mru = Build.objects.order_by("-started_on")[:3]
-
-    # set up list of fstypes for each build
-    fstypes_map = {};
-    for build in build_info:
-        targets = Target.objects.filter( build_id = build.id )
-        comma = "";
-        extensions = "";
-        for t in targets:
-            if ( not t.is_image ):
-                continue
-            tif = Target_Image_File.objects.filter( target_id = t.id )
-            for i in tif:
-                s=re.sub('.*tar.bz2', 'tar.bz2', i.file_name)
-                if s == i.file_name:
-                    s=re.sub('.*\.', '', i.file_name)
-                if None == re.search(s,extensions):
-                    extensions += comma + s
-                    comma = ", "
-        fstypes_map[build.id]=extensions
-
-    # send the data to the template
-    context = {
-            # specific info for
-                'mru' : build_mru,
-            # TODO: common objects for all table views, adapt as needed
-                'objects' : build_info,
-                'objectname' : "builds",
-                'default_orderby' : 'completed_on:-',
-                'fstypes' : fstypes_map,
-                'search_term' : search_term,
-                'total_count' : queryset_with_search.count(),
-            # Specifies the display of columns for the table, appearance in "Edit columns" box, toggling default show/hide, and specifying filters for columns
-                'tablecols' : [
-                {'name': 'Outcome',                                                # column with a single filter
-                 'qhelp' : "The outcome tells you if a build successfully completed or failed",     # the help button content
-                 'dclass' : "span2",                                                # indication about column width; comes from the design
-                 'orderfield': _get_toggle_order(request, "outcome"),               # adds ordering by the field value; default ascending unless clicked from ascending into descending
-                 'ordericon':_get_toggle_order_icon(request, "outcome"),
-                  # filter field will set a filter on that column with the specs in the filter description
-                  # the class field in the filter has no relation with clclass; the control different aspects of the UI
-                  # still, it is recommended for the values to be identical for easy tracking in the generated HTML
-                 'filter' : {'class' : 'outcome',
-                             'label': 'Show:',
-                             'options' : [
-                                         ('Successful builds', 'outcome:' + str(Build.SUCCEEDED), queryset_with_search.filter(outcome=str(Build.SUCCEEDED)).count()),  # this is the field search expression
-                                         ('Failed builds', 'outcome:'+ str(Build.FAILED), queryset_with_search.filter(outcome=str(Build.FAILED)).count()),
-                                         ]
-                            }
-                },
-                {'name': 'Target',                                                 # default column, disabled box, with just the name in the list
-                 'qhelp': "This is the build target or build targets (i.e. one or more recipes or image recipes)",
-                 'orderfield': _get_toggle_order(request, "target__target"),
-                 'ordericon':_get_toggle_order_icon(request, "target__target"),
-                },
-                {'name': 'Machine',
-                 'qhelp': "The machine is the hardware for which you are building a recipe or image recipe",
-                 'orderfield': _get_toggle_order(request, "machine"),
-                 'ordericon':_get_toggle_order_icon(request, "machine"),
-                 'dclass': 'span3'
-                },                           # a slightly wider column
-                {'name': 'Started on', 'clclass': 'started_on', 'hidden' : 1,      # this is an unchecked box, which hides the column
-                 'qhelp': "The date and time you started the build",
-                 'orderfield': _get_toggle_order(request, "started_on", True),
-                 'ordericon':_get_toggle_order_icon(request, "started_on"),
-                 'filter' : {'class' : 'started_on',
-                             'label': 'Show:',
-                             'options' : [
-                                         ("Today's builds" , 'started_on__gte:'+timezone.now().strftime("%Y-%m-%d"), queryset_with_search.filter(started_on__gte=timezone.now()).count()),
-                                         ("Yesterday's builds", 'started_on__gte:'+(timezone.now()-timedelta(hours=24)).strftime("%Y-%m-%d"), queryset_with_search.filter(started_on__gte=(timezone.now()-timedelta(hours=24))).count()),
-                                         ("This week's builds", 'started_on__gte:'+(timezone.now()-timedelta(days=7)).strftime("%Y-%m-%d"), queryset_with_search.filter(started_on__gte=(timezone.now()-timedelta(days=7))).count()),
-                                         ]
-                            }
-                },
-                {'name': 'Completed on',
-                 'qhelp': "The date and time the build finished",
-                 'orderfield': _get_toggle_order(request, "completed_on", True),
-                 'ordericon':_get_toggle_order_icon(request, "completed_on"),
-                 'orderkey' : 'completed_on',
-                 'filter' : {'class' : 'completed_on',
-                             'label': 'Show:',
-                             'options' : [
-                                         ("Today's builds", 'completed_on__gte:'+timezone.now().strftime("%Y-%m-%d"), queryset_with_search.filter(completed_on__gte=timezone.now()).count()),
-                                         ("Yesterday's builds", 'completed_on__gte:'+(timezone.now()-timedelta(hours=24)).strftime("%Y-%m-%d"), queryset_with_search.filter(completed_on__gte=(timezone.now()-timedelta(hours=24))).count()),
-                                         ("This week's builds", 'completed_on__gte:'+(timezone.now()-timedelta(days=7)).strftime("%Y-%m-%d"), queryset_with_search.filter(completed_on__gte=(timezone.now()-timedelta(days=7))).count()),
-                                         ]
-                            }
-                },
-                {'name': 'Failed tasks', 'clclass': 'failed_tasks',                # specifing a clclass will enable the checkbox
-                 'qhelp': "How many tasks failed during the build",
-                 'filter' : {'class' : 'failed_tasks',
-                             'label': 'Show:',
-                             'options' : [
-                                         ('Builds with failed tasks', 'task_build__outcome:4', queryset_with_search.filter(task_build__outcome=4).count()),
-                                         ('Builds without failed tasks', 'task_build__outcome:NOT4', queryset_with_search.filter(~Q(task_build__outcome=4)).count()),
-                                         ]
-                            }
-                },
-                {'name': 'Errors', 'clclass': 'errors_no',
-                 'qhelp': "How many errors were encountered during the build (if any)",
-                 'orderfield': _get_toggle_order(request, "errors_no", True),
-                 'ordericon':_get_toggle_order_icon(request, "errors_no"),
-                 'orderkey' : 'errors_no',
-                 'filter' : {'class' : 'errors_no',
-                             'label': 'Show:',
-                             'options' : [
-                                         ('Builds with errors', 'errors_no__gte:1', queryset_with_search.filter(errors_no__gte=1).count()),
-                                         ('Builds without errors', 'errors_no:0', queryset_with_search.filter(errors_no=0).count()),
-                                         ]
-                            }
-                },
-                {'name': 'Warnings', 'clclass': 'warnings_no',
-                 'qhelp': "How many warnings were encountered during the build (if any)",
-                 'orderfield': _get_toggle_order(request, "warnings_no", True),
-                 'ordericon':_get_toggle_order_icon(request, "warnings_no"),
-                 'orderkey' : 'warnings_no',
-                 'filter' : {'class' : 'warnings_no',
-                             'label': 'Show:',
-                             'options' : [
-                                         ('Builds with warnings','warnings_no__gte:1', queryset_with_search.filter(warnings_no__gte=1).count()),
-                                         ('Builds without warnings','warnings_no:0', queryset_with_search.filter(warnings_no=0).count()),
-                                         ]
-                            }
-                },
-                {'name': 'Time', 'clclass': 'time', 'hidden' : 1,
-                 'qhelp': "How long it took the build to finish",
-                 'orderfield': _get_toggle_order(request, "timespent", True),
-                 'ordericon':_get_toggle_order_icon(request, "timespent"),
-                 'orderkey' : 'timespent',
-                },
-                {'name': 'Image files', 'clclass': 'output',
-                 'qhelp': "The root file system types produced by the build. You can find them in your <code>/build/tmp/deploy/images/</code> directory",
-                    # TODO: compute image fstypes from Target_Image_File
-                },
-                ]
-            }
-
-    if not toastermain.settings.MANAGED:
-        context['tablecols'].insert(-2,
-                {'name': 'Log1',
-                 'dclass': "span4",
-                 'qhelp': "Path to the build main log file",
-                 'clclass': 'log', 'hidden': 1,
-                 'orderfield': _get_toggle_order(request, "cooker_log_path"),
-                 'ordericon':_get_toggle_order_icon(request, "cooker_log_path"),
-                 'orderkey' : 'cooker_log_path',
-                }
-        )
-
-
-    if toastermain.settings.MANAGED:
-        context['tablecols'].append(
-                {'name': 'Project', 'clclass': 'project',
-                 'filter': {'class': 'project',
-                        'label': 'Project:',
-                        'options':  map(lambda x: (x.name,'',x.build_set.filter(outcome__lt=Build.IN_PROGRESS).count()), Project.objects.all()),
-
-                       }
-                }
-        )
-
-
-    response = render(request, template, context)
-    _save_parameters_cookies(response, pagesize, orderby, request)
-    return response
-
-
 ##
 # build dashboard for a single build, coming in as argument
 # Each build may contain multiple targets and each target
@@ -1895,6 +1704,221 @@ if toastermain.settings.MANAGED:
                 del request.session['project_id']
         return ret
 
+
+    # shows the "all builds" page for managed mode; it displays build requests (at least started!) instead of actual builds
+    def builds(request):
+        template = 'managed_builds.html'
+        # define here what parameters the view needs in the GET portion in order to
+        # be able to display something.  'count' and 'page' are mandatory for all views
+        # that use paginators.
+
+        # ATTN: we use here the ordering parameters for interactive mode; the translation for BuildRequest fields will happen below
+        (pagesize, orderby) = _get_parameters_values(request, 10, 'completed_on:-')
+        mandatory_parameters = { 'count': pagesize,  'page' : 1, 'orderby' : orderby }
+        retval = _verify_parameters( request.GET, mandatory_parameters )
+        if retval:
+            return _redirect_parameters( 'all-builds', request.GET, mandatory_parameters)
+
+        # translate interactive mode ordering to managed mode ordering
+        ordering_params = orderby.split(":")
+        if ordering_params[0] == "completed_on":
+            ordering_params[0] = "updated"
+        if ordering_params[0] == "started_on":
+            ordering_params = "created"
+
+        request.GET = request.GET.copy()        # get a mutable copy of the GET QueryDict
+        request.GET['orderby'] = ":".join(ordering_params)
+
+        # boilerplate code that takes a request for an object type and returns a queryset
+        # for that object type. copypasta for all needed table searches
+        (filter_string, search_term, ordering_string) = _search_tuple(request, BuildRequest)
+        # we don't display in-progress or deleted builds
+        queryset_all = BuildRequest.objects.exclude(state__lte = BuildRequest.REQ_INPROGRESS).exclude(state=BuildRequest.REQ_DELETED)
+        queryset_with_search = _get_queryset(BuildRequest, queryset_all, None, search_term, ordering_string, '-updated')
+        queryset = _get_queryset(BuildRequest, queryset_all, filter_string, search_term, ordering_string, '-updated')
+
+        # retrieve the objects that will be displayed in the table; builds a paginator and gets a page range to display
+        build_info = _build_page_range(Paginator(queryset, pagesize), request.GET.get('page', 1))
+
+        # build view-specific information; this is rendered specifically in the builds page, at the top of the page (i.e. Recent builds)
+        # most recent build is like projects' most recent builds, but across all projects
+        build_mru = BuildRequest.objects.all()
+        build_mru = list(build_mru.filter(Q(state__lt=BuildRequest.REQ_COMPLETED) or Q(state=BuildRequest.REQ_DELETED)).order_by("-pk")) + list(build_mru.filter(state__in=[BuildRequest.REQ_COMPLETED, BuildRequest.REQ_FAILED]).order_by("-pk")[:3])
+
+        fstypes_map = {};
+        for build_request in build_info:
+            # set display variables for build request
+            build_request.machine = build_request.brvariable_set.get(name="MACHINE").value
+            build_request.timespent = build_request.updated - build_request.created
+
+            # set up list of fstypes for each build
+            if build_request.build is None:
+                continue
+            targets = Target.objects.filter( build_id = build_request.build.id )
+            comma = "";
+            extensions = "";
+            for t in targets:
+                if ( not t.is_image ):
+                    continue
+                tif = Target_Image_File.objects.filter( target_id = t.id )
+                for i in tif:
+                    s=re.sub('.*tar.bz2', 'tar.bz2', i.file_name)
+                    if s == i.file_name:
+                        s=re.sub('.*\.', '', i.file_name)
+                    if None == re.search(s,extensions):
+                        extensions += comma + s
+                        comma = ", "
+            fstypes_map[build_request.build.id]=extensions
+
+
+        # send the data to the template
+        context = {
+                # specific info for
+                    'mru' : build_mru,
+                # TODO: common objects for all table views, adapt as needed
+                    'objects' : build_info,
+                    'objectname' : "builds",
+                    'default_orderby' : 'updated:-',
+                    'fstypes' : fstypes_map,
+                    'search_term' : search_term,
+                    'total_count' : queryset_with_search.count(),
+                # Specifies the display of columns for the table, appearance in "Edit columns" box, toggling default show/hide, and specifying filters for columns
+                    'tablecols' : [
+                    {'name': 'Outcome',                                                # column with a single filter
+                     'qhelp' : "The outcome tells you if a build successfully completed or failed",     # the help button content
+                     'dclass' : "span2",                                                # indication about column width; comes from the design
+                     'orderfield': _get_toggle_order(request, "state"),               # adds ordering by the field value; default ascending unless clicked from ascending into descending
+                     'ordericon':_get_toggle_order_icon(request, "state"),
+                      # filter field will set a filter on that column with the specs in the filter description
+                      # the class field in the filter has no relation with clclass; the control different aspects of the UI
+                      # still, it is recommended for the values to be identical for easy tracking in the generated HTML
+                     'filter' : {'class' : 'outcome',
+                                 'label': 'Show:',
+                                 'options' : [
+                                             ('Successful builds', 'state:' + str(BuildRequest.REQ_COMPLETED), queryset_with_search.filter(state=str(BuildRequest.REQ_COMPLETED)).count()),  # this is the field search expression
+                                             ('Failed builds', 'state:'+ str(BuildRequest.REQ_FAILED), queryset_with_search.filter(state=str(BuildRequest.REQ_FAILED)).count()),
+                                             ]
+                                }
+                    },
+                    {'name': 'Target',                                                 # default column, disabled box, with just the name in the list
+                     'qhelp': "This is the build target or build targets (i.e. one or more recipes or image recipes)",
+                     'orderfield': _get_toggle_order(request, "target__target"),
+                     'ordericon':_get_toggle_order_icon(request, "target__target"),
+                    },
+                    {'name': 'Machine',
+                     'qhelp': "The machine is the hardware for which you are building a recipe or image recipe",
+                     'orderfield': _get_toggle_order(request, "machine"),
+                     'ordericon':_get_toggle_order_icon(request, "machine"),
+                     'dclass': 'span3'
+                    },                           # a slightly wider column
+                    {'name': 'Started on', 'clclass': 'started_on', 'hidden' : 1,      # this is an unchecked box, which hides the column
+                     'qhelp': "The date and time you started the build",
+                     'orderfield': _get_toggle_order(request, "created", True),
+                     'ordericon':_get_toggle_order_icon(request, "created"),
+                     'filter' : {'class' : 'created',
+                                 'label': 'Show:',
+                                 'options' : [
+                                             ("Today's builds" , 'created__gte:'+timezone.now().strftime("%Y-%m-%d"), queryset_with_search.filter(created__gte=timezone.now()).count()),
+                                             ("Yesterday's builds", 'created__gte:'+(timezone.now()-timedelta(hours=24)).strftime("%Y-%m-%d"), queryset_with_search.filter(created__gte=(timezone.now()-timedelta(hours=24))).count()),
+                                             ("This week's builds", 'created__gte:'+(timezone.now()-timedelta(days=7)).strftime("%Y-%m-%d"), queryset_with_search.filter(created__gte=(timezone.now()-timedelta(days=7))).count()),
+                                             ]
+                                }
+                    },
+                    {'name': 'Completed on',
+                     'qhelp': "The date and time the build finished",
+                     'orderfield': _get_toggle_order(request, "updated", True),
+                     'ordericon':_get_toggle_order_icon(request, "updated"),
+                     'orderkey' : 'updated',
+                     'filter' : {'class' : 'updated',
+                                 'label': 'Show:',
+                                 'options' : [
+                                             ("Today's builds", 'updated__gte:'+timezone.now().strftime("%Y-%m-%d"), queryset_with_search.filter(updated__gte=timezone.now()).count()),
+                                             ("Yesterday's builds", 'updated__gte:'+(timezone.now()-timedelta(hours=24)).strftime("%Y-%m-%d"), queryset_with_search.filter(updated__gte=(timezone.now()-timedelta(hours=24))).count()),
+                                             ("This week's builds", 'updated__gte:'+(timezone.now()-timedelta(days=7)).strftime("%Y-%m-%d"), queryset_with_search.filter(updated__gte=(timezone.now()-timedelta(days=7))).count()),
+                                             ]
+                                }
+                    },
+                    {'name': 'Failed tasks', 'clclass': 'failed_tasks',                # specifing a clclass will enable the checkbox
+                     'qhelp': "How many tasks failed during the build",
+                     'filter' : {'class' : 'failed_tasks',
+                                 'label': 'Show:',
+                                 'options' : [
+                                             ('BuildRequests with failed tasks', 'build__task_build__outcome:4', queryset_with_search.filter(build__task_build__outcome=4).count()),
+                                             ('BuildRequests without failed tasks', 'build__task_build__outcome:NOT4', queryset_with_search.filter(~Q(build__task_build__outcome=4)).count()),
+                                             ]
+                                }
+                    },
+                    {'name': 'Errors', 'clclass': 'errors_no',
+                     'qhelp': "How many errors were encountered during the build (if any)",
+                     'orderfield': _get_toggle_order(request, "errors_no", True),
+                     'ordericon':_get_toggle_order_icon(request, "errors_no"),
+                     'orderkey' : 'errors_no',
+                     'filter' : {'class' : 'errors_no',
+                                 'label': 'Show:',
+                                 'options' : [
+                                             ('BuildRequests with errors', 'errors_no__gte:1', queryset_with_search.filter(build__errors_no__gte=1).count()),
+                                             ('BuildRequests without errors', 'errors_no:0', queryset_with_search.filter(build__errors_no=0).count()),
+                                             ]
+                                }
+                    },
+                    {'name': 'Warnings', 'clclass': 'warnings_no',
+                     'qhelp': "How many warnings were encountered during the build (if any)",
+                     'orderfield': _get_toggle_order(request, "build__warnings_no", True),
+                     'ordericon':_get_toggle_order_icon(request, "build__warnings_no"),
+                     'orderkey' : 'build__warnings_no',
+                     'filter' : {'class' : 'build__warnings_no',
+                                 'label': 'Show:',
+                                 'options' : [
+                                             ('BuildRequests with warnings','build__warnings_no__gte:1', queryset_with_search.filter(build__warnings_no__gte=1).count()),
+                                             ('BuildRequests without warnings','build__warnings_no:0', queryset_with_search.filter(build__warnings_no=0).count()),
+                                             ]
+                                }
+                    },
+                    {'name': 'Time', 'clclass': 'time', 'hidden' : 1,
+                     'qhelp': "How long it took the build to finish",
+                     'orderfield': _get_toggle_order(request, "timespent", True),
+                     'ordericon':_get_toggle_order_icon(request, "timespent"),
+                     'orderkey' : 'timespent',
+                    },
+                    {'name': 'Image files', 'clclass': 'output',
+                     'qhelp': "The root file system types produced by the build. You can find them in your <code>/build/tmp/deploy/images/</code> directory",
+                        # TODO: compute image fstypes from Target_Image_File
+                    },
+                    ]
+                }
+
+        if not toastermain.settings.MANAGED:
+            context['tablecols'].insert(-2,
+                    {'name': 'Log1',
+                     'dclass': "span4",
+                     'qhelp': "Path to the build main log file",
+                     'clclass': 'log', 'hidden': 1,
+                     'orderfield': _get_toggle_order(request, "cooker_log_path"),
+                     'ordericon':_get_toggle_order_icon(request, "cooker_log_path"),
+                     'orderkey' : 'cooker_log_path',
+                    }
+            )
+
+
+        if toastermain.settings.MANAGED:
+            context['tablecols'].append(
+                    {'name': 'Project', 'clclass': 'project',
+                     'filter': {'class': 'project',
+                            'label': 'Project:',
+                            'options':  map(lambda x: (x.name,'',x.build_set.filter(outcome__lt=BuildRequest.REQ_INPROGRESS).count()), Project.objects.all()),
+
+                           }
+                    }
+            )
+
+
+        response = render(request, template, context)
+        _save_parameters_cookies(response, pagesize, orderby, request)
+        return response
+
+
+
+
     # new project
     def newproject(request):
         template = "newproject.html"
@@ -2819,21 +2843,21 @@ if toastermain.settings.MANAGED:
                      'filter' : {'class' : 'failed_tasks',
                                  'label': 'Show:',
                                  'options' : [
-                                             ('Builds with failed tasks', 'task_build__outcome:4', queryset_with_search.filter(task_build__outcome=4).count()),
-                                             ('Builds without failed tasks', 'task_build__outcome:NOT4', queryset_with_search.filter(~Q(task_build__outcome=4)).count()),
+                                             ('Builds with failed tasks', 'build__task_build__outcome:4', queryset_with_search.filter(build__task_build__outcome=4).count()),
+                                             ('Builds without failed tasks', 'build__task_build__outcome:NOT4', queryset_with_search.filter(~Q(build__task_build__outcome=4)).count()),
                                              ]
                                 }
                     },
                     {'name': 'Errors', 'clclass': 'errors_no',
                      'qhelp': "How many errors were encountered during the build (if any)",
-                     'orderfield': _get_toggle_order(request, "errors_no", True),
-                     'ordericon':_get_toggle_order_icon(request, "errors_no"),
-                     'orderkey' : 'errors_no',
-                     'filter' : {'class' : 'errors_no',
+                     'orderfield': _get_toggle_order(request, "build__errors_no", True),
+                     'ordericon':_get_toggle_order_icon(request, "build__errors_no"),
+                     'orderkey' : 'build__errors_no',
+                     'filter' : {'class' : 'build__errors_no',
                                  'label': 'Show:',
                                  'options' : [
-                                             ('Builds with errors', 'errors_no__gte:1', queryset_with_search.filter(errors_no__gte=1).count()),
-                                             ('Builds without errors', 'errors_no:0', queryset_with_search.filter(errors_no=0).count()),
+                                             ('Builds with errors', 'build__errors_no__gte:1', queryset_with_search.filter(build__errors_no__gte=1).count()),
+                                             ('Builds without errors', 'build__errors_no:0', queryset_with_search.filter(build__errors_no=0).count()),
                                              ]
                                 }
                     },
@@ -3006,6 +3030,199 @@ else:
             "MANAGED" : toastermain.settings.MANAGED,
             "DEBUG" : toastermain.settings.DEBUG
         }
+
+
+    # shows the "all builds" page for interactive mode; this is the old code, simply moved
+    def builds(request):
+        template = 'build.html'
+        # define here what parameters the view needs in the GET portion in order to
+        # be able to display something.  'count' and 'page' are mandatory for all views
+        # that use paginators.
+        (pagesize, orderby) = _get_parameters_values(request, 10, 'completed_on:-')
+        mandatory_parameters = { 'count': pagesize,  'page' : 1, 'orderby' : orderby }
+        retval = _verify_parameters( request.GET, mandatory_parameters )
+        if retval:
+            return _redirect_parameters( 'all-builds', request.GET, mandatory_parameters)
+
+        # boilerplate code that takes a request for an object type and returns a queryset
+        # for that object type. copypasta for all needed table searches
+        (filter_string, search_term, ordering_string) = _search_tuple(request, Build)
+        queryset_all = Build.objects.exclude(outcome = Build.IN_PROGRESS)
+        queryset_with_search = _get_queryset(Build, queryset_all, None, search_term, ordering_string, '-completed_on')
+        queryset = _get_queryset(Build, queryset_all, filter_string, search_term, ordering_string, '-completed_on')
+
+        # retrieve the objects that will be displayed in the table; builds a paginator and gets a page range to display
+        build_info = _build_page_range(Paginator(queryset, pagesize), request.GET.get('page', 1))
+
+        # build view-specific information; this is rendered specifically in the builds page, at the top of the page (i.e. Recent builds)
+        build_mru = Build.objects.order_by("-started_on")[:3]
+
+        # set up list of fstypes for each build
+        fstypes_map = {};
+        for build in build_info:
+            targets = Target.objects.filter( build_id = build.id )
+            comma = "";
+            extensions = "";
+            for t in targets:
+                if ( not t.is_image ):
+                    continue
+                tif = Target_Image_File.objects.filter( target_id = t.id )
+                for i in tif:
+                    s=re.sub('.*tar.bz2', 'tar.bz2', i.file_name)
+                    if s == i.file_name:
+                        s=re.sub('.*\.', '', i.file_name)
+                    if None == re.search(s,extensions):
+                        extensions += comma + s
+                        comma = ", "
+            fstypes_map[build.id]=extensions
+
+        # send the data to the template
+        context = {
+                # specific info for
+                    'mru' : build_mru,
+                # TODO: common objects for all table views, adapt as needed
+                    'objects' : build_info,
+                    'objectname' : "builds",
+                    'default_orderby' : 'completed_on:-',
+                    'fstypes' : fstypes_map,
+                    'search_term' : search_term,
+                    'total_count' : queryset_with_search.count(),
+                # Specifies the display of columns for the table, appearance in "Edit columns" box, toggling default show/hide, and specifying filters for columns
+                    'tablecols' : [
+                    {'name': 'Outcome',                                                # column with a single filter
+                     'qhelp' : "The outcome tells you if a build successfully completed or failed",     # the help button content
+                     'dclass' : "span2",                                                # indication about column width; comes from the design
+                     'orderfield': _get_toggle_order(request, "outcome"),               # adds ordering by the field value; default ascending unless clicked from ascending into descending
+                     'ordericon':_get_toggle_order_icon(request, "outcome"),
+                      # filter field will set a filter on that column with the specs in the filter description
+                      # the class field in the filter has no relation with clclass; the control different aspects of the UI
+                      # still, it is recommended for the values to be identical for easy tracking in the generated HTML
+                     'filter' : {'class' : 'outcome',
+                                 'label': 'Show:',
+                                 'options' : [
+                                             ('Successful builds', 'outcome:' + str(Build.SUCCEEDED), queryset_with_search.filter(outcome=str(Build.SUCCEEDED)).count()),  # this is the field search expression
+                                             ('Failed builds', 'outcome:'+ str(Build.FAILED), queryset_with_search.filter(outcome=str(Build.FAILED)).count()),
+                                             ]
+                                }
+                    },
+                    {'name': 'Target',                                                 # default column, disabled box, with just the name in the list
+                     'qhelp': "This is the build target or build targets (i.e. one or more recipes or image recipes)",
+                     'orderfield': _get_toggle_order(request, "target__target"),
+                     'ordericon':_get_toggle_order_icon(request, "target__target"),
+                    },
+                    {'name': 'Machine',
+                     'qhelp': "The machine is the hardware for which you are building a recipe or image recipe",
+                     'orderfield': _get_toggle_order(request, "machine"),
+                     'ordericon':_get_toggle_order_icon(request, "machine"),
+                     'dclass': 'span3'
+                    },                           # a slightly wider column
+                    {'name': 'Started on', 'clclass': 'started_on', 'hidden' : 1,      # this is an unchecked box, which hides the column
+                     'qhelp': "The date and time you started the build",
+                     'orderfield': _get_toggle_order(request, "started_on", True),
+                     'ordericon':_get_toggle_order_icon(request, "started_on"),
+                     'filter' : {'class' : 'started_on',
+                                 'label': 'Show:',
+                                 'options' : [
+                                             ("Today's builds" , 'started_on__gte:'+timezone.now().strftime("%Y-%m-%d"), queryset_with_search.filter(started_on__gte=timezone.now()).count()),
+                                             ("Yesterday's builds", 'started_on__gte:'+(timezone.now()-timedelta(hours=24)).strftime("%Y-%m-%d"), queryset_with_search.filter(started_on__gte=(timezone.now()-timedelta(hours=24))).count()),
+                                             ("This week's builds", 'started_on__gte:'+(timezone.now()-timedelta(days=7)).strftime("%Y-%m-%d"), queryset_with_search.filter(started_on__gte=(timezone.now()-timedelta(days=7))).count()),
+                                             ]
+                                }
+                    },
+                    {'name': 'Completed on',
+                     'qhelp': "The date and time the build finished",
+                     'orderfield': _get_toggle_order(request, "completed_on", True),
+                     'ordericon':_get_toggle_order_icon(request, "completed_on"),
+                     'orderkey' : 'completed_on',
+                     'filter' : {'class' : 'completed_on',
+                                 'label': 'Show:',
+                                 'options' : [
+                                             ("Today's builds", 'completed_on__gte:'+timezone.now().strftime("%Y-%m-%d"), queryset_with_search.filter(completed_on__gte=timezone.now()).count()),
+                                             ("Yesterday's builds", 'completed_on__gte:'+(timezone.now()-timedelta(hours=24)).strftime("%Y-%m-%d"), queryset_with_search.filter(completed_on__gte=(timezone.now()-timedelta(hours=24))).count()),
+                                             ("This week's builds", 'completed_on__gte:'+(timezone.now()-timedelta(days=7)).strftime("%Y-%m-%d"), queryset_with_search.filter(completed_on__gte=(timezone.now()-timedelta(days=7))).count()),
+                                             ]
+                                }
+                    },
+                    {'name': 'Failed tasks', 'clclass': 'failed_tasks',                # specifing a clclass will enable the checkbox
+                     'qhelp': "How many tasks failed during the build",
+                     'filter' : {'class' : 'failed_tasks',
+                                 'label': 'Show:',
+                                 'options' : [
+                                             ('Builds with failed tasks', 'task_build__outcome:4', queryset_with_search.filter(task_build__outcome=4).count()),
+                                             ('Builds without failed tasks', 'task_build__outcome:NOT4', queryset_with_search.filter(~Q(task_build__outcome=4)).count()),
+                                             ]
+                                }
+                    },
+                    {'name': 'Errors', 'clclass': 'errors_no',
+                     'qhelp': "How many errors were encountered during the build (if any)",
+                     'orderfield': _get_toggle_order(request, "errors_no", True),
+                     'ordericon':_get_toggle_order_icon(request, "errors_no"),
+                     'orderkey' : 'errors_no',
+                     'filter' : {'class' : 'errors_no',
+                                 'label': 'Show:',
+                                 'options' : [
+                                             ('Builds with errors', 'errors_no__gte:1', queryset_with_search.filter(errors_no__gte=1).count()),
+                                             ('Builds without errors', 'errors_no:0', queryset_with_search.filter(errors_no=0).count()),
+                                             ]
+                                }
+                    },
+                    {'name': 'Warnings', 'clclass': 'warnings_no',
+                     'qhelp': "How many warnings were encountered during the build (if any)",
+                     'orderfield': _get_toggle_order(request, "warnings_no", True),
+                     'ordericon':_get_toggle_order_icon(request, "warnings_no"),
+                     'orderkey' : 'warnings_no',
+                     'filter' : {'class' : 'warnings_no',
+                                 'label': 'Show:',
+                                 'options' : [
+                                             ('Builds with warnings','warnings_no__gte:1', queryset_with_search.filter(warnings_no__gte=1).count()),
+                                             ('Builds without warnings','warnings_no:0', queryset_with_search.filter(warnings_no=0).count()),
+                                             ]
+                                }
+                    },
+                    {'name': 'Time', 'clclass': 'time', 'hidden' : 1,
+                     'qhelp': "How long it took the build to finish",
+                     'orderfield': _get_toggle_order(request, "timespent", True),
+                     'ordericon':_get_toggle_order_icon(request, "timespent"),
+                     'orderkey' : 'timespent',
+                    },
+                    {'name': 'Image files', 'clclass': 'output',
+                     'qhelp': "The root file system types produced by the build. You can find them in your <code>/build/tmp/deploy/images/</code> directory",
+                        # TODO: compute image fstypes from Target_Image_File
+                    },
+                    ]
+                }
+
+        if not toastermain.settings.MANAGED:
+            context['tablecols'].insert(-2,
+                    {'name': 'Log1',
+                     'dclass': "span4",
+                     'qhelp': "Path to the build main log file",
+                     'clclass': 'log', 'hidden': 1,
+                     'orderfield': _get_toggle_order(request, "cooker_log_path"),
+                     'ordericon':_get_toggle_order_icon(request, "cooker_log_path"),
+                     'orderkey' : 'cooker_log_path',
+                    }
+            )
+
+
+        if toastermain.settings.MANAGED:
+            context['tablecols'].append(
+                    {'name': 'Project', 'clclass': 'project',
+                     'filter': {'class': 'project',
+                            'label': 'Project:',
+                            'options':  map(lambda x: (x.name,'',x.build_set.filter(outcome__lt=Build.IN_PROGRESS).count()), Project.objects.all()),
+
+                           }
+                    }
+            )
+
+
+        response = render(request, template, context)
+        _save_parameters_cookies(response, pagesize, orderby, request)
+        return response
+
+
+
 
     def newproject(request):
         raise Exception("page not available in interactive mode")
