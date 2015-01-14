@@ -757,7 +757,7 @@ class BuildInfoHelper(object):
 
         # Save build configuration
         data = self.server.runCommand(["getAllKeysWithFlags", ["doc", "func"]])[0]
-        self.orm_wrapper.save_build_variables(build_obj, [])
+        self.orm_wrapper.save_build_variables(build_obj, data)
 
         return self.brbe
 
