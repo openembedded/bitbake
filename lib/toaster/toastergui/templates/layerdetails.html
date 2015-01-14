@@ -160,26 +160,7 @@
                     </form>
                     <i class="icon-pencil"></i>
                   </dd>
-                  <dt>
-                    <i class="icon-question-sign get-help" title="The Yocto Project versions with which this layer is compatible. Currently Toaster supports Yocto Project 1.6 and 1.7"></i>
-                    Yocto Project compatibility
-                  </dt>
-                  <dd>
-                    <span class="current-value">{{layerversion.up_branch.name}}</span>
-                    <form style="display:none">
-                      <div class="input-append">
-                        <select name="projectversion" id="projectversion">
-                          {% for compat in yocto_compat %}
-                          <option value="{{compat.id}}" {%if layerversion.up_branch.id == compat.id %} selected{%endif%}>{{compat.name}}</option>
-                          {% endfor %}
-                        </select>
-                        <button  data-layer-prop="up_branch" class="btn change-btn" type="button">Save</button>
-                        <a href="#" style="display:none" class="btn btn-link cancel">Cancel</a>
-                      </div>
-                    </form>
-                    <i class="icon-pencil"></i>
-                  </dd>
-                  <dt>
+                 <dt>
                     <i class="icon-question-sign get-help" title="Other layers this layer depends upon"></i>
                     Layer dependencies
                   </dt>

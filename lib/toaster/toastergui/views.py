@@ -2524,7 +2524,6 @@ if toastermain.settings.MANAGED:
         context = {
             'layerversion': layer_version,
             'layer_in_project' : ProjectLayer.objects.filter(project_id=request.session['project_id'],layercommit=layerid).count(),
-            'yocto_compat': Branch.objects.filter(layer_source=layer_version.layer_source),
             'machines': machines,
             'targets': targets,
             'total_targets': Recipe.objects.filter(layer_version=layer_version).count(),
