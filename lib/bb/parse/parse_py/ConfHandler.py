@@ -27,7 +27,7 @@
 import re, os
 import logging
 import bb.utils
-from bb.parse import ParseError, resolve_file, ast, logger
+from bb.parse import ParseError, resolve_file, ast, logger, handle
 
 __config_regexp__  = re.compile( r"""
     ^
@@ -75,7 +75,6 @@ def include(parentfn, fn, lineno, data, error_out):
     if parentfn == fn: # prevent infinite recursion
         return None
 
-    import bb
     fn = data.expand(fn)
     parentfn = data.expand(parentfn)
 
@@ -84,17 +83,16 @@ def include(parentfn, fn, lineno, data, error_out):
         bbpath = "%s:%s" % (dname, data.getVar("BBPATH", True))
         abs_fn, attempts = bb.utils.which(bbpath, fn, history=True)
         if abs_fn and bb.parse.check_dependency(data, abs_fn):
-            bb.warn("Duplicate inclusion for %s in %s" % (abs_fn, data.getVar('FILE', True)))
+            logger.warn("Duplicate inclusion for %s in %s" % (abs_fn, data.getVar('FILE', True)))
         for af in attempts:
             bb.parse.mark_dependency(data, af)
         if abs_fn:
             fn = abs_fn
     elif bb.parse.check_dependency(data, fn):
-        bb.warn("Duplicate inclusion for %s in %s" % (fn, data.getVar('FILE', True)))
+        logger.warn("Duplicate inclusion for %s in %s" % (fn, data.getVar('FILE', True)))
 
-    from bb.parse import handle
     try:
-        ret = handle(fn, data, True)
+        ret = bb.parse.handle(fn, data, True)
     except (IOError, OSError):
         if error_out:
             raise ParseError("Could not %(error_out)s file %(fn)s" % vars(), parentfn, lineno)
