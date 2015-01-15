@@ -122,11 +122,13 @@ class BBCooker:
         self.configuration = configuration
 
         self.configwatcher = pyinotify.WatchManager()
+        self.configwatcher.bbseen = []
         self.confignotifier = pyinotify.Notifier(self.configwatcher, self.config_notifications)
         self.watchmask = pyinotify.IN_CLOSE_WRITE | pyinotify.IN_CREATE | pyinotify.IN_DELETE | \
                          pyinotify.IN_DELETE_SELF | pyinotify.IN_MODIFY | pyinotify.IN_MOVE_SELF | \
                          pyinotify.IN_MOVED_FROM | pyinotify.IN_MOVED_TO 
         self.watcher = pyinotify.WatchManager()
+        self.watcher.bbseen = []
         self.notifier = pyinotify.Notifier(self.watcher, self.notifications)
 
 
@@ -181,6 +183,9 @@ class BBCooker:
             watcher = self.watcher
         for i in deps:
             f = i[0]
+            if f in watcher.bbseen:
+                continue
+            watcher.bbseen.append(f)
             while True:
                 # We try and add watches for files that don't exist but if they did, would influence
                 # the parser. The parent directory of these files may not exist, in which case we need 
@@ -191,6 +196,7 @@ class BBCooker:
                 except pyinotify.WatchManagerError as e:
                     if 'ENOENT' in str(e):
                         f = os.path.dirname(f)
+                        watcher.bbseen.append(f)
                         continue
                     raise
 
