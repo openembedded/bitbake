@@ -66,21 +66,21 @@ def init(data):
 def supports(fn, d):
     return fn[-5:] == ".conf"
 
-def include(oldfn, fn, lineno, data, error_out):
+def include(parentfn, fn, lineno, data, error_out):
     """
     error_out: A string indicating the verb (e.g. "include", "inherit") to be
     used in a ParseError that will be raised if the file to be included could
     not be included. Specify False to avoid raising an error in this case.
     """
-    if oldfn == fn: # prevent infinite recursion
+    if parentfn == fn: # prevent infinite recursion
         return None
 
     import bb
     fn = data.expand(fn)
-    oldfn = data.expand(oldfn)
+    parentfn = data.expand(parentfn)
 
     if not os.path.isabs(fn):
-        dname = os.path.dirname(oldfn)
+        dname = os.path.dirname(parentfn)
         bbpath = "%s:%s" % (dname, data.getVar("BBPATH", True))
         abs_fn, attempts = bb.utils.which(bbpath, fn, history=True)
         if abs_fn and bb.parse.check_dependency(data, abs_fn):
@@ -97,7 +97,7 @@ def include(oldfn, fn, lineno, data, error_out):
         ret = handle(fn, data, True)
     except (IOError, OSError):
         if error_out:
-            raise ParseError("Could not %(error_out)s file %(fn)s" % vars(), oldfn, lineno)
+            raise ParseError("Could not %(error_out)s file %(fn)s" % vars(), parentfn, lineno)
         logger.debug(2, "CONF file '%s' not found", fn)
         bb.parse.mark_dependency(data, fn)
 
