@@ -104,6 +104,8 @@ class BuildRequest(models.Model):
         (REQ_DELETED, "deleted"),
     )
 
+    search_allowed_fields = ("brtarget__target",)
+
     project     = models.ForeignKey(Project)
     build       = models.OneToOneField(Build, null = True)     # TODO: toasterui should set this when Build is created
     environment = models.ForeignKey(BuildEnvironment, null = True)

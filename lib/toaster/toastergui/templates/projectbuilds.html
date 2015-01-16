@@ -9,40 +9,72 @@
 {% block projectinfomain %}
                 <div class="page-header">
                     <h1>
-                        All builds
-                        <i class="icon-question-sign get-help heading-help" title="This page lists all the layers compatible with Yocto Project 1.7 'Dxxxx' that Toaster knows about. They include community-created layers suitable for use on top of OpenEmbedded Core and any layers you have imported"></i>
-                     </h1>
-                </div>
-                <!--div class="alert">
-                    <div class="input-append" style="margin-bottom:0px;">
-                        <input class="input-xxlarge" type="text" placeholder="Search layers" value="browser" />
-                        <a class="add-on btn">
-                            <i class="icon-remove"></i>
-                        </a>
-                        <button class="btn" type="button">Search</button>
-                        <a class="btn btn-link" href="#">Show all layers</a>
-                    </div>
-                </div-->
-                <div id="layer-added" class="alert alert-info lead" style="display:none;"></div>
-                <div id="layer-removed" class="alert alert-info lead" style="display:none;">
-                    <button type="button" class="close" data-dismiss="alert">&times;</button>
-                    <strong>1</strong> layer deleted from <a href="project-with-targets.html">your project</a>: <a href="#">meta-aarch64</a>
+ {% if objects.paginator.count == 0 %}
+                     No builds found
+
+ {% else %}
+	{% if  request.GET.filter or request.GET.search  %}
+			{{objects.paginator.count}} builds found
+	{% else %}
+                        Project builds <small>({{objects.paginator.count}})</small>
+	{% endif %}
+ {% endif %}
+                        <i class="icon-question-sign get-help heading-help" title="This page lists all the builds for the current project"></i>
+                    </h1>
                 </div>
 
 
-{% include "basetable_top.html" %}
-    {% for build in objects %}
+ {% if objects.paginator.count == 0 %}
+    <div class="row-fluid">
+      <div class="alert">
+        <form class="no-results input-append" id="searchform">
+            <input id="search" name="search" class="input-xxlarge" type="text" value="{{request.GET.search}}"/>{% if request.GET.search %}<a href="javascript:$('#search').val('');searchform.submit()" class="add-on btn" tabindex="-1"><i class="icon-remove"></i></a>{% endif %}
+            <button class="btn" type="submit" value="Search">Search</button>
+            <button class="btn btn-link" onclick="javascript:$('#search').val('');searchform.submit()">Show all builds</button>
+        </form>
+      </div>
+    </div>
+
+
+ {% else %}
+
+  {% include "basetable_top.html" %}
+        <!-- Table data rows; the order needs to match the order of "tablecols" definitions; and the <td class value needs to match the tablecols clclass value for show/hide buttons to work -->
+        {% for br in objects %}{% if br.build %}  {% with build=br.build %} {# if we have a build, just display it #}
         <tr class="data">
             <td class="outcome"><a href="{% url "builddashboard" build.id %}">{%if build.outcome == build.SUCCEEDED%}<i class="icon-ok-sign success"></i>{%elif build.outcome == build.FAILED%}<i class="icon-minus-sign error"></i>{%else%}{%endif%}</a></td>
             <td class="target">{% for t in build.target_set.all %} <a href="{% url "builddashboard" build.id %}"> {{t.target}} </a> <br />{% endfor %}</td>
             <td class="machine"><a href="{% url "builddashboard" build.id %}">{{build.machine}}</a></td>
             <td class="started_on"><a href="{% url "builddashboard" build.id %}">{{build.started_on|date:"d/m/y H:i"}}</a></td>
             <td class="completed_on"><a href="{% url "builddashboard" build.id %}">{{build.completed_on|date:"d/m/y H:i"}}</a></td>
-            <td class="failed_tasks error">{% query build.task_build outcome=4 order__gt=0 as exectask%}{% if exectask.count == 1 %}<a href="{% url "task" build.id exectask.0.id %}">{{exectask.0.recipe.name}}.{{exectask.0.task_name}}</a>{% elif exectask.count > 1%}<a href="{% url "tasks" build.id %}?filter=outcome%3A4">{{exectask.count}}</a>{%endif%}</td>
-            <td class="errors_no">{% if  build.errors_no %}<a class="errors_no error" href="{% url "builddashboard" build.id %}#errors">{{build.errors_no}} error{{build.errors_no|pluralize}}</a>{%endif%}</td>
+            <td class="failed_tasks error">
+                {% query build.task_build outcome=4 order__gt=0 as exectask%}
+                    {% if exectask.count == 1 %}
+                        <a href="{% url "task" build.id exectask.0.id %}">{{exectask.0.recipe.name}}.{{exectask.0.task_name}}</a>
+                      {% if MANAGED and build.project %}
+                        <a href="{% url 'build_artifact' build.id "tasklogfile" exectask.0.id %}">
+                            <i class="icon-download-alt" title="" data-original-title="Download task log file"></i>
+                        </a>
+                      {% endif %}
+                    {% elif exectask.count > 1%}
+                        <a href="{% url "tasks" build.id %}?filter=outcome%3A4">{{exectask.count}} task{{exectask.count|pluralize}}</a>
+                    {%endif%}
+            </td>
+            <td class="errors_no">
+                {% if  build.errors_no %}
+                    <a class="errors_no error" href="{% url "builddashboard" build.id %}#errors">{{build.errors_no}} error{{build.errors_no|pluralize}}</a>
+                    {% if MANAGED and build.project %}
+                        <a href="{% url 'build_artifact' build.id "cookerlog" build.id %}">
+                            <i class="icon-download-alt" title="" data-original-title="Download build log"></i>
+                        </a>
+                    {% endif %}
+                {%endif%}
+            </td>
             <td class="warnings_no">{% if  build.warnings_no %}<a class="warnings_no warning" href="{% url "builddashboard" build.id %}#warnings">{{build.warnings_no}} warning{{build.warnings_no|pluralize}}</a>{%endif%}</td>
             <td class="time"><a href="{% url "buildtime" build.id %}">{{build.timespent|sectohms}}</a></td>
-            <td class="log">{{build.cooker_log_path}}</td>
+            {% if not MANAGED or not build.project %}
+                <td class="log">{{build.cooker_log_path}}</td>
+            {% endif %}
             <td class="output">
               {% if build.outcome == build.SUCCEEDED %}
               <a href="{%url "builddashboard" build.id%}#images">{{fstypes|get_dict_value:build.id}}</a>
@@ -50,10 +82,44 @@
             </td>
         </tr>
 
-    {% endfor %}
-{% include "basetable_bottom.html" %}
 
-    <!-- Modals -->
+              {%endwith%}
+      {% else %} {# we don't have a build for this build request, mask the data with build request data #}
 
+
+
+        <tr class="data">
+            <td class="outcome">{% if buildrequest.state == buildrequest.REQ_FAILED %}<i class="icon-minus-sign error"></i>{%else%}FIXME_build_request_state{%endif%}</td>
+            <td class="target">
+                <span data-toggle="tooltip" {%if br.brtarget_set.all.count > 1%}title="Targets: {%for target in br.brtarget_set.all%}{{target.target}} {%endfor%}"{%endif%}>{{br.brtarget_set.all.0.target}} {%if br.brtarget_set.all.count > 1%}(+ {{br.brtarget_set.all.count|add:"-1"}}){%endif%} </span>
+            </td>
+            <td class="machine">
+                {{br.machine}}
+            </td>
+            <td class="started_on">
+                {{br.created|date:"d/m/y H:i"}}
+            </td>
+            <td class="completed_on">
+                {{br.updated|date:"d/m/y H:i"}}
+            </td>
+            <td class="failed_tasks error">
+                {{br.brerror_set.all.0.errmsg|whitespace_slice:":32"}}
+            </td>
+            <td class="errors_no">
+            </td>
+            <td class="warnings_no">
+            </td>
+            <td class="time">
+                {{br.timespent.total_seconds|sectohms}}
+            </td>
+            <td class="output"> {# we have no output here #}
+            </td>
+        </tr>
+          {%endif%}
+        {% endfor %}
+
+
+  {% include "basetable_bottom.html" %}
+{% endif %}
 
 {% endblock %}
