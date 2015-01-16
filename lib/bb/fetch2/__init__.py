@@ -1201,9 +1201,9 @@ class FetchMethod(object):
             bb.fatal("Invalid value for 'unpack' parameter for %s: %s" %
                      (file, urldata.parm.get('unpack')))
 
-        dots = file.split(".")
-        if dots[-1] in ['gz', 'bz2', 'Z', 'xz', 'lz']:
-            efile = os.path.join(rootdir, os.path.basename('.'.join(dots[0:-1])))
+        base, ext = os.path.splitext(file)
+        if ext in ['.gz', '.bz2', '.Z', '.xz', '.lz']:
+            efile = os.path.join(rootdir, os.path.basename(base))
         else:
             efile = file
         cmd = None
