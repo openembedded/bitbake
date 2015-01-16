@@ -2270,6 +2270,55 @@ if toastermain.settings.MANAGED:
             return HttpResponse(jsonfilter({"error":str(e) + "\n" + traceback.format_exc()}), content_type = "application/json")
 
 
+    def xhr_configvaredit(request, pid):
+        try:
+            prj = Project.objects.get(id = pid)
+            # add conf variables
+            if 'configvarAdd' in request.POST:
+                t=request.POST['configvarAdd'].strip()
+                if ":" in t:
+                    variable, value = t.split(":")
+                else:
+                    variable = t
+                    value = ""
+
+                pt, created = ProjectVariable.objects.get_or_create(project = prj, name = variable, value = value)
+            # change conf variables
+            if 'configvarChange' in request.POST:
+                t=request.POST['configvarChange'].strip()
+                if ":" in t:
+                    variable, value = t.split(":")
+                else:
+                    variable = t
+                    value = ""
+
+                try:
+                    pt = ProjectVariable.objects.get(project = prj, name = variable)
+                    pt.value=value
+                    pt.save()
+                except ObjectDoesNotExist:
+                    print("the entry doesn't exist.")
+            # remove conf variables
+            if 'configvarDel' in request.POST:
+                t=request.POST['configvarDel'].strip()
+                pt = ProjectVariable.objects.get(pk = int(t)).delete()
+
+            # return all project settings
+            vars_managed,vars_fstypes,vars_blacklist = get_project_configvars_context()
+            return HttpResponse(json.dumps( {
+                "error": "ok",
+                'configvars'   : map(lambda x: (x.name, x.value, x.pk), ProjectVariable.objects.filter(project_id = pid).all()),
+                'distro'       : ProjectVariable.objects.get(project = prj, name = "DISTRO").value,
+                'fstypes'      : ProjectVariable.objects.get(project = prj, name = "IMAGE_FSTYPES").value,
+                'image_install_append': ProjectVariable.objects.get(project = prj, name = "IMAGE_INSTALL_append").value,
+                'package_classes': ProjectVariable.objects.get(project = prj, name = "PACKAGE_CLASSES").value,
+                'sdk_machine'  : ProjectVariable.objects.get(project = prj, name = "SDKMACHINE").value,
+               }), content_type = "application/json")
+
+        except Exception as e:
+            return HttpResponse(json.dumps({"error":str(e) + "\n" + traceback.format_exc()}), content_type = "application/json")
+
+
     def xhr_importlayer(request):
         if (not request.POST.has_key('vcs_url') or
             not request.POST.has_key('name') or
@@ -2737,11 +2786,66 @@ if toastermain.settings.MANAGED:
 
         return render(request, template, context)
 
+
+    def get_project_configvars_context():
+        # Vars managed outside of this view
+        vars_managed = {
+            'MACHINE'
+        }
+
+        vars_blacklist  = {
+            'DL_DR','PARALLEL_MAKE','BB_NUMBER_THREADS','SSTATE_DIR',
+			'BB_DISKMON_DIRS','BB_NUMBER_THREADS','CVS_PROXY_HOST','CVS_PROXY_PORT',
+			'DL_DIR','PARALLEL_MAKE','SSTATE_DIR','SSTATE_DIR','SSTATE_MIRRORS','TMPDIR',
+			'all_proxy','ftp_proxy','http_proxy ','https_proxy'
+			}
+
+        vars_fstypes  = {
+            'btrfs','cpio','cpio.gz','cpio.lz4','cpio.lzma','cpio.xz','cramfs',
+            'elf','ext2','ext2.bz2','ext2.gz','ext2.lzma' 'ext3','ext3.gz','hddimg',
+            'iso','jffs2','jffs2.sum','squashfs','squashfs-lzo','squashfs-xz','tar.bz2',
+            'tar.lz4','tar.xz','tartar.gz','ubi','ubifs','vmdk'
+        }
+
+        return(vars_managed,sorted(vars_fstypes),vars_blacklist)
+
     def projectconf(request, pid):
         template = "projectconf.html"
+
+        try:
+            prj = Project.objects.get(id = pid)
+        except Project.DoesNotExist:
+            return HttpResponseNotFound("<h1>Project id " + pid + " is unavailable</h1>")
+
+        vars_managed,vars_fstypes,vars_blacklist = get_project_configvars_context()
         context = {
-            'configvars': ProjectVariable.objects.filter(project_id = pid),
+            'configvars':       ProjectVariable.objects.filter(project_id = pid).all(),
+            'vars_managed':     vars_managed,
+            'vars_fstypes':     vars_fstypes,
+            'vars_blacklist':   vars_blacklist,
         }
+
+        try:
+            context['distro'] =  ProjectVariable.objects.get(project = prj, name = "DISTRO").value
+        except ProjectVariable.DoesNotExist:
+            pass
+        try:
+            context['fstypes'] =  ProjectVariable.objects.get(project = prj, name = "IMAGE_FSTYPES").value
+        except ProjectVariable.DoesNotExist:
+            pass
+        try:
+            context['image_install_append'] =  ProjectVariable.objects.get(project = prj, name = "IMAGE_INSTALL_append").value
+        except ProjectVariable.DoesNotExist:
+            pass
+        try:
+            context['package_classes'] =  ProjectVariable.objects.get(project = prj, name = "PACKAGE_CLASSES").value
+        except ProjectVariable.DoesNotExist:
+            pass
+        try:
+            context['sdk_machine'] =  ProjectVariable.objects.get(project = prj, name = "SDKMACHINE").value
+        except ProjectVariable.DoesNotExist:
+            pass
+
         return render(request, template, context)
 
     def projectbuilds(request, pid):
