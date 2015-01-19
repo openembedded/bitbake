@@ -1725,10 +1725,10 @@ if toastermain.settings.MANAGED:
             return _redirect_parameters( builds, request.GET, e.response)
 
         context['tablecols'].append(
-                    {'name': 'Project', 'clclass': 'project',
+                    {'name': 'Project', 'clclass': 'projectx',
                      'filter': {'class': 'project',
                             'label': 'Project:',
-                            'options':  map(lambda x: (x.name,'',x.build_set.filter(outcome__lt=BuildRequest.REQ_INPROGRESS).count()), Project.objects.all()),
+                            'options':  map(lambda x: (x.name,'project:%d' % x.id,x.build_set.filter(outcome__lt=BuildRequest.REQ_INPROGRESS).count()), Project.objects.all()),
 
                            }
                     }
@@ -3152,6 +3152,14 @@ else:
                                              ]
                                 }
                     },
+                    {'name': 'Log',
+                     'dclass': "span4",
+                     'qhelp': "Path to the build main log file",
+                     'clclass': 'log', 'hidden': 1,
+                     'orderfield': _get_toggle_order(request, "cooker_log_path"),
+                     'ordericon':_get_toggle_order_icon(request, "cooker_log_path"),
+                     'orderkey' : 'cooker_log_path',
+                    },
                     {'name': 'Time', 'clclass': 'time', 'hidden' : 1,
                      'qhelp': "How long it took the build to finish",
                      'orderfield': _get_toggle_order(request, "timespent", True),
@@ -3164,31 +3172,6 @@ else:
                     },
                     ]
                 }
-
-        if not toastermain.settings.MANAGED:
-            context['tablecols'].insert(-2,
-                    {'name': 'Log1',
-                     'dclass': "span4",
-                     'qhelp': "Path to the build main log file",
-                     'clclass': 'log', 'hidden': 1,
-                     'orderfield': _get_toggle_order(request, "cooker_log_path"),
-                     'ordericon':_get_toggle_order_icon(request, "cooker_log_path"),
-                     'orderkey' : 'cooker_log_path',
-                    }
-            )
-
-
-        if toastermain.settings.MANAGED:
-            context['tablecols'].append(
-                    {'name': 'Project', 'clclass': 'project',
-                     'filter': {'class': 'project',
-                            'label': 'Project:',
-                            'options':  map(lambda x: (x.name,'',x.build_set.filter(outcome__lt=Build.IN_PROGRESS).count()), Project.objects.all()),
-
-                           }
-                    }
-            )
-
 
         response = render(request, template, context)
         _save_parameters_cookies(response, pagesize, orderby, request)
