@@ -328,7 +328,7 @@ class Wget(FetchMethod):
         if version:
             package_custom_regex_comp = re.compile(
                 "(?P<name>%s)(?P<ver>%s)(?P<arch>%s)?[\.\-](?P<type>%s)$" %
-                (version[0], pver_regex, parch_regex, psuffix_regex))
+                (re.escape(version[0]), pver_regex, parch_regex, psuffix_regex))
 
         return package_custom_regex_comp
 
