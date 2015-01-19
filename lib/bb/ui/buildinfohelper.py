@@ -1135,6 +1135,7 @@ class BuildInfoHelper(object):
             return
 
         if 'build' in self.internal_state and 'backlog' in self.internal_state:
+            # if we have a backlog of events, do our best to save them here
             if len(self.internal_state['backlog']):
                 tempevent = self.internal_state['backlog'].pop()
                 logger.debug(1, "buildinfohelper: Saving stored event %s " % tempevent)
@@ -1164,5 +1165,11 @@ class BuildInfoHelper(object):
             self._store_build_done(errorcode)
 
         if 'backlog' in self.internal_state:
-            for event in self.internal_state['backlog']:
-                   logger.error("Unsaved log: %s", event.msg)
+            if 'build' in self.internal_state:
+                # we save missed events in the database for the current build
+                tempevent = self.internal_state['backlog'].pop()
+                self.store_log_event(tempevent)
+            else:
+                # we have no build, and we still have events; something amazingly wrong happend
+                for event in self.internal_state['backlog']:
+                   logger.error("UNSAVED log: %s", event.msg)
