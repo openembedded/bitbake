@@ -2560,7 +2560,10 @@ if toastermain.settings.MANAGED:
             ]
         }
 
-        return render(request, template, context)
+        response = render(request, template, context)
+        _save_parameters_cookies(response, pagesize, orderby, request)
+
+        return response
 
     def layerdetails(request, layerid):
         template = "layerdetails.html"
@@ -2626,7 +2629,7 @@ if toastermain.settings.MANAGED:
         (filter_string, search_term, ordering_string) = _search_tuple(request, Recipe)
 
         prj = Project.objects.get(pk = request.session['project_id'])
-        queryset_all = Recipe.objects.filter(Q(layer_version__up_branch__name= prj.release.name) | Q(layer_version__build__in = prj.build_set.all()))
+        queryset_all = Recipe.objects.filter(Q(layer_version__up_branch__name= prj.release.name) | Q(layer_version__build__in = prj.build_set.all())).filter(name__regex=r'.{1,}.*')
 
         queryset_with_search = _get_queryset(Recipe, queryset_all, None, search_term, ordering_string, '-name')
 
@@ -2711,8 +2714,10 @@ if toastermain.settings.MANAGED:
                     }
                 }, ]
 
+        response = render(request, template, context)
+        _save_parameters_cookies(response, pagesize, orderby, request)
 
-        return render(request, template, context)
+        return response
 
     def machines(request):
         template = "machines.html"
@@ -2783,8 +2788,10 @@ if toastermain.settings.MANAGED:
 
             ]
         }
+        response = render(request, template, context)
+        _save_parameters_cookies(response, pagesize, orderby, request)
 
-        return render(request, template, context)
+        return response
 
 
     def get_project_configvars_context():
