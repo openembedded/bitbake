@@ -1743,7 +1743,8 @@ if toastermain.settings.MANAGED:
     # helper function, to be used on "all builds" and "project builds" pages
     def _build_list_helper(request, buildrequests):
         # ATTN: we use here the ordering parameters for interactive mode; the translation for BuildRequest fields will happen below
-        (pagesize, orderby) = _get_parameters_values(request, 10, 'completed_on:-')
+        default_orderby = 'completed_on:-'
+        (pagesize, orderby) = _get_parameters_values(request, 10, default_orderby)
         mandatory_parameters = { 'count': pagesize,  'page' : 1, 'orderby' : orderby }
         retval = _verify_parameters( request.GET, mandatory_parameters )
         if retval:
@@ -1764,6 +1765,9 @@ if toastermain.settings.MANAGED:
             ordering_params[0] = "build__machine"
         if ordering_params[0] == "target__target":
             ordering_params[0] = "brtarget__target"
+        if ordering_params[0] == "timespent":
+            ordering_params[0] = "id"
+            orderby = default_orderby
 
         request.GET = request.GET.copy()        # get a mutable copy of the GET QueryDict
         request.GET['orderby'] = ":".join(ordering_params)
@@ -3202,6 +3206,9 @@ else:
         raise Exception("page not available in interactive mode")
 
     def xhr_datatypeahead(request):
+        raise Exception("page not available in interactive mode")
+
+    def xhr_configvaredit(request):
         raise Exception("page not available in interactive mode")
 
     def importlayer(request):
