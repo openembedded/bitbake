@@ -198,6 +198,11 @@ class BBCooker:
                         f = os.path.dirname(f)
                         watcher.bbseen.append(f)
                         continue
+                    if 'ENOSPC' in str(e):
+                        providerlog.error("No space left on device or exceeds fs.inotify.max_user_watches?")
+                        providerlog.error("To check max_user_watches: sysctl -n fs.inotify.max_user_watches.")
+                        providerlog.error("To modify max_user_watches: sysctl -n -w fs.inotify.max_user_watches=<value>.")
+                        providerlog.error("Root privilege is required to modify max_user_watches.")
                     raise
 
     def sigterm_exception(self, signum, stackframe):
