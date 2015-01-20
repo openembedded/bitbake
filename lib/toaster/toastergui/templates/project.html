@@ -92,7 +92,7 @@ vim: expandtab tabstop=2
     <form class="build-form" ng-submit="buildNamedTarget()">
       <div class="input-append controls">
         <input type="text" class="huge span7" placeholder="Type the target(s) you want to build" autocomplete="off" ng-model="targetName" typeahead="e.name for e in getAutocompleteSuggestions('targets', $viewValue)|filter:$viewValue" typeahead-template-url="suggestion_details" ng-disabled="!layers.length"/>
-        <button type="submit" id="build-button" class="btn btn-large btn-primary" ng-disabled="!targetName.length">
+        <button type="submit" class="btn btn-large btn-primary" ng-disabled="!targetName.length">
         Build
         </button>
       </div>
@@ -289,7 +289,7 @@ vim: expandtab tabstop=2
         <form ng-submit="buildNamedTarget()">
           <div class="input-append">
             <input type="text" class="input-xlarge" placeholder="Type the target(s) you want to build" autocomplete="off" data-minLength="1"  ng-model="targetName1" typeahead="e.name for e in getAutocompleteSuggestions('targets', $viewValue)|filter:$viewValue" typeahead-template-url="suggestion_details" ng-disabled="!layers.length">
-            <button type="submit" id="build-button" class="btn btn-primary" ng-disabled="!targetName1.length">
+            <button type="submit" class="btn btn-primary" ng-disabled="!targetName1.length">
               Build </button>
           </div>
           {% csrf_token %}
@@ -306,7 +306,7 @@ vim: expandtab tabstop=2
             </label>
           </li>
         </ul>
-        <button class="btn btn-large btn-primary" ng-disabled="selectedMostBuildTargets()">Build selected targets</button>
+        <button class="btn btn-large btn-primary" ng-disabled="enableBuildSelectedTargets()" ng-click="buildSelectedTargets()">Build selected targets</button>
         </div>
     </div>
 
