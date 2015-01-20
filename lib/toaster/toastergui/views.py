@@ -2494,9 +2494,12 @@ if toastermain.settings.MANAGED:
 
         queryset_all = _get_queryset(Layer_Version, queryset_all, filter_string, search_term, ordering_string, '-layer__name')
 
+        object_list = set([x.get_equivalents_wpriority(prj)[0] for x in queryset_all])
+        object_list = list(object_list)
+
 
         # retrieve the objects that will be displayed in the table; layers a paginator and gets a page range to display
-        layer_info = _build_page_range(Paginator(queryset_all, request.GET.get('count', 10)),request.GET.get('page', 1))
+        layer_info = _build_page_range(Paginator(object_list, request.GET.get('count', 10)),request.GET.get('page', 1))
 
 
         context = {
@@ -2504,7 +2507,7 @@ if toastermain.settings.MANAGED:
             'objects' : layer_info,
             'objectname' : "layers",
             'default_orderby' : 'layer__name:+',
-            'total_count': queryset_all.count(),
+            'total_count': len(object_list),
 
             'tablecols' : [
                 {   'name': 'Layer',
