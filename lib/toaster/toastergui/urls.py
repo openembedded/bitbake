@@ -77,7 +77,7 @@ urlpatterns = patterns('toastergui.views',
         url(r'^layers/$', 'layers', name='layers'),
         url(r'^layer/(?P<layerid>\d+)/$', 'layerdetails', name='layerdetails'),
         url(r'^layer/$', 'layerdetails', name='layerdetails'),
-        url(r'^targets/$', 'targets', name='targets'),
+        url(r'^targets/$', 'targets', name='all-targets'),
         url(r'^machines/$', 'machines', name='machines'),
 
         url(r'^projects/$', 'projects', name='all-projects'),

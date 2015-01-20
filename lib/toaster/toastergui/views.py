@@ -2625,7 +2625,7 @@ if toastermain.settings.MANAGED:
         mandatory_parameters = { 'count': pagesize,  'page' : 1, 'orderby' : orderby }
         retval = _verify_parameters( request.GET, mandatory_parameters )
         if retval:
-            return _redirect_parameters( 'targets', request.GET, mandatory_parameters)
+            return _redirect_parameters( 'all-targets', request.GET, mandatory_parameters)
         (filter_string, search_term, ordering_string) = _search_tuple(request, Recipe)
 
         prj = Project.objects.get(pk = request.session['project_id'])

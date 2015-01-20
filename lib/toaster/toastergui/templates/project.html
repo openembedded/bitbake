@@ -98,7 +98,7 @@ vim: expandtab tabstop=2
       </div>
       <i class="icon-question-sign get-help get-help-blue" title="Type the name of one or more targets you want to build, separated by a space. You can also specify a task by appending a semicolon and a task name to a target name, like so: <code>core-image-minimal:do_build</code>"></i>
       <p>
-        <a href="{% url 'targets' %}">
+        <a href="{% url 'all-targets' %}">
           View all targets
         </a>
         {% if completedbuilds.count %}
