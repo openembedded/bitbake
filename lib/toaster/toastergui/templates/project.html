@@ -294,7 +294,8 @@ vim: expandtab tabstop=2
           </div>
           {% csrf_token %}
         </form>
-        <p><a href="{% url 'targets' %}">View all targets</a></p>
+        <p>
+          <a href="{% url 'all-targets' %}">View all targets</a></p>
         <div ng-if="frequenttargets.length">
         <h4 class="air">
             Most built targets
