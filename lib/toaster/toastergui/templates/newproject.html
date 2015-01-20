@@ -22,18 +22,24 @@
                 <i class="icon-question-sign get-help" title="The version of the build system you want to use"></i>
               </label>
               <select name="projectversion" id="projectversion">
-  {% for release in releases %}
-    <option value="{{release.id}}"{%if projectversion == release.id %} selected{%endif%}>{{release.description}}</option>
-  {% endfor %}
+          {% for release in releases %}
+            <option value="{{release.id}}"
+                {%if defaultbranch == release.name %}
+                selected
+            {%endif%}
+
+             >{{release.description}}</option>
+          {% endfor %}
               </select>
-  {% for release in releases %}
-    <div class="row-fluid helptext" id="description-{{release.id}}" style="display: none">
-        <span class="help-block span5">{{release.helptext|safe}}</span>
-    </div>
-  {% endfor %}
+         {% for release in releases %}
+             <div class="row-fluid helptext" id="description-{{release.id}}" style="display: none">
+                <span class="help-block span5">{{release.helptext|safe}}</span>
+           </div>
+         {% endfor %}
        {% else %}
-    <input type="hidden" name="projectversion" value="{{releases.0.id}}"/>
+        <input type="hidden" name="projectversion" value="{{releases.0.id}}"/>
        {% endif %}
+
             </fieldset>
 
             <div class="form-actions">
@@ -82,11 +88,11 @@
             $("#description-" + selected_release).show();
 
 
-			$('select').change(function(){
-				var new_release = $('select').val();
+            $('select').change(function(){
+                var new_release = $('select').val();
                 $(".helptext").hide();
-				$('#description-' + new_release).fadeIn();
-			});
+                $('#description-' + new_release).fadeIn();
+            });
         })
     </script>
 </div>
