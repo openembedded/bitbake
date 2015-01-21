@@ -564,7 +564,7 @@ class BBCooker:
             fn = self.matchFile(fn)
             fn = bb.cache.Cache.realfn2virtual(fn, cls)
         elif len(pkgs_to_build) == 1:
-            ignore = self.data.getVar("ASSUME_PROVIDED", True) or ""
+            ignore = self.expanded_data.getVar("ASSUME_PROVIDED", True) or ""
             if pkgs_to_build[0] in set(ignore.split()):
                 bb.fatal("%s is in ASSUME_PROVIDED" % pkgs_to_build[0])
 
@@ -1484,7 +1484,7 @@ class BBCooker:
         if len(pkgs_to_build) == 0:
             raise NothingToBuild
 
-        ignore = (self.data.getVar("ASSUME_PROVIDED", True) or "").split()
+        ignore = (self.expanded_data.getVar("ASSUME_PROVIDED", True) or "").split()
         for pkg in pkgs_to_build:
             if pkg in ignore:
                 parselog.warn("Explicit target \"%s\" is in ASSUME_PROVIDED, ignoring" % pkg)
