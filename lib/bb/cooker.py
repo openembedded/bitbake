@@ -489,9 +489,29 @@ class BBCooker:
 
         self.handleCollections( self.data.getVar("BBFILE_COLLECTIONS", True) )
 
-    def updateConfigOpts(self,options):
+    def updateConfigOpts(self, options, environment):
         for o in options:
             setattr(self.configuration, o, options[o])
+        clean = True
+        for k in bb.utils.approved_variables():
+            if k in environment and k not in self.configuration.env:
+                logger.debug(1, "Updating environment variable %s to %s" % (k, environment[k]))
+                self.configuration.env[k] = environment[k]
+                clean = False
+            if k in self.configuration.env and k not in environment:
+                logger.debug(1, "Updating environment variable %s (deleted)" % (k))
+                del self.configuration.env[k]
+                clean = False
+            if k not in self.configuration.env and k not in environment:
+                 continue
+            if environment[k] != self.configuration.env[k]:
+                logger.debug(1, "Updating environment variable %s to %s" % (k, environment[k]))
+                self.configuration.env[k] = environment[k]
+                clean = False
+        if not clean:
+            logger.debug(1, "Base environment change, triggering reparse")
+            self.baseconfig_valid = False        
+            self.reset()
 
     def runCommands(self, server, data, abort):
         """

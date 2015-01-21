@@ -273,7 +273,8 @@ class CommandsSync:
 
     def updateConfig(self, command, params):
         options = params[0]
-        command.cooker.updateConfigOpts(options)
+        environment = params[1]
+        command.cooker.updateConfigOpts(options, environment)
 
 class CommandsAsync:
     """
