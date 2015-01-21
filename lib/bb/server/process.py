@@ -115,7 +115,7 @@ class ProcessServer(Process, BaseImplServer):
                     self.quitout.recv()
                     self.quit = True
 
-                self.idle_commands(.1, [self.event_queue._reader, self.command_channel, self.quitout])
+                self.idle_commands(.1, [self.command_channel, self.quitout])
             except Exception:
                 logger.exception('Running command %s', command)
 
