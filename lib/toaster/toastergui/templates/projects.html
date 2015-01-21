@@ -23,12 +23,12 @@
       <td><a href="{% url 'project' o.id %}">{{o.release.name}}</a></td>
       <td>{{o.get_current_machine_name}}</td>
       <td>{{o.get_number_of_builds}}</td>
-      <td>{{o.get_last_outcome}}</td>
-      <td>{{o.get_last_target}}</td>
-      <td>{{o.get_last_errors}}</td>
-      <td>{{o.get_last_warnings}}</td>
-      <td>{{o.get_last_imgfiles}}</td>
-      <td>{{o.updated|date:"d/m/y H:i"}}</td>
+      <td class="loutcome">{{o.get_last_outcome}}</td>
+      <td class="ltarget">{{o.get_last_target}}</td>
+      <td class="lerrors">{{o.get_last_errors}}</td>
+      <td class="lwarnings">{{o.get_last_warnings}}</td>
+      <td class="limagefiles">{{o.get_last_imgfiles}}</td>
+      <td class="updated">{{o.updated|date:"d/m/y H:i"}}</td>
     </tr>
   {% endfor %}
 {% include "basetable_bottom.html" %}
