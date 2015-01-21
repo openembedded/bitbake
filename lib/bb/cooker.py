@@ -324,11 +324,12 @@ class BBCooker:
 
 
         #
-        # Special updated configuration we use for firing events
+        # Copy of the data store which has been expanded.
+        # Used for firing events and accessing variables where expansion needs to be accounted for
         #
-        self.event_data = bb.data.createCopy(self.data)
-        bb.data.update_data(self.event_data)
-        bb.parse.init_parser(self.event_data)
+        self.expanded_data = bb.data.createCopy(self.data)
+        bb.data.update_data(self.expanded_data)
+        bb.parse.init_parser(self.expanded_data)
 
         if CookerFeatures.BASEDATASTORE_TRACKING in self.featureset:
             self.disableDataTracking()
@@ -1182,7 +1183,7 @@ class BBCooker:
             bf = os.path.abspath(bf)
 
         self.collection = CookerCollectFiles(self.recipecache.bbfile_config_priorities)
-        filelist, masked = self.collection.collect_bbfiles(self.data, self.event_data)
+        filelist, masked = self.collection.collect_bbfiles(self.data, self.expanded_data)
         try:
             os.stat(bf)
             bf = os.path.abspath(bf)
@@ -1272,7 +1273,7 @@ class BBCooker:
         taskdata.add_provider(self.data, self.recipecache, item)
 
         buildname = self.data.getVar("BUILDNAME")
-        bb.event.fire(bb.event.BuildStarted(buildname, [item]), self.event_data)
+        bb.event.fire(bb.event.BuildStarted(buildname, [item]), self.expanded_data)
 
         # Execute the runqueue
         runlist = [[item, "do_%s" % task]]
@@ -1299,7 +1300,7 @@ class BBCooker:
                 return False
 
             if not retval:
-                bb.event.fire(bb.event.BuildCompleted(len(rq.rqdata.runq_fnid), buildname, item, failures), self.event_data)
+                bb.event.fire(bb.event.BuildCompleted(len(rq.rqdata.runq_fnid), buildname, item, failures), self.expanded_data)
                 self.command.finishAsyncCommand(msg)
                 return False
             if retval is True:
@@ -1446,14 +1447,14 @@ class BBCooker:
             if CookerFeatures.SEND_SANITYEVENTS in self.featureset:
                 bb.event.fire(bb.event.SanityCheck(False), self.data)
 
-            ignore = self.data.getVar("ASSUME_PROVIDED", True) or ""
+            ignore = self.expanded_data.getVar("ASSUME_PROVIDED", True) or ""
             self.recipecache.ignored_dependencies = set(ignore.split())
 
             for dep in self.configuration.extra_assume_provided:
                 self.recipecache.ignored_dependencies.add(dep)
 
             self.collection = CookerCollectFiles(self.recipecache.bbfile_config_priorities)
-            (filelist, masked) = self.collection.collect_bbfiles(self.data, self.event_data)
+            (filelist, masked) = self.collection.collect_bbfiles(self.data, self.expanded_data)
 
             self.data.renameVar("__depends", "__base_depends")
             self.add_filewatch(self.data.getVar("__base_depends"), self.configwatcher)
@@ -1513,13 +1514,13 @@ class BBCooker:
         try:
             self.prhost = prserv.serv.auto_start(self.data)
         except prserv.serv.PRServiceConfigError:
-            bb.event.fire(CookerExit(), self.event_data)
+            bb.event.fire(CookerExit(), self.expanded_data)
             self.state = state.error
         return
 
     def post_serve(self):
         prserv.serv.auto_shutdown(self.data)
-        bb.event.fire(CookerExit(), self.event_data)
+        bb.event.fire(CookerExit(), self.expanded_data)
 
     def shutdown(self, force = False):
         if force:
