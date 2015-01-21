@@ -182,7 +182,7 @@ class BBCooker:
         if not watcher:
             watcher = self.watcher
         for i in deps:
-            f = i[0]
+            f = os.path.dirname(i[0])
             if f in watcher.bbseen:
                 continue
             watcher.bbseen.append(f)
