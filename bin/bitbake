@@ -44,8 +44,8 @@ from bb import cookerdata
 __version__ = "1.25.0"
 logger = logging.getLogger("BitBake")
 
-# Python multiprocessing requires /dev/shm
-if not os.access('/dev/shm', os.W_OK | os.X_OK):
+# Python multiprocessing requires /dev/shm on Linux
+if sys.platform.startswith('linux') and not os.access('/dev/shm', os.W_OK | os.X_OK):
     sys.exit("FATAL: /dev/shm does not exist or is not writable")
 
 # Unbuffer stdout to avoid log truncation in the event
