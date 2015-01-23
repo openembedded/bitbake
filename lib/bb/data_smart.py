@@ -429,12 +429,13 @@ class DataSmart(MutableMapping):
                             continue
 
                         if op == "_append":
-                            sval = self.getVar(append, False) or ""
-                            sval += a
-                            self.setVar(append, sval)
+                            apps = self.getVarFlag(append, "_appendactive", False) or []
+                            apps.extend([a])
+                            self.setVarFlag(append, "_appendactive", apps, ignore=True)
                         elif op == "_prepend":
-                            sval = a + (self.getVar(append, False) or "")
-                            self.setVar(append, sval)
+                            prepends = self.getVarFlag(append, "_prependactive", False) or []
+                            prepends.extend([a])
+                            self.setVarFlag(append, "_prependactive", prepends, ignore=True)
                         elif op == "_remove":
                             removes = self.getVarFlag(append, "_removeactive", False) or []
                             removes.extend(a.split())
@@ -506,6 +507,11 @@ class DataSmart(MutableMapping):
 
         if not var in self.dict:
             self._makeShadowCopy(var)
+
+        if "_appendactive" in self.dict[var]:
+            del self.dict[var]["_appendactive"]
+        if "_prependactive" in self.dict[var]:
+            del self.dict[var]["_prependactive"]
 
         # more cookies for the cookie monster
         if '_' in var:
@@ -612,6 +618,17 @@ class DataSmart(MutableMapping):
                 value = copy.copy(local_var[flag])
             elif flag == "_content" and "_defaultval" in local_var and not noweakdefault:
                 value = copy.copy(local_var["_defaultval"])
+
+        if flag == "_content" and local_var is not None and "_appendactive" in local_var:
+            if not value:
+                value = ""
+            for r in local_var["_appendactive"]:
+                value = value + r
+        if flag == "_content" and local_var is not None and "_prependactive" in local_var:
+            if not value:
+                value = ""
+            for r in local_var["_prependactive"]:
+                value = r + value
         if expand and value:
             # Only getvar (flag == _content) hits the expand cache
             cachename = None
