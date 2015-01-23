@@ -770,7 +770,7 @@ class BuildInfoHelper(object):
             if t.is_image == True:
                 output_files = list(evdata.viewkeys())
                 for output in output_files:
-                    if t.target in output and output.split('.rootfs.')[1] in image_fstypes:
+                    if t.target in output and 'rootfs' in output and not output.endswith(".manifest"):
                         self.orm_wrapper.save_target_image_file_information(t, output, evdata[output])
 
     def update_artifact_image_file(self, event):
