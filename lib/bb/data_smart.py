@@ -298,6 +298,7 @@ class VariableHistory(object):
 class DataSmart(MutableMapping):
     def __init__(self, special = None, seen = None ):
         self.dict = {}
+        self.overrides = []
 
         if special is None:
             special = COWDictBase.copy()
@@ -354,11 +355,13 @@ class DataSmart(MutableMapping):
     def expand(self, s, varname = None):
         return self.expandWithRefs(s, varname).value
 
-
     def finalize(self, parent = False):
+        return
+
+    def internal_finalize(self, parent = False):
         """Performs final steps upon the datastore, including application of overrides"""
 
-        overrides = (self.getVar("OVERRIDES", True) or "").split(":") or []
+        self.overrides = (self.getVar("OVERRIDES", True) or "").split(":") or []
         finalize_caller = {
             'op': 'finalize',
         }
@@ -383,7 +386,7 @@ class DataSmart(MutableMapping):
         # We only want to report finalization once per variable overridden.
         finalizes_reported = {}
 
-        for o in overrides:
+        for o in self.overrides:
             # calculate '_'+override
             l = len(o) + 1
 
@@ -417,12 +420,15 @@ class DataSmart(MutableMapping):
             if op in self._special_values:
                 appends = self._special_values[op] or []
                 for append in appends:
+                    self.handle_special_values(append, op)
+
+    def handle_special_values(self, append, op):
                     keep = []
                     for (a, o) in self.getVarFlag(append, op) or []:
                         match = True
                         if o:
                             for o2 in o.split("_"):
-                                if not o2 in overrides:
+                                if not o2 in self.overrides:
                                     match = False
                         if not match:
                             keep.append((a ,o))
@@ -502,6 +508,7 @@ class DataSmart(MutableMapping):
             except KeyError:
                 self._special_values[keyword] = set()
                 self._special_values[keyword].add(base)
+            self.handle_special_values(base, keyword)
 
             return
 
@@ -520,6 +527,9 @@ class DataSmart(MutableMapping):
         # setting var
         self.dict[var]["_content"] = value
         self.varhistory.record(**loginfo)
+
+        if var == "OVERRIDES":
+            self.internal_finalize(True)
 
     def _setvar_update_overrides(self, var):
         # aka pay the cookie monster
@@ -733,6 +743,7 @@ class DataSmart(MutableMapping):
         # we really want this to be a DataSmart...
         data = DataSmart(seen=self._seen_overrides.copy(), special=self._special_values.copy())
         data.dict["_data"] = self.dict
+        data.overrides = copy.copy(self.overrides)
         data.varhistory = self.varhistory.copy()
         data.varhistory.datasmart = data
         data.inchistory = self.inchistory.copy()
