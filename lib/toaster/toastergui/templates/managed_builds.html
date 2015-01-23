@@ -35,10 +35,10 @@
     </div>
 
 
-  {% else %}
+  {% else %} {# We have builds to display #}
   {% include "basetable_top_buildprojects.html" %}
         <!-- Table data rows; the order needs to match the order of "tablecols" definitions; and the <td class value needs to match the tablecols clclass value for show/hide buttons to work -->
-        {% for br in objects %}{% if br.build %}  {% with build=br.build %} {# if we have a build, just display it #}
+        {% for buildrequest in objects %}{% if buildrequest.build %}  {% with build=buildrequest.build %} {# if we have a build, just display it #}
         <tr class="data">
             <td class="outcome"><a href="{% url "builddashboard" build.id %}">{%if build.outcome == build.SUCCEEDED%}<i class="icon-ok-sign success"></i>{%elif build.outcome == build.FAILED%}<i class="icon-minus-sign error"></i>{%else%}{%endif%}</a></td>
             <td class="target">{% for t in build.target_set.all %} <a href="{% url "builddashboard" build.id %}"> {{t.target}} </a> <br />{% endfor %}</td>
@@ -61,7 +61,7 @@
             <td class="errors_no">
                 {% if  build.errors_no %}
                     <a class="errors_no error" href="{% url "builddashboard" build.id %}#errors">{{build.errors_no}} error{{build.errors_no|pluralize}}</a>
-                    {% if MANAGED and build.project %}
+                    {% if MANAGED and build.project and build.buildartifact_set.count %}
                         <a href="{% url 'build_artifact' build.id "cookerlog" build.id %}">
                             <i class="icon-download-alt" title="" data-original-title="Download build log"></i>
                         </a>
@@ -96,21 +96,21 @@
         <tr class="data">
             <td class="outcome">{% if buildrequest.state == buildrequest.REQ_FAILED %}<i class="icon-minus-sign error"></i>{%else%}FIXME_build_request_state{%endif%}</td>
             <td class="target">
-                <span data-toggle="tooltip" {%if br.brtarget_set.all.count > 1%}title="Targets: {%for target in br.brtarget_set.all%}{{target.target}} {%endfor%}"{%endif%}>{{br.brtarget_set.all.0.target}} {%if br.brtarget_set.all.count > 1%}(+ {{br.brtarget_set.all.count|add:"-1"}}){%endif%} </span>
+                <a href="{% url "buildrequestdetails" buildrequest.project.id buildrequest.id %}"><span data-toggle="tooltip" {%if buildrequest.brtarget_set.all.count > 1%}title="Targets: {%for target in buildrequest.brtarget_set.all%}{{target.target}} {%endfor%}"{%endif%}>{{buildrequest.brtarget_set.all.0.target}} {%if buildrequest.brtarget_set.all.count > 1%}(+ {{buildrequest.brtarget_set.all.count|add:"-1"}}){%endif%} </span></a>
             </td>
             <td class="machine">
-                {{br.machine}}
+                <a href="{% url "buildrequestdetails" buildrequest.project.id buildrequest.id %}">{{buildrequest.machine}}</a>
             </td>
             <td class="started_on">
-                {{br.created|date:"d/m/y H:i"}}
+                <a href="{% url "buildrequestdetails" buildrequest.project.id buildrequest.id %}">{{buildrequest.created|date:"d/m/y H:i"}}</a>
             </td>
             <td class="completed_on">
-                {{br.updated|date:"d/m/y H:i"}}
+                <a href="{% url "buildrequestdetails" buildrequest.project.id buildrequest.id %}">{{buildrequest.updated|date:"d/m/y H:i"}}</a>
             </td>
             <td class="failed_tasks error">
-                {{br.brerror_set.all.0.errmsg|whitespace_slice:":32"}}
             </td>
             <td class="errors_no">
+                <a class="errors_no error" href="{% url "buildrequestdetails" buildrequest.project.id buildrequest.id %}#errors">{{buildrequest.brerror_set.all.count}} error{{buildrequest.brerror_set.all.count|pluralize}}</a>
             </td>
             <td class="warnings_no">
             </td>
@@ -120,7 +120,7 @@
             <td class="output"> {# we have no output here #}
             </td>
             <td class="project">
-                <a href="{% url 'project' br.project.id %}">{{br.project.name}}</a>
+                <a href="{% url 'project' buildrequest.project.id %}">{{buildrequest.project.name}}</a>
             </td>
         </tr>
           {%endif%}

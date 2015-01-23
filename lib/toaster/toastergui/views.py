@@ -22,7 +22,7 @@
 import operator,re
 import HTMLParser
 
-from django.db.models import Q, Sum
+from django.db.models import Q, Sum, Count
 from django.db import IntegrityError
 from django.shortcuts import render, redirect
 from orm.models import Build, Target, Task, Layer, Layer_Version, Recipe, LogMessage, Variable
@@ -117,7 +117,8 @@ def _redirect_parameters(view, g, mandatory_parameters, *args, **kwargs):
     return redirect(url + "?%s" % urllib.urlencode(params), *args, **kwargs)
 
 FIELD_SEPARATOR = ":"
-VALUE_SEPARATOR = "!"
+AND_VALUE_SEPARATOR = "!"
+OR_VALUE_SEPARATOR = "|"
 DESCENDING = "-"
 
 def __get_q_for_val(name, value):
@@ -126,20 +127,31 @@ def __get_q_for_val(name, value):
     if "AND" in value:
         return reduce(operator.and_, map(lambda x: __get_q_for_val(name, x), [ x for x in value.split("AND") ]))
     if value.startswith("NOT"):
-        kwargs = { name : value.strip("NOT") }
+        value = value[3:]
+        if value == 'None':
+            value = None
+        kwargs = { name : value }
         return ~Q(**kwargs)
     else:
+        if value == 'None':
+            value = None
         kwargs = { name : value }
         return Q(**kwargs)
 
 def _get_filtering_query(filter_string):
 
     search_terms = filter_string.split(FIELD_SEPARATOR)
-    keys = search_terms[0].split(VALUE_SEPARATOR)
-    values = search_terms[1].split(VALUE_SEPARATOR)
+    and_keys = search_terms[0].split(AND_VALUE_SEPARATOR)
+    and_values = search_terms[1].split(AND_VALUE_SEPARATOR)
 
-    querydict = dict(zip(keys, values))
-    return reduce(operator.and_, map(lambda x: __get_q_for_val(x, querydict[x]), [k for k in querydict]))
+    and_query = []
+    for kv in zip(and_keys, and_values):
+        or_keys = kv[0].split(OR_VALUE_SEPARATOR)
+        or_values = kv[1].split(OR_VALUE_SEPARATOR)
+        querydict = dict(zip(or_keys, or_values))
+        and_query.append(reduce(operator.or_, map(lambda x: __get_q_for_val(x, querydict[x]), [k for k in querydict])))
+
+    return reduce(operator.and_, [k for k in and_query])
 
 def _get_toggle_order(request, orderkey, reverse = False):
     if reverse:
@@ -169,13 +181,13 @@ def _validate_input(input, model):
             return None, invalid
 
         # Check we have an equal number of terms both sides of the colon
-        if len(input_list[0].split(VALUE_SEPARATOR)) != len(input_list[1].split(VALUE_SEPARATOR)):
+        if len(input_list[0].split(AND_VALUE_SEPARATOR)) != len(input_list[1].split(AND_VALUE_SEPARATOR)):
             invalid = "Not all arg names got values"
             return None, invalid + str(input_list)
 
         # Check we are looking for a valid field
         valid_fields = model._meta.get_all_field_names()
-        for field in input_list[0].split(VALUE_SEPARATOR):
+        for field in input_list[0].split(AND_VALUE_SEPARATOR):
             if not reduce(lambda x, y: x or y, map(lambda x: field.startswith(x), [ x for x in valid_fields ])):
                 return None, (field, [ x for x in valid_fields ])
 
@@ -216,6 +228,7 @@ def _search_tuple(request, model):
 def _get_queryset(model, queryset, filter_string, search_term, ordering_string, ordering_secondary=''):
     if filter_string:
         filter_query = _get_filtering_query(filter_string)
+#        raise Exception(filter_query)
         queryset = queryset.filter(filter_query)
     else:
         queryset = queryset.all()
@@ -1780,12 +1793,13 @@ if toastermain.settings.MANAGED:
         # for that object type. copypasta for all needed table searches
         (filter_string, search_term, ordering_string) = _search_tuple(request, BuildRequest)
         # we don't display in-progress or deleted builds
-        queryset_all = buildrequests
-        queryset_with_search = _get_queryset(BuildRequest, queryset_all, None, search_term, ordering_string, '-updated')
-        queryset = _get_queryset(BuildRequest, queryset_all, filter_string, search_term, ordering_string, '-updated')
+        queryset_all = buildrequests.exclude(state = BuildRequest.REQ_DELETED)
+        queryset_all = queryset_all.annotate(Count('brerror'))
+        queryset_with_search = _get_queryset(BuildRequest, queryset_all, filter_string, search_term, ordering_string, '-updated')
+
 
         # retrieve the objects that will be displayed in the table; builds a paginator and gets a page range to display
-        build_info = _build_page_range(Paginator(queryset, pagesize), request.GET.get('page', 1))
+        build_info = _build_page_range(Paginator(queryset_with_search, pagesize), request.GET.get('page', 1))
 
         # build view-specific information; this is rendered specifically in the builds page, at the top of the page (i.e. Recent builds)
         # most recent build is like projects' most recent builds, but across all projects
@@ -1842,8 +1856,8 @@ if toastermain.settings.MANAGED:
                      'filter' : {'class' : 'outcome',
                                  'label': 'Show:',
                                  'options' : [
-                                             ('Successful builds', 'state:' + str(BuildRequest.REQ_COMPLETED), queryset_with_search.filter(state=str(BuildRequest.REQ_COMPLETED)).count()),  # this is the field search expression
-                                             ('Failed builds', 'state:'+ str(BuildRequest.REQ_FAILED), queryset_with_search.filter(state=str(BuildRequest.REQ_FAILED)).count()),
+                                             ('Successful builds', 'state:' + str(BuildRequest.REQ_COMPLETED), queryset_all.filter(state=str(BuildRequest.REQ_COMPLETED)).count()),  # this is the field search expression
+                                             ('Failed builds', 'state:'+ str(BuildRequest.REQ_FAILED), queryset_all.filter(state=str(BuildRequest.REQ_FAILED)).count()),
                                              ]
                                 }
                     },
@@ -1865,9 +1879,9 @@ if toastermain.settings.MANAGED:
                      'filter' : {'class' : 'created',
                                  'label': 'Show:',
                                  'options' : [
-                                             ("Today's builds" , 'created__gte:'+timezone.now().strftime("%Y-%m-%d"), queryset_with_search.filter(created__gte=timezone.now()).count()),
-                                             ("Yesterday's builds", 'created__gte:'+(timezone.now()-timedelta(hours=24)).strftime("%Y-%m-%d"), queryset_with_search.filter(created__gte=(timezone.now()-timedelta(hours=24))).count()),
-                                             ("This week's builds", 'created__gte:'+(timezone.now()-timedelta(days=7)).strftime("%Y-%m-%d"), queryset_with_search.filter(created__gte=(timezone.now()-timedelta(days=7))).count()),
+                                             ("Today's builds" , 'created__gte:'+timezone.now().strftime("%Y-%m-%d"), queryset_all.filter(created__gte=timezone.now()).count()),
+                                             ("Yesterday's builds", 'created__gte:'+(timezone.now()-timedelta(hours=24)).strftime("%Y-%m-%d"), queryset_all.filter(created__gte=(timezone.now()-timedelta(hours=24))).count()),
+                                             ("This week's builds", 'created__gte:'+(timezone.now()-timedelta(days=7)).strftime("%Y-%m-%d"), queryset_all.filter(created__gte=(timezone.now()-timedelta(days=7))).count()),
                                              ]
                                 }
                     },
@@ -1879,9 +1893,9 @@ if toastermain.settings.MANAGED:
                      'filter' : {'class' : 'updated',
                                  'label': 'Show:',
                                  'options' : [
-                                             ("Today's builds", 'updated__gte:'+timezone.now().strftime("%Y-%m-%d"), queryset_with_search.filter(updated__gte=timezone.now()).count()),
-                                             ("Yesterday's builds", 'updated__gte:'+(timezone.now()-timedelta(hours=24)).strftime("%Y-%m-%d"), queryset_with_search.filter(updated__gte=(timezone.now()-timedelta(hours=24))).count()),
-                                             ("This week's builds", 'updated__gte:'+(timezone.now()-timedelta(days=7)).strftime("%Y-%m-%d"), queryset_with_search.filter(updated__gte=(timezone.now()-timedelta(days=7))).count()),
+                                             ("Today's builds", 'updated__gte:'+timezone.now().strftime("%Y-%m-%d"), queryset_all.filter(updated__gte=timezone.now()).count()),
+                                             ("Yesterday's builds", 'updated__gte:'+(timezone.now()-timedelta(hours=24)).strftime("%Y-%m-%d"), queryset_all.filter(updated__gte=(timezone.now()-timedelta(hours=24))).count()),
+                                             ("This week's builds", 'updated__gte:'+(timezone.now()-timedelta(days=7)).strftime("%Y-%m-%d"), queryset_all.filter(updated__gte=(timezone.now()-timedelta(days=7))).count()),
                                              ]
                                 }
                     },
@@ -1890,8 +1904,10 @@ if toastermain.settings.MANAGED:
                      'filter' : {'class' : 'failed_tasks',
                                  'label': 'Show:',
                                  'options' : [
-                                             ('Build with failed tasks', 'build__task_build__outcome:4', queryset_with_search.filter(build__task_build__outcome=4).count()),
-                                             ('Build without failed tasks', 'build__task_build__outcome:NOT4', queryset_with_search.filter(~Q(build__task_build__outcome=4)).count()),
+                                             ('Builds with failed tasks', 'build__task_build__outcome:%d' % Task.OUTCOME_FAILED,
+                                                queryset_all.filter(build__task_build__outcome=Task.OUTCOME_FAILED).count()),
+                                             ('Builds without failed tasks', 'build__task_build__outcome:%d' % Task.OUTCOME_FAILED,
+                                                queryset_all.filter(~Q(build__task_build__outcome=Task.OUTCOME_FAILED)).count()),
                                              ]
                                 }
                     },
@@ -1903,8 +1919,10 @@ if toastermain.settings.MANAGED:
                      'filter' : {'class' : 'errors_no',
                                  'label': 'Show:',
                                  'options' : [
-                                             ('Build with errors', 'build__errors_no__gte:1', queryset_with_search.filter(build__errors_no__gte=1).count()),
-                                             ('Build without errors', 'build__errors_no:0', queryset_with_search.filter(build__errors_no=0).count()),
+                                             ('Builds with errors', 'build|build__errors_no__gt:None|0',
+                                                queryset_all.filter(Q(build=None) | Q(build__errors_no__gt=0)).count()),
+                                             ('Builds without errors', 'build__errors_no:0',
+                                                queryset_all.filter(build__errors_no=0).count()),
                                              ]
                                 }
                     },
@@ -1916,8 +1934,8 @@ if toastermain.settings.MANAGED:
                      'filter' : {'class' : 'build__warnings_no',
                                  'label': 'Show:',
                                  'options' : [
-                                             ('Build with warnings','build__warnings_no__gte:1', queryset_with_search.filter(build__warnings_no__gte=1).count()),
-                                             ('Build without warnings','build__warnings_no:0', queryset_with_search.filter(build__warnings_no=0).count()),
+                                             ('Builds with warnings','build__warnings_no__gte:1', queryset_all.filter(build__warnings_no__gte=1).count()),
+                                             ('Builds without warnings','build__warnings_no:0', queryset_all.filter(build__warnings_no=0).count()),
                                              ]
                                 }
                     },
@@ -2016,7 +2034,7 @@ if toastermain.settings.MANAGED:
 
         context = {
             "project" : prj,
-            "completedbuilds": Build.objects.filter(project = prj).exclude(outcome = Build.IN_PROGRESS),
+            "completedbuilds": BuildRequest.objects.filter(project_id = pid).exclude(state__lte = BuildRequest.REQ_INPROGRESS).exclude(state=BuildRequest.REQ_DELETED),
             "prj" : {"name": prj.name, "release": { "id": prj.release.pk, "name": prj.release.name, "desc": prj.release.description}},
             #"buildrequests" : prj.buildrequest_set.filter(state=BuildRequest.REQ_QUEUED),
             "builds" : _project_recent_build_list(prj),
@@ -2061,7 +2079,7 @@ if toastermain.settings.MANAGED:
         try:
             if request.method != "POST":
                 raise BadParameterException("invalid method")
-			request.session['project_id'] = pid
+            request.session['project_id'] = pid
             prj = Project.objects.get(id = pid)
 
 
@@ -2167,11 +2185,11 @@ if toastermain.settings.MANAGED:
         try:
             prj = None
             if request.GET.has_key('project_id'):
-				prj = Project.objects.get(pk = request.GET['project_id'])
+                prj = Project.objects.get(pk = request.GET['project_id'])
             elif 'project_id' in request.session:
                 prj = Project.objects.get(pk = request.session['project_id'])
-			else:
-				raise Exception("No valid project selected")
+            else:
+                raise Exception("No valid project selected")
 
 
             def _lv_to_dict(x):
@@ -2819,10 +2837,10 @@ if toastermain.settings.MANAGED:
 
         vars_blacklist  = {
             'DL_DR','PARALLEL_MAKE','BB_NUMBER_THREADS','SSTATE_DIR',
-			'BB_DISKMON_DIRS','BB_NUMBER_THREADS','CVS_PROXY_HOST','CVS_PROXY_PORT',
-			'DL_DIR','PARALLEL_MAKE','SSTATE_DIR','SSTATE_DIR','SSTATE_MIRRORS','TMPDIR',
-			'all_proxy','ftp_proxy','http_proxy ','https_proxy'
-			}
+            'BB_DISKMON_DIRS','BB_NUMBER_THREADS','CVS_PROXY_HOST','CVS_PROXY_PORT',
+            'DL_DIR','PARALLEL_MAKE','SSTATE_DIR','SSTATE_DIR','SSTATE_MIRRORS','TMPDIR',
+            'all_proxy','ftp_proxy','http_proxy ','https_proxy'
+            }
 
         vars_fstypes  = {
             'btrfs','cpio','cpio.gz','cpio.lz4','cpio.lzma','cpio.xz','cramfs',
@@ -2874,7 +2892,7 @@ if toastermain.settings.MANAGED:
 
     def projectbuilds(request, pid):
         template = 'projectbuilds.html'
-        buildrequests = BuildRequest.objects.exclude(project_id = pid, state__lte = BuildRequest.REQ_INPROGRESS).exclude(state=BuildRequest.REQ_DELETED)
+        buildrequests = BuildRequest.objects.filter(project_id = pid).exclude(state__lte = BuildRequest.REQ_INPROGRESS).exclude(state=BuildRequest.REQ_DELETED)
 
         try:
             context, pagesize, orderby = _build_list_helper(request, buildrequests)
@@ -3011,6 +3029,14 @@ if toastermain.settings.MANAGED:
                     ]
             }
         return render(request, template, context)
+
+    def buildrequestdetails(request, pid, brid):
+        template = "buildrequestdetails.html"
+        context = {
+            'buildrequest' : BuildRequest.objects.get(pk = brid, project_id = pid)
+        }
+        return render(request, template, context)
+
 
 else:
     # these are pages that are NOT available in interactive mode
@@ -3255,4 +3281,7 @@ else:
         raise Exception("page not available in interactive mode")
 
     def xhr_updatelayer(request):
+        raise Exception("page not available in interactive mode")
+
+    def buildrequestdetails(request, pid, brid):
         raise Exception("page not available in interactive mode")

@@ -113,6 +113,15 @@ class BuildRequest(models.Model):
     created     = models.DateTimeField(auto_now_add = True)
     updated     = models.DateTimeField(auto_now = True)
 
+    def get_duration(self):
+        return (self.updated - self.created).total_seconds()
+
+    def get_sorted_target_list(self):
+        tgts = self.brtarget_set.order_by( 'target' );
+        return( tgts );
+
+    def get_machine(self):
+        return self.brvariable_set.get(name="MACHINE").value
 
 # These tables specify the settings for running an actual build.
 # They MUST be kept in sync with the tables in orm.models.Project*

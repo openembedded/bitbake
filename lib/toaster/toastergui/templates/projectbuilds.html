@@ -13,11 +13,11 @@
                      No builds found
 
  {% else %}
-	{% if  request.GET.filter or request.GET.search  %}
-			{{objects.paginator.count}} builds found
-	{% else %}
+    {% if  request.GET.filter or request.GET.search  %}
+            {{objects.paginator.count}} builds found
+    {% else %}
                         Project builds <small>({{objects.paginator.count}})</small>
-	{% endif %}
+    {% endif %}
  {% endif %}
                         <i class="icon-question-sign get-help heading-help" title="This page lists all the builds for the current project"></i>
                     </h1>
@@ -89,23 +89,23 @@
 
 
         <tr class="data">
-            <td class="outcome">{% if buildrequest.state == buildrequest.REQ_FAILED %}<i class="icon-minus-sign error"></i>{%else%}FIXME_build_request_state{%endif%}</td>
+            <td class="outcome">{% if br.state == br.REQ_FAILED %}<i class="icon-minus-sign error"></i>{%else%}FIXME_build_request_state{%endif%}</td>
             <td class="target">
-                <span data-toggle="tooltip" {%if br.brtarget_set.all.count > 1%}title="Targets: {%for target in br.brtarget_set.all%}{{target.target}} {%endfor%}"{%endif%}>{{br.brtarget_set.all.0.target}} {%if br.brtarget_set.all.count > 1%}(+ {{br.brtarget_set.all.count|add:"-1"}}){%endif%} </span>
+                <a href="{% url "buildrequestdetails" br.project.id br.id %}"><span data-toggle="tooltip" {%if br.brtarget_set.all.count > 1%}title="Targets: {%for target in br.brtarget_set.all%}{{target.target}} {%endfor%}"{%endif%}>{{br.brtarget_set.all.0.target}} {%if br.brtarget_set.all.count > 1%}(+ {{br.brtarget_set.all.count|add:"-1"}}){%endif%} </span></a>
             </td>
             <td class="machine">
-                {{br.machine}}
+                <a href="{% url "buildrequestdetails" br.project.id br.id %}">{{br.machine}}</a>
             </td>
             <td class="started_on">
-                {{br.created|date:"d/m/y H:i"}}
+                <a href="{% url "buildrequestdetails" br.project.id br.id %}">{{br.created|date:"d/m/y H:i"}}</a>
             </td>
             <td class="completed_on">
-                {{br.updated|date:"d/m/y H:i"}}
+                <a href="{% url "buildrequestdetails" br.project.id br.id %}">{{br.updated|date:"d/m/y H:i"}}</a>
             </td>
             <td class="failed_tasks error">
-                {{br.brerror_set.all.0.errmsg|whitespace_slice:":32"}}
             </td>
             <td class="errors_no">
+        <a class="errors_no error" href="{% url "buildrequestdetails" br.project.id br.id %}#errors">{{br.brerror_set.all.count}} error{{br.brerror_set.all.count|pluralize}}</a>
             </td>
             <td class="warnings_no">
             </td>
