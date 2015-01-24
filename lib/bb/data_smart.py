@@ -311,6 +311,7 @@ class DataSmart(MutableMapping):
 
         self.expand_cache = {}
 
+        self.overrides = []
         self.overridevars = set(["OVERRIDES", "FILE"])
         self.replaces = {}
 
@@ -360,7 +361,7 @@ class DataSmart(MutableMapping):
     def internal_finalize(self, parent = False):
         """Performs final steps upon the datastore, including application of overrides"""
 
-        overrides = (self.getVar("OVERRIDES", True) or "").split(":") or []
+        self.overrides = (self.getVar("OVERRIDES", True) or "").split(":") or []
 
         #
         # Well let us see what breaks here. We used to iterate
@@ -380,7 +381,7 @@ class DataSmart(MutableMapping):
 
         self.replaces = {}
 
-        for o in overrides:
+        for o in self.overrides:
             # calculate '_'+override
             l = len(o) + 1
 
@@ -392,6 +393,18 @@ class DataSmart(MutableMapping):
             for var in vars:
                 name = var[:-l]
                 self.replaces[name] = var
+
+    def internal_finalize2(self, var, o):
+        """Performs final steps upon the datastore, including application of overrides"""
+
+        l = len(o) + 1
+        name = var[:-l]
+
+        if name in self.replaces:
+            del self.replaces[name]
+        for o in self.overrides:
+            if o in self._seen_overrides and name + "_" + o in self._seen_overrides[o]:
+                self.replaces[name] = name + "_" + o
 
     def initVar(self, var):
         self.expand_cache = {}
@@ -457,6 +470,12 @@ class DataSmart(MutableMapping):
         if "_prepend" in self.dict[var]:
             del self.dict[var]["_prepend"]
 
+        if var in self.replaces:
+            del self.replaces[var]
+        for o in self.overrides:
+            if o in self._seen_overrides and var + "_" + o in self._seen_overrides[o]:
+                self.delVar(var + "_" + o)
+
         # more cookies for the cookie monster
         if '_' in var:
             self._setvar_update_overrides(var)
@@ -477,6 +496,7 @@ class DataSmart(MutableMapping):
             if override not in self._seen_overrides:
                 self._seen_overrides[override] = set()
             self._seen_overrides[override].add( var )
+            self.internal_finalize2(var, override)
             override = None
             if "_" in shortvar:
                 override = var[shortvar.rfind('_')+1:]
@@ -534,6 +554,7 @@ class DataSmart(MutableMapping):
             override = var[var.rfind('_')+1:]
             if override and override in self._seen_overrides and var in self._seen_overrides[override]:
                 self._seen_overrides[override].remove(var)
+                self.internal_finalize2(var, override)
 
     def setVarFlag(self, var, flag, value, **loginfo):
         self.expand_cache = {}
@@ -574,9 +595,8 @@ class DataSmart(MutableMapping):
             for (r, o) in local_var["_append"]:
                 match = True
                 if o:
-                    overrides = (self.getVar("OVERRIDES", True) or "").split(":") or []
                     for o2 in o.split("_"):
-                        if not o2 in overrides:
+                        if not o2 in self.overrides:
                             match = False                            
                 if match:
                     value = value + r
@@ -587,9 +607,8 @@ class DataSmart(MutableMapping):
             for (r, o) in local_var["_prepend"]:
                 match = True
                 if o:
-                    overrides = (self.getVar("OVERRIDES", True) or "").split(":") or []
                     for o2 in o.split("_"):
-                        if not o2 in overrides:
+                        if not o2 in self.overrides:
                             match = False                            
                 if match:
                     value = r + value
@@ -608,9 +627,8 @@ class DataSmart(MutableMapping):
             for (r, o) in local_var["_remove"]:
                 match = True
                 if o:
-                    overrides = (self.getVar("OVERRIDES", True) or "").split(":") or []
                     for o2 in o.split("_"):
-                        if not o2 in overrides:
+                        if not o2 in self.overrides:
                             match = False                            
                 if match:
                     removes.extend(self.expand(r).split())
@@ -716,6 +734,7 @@ class DataSmart(MutableMapping):
 
         data._tracking = self._tracking
 
+        data.overrides = copy.copy(self.overrides)
         data.overridevars = copy.copy(self.overridevars)
 
         return data
