@@ -205,11 +205,14 @@
 
                       <input type="text" id="target-search" name="targets_search" placeholder="Search targets" class="input-xlarge" value="{{request.GET.targets_search}}">
                         {% if request.GET.targets_search %}
-                        <a class="add-on btn" id="target-search-clear">
+                        <a class="add-on btn target-search-clear">
                           <i class="icon-remove"></i>
                         </a>
                         {% endif %}
                         <button type="submit" class="btn">Search</button>
+                        {% if targets.paginator.count == 0 %}
+                            <button type="submit" class="btn btn-link target-search-clear">Show all targets</a>
+                        {% endif %}
                       </form>
                     {% endif %}
 
@@ -332,11 +335,14 @@
 
                       <input type="text" id="machine-search" name="machines_search" placeholder="Search machines" class="input-xlarge" value="{{request.GET.machines_search}}">
                         {% if request.GET.machines_search %}
-                        <a class="add-on btn" id="machine-search-clear">
+                        <a class="add-on btn machine-search-clear">
                           <i class="icon-remove"></i>
                         </a>
                         {% endif %}
                         <button type="submit" class="btn">Search</button>
+                        {% if machines.paginator.count == 0 %}
+                            <button type="submit" class="btn btn-link machine-search-clear">Show all machines</a>
+                        {% endif %}
                       </form>
                     {% endif %}
 
