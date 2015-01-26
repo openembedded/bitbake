@@ -223,6 +223,7 @@
                      </div>
                     {% else %}
 
+                    {% if total_targets > 10 %}
                     <div class="pull-right">
                       <span class="help-inline" style="padding-top:5px;">Show rows:</span>
                       <select style="margin-top:5px;margin-bottom:0px;" class="pagesize">
@@ -237,6 +238,7 @@
                       {% endwith %}
                     </select>
                   </div>
+                  {% endif %}
                 </div>
 
                 <table class="table table-bordered table-hover">
@@ -274,6 +276,7 @@
                     </tbody>
                   </table>
 
+                  {% if total_targets > 10 %}
                   <!-- Show pagination controls -->
                   <div class="pagination">
                     <ul>
@@ -306,6 +309,7 @@
                       </select>
                     </div>
                   </div>
+                  {% endif %}
                   {% endif %}
                   {% endif %}
                 </div>
@@ -351,8 +355,10 @@
                      </div>
                      <!-- end row-fluid -->
                      </div>
+
                     {% else %}
 
+                    {% if total_machines > 10 %}
                     <div class="pull-right">
                       <span class="help-inline" style="padding-top:5px;">Show rows:</span>
                       <select style="margin-top:5px;margin-bottom:0px;" class="pagesize">
@@ -367,6 +373,8 @@
                       {% endwith %}
                     </select>
                   </div>
+                  {% endif %}
+
                 </div>
 
                 <table class="table table-bordered table-hover">
@@ -394,6 +402,7 @@
                     </tbody>
                   </table>
 
+                  {% if total_machines > 10 %}
                   <!-- Show pagination controls -->
                   <div class="pagination">
                     <ul>
@@ -426,6 +435,7 @@
                       </select>
                     </div>
                   </div>
+                  {% endif %}
                   {% endif %}
                   {% endif %}
                   </div>
