@@ -206,6 +206,7 @@ dl textarea { resize: vertical; }
 .new-build form { margin: 5px 0 0; }
 .new-build .input-append { margin-bottom: 0; }
 #build-selected { margin-top: 15px; }
+div.add-deps { margin-top: 15px; }
 
 
 .animate-repeat {
