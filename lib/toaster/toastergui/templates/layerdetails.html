@@ -23,6 +23,7 @@
       xhrDataTypeaheadUrl : "{% url 'xhr_datatypeahead' %}",
       xhrUpdateLayerUrl : "{% url 'xhr_updatelayer' %}",
       projectId : {{project.id}},
+      projectName : "{{project.name}}",
       numTargets : {{total_targets}},
       numMachines: {{machines|length}},
       layerVersion : {
@@ -73,7 +74,6 @@
         <div class="alert alert-info lead" id="alert-area" style="display:none">
           <button type="button" class="close" id="dismiss-alert" data-dismiss="alert">&times;</button>
           <span id="alert-msg"></span>
-          <p style="margin-top:10px;"><a href="{% url 'project' project.id %}">Go to project configuration</a></p>
         </div>
         <ul class="nav nav-pills">
           <li class="active">
