@@ -265,7 +265,7 @@
                         <td>
                           {{target.name}}
                           {% if target.up_id %}
-                          <a href="http://layers.openembedded.org/layerindex/recipe/{{target.up_id}}/" class="icon-share get-info"></a>
+                          <a href="{{target.get_layersource_view_url}}" class="icon-share get-info" target="_blank"></a>
                           {% endif %}
                         </td>
                         <td>{{target.version}}</td>
