@@ -184,7 +184,6 @@ a code:hover { color: #005580; }
 .control-group { margin-bottom: 0px; }
 #project-details form { margin: 0px; }
 dd form { margin: 10px 0 0 0; }
-dd form { margin-bottom: 0px; }
 dl textarea { resize: vertical; }
 .navbar-fixed-top {  z-index: 1; }
 .popover { z-index: 2; }
