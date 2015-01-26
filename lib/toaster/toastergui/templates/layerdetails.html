@@ -3,7 +3,7 @@
 {% load humanize %}
 {% load static %}
 {% block localbreadcrumb %}
-<li><a href="{% url 'layers' %}">All Layers</a></li>
+<li><a href="{% url 'layers' %}">All layers</a></li>
 <li>
   {{layerversion.layer.name}} ({{layerversion.commit|truncatechars:13}})
 </li>
@@ -63,18 +63,13 @@
 {% endif %}
 
 {% include "layers_dep_modal.html" %}
- <div class="container-fluid top-padded">
-  <div class="row-fluid">
-    <div class="span11">
+  <div class="row-fluid span11">
       <div class="page-header">
         <h1>{{layerversion.layer.name}} <small class="commit" data-toggle="tooltip" title="{{layerversion.commit}}">({{layerversion.commit|truncatechars:13}})</small></h1>
       </div>
-    </div>
   </div>
 
-    <div class="row-fluid">
-    <div class="span7">
-      <div class="tabbable">
+    <div class="row-fluid span7 tabbable">
         <div class="alert alert-info lead" id="alert-area" style="display:none">
           <button type="button" class="close" id="dismiss-alert" data-dismiss="alert">&times;</button>
           <span id="alert-msg"></span>
@@ -91,7 +86,6 @@
             <a data-toggle="tab" href="#machines" id="machines-tab">Machines ({{total_machines}})</a>
           </li>
         </ul>
-      </div>
       <div class="tab-content">
         <span class="button-place">
           {% if layer_in_project == 0 %}
@@ -435,7 +429,7 @@
                   </div>
               </div>
             </div>
-            <div class="row span4 well">
+            <div class="row-fluid span4 well">
               <h2>About {{layerversion.layer.name}}</h2>
               <dl>
 
@@ -480,7 +474,4 @@
            </dl>
          </div>
 
-          </div>
-       </div>
-   </div>
 {% endblock %}

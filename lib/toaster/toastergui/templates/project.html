@@ -91,7 +91,7 @@ vim: expandtab tabstop=2
   <div class="well">
     <form class="build-form" ng-submit="buildNamedTarget()">
       <div class="input-append controls">
-        <input type="text" class="huge span7" placeholder="Type the target(s) you want to build" autocomplete="off" ng-model="targetName" typeahead="e.name for e in getAutocompleteSuggestions('targets', $viewValue)|filter:$viewValue" typeahead-template-url="suggestion_details" ng-disabled="!layers.length"/>
+        <input type="text" class="huge input-xxlarge" placeholder="Type the target(s) you want to build" autocomplete="off" ng-model="targetName" typeahead="e.name for e in getAutocompleteSuggestions('targets', $viewValue)|filter:$viewValue" typeahead-template-url="suggestion_details" ng-disabled="!layers.length"/>
         <button type="submit" class="btn btn-large btn-primary" ng-disabled="!targetName.length">
         Build
         </button>
@@ -337,7 +337,7 @@ vim: expandtab tabstop=2
       <p class="link-action">
             <a href="{% url 'projectconf' project.id %}" class="link">Edit configuration variables</a>
             <i data-original-title="You can set other project configuration options here. Each option, like everything else in the build system, is a variable - value pair" class="icon-question-sign get-help heading-help" title=""></i>
-			</p>
+            </p>
     </div>
   </div>
 

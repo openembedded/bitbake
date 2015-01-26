@@ -4,7 +4,7 @@
 {% block pagecontent %}
 
 
- <div class="">
+ <div class="row-fluid">
 <!-- Breadcrumbs -->
     <div class="section">
         <ul class="breadcrumb" id="breadcrumb">
@@ -28,14 +28,10 @@
         </script>
     </div>
 
-    <div>
+    <!-- Begin main page container -->
+    {% block projectinfomain %}{% endblock %}
+    <!-- End main container -->
 
-        <!-- Begin main page container -->
-        {% block projectinfomain %}{% endblock %}
-        <!-- End main container -->
-
-
-    </div>
   </div>
 
 
