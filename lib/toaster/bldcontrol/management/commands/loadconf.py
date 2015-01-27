@@ -22,7 +22,7 @@ def _get_id_for_sourcetype(s):
     for i in LayerSource.SOURCE_TYPE:
         if s == i[1]:
             return i[0]
-    raise Exception("Could not find definition for sourcetype " + s)
+    raise Exception("Could not find definition for sourcetype '%s'. Valid source types are %s" % (str(s), ', '.join(map(lambda x: "'%s'" % x[1], LayerSource.SOURCE_TYPE ))))
 
 class Command(BaseCommand):
     help = "Loads a toasterconf.json file in the database"
