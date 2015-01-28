@@ -81,12 +81,17 @@ def getBuildEnvironmentController(**kwargs):
         raise Exception("FIXME: Implement BEC for type %s" % str(be.betype))
 
 
-def _getgitcheckoutdirectoryname(url):
+def _get_git_clonedirectory(url, branch):
     """ Utility that returns the last component of a git path as directory
     """
     import re
     components = re.split(r'[:\.\/]', url)
-    return components[-2] if components[-1] == "git" else components[-1]
+    base = components[-2] if components[-1] == "git" else components[-1]
+
+    if branch != "HEAD":
+        return "_%s_%s.toaster_cloned" % (base, branch)
+
+    return base
 
 
 class BuildEnvironmentController(object):
@@ -166,12 +171,12 @@ class BuildEnvironmentController(object):
         raise Exception("Must override setLayers")
 
 
-    def getBBController(self, brbe):
+    def getBBController(self):
         """ returns a BitbakeController to an already started server; this is the point where the server
             starts if needed; or reconnects to the server if we can
         """
         if not self.connection:
-            self.startBBServer(brbe)
+            self.startBBServer()
             self.be.lock = BuildEnvironment.LOCK_RUNNING
             self.be.save()
 

@@ -30,11 +30,12 @@ import subprocess
 
 from toastermain import settings
 
-from bbcontroller import BuildEnvironmentController, ShellCmdException, BuildSetupException, _getgitcheckoutdirectoryname
+from bbcontroller import BuildEnvironmentController, ShellCmdException, BuildSetupException, _get_git_clonedirectory
 
 import logging
 logger = logging.getLogger("toaster")
 
+from pprint import pprint, pformat
 
 class LocalhostBEController(BuildEnvironmentController):
     """ Implementation of the BuildEnvironmentController for the localhost;
@@ -55,15 +56,16 @@ class LocalhostBEController(BuildEnvironmentController):
 
         p = subprocess.Popen(command, cwd = cwd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         (out,err) = p.communicate()
+        p.wait()
         if p.returncode:
             if len(err) == 0:
                 err = "command: %s \n%s" % (command, out)
             else:
                 err = "command: %s \n%s" % (command, err)
-            logger.debug("localhostbecontroller: shellcmd error %s" % err)
+            #logger.debug("localhostbecontroller: shellcmd error %s" % err)
             raise ShellCmdException(err)
         else:
-            logger.debug("localhostbecontroller: shellcmd success")
+            #logger.debug("localhostbecontroller: shellcmd success")
             return out
 
     def _createdirpath(self, path):
@@ -80,9 +82,18 @@ class LocalhostBEController(BuildEnvironmentController):
         self._createdirpath(self.be.builddir)
         self._shellcmd("bash -c \"source %s/oe-init-build-env %s\"" % (self.pokydirname, self.be.builddir))
 
-    def startBBServer(self, brbe):
+    def startBBServer(self):
         assert self.pokydirname and os.path.exists(self.pokydirname)
         assert self.islayerset
+
+        # find our own toasterui listener/bitbake
+        from toaster.bldcontrol.management.commands.loadconf import _reduce_canon_path
+
+        own_bitbake = _reduce_canon_path(os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../../bin/bitbake"))
+
+        assert os.path.exists(own_bitbake) and os.path.isfile(own_bitbake)
+
+        logger.debug("localhostbecontroller: running the listener at %s" % own_bitbake)
 
         try:
             os.remove(os.path.join(self.be.builddir, "toaster_ui.log"))
@@ -91,7 +102,10 @@ class LocalhostBEController(BuildEnvironmentController):
             if e.errno != errno.ENOENT:
                 raise
 
-        cmd = "bash -c \"source %s/oe-init-build-env %s && DATABASE_URL=%s source toaster start noweb brbe=%s\"" % (self.pokydirname, self.be.builddir, self.dburl, brbe)
+
+        cmd = "bash -c \"source %s/oe-init-build-env %s && bitbake --read conf/toaster-pre.conf --postread conf/toaster.conf --server-only -t xmlrpc -B 0.0.0.0:0 && DATABASE_URL=%s BBSERVER=0.0.0.0:-1 daemon -d -i -D %s -o toaster_ui.log -- %s --observe-only -u toasterui &\"" % (self.pokydirname, self.be.builddir,
+                self.dburl, self.be.builddir, own_bitbake)
+        logger.debug("fullcommand |%s| " % cmd)
         port = "-1"
         for i in self._shellcmd(cmd).split("\n"):
             if i.startswith("Bitbake server address"):
@@ -113,6 +127,16 @@ class LocalhostBEController(BuildEnvironmentController):
             time.sleep(0.5)
 
         logger.debug("localhostbecontroller: Started bitbake server")
+
+        while port == "-1":
+            # the port specification is "autodetect"; read the bitbake.lock file
+            with open("%s/bitbake.lock" % self.be.builddir, "r") as f:
+                for line in f.readlines():
+                    if ":" in line:
+                        port = line.split(":")[1].strip()
+                        logger.debug("localhostbecontroller: Autodetected bitbake port %s", port)
+                        break
+
         assert self.be.sourcedir and os.path.exists(self.be.builddir)
         self.be.bbaddress = "localhost"
         self.be.bbport = port
@@ -135,42 +159,62 @@ class LocalhostBEController(BuildEnvironmentController):
         assert len(bitbakes) == 1
         # set layers in the layersource
 
-        # 1. get a list of repos, and map dirpaths for each layer
+        # 1. get a list of repos with branches, and map dirpaths for each layer
         gitrepos = {}
-        gitrepos[bitbakes[0].giturl] = []
-        gitrepos[bitbakes[0].giturl].append( ("bitbake", bitbakes[0].dirpath, bitbakes[0].commit) )
+
+        gitrepos[(bitbakes[0].giturl, bitbakes[0].commit)] = []
+        gitrepos[(bitbakes[0].giturl, bitbakes[0].commit)].append( ("bitbake", bitbakes[0].dirpath) )
 
         for layer in layers:
             # we don't process local URLs
             if layer.giturl.startswith("file://"):
                 continue
-            if not layer.giturl in gitrepos:
-                gitrepos[layer.giturl] = []
-            gitrepos[layer.giturl].append( (layer.name, layer.dirpath, layer.commit))
-        for giturl in gitrepos.keys():
-            commitid = gitrepos[giturl][0][2]
-            for e in gitrepos[giturl]:
-                if commitid != e[2]:
-                    import pprint
-                    raise BuildSetupException("More than one commit per git url, unsupported configuration: \n%s" % pprint.pformat(gitrepos))
+            if not (layer.giturl, layer.commit) in gitrepos:
+                gitrepos[(layer.giturl, layer.commit)] = []
+            gitrepos[(layer.giturl, layer.commit)].append( (layer.name, layer.dirpath) )
 
 
-        logger.debug("localhostbecontroller, our git repos are %s" % gitrepos)
+        logger.debug("localhostbecontroller, our git repos are %s" % pformat(gitrepos))
+
+
+        # 2. find checked-out git repos in the sourcedir directory that may help faster cloning
+
+        cached_layers = {}
+        for ldir in os.listdir(self.be.sourcedir):
+            fldir = os.path.join(self.be.sourcedir, ldir)
+            if os.path.isdir(fldir):
+                try:
+                    for line in self._shellcmd("git remote -v", fldir).split("\n"):
+                        try:
+                            remote = line.split("\t")[1].split(" ")[0]
+                            if remote not in cached_layers:
+                                cached_layers[remote] = fldir
+                        except IndexError:
+                            pass
+                except ShellCmdException:
+                    # ignore any errors in collecting git remotes
+                    pass
+
         layerlist = []
 
-        # 2. checkout the repositories
-        for giturl in gitrepos.keys():
-            localdirname = os.path.join(self.be.sourcedir, _getgitcheckoutdirectoryname(giturl))
-            logger.debug("localhostbecontroller: giturl %s checking out in current directory %s" % (giturl, localdirname))
+        # 3. checkout the repositories
+        for giturl, commit in gitrepos.keys():
+            localdirname = os.path.join(self.be.sourcedir, _get_git_clonedirectory(giturl, commit))
+            logger.debug("localhostbecontroller: giturl %s:%s checking out in current directory %s" % (giturl, commit, localdirname))
 
             # make sure our directory is a git repository
             if os.path.exists(localdirname):
                 if not giturl in self._shellcmd("git remote -v", localdirname):
                     raise BuildSetupException("Existing git repository at %s, but with different remotes (not '%s'). Aborting." % (localdirname, giturl))
             else:
-                self._shellcmd("git clone \"%s\" \"%s\"" % (giturl, localdirname))
-            # checkout the needed commit
-            commit = gitrepos[giturl][0][2]
+                if giturl in cached_layers:
+                    logger.debug("localhostbecontroller git-copying %s to %s" % (cached_layers[giturl], localdirname))
+                    self._shellcmd("git clone \"%s\" \"%s\"" % (cached_layers[giturl], localdirname))
+                    self._shellcmd("git remote remove origin", localdirname)
+                    self._shellcmd("git remote add origin \"%s\"" % giturl, localdirname)
+                else:
+                    logger.debug("localhostbecontroller: cloning %s:%s in %s" % (giturl, commit, localdirname))
+                    self._shellcmd("git clone \"%s\" --single-branch --branch \"%s\" \"%s\"" % (giturl, commit, localdirname))
 
             # branch magic name "HEAD" will inhibit checkout
             if commit != "HEAD":
@@ -188,21 +232,22 @@ class LocalhostBEController(BuildEnvironmentController):
                     self._shellcmd("git clone -b \"%s\" \"%s\" \"%s\" " % (bitbakes[0].commit, bitbakes[0].giturl, os.path.join(self.pokydirname, 'bitbake')))
 
             # verify our repositories
-            for name, dirpath, commit in gitrepos[giturl]:
+            for name, dirpath in gitrepos[(giturl, commit)]:
                 localdirpath = os.path.join(localdirname, dirpath)
+                logger.debug("localhostbecontroller: localdirpath expected '%s'" % localdirpath)
                 if not os.path.exists(localdirpath):
                     raise BuildSetupException("Cannot find layer git path '%s' in checked out repository '%s:%s'. Aborting." % (localdirpath, giturl, commit))
 
                 if name != "bitbake":
                     layerlist.append(localdirpath.rstrip("/"))
 
-        logger.debug("localhostbecontroller: current layer list %s " % layerlist)
+        logger.debug("localhostbecontroller: current layer list %s " % pformat(layerlist))
 
-        # 3. configure the build environment, so we have a conf/bblayers.conf
+        # 4. configure the build environment, so we have a conf/bblayers.conf
         assert self.pokydirname is not None
         self._setupBE()
 
-        # 4. update the bblayers.conf
+        # 5. update the bblayers.conf
         bblayerconf = os.path.join(self.be.builddir, "conf/bblayers.conf")
         if not os.path.exists(bblayerconf):
             raise BuildSetupException("BE is not consistent: bblayers.conf file missing at %s" % bblayerconf)

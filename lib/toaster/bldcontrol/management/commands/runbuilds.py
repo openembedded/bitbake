@@ -2,7 +2,7 @@ from django.core.management.base import NoArgsCommand, CommandError
 from django.db import transaction
 from orm.models import Build
 from bldcontrol.bbcontroller import getBuildEnvironmentController, ShellCmdException, BuildSetupException
-from bldcontrol.models import BuildRequest, BuildEnvironment, BRError
+from bldcontrol.models import BuildRequest, BuildEnvironment, BRError, BRVariable
 import os
 import logging
 
@@ -47,6 +47,9 @@ class Command(NoArgsCommand):
                 return
 
             logger.debug("runbuilds: starting build %s, environment %s" % (br, bec.be))
+
+            # write the build identification variable
+            BRVariable.objects.create(req = br, name="TOASTER_BRBE", value="%d:%d" % (br.pk, bec.be.pk))
             # let the build request know where it is being executed
             br.environment = bec.be
             br.save()
@@ -56,7 +59,7 @@ class Command(NoArgsCommand):
             bec.writePreConfFile(br.brvariable_set.all())
 
             # get the bb server running with the build req id and build env id
-            bbctrl = bec.getBBController("%d:%d" % (br.pk, bec.be.pk))
+            bbctrl = bec.getBBController()
 
             # trigger the build command
             task = reduce(lambda x, y: x if len(y)== 0 else y, map(lambda y: y.task, br.brtarget_set.all()))
