@@ -296,8 +296,13 @@ class VariableHistory(object):
                 self.variables[var] = []
 
 class DataSmart(MutableMapping):
-    def __init__(self, special = COWDictBase.copy(), seen = COWDictBase.copy() ):
+    def __init__(self, special = None, seen = None ):
         self.dict = {}
+
+        if special is None:
+            special = COWDictBase.copy()
+        if seen is None:
+            seen = COWDictBase.copy()
 
         self.inchistory = IncludeHistory()
         self.varhistory = VariableHistory(self)
