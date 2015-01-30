@@ -2774,6 +2774,7 @@ if toastermain.settings.MANAGED:
         # define here what parameters the view needs in the GET portion in order to
         # be able to display something.  'count' and 'page' are mandatory for all views
         # that use paginators.
+        (pagesize, orderby) = _get_parameters_values(request, 10, 'updated:+')
         mandatory_parameters = { 'count': 10,  'page' : 1, 'orderby' : 'name:+' };
         retval = _verify_parameters( request.GET, mandatory_parameters )
         if retval:
