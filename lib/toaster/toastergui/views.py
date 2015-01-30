@@ -2770,6 +2770,9 @@ if toastermain.settings.MANAGED:
         return response
 
     def machines(request):
+        if not 'project_id' in request.session:
+            raise Exception("invalid page: cannot show page without a project")
+
         template = "machines.html"
         # define here what parameters the view needs in the GET portion in order to
         # be able to display something.  'count' and 'page' are mandatory for all views
@@ -2785,11 +2788,11 @@ if toastermain.settings.MANAGED:
         (filter_string, search_term, ordering_string) = _search_tuple(request, Machine)
 
         queryset_all = Machine.objects.all()
-#        if 'project_id' in request.session:
-#            queryset_all = queryset_all.filter(Q(layer_version__up_branch__name = Project.objects.get(request.session['project_id']).release.branch_name) | Q(layer_version__build__in = Project.objects.get(request.session['project_id']).build_set.all()))
 
         queryset_with_search = _get_queryset(Machine, queryset_all, None, search_term, ordering_string, '-name')
         queryset = _get_queryset(Machine, queryset_all, filter_string, search_term, ordering_string, '-name')
+
+        project_layers = ProjectLayer.objects.filter(project_id=request.session['project_id']).values_list('layercommit',flat=True)
 
         # retrieve the objects that will be displayed in the table; machines a paginator and gets a page range to display
         machine_info = _build_page_range(Paginator(queryset, request.GET.get('count', 10)),request.GET.get('page', 1))
@@ -2797,6 +2800,7 @@ if toastermain.settings.MANAGED:
 
         context = {
             'objects' : machine_info,
+            'project_layers' : project_layers,
             'objectname' : "machines",
             'default_orderby' : 'name:+',
             'total_count': queryset_with_search.count(),
@@ -2809,10 +2813,6 @@ if toastermain.settings.MANAGED:
                 {   'name': 'Description',
                     'dclass': 'span5',
                     'clclass': 'description',
-                },
-                {   'name': 'Machine file',
-                    'clclass': 'machine-file',
-                    'hidden': 1,
                 },
                 {   'name': 'Layer',
                     'clclass': 'layer',
