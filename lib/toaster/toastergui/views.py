@@ -2778,7 +2778,7 @@ if toastermain.settings.MANAGED:
         # be able to display something.  'count' and 'page' are mandatory for all views
         # that use paginators.
         (pagesize, orderby) = _get_parameters_values(request, 10, 'updated:+')
-        mandatory_parameters = { 'count': 10,  'page' : 1, 'orderby' : 'name:+' };
+        mandatory_parameters = { 'count': pagesize,  'page' : 1, 'orderby' : orderby };
         retval = _verify_parameters( request.GET, mandatory_parameters )
         if retval:
             return _redirect_parameters( 'machines', request.GET, mandatory_parameters)
