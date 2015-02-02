@@ -111,7 +111,7 @@
             <dd>
               <span class="current-value">{{layerversion.layer.vcs_url}}</span>
               {% if layerversion.get_vcs_link_url %}
-                <a href="{{layerversion.get_vcs_link_url}}/" class="icon-share get-info"></a>
+                <a href="{{layerversion.get_vcs_link_url}}/" class="icon-share get-info" target="_blank"></a>
               {% endif %}
               <form id="change-repo-form" class="control-group" style="display:none">
                 <div class="input-append">
@@ -130,7 +130,7 @@
                 <span class="muted" style="display:none">Not set</span>
                 <span class="current-value">{{layerversion.dirpath}}</span>
                 {% if layerversion.get_vcs_dirpath_link_url %}
-                  <a href="{{layerversion.get_vcs_dirpath_link_url}}" class="icon-share get-info"></a>
+                  <a href="{{layerversion.get_vcs_dirpath_link_url}}" class="icon-share get-info" target="_blank"></a>
                 {% endif %}
                 <form id="change-subdir-form" style="display:none;">
                   <div class="input-append">
