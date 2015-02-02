@@ -56,7 +56,8 @@ class Command(NoArgsCommand):
 
             # set up the buid environment with the needed layers
             bec.setLayers(br.brbitbake_set.all(), br.brlayer_set.all())
-            bec.writePreConfFile(br.brvariable_set.all())
+            bec.writeConfFile("conf/toaster-pre.conf", br.brvariable_set.all())
+            bec.writeConfFile("conf/toaster.conf", raw = "INHERIT+=\"toaster buildhistory\"")
 
             # get the bb server running with the build req id and build env id
             bbctrl = bec.getBBController()

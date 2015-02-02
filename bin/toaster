@@ -175,6 +175,11 @@ if [ -z "$ZSH_NAME" ] && [ `basename \"$0\"` = `basename \"$BASH_SOURCE\"` ]; th
         exit 1;
     fi
 
+    if [ "x`which daemon`" == "x" ]; then
+        echo -e "Failed dependency; toaster needs the 'daemon' program in order to be able to start builds'. Please install the 'daemon' program." 1>&2;
+	exit 1;
+    fi
+
     # Define a fake builddir where only the pid files are actually created. No real builds will take place here.
     BUILDDIR=/tmp
     RUNNING=1

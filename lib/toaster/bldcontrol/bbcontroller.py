@@ -140,25 +140,25 @@ class BuildEnvironmentController(object):
         bblayerconffile.write("# line added by toaster build control\nBBLAYERS = \"" + " ".join(layerlist) + "\"")
         bblayerconffile.close()
 
-    def writePreConfFile(self, variable_list):
-        prefilepath = os.path.join(self.be.builddir, "conf/toaster-pre.conf")
-        with open(prefilepath, "w") as prefile:
-            for i in variable_list:
-                prefile.write("%s=\"%s\"\n" % (i.name, i.value))
+
+    def writeConfFile(self, variable_list = None, raw = None):
+        """ Writes a configuration file in the build directory. Override with buildenv-specific implementation. """
+        raise Exception("FIXME: Must override to actually write a configuration file")
 
 
-    def startBBServer(self, brbe):
+    def startBBServer(self):
         """ Starts a  BB server with Toaster toasterui set up to record the builds, an no controlling UI.
             After this method executes, self.be bbaddress/bbport MUST point to a running and free server,
             and the bbstate MUST be  updated to "started".
         """
-        raise Exception("Must override in order to actually start the BB server")
+        raise Exception("FIXME: Must override in order to actually start the BB server")
 
     def stopBBServer(self):
         """ Stops the currently running BB server.
             The bbstate MUST be updated to "stopped".
             self.connection must be none.
         """
+        raise Exception("FIXME: Must override stoBBServer")
 
     def setLayers(self, bbs, ls):
         """ Checks-out bitbake executor and layers from git repositories.
@@ -168,7 +168,7 @@ class BuildEnvironmentController(object):
 
             a word of attention: by convention, the first layer for any build will be poky!
         """
-        raise Exception("Must override setLayers")
+        raise Exception("FIXME: Must override setLayers")
 
 
     def getBBController(self):
