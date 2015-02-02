@@ -266,6 +266,13 @@ class TestConcatOverride(unittest.TestCase):
         bb.data.update_data(self.d)
         self.assertEqual(self.d.getVar("TEST", True), "Y")
 
+    def test_remove_expansion_items(self):
+        self.d.setVar("TEST", "A B C D")
+        self.d.setVar("BAR", "B D")
+        self.d.setVar("TEST_remove", "${BAR}")
+        bb.data.update_data(self.d)
+        self.assertEqual(self.d.getVar("TEST", True), "A C")
+
 class TestOverrides(unittest.TestCase):
     def setUp(self):
         self.d = bb.data.init()
