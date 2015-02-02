@@ -100,7 +100,7 @@
             </div>
             <div class="lead ">
               <span class="lead{%if not MANAGED or not buildrequest.project%} pull-right{%endif%}">
-                Build time: <a href="{% url 'buildrequestdetails' buildrequest.project.id buildrequest.pk %}">{{ buildrequest.get_duration|sectohms }}</a>
+                Build time: {{ buildrequest.get_duration|sectohms }}
               </span>
               <button class="btn btn-danger pull-right" onclick='scheduleBuild({% url 'xhr_projectbuild' buildrequest.project.id as bpi%}{{bpi|json}}, {{buildrequest.project.name|json}}, {{buildrequest.get_sorted_target_list|mapselect:'target'|json}})'>Run again</button>
 
