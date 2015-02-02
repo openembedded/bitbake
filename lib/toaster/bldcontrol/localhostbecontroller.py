@@ -30,7 +30,7 @@ import subprocess
 
 from toastermain import settings
 
-from bbcontroller import BuildEnvironmentController, ShellCmdException, BuildSetupException, _get_git_clonedirectory
+from bbcontroller import BuildEnvironmentController, ShellCmdException, BuildSetupException
 
 import logging
 logger = logging.getLogger("toaster")
@@ -54,6 +54,7 @@ class LocalhostBEController(BuildEnvironmentController):
         if cwd is None:
             cwd = self.be.sourcedir
 
+        #logger.debug("lbc_shellcmmd: (%s) %s" % (cwd, command))
         p = subprocess.Popen(command, cwd = cwd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         (out,err) = p.communicate()
         p.wait()
@@ -62,7 +63,7 @@ class LocalhostBEController(BuildEnvironmentController):
                 err = "command: %s \n%s" % (command, out)
             else:
                 err = "command: %s \n%s" % (command, err)
-            #logger.debug("localhostbecontroller: shellcmd error %s" % err)
+            #logger.warn("localhostbecontroller: shellcmd error %s" % err)
             raise ShellCmdException(err)
         else:
             #logger.debug("localhostbecontroller: shellcmd success")
@@ -106,19 +107,12 @@ class LocalhostBEController(BuildEnvironmentController):
 
         logger.debug("localhostbecontroller: running the listener at %s" % own_bitbake)
 
-        try:
-            os.remove(os.path.join(self.be.builddir, "toaster_ui.log"))
-        except OSError as e:
-            import errno
-            if e.errno != errno.ENOENT:
-                raise
-
 
         cmd = "bash -c \"source %s/oe-init-build-env %s && bitbake --read conf/toaster-pre.conf --postread conf/toaster.conf --server-only -t xmlrpc -B 0.0.0.0:0 && DATABASE_URL=%s BBSERVER=0.0.0.0:-1 daemon -d -i -D %s -o toaster_ui.log -- %s --observe-only -u toasterui &\"" % (self.pokydirname, self.be.builddir,
                 self.dburl, self.be.builddir, own_bitbake)
-        logger.debug("fullcommand |%s| " % cmd)
         port = "-1"
-        for i in self._shellcmd(cmd).split("\n"):
+        cmdoutput = self._shellcmd(cmd)
+        for i in cmdoutput.split("\n"):
             if i.startswith("Bitbake server address"):
                 port = i.split(" ")[-1]
                 logger.debug("localhostbecontroller: Found bitbake server port %s" % port)
@@ -132,10 +126,17 @@ class LocalhostBEController(BuildEnvironmentController):
                         return True
             return False
 
-        while not _toaster_ui_started(os.path.join(self.be.builddir, "toaster_ui.log")):
+        retries = 0
+        started = False
+        while not started and retries < 10:
+            started = _toaster_ui_started(os.path.join(self.be.builddir, "toaster_ui.log"))
             import time
             logger.debug("localhostbecontroller: Waiting bitbake server to start")
             time.sleep(0.5)
+            retries += 1
+
+        if not started:
+            raise BuildSetupException("localhostbecontroller: Bitbake server did not start in 5 seconds, aborting (Error: '%s')" % (cmdoutput))
 
         logger.debug("localhostbecontroller: Started bitbake server")
 
@@ -162,6 +163,25 @@ class LocalhostBEController(BuildEnvironmentController):
         self.be.bbstate = BuildEnvironment.SERVER_STOPPED
         self.be.save()
         logger.debug("localhostbecontroller: Stopped bitbake server")
+
+    def getGitCloneDirectory(self, url, branch):
+        """ Utility that returns the last component of a git path as directory
+        """
+        import re
+        components = re.split(r'[:\.\/]', url)
+        base = components[-2] if components[-1] == "git" else components[-1]
+
+        if branch != "HEAD":
+            return "_%s_%s.toaster_cloned" % (base, branch)
+
+
+        # word of attention; this is a localhost-specific issue; only on the localhost we expect to have "HEAD" releases
+        # which _ALWAYS_ means the current poky checkout
+        from os.path import dirname as DN
+        local_checkout_path = DN(DN(DN(DN(DN(os.path.abspath(__file__))))))
+        #logger.debug("localhostbecontroller: using HEAD checkout in %s" % local_checkout_path)
+        return local_checkout_path
+
 
     def setLayers(self, bitbakes, layers):
         """ a word of attention: by convention, the first layer for any build will be poky! """
@@ -208,15 +228,17 @@ class LocalhostBEController(BuildEnvironmentController):
 
         layerlist = []
 
+
         # 3. checkout the repositories
         for giturl, commit in gitrepos.keys():
-            localdirname = os.path.join(self.be.sourcedir, _get_git_clonedirectory(giturl, commit))
+            localdirname = os.path.join(self.be.sourcedir, self.getGitCloneDirectory(giturl, commit))
             logger.debug("localhostbecontroller: giturl %s:%s checking out in current directory %s" % (giturl, commit, localdirname))
 
             # make sure our directory is a git repository
             if os.path.exists(localdirname):
-                if not giturl in self._shellcmd("git remote -v", localdirname):
-                    raise BuildSetupException("Existing git repository at %s, but with different remotes (not '%s'). Aborting." % (localdirname, giturl))
+                localremotes = self._shellcmd("git remote -v", localdirname)
+                if not giturl in localremotes:
+                    raise BuildSetupException("Existing git repository at %s, but with different remotes ('%s', expected '%s'). Toaster will not continue out of fear of damaging something." % (localdirname, ", ".join(localremotes.split("\n")), giturl))
             else:
                 if giturl in cached_layers:
                     logger.debug("localhostbecontroller git-copying %s to %s" % (cached_layers[giturl], localdirname))
@@ -230,7 +252,7 @@ class LocalhostBEController(BuildEnvironmentController):
             # branch magic name "HEAD" will inhibit checkout
             if commit != "HEAD":
                 logger.debug("localhostbecontroller: checking out commit %s to %s " % (commit, localdirname))
-                self._shellcmd("git fetch --all && git checkout \"%s\"" % commit , localdirname)
+                self._shellcmd("git fetch --all && git checkout \"%s\" && git pull --rebase" % (commit) , localdirname)
 
             # take the localdirname as poky dir if we can find the oe-init-build-env
             if self.pokydirname is None and os.path.exists(os.path.join(localdirname, "oe-init-build-env")):

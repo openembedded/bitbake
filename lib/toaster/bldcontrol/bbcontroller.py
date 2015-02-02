@@ -81,19 +81,6 @@ def getBuildEnvironmentController(**kwargs):
         raise Exception("FIXME: Implement BEC for type %s" % str(be.betype))
 
 
-def _get_git_clonedirectory(url, branch):
-    """ Utility that returns the last component of a git path as directory
-    """
-    import re
-    components = re.split(r'[:\.\/]', url)
-    base = components[-2] if components[-1] == "git" else components[-1]
-
-    if branch != "HEAD":
-        return "_%s_%s.toaster_cloned" % (base, branch)
-
-    return base
-
-
 class BuildEnvironmentController(object):
     """ BuildEnvironmentController (BEC) is the abstract class that defines the operations that MUST
         or SHOULD be supported by a Build Environment. It is used to establish the framework, and must

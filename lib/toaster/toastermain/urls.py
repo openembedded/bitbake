@@ -48,6 +48,11 @@ import toastermain.settings
 if toastermain.settings.FRESH_ENABLED:
     urlpatterns.insert(1, url(r'', include('fresh.urls')))
 
+if toastermain.settings.DEBUG_PANEL_ENABLED:
+    import debug_toolbar
+    urlpatterns.insert(1, url(r'', include(debug_toolbar.urls)))
+
+
 if toastermain.settings.MANAGED:
     urlpatterns = [
         # Uncomment the next line to enable the admin:

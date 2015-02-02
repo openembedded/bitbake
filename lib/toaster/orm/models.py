@@ -103,7 +103,7 @@ class Project(models.Model):
         if release == None:
             release = self.release
         # layers on the same branch or layers specifically set for this project
-        queryset = Layer_Version.objects.filter((Q(up_branch__name = release.branch_name) & Q(project = None)) | Q(project = self))
+        queryset = Layer_Version.objects.filter((Q(up_branch__name = release.branch_name) & Q(project = None)) | Q(project = self) | Q(build__project = self))
         if layer_name is not None:
             # we select only a layer name
             queryset = queryset.filter(layer__name = layer_name)
@@ -952,11 +952,24 @@ class Layer_Version(models.Model):
         """ Returns an ordered layerversion list that satisfies a LayerVersionDependency using the layer name and the current Project Releases' LayerSource priority """
         def _get_ls_priority(ls):
             try:
+                # if there is no layer source, we have minus infinite priority, as we don't want this layer selected
+                if ls == None:
+                    return -10000
                 return ls.releaselayersourcepriority_set.get(release=project.release).priority
             except ReleaseLayerSourcePriority.DoesNotExist:
                 raise
+
+        # layers created for this project, or coming from a build inthe project
+        query = Q(project = project) | Q(build__project = project)
+        if self.up_branch is not None:
+            # the same up_branch name
+            query |= Q(up_branch__name=self.up_branch.name)
+        else:
+            # or we have a layer in the project that's similar to mine (See the layer.name constraint below)
+            query |= Q(projectlayer__project=project)
+
         return sorted(
-                Layer_Version.objects.filter( layer__name = self.layer.name, up_branch__name = self.up_branch.name ),
+                Layer_Version.objects.filter(layer__name = self.layer.name).filter(query).select_related('layer_source', 'layer'),
                 key = lambda x: _get_ls_priority(x.layer_source),
                 reverse = True)
 
@@ -965,10 +978,12 @@ class Layer_Version(models.Model):
             return self.commit
         if self.branch is not None and len(self.branch) > 0:
             return self.branch
-        return self.up_branch.name
+        if self.up_branch is not None:
+            return self.up_branch.name
+        raise Exception("Cannot determine the vcs_reference for layer version %s" % vars(self))
 
     def __unicode__(self):
-        return  str(self.layer) + " (" + self.commit +")"
+        return  str(self.layer) + "(%s,%s)" % (self.get_vcs_reference(), self.build.project if self.build is not None else "None")
 
     class Meta:
         unique_together = ("layer_source", "up_id")

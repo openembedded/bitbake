@@ -52,11 +52,11 @@
         </td>
         <td class="target-section">{{o.section}}</td>
         <td class="license">{{o.license}}</td>
-        <td class="layer"><a href="{% url 'layerdetails' o.layer_version.id%}">{{o.layer_version.layer.name}}</a></td>
-        <td class="source">{{o.layer_source.name}}</td>
+        <td class="layer"><a href="{% url 'layerdetails' o.preffered_layerversion.id%}">{{o.preffered_layerversion.layer.name}}</a></td>
+        <td class="source">{{o.preffered_layerversion.layer_source.name}}</td>
         <td class="branch">
-        {% if o.layer_version.up_branch %}
-            {{o.layer_version.up_branch.name}}
+        {% if o.preffered_layerversion.up_branch %}
+            {{o.preffered_layerversion.up_branch.name}}
         {% else %}
         <a class="btn"
                 data-content="<ul class='unstyled'>
@@ -66,15 +66,15 @@
             </a>
             {% endif %}
         </td>
-        <td class="add-layer" value="{{o.pk}}" layerversion_id="{{o.layer_version.pk}}">
+        <td class="add-layer" value="{{o.pk}}" layerversion_id="{{o.preffered_layerversion.pk}}">
             <div id="layer-tooltip-{{o.pk}}" style="display: none; font-size: 11px; line-height: 1.3;" class="tooltip-inner">layer was modified</div>
             <a href="{% url 'project' project.id %}#/targetbuild={{o.name}}" id="target-build-{{o.pk}}" class="btn btn-block remove-layer" style="display:none;" >
                 Build target
             </a>
-            <a id="layer-add-{{o.pk}}" class="btn btn-block" style="display:none;" href="javascript:layerAdd({{o.layer_version.pk}}, '{{o.layer_version.layer.name}}', '{%url 'layerdetails' o.layer_version.pk%}', {{o.pk}})" >
+            <a id="layer-add-{{o.pk}}" class="btn btn-block" style="display:none;" href="javascript:layerAdd({{o.preffered_layerversion.pk}}, '{{o.preffered_layerversion.layer.name}}', '{%url 'layerdetails' o.preffered_layerversion.pk%}', {{o.pk}})" >
                 <i class="icon-plus"></i>
                 Add layer
-                <i title="" class="icon-question-sign get-help" data-original-title="To build this target, you must first add the {{o.layer_version.layer.name}} layer to your project"></i>
+                <i title="" class="icon-question-sign get-help" data-original-title="To build this target, you must first add the {{o.preffered_layerversion.layer.name}} layer to your project"></i>
             </a>
         </td>
     </tr>

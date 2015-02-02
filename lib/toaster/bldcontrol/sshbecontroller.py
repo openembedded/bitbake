@@ -29,7 +29,7 @@ import subprocess
 
 from toastermain import settings
 
-from bbcontroller import BuildEnvironmentController, ShellCmdException, BuildSetupException, _get_git_clonedirectory
+from bbcontroller import BuildEnvironmentController, ShellCmdException, BuildSetupException
 
 def DN(path):
     return "/".join(path.split("/")[0:-1])

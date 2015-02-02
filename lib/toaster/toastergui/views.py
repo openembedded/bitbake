@@ -22,7 +22,7 @@
 import operator,re
 import HTMLParser
 
-from django.db.models import Q, Sum, Count
+from django.db.models import Q, Sum, Count, Max
 from django.db import IntegrityError
 from django.shortcuts import render, redirect
 from orm.models import Build, Target, Task, Layer, Layer_Version, Recipe, LogMessage, Variable
@@ -236,7 +236,7 @@ def _get_queryset(model, queryset, filter_string, search_term, ordering_string, 
     if search_term:
         queryset = _get_search_results(search_term, queryset, model)
 
-    if ordering_string and queryset:
+    if ordering_string:
         column, order = ordering_string.split(':')
         if column == re.sub('-','',ordering_secondary):
             ordering_secondary=''
@@ -2046,7 +2046,7 @@ if toastermain.settings.MANAGED:
                         "url": x.layercommit.layer.layer_index_url,
                         "layerdetailurl": reverse("layerdetails", args=(x.layercommit.pk,)),
                 # This branch name is actually the release
-                        "branch" : { "name" : x.layercommit.commit, "layersource" : x.layercommit.up_branch.layer_source.name}},
+                        "branch" : { "name" : x.layercommit.commit, "layersource" : x.layercommit.up_branch.layer_source.name if x.layercommit.up_branch != None else None}},
                     prj.projectlayer_set.all().order_by("id")),
             "targets" : map(lambda x: {"target" : x.target, "task" : x.task, "pk": x.pk}, prj.projecttarget_set.all()),
             "freqtargets": freqtargets,
@@ -2243,11 +2243,11 @@ if toastermain.settings.MANAGED:
 
             # returns layer versions that provide the named targets
             if request.GET['type'] == "layers4target":
-                # we returnd ata only if the recipe can't be provided by the current project layer set
-                if reduce(lambda x, y: x + y, [x.recipe_layer_version.filter(name="anki").count() for x in prj.projectlayer_equivalent_set()], 0):
+                # we return data only if the recipe can't be provided by the current project layer set
+                if reduce(lambda x, y: x + y, [x.recipe_layer_version.filter(name=request.GET['value']).count() for x in prj.projectlayer_equivalent_set()], 0):
                     final_list = []
                 else:
-                    queryset_all = prj.compatible_layerversions().filter(recipe_layer_version__name = request.GET.get('value', '__none__'))
+                    queryset_all = prj.compatible_layerversions().filter(recipe_layer_version__name = request.GET['value'])
 
                     # exclude layers in the project
                     queryset_all = queryset_all.exclude(pk__in = [x.id for x in prj.projectlayer_equivalent_set()])
@@ -2259,14 +2259,20 @@ if toastermain.settings.MANAGED:
 
             # returns targets provided by current project layers
             if request.GET['type'] == "targets":
-                queryset_all = Recipe.objects.all()
+                queryset_all = Recipe.objects.filter(name__icontains=request.GET.get('value',''))
                 layer_equivalent_set = []
                 for i in prj.projectlayer_set.all():
                     layer_equivalent_set += i.layercommit.get_equivalents_wpriority(prj)
                 queryset_all = queryset_all.filter(layer_version__in =  layer_equivalent_set)
+
+                # if we have more than one hit here (for distinct name and version), max the id it out
+                queryset_all_maxids = queryset_all.values('name').distinct().annotate(max_id=Max('id')).values_list('max_id')
+                queryset_all = queryset_all.filter(id__in = queryset_all_maxids)
+
+
                 return HttpResponse(jsonfilter({ "error":"ok",
-                    "list" : map ( lambda x: {"id": x.pk, "name": x.name, "detail":"[" + x.layer_version.layer.name+ (" | " + x.layer_version.up_branch.name + "]" if x.layer_version.up_branch is not None else "]")},
-                        queryset_all.filter(name__icontains=request.GET.get('value',''))[:8]),
+                    "list" : map ( lambda x: {"id": x.pk, "name": x.name, "detail":"[" + x.layer_version.layer.name + (" | " + x.layer_version.up_branch.name + "]" if x.layer_version.up_branch is not None else "]")},
+                        queryset_all[:8]),
 
                     }), content_type = "application/json")
 
@@ -2663,10 +2669,17 @@ if toastermain.settings.MANAGED:
 
         queryset_with_search = _get_queryset(Recipe, queryset_all, None, search_term, ordering_string, '-name')
 
-        queryset_with_search.prefetch_related("layer_source")
+        # get unique values for 'name' and 'version', and select the maximum ID for each entry (the max id is the newest one)
+        queryset_with_search_maxids = queryset_with_search.values('name').distinct().annotate(max_id=Max('id')).values_list('max_id')
+
+        queryset_with_search = queryset_with_search.filter(id__in=queryset_with_search_maxids).select_related('layer_version', 'layer_version__layer')
+
+        objects = list(queryset_with_search)
+        for e in objects:
+            e.preffered_layerversion = e.layer_version.get_equivalents_wpriority(prj)[0]
 
         # retrieve the objects that will be displayed in the table; targets a paginator and gets a page range to display
-        target_info = _build_page_range(Paginator(queryset_with_search, request.GET.get('count', 10)),request.GET.get('page', 1))
+        target_info = _build_page_range(Paginator(objects, request.GET.get('count', 10)),request.GET.get('page', 1))
 
 
         context = {
