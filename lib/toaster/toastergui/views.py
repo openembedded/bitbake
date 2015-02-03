@@ -2797,7 +2797,6 @@ if toastermain.settings.MANAGED:
         # retrieve the objects that will be displayed in the table; machines a paginator and gets a page range to display
         machine_info = _build_page_range(Paginator(queryset, request.GET.get('count', 10)),request.GET.get('page', 1))
 
-
         context = {
             'objects' : machine_info,
             'project_layers' : project_layers,
@@ -2833,6 +2832,10 @@ if toastermain.settings.MANAGED:
                     'clclass': 'branch',
                     'qhelp' : "The Git branch, tag or commit. For the layers from the OpenEmbedded layer source, the revision is always the branch compatible with the Yocto Project version you selected for this project",
                     'hidden': 1,
+                },
+                {   'name' : 'Machine file',
+                    'clclass' : 'machinefile',
+                    'hidden' : 1,
                 },
                 {   'name': 'Select',
                     'dclass': 'span2',

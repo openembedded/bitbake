@@ -48,6 +48,7 @@
   <td class="layer"><a href="{%url "layerdetails" o.layer_version.id %}">{{o.layer_version.layer.name}}</a></td>
   <td class="source">{{o.layer_source.name}}</td>
   <td class="branch">{{o.layer_version.commit}}</td>
+  <td class="machinefile"><code>/machine/conf/{{o.name}}.conf</code><a href="{{o.get_vcs_machine_file_link_url}}" target="_blank"><i class="icon-share get-info"></i></a></td>
   <td class="select-or-add">
     <a href="#" class="btn btn-block select-machine-btn" data-machine-name="{{o.name}}" data-layer-version-id="{{o.layer_version.id}}"
         {%if o.layer_version.id not in project_layers %}style="display:none" {%endif%}  >Select machine</a>

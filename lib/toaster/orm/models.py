@@ -538,6 +538,11 @@ class Machine(models.Model):
     name = models.CharField(max_length=255)
     description = models.CharField(max_length=255)
 
+    def get_vcs_machine_file_link_url(self):
+        path = 'conf/machine/'+self.name+'.conf'
+
+        return self.layer_version.get_vcs_file_link_url(path)
+
     def __unicode__(self):
         return "Machine " + self.name + "(" + self.description + ")"
 
@@ -901,7 +906,7 @@ class Layer_Version(models.Model):
 
     # code lifted, with adaptations, from the layerindex-web application https://git.yoctoproject.org/cgit/cgit.cgi/layerindex-web/
     def _handle_url_path(self, base_url, path):
-        import re
+        import re, posixpath
         if base_url:
             if self.dirpath:
                 if path:
