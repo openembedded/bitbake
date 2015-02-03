@@ -211,9 +211,24 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.cache.UpdateCacheMiddleware',
+    'django.middleware.cache.FetchFromCacheMiddleware',
     # Uncomment the next line for simple clickjacking protection:
     # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
+
+CACHES = {
+    #        'default': {
+    #            'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
+    #            'LOCATION': '127.0.0.1:11211',
+    #        },
+           'default': {
+               'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
+               'LOCATION': '/tmp/django-default-cache',
+               'TIMEOUT': 5,
+            }
+          }
+
 
 from os.path import dirname as DN
 SITE_ROOT=DN(DN(os.path.abspath(__file__)))
@@ -252,14 +267,38 @@ INSTALLED_APPS = (
 )
 
 
+INTERNAL_IPS = ['127.0.0.1', '192.168.2.28']
+
 # Load django-fresh is TOASTER_DEVEL is set, and the module is available
 FRESH_ENABLED = False
 if os.environ.get('TOASTER_DEVEL', None) is not None:
     try:
         import fresh
-        MIDDLEWARE_CLASSES = MIDDLEWARE_CLASSES + ("fresh.middleware.FreshMiddleware",)
+        MIDDLEWARE_CLASSES = ("fresh.middleware.FreshMiddleware",) + MIDDLEWARE_CLASSES
         INSTALLED_APPS = INSTALLED_APPS + ('fresh',)
         FRESH_ENABLED = True
+    except:
+        pass
+
+DEBUG_PANEL_ENABLED = False
+if os.environ.get('TOASTER_DEVEL', None) is not None:
+    try:
+        import debug_toolbar, debug_panel
+        MIDDLEWARE_CLASSES = ('debug_panel.middleware.DebugPanelMiddleware',) + MIDDLEWARE_CLASSES
+        #MIDDLEWARE_CLASSES = MIDDLEWARE_CLASSES + ('debug_toolbar.middleware.DebugToolbarMiddleware',)
+        INSTALLED_APPS = INSTALLED_APPS + ('debug_toolbar','debug_panel',)
+        DEBUG_PANEL_ENABLED = True
+
+        # this cache backend will be used by django-debug-panel
+        CACHES['debug-panel'] = {
+                'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
+                'LOCATION': '/var/tmp/debug-panel-cache',
+                'TIMEOUT': 300,
+                'OPTIONS': {
+                    'MAX_ENTRIES': 200
+                }
+        }
+
     except:
         pass
 
