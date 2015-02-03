@@ -2777,7 +2777,7 @@ if toastermain.settings.MANAGED:
         # define here what parameters the view needs in the GET portion in order to
         # be able to display something.  'count' and 'page' are mandatory for all views
         # that use paginators.
-        (pagesize, orderby) = _get_parameters_values(request, 10, 'updated:+')
+        (pagesize, orderby) = _get_parameters_values(request, 10, 'name:+')
         mandatory_parameters = { 'count': pagesize,  'page' : 1, 'orderby' : orderby };
         retval = _verify_parameters( request.GET, mandatory_parameters )
         if retval:
@@ -2815,6 +2815,8 @@ if toastermain.settings.MANAGED:
                 },
                 {   'name': 'Layer',
                     'clclass': 'layer',
+                    'orderfield': _get_toggle_order(request, "layer_version__layer__name"),
+                    'ordericon' : _get_toggle_order_icon(request, "layer_version__layer__name"),
                 },
                 {   'name': 'Layer source',
                     'clclass': 'source',
