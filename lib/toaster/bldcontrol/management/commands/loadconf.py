@@ -59,7 +59,7 @@ class Command(BaseCommand):
                 except ValueError:
                     pass
             if url == None:
-                raise Exception("Error while looking for remote \"%s\" in \"s\"" % (remote_name, lo.local_path))
+                raise Exception("Error while looking for remote \"%s\" in \"%s\"" % (remote_name, out))
             return url
 
 
