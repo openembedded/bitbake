@@ -242,8 +242,8 @@ if [ ${CMD} == "start" ] && [ $lock -eq 0 ]; then
 fi
 
 if [ ${CMD} == "start" ] && [ -e $BUILDDIR/.toastermain.pid ] && kill -0 `cat $BUILDDIR/.toastermain.pid`; then
-    echo "Error: bitbake appears to be dead, but the webserver is alive. Something fishy is going on." 1>&2
-    echo "Cleaning up the web server at to start a clean slate."
+    echo "Warning: bitbake appears to be dead, but the Toaster web server is running. Something fishy is going on." 1>&2
+    echo "Cleaning up the web server to start from a clean slate."
     webserverKillAll
 fi
 
