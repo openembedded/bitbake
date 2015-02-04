@@ -2574,9 +2574,9 @@ if toastermain.settings.MANAGED:
                     'hidden': 1,
                     'qhelp': "The layer directory within the Git repository",
                 },
-                {   'name': 'Branch, tag o commit',
+                {   'name': 'Revision',
                     'clclass': 'branch',
-                    'qhelp': "The Git branch of the layer. For the layers from the OpenEmbedded source, the branch matches the Yocto Project version you selected for this project",
+                    'qhelp': "The Git branch, tag or commit. For the layers from the OpenEmbedded layer source, the revision is always the branch compatible with the Yocto Project version you selected for this project",
                 },
                 {   'name': 'Dependencies',
                     'clclass': 'dependencies',
@@ -2740,8 +2740,9 @@ if toastermain.settings.MANAGED:
                         'options': map(lambda x: ("Targets provided by " + x.name + " layers", 'layer_source__pk:' + str(x.id), queryset_with_search.filter(layer_source__pk = x.id).count() ), LayerSource.objects.all()),
                     }
                 },
-                {   'name': 'Branch, tag or commit',
+                {   'name': 'Revision',
                     'clclass': 'branch',
+                    'qhelp': "The Git branch, tag or commit. For the layers from the OpenEmbedded layer source, the revision is always the branch compatible with the Yocto Project version you selected for this project.",
                     'hidden': 1,
                 },
             ]
@@ -2827,8 +2828,9 @@ if toastermain.settings.MANAGED:
                         'options': map(lambda x: (x.name, 'layer_source__pk:' + str(x.id), queryset_with_search.filter(layer_source__pk = x.id).count() ), LayerSource.objects.all()),
                     }
                 },
-                {   'name': 'Branch, tag or commit',
+                {   'name': 'Revision',
                     'clclass': 'branch',
+                    'qhelp' : "The Git branch, tag or commit. For the layers from the OpenEmbedded layer source, the revision is always the branch compatible with the Yocto Project version you selected for this project",
                     'hidden': 1,
                 },
                 {   'name': 'Select',
