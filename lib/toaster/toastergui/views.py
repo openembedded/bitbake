@@ -2789,10 +2789,37 @@ if toastermain.settings.MANAGED:
 
         queryset_all = Machine.objects.all()
 
-        queryset_with_search = _get_queryset(Machine, queryset_all, None, search_term, ordering_string, '-name')
-        queryset = _get_queryset(Machine, queryset_all, filter_string, search_term, ordering_string, '-name')
+        prj = Project.objects.get(pk = request.session['project_id'])
+        compatible_layers = prj.compatible_layerversions()
+        # Make sure we only show machines / layers which are compatible with the current project
+        queryset_all = queryset_all.filter(layer_version__in=compatible_layers)
 
         project_layers = ProjectLayer.objects.filter(project_id=request.session['project_id']).values_list('layercommit',flat=True)
+
+        by_pass_filter_string = False
+        #  "special" filters identified by these valid filter strings we
+        # by pass the usual filter applying method because we're filtering using
+        # a subquery done by project_layers
+        if "name:inprj" in filter_string:
+          queryset_all = queryset_all.filter(layer_version__in=project_layers)
+          by_pass_filter_string = True
+
+        if "name:notinprj" in filter_string:
+          queryset_all = queryset_all.exclude(layer_version__in=project_layers)
+          by_pass_filter_string = True
+
+        queryset_with_search = _get_queryset(Machine, queryset_all, None, search_term, ordering_string, '-name')
+
+        if by_pass_filter_string:
+          queryset = _get_queryset(Machine, queryset_all, None, search_term, ordering_string, '-name')
+        else:
+          queryset = _get_queryset(Machine, queryset_all, filter_string, search_term, ordering_string, '-name')
+
+        selected_filter_count = {
+          'inprj' : queryset.filter(layer_version__in=project_layers).count(),
+          'notinprj' : queryset.exclude(layer_version__in=project_layers).count()
+        }
+
 
         # retrieve the objects that will be displayed in the table; machines a paginator and gets a page range to display
         machine_info = _build_page_range(Paginator(queryset, request.GET.get('count', 10)),request.GET.get('page', 1))
@@ -2802,7 +2829,7 @@ if toastermain.settings.MANAGED:
             'project_layers' : project_layers,
             'objectname' : "machines",
             'default_orderby' : 'name:+',
-            'total_count': queryset_with_search.count(),
+            'total_count': machine_info.paginator.count,
 
             'tablecols' : [
                 {   'name': 'Machine',
@@ -2840,12 +2867,23 @@ if toastermain.settings.MANAGED:
                     'hidden' : 1,
                 },
                 {   'name': 'Select',
-                    'dclass': 'span2',
-                    'qhelp': "Add or delete machines to / from your project ",
+                    'dclass': 'select span2',
+                    'qhelp': "Sets the selected machine as the project machine. You can only have one machine per project",
+                    'filter': {
+                        'class': 'select',
+                        'label': 'Show:',
+                        'options': [
+                          (u'Machines provided by layers added to this project', 'name:inprj', selected_filter_count['inprj']),
+                          (u'Machines provided by layers not added to this project', 'name:notinprj', selected_filter_count['notinprj']),
+
+                        ],
+                    }
+
                 },
 
             ]
         }
+
         response = render(request, template, context)
         _save_parameters_cookies(response, pagesize, orderby, request)
 
