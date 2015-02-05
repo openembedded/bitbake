@@ -78,44 +78,68 @@ class Command(NoArgsCommand):
 
         # we make sure we have builddir and sourcedir for all defined build envionments
         for be in BuildEnvironment.objects.all():
+            be.needs_import = False
             def _verify_be():
                 is_changed = False
-                print("Verifying the Build Environment. If the Build Environment is completly configured, you will be asked to configure it.")
-                if len(be.sourcedir) == 0:
+                print("Verifying the Build Environment. If the local Build Environment is not properly configured, you will be asked to configure it.")
+
+                def _update_sourcedir():
                     suggesteddir = self._get_suggested_sourcedir(be)
                     if len(suggesteddir) > 0:
-                        be.sourcedir = raw_input("\nToaster needs to know in which directory it should check out the layers that will be needed for your builds.\n Toaster suggests \"%s\". If you select this directory, a layer like \"meta-yocto\" will end up in \"%s/meta-yocto\".\n Press Enter to select \"%s\" or type the full path to a different directory: " % (suggesteddir, suggesteddir, suggesteddir))
+                        be.sourcedir = raw_input("Toaster needs to know in which directory it should check out the layers that will be needed for your builds.\n Toaster suggests \"%s\". If you select this directory, a layer like \"meta-intel\" will end up in \"%s/meta-intel\".\n Press Enter to select \"%s\" or type the full path to a different directory (must be a parent of current checkout directory): " % (suggesteddir, suggesteddir, suggesteddir))
                     else:
-                        be.sourcedir = raw_input("\nToaster needs to know in which directory it should check out the layers that will be needed for your builds. Type the full path to the directory (for example: \"%s\": " % os.environment['HOME'])
+                        be.sourcedir = raw_input("Toaster needs to know in which directory it should check out the layers that will be needed for your builds. Type the full path to the directory (for example: \"%s\": " % os.environ.get('HOME', '/tmp/'))
                     if len(be.sourcedir) == 0 and len(suggesteddir) > 0:
                         be.sourcedir = suggesteddir
-                    is_changed = True
+                    return True
+
+                if len(be.sourcedir) == 0:
+                    print "\n -- Validation: The checkout directory must be set."
+                    is_changed = _update_sourcedir()
 
                 if not be.sourcedir.startswith("/"):
-                    be.sourcedir = raw_input(" Layer sources checkout directory must be an absolute path:")
-                    is_changed = True
+                    print "\n -- Validation: The checkout directory must be set to an absolute path."
+                    is_changed = _update_sourcedir()
 
-                if len(be.builddir) == 0:
+                if not be.sourcedir in DN(__file__):
+                    print "\n -- Validation: The checkout directory must be a parent of the current checkout."
+                    is_changed = _update_sourcedir()
+
+                if is_changed:
+                    if be.betype == BuildEnvironment.TYPE_LOCAL:
+                        be.needs_import = True
+                    return True
+
+                def _update_builddir():
                     suggesteddir = self._get_suggested_builddir(be)
                     if len(suggesteddir) > 0:
-                        be.builddir = raw_input("\nToaster needs to know where is your build directory.\n The build directory is where all the artifacts created by your builds will be stored. Toaster suggests \"%s\".\n Press Enter to select \"%s\" or type the full path to a different directory: " % (suggesteddir, suggesteddir))
+                        be.builddir = raw_input("Toaster needs to know where it your build directory is located.\n The build directory is where all the artifacts created by your builds will be stored. Toaster suggests \"%s\".\n Press Enter to select \"%s\" or type the full path to a different directory: " % (suggesteddir, suggesteddir))
                     else:
-                        be.builddir = raw_input("\nToaster needs to know where is your build directory.\n The build directory is where all the artifacts created by your builds will be stored. Type the full path to the directory (for example: \" %s/build\")" % os.environment['HOME'])
+                        be.builddir = raw_input("Toaster needs to know where is your build directory.\n The build directory is where all the artifacts created by your builds will be stored. Type the full path to the directory (for example: \" %s/build\")" % os.environ.get('HOME','/tmp/'))
                     if len(be.builddir) == 0 and len(suggesteddir) > 0:
                         be.builddir = suggesteddir
-                    is_changed = True
+                    return True
+
+                if len(be.builddir) == 0:
+                    print "\n -- Validation: The build directory must be set."
+                    is_changed = _update_builddir()
 
                 if not be.builddir.startswith("/"):
-                    be.builddir = raw_input(" Build directory must be an absolute path:")
-                    is_changed = True
+                    print "\n -- Validation: The build directory must to be set to an absolute path."
+                    is_changed = _update_builddir()
 
 
                 if is_changed:
                     print "Build configuration saved"
                     be.save()
+                    return True
 
-                if is_changed and be.betype == BuildEnvironment.TYPE_LOCAL:
-                    print "\nToaster can use a SINGLE predefined configuration file to set up default project settings and layer information sources.\n Toaster will list now the configuration files that it found. Select Yes to use the desired configuration file."
+
+                if be.needs_import:
+                    print "\nToaster can use a SINGLE predefined configuration file to set up default project settings and layer information sources.\n"
+
+                    # find configuration files
+                    config_files = []
                     for dirname in self._recursive_list_directories(be.sourcedir,2):
                         if os.path.exists(os.path.join(dirname, ".templateconf")):
                             import subprocess
@@ -123,11 +147,20 @@ class Command(NoArgsCommand):
                             conffilepath = os.path.join(conffilepath.strip(), "toasterconf.json")
                             candidatefilepath = os.path.join(dirname, conffilepath)
                             if os.path.exists(candidatefilepath):
-                                i = raw_input("\n Found an preset configuration file \"%s\".\n Do you want to use it? (y/N):" % candidatefilepath)
-                                if len(i) and i.upper()[0] == 'Y':
+                                config_files.append(candidatefilepath)
+
+                    if len(config_files) > 0:
+                        print " Toaster will list now the configuration files that it found. Select the number to use the desired configuration file."
+                        for cf in config_files:
+                            print "  [%d] - %s" % (config_files.index(cf) + 1, cf)
+                        print "\n  [0] - Exit without importing any file"
+                        try:
+                                i = raw_input("\n Enter your option: ")
+                                if len(i) and (int(i) - 1 >= 0 and int(i) - 1 < len(config_files)):
+                                    print "Importing file: %s" % config_files[int(i)-1]
                                     from loadconf import Command as LoadConfigCommand
 
-                                    LoadConfigCommand()._import_layer_config(candidatefilepath)
+                                    LoadConfigCommand()._import_layer_config(config_files[int(i)-1])
                                     # we run lsupdates after config update
                                     print "Layer configuration imported. Updating information from the layer sources, please wait.\n You can re-update any time later by running bitbake/lib/toaster/manage.py lsupdates"
                                     from django.core.management import call_command
@@ -135,6 +168,13 @@ class Command(NoArgsCommand):
 
                                     # we don't look for any other config files
                                     return is_changed
+                        except Exception as e:
+                            print "Failure while trying to import the toaster config file: %s" % e
+                    else:
+                        print "\n Toaster could not find a configuration file. You need to configure Toaster manually using the web interface, or create a configuration file and use\n  bitbake/lib/toaster/managepy.py loadconf [filename]\n command to load it. You can use https://wiki.yoctoproject.org/wiki/File:Toasterconf.json.txt.patch as a starting point."
+
+
+
 
                 return is_changed
 

@@ -126,17 +126,20 @@ function notify_chldexit() {
 }
 
 
-# Verify prerequisites
+function verify_prereq() {
+	# Verify prerequisites
 
-if ! echo "import django; print (1,) == django.VERSION[0:1] and django.VERSION[1:2][0] in (5,6)" | python 2>/dev/null | grep True >/dev/null; then
-    echo -e "This program needs Django 1.5 or 1.6. Please install with\n\npip install django==1.6"
-    return 2
-fi
+    if ! echo "import django; print (1,) == django.VERSION[0:1] and django.VERSION[1:2][0] in (5,6)" | python 2>/dev/null | grep True >/dev/null; then
+        echo -e "This program needs Django 1.5 or 1.6. Please install with\n\npip install django==1.6\n"
+        return 2
+    fi
 
-if ! echo "import south; print [0,8,4] ==  map(int,south.__version__.split(\".\"))" | python 2>/dev/null | grep True >/dev/null; then
-    echo -e "This program needs South 0.8.4. Please install with\n\npip install south==0.8.4"
-    return 2
-fi
+    if ! echo "import south; print reduce(lambda x, y: 2 if x==2 else 0 if x == 0 else y, map(lambda x: 1+cmp(x[1]-x[0],0), zip([0,8,4], map(int,south.__version__.split(\".\"))))) > 0" | python 2>/dev/null | grep True >/dev/null; then
+        echo -e "This program needs South 0.8.4. Please install with\n\npip install south==0.8.4\n"
+        return 2
+    fi
+    return 0
+}
 
 
 # read command line parameters
@@ -170,13 +173,18 @@ if [ -z "$ZSH_NAME" ] && [ `basename \"$0\"` = `basename \"$BASH_SOURCE\"` ]; th
     # We are called as standalone. We refuse to run in a build environment - we need the interactive mode for that.
     # Start just the web server, point the web browser to the interface, and start any Django services.
 
+    if ! verify_prereq; then
+        echo -e "Error: Could not verify that the needed dependencies are installed. Please use virtualenv and pip to install dependencies listed in toaster-requirements.txt" 1>&2;
+        exit 1;
+    fi
+
     if [ -n "$BUILDDIR" ]; then
-	echo -e "Error: It looks like you sourced oe-init-build-env. Toaster cannot start in build mode from an oe-core build environment. You can work around this problem by starting Toaster from a new terminal window." 1>&2;
+	echo -e "Error: It looks like you sourced oe-init-build-env. Toaster cannot start in build mode from an oe-core build environment.\n You should be starting Toaster from a new terminal window." 1>&2;
         exit 1;
     fi
 
     if [ "x`which daemon`" == "x" ]; then
-        echo -e "Failed dependency; toaster needs the 'daemon' program in order to be able to start builds'. Please install the 'daemon' program." 1>&2;
+        echo -e "Failed dependency; toaster needs the 'daemon' program in order to be able to start builds'. Please install the 'daemon' program from your distribution repositories or http://www.libslack.org/daemon/" 1>&2;
 	exit 1;
     fi
 
@@ -207,6 +215,13 @@ if [ -z "$ZSH_NAME" ] && [ `basename \"$0\"` = `basename \"$BASH_SOURCE\"` ]; th
     echo "**** Exit"
     exit 0
 fi
+
+
+if ! verify_prereq; then
+	echo -e "Error: Could not verify that the needed dependencies are installed. Please use virtualenv and pip to install dependencies listed in toaster-requirements.txt" 1>&2;
+	return 1;
+fi
+
 
 # We make sure we're running in the current shell and in a good environment
 if [ -z "$BUILDDIR" ] || [ -z `which bitbake` ]; then
