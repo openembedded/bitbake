@@ -30,7 +30,7 @@
 {% include "layers_dep_modal.html" %}
 <div class="page-header">
   <h1>
-    {% if request.GET.search %}
+    {% if request.GET.search or request.GET.filter %}
       {% if objects.paginator.count != 0 %}
         {{objects.paginator.count}} machines found
        {% else %}
