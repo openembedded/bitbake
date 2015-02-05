@@ -34,7 +34,7 @@
       {% if objects.paginator.count != 0 %}
         {{objects.paginator.count}} machines found
        {% else %}
-        No Machines found
+        No machines found
        {% endif %}
     {% else %}
 
@@ -54,7 +54,7 @@
     <input type="hidden" name="orderby" value="">
       <input type="hidden" name="page" value="1">
         <button class="btn" type="submit" value="Search">Search</button>
-        <button type="submit" class="btn btn-link"><a href="{%url 'machines' %}">Show all machines</a></button>
+        <button type="submit" class="btn btn-link" id="show-all-btn">Show all machines</button>
       </form>
     </div>
 {% else %}
