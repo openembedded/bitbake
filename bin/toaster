@@ -69,7 +69,7 @@ function webserverStartAll()
 	fi
         if [ $retval -eq 0 ]; then
 	    echo "Starting webserver..."
-            python $BBBASEDIR/lib/toaster/manage.py runserver "0.0.0.0:$WEB_PORT" </dev/null >${BUILDDIR}/toaster_web_$$.log 2>&1 & echo $! >${BUILDDIR}/.toastermain.pid
+            python $BBBASEDIR/lib/toaster/manage.py runserver "0.0.0.0:$WEB_PORT" </dev/null >>${BUILDDIR}/toaster_web.log 2>&1 & echo $! >${BUILDDIR}/.toastermain.pid
             sleep 1
             if ! cat "${BUILDDIR}/.toastermain.pid" | xargs -I{} kill -0 {} ; then
                 retval=1
@@ -189,17 +189,43 @@ if [ -z "$ZSH_NAME" ] && [ `basename \"$0\"` = `basename \"$BASH_SOURCE\"` ]; th
     fi
 
     # Define a fake builddir where only the pid files are actually created. No real builds will take place here.
-    BUILDDIR=/tmp
+    BUILDDIR=/tmp/toaster_$$
+    if [ -d "$BUILDDIR" ]; then
+        echo -e "Previous toaster run directory $BUILDDIR found, cowardly refusing to start. Please remove the directory when that toaster instance is over" 2>&1
+        exit 1;
+    fi
+
+    mkdir -p "$BUILDDIR"
+
     RUNNING=1
     function trap_ctrlc() {
         echo "** Stopping system"
         webserverKillAll
         RUNNING=0
     }
+
+    function do_cleanup() {
+        find "$BUILDDIR" -type f | xargs rm
+        rmdir "$BUILDDIR"
+    }
+    function cleanup() {
+        if grep -ir error "$BUILDDIR" >/dev/null; then
+            if grep -irn "That port is already in use" "$BUILDDIR"; then
+                echo "You can use the \"webport=PORTNUMBER\" parameter to start Toaster on a different port (port $WEB_PORT is already in use)"
+                do_cleanup
+            else
+                echo -e "\nErrors found in the Toaster log files present in '$BUILDDIR'. Directory will not be cleaned.\n Please review the errors and notify toaster@yoctoproject.org or submit a bug https://bugzilla.yoctoproject.org/enter_bug.cgi?product=Toaster"
+            fi
+        else
+            echo "No errors found, removing the run directory '$BUILDDIR'"
+            do_cleanup
+        fi;
+    }
     TOASTER_MANAGED=1
     export TOASTER_MANAGED=1
     if [ $WEBSERVER -gt 0 ] && ! webserverStartAll; then
         echo "Failed to start the web server, stopping" 1>&2;
+        cleanup
         exit 1;
     fi
     if [ $WEBSERVER -gt 0 ]; then
@@ -209,9 +235,10 @@ if [ -z "$ZSH_NAME" ] && [ `basename \"$0\"` = `basename \"$BASH_SOURCE\"` ]; th
     trap trap_ctrlc SIGINT
     echo "Toaster is now running. You can stop it with Ctrl-C"
     while [ $RUNNING -gt 0 ]; do
-	python $BBBASEDIR/lib/toaster/manage.py runbuilds
-	sleep 1
+        python $BBBASEDIR/lib/toaster/manage.py runbuilds 2>&1 | tee -a "$BUILDDIR/toaster.log"
+        sleep 1
     done
+    cleanup
     echo "**** Exit"
     exit 0
 fi
@@ -275,8 +302,8 @@ case $CMD in
         fi
         unset BBSERVER
         PREREAD=""
-        if [ -e conf/toaster-pre.conf ]; then
-                PREREAD="--read conf/toaster-pre.conf"
+        if [ -e ${BUILDDIR}/conf/toaster-pre.conf ]; then
+		rm ${BUILDDIR}/conf/toaster-pre.conf
         fi
         bitbake $PREREAD --postread conf/toaster.conf --server-only -t xmlrpc -B 0.0.0.0:0
         if [ $? -ne 0 ]; then
@@ -285,7 +312,7 @@ case $CMD in
         else
             export BBSERVER=0.0.0.0:-1
             if [ $NOTOASTERUI == 0 ]; then        # we start the TOASTERUI only if not inhibited
-                bitbake --observe-only -u toasterui >${BUILDDIR}/toaster_ui.log 2>&1 & echo $! >${BUILDDIR}/.toasterui.pid
+                bitbake --observe-only -u toasterui >>${BUILDDIR}/toaster_ui.log 2>&1 & echo $! >${BUILDDIR}/.toasterui.pid
             fi
         fi
         if [ $start_success -eq 1 ]; then

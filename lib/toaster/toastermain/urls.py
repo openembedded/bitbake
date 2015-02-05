@@ -23,6 +23,9 @@ from django.conf.urls import patterns, include, url
 from django.views.generic import RedirectView
 from django.views.decorators.cache import never_cache
 
+import logging
+
+logger = logging.getLogger("toaster")
 
 # Uncomment the next two lines to enable the admin:
 from django.contrib import admin
@@ -47,10 +50,12 @@ import toastermain.settings
 
 if toastermain.settings.FRESH_ENABLED:
     urlpatterns.insert(1, url(r'', include('fresh.urls')))
+    logger.info("Enabled django-fresh extension")
 
 if toastermain.settings.DEBUG_PANEL_ENABLED:
     import debug_toolbar
     urlpatterns.insert(1, url(r'', include(debug_toolbar.urls)))
+    logger.info("Enabled django_toolbar extension")
 
 
 if toastermain.settings.MANAGED:
@@ -70,4 +75,15 @@ for t in os.walk(os.path.dirname(currentdir)):
 
     if "urls.py" in t[2] and t[0] != currentdir:
         modulename = os.path.basename(t[0])
-        urlpatterns.insert(0, url(r'^' + modulename + '/', include ( modulename + '.urls')))
+        # make sure we don't have this module name in
+        conflict = False
+        for p in urlpatterns:
+            if p.regex.pattern == '^' + modulename + '/':
+                conflict = True
+        if not conflict:
+            urlpatterns.insert(0, url(r'^' + modulename + '/', include ( modulename + '.urls')))
+        else:
+            logger.warn("Module \'%s\' has a regexp conflict, was not added to the urlpatterns" % modulename)
+
+from pprint import pformat
+logger.debug("urlpatterns list %s", pformat(urlpatterns))

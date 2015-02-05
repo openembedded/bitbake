@@ -344,7 +344,7 @@ LOGGING = {
     },
     'formatters': {
         'datetime': {
-            'format': '%(levelname)s %(asctime)s %(message)s'
+            'format': '%(asctime)s %(levelname)s %(message)s'
         }
     },
     'handlers': {
@@ -365,8 +365,8 @@ LOGGING = {
             'level': 'DEBUG',
         },
         'django.request': {
-            'handlers': ['mail_admins'],
-            'level': 'ERROR',
+            'handlers': ['console'],
+            'level': 'WARN',
             'propagate': True,
         },
     }

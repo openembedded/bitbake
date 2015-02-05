@@ -3248,7 +3248,7 @@ else:
     def xhr_build(request, pid):
         raise Exception("page not available in interactive mode")
 
-    def xhr_projectinfo(request, pid):
+    def xhr_projectinfo(request):
         raise Exception("page not available in interactive mode")
 
     def xhr_projectedit(request, pid):

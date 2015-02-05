@@ -656,18 +656,41 @@ class BuildInfoHelper(object):
         assert path.startswith("/")
         assert 'build' in self.internal_state
 
-        def _slkey(layer_version):
-            assert isinstance(layer_version, Layer_Version)
-            return len(layer_version.layer.local_path)
+        if self.brbe is None:
+            def _slkey_interactive(layer_version):
+                assert isinstance(layer_version, Layer_Version)
+                return len(layer_version.layer.local_path)
 
-        # Heuristics: we always match recipe to the deepest layer path that
-        # we can match to the recipe file path
-        for bl in sorted(self.orm_wrapper.layer_version_objects, reverse=True, key=_slkey):
-            if (path.startswith(bl.layer.local_path)):
-                return bl
+            # Heuristics: we always match recipe to the deepest layer path in the discovered layers
+            for lvo in sorted(self.orm_wrapper.layer_version_objects, reverse=True, key=_slkey_interactive):
+                # we can match to the recipe file path
+                if path.startswith(lvo.layer.local_path):
+                    return lvo
 
-        #if we get here, we didn't read layers correctly; mockup the new layer
-        unknown_layer, created = Layer.objects.get_or_create(name="unknown", local_path="/", layer_index_url="")
+        else:
+            br_id, be_id = self.brbe.split(":")
+            from bldcontrol.bbcontroller import getBuildEnvironmentController
+            from bldcontrol.models import BuildRequest
+            bc = getBuildEnvironmentController(pk = be_id)
+
+            def _slkey_managed(layer_version):
+                return len(bc.getGitCloneDirectory(layer_version.giturl, layer_version.commit) + layer_version.dirpath)
+
+            # Heuristics: we match the path to where the layers have been checked out
+            for brl in sorted(BuildRequest.objects.get(pk = br_id).brlayer_set.all(), reverse = True, key = _slkey_managed):
+                localdirname = os.path.join(os.path.join(bc.be.sourcedir, bc.getGitCloneDirectory(brl.giturl, brl.commit)), brl.dirpath)
+                if path.startswith(localdirname):
+                    #logger.warn("-- managed: matched path %s with layer %s " % (path, localdirname))
+                    # we matched the BRLayer, but we need the layer_version that generated this br
+                    for lvo in self.orm_wrapper.layer_version_objects:
+                        if brl.name == lvo.layer.name:
+                            return lvo
+
+        #if we get here, we didn't read layers correctly; dump whatever information we have on the error log
+        logger.error("Could not match layer version for recipe path %s : %s" % (path, self.orm_wrapper.layer_version_objects))
+
+        #mockup the new layer
+        unknown_layer, created = Layer.objects.get_or_create(name="__FIXME__unidentified_layer", local_path="/", layer_index_url="")
         unknown_layer_version_obj, created = Layer_Version.objects.get_or_create(layer = unknown_layer, build = self.internal_state['build'])
 
         return unknown_layer_version_obj

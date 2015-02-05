@@ -68,7 +68,7 @@ class Command(NoArgsCommand):
                 task = None
             bbctrl.build(list(map(lambda x:x.target, br.brtarget_set.all())), task)
 
-            logger.debug("runbuilds: Build launched, exiting")
+            logger.debug("runbuilds: Build launched, exiting. Follow build logs at %s/toaster_ui.log" % bec.be.builddir)
             # disconnect from the server
             bbctrl.disconnect()
 
