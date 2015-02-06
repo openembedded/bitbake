@@ -2,6 +2,25 @@
 .logo img { height: 30px; width: auto !important; }
 .logo { padding-top: 4px !important; padding-bottom:0px !important; }
 
+/* style the version text */
+.version-text {
+	color: #AAA;
+	font-size: 0.6em;
+	display: table-footer-group;
+	padding: 0px;
+	margin: 1px 1px 1px 1px;
+}
+
+.version-brand, .version-brand:hover, a.version-brand:focus  {
+    color: #777;
+    display: block;
+    float: left;
+    font-size: 20px;
+    font-weight: 200;
+    padding: 00px 0px;
+    text-shadow: 0 1px 0 #fff;
+}
+
 /* Style the breadcrumb */
 .breadcrumb { display: inline-block; background-color: transparent; }
 .section { margin: 20px 0; }

@@ -1709,10 +1709,12 @@ if toastermain.settings.MANAGED:
 
     # the context processor that supplies data used across all the pages
     def managedcontextprocessor(request):
+        import subprocess
         ret = {
             "projects": Project.objects.all(),
             "MANAGED" : toastermain.settings.MANAGED,
-            "DEBUG" : toastermain.settings.DEBUG
+            "DEBUG" : toastermain.settings.DEBUG,
+            "TOASTER_VERSION": toastermain.settings.TOASTER_VERSION,
         }
         if 'project_id' in request.session:
             try:
@@ -3057,7 +3059,9 @@ else:
         return {
             "projects": [],
             "MANAGED" : toastermain.settings.MANAGED,
-            "DEBUG" : toastermain.settings.DEBUG
+            "DEBUG" : toastermain.settings.DEBUG,
+            "TOASTER_VERSION": toastermain.settings.TOASTER_VERSION,
+
         }
 
 

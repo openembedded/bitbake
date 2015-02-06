@@ -211,8 +211,6 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.cache.UpdateCacheMiddleware',
-    'django.middleware.cache.FetchFromCacheMiddleware',
     # Uncomment the next line for simple clickjacking protection:
     # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
@@ -232,6 +230,9 @@ CACHES = {
 
 from os.path import dirname as DN
 SITE_ROOT=DN(DN(os.path.abspath(__file__)))
+
+import subprocess
+TOASTER_VERSION = subprocess.Popen('cd %s; git branch | grep "^* " | tr -d "* "' % SITE_ROOT, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0]
 
 ROOT_URLCONF = 'toastermain.urls'
 
