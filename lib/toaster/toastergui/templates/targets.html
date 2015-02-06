@@ -3,7 +3,7 @@
 {% load humanize %}
 
 {% block localbreadcrumb %}
-<li>Targets</li>
+<li>All compatible targets</li>
 {% endblock %}
 
 {% block projectinfomain %}
@@ -14,9 +14,9 @@
   {% elif request.GET.filter and objects.paginator.count ==  0 or request.GET.search and objects.paginator.count == 0 %}
       No targets found
   {%else%}
-      All targets
+      All compatible targets
   {%endif%}
-                        <i class="icon-question-sign get-help heading-help" title="This page lists all the targets compatible with " + {{project.release.name}} + " that Toaster knows about."></i>
+                        <i class="icon-question-sign get-help heading-help" title="This page lists all the targets compatible with the release selected for this project, which is {{project.release.description}}"></i>
                      </h1>
                 </div>
 

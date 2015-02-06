@@ -34,7 +34,7 @@
 .get-help-yellow:hover { color: #B38942; cursor: pointer; }
 .get-help-red { color: #B94A48; font-size: 16px; padding-left: 2px; }
 .get-help-red:hover { color: #943A38; cursor: pointer; }
-.build-form .get-help { margin-left: 5px; }
+.build-form>i:first-of-type { margin-left: 5px; }
 .manual { margin: 11px 15px;}
 .heading-help { font-size: 14px; }
 

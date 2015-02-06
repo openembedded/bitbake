@@ -3,7 +3,7 @@
 {% load humanize %}
 
 {% block localbreadcrumb %}
-<li>Layers</li>
+<li>All compatible layers</li>
 {% endblock %}
 
 {% block projectinfomain %}
@@ -14,9 +14,9 @@
   {% elif request.GET.filter and total_count ==  0 or request.GET.search and total_count == 0 %}
       No layers found
   {%else%}
-      All layers
+      All compatible layers
   {%endif%}
-                        <i class="icon-question-sign get-help heading-help" title="This page lists all the layers compatible with {{project.release.name}} that Toaster knows about."></i>
+                        <i class="icon-question-sign get-help heading-help" title="This page lists all the layers compatible with the release selected for this project, which is {{project.release.description}}"></i>
                      </h1>
                 </div>
 
