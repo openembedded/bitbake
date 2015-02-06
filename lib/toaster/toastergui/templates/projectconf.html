@@ -269,7 +269,7 @@
                 });
             });
 
-            $(".js-new-config_var").keyup(function(){
+            $(".js-new-config_var").on('input', function(){
                 if ($(this).val().length == 0) {
                     $(".js-apply-change-config_var").attr("disabled","disabled");
                 }
@@ -386,7 +386,7 @@
                 });
             });
 
-            $("#new-distro").keyup(function(){
+            $("#new-distro").on('input', function(){
                 if ($(this).val().length == 0) {
                     $("#apply-change-distro").attr("disabled","disabled");
                 }
@@ -469,7 +469,7 @@
                 });
             });
 
-            $("#new-image_install").keyup(function(){
+            $("#new-image_install").on('input', function(){
                 if ($(this).val().length == 0) {
                     $("#apply-change-image_install").attr("disabled","disabled");
                 }
@@ -629,7 +629,7 @@
             });
 
             //activate / deactivate save added variable button
-            $("#variable, #value").keyup(function() {
+            $("#variable, #value").on('input', function() {
                 if ( $("#variable").val().length > 0  && $("#value").val().trim().length > 0 ) {
                     $(".save").removeAttr("disabled");
                 }

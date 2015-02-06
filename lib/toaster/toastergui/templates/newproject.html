@@ -72,7 +72,7 @@
             $('.btn-primary').attr('disabled', 'disabled');
 
             // enable submit button when all required fields are populated
-            $("input#new-project-name").keyup(function() {
+            $("input#new-project-name").on('input', function() {
                 if ($("input#new-project-name").val().length > 0 ){
                     $('.btn-primary').removeAttr('disabled');
                     $(".help-inline").css('visibility','hidden');
