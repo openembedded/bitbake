@@ -43,8 +43,8 @@
        <link linkend='var-DEFAULT_PREFERENCE'>D</link>
        <link linkend='var-EXCLUDE_FROM_WORLD'>E</link>
        <link linkend='var-FAKEROOT'>F</link>
-<!--       <link linkend='var-GROUPADD_PARAM'>G</link> -->
-       <link linkend='var-HOMEPAGE'>H</link>
+       <link linkend='var-GITDIR'>G</link>
+       <link linkend='var-HGDIR'>H</link>
 <!--       <link linkend='var-ICECC_DISABLED'>I</link> -->
 <!--               <link linkend='var-glossary-j'>J</link> -->
 <!--       <link linkend='var-KARCH'>K</link> -->
@@ -1154,6 +1154,15 @@
             </glossdef>
         </glossentry>
 
+        <glossentry id='var-BZRDIR'><glossterm>BZRDIR</glossterm>
+            <glossdef>
+                <para>
+                    The directory in which files checked out of a Bazaar
+                    system are stored.
+                </para>
+            </glossdef>
+        </glossentry>
+
     </glossdiv>
 
     <glossdiv id='var-glossary-c'><title>C</title>
@@ -1164,6 +1173,15 @@
                     Specifies the directory BitBake uses to store a cache
                     of the metadata so it does not need to be parsed every
                     time BitBake is started.
+                </para>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-CVSDIR'><glossterm>CVSDIR</glossterm>
+            <glossdef>
+                <para>
+                    The directory in which files checked out under the
+                    CVS system are stored.
                 </para>
             </glossdef>
         </glossentry>
@@ -1412,12 +1430,31 @@
 
     </glossdiv>
 
-<!--
+
     <glossdiv id='var-glossary-g'><title>G</title>
+
+        <glossentry id='var-GITDIR'><glossterm>GITDIR</glossterm>
+            <glossdef>
+                <para>
+                    The directory in which a local copy of a Git repository
+                    is stored when it is cloned.
+                </para>
+            </glossdef>
+        </glossentry>
+
     </glossdiv>
--->
+
 
     <glossdiv id='var-glossary-h'><title>H</title>
+
+        <glossentry id='var-HGDIR'><glossterm>HGDIR</glossterm>
+            <glossdef>
+                <para>
+                    The directory in which files checked out of a Mercurial
+                    system are stored.
+                </para>
+            </glossdef>
+        </glossentry>
 
         <glossentry id='var-HOMEPAGE'><glossterm>HOMEPAGE</glossterm>
             <glossdef>
@@ -2096,6 +2133,15 @@
             <glossdef>
                 <para>
                     A short summary for the recipe, which is 72 characters or less.
+                </para>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-SVNDIR'><glossterm>SVNDIR</glossterm>
+            <glossdef>
+                <para>
+                    The directory in which files checked out of a Subversion
+                    system are stored.
                 </para>
             </glossdef>
         </glossentry>
