@@ -2814,11 +2814,6 @@ if toastermain.settings.MANAGED:
           queryset_all = queryset_all.exclude(layer_version__in=project_layers)
           by_pass_filter_string = True
 
-        selected_filter_count = {
-          'inprj' : queryset_all.filter(layer_version__in=project_layers).count(),
-          'notinprj' : queryset_all.exclude(layer_version__in=project_layers).count()
-        }
-
         # END FILTERS
 
         if by_pass_filter_string:
@@ -2834,13 +2829,16 @@ if toastermain.settings.MANAGED:
              queryset = queryset.exclude(layer_version__in=to_rm)
 
         machine_info = _build_page_range(Paginator(queryset, request.GET.get('count', 10)),request.GET.get('page', 1))
+        selected_filter_count = {}
+        selected_filter_count['inprj'] = queryset.filter(layer_version__in=project_layers).count()
+        selected_filter_count['notinprj'] = queryset.count() - selected_filter_count['inprj']
 
         context = {
             'objects' : machine_info,
             'project_layers' : project_layers,
             'objectname' : "machines",
             'default_orderby' : 'name:+',
-            'total_count': machine_info.paginator.count,
+            'total_count': queryset.count(),
 
             'tablecols' : [
                 {   'name': 'Machine',
