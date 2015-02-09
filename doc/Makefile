@@ -11,7 +11,7 @@
 #    validate: validates
 #    clean:    removes files
 #
-# The Makefile generates an HTML and PDF version of every document.  The
+# The Makefile generates an HTML version of every document.  The
 # variable DOC indicates the folder name for a given manual.
 #
 # To build a manual, you must invoke 'make' with the DOC argument.
@@ -21,8 +21,8 @@
 #     make DOC=bitbake-user-manual
 #     make pdf DOC=bitbake-user-manual
 #
-# The first example generates the HTML and PDF versions of the User Manual.
-# The second example generates the HTML version only of the User Manual.
+# The first example generates the HTML version of the User Manual.
+# The second example generates the PDF version of the User Manual.
 #
 
 ifeq ($(DOC),bitbake-user-manual)
@@ -31,9 +31,9 @@ XSLTOPTS = --stringparam html.stylesheet bitbake-user-manual-style.css \
            --stringparam  section.autolabel 1 \
            --stringparam  section.label.includes.component.label 1 \
            --xinclude
-ALLPREQ = html pdf tarball
-TARFILES = bitbake-user-manual-style.css bitbake-user-manual.html bitbake-user-manual.pdf figures/bitbake-title.png
-MANUALS = $(DOC)/$(DOC).html $(DOC)/$(DOC).pdf
+ALLPREQ = html tarball
+TARFILES = bitbake-user-manual-style.css bitbake-user-manual.html figures/bitbake-title.png
+MANUALS = $(DOC)/$(DOC).html
 FIGURES = figures
 STYLESHEET = $(DOC)/*.css
 
