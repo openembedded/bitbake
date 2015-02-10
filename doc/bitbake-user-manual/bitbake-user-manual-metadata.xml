@@ -1140,8 +1140,6 @@
                 <filename>DISPLAY</filename> variable.
                 Here is an example:
                 <literallayout class='monospaced'>
-     BB_ORIGENV - add example?
-
      origenv = d.getVar("BB_ORIGENV", False)
      bar = origenv.getVar("BAR", False)
                 </literallayout>
