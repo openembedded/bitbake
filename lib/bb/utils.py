@@ -131,6 +131,28 @@ def vercmp_string(a, b):
     tb = split_version(b)
     return vercmp(ta, tb)
 
+def vercmp_string_op(a, b, op):
+    """
+    Compare two versions and check if the specified comparison operator matches the result of the comparison.
+    This function is fairly liberal about what operators it will accept since there are a variety of styles
+    depending on the context.
+    """
+    res = vercmp_string(a, b)
+    if op in ('=', '=='):
+        return res == 0
+    elif op == '<=':
+        return res <= 0
+    elif op == '>=':
+        return res >= 0
+    elif op in ('>', '>>'):
+        return res > 0
+    elif op in ('<', '<<'):
+        return res < 0
+    elif op == '!=':
+        return res != 0
+    else:
+        raise VersionStringException('Unsupported comparison operator "%s"' % op)
+
 def explode_deps(s):
     """
     Take an RDEPENDS style string of format:

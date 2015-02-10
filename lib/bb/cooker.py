@@ -1096,42 +1096,30 @@ class BBCooker:
                 # Check dependencies and store information for priority calculation
                 deps = self.data.getVar("LAYERDEPENDS_%s" % c, True)
                 if deps:
-                    depnamelist = []
-                    deplist = deps.split()
-                    for dep in deplist:
-                        depsplit = dep.split(':')
-                        if len(depsplit) > 1:
-                            try:
-                                depver = int(depsplit[1])
-                            except ValueError:
-                                parselog.error("invalid version value in LAYERDEPENDS_%s: \"%s\"", c, dep)
-                                errors = True
-                                continue
-                        else:
-                            depver = None
-                        dep = depsplit[0]
-                        depnamelist.append(dep)
-
+                    try:
+                        deplist = bb.utils.explode_dep_versions2(deps)
+                    except bb.utils.VersionStringException as vse:
+                        bb.fatal('Error parsing LAYERDEPENDS_%s: %s' % (c, str(vse)))
+                    for dep, oplist in deplist.iteritems():
                         if dep in collection_list:
-                            if depver:
+                            for opstr in oplist:
                                 layerver = self.data.getVar("LAYERVERSION_%s" % dep, True)
+                                (op, depver) = opstr.split()
                                 if layerver:
                                     try:
-                                        lver = int(layerver)
-                                    except ValueError:
-                                        parselog.error("invalid value for LAYERVERSION_%s: \"%s\"", c, layerver)
-                                        errors = True
-                                        continue
-                                    if lver != depver:
-                                        parselog.error("Layer '%s' depends on version %d of layer '%s', but version %d is enabled in your configuration", c, depver, dep, lver)
+                                        res = bb.utils.vercmp_string_op(layerver, depver, op)
+                                    except bb.utils.VersionStringException as vse:
+                                        bb.fatal('Error parsing LAYERDEPENDS_%s: %s' % (c, str(vse)))
+                                    if not res:
+                                        parselog.error("Layer '%s' depends on version %s of layer '%s', but version %s is currently enabled in your configuration. Check that you are using the correct matching versions/branches of these two layers.", c, opstr, dep, layerver)
                                         errors = True
                                 else:
-                                    parselog.error("Layer '%s' depends on version %d of layer '%s', which exists in your configuration but does not specify a version", c, depver, dep)
+                                    parselog.error("Layer '%s' depends on version %s of layer '%s', which exists in your configuration but does not specify a version. Check that you are using the correct matching versions/branches of these two layers.", c, opstr, dep)
                                     errors = True
                         else:
                             parselog.error("Layer '%s' depends on layer '%s', but this layer is not enabled in your configuration", c, dep)
                             errors = True
-                    collection_depends[c] = depnamelist
+                    collection_depends[c] = deplist.keys()
                 else:
                     collection_depends[c] = []
 
