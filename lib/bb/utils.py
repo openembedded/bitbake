@@ -53,6 +53,9 @@ def set_context(ctx):
 # Context used in better_exec, eval
 _context = clean_context()
 
+class VersionStringException(Exception):
+    """Exception raised when an invalid version specification is found"""
+
 def explode_version(s):
     r = []
     alpha_regexp = re.compile('^([a-zA-Z]+)(.*)$')
@@ -188,6 +191,7 @@ def explode_dep_versions2(s):
                 i = i[1:]
             else:
                 # This is an unsupported case!
+                raise VersionStringException('Invalid version specification in "(%s" - invalid or missing operator' % i)
                 lastcmp = (i or "")
                 i = ""
             i.strip()
