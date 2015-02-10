@@ -78,10 +78,16 @@ class Command(NoArgsCommand):
         except Exception as e:
             logger.error("runbuilds: Error executing shell command %s" % e)
             traceback.print_exc(e)
+            if "[Errno 111] Connection refused" in str(e):
+                # Connection refused, read toaster_server.out
+                errmsg = bec.readServerLogFile()
+            else:
+                errmsg = str(e)
+
             BRError.objects.create(req = br,
-                errtype = str(type(e)),
-                errmsg = str(e),
-                traceback = traceback.format_exc(e))
+                    errtype = str(type(e)),
+                    errmsg = errmsg,
+                    traceback = traceback.format_exc(e))
             br.state = BuildRequest.REQ_FAILED
             br.save()
             bec.be.lock = BuildEnvironment.LOCK_FREE

@@ -108,7 +108,7 @@ class LocalhostBEController(BuildEnvironmentController):
         logger.debug("localhostbecontroller: running the listener at %s" % own_bitbake)
 
 
-        cmd = "bash -c \"source %s/oe-init-build-env %s && bitbake --read conf/toaster-pre.conf --postread conf/toaster.conf --server-only -t xmlrpc -B 0.0.0.0:0 && DATABASE_URL=%s BBSERVER=0.0.0.0:-1 daemon -d -i -D %s -o toaster_ui.log -- %s --observe-only -u toasterui &\"" % (self.pokydirname, self.be.builddir,
+        cmd = "bash -c \"source %s/oe-init-build-env %s && bitbake --read conf/toaster-pre.conf --postread conf/toaster.conf --server-only -t xmlrpc -B 0.0.0.0:0 >toaster_server.log && DATABASE_URL=%s BBSERVER=0.0.0.0:-1 daemon -d -i -D %s -o toaster_ui.log -- %s --observe-only -u toasterui &\"" % (self.pokydirname, self.be.builddir,
                 self.dburl, self.be.builddir, own_bitbake)
         port = "-1"
         cmdoutput = self._shellcmd(cmd)
@@ -289,6 +289,9 @@ class LocalhostBEController(BuildEnvironmentController):
 
         self.islayerset = True
         return True
+
+    def readServerLogFile(self):
+        return open(os.path.join(self.be.builddir, "toaster_server.log"), "r").read()
 
     def release(self):
         assert self.be.sourcedir and os.path.exists(self.be.builddir)
