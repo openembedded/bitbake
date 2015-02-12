@@ -2325,12 +2325,9 @@ if toastermain.settings.MANAGED:
                     variable = t
                     value = ""
 
-                try:
-                    pt = ProjectVariable.objects.get(project = prj, name = variable)
-                    pt.value=value
-                    pt.save()
-                except ObjectDoesNotExist:
-                    print("the entry doesn't exist.")
+                pt, created = ProjectVariable.objects.get_or_create(project = prj, name = variable)
+                pt.value=value
+                pt.save()
             # remove conf variables
             if 'configvarDel' in request.POST:
                 t=request.POST['configvarDel'].strip()
@@ -2338,15 +2335,32 @@ if toastermain.settings.MANAGED:
 
             # return all project settings
             vars_managed,vars_fstypes,vars_blacklist = get_project_configvars_context()
-            return HttpResponse(json.dumps( {
+            return_data = {
                 "error": "ok",
                 'configvars'   : map(lambda x: (x.name, x.value, x.pk), ProjectVariable.objects.filter(project_id = pid).all()),
-                'distro'       : ProjectVariable.objects.get(project = prj, name = "DISTRO").value,
-                'fstypes'      : ProjectVariable.objects.get(project = prj, name = "IMAGE_FSTYPES").value,
-                'image_install_append': ProjectVariable.objects.get(project = prj, name = "IMAGE_INSTALL_append").value,
-                'package_classes': ProjectVariable.objects.get(project = prj, name = "PACKAGE_CLASSES").value,
-                'sdk_machine'  : ProjectVariable.objects.get(project = prj, name = "SDKMACHINE").value,
-               }), content_type = "application/json")
+               }
+            try:
+                return_data['distro'] = ProjectVariable.objects.get(project = prj, name = "DISTRO").value,
+            except ProjectVariable.DoesNotExist:
+                pass
+            try:
+                return_data['fstypes'] = ProjectVariable.objects.get(project = prj, name = "IMAGE_FSTYPES").value,
+            except ProjectVariable.DoesNotExist:
+                pass
+            try:
+                return_data['image_install_append'] = ProjectVariable.objects.get(project = prj, name = "IMAGE_INSTALL_append").value,
+            except ProjectVariable.DoesNotExist:
+                pass
+            try:
+                return_data['package_classes'] = ProjectVariable.objects.get(project = prj, name = "PACKAGE_CLASSES").value,
+            except ProjectVariable.DoesNotExist:
+                pass
+            try:
+                return_data['sdk_machine'] = ProjectVariable.objects.get(project = prj, name = "SDKMACHINE").value,
+            except ProjectVariable.DoesNotExist:
+                pass
+
+            return HttpResponse(json.dumps( return_data ), content_type = "application/json")
 
         except Exception as e:
             return HttpResponse(json.dumps({"error":str(e) + "\n" + traceback.format_exc()}), content_type = "application/json")
@@ -2916,7 +2930,7 @@ if toastermain.settings.MANAGED:
 
         vars_fstypes  = {
             'btrfs','cpio','cpio.gz','cpio.lz4','cpio.lzma','cpio.xz','cramfs',
-            'elf','ext2','ext2.bz2','ext2.gz','ext2.lzma' 'ext3','ext3.gz','hddimg',
+            'elf','ext2','ext2.bz2','ext2.gz','ext2.lzma', 'ext3','ext3.gz','hddimg',
             'iso','jffs2','jffs2.sum','squashfs','squashfs-lzo','squashfs-xz','tar.bz2',
             'tar.lz4','tar.xz','tartar.gz','ubi','ubifs','vmdk'
         }
