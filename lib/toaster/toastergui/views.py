@@ -2554,7 +2554,6 @@ if toastermain.settings.MANAGED:
             'objects' : layer_info,
             'objectname' : "layers",
             'default_orderby' : 'layer__name:+',
-            'total_count': len(object_list),
 
             'tablecols' : [
                 {   'name': 'Layer',
@@ -2586,15 +2585,6 @@ if toastermain.settings.MANAGED:
                 {   'name': 'Add | Delete',
                     'dclass': 'span2',
                     'qhelp': "Add or delete layers to / from your project ",
-                    'filter': {
-                        'class': 'add-del-layers',
-                        'label': 'Show:',
-                        'options': [
-              ('Layers added to this project', "projectlayer__project:" + str(prj.id), queryset_all.filter(projectlayer__project = prj.id).count()),
-              ('Layers not added to this project', "projectlayer__project:NOT" + str(prj.id), queryset_all.exclude(projectlayer__project = prj.id).count()),
-                                   ]
-
-                    }
                 },
             ]
         }
@@ -2690,7 +2680,6 @@ if toastermain.settings.MANAGED:
             'objects' : target_info,
             'objectname' : "targets",
             'default_orderby' : 'name:+',
-            'total_count': queryset_with_search.count(),
 
             'tablecols' : [
                 {   'name': 'Target',
@@ -2742,15 +2731,6 @@ if toastermain.settings.MANAGED:
                 {   'name': 'Build',
                     'dclass': 'span2',
                     'qhelp': "Add or delete targets to / from your project ",
-                    'filter': {
-                        'class': 'add-layer',
-                        'label': 'Show:',
-                        'options': [
-              ('Targets provided by layers added to this project', "layer_version__projectlayer__project:" + str(prj.id), queryset_with_search.filter(layer_version__projectlayer__project = prj.id).count()),
-              ('Targets provided by layers not added to this project', "layer_version__projectlayer__project:NOT" + str(prj.id), queryset_with_search.exclude(layer_version__projectlayer__project = prj.id).count()),
-                                   ]
-
-                    }
                 }, ]
 
         response = render(request, template, context)
@@ -2782,52 +2762,25 @@ if toastermain.settings.MANAGED:
         prj = Project.objects.get(pk = request.session['project_id'])
         compatible_layers = prj.compatible_layerversions()
 
-        # FILTERS SECTION
-
         # Make sure we only show machines / layers which are compatible
         # with the current project
         queryset_all = queryset_all.filter(layer_version__in=compatible_layers)
 
         project_layers = ProjectLayer.objects.filter(project_id=request.session['project_id']).values_list('layercommit',flat=True)
 
-        by_pass_filter_string = False
-        # "special" filters identified by these valid filter strings we
-        # by pass the usual filter applying method because we're filtering using
-        # a subquery done by project_layers
-
-        if "name:inprj" in filter_string:
-          queryset_all = queryset_all.filter(layer_version__in=project_layers)
-          by_pass_filter_string = True
-
-        if "name:notinprj" in filter_string:
-          queryset_all = queryset_all.exclude(layer_version__in=project_layers)
-          by_pass_filter_string = True
-
-        # END FILTERS
-
-        if by_pass_filter_string:
-          queryset = _get_queryset(Machine, queryset_all, None, search_term, ordering_string, '-name')
-        else:
-          queryset = _get_queryset(Machine, queryset_all, filter_string, search_term, ordering_string, '-name')
-
         # Now we need to weed out the layers which will appear as duplicated
         # because they're from a layer source which doesn't need to be used
-        for machine in queryset:
+        for machine in queryset_all:
            to_rm = machine.layer_version.get_equivalents_wpriority(prj)[1:]
            if len(to_rm) > 0:
-             queryset = queryset.exclude(layer_version__in=to_rm)
+             queryset_all = queryset_all.exclude(layer_version__in=to_rm)
 
-        machine_info = _build_page_range(Paginator(queryset, request.GET.get('count', 10)),request.GET.get('page', 1))
-        selected_filter_count = {}
-        selected_filter_count['inprj'] = queryset.filter(layer_version__in=project_layers).count()
-        selected_filter_count['notinprj'] = queryset.count() - selected_filter_count['inprj']
 
         context = {
             'objects' : machine_info,
             'project_layers' : project_layers,
             'objectname' : "machines",
             'default_orderby' : 'name:+',
-            'total_count': queryset.count(),
 
             'tablecols' : [
                 {   'name': 'Machine',
@@ -2857,16 +2810,6 @@ if toastermain.settings.MANAGED:
                 {   'name': 'Select',
                     'dclass': 'select span2',
                     'qhelp': "Sets the selected machine as the project machine. You can only have one machine per project",
-                    'filter': {
-                        'class': 'select',
-                        'label': 'Show:',
-                        'options': [
-                          (u'Machines provided by layers added to this project', 'name:inprj', selected_filter_count['inprj']),
-                          (u'Machines provided by layers not added to this project', 'name:notinprj', selected_filter_count['notinprj']),
-
-                        ],
-                    }
-
                 },
 
             ]
