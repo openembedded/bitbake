@@ -2746,7 +2746,7 @@ if toastermain.settings.MANAGED:
         # define here what parameters the view needs in the GET portion in order to
         # be able to display something.  'count' and 'page' are mandatory for all views
         # that use paginators.
-        (pagesize, orderby) = _get_parameters_values(request, 10, 'name:+')
+        (pagesize, orderby) = _get_parameters_values(request, 100, 'name:+')
         mandatory_parameters = { 'count': pagesize,  'page' : 1, 'orderby' : orderby };
         retval = _verify_parameters( request.GET, mandatory_parameters )
         if retval:
@@ -2775,6 +2775,7 @@ if toastermain.settings.MANAGED:
            if len(to_rm) > 0:
              queryset_all = queryset_all.exclude(layer_version__in=to_rm)
 
+        machine_info = _build_page_range(Paginator(queryset_all, request.GET.get('count', 100)),request.GET.get('page', 1))
 
         context = {
             'objects' : machine_info,
