@@ -2565,18 +2565,6 @@ if toastermain.settings.MANAGED:
                     'dclass': 'span4',
                     'clclass': 'description',
                 },
-                {   'name': 'Layer source',
-                    'clclass': 'source',
-                    'qhelp': "Where the layer is coming from, for example, if it's part of the OpenEmbedded collection of layers or if it's a layer you have imported",
-                    'orderfield': _get_toggle_order(request, "layer_source__name"),
-                    'ordericon': _get_toggle_order_icon(request, "layer_source__name"),
-                    'orderkey' : "layer_source__name",
-                    'filter': {
-                        'class': 'layer',
-                        'label': 'Show:',
-                        'options': map(lambda x: (x.name + " layers", 'layer_source__pk:' + str(x.id), queryset_all.filter(layer_source__pk = x.id).count() ), LayerSource.objects.all()),
-                    }
-                },
                 {   'name': 'Git repository URL',
                     'dclass': 'span6',
                     'clclass': 'git-repo', 'hidden': 1,
@@ -2741,18 +2729,6 @@ if toastermain.settings.MANAGED:
                     'ordericon': _get_toggle_order_icon(request, "layer_version__layer__name"),
                     'orderkey': "layer_version__layer__name",
                 },
-                {   'name': 'Layer source',
-                    'clclass': 'source',
-                    'qhelp': "Where the target is coming from, for example, if it's part of the OpenEmbedded collection of targets or if it's a target you have imported",
-                    'orderfield': _get_toggle_order(request, "layer_source__name"),
-                    'ordericon': _get_toggle_order_icon(request, "layer_source__name"),
-                    'orderkey': "layer_source__name",
-                    'filter': {
-                        'class': 'target',
-                        'label': 'Show:',
-                        'options': map(lambda x: ("Targets provided by " + x.name + " layers", 'layer_source__pk:' + str(x.id), queryset_with_search.filter(layer_source__pk = x.id).count() ), LayerSource.objects.all()),
-                    }
-                },
                 {   'name': 'Revision',
                     'clclass': 'branch',
                     'qhelp': "The Git branch, tag or commit. For the layers from the OpenEmbedded layer source, the revision is always the branch compatible with the Yocto Project version you selected for this project.",
@@ -2802,7 +2778,6 @@ if toastermain.settings.MANAGED:
 
         queryset_all = Machine.objects.all()
         queryset_all = queryset_all.prefetch_related('layer_version')
-        queryset_all = queryset_all.prefetch_related('layer_source')
 
         prj = Project.objects.get(pk = request.session['project_id'])
         compatible_layers = prj.compatible_layerversions()
@@ -2869,18 +2844,6 @@ if toastermain.settings.MANAGED:
                     'orderfield': _get_toggle_order(request, "layer_version__layer__name"),
                     'ordericon' : _get_toggle_order_icon(request, "layer_version__layer__name"),
                     'orderkey' : "layer_version__layer__name",
-                },
-                {   'name': 'Layer source',
-                    'clclass': 'source',
-                    'qhelp': "Where the machine is coming from, for example, if it's part of the OpenEmbedded collection of machines or if it's a machine you have imported",
-                    'orderfield': _get_toggle_order(request, "layer_source__name"),
-                    'ordericon': _get_toggle_order_icon(request, "layer_source__name"),
-                    'orderkey': "layer_source__name",
-                    'filter': {
-                        'class': 'machine',
-                        'label': 'Show:',
-                        'options': map(lambda x: (x.name, 'layer_source__pk:' + str(x.id), queryset.filter(layer_source__pk = x.id).count() ), LayerSource.objects.all()),
-                    }
                 },
                 {   'name': 'Revision',
                     'clclass': 'branch',

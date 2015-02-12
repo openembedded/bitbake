@@ -53,7 +53,6 @@
         <td class="target-section">{{o.section}}</td>
         <td class="license">{{o.license}}</td>
         <td class="layer"><a href="{% url 'layerdetails' o.preffered_layerversion.id%}">{{o.preffered_layerversion.layer.name}}</a></td>
-        <td class="source">{{o.preffered_layerversion.layer_source.name}}</td>
         <td class="branch">
         {% if o.preffered_layerversion.up_branch %}
             {{o.preffered_layerversion.up_branch.name}}

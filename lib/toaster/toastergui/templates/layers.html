@@ -41,7 +41,6 @@
     <tr class="data">
             <td class="layer"><a href="{% url 'layerdetails' o.id %}">{{o.layer.name}}</a></td>
             <td class="description">{% if o.layer.summary %}{{o.layer.summary}}{%endif%}</td>
-            <td class="source"><a href="{% url 'layerdetails' o.pk %}">{{o.layer_source.name}}</a></td>
             <td class="git-repo"><a href="{% url 'layerdetails' o.pk %}"><code>{{o.layer.vcs_url}}</code></a>
             {% if o.get_vcs_link_url %}
             <a target="_blank" href="{{ o.get_vcs_link_url }}"><i class="icon-share get-info"></i></a>
