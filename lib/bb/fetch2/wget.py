@@ -179,10 +179,7 @@ class Wget(FetchMethod):
         oldpv = self._modelate_version(oldpv)
         newpv = self._modelate_version(newpv)
 
-        if bb.utils.vercmp(("0", oldpv, ""), ("0", newpv, "")) < 0:
-            return True
-        else:
-            return False
+        return bb.utils.vercmp(("0", oldpv, ""), ("0", newpv, ""))
 
     def _fetch_index(self, uri, ud, d):
         """
@@ -230,7 +227,7 @@ class Wget(FetchMethod):
             m = regex.search(href['href'].strip("/"))
             if m:
                 thisversion = ('', m.group(2), '')
-                if thisversion and self._vercmp(version, thisversion) == True:
+                if thisversion and self._vercmp(version, thisversion) < 0:
                     version = thisversion
 
         if valid:
@@ -267,7 +264,7 @@ class Wget(FetchMethod):
                 if valid == 0:
                     version = newver
                     valid = 1
-                elif self._vercmp(version, newver) == True:
+                elif self._vercmp(version, newver) < 0:
                     version = newver
                 
         # check whether a valid package and version were found
@@ -278,6 +275,49 @@ class Wget(FetchMethod):
             return re.sub('_', '.', version[1])
 
         return ""
+
+    def _check_latest_version_by_dir(self, dirver, package, package_regex,
+            current_version, ud, d):
+        """
+            Scan every directory in order to get upstream version.
+        """
+        version_dir = ['', '', '']
+        version = ['', '', '']
+
+        dirver_regex = re.compile("(\D*)((\d+[\.\-_])+(\d+))")
+        s = dirver_regex.search(dirver)
+        if s:
+            version_dir[1] = s.group(2)
+        else:
+            version_dir[1] = dirver
+
+        dirs_uri = bb.fetch.encodeurl([ud.type, ud.host,
+                ud.path.split(dirver)[0], ud.user, ud.pswd, {}])
+        bb.debug(3, "DirURL: %s, %s" % (dirs_uri, package))
+
+        soup = BeautifulSoup(self._fetch_index(dirs_uri, ud, d))
+        if not soup:
+            return version[1]
+
+        for line in soup.find_all('a', href=True):
+            s = dirver_regex.search(line['href'].strip("/"))
+            if s:
+                version_dir_new = ['', s.group(2), '']
+                if self._vercmp(version_dir, version_dir_new) <= 0:
+                    dirver_new = s.group(1) + s.group(2)
+                    path = ud.path.replace(dirver, dirver_new, True) \
+                        .split(package)[0]
+                    uri = bb.fetch.encodeurl([ud.type, ud.host, path,
+                        ud.user, ud.pswd, {}])
+
+                    pupver = self._check_latest_version(uri,
+                            package, package_regex, current_version, ud, d)
+                    if pupver:
+                        version[1] = pupver
+
+                    version_dir = version_dir_new
+
+        return version[1]
 
     def _init_regexes(self, package, ud, d):
         """
