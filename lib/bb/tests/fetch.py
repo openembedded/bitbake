@@ -629,6 +629,7 @@ class FetchMethodTest(FetcherTest):
     else:
         def test_git_latest_versionstring(self):
             for k, v in self.test_git_uris.items():
+                self.d.setVar("PN", k[0])
                 self.d.setVar("SRCREV", k[2])
                 self.d.setVar("GITTAGREGEX", k[3])
                 ud = bb.fetch2.FetchData(k[1], self.d)
@@ -638,6 +639,7 @@ class FetchMethodTest(FetcherTest):
 
         def test_wget_latest_versionstring(self):
             for k, v in self.test_wget_uris.items():
+                self.d.setVar("PN", k[0])
                 self.d.setVar("REGEX_URI", k[2])
                 self.d.setVar("REGEX", k[3])
                 ud = bb.fetch2.FetchData(k[1], self.d)
