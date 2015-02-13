@@ -143,9 +143,9 @@ class Wget(FetchMethod):
 
         version = re.sub('\-', '.', version)
         version = re.sub('_', '.', version)
-        version = re.sub('(rc)+', '.-1.', version)
-        version = re.sub('(alpha)+', '.-3.', version)
-        version = re.sub('(beta)+', '.-2.', version)
+        version = re.sub('(rc)+', '.1000.', version)
+        version = re.sub('(beta)+', '.100.', version)
+        version = re.sub('(alpha)+', '.10.', version)
         if version[0] == 'v':
             version = version[1:len(version)]
         return version
