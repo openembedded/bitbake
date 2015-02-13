@@ -25,6 +25,7 @@
   </div>
 
 {% if objects.paginator.count == 0 %}
+  {% if request.GET.filter or request.GET.search %}
   <div class="row-fluid">
       <div class="alert">
         <form class="no-results input-append" id="searchform">
@@ -34,6 +35,17 @@
         </form>
       </div>
   </div>
+  {% else %}
+    <div class="alert alert-info">
+      <p class="lead">
+       Toaster has not target information. To generate target information you can:<br/>
+       <ul class="lead">
+       <li style="margin-top: 10px"> <a href="https://wiki.yoctoproject.org/wiki/Setting_up_a_hosted_managed_mode_for_Toaster#LayerSources">Configure a layer source</a></li>
+       <li style="margin-top: 10px">  <a href="{% url 'importlayer' %}">Import a layer</a></li>
+       </ul>
+      </p>
+    </div>
+  {% endif %}
 
 {% else %}
 

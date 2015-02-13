@@ -43,13 +43,22 @@ import json
 # all new sessions should come through the landing page;
 # determine in which mode we are running in, and redirect appropriately
 def landing(request):
-    if toastermain.settings.MANAGED and Build.objects.count() == 0 and Project.objects.count() > 0:
-        return redirect(reverse('all-projects'), permanent = False)
+    if toastermain.settings.MANAGED:
+        from bldcontrol.models import BuildRequest
+        if BuildRequest.objects.count() == 0 and Project.objects.count() > 0:
+            return redirect(reverse('all-projects'), permanent = False)
 
-    if Build.objects.all().count() > 0:
-        return redirect(reverse('all-builds'), permanent = False)
+        if BuildRequest.objects.all().count() > 0:
+            return redirect(reverse('all-builds'), permanent = False)
+    else:
+        if Build.objects.all().count() > 0:
+            return redirect(reverse('all-builds'), permanent = False)
 
-    return render(request, 'landing.html')
+    context = {}
+    if toastermain.settings.MANAGED:
+        context['lvs_nos'] = Layer_Version.objects.all().count()
+
+    return render(request, 'landing.html', context)
 
 # returns a list for most recent builds; for use in the Project page, xhr_ updates,  and other places, as needed
 def _project_recent_build_list(prj):
@@ -2035,6 +2044,7 @@ if toastermain.settings.MANAGED:
 
         context = {
             "project" : prj,
+            "lvs_nos" : Layer_Version.objects.all().count(),
             "completedbuilds": BuildRequest.objects.filter(project_id = pid).exclude(state__lte = BuildRequest.REQ_INPROGRESS).exclude(state=BuildRequest.REQ_DELETED),
             "prj" : {"name": prj.name, "release": { "id": prj.release.pk, "name": prj.release.name, "desc": prj.release.description}},
             #"buildrequests" : prj.buildrequest_set.filter(state=BuildRequest.REQ_QUEUED),

@@ -3,12 +3,11 @@
 {% load humanize %}
 
 
-{%if mru.count > 0%}
-
+{%if len.mru > 0%}
   <div class="page-header top-air">
       <h1>
           Latest builds
-       </h1>
+      </h1>
   </div>
   <div id="latest-builds">
   {% for buildrequest in mru %}{% with build=buildrequest.build %}

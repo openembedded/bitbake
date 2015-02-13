@@ -9,10 +9,12 @@
   <div class="container-fluid">
    <div class="row-fluid">
     <!-- Empty - no data in database -->
-    <div class="hero-unit span12">
+    <div class="hero-unit span12" {%if MANAGED%}style="background-color: white"{%endif%}>
+    {% if not MANAGED %}
      <button class="close" data-dismiss="alert" type="button">
       ×
      </button>
+    {% endif %}
      <div class="row-fluid">
       <div class="span6">
        <h1>
@@ -29,22 +31,63 @@
         </a>
         build system.
        </p>
+
+	{% if MANAGED %}
+
+		{% if lvs_nos %}
+		       <p class="hero-actions">
+			<a class="btn btn-primary btn-large" href="{% url 'newproject' %}">
+				To start building, create your first Toaster project
+			</a>
+		       </p>
+		{% else %}
+		<div class="alert alert-info">
+			<p>
+			Toaster has no layer information; without layer information, you cannot run builds. To generate layer information you can:
+			</p>
+			<ul>
+			 <li> <a href="https://wiki.yoctoproject.org/wiki/Setting_up_a_hosted_managed_mode_for_Toaster#LayerSources">Configure a layer source</a>
+			 </li>
+			 <li> <a href="{% url 'newproject' %}">Create a project</a>, then import layers
+			</ul>
+		</div>
+		{% endif %}
+
+       <p style="margin-top: 2em">
+        <a href="https://www.yoctoproject.org/documentation/toaster-manual">
+	 Read the Toaster manual
+	</a> <br/>
+        <a href="https://wiki.yoctoproject.org/wiki/Contribute_to_Toaster">
+         Contribute to Toaster
+        </a>
+       </p>
+
+         {% else %}
+
        <p class="hero-actions">
         <a class="btn btn-primary btn-large" href="https://www.yoctoproject.org/documentation/toaster-manual">
          Show me the manual
-        </a>
+         </a>
         <a class="btn btn-large" href="https://wiki.yoctoproject.org/wiki/Contribute_to_Toaster">
          I want to contribute
-        </a>
-       </p>
+	 </a>
+	</p>
+
+	 {% endif %}
       </div>
       <div class="span5">
        <a href="http://www.yoctoproject.org">
-        <img alt="Yocto Project" class="thumbnail" src="/static/img/toaster.png"/>
+        {% if MANAGED %}
+        <img alt="Yocto Project" class="thumbnail" src="{% static 'img/toaster_1.7.png' %}"/>
+	{% else %}
+        <img alt="Yocto Project" class="thumbnail" src="{% static 'img/toaster.png' %}"/>
+	{% endif %}
        </a>
       </div>
      </div>
     </div>
+
+   {% if not MANAGED %}
     <!-- Empty - no data in database -->
     <div class="page-header top-air">
      <h1>
@@ -61,6 +104,8 @@
       Hob
      </a>
     </div>
+   {% endif %}
+
    </div>
 
 {% endblock %}

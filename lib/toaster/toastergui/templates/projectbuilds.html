@@ -9,8 +9,8 @@
 {% block projectinfomain %}
                 <div class="page-header">
                     <h1>
- {% if objects.paginator.count == 0 %}
-                     No builds found
+ {% if objects.paginator.count == 0 and request.GET.filter or request.GET.search %}
+        No builds found
 
  {% else %}
     {% if  request.GET.filter or request.GET.search  %}
@@ -25,6 +25,7 @@
 
 
  {% if objects.paginator.count == 0 %}
+  {% if request.GET.filter or request.GET.search %}
     <div class="row-fluid">
       <div class="alert">
         <form class="no-results input-append" id="searchform">
@@ -34,7 +35,13 @@
         </form>
       </div>
     </div>
-
+  {% else %}
+    <div class="alert alert-info">
+      <p class="lead">
+        This project has no builds.
+      </p>
+    </div>
+  {% endif %}
 
  {% else %}
 

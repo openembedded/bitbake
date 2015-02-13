@@ -52,7 +52,7 @@
                 <i class="icon-question-sign get-help" title="Specifies additional packages to install into an image. If your build creates more than one image, the packages will be installed in <strong>all of them</strong> <br /><a href='http://www.yoctoproject.org/docs/1.6.1/ref-manual/ref-manual.html#var-IMAGE_INSTALL' target='_blank'>Read more in the manual</a>"></i>
             </dt>
             <dd class="lead">
-                <span id="image_install">{% if image_install_append %}{{image_install_append}}{%else%}Not set{%endif%}</span>
+                <span id="image_install">{% if image_install_append %}{{image_install_append}}{%else%}<i>Not set</i>{%endif%}</span>
                 <i class="icon-pencil" id="change-image_install-icon"></i>
                 <i class="icon-trash" id="delete-image_install-icon" {% if image_install_append %}{%else%}style="display:none;"{%endif%}></i>
                 <form id="change-image_install-form" style="display:none;">

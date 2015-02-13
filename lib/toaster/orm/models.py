@@ -67,10 +67,14 @@ class ProjectManager(models.Manager):
 
 
         for rdl in release.releasedefaultlayer_set.all():
-            lv = Layer_Version.objects.filter(layer__name = rdl.layer_name, up_branch__name = release.branch_name)[0].get_equivalents_wpriority(prj)[0]
-            ProjectLayer.objects.create( project = prj,
+            try:
+                lv =Layer_Version.objects.filter(layer__name = rdl.layer_name, up_branch__name = release.branch_name)[0].get_equivalents_wpriority(prj)[0]
+                ProjectLayer.objects.create( project = prj,
                         layercommit = lv,
                         optional = False )
+            except IndexError:
+                # we may have no valid layer version objects, and that's ok
+                pass
 
         return prj
 
