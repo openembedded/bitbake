@@ -109,16 +109,30 @@ class Wget(FetchMethod):
 
         return True
 
-
     def _parse_path(self, regex, s):
         """
         Find and group name, version and archive type in the given string s
         """
-        bb.debug(3, "parse_path(%s, %s)" % (regex.pattern, s))
+        bb.debug(3, "_parse_path(%s, %s)" % (regex.pattern, s))
+
         m = regex.search(s)
         if m:
-            bb.debug(3, "%s, %s, %s" % (m.group('name'), m.group('ver'), m.group('type')))
-            return (m.group('name'), m.group('ver'), m.group('type'))
+            pname = ''
+            pver = ''
+            ptype = ''
+
+            mdict = m.groupdict()
+            if 'name' in mdict.keys():
+                pname = mdict['name']
+            if 'pver' in mdict.keys():
+                pver = mdict['pver']
+            if 'type' in mdict.keys():
+                ptype = mdict['type']
+
+            bb.debug(3, "_parse_path: %s, %s, %s" % (pname, pver, ptype))
+
+            return (pname, pver, ptype)
+
         return None
 
     def _modelate_version(self, version):
@@ -243,25 +257,15 @@ class Wget(FetchMethod):
         pn_regex = d.getVar('REGEX', True)
         if pn_regex:
             pn_regex = re.compile(pn_regex)
+            package_regex = pn_regex
             bb.debug(3, "pn_regex = '%s'" % (pn_regex.pattern))
             
         for line in soup.find_all('a', href=True):
             newver = None
             bb.debug(3, "line = '%s'" % (line['href']))
-            if pn_regex:
-                m = pn_regex.search(line['href'])
-                if m:
-                    bb.debug(3, "Pver = '%s'" % (m.group('pver')))
-                    newver = ('', m.group('pver'), '')
-                else:
-                    m = pn_regex.search(str(line))
-                    if m:
-                        bb.debug(3, "Pver = '%s'" % (m.group('pver')))
-                        newver = ('', m.group('pver'), '')
-            else:
-                newver = self._parse_path(package_regex, line['href'])
-                if not newver:
-                    newver = self._parse_path(package_regex, str(line))
+            newver = self._parse_path(package_regex, line['href'])
+            if not newver:
+                newver = self._parse_path(package_regex, str(line))
 
             if newver:
                 bb.debug(3, "Upstream version found: %s" % newver[1])
@@ -314,7 +318,7 @@ class Wget(FetchMethod):
         psuffix_regex = "(tar\.gz|tgz|tar\.bz2|zip|xz|rpm|bz2|orig\.tar\.gz|tar\.xz|src\.tar\.gz|src\.tgz|svnr\d+\.tar\.bz2|stable\.tar\.gz|src\.rpm)"
 
         # match name, version and archive type of a package
-        self.package_regex_comp = re.compile("(?P<name>%s?)\.?v?(?P<ver>%s)(?P<arch>%s)?[\.\-](?P<type>%s$)"
+        self.package_regex_comp = re.compile("(?P<name>%s?)\.?v?(?P<pver>%s)(?P<arch>%s)?[\.\-](?P<type>%s$)"
                                                     % (pn_regex, pver_regex, parch_regex, psuffix_regex))
         self.suffix_regex_comp = re.compile(psuffix_regex)
 
@@ -327,7 +331,7 @@ class Wget(FetchMethod):
         version = self._parse_path(self.package_regex_comp, package)
         if version:
             package_custom_regex_comp = re.compile(
-                "(?P<name>%s)(?P<ver>%s)(?P<arch>%s)?[\.\-](?P<type>%s)$" %
+                "(?P<name>%s)(?P<pver>%s)(?P<arch>%s)?[\.\-](?P<type>%s)$" %
                 (re.escape(version[0]), pver_regex, parch_regex, psuffix_regex))
 
         return package_custom_regex_comp
