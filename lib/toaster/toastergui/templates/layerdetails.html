@@ -5,7 +5,7 @@
 {% block localbreadcrumb %}
 <li><a href="{% url 'layers' %}">All compatible layers</a></li>
 <li>
-  {{layerversion.layer.name}} ({{layerversion.commit|truncatechars:13}})
+  {{layerversion.layer.name}} ({{layerversion.get_vcs_reference|truncatechars:13}})
 </li>
 {% endblock %}
 {% block projectinfomain %}
@@ -29,7 +29,7 @@
       layerVersion : {
         name : "{{layerversion.layer.name}}",
         id : {{layerversion.id}},
-        commit: "{{layerversion.commit}}",
+        commit: "{{layerversion.get_vcs_reference}}",
         inCurrentPrj : {{layer_in_project}},
         url : "{% url 'layerdetails' layerversion.id  %}",
         sourceId: {{layerversion.layer_source_id}},
@@ -66,7 +66,7 @@
 {% include "layers_dep_modal.html" %}
   <div class="row-fluid span11">
       <div class="page-header">
-        <h1>{{layerversion.layer.name}} <small class="commit" data-toggle="tooltip" title="{{layerversion.commit}}">({{layerversion.commit|truncatechars:13}})</small></h1>
+        <h1>{{layerversion.layer.name}} <small class="commit" data-toggle="tooltip" title="{{layerversion.get_vcs_reference}}">({{layerversion.get_vcs_reference|truncatechars:13}})</small></h1>
       </div>
   </div>
 
@@ -147,10 +147,10 @@
                   Revision
                 </dt>
                 <dd>
-                  <span class="current-value">{{layerversion.commit}}</span>
+                  <span class="current-value">{{layerversion.get_vcs_reference}}</span>
                   <form style="display:none;">
                     <div class="input-append">
-                      <input type="text" value="{{layerversion.commit}}">
+                      <input type="text" value="{{layerversion.get_vcs_reference}}">
                         <button  data-layer-prop="commit" class="btn change-btn" type="button">Save</button>
                         <a href="#" style="display:none" class="btn btn-link cancel">Cancel</a>
                       </div>
@@ -166,8 +166,7 @@
                       {% for ld in layerversion.dependencies.all %}
                       <span class="current-value">
                       <li data-layer-id="{{ld.depends_on.id}}">
-                        <!-- TODO use ld.depends_on.get_vcs_reference instead of commit -->
-                        <a data-toggle="tooltip" title="{{ld.depends_on.layer.vcs_url}} | {{ld.depends_on.commit}}" href="{% url 'layerdetails' ld.depends_on.id %}">{{ld.depends_on.layer.name}}</a>
+                        <a data-toggle="tooltip" title="{{ld.depends_on.layer.vcs_url}} | {{ld.depends_on.get_vcs_reference}}" href="{% url 'layerdetails' ld.depends_on.id %}">{{ld.depends_on.layer.name}}</a>
                         <span class="icon-trash " data-toggle="tooltip" title="Delete"></span>
                       </li>
                       </span>
