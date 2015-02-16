@@ -17,6 +17,7 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+import sys
 import gobject
 import gtk
 import Queue
@@ -213,6 +214,12 @@ def main(server, eventHandler, params):
             return 1
     except xmlrpclib.Fault as x:
         print("XMLRPC Fault getting commandline:\n %s" % x)
+        return
+
+    try:
+        gtk.init_check()
+    except RuntimeError:
+        sys.stderr.write("Please set DISPLAY variable before running this command \n")
         return
 
     shutdown = 0
