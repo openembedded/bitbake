@@ -88,7 +88,9 @@
                 </a>
             </td>
             <!-- Layer directory -->
-            <td class="recipe__layer_version__layer__local_path">{{package.recipe.layer_version.layer.local_path}}</td>
+            {% if not MANAGED or not build.project %}
+                <td class="recipe__layer_version__layer__local_path">{{package.recipe.layer_version.layer.local_path}}</td>
+            {% endif %}
         {%else%}
             <td class="recipe__name"></td>
             <td class="recipe__version"></td>

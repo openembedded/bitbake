@@ -1282,9 +1282,11 @@ def bpackage(request, build_id):
 
     packages = _build_page_range(Paginator(queryset, pagesize),request.GET.get('page', 1))
 
+    build = Build.objects.get( pk = build_id )
+
     context = {
         'objectname': 'packages built',
-        'build': Build.objects.get(pk=build_id),
+        'build': build,
         'objects' : packages,
         'default_orderby' : 'name:+',
         'tablecols':[
@@ -1349,16 +1351,20 @@ def bpackage(request, build_id):
                 'qhelp':'The Git commit of the layer providing the recipe that builds the package',
                 'clclass': 'recipe__layer_version__layer__commit', 'hidden': 1,
             },
-            {
+            ]
+        }
+
+    if not toastermain.settings.MANAGED or build.project is None:
+
+        tc_layerDir = {
                 'name':'Layer directory',
                 'qhelp':'Path to the layer providing the recipe that builds the package',
                 'orderfield': _get_toggle_order(request, "recipe__layer_version__layer__local_path"),
                 'ordericon':_get_toggle_order_icon(request, "recipe__layer_version__layer__local_path"),
                 'orderkey' : 'recipe__layer_version__layer__local_path',
                 'clclass': 'recipe__layer_version__layer__local_path', 'hidden': 1,
-            },
-            ]
         }
+        context['tablecols'].append(tc_layerDir)
 
     response = render(request, template, context)
     _save_parameters_cookies(response, pagesize, orderby, request)
