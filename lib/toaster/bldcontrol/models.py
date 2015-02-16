@@ -94,6 +94,7 @@ class BuildRequest(models.Model):
     REQ_COMPLETED = 3
     REQ_FAILED = 4
     REQ_DELETED = 5
+    REQ_ARCHIVE = 6
 
     REQUEST_STATE = (
         (REQ_CREATED, "created"),
@@ -102,6 +103,7 @@ class BuildRequest(models.Model):
         (REQ_COMPLETED, "completed"),
         (REQ_FAILED, "failed"),
         (REQ_DELETED, "deleted"),
+        (REQ_ARCHIVE, "archive"),
     )
 
     search_allowed_fields = ("brtarget__target",)

@@ -50,12 +50,12 @@ import toastermain.settings
 
 if toastermain.settings.FRESH_ENABLED:
     urlpatterns.insert(1, url(r'', include('fresh.urls')))
-    logger.info("Enabled django-fresh extension")
+    #logger.info("Enabled django-fresh extension")
 
 if toastermain.settings.DEBUG_PANEL_ENABLED:
     import debug_toolbar
     urlpatterns.insert(1, url(r'', include(debug_toolbar.urls)))
-    logger.info("Enabled django_toolbar extension")
+    #logger.info("Enabled django_toolbar extension")
 
 
 if toastermain.settings.MANAGED:
@@ -86,4 +86,4 @@ for t in os.walk(os.path.dirname(currentdir)):
             logger.warn("Module \'%s\' has a regexp conflict, was not added to the urlpatterns" % modulename)
 
 from pprint import pformat
-logger.debug("urlpatterns list %s", pformat(urlpatterns))
+#logger.debug("urlpatterns list %s", pformat(urlpatterns))

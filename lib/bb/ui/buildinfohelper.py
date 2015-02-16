@@ -1114,7 +1114,8 @@ class BuildInfoHelper(object):
         be.save()
         br = BuildRequest.objects.get(pk = br_id)
         if errorcode == 0:
-            br.state = BuildRequest.REQ_COMPLETED
+            # request archival of the project artifacts
+            br.state = BuildRequest.REQ_ARCHIVE
         else:
             br.state = BuildRequest.REQ_FAILED
         br.save()

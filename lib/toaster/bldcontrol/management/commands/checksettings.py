@@ -62,6 +62,23 @@ class Command(NoArgsCommand):
 
 
     def handle(self, **options):
+        # verify that we have a settings for downloading artifacts
+        while ToasterSetting.objects.filter(name="ARTIFACTS_STORAGE_DIR").count() == 0:
+            guessedpath = os.getcwd() + "/toaster_build_artifacts/"
+            print("Toaster needs to know in which directory it can download build log files and other artifacts.\n Toaster suggests \"%s\"." % guessedpath)
+            artifacts_storage_dir = raw_input(" Press Enter to select \"%s\" or type the full path to a different directory: " % guessedpath)
+            if len(artifacts_storage_dir) == 0:
+                artifacts_storage_dir = guessedpath
+            if len(artifacts_storage_dir) > 0 and artifacts_storage_dir.startswith("/"):
+                try:
+                    os.makedirs(artifacts_storage_dir)
+                except OSError as ose:
+                    if "File exists" in str(ose):
+                        pass
+                    else:
+                        raise ose
+                ToasterSetting.objects.create(name="ARTIFACTS_STORAGE_DIR", value=artifacts_storage_dir)
+
         self.guesspath = DN(DN(DN(DN(DN(DN(DN(__file__)))))))
         # refuse to start if we have no build environments
         while BuildEnvironment.objects.count() == 0:

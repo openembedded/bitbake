@@ -36,7 +36,11 @@
 {% endif %}
     <span > <i class="icon-warning-sign yellow"></i><strong><a href="#warnings" class="warning show-warnings"> {{build.warnings_no}} warning{{build.warnings_no|pluralize}}</a></strong></span>
 {% endif %}
-            <span class="pull-right">Build time: <a href="{% url 'buildtime' build.pk %}">{{ build.timespent|sectohms }}</a></span>
+            <span class="pull-right">Build time: <a href="{% url 'buildtime' build.pk %}">{{ build.timespent|sectohms }}</a> &nbsp;
+      {% if MANAGED and build.project %}
+            <a class="btn {%if build.outcome == build.SUCCEEDED%}btn-success{%else%}btn-danger{%endif%} pull-right" href="{% url 'build_artifact' build.id "cookerlog" build.id %}">Download build log</a>
+      {% endif %}
+            </span>
 {%endif%}
     </div>
     {% if build.toaster_exceptions.count > 0 %}
@@ -54,10 +58,7 @@
 <div class="accordion span10 pull-right" id="errors">
   <div class="accordion-group">
     <div class="accordion-heading">
-      {% if MANAGED and build.project %}
-          <a class="btn btn-large pull-right" href="{% url 'build_artifact' build.id "cookerlog" build.id %}" style="margin:15px;">Download build log</a>
-      {% endif %}
-      <a class="accordion-toggle error toggle-errors">
+            <a class="accordion-toggle error toggle-errors">
          <h2 id="error-toggle">
            <i class="icon-minus-sign"></i>
            {{build.errors_no}} error{{build.errors_no|pluralize}}

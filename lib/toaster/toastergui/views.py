@@ -2914,9 +2914,6 @@ if toastermain.settings.MANAGED:
         if artifact_type == "imagefile":
             file_name = Target_Image_File.objects.get(target__build = b, pk = artifact_id).file_name
 
-        elif artifact_type == "cookerlog":
-            file_name = b.cooker_log_path
-
         elif artifact_type == "buildartifact":
             file_name = BuildArtifact.objects.get(build = b, pk = artifact_id).file_name
 
@@ -2935,26 +2932,87 @@ if toastermain.settings.MANAGED:
 
 
     def build_artifact(request, build_id, artifact_type, artifact_id):
-        b = Build.objects.get(pk=build_id)
-        if b.buildrequest is None or b.buildrequest.environment is None:
-            raise Exception("Artifact not available for download (missing build request or build environment)")
+        if artifact_type in ["cookerlog"]:
+            # these artifacts are saved after building, so they are on the server itself
+            def _mimetype_for_artifact(path):
+                try:
+                    import magic
 
-        file_name = _file_name_for_artifact(b, artifact_type, artifact_id)
-        fsock = None
-        content_type='application/force-download'
+                    # fair warning: this is a mess; there are multiple competing and incompatible
+                    # magic modules floating around, so we try some of the most common combinations
 
-        if file_name is None:
-            raise Exception("Could not handle artifact %s id %s" % (artifact_type, artifact_id))
+                    try:    # we try ubuntu's python-magic 5.4
+                        m = magic.open(magic.MAGIC_MIME_TYPE)
+                        m.load()
+                        return m.file(path)
+                    except AttributeError:
+                        pass
+
+                    try:    # we try python-magic 0.4.6
+                        m = magic.Magic(magic.MAGIC_MIME)
+                        return m.from_file(path)
+                    except AttributeError:
+                        pass
+
+                    try:    # we try pip filemagic 1.6
+                        m = magic.Magic(flags=magic.MAGIC_MIME_TYPE)
+                        return m.id_filename(path)
+                    except AttributeError:
+                        pass
+
+                    return "binary/octet-stream"
+                except ImportError:
+                    return "binary/octet-stream"
+            try:
+                # match code with runbuilds.Command.archive()
+                build_artifact_storage_dir = os.path.join(ToasterSetting.objects.get(name="ARTIFACTS_STORAGE_DIR").value, "%d" % int(build_id))
+                file_name = os.path.join(build_artifact_storage_dir, "cooker_log.txt")
+
+                fsock = open(file_name, "r")
+                content_type=_mimetype_for_artifact(file_name)
+
+                response = HttpResponse(fsock, content_type = content_type)
+
+                response['Content-Disposition'] = 'attachment; filename=' + os.path.basename(file_name)
+                return response
+            except IOError:
+                context = {
+                    'build' : Build.objects.get(pk = build_id),
+                }
+                return render(request, "unavailable_artifact.html", context)
+
         else:
-            content_type = b.buildrequest.environment.get_artifact_type(file_name)
-            fsock = b.buildrequest.environment.get_artifact(file_name)
-            file_name = os.path.basename(file_name) # we assume that the build environment system has the same path conventions as host
+            # retrieve the artifact directly from the build environment
+            return _get_be_artifact(request, build_id, artifact_type, artifact_id)
 
-        response = HttpResponse(fsock, content_type = content_type)
 
-        # returns a file from the environment
-        response['Content-Disposition'] = 'attachment; filename=' + file_name
-        return response
+    def _get_be_artifact(request, build_id, artifact_type, artifact_id):
+        try:
+            b = Build.objects.get(pk=build_id)
+            if b.buildrequest is None or b.buildrequest.environment is None:
+                raise Exception("Artifact not available for download (missing build request or build environment)")
+
+            file_name = _file_name_for_artifact(b, artifact_type, artifact_id)
+            fsock = None
+            content_type='application/force-download'
+
+            if file_name is None:
+                raise Exception("Could not handle artifact %s id %s" % (artifact_type, artifact_id))
+            else:
+                content_type = b.buildrequest.environment.get_artifact_type(file_name)
+                fsock = b.buildrequest.environment.get_artifact(file_name)
+                file_name = os.path.basename(file_name) # we assume that the build environment system has the same path conventions as host
+
+            response = HttpResponse(fsock, content_type = content_type)
+
+            # returns a file from the environment
+            response['Content-Disposition'] = 'attachment; filename=' + file_name
+            return response
+        except IOError:
+            context = {
+                'build' : Build.objects.get(pk = build_id),
+            }
+            return render(request, "unavailable_artifact.html", context)
 
 
 
