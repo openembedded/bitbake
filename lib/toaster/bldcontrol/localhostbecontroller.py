@@ -107,6 +107,13 @@ class LocalhostBEController(BuildEnvironmentController):
 
         logger.debug("localhostbecontroller: running the listener at %s" % own_bitbake)
 
+        toaster_ui_log_filepath = os.path.join(self.be.builddir, "toaster_ui.log")
+        # get the file length; we need to detect the _last_ start of the toaster UI, not the first
+        toaster_ui_log_filelength = 0
+        if os.path.exists(toaster_ui_log_filepath):
+            with open(toaster_ui_log_filepath, "r") as f:
+                f.seek(0, 2)    # jump to the end
+                toaster_ui_log_filelength = f.tell()
 
         cmd = "bash -c \"source %s/oe-init-build-env %s && bitbake --read conf/toaster-pre.conf --postread conf/toaster.conf --server-only -t xmlrpc -B 0.0.0.0:0 >toaster_server.log && DATABASE_URL=%s BBSERVER=0.0.0.0:-1 daemon -d -i -D %s -o toaster_ui.log -- %s --observe-only -u toasterui &\"" % (self.pokydirname, self.be.builddir,
                 self.dburl, self.be.builddir, own_bitbake)
@@ -117,10 +124,11 @@ class LocalhostBEController(BuildEnvironmentController):
                 port = i.split(" ")[-1]
                 logger.debug("localhostbecontroller: Found bitbake server port %s" % port)
 
-        def _toaster_ui_started(filepath):
+        def _toaster_ui_started(filepath, filepos = 0):
             if not os.path.exists(filepath):
                 return False
             with open(filepath, "r") as f:
+                f.seek(filepos)
                 for line in f:
                     if line.startswith("NOTE: ToasterUI waiting for events"):
                         return True
@@ -129,7 +137,7 @@ class LocalhostBEController(BuildEnvironmentController):
         retries = 0
         started = False
         while not started and retries < 10:
-            started = _toaster_ui_started(os.path.join(self.be.builddir, "toaster_ui.log"))
+            started = _toaster_ui_started(toaster_ui_log_filepath, toaster_ui_log_filelength)
             import time
             logger.debug("localhostbecontroller: Waiting bitbake server to start")
             time.sleep(0.5)
