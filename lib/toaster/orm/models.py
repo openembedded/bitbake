@@ -362,11 +362,14 @@ class Task(models.Model):
         return "Not Executed"
 
     def get_description(self):
-        helptext = HelpText.objects.filter(key=self.task_name, area=HelpText.VARIABLE, build=self.build)
+        if '_helptext' in vars(self) and self._helptext != None:
+            return self._helptext
         try:
-            return helptext[0].text
-        except IndexError:
-            return ''
+            self._helptext = HelpText.objects.get(key=self.task_name, area=HelpText.VARIABLE, build=self.build).text
+        except HelpText.DoesNotExit:
+            self._helptext = None
+
+        return self._helptext
 
     build = models.ForeignKey(Build, related_name='task_build')
     order = models.IntegerField(null=True)
