@@ -453,7 +453,7 @@
                 </dt>
                 <dd>
                   <span class="muted" style="display:none">Not set</span>
-                  <span class="current-value">{{layerversion.layer.summary}}</span>
+                  <span class="current-value">{{layerversion.layer.summary|default_if_none:''}}</span>
                   <form style="display:none; margin-bottom:20px">
                     <textarea class="span12" rows="2">{% if layerversion.layer.summary %}{{layerversion.layer.summary}}{% endif %}</textarea>
                     <button class="btn change-btn" data-layer-prop="summary" type="button">Save</button>
@@ -467,7 +467,7 @@
                 </dt>
                 <dd>
                   <span class="muted" style="display:none">Not set</span>
-                  <span class="current-value">{{layerversion.layer.description}}</span>
+                  <span class="current-value">{{layerversion.layer.description|default_if_none:''}}</span>
                   <form style="display:none; margin-bottom:20px">
                     <textarea class="span12" rows="6">{% if layerversion.layer.description %}{{layerversion.layer.description}}{% endif %}</textarea>
                     <button class="btn change-btn" data-layer-prop="description" type="button" >Save</button>
