@@ -3290,64 +3290,64 @@ else:
 
 
     def newproject(request):
-        raise Exception("page not available in interactive mode")
+        return render(request, 'landing_not_managed.html')
 
     def project(request, pid):
-        raise Exception("page not available in interactive mode")
+        return render(request, 'landing_not_managed.html')
 
     def xhr_projectbuild(request, pid):
-        raise Exception("page not available in interactive mode")
+        return render(request, 'landing_not_managed.html')
 
     def xhr_build(request, pid):
-        raise Exception("page not available in interactive mode")
+        return render(request, 'landing_not_managed.html')
 
     def xhr_projectinfo(request):
-        raise Exception("page not available in interactive mode")
+        return render(request, 'landing_not_managed.html')
 
     def xhr_projectedit(request, pid):
-        raise Exception("page not available in interactive mode")
+        return render(request, 'landing_not_managed.html')
 
     def xhr_datatypeahead(request):
-        raise Exception("page not available in interactive mode")
+        return render(request, 'landing_not_managed.html')
 
     def xhr_configvaredit(request):
-        raise Exception("page not available in interactive mode")
+        return render(request, 'landing_not_managed.html')
 
     def importlayer(request):
-        raise Exception("page not available in interactive mode")
+        return render(request, 'landing_not_managed.html')
 
     def layers(request):
-        raise Exception("page not available in interactive mode")
+        return render(request, 'landing_not_managed.html')
 
     def layerdetails(request):
-        raise Exception("page not available in interactive mode")
+        return render(request, 'landing_not_managed.html')
 
     def targets(request):
-        raise Exception("page not available in interactive mode")
+        return render(request, 'landing_not_managed.html')
 
     def targetdetails(request):
-        raise Exception("page not available in interactive mode")
+        return render(request, 'landing_not_managed.html')
 
     def machines(request):
-        raise Exception("page not available in interactive mode")
+        return render(request, 'landing_not_managed.html')
 
     def projectconf(request):
-        raise Exception("page not available in interactive mode")
+        return render(request, 'landing_not_managed.html')
 
     def projectbuilds(request):
-        raise Exception("page not available in interactive mode")
+        return render(request, 'landing_not_managed.html')
 
     def build_artifact(request, build_id, artifact_type, artifact_id):
-        raise Exception("page not available in interactive mode")
+        return render(request, 'landing_not_managed.html')
 
     def projects(request):
-        raise Exception("page not available in interactive mode")
+        return render(request, 'landing_not_managed.html')
 
     def xhr_importlayer(request):
-        raise Exception("page not available in interactive mode")
+        return render(request, 'landing_not_managed.html')
 
     def xhr_updatelayer(request):
-        raise Exception("page not available in interactive mode")
+        return render(request, 'landing_not_managed.html')
 
     def buildrequestdetails(request, pid, brid):
-        raise Exception("page not available in interactive mode")
+        return render(request, 'landing_not_managed.html')
