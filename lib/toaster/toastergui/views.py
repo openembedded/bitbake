@@ -2422,9 +2422,6 @@ if toastermain.settings.MANAGED:
             if layer_created:
                 layer.layer_source = layer_source
                 layer.vcs_url = post_data['vcs_url']
-                if post_data.has_key('summary'):
-                    layer.summary = layer.description = post_data['summary']
-
                 layer.up_date = timezone.now()
                 layer.save()
             else:
