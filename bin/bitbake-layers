@@ -39,8 +39,18 @@ import bb.utils
 import bb.tinfoil
 
 
-logger = logging.getLogger('BitBake')
+def logger_create(name, output=sys.stderr):
+    logger = logging.getLogger(name)
+    console = logging.StreamHandler(output)
+    format = bb.msg.BBLogFormatter("%(levelname)s: %(message)s")
+    if output.isatty():
+        format.enable_color()
+    console.setFormatter(format)
+    logger.addHandler(console)
+    logger.setLevel(logging.INFO)
+    return logger
 
+logger = logger_create('bitbake-layers')
 
 
 class Commands():
