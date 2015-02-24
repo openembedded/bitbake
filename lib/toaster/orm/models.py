@@ -393,6 +393,8 @@ class Task(models.Model):
     outcome_text = property(get_outcome_text)
     sstate_text  = property(get_sstate_text)
 
+    def __unicode__(self):
+        return "%d %s:%s" % (self.id, self.recipe.name, self.task_name)
     class Meta:
         ordering = ('order', 'recipe' ,)
         unique_together = ('build', 'recipe', 'task_name', )

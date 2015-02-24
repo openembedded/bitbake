@@ -352,15 +352,17 @@ def builddashboard( request, build_id ):
     return render( request, template, context )
 
 
-def generateCoveredList( task ):
-    revList = _find_task_revdep( task );
-    list = { };
-    for t in revList:
-        if ( t.outcome == Task.OUTCOME_COVERED ):
-            list.update( generateCoveredList( t ));
-        else:
-            list[ t.task_name ] = t;
-    return( list );
+
+def generateCoveredList2( revlist = [] ):
+    covered_list =  [ x for x in revlist if x.outcome == Task.OUTCOME_COVERED ]
+    while len(covered_list):
+        revlist =  [ x for x in revlist if x.outcome != Task.OUTCOME_COVERED ]
+
+        newlist = _find_task_revdep_list(covered_list)
+
+        revlist = list(set(revlist + newlist))
+        covered_list =  [ x for x in revlist if x.outcome == Task.OUTCOME_COVERED ]
+    return revlist
 
 def task( request, build_id, task_id ):
     template = "task.html"
@@ -376,9 +378,10 @@ def task( request, build_id, task_id ):
         key=lambda t:'%s_%s %s'%( t.recipe.name, t.recipe.version, t.task_name ))
     coveredBy = '';
     if ( task.outcome == Task.OUTCOME_COVERED ):
-        dict = generateCoveredList( task )
+#        _list = generateCoveredList( task )
+        _list = generateCoveredList2( _find_task_revdep( task ) )
         coveredBy = [ ]
-        for name, t in dict.items( ):
+        for t in _list:
             coveredBy.append( t )
     log_head = ''
     log_body = ''
@@ -737,18 +740,17 @@ def dirinfo(request, build_id, target_id, file_path=None):
     return render(request, template, context)
 
 def _find_task_dep(task):
-    tp = []
-    for p in Task_Dependency.objects.filter(task=task):
-        if (p.depends_on.order > 0) and (p.depends_on.outcome != Task.OUTCOME_NA):
-            tp.append(p.depends_on);
-    return tp
+    return map(lambda x: x.depends_on, Task_Dependency.objects.filter(task=task).filter(depends_on__order__gt = 0).exclude(depends_on__outcome = Task.OUTCOME_NA).select_related("depends_on"))
 
 
 def _find_task_revdep(task):
     tp = []
-    for p in Task_Dependency.objects.filter(depends_on=task):
-        if (p.task.order > 0) and (p.task.outcome != Task.OUTCOME_NA):
-            tp.append(p.task);
+    tp = map(lambda t: t.task, Task_Dependency.objects.filter(depends_on=task).filter(task__order__gt=0).exclude(task__outcome = Task.OUTCOME_NA).select_related("task", "task__recipe", "task__build"))
+    return tp
+
+def _find_task_revdep_list(tasklist):
+    tp = []
+    tp = map(lambda t: t.task, Task_Dependency.objects.filter(depends_on__in=tasklist).filter(task__order__gt=0).exclude(task__outcome = Task.OUTCOME_NA).select_related("task", "task__recipe", "task__build"))
     return tp
 
 def _find_task_provider(task):
