@@ -61,7 +61,7 @@
             <span class="brand">
                 <a href="/">Toaster</a>
                 {% if DEBUG %}
-                    <i class="icon-info-sign get-help heading-help" data-placement="bottom" title="Version: {{TOASTER_VERSION}} <br /> Mode: {%if MANAGED%}build{%else%}analysis{%endif%}"></i>
+                    <i class="icon-info-sign" title="<strong>Toaster version information</strong>" data-content="<dl><dt>Branch</dt><dd>{{TOASTER_BRANCH}}</dd><dt>Revision</dt><dd>{{TOASTER_REVISION}}</dd><dt>Mode</dt><dd>{%if MANAGED%}Build{%else%}Analysis{%endif%}</dd></dl>"></i>
                 {% endif %}
             </span>
             <a class="pull-right manual" target="_blank" href="http://www.yoctoproject.org/documentation/toaster-manual">

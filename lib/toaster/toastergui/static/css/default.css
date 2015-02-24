@@ -5,7 +5,8 @@
 /* style the version information */
 .brand > a { color: #777; }
 .brand > a:hover { color: #999; text-decoration: none; }
-.icon-info-sign.get-help { color: #777; font-size: 16px; margin-left: 5px;}
+.icon-info-sign { color: #777; font-size: 16px; margin-left: 5px;}
+.icon-info-sign:hover { color: #999; cursor: pointer; }
 
 /* Style the breadcrumb */
 .breadcrumb { display: inline-block; background-color: transparent; }

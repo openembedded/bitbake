@@ -1731,7 +1731,8 @@ if toastermain.settings.MANAGED:
             "projects": Project.objects.all(),
             "MANAGED" : toastermain.settings.MANAGED,
             "DEBUG" : toastermain.settings.DEBUG,
-            "TOASTER_VERSION": toastermain.settings.TOASTER_VERSION,
+            "TOASTER_BRANCH": toastermain.settings.TOASTER_BRANCH,
+            "TOASTER_REVISION" : toastermain.settings.TOASTER_REVISION,
         }
         if 'project_id' in request.session:
             try:
@@ -3104,8 +3105,8 @@ else:
             "projects": [],
             "MANAGED" : toastermain.settings.MANAGED,
             "DEBUG" : toastermain.settings.DEBUG,
-            "TOASTER_VERSION": toastermain.settings.TOASTER_VERSION,
-
+            "TOASTER_BRANCH": toastermain.settings.TOASTER_BRANCH,
+            "TOASTER_REVISION" : toastermain.settings.TOASTER_REVISION,
         }
 
 
