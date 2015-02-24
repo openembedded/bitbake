@@ -35,6 +35,7 @@ from bb.msg import BBLogFormatter as format
 from django.db import models
 import logging
 
+from django.db import transaction
 
 logger = logging.getLogger("BitBake")
 
@@ -606,7 +607,9 @@ class BuildInfoHelper(object):
         self.internal_state = {}
         self.internal_state['taskdata'] = {}
         self.task_order = 0
+        self.autocommit_step = 1
         self.server = server
+        transaction.set_autocommit(False)
         self.orm_wrapper = ORMWrapper()
         self.has_build_history = has_build_history
         self.tmp_dir = self.server.runCommand(["getVariable", "TMPDIR"])[0]
@@ -926,6 +929,12 @@ class BuildInfoHelper(object):
                 task_information['outcome'] = Task.OUTCOME_FAILED
                 del self.internal_state['taskdata'][identifier]
 
+        # we force a sync point here, to get the progress bar to show
+        if self.autocommit_step % 3 == 0:
+            transaction.set_autocommit(True)
+            transaction.set_autocommit(False)
+        self.autocommit_step += 1
+
         self.orm_wrapper.get_update_task_object(task_information, True) # must exist
 
 
@@ -1197,3 +1206,5 @@ class BuildInfoHelper(object):
                 # we have no build, and we still have events; something amazingly wrong happend
                 for event in self.internal_state['backlog']:
                    logger.error("UNSAVED log: %s", event.msg)
+
+        transaction.set_autocommit(True)
