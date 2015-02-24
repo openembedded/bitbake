@@ -165,17 +165,17 @@ vim: expandtab tabstop=2
           </case>
 
           <case ng-switch-when="created">
-            <div class="lead span3"> <span ng-repeat="t in b.targets" ng-include src="'target_display'"></span>   </div>
-            <div class="span6" >
+            <div class="lead span5"> <span ng-repeat="t in b.targets" ng-include src="'target_display'"></span>   </div>
+            <div class="span4">
               <span class="lead">Creating build</span>
             </div>
             <button class="btn pull-right btn-info" ng-click="buildCancel(b)">Cancel</button>
           </case>
 
           <case ng-switch-when="deleted">
-            <div class="lead span3"> <span ng-repeat="t in b.targets" ng-include src="'target_display'"></span>   </div>
-            <div class="span6" id="{[b.id]}-deleted" >
-              <span class="lead">Build deleted</span>
+            <div class="lead span5"> <span ng-repeat="t in b.targets" ng-include src="'target_display'"></span>   </div>
+            <div class="span4" id="{[b.id]}-deleted" >
+              <span class="lead">Build cancelled</span>
             </div>
             <button class="btn pull-right btn-info" ng-click="buildDelete(b)">Close</button>
           </case>

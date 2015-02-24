@@ -15,7 +15,9 @@
 
     <div class="alert {%if build.outcome == build.SUCCEEDED%}alert-success{%elif build.outcome == build.FAILED%}alert-error{%else%}alert-info{%endif%} {% if MANAGED and build.project %}project-name{% endif %} ">
     {% if MANAGED and build.project %}
-       <span class="label {%if build.outcome == build.SUCCEEDED%}label-success{%elif build.outcome == build.FAILED%}label-danger{%else%}label-info{%endif%}"> {{build.project.name}} </span>
+       <span class="label {%if build.outcome == build.SUCCEEDED%}label-success{%elif build.outcome == build.FAILED%}label-important{%else%}label-info{%endif%}">
+        <a href="{% url 'project' build.project.id %}"> {{build.project.name}} </a>
+       </span>
     {% endif %}
 
         <div class="row-fluid">
@@ -29,6 +31,7 @@
                 </a>
     {% endif %}
             </div>
+    {%if build.outcome == build.SUCCEEDED or build.outcome == build.FAILED %}
             <div class="span2 lead">
                 {% if build.completed_on|format_build_date  %}
                     {{ build.completed_on|date:'d/m/y H:i' }}
@@ -36,7 +39,6 @@
                     {{ build.completed_on|date:'H:i' }}
                 {% endif %}
             </div>
-    {%if build.outcome == build.SUCCEEDED or build.outcome == build.FAILED %}
             <div class="span2 lead">
       {% if  build.errors_no %}
                 <i class="icon-minus-sign red"></i> <a href="{%url 'builddashboard' build.pk%}#errors" class="error">{{build.errors_no}} error{{build.errors_no|pluralize}}</a>
@@ -52,12 +54,13 @@
                 Build time: <a href="{% url 'buildtime' build.pk %}">{{ build.timespent|sectohms }}</a>
               </span>
           {% if build.project %}
-              <button class="btn {%if build.outcome == build.SUCCEEDED%}btn-success{%elif build.outcome == build.FAILED%}btn-danger{%else%}btn-info{%endif%} pull-right" onclick='scheduleBuild({% url 'xhr_projectbuild' build.project.id as bpi%}{{bpi|json}}, {{build.project.name|json}}, {{build.get_sorted_target_list|mapselect:'target'|json}})'>Run again</button>
+              <button class="btn {%if build.outcome == build.SUCCEEDED%}btn-success{%elif build.outcome == build.FAILED%}btn-danger{%else%}btn-info{%endif%} pull-right" onclick='scheduleBuild({% url 'xhr_projectbuild' build.project.id as bpi%}{{bpi|json}}, {{build.project.name|json}},
+{% url 'project' buildrequest.project.id as bpurl%}{{bpurl|json}}, {{build.get_sorted_target_list|mapselect:'target'|json}})'>Run again</button>
           {% endif %}
             </div>
     {%endif%}
     {%if build.outcome == build.IN_PROGRESS %}
-            <div class="span4">
+            <div class="span4 offset1">
                 <div class="progress" style="margin-top:5px;" data-toggle="tooltip" title="{{build.completeper}}% of tasks complete">
                     <div style="width: {{build.completeper}}%;" class="bar"></div>
                 </div>
@@ -73,7 +76,9 @@
 
 
   <div class="alert {% if buildrequest.state  == buildrequest.REQ_FAILED %}alert-error{% else %}alert-info{% endif %} project-name">
-       <span class="label label-danger"> {{buildrequest.project.name}} </span>
+       <span class="label {% if buildrequest.state  == buildrequest.REQ_FAILED %}label-important{% else%}label-info{% endif %}">
+        <a href="{% url 'project' buildrequest.project.id %}"> {{buildrequest.project.name}} </a>
+       </span>
     <div class="row-fluid">
 
           {% if buildrequest.state == buildrequest.REQ_FAILED %}
@@ -100,7 +105,7 @@
               <span class="lead{%if not MANAGED or not buildrequest.project%} pull-right{%endif%}">
                 Build time: {{ buildrequest.get_duration|sectohms }}
               </span>
-              <button class="btn btn-danger pull-right" onclick='scheduleBuild({% url 'xhr_projectbuild' buildrequest.project.id as bpi%}{{bpi|json}}, {{buildrequest.project.name|json}}, {{buildrequest.get_sorted_target_list|mapselect:'target'|json}})'>Run again</button>
+              <button class="btn btn-danger pull-right" onclick='scheduleBuild({% url 'xhr_projectbuild' buildrequest.project.id as bpi%}{{bpi|json}},  {{buildrequest.project.name|json}}, {% url 'project' buildrequest.project.id as bpurl%}|{{bpurl|json}}, {{buildrequest.get_sorted_target_list|mapselect:'target'|json}})'>Run again</button>
 
             </div>
 
@@ -111,7 +116,7 @@
 
                 <span data-toggle="tooltip" {%if buildrequest.brtarget_set.all.count > 1%}title="Targets: {%for target in buildrequest.brtarget_set.all%}{{target.target}} {%endfor%}"{%endif%}>{{buildrequest.brtarget_set.all.0.target}} {%if buildrequest.brtarget_set.all.count > 1%}(+ {{buildrequest.brtarget_set.all.count|add:"-1"}}){%endif%} </span>
             </div>
-            <div class="span4 lead" >Build queued
+            <div class="span4 lead">Build queued
               <i title="This build will start as soon as a build server is available" class="icon-question-sign get-help get-help-blue heading-help" data-toggle="tooltip"></i>
             </div>
 
@@ -172,13 +177,13 @@ function _makeXHRBuildCall(url, data, onsuccess, onfail) {
 }
 
 
-function scheduleBuild(url, projectName, buildlist) {
+function scheduleBuild(url, projectName, projectUrl, buildlist) {
   console.log("scheduleBuild");
   _makeXHRBuildCall(url, {targets: buildlist.join(" ")}, function (_data) {
 
-      $('#latest-builds').prepend('<div class="alert alert-info" style="padding-top:0px">' + '<span class="label label-info" style="font-weight: normal; margin-bottom: 5px; margin-left:-15px; padding-top:5px;">'+projectName+'</span><div class="row-fluid">' +
-  '<div class="span4 lead">' + buildlist.join(" ") +
-  '</div><div class="span4 lead pull-right">Build queued. Your build will start shortly.</div></div></div>');
+      $('#latest-builds').prepend("<div class=\"alert alert-info project-name\"><span class=\"label label-info\"><a href=\""+projectUrl+"\">"+projectName+"</a></span><div class=\"row-fluid\">" +
+  "<div class=\"span5 lead\">" + buildlist.join(" ") +
+  "</div><div class=\"span4 lead\">Build queued <i title=\"This build will start as soon as a build server is available\" class=\"icon-question-sign get-help get-help-blue heading-help\"></i></div></div></div>");
   });
 }
 
