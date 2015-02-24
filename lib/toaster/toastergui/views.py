@@ -2622,31 +2622,39 @@ if toastermain.settings.MANAGED:
 
         layer_version = Layer_Version.objects.get(pk = layerid)
 
+        targets_query = Recipe.objects.filter(layer_version=layer_version)
+
         # Targets tab query functionality
         if request.GET.has_key('targets_search'):
-            targets = Paginator(Recipe.objects.filter(layer_version=layer_version,name__icontains=request.GET['targets_search']).order_by("name"), limit)
-        else:
-            targets = Paginator(Recipe.objects.filter(layer_version=layer_version).order_by("name"), limit)
+            targets_query = targets_query.filter(
+                Q(name__icontains=request.GET['targets_search']) |
+                Q(summary__icontains=request.GET['targets_search']))
+
+        targets = Paginator(targets_query.order_by("name"), limit)
 
         if request.GET.has_key("tpage"):
-          try:
-              targets = targets.page(request.GET['tpage'])
-          except EmptyPage:
-              targets = targets.page(targets.num_pages)
+            try:
+                targets = targets.page(request.GET['tpage'])
+            except EmptyPage:
+                targets = targets.page(targets.num_pages)
         else:
             targets = targets.page(1)
 
+        machines_query = Machine.objects.filter(layer_version=layer_version)
+
         # Machines tab query functionality
         if request.GET.has_key('machines_search'):
-          machines = Paginator(Machine.objects.filter(layer_version=layer_version,name__icontains=request.GET['machines_search']).order_by("name"), limit)
-        else:
-          machines = Paginator(Machine.objects.filter(layer_version=layer_version).order_by("name"), limit)
+            machines_query = machines_query.filter(
+                Q(name__icontains=request.GET['machines_search']) |
+                Q(description__icontains=request.GET['machines_search']))
+
+        machines = Paginator(machines_query.order_by("name"), limit)
 
         if request.GET.has_key("mpage"):
-          try:
-            machines = machines.page(request.GET['mpage'])
-          except EmptyPage:
-            machines = machines.page(machines.num_pages)
+            try:
+                machines = machines.page(request.GET['mpage'])
+            except EmptyPage:
+                machines = machines.page(machines.num_pages)
         else:
             machines = machines.page(1)
 
@@ -2787,9 +2795,9 @@ if toastermain.settings.MANAGED:
         # Now we need to weed out the layers which will appear as duplicated
         # because they're from a layer source which doesn't need to be used
         for machine in queryset_all:
-           to_rm = machine.layer_version.get_equivalents_wpriority(prj)[1:]
-           if len(to_rm) > 0:
-             queryset_all = queryset_all.exclude(layer_version__in=to_rm)
+            to_rm = machine.layer_version.get_equivalents_wpriority(prj)[1:]
+            if len(to_rm) > 0:
+               queryset_all = queryset_all.exclude(layer_version__in=to_rm)
 
         machine_info = _build_page_range(Paginator(queryset_all, request.GET.get('count', 100)),request.GET.get('page', 1))
 
