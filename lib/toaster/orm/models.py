@@ -194,7 +194,7 @@ class Build(models.Model):
         eta = timezone.now()
         completeper = self.completeper()
         if self.completeper() > 0:
-            eta += ((eta - self.started_on)*100)/completeper
+            eta += ((eta - self.started_on)*(100-completeper))/completeper
         return eta
 
 
