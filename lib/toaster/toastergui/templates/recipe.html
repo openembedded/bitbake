@@ -19,25 +19,25 @@
 
 <div class="row span7 tabbable">
     <ul class="nav nav-pills">
-        <li class="active">
+        <li class="{{tab_states.1}}">
             <a href="#information" data-toggle="tab">
                 <i class="icon-question-sign get-help" title="Build-related information about the recipe"></i>
                 Recipe details
             </a>
         </li>
         <li>
-            <a href="#packages-built" data-toggle="tab">
+             <a href="{% url "recipe_packages" build.pk object.id %}">
                 <i class="icon-question-sign get-help" title="The packaged output resulting from building the recipe"></i>
-                Packages ({{packages.count}})
+                Packages ({{package_count}})
             </a>
         </li>
-        <li>
+        <li class="{{tab_states.3}}">
             <a href="#dependencies" data-toggle="tab">
                 <i class="icon-question-sign get-help" title="The recipe build-time dependencies (i.e. other recipes)"></i>
                 Build dependencies ({{object.r_dependencies_recipe.all.count}})
             </a>
         </li>
-        <li>
+        <li class="{{tab_states.4}}">
             <a href="#brought-in-by" data-toggle="tab">
                 <i class="icon-question-sign get-help" title="The recipe build-time reverse dependencies (i.e. the recipes that depend on this recipe)"></i>
                 Reverse build dependencies ({{object.r_dependencies_depends.all.count}})
@@ -45,7 +45,7 @@
         </li>
     </ul>
     <div class="tab-content">
-        <div class="tab-pane active" id="information" name="information">
+        <div class="tab-pane {{tab_states.1}}" id="information" name="information">
             <dl class="dl-horizontal">
                 <dt>
                     <i class="icon-question-sign get-help" title="The name of the layer providing the recipe"></i>
@@ -144,43 +144,7 @@
             </table>
             {% endif %}
         </div>
-        <div class="tab-pane" id="packages-built" name="packages-built">
-            {% if not packages %}
-            <div class="alert alert-info">
-                <strong>{{object.name}}_{{object.version}}</strong> does not build any packages.
-            </div>
-            {% else %}
-            <table class="table table-bordered table-hover" style="margin-top:10px;">
-                <thead>
-                    <tr>
-                        <th>
-                            Package
-                        </th>
-                        <th>
-                            Version
-                        </th>
-                        <th class="sizecol span2">
-                            Size
-                        </th>
-                    </tr>
-                </thead>
-                <tbody>
-
-                    {% for package in packages|dictsort:"name" %}
-
-                    <tr>
-                        <td><a href="{% url "package_built_detail" build.pk package.pk %}">{{package.name}}</a></td>
-                        <td><a href="{% url "package_built_detail" build.pk package.pk %}">{{package.version}}_{{package.revision}}</a></td>
-                        <td class="sizecol"><a href="{% url "package_built_detail" build.pk package.pk %}">{{package.size|filtered_filesizeformat}}</a></td>
-                    </tr>
-
-                    {% endfor %}
-
-                </tbody>
-            </table>
-            {% endif %}
-        </div>
-        <div class="tab-pane" id="dependencies" name="dependencies">
+        <div class="tab-pane {{tab_states.3}}" id="dependencies" name="dependencies">
 
             {% if not object.r_dependencies_recipe.all %}
             <div class="alert alert-info">
@@ -212,7 +176,7 @@
             {% endif %}
 
         </div>
-        <div class="tab-pane" id="brought-in-by" name="brought-in-by">
+        <div class="tab-pane {{tab_states.4}}" id="brought-in-by" name="brought-in-by">
 
             {% if not object.r_dependencies_depends.all %}
             <div class="alert alert-info">

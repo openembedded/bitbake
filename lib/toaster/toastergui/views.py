@@ -419,8 +419,7 @@ def task( request, build_id, task_id ):
 
     return render( request, template, context )
 
-
-def recipe(request, build_id, recipe_id):
+def recipe(request, build_id, recipe_id, active_tab="1"):
     template = "recipe.html"
     if Recipe.objects.filter(pk=recipe_id).count() == 0 :
         return redirect(builds)
@@ -429,7 +428,12 @@ def recipe(request, build_id, recipe_id):
     layer_version = Layer_Version.objects.get(pk=object.layer_version_id)
     layer  = Layer.objects.get(pk=layer_version.layer_id)
     tasks  = Task.objects.filter(recipe_id = recipe_id, build_id = build_id).exclude(order__isnull=True).exclude(task_name__endswith='_setscene').exclude(outcome=Task.OUTCOME_NA)
-    packages = Package.objects.filter(recipe_id = recipe_id).filter(build_id = build_id).filter(size__gte=0)
+    package_count = Package.objects.filter(recipe_id = recipe_id).filter(build_id = build_id).filter(size__gte=0).count()
+
+    if active_tab != '1' and active_tab != '3' and active_tab != '4' :
+        active_tab = '1'
+    tab_states = {'1': '', '3': '', '4': ''}
+    tab_states[active_tab] = 'active'
 
     context = {
             'build'   : Build.objects.get(pk=build_id),
@@ -437,9 +441,57 @@ def recipe(request, build_id, recipe_id):
             'layer_version' : layer_version,
             'layer'   : layer,
             'tasks'   : tasks,
-            'packages': packages,
+            'package_count' : package_count,
+            'tab_states' : tab_states,
     }
     return render(request, template, context)
+
+def recipe_packages(request, build_id, recipe_id):
+    template = "recipe_packages.html"
+    if Recipe.objects.filter(pk=recipe_id).count() == 0 :
+        return redirect(builds)
+
+    (pagesize, orderby) = _get_parameters_values(request, 10, 'name:+')
+    mandatory_parameters = { 'count': pagesize,  'page' : 1, 'orderby': orderby }
+    retval = _verify_parameters( request.GET, mandatory_parameters )
+    if retval:
+        return _redirect_parameters( 'recipe_packages', request.GET, mandatory_parameters, build_id = build_id, recipe_id = recipe_id)
+    (filter_string, search_term, ordering_string) = _search_tuple(request, Package)
+
+    recipe = Recipe.objects.get(pk=recipe_id)
+    queryset = Package.objects.filter(recipe_id = recipe_id).filter(build_id = build_id).filter(size__gte=0)
+    package_count = queryset.count()
+    queryset = _get_queryset(Package, queryset, filter_string, search_term, ordering_string, 'name')
+
+    packages = _build_page_range(Paginator(queryset, pagesize),request.GET.get('page', 1))
+
+    context = {
+            'build'   : Build.objects.get(pk=build_id),
+            'recipe'  : recipe,
+            'objects'  : packages,
+            'object_count' : package_count,
+            'tablecols':[
+                {
+                    'name':'Package',
+                    'orderfield': _get_toggle_order(request,"name"),
+                    'ordericon': _get_toggle_order_icon(request,"name"),
+                    'orderkey': "name",
+                },
+                {
+                    'name':'Version',
+                },
+                {
+                    'name':'Size',
+                    'orderfield': _get_toggle_order(request,"size", True),
+                    'ordericon': _get_toggle_order_icon(request,"size"),
+                    'orderkey': 'size',
+                    'dclass': 'sizecol span2',
+                },
+           ]
+       }
+    response = render(request, template, context)
+    _save_parameters_cookies(response, pagesize, orderby, request)
+    return response
 
 def target_common( request, build_id, target_id, variant ):
     template = "target.html"
