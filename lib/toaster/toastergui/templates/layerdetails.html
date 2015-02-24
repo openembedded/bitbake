@@ -396,7 +396,12 @@
                     <tbody>
                       {% for machine in machines %}
                       <tr>
-                        <td>{{machine.name}}</td>
+                        <td>
+                          {{machine.name}}
+                          {% if machine.get_vcs_machine_file_link_url %}
+                          <a href="{{machine.get_vcs_machine_file_link_url}}" target="_blank"><i class="icon-share get-info"></i></a>
+                          {% endif %}
+                        </td>
                         <td>{{machine.description}}</td>
                         <td><button class="btn btn-block select-machine-btn" data-machine-name="{{machine.name}}" {% if layer_in_project == 0 %}disabled="disabled"{% endif %}}>Select machine</button></td>
                       </tr>
