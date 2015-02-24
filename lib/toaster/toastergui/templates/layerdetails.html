@@ -287,7 +287,7 @@
                       {%else%}
                       <li class="disabled"><a href="#">&laquo;</a></li>
                       {%endif%}
-                      {% for i in targets.paginator.page_range %}
+                      {% for i in targets.page_range %}
                       <li {%if i == targets.number %} class="active" {%endif%}><a href="?tpage={{i}}#targets">{{i}}</a></li>
                       {% endfor %}
                       {%if targets.has_next%}
@@ -418,7 +418,7 @@
                       {%else%}
                       <li class="disabled"><a href="#">&laquo;</a></li>
                       {%endif%}
-                      {% for i in machines.paginator.page_range %}
+                      {% for i in machines.page_range %}
                       <li {%if i == machines.number %} class="active" {%endif%}><a href="?mpage={{i}}#machines">{{i}}</a></li>
                       {% endfor %}
                       {%if machines.has_next%}

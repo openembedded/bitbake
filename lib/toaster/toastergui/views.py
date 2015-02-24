@@ -2630,15 +2630,7 @@ if toastermain.settings.MANAGED:
                 Q(name__icontains=request.GET['targets_search']) |
                 Q(summary__icontains=request.GET['targets_search']))
 
-        targets = Paginator(targets_query.order_by("name"), limit)
-
-        if request.GET.has_key("tpage"):
-            try:
-                targets = targets.page(request.GET['tpage'])
-            except EmptyPage:
-                targets = targets.page(targets.num_pages)
-        else:
-            targets = targets.page(1)
+        targets = _build_page_range(Paginator(targets_query.order_by("name"), limit), request.GET.get('tpage', 1))
 
         machines_query = Machine.objects.filter(layer_version=layer_version)
 
@@ -2648,15 +2640,7 @@ if toastermain.settings.MANAGED:
                 Q(name__icontains=request.GET['machines_search']) |
                 Q(description__icontains=request.GET['machines_search']))
 
-        machines = Paginator(machines_query.order_by("name"), limit)
-
-        if request.GET.has_key("mpage"):
-            try:
-                machines = machines.page(request.GET['mpage'])
-            except EmptyPage:
-                machines = machines.page(machines.num_pages)
-        else:
-            machines = machines.page(1)
+        machines = _build_page_range(Paginator(machines_query.order_by("name"), limit), request.GET.get('mpage', 1))
 
         context = {
             'layerversion': layer_version,
