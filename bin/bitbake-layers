@@ -119,7 +119,7 @@ Removes the specified layer from bblayers.conf
             return 1
 
         if args.layerdir.startswith('*'):
-            layerdir = dirname
+            layerdir = args.layerdir
         else:
             layerdir = os.path.abspath(args.layerdir)
         (_, notremoved) = bb.utils.edit_bblayers_conf(bblayers_conf, None, layerdir)
