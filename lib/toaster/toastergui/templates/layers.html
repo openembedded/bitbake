@@ -52,12 +52,15 @@
                 {% endif %}
         </td>
             <td class="branch">
-                {% if o.branch %}
-                    {{o.branch}}
-                {% else %}
-                    {{o.up_branch.name}}
-                    <i class="icon-question-sign get-help hover-help" title="Your builds will use the tip of the branch you have cloned or downloaded to your computer, so nothing will be fetched"></i>
-                {% endif %}
+                {% with vcs_ref=o.get_vcs_reference %}
+                  {% if vcs_ref|is_shaid %}
+                    <a class="btn" data-content="<ul class='unstyled'> <li>{{vcs_ref}}</li> </ul>">
+                      {{vcs_ref|truncatechars:10}}
+                    </a>
+                  {% else %}
+                    {{vcs_ref}}
+                  {% endif %}
+                {% endwith %}
             </td>
             <td class="dependencies">
         {% with ods=o.dependencies.all%}

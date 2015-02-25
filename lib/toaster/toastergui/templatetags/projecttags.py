@@ -295,3 +295,15 @@ def format_build_date(completed_on):
 
     if delta.days >= 1:
         return True
+
+@register.filter
+def is_shaid(text):
+    """ return True if text length is 40 characters and all hex-digits
+    """
+    try:
+        int(text, 16)
+        if len(text) == 40:
+            return True
+        return False
+    except ValueError:
+        return False
