@@ -117,6 +117,7 @@
 
 var tooltipUpdateText;
 
+/* ensure csrf cookie exists {% csrf_token %} */
 function _makeXHREditCall(data, onsuccess, onfail) {
     $.ajax( {
         type: "POST",

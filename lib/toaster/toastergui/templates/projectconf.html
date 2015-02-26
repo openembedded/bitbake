@@ -429,6 +429,7 @@
             // re-assert the event handlers
         }
 
+	/* ensure cookie exists {% csrf_token %} */
         function postEditAjaxRequest(reqdata) {
             var ajax = $.ajax({
                     type:"POST",
