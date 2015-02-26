@@ -994,7 +994,7 @@ class Layer_Version(models.Model):
             query |= Q(projectlayer__project=project)
 
         return sorted(
-                Layer_Version.objects.filter(layer__name = self.layer.name).filter(query).select_related('layer_source', 'layer'),
+                Layer_Version.objects.filter(layer__name = self.layer.name).filter(query).select_related('layer_source', 'layer').order_by("-id"),
                 key = lambda x: _get_ls_priority(x.layer_source),
                 reverse = True)
 
