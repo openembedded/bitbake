@@ -357,6 +357,8 @@ def generateCoveredList2( revlist = [] ):
     covered_list =  [ x for x in revlist if x.outcome == Task.OUTCOME_COVERED ]
     while len(covered_list):
         revlist =  [ x for x in revlist if x.outcome != Task.OUTCOME_COVERED ]
+        if len(revlist) > 0:
+            return revlist
 
         newlist = _find_task_revdep_list(covered_list)
 
@@ -379,10 +381,7 @@ def task( request, build_id, task_id ):
     coveredBy = '';
     if ( task.outcome == Task.OUTCOME_COVERED ):
 #        _list = generateCoveredList( task )
-        _list = generateCoveredList2( _find_task_revdep( task ) )
-        coveredBy = [ ]
-        for t in _list:
-            coveredBy.append( t )
+        coveredBy = sorted(generateCoveredList2( _find_task_revdep( task ) ), key = lambda x: x.recipe.name)
     log_head = ''
     log_body = ''
     if task.outcome == task.OUTCOME_FAILED:
