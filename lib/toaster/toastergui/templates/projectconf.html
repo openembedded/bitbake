@@ -23,12 +23,12 @@
                 <i class="icon-pencil" id="change-distro-icon"></i>
                 <form id="change-distro-form" style="display:none;">
                     <div class="input-append">
-                  <span  id="edit-distro-name-div" class="control-group">
-                        <input type="text" id="new-distro" value="{{distro}}">
-                        <button id="apply-change-distro" class="btn" type="button">Save</button>
-                        <button id="cancel-change-distro" type="button" class="btn btn-link">Cancel</button>
+                        <span  id="edit-distro-name-div" class="control-group">
+                            <input type="text" id="new-distro" value="{{distro}}">
+                            <button id="apply-change-distro" class="btn" type="button">Save</button>
+                            <button id="cancel-change-distro" type="button" class="btn btn-link">Cancel</button>
+                        </span>
                         <span class="help-block error" id="distro-error-message"></span>
-                  </span>
                     </div>
                 </form>
             </dd>
@@ -52,7 +52,7 @@
                 <i class="icon-question-sign get-help" title="Specifies additional packages to install into an image. If your build creates more than one image, the packages will be installed in <strong>all of them</strong> <br /><a href='http://www.yoctoproject.org/docs/1.6.1/ref-manual/ref-manual.html#var-IMAGE_INSTALL' target='_blank'>Read more in the manual</a>"></i>
             </dt>
             <dd class="lead">
-                <span id="image_install">{% if image_install_append %}{{image_install_append}}{%else%}<i>Not set</i>{%endif%}</span>
+                <span id="image_install"{% if image_install_append %}{%else%} class="muted"{%endif%}>{% if image_install_append %}{{image_install_append}}{%else%}Not set{%endif%}</span>
                 <i class="icon-pencil" id="change-image_install-icon"></i>
                 <i class="icon-trash" id="delete-image_install-icon" {% if image_install_append %}{%else%}style="display:none;"{%endif%}></i>
                 <form id="change-image_install-form" style="display:none;">
@@ -198,14 +198,14 @@
 
             var existing_configvars = document.getElementsByClassName('js-config-var-name');
             for (var i = 0, length = existing_configvars.length; i < length; i++) {
-                if (existing_configvars[i].innerHTML == variable) {
+                if (existing_configvars[i].innerHTML.toUpperCase() == variable.toUpperCase()) {
                     error_msg = "This variable is already set in this page, edit its value instead";
                 }
             }
 
             var blacklist_configvars = document.getElementsByClassName('js-config-blacklist-name');
             for (var i = 0, length = blacklist_configvars.length; i < length; i++) {
-                if (blacklist_configvars[i].value == variable.toUpperCase()) {
+                if (blacklist_configvars[i].value.toUpperCase() == variable.toUpperCase()) {
                     error_msg = "You cannot edit this variable in Toaster because it is set by the build servers";
                 }
             }
@@ -257,7 +257,7 @@
             if (has_spaces) {
                 error_msg = "A valid distro name cannot include spaces";
             } else if (0 == value.length) {
-                error_msg = "A valid distro name cannot be empty";
+                error_msg = " ";
             }
 
             if ("" != error_msg) {
@@ -609,7 +609,7 @@
                 var name = $('#new-image_install').val();
                 postEditAjaxRequest({"configvarChange" : 'IMAGE_INSTALL_append:'+name});
                 $('#image_install').text(name);
-                $('#image_install').parent().removeClass('muted');
+                $('#image_install').removeClass('muted');
                 $("#change-image_install-form").slideUp(function () {
                     $('#image_install, #change-image_install-icon').show();
                     if (name.length > -1) {
@@ -624,7 +624,7 @@
                 $(this).tooltip('hide');
                 postEditAjaxRequest({"configvarChange" : 'IMAGE_INSTALL_append:'+''});
                 $('#image_install').parent().fadeOut(1000, function(){
-                    $('#image_install').parent().addClass('muted');
+                    $('#image_install').addClass('muted');
                     $('#image_install').text('Not set');
                     $('#delete-image_install-icon').hide();
                     $('#image_install').parent().fadeIn(1000);
