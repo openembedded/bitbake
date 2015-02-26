@@ -281,10 +281,6 @@ class Target_File(models.Model):
     sym_target = models.ForeignKey('Target_File', related_name="symlink_set", null=True)
 
 
-class TaskManager(models.Manager):
-    def related_setscene(self, task_object):
-        return Task.objects.filter(task_executed=True, build = task_object.build, recipe = task_object.recipe, task_name=task_object.task_name+"_setscene")
-
 class Task(models.Model):
 
     SSTATE_NA = 0
@@ -339,10 +335,8 @@ class Task(models.Model):
 
     search_allowed_fields = [ "recipe__name", "recipe__version", "task_name", "logfile" ]
 
-    objects = TaskManager()
-
     def get_related_setscene(self):
-        return Task.objects.related_setscene(self)
+        return Task.objects.filter(task_executed=True, build = self.build, recipe = self.recipe, task_name=self.task_name+"_setscene")
 
     def get_outcome_text(self):
         return Task.TASK_OUTCOME[self.outcome + 1][1]
@@ -377,7 +371,7 @@ class Task(models.Model):
     outcome = models.IntegerField(choices=TASK_OUTCOME, default=OUTCOME_NA)
     sstate_checksum = models.CharField(max_length=100, blank=True)
     path_to_sstate_obj = models.FilePathField(max_length=500, blank=True)
-    recipe = models.ForeignKey('Recipe', related_name='build_recipe')
+    recipe = models.ForeignKey('Recipe', related_name='tasks')
     task_name = models.CharField(max_length=100)
     source_url = models.FilePathField(max_length=255, blank=True)
     work_directory = models.FilePathField(max_length=255, blank=True)
@@ -394,7 +388,8 @@ class Task(models.Model):
     sstate_text  = property(get_sstate_text)
 
     def __unicode__(self):
-        return "%d %s:%s" % (self.id, self.recipe.name, self.task_name)
+        return "%d(%d) %s:%s" % (self.pk, self.build.pk, self.recipe.name, self.task_name)
+
     class Meta:
         ordering = ('order', 'recipe' ,)
         unique_together = ('build', 'recipe', 'task_name', )

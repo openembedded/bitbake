@@ -190,8 +190,8 @@ class ORMWrapper(object):
                     vars(task_object)[v] = task_information[v]
                     object_changed = True
 
-        # update setscene-related information if the task was just created
-        if created and task_object.outcome == Task.OUTCOME_COVERED and 1 == Task.objects.related_setscene(task_object).count():
+        # update setscene-related information if the task has a setscene
+        if task_object.outcome == Task.OUTCOME_COVERED and 1 == task_object.get_related_setscene().count():
             task_object.outcome = Task.OUTCOME_CACHED
             object_changed = True
 
