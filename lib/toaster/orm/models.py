@@ -366,7 +366,7 @@ class Task(models.Model):
             return self._helptext
         try:
             self._helptext = HelpText.objects.get(key=self.task_name, area=HelpText.VARIABLE, build=self.build).text
-        except HelpText.DoesNotExit:
+        except HelpText.DoesNotExist:
             self._helptext = None
 
         return self._helptext
