@@ -102,6 +102,69 @@ class Project(models.Model):
     def __unicode__(self):
         return "%s (%s, %s)" % (self.name, self.release, self.bitbake_version)
 
+    def get_current_machine_name(self):
+        try:
+            return self.projectvariable_set.get(name="MACHINE").value
+        except (ProjectVariable.DoesNotExist,IndexError):
+            return( "None" );
+
+    def get_number_of_builds(self):
+        try:
+            return len(Build.objects.filter( project = self.id ))
+        except (Build.DoesNotExist,IndexError):
+            return( 0 )
+
+    def get_last_build_id(self):
+        try:
+            return Build.objects.filter( project = self.id ).order_by('-completed_on')[0].id
+        except (Build.DoesNotExist,IndexError):
+            return( -1 )
+
+    def get_last_outcome(self):
+        build_id = self.get_last_build_id
+        if (-1 == build_id):
+            return( "" )
+        try:
+            return Build.objects.filter( id = self.get_last_build_id )[ 0 ].outcome
+        except (Build.DoesNotExist,IndexError):
+            return( "not_found" )
+
+    def get_last_target(self):
+        build_id = self.get_last_build_id
+        if (-1 == build_id):
+            return( "" )
+        try:
+            return Target.objects.filter(build = build_id)[0].target
+        except (Target.DoesNotExist,IndexError):
+            return( "not_found" )
+
+    def get_last_errors(self):
+        build_id = self.get_last_build_id
+        if (-1 == build_id):
+            return( 0 )
+        try:
+            return Build.objects.filter(id = build_id)[ 0 ].errors_no
+        except (Build.DoesNotExist,IndexError):
+            return( "not_found" )
+
+    def get_last_warnings(self):
+        build_id = self.get_last_build_id
+        if (-1 == build_id):
+            return( 0 )
+        try:
+            return Build.objects.filter(id = build_id)[ 0 ].warnings_no
+        except (Build.DoesNotExist,IndexError):
+            return( "not_found" )
+
+    def get_last_imgfiles(self):
+        build_id = self.get_last_build_id
+        if (-1 == build_id):
+            return( "" )
+        try:
+            return Variable.objects.filter(build = build_id, variable_name = "IMAGE_FSTYPES")[ 0 ].variable_value
+        except (Variable.DoesNotExist,IndexError):
+            return( "not_found" )
+
     # returns a queryset of compatible layers for a project
     def compatible_layerversions(self, release = None, layer_name = None):
         if release == None:

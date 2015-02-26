@@ -1758,19 +1758,9 @@ if toastermain.settings.MANAGED:
         buildrequests = BuildRequest.objects.exclude(state__lte = BuildRequest.REQ_INPROGRESS).exclude(state=BuildRequest.REQ_DELETED)
 
         try:
-            context, pagesize, orderby = _build_list_helper(request, buildrequests)
+            context, pagesize, orderby = _build_list_helper(request, buildrequests, True)
         except InvalidRequestException as e:
             return _redirect_parameters( builds, request.GET, e.response)
-
-        context['tablecols'].append(
-                    {'name': 'Project', 'clclass': 'projectx',
-                     'filter': {'class': 'project',
-                            'label': 'Project:',
-                            'options':  map(lambda x: (x.name,'project:%d' % x.id,x.build_set.filter(outcome__lt=BuildRequest.REQ_INPROGRESS).count()), Project.objects.all()),
-
-                           }
-                    }
-            )
 
         response = render(request, template, context)
         _save_parameters_cookies(response, pagesize, orderby, request)
@@ -1779,7 +1769,7 @@ if toastermain.settings.MANAGED:
 
 
     # helper function, to be used on "all builds" and "project builds" pages
-    def _build_list_helper(request, buildrequests):
+    def _build_list_helper(request, buildrequests, insert_projects):
         # ATTN: we use here the ordering parameters for interactive mode; the translation for BuildRequest fields will happen below
         default_orderby = 'completed_on:-'
         (pagesize, orderby) = _get_parameters_values(request, 10, default_orderby)
@@ -1893,6 +1883,16 @@ if toastermain.settings.MANAGED:
                      'ordericon':_get_toggle_order_icon(request, "build__machine"),
                      'dclass': 'span3'
                     },                           # a slightly wider column
+                    ]
+                }
+
+        if (insert_projects):
+            context['tablecols'].append(
+                    {'name': 'Project', 'clclass': 'project',
+                    }
+            )
+
+        context['tablecols'].append(
                     {'name': 'Started on', 'clclass': 'started_on', 'hidden' : 1,      # this is an unchecked box, which hides the column
                      'qhelp': "The date and time you started the build",
                      'orderfield': _get_toggle_order(request, "created", True),
@@ -1905,7 +1905,9 @@ if toastermain.settings.MANAGED:
                                              ("This week's builds", 'created__gte:'+(timezone.now()-timedelta(days=7)).strftime("%Y-%m-%d"), queryset_all.filter(created__gte=(timezone.now()-timedelta(days=7))).count()),
                                              ]
                                 }
-                    },
+                    }
+            )
+        context['tablecols'].append(
                     {'name': 'Completed on',
                      'qhelp': "The date and time the build finished",
                      'orderfield': _get_toggle_order(request, "updated", True),
@@ -1919,7 +1921,9 @@ if toastermain.settings.MANAGED:
                                              ("This week's builds", 'updated__gte:'+(timezone.now()-timedelta(days=7)).strftime("%Y-%m-%d"), queryset_all.filter(updated__gte=(timezone.now()-timedelta(days=7))).count()),
                                              ]
                                 }
-                    },
+                    }
+            )
+        context['tablecols'].append(
                     {'name': 'Failed tasks', 'clclass': 'failed_tasks',                # specifing a clclass will enable the checkbox
                      'qhelp': "How many tasks failed during the build",
                      'filter' : {'class' : 'failed_tasks',
@@ -1931,7 +1935,9 @@ if toastermain.settings.MANAGED:
                                                 queryset_all.filter(~Q(build__task_build__outcome=Task.OUTCOME_FAILED)).count()),
                                              ]
                                 }
-                    },
+                    }
+            )
+        context['tablecols'].append(
                     {'name': 'Errors', 'clclass': 'errors_no',
                      'qhelp': "How many errors were encountered during the build (if any)",
                      'orderfield': _get_toggle_order(request, "build__errors_no", True),
@@ -1946,7 +1952,9 @@ if toastermain.settings.MANAGED:
                                                 queryset_all.filter(build__errors_no=0).count()),
                                              ]
                                 }
-                    },
+                    }
+            )
+        context['tablecols'].append(
                     {'name': 'Warnings', 'clclass': 'warnings_no',
                      'qhelp': "How many warnings were encountered during the build (if any)",
                      'orderfield': _get_toggle_order(request, "build__warnings_no", True),
@@ -1959,19 +1967,23 @@ if toastermain.settings.MANAGED:
                                              ('Builds without warnings','build__warnings_no:0', queryset_all.filter(build__warnings_no=0).count()),
                                              ]
                                 }
-                    },
+                    }
+            )
+        context['tablecols'].append(
                     {'name': 'Time', 'clclass': 'time', 'hidden' : 1,
                      'qhelp': "How long it took the build to finish",
-#                     'orderfield': _get_toggle_order(request, "timespent", True),
-#                     'ordericon':_get_toggle_order_icon(request, "timespent"),
+#                    'orderfield': _get_toggle_order(request, "timespent", True),
+#                    'ordericon':_get_toggle_order_icon(request, "timespent"),
                      'orderkey' : 'timespent',
-                    },
+                    }
+            )
+        context['tablecols'].append(
                     {'name': 'Image files', 'clclass': 'output',
                      'qhelp': "The root file system types produced by the build. You can find them in your <code>/build/tmp/deploy/images/</code> directory",
                         # TODO: compute image fstypes from Target_Image_File
-                    },
-                    ]
-                }
+                    }
+            )
+
         return context, pagesize, orderby
 
     # new project
@@ -2898,7 +2910,7 @@ if toastermain.settings.MANAGED:
         buildrequests = BuildRequest.objects.filter(project_id = pid).exclude(state__lte = BuildRequest.REQ_INPROGRESS).exclude(state=BuildRequest.REQ_DELETED)
 
         try:
-            context, pagesize, orderby = _build_list_helper(request, buildrequests)
+            context, pagesize, orderby = _build_list_helper(request, buildrequests, False)
         except InvalidRequestException as e:
             return _redirect_parameters(projectbuilds, request.GET, e.response, pid = pid)
 
@@ -3019,7 +3031,7 @@ if toastermain.settings.MANAGED:
     def projects(request):
         template="projects.html"
 
-        (pagesize, orderby) = _get_parameters_values(request, 10, 'updated:+')
+        (pagesize, orderby) = _get_parameters_values(request, 10, 'updated:-')
         mandatory_parameters = { 'count': pagesize,  'page' : 1, 'orderby' : orderby }
         retval = _verify_parameters( request.GET, mandatory_parameters )
         if retval:
@@ -3039,7 +3051,27 @@ if toastermain.settings.MANAGED:
         # build view-specific information; this is rendered specifically in the builds page, at the top of the page (i.e. Recent builds)
         build_mru = Build.objects.order_by("-started_on")[:3]
 
-
+        # translate the project's build target strings
+        fstypes_map = {};
+        for project in project_info:
+            try:
+                targets = Target.objects.filter( build_id = project.get_last_build_id() )
+                comma = "";
+                extensions = "";
+                for t in targets:
+                    if ( not t.is_image ):
+                        continue
+                    tif = Target_Image_File.objects.filter( target_id = t.id )
+                    for i in tif:
+                        s=re.sub('.*tar.bz2', 'tar.bz2', i.file_name)
+                        if s == i.file_name:
+                            s=re.sub('.*\.', '', i.file_name)
+                        if None == re.search(s,extensions):
+                            extensions += comma + s
+                            comma = ", "
+                fstypes_map[project.id]=extensions
+            except (Target.DoesNotExist,IndexError):
+                fstypes_map[project.id]=project.get_last_imgfiles
 
         context = {
                 'mru' : build_mru,
@@ -3049,6 +3081,9 @@ if toastermain.settings.MANAGED:
                 'default_orderby' : 'id:-',
                 'search_term' : search_term,
                 'total_count' : queryset_with_search.count(),
+                'fstypes' : fstypes_map,
+                'build_FAILED' : Build.FAILED,
+                'build_SUCCEEDED' : Build.SUCCEEDED,
                 'tablecols': [
                     {'name': 'Project',
                     'orderfield': _get_toggle_order(request, "name"),
@@ -3067,6 +3102,11 @@ if toastermain.settings.MANAGED:
                     {'name': 'Number of builds',
                     'qhelp': "How many builds have been run for the project",
                     },
+                    {'name': 'Last build', 'clclass': 'updated',
+                    'orderfield': _get_toggle_order(request, "updated", True),
+                    'ordericon':_get_toggle_order_icon(request, "updated"),
+                    'orderkey' : 'updated',
+                    },
                     {'name': 'Last outcome', 'clclass': 'loutcome',
                     'qhelp': "Tells you if the last project build completed successfully or failed",
                     },
@@ -3082,11 +3122,6 @@ if toastermain.settings.MANAGED:
                     {'name': 'Last image files', 'clclass': 'limagefiles', 'hidden': 1,
                     'qhelp': "The root file system types produced by the last project build",
                     },
-                    {'name': 'Last updated', 'clclass': 'updated',
-                    'orderfield': _get_toggle_order(request, "updated"),
-                    'ordericon':_get_toggle_order_icon(request, "updated"),
-                    'orderkey' : 'updated',
-                    }
                     ]
             }
         return render(request, template, context)

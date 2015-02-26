@@ -56,6 +56,13 @@
             </td>
             <td class="target">{% for t in build.target_set.all %} <a href="{% url "builddashboard" build.id %}"> {{t.target}} </a> <br />{% endfor %}</td>
             <td class="machine"><a href="{% url "builddashboard" build.id %}">{{build.machine}}</a></td>
+   {% if MANAGED %}
+            <td class="project">
+            {% if build.project %}
+                <a href="{% url 'project' build.project.id %}">{{build.project.name}}</a>
+            {% endif %}
+            </td>
+   {% endif %}
             <td class="started_on"><a href="{% url "builddashboard" build.id %}">{{build.started_on|date:"d/m/y H:i"}}</a></td>
             <td class="completed_on"><a href="{% url "builddashboard" build.id %}">{{build.completed_on|date:"d/m/y H:i"}}</a></td>
             <td class="failed_tasks error">
@@ -91,13 +98,6 @@
               <a href="{%url "builddashboard" build.id%}#images">{{fstypes|get_dict_value:build.id}}</a>
               {% endif %}
             </td>
-   {% if MANAGED %}
-            <td class="project">
-            {% if build.project %}
-                <a href="{% url 'project' build.project.id %}">{{build.project.name}}</a>
-            {% endif %}
-            </td>
-   {% endif %}
         </tr>
 
 
@@ -114,6 +114,11 @@
             <td class="machine">
                 <a href="{% url "buildrequestdetails" buildrequest.project.id buildrequest.id %}">{{buildrequest.machine}}</a>
             </td>
+   {% if MANAGED %}
+            <td class="project">
+                <a href="{% url 'project' buildrequest.project.id %}">{{buildrequest.project.name}}</a>
+            </td>
+   {% endif %}
             <td class="started_on">
                 <a href="{% url "buildrequestdetails" buildrequest.project.id buildrequest.id %}">{{buildrequest.created|date:"d/m/y H:i"}}</a>
             </td>
@@ -131,9 +136,6 @@
                 {{br.timespent.total_seconds|sectohms}}
             </td>
             <td class="output"> {# we have no output here #}
-            </td>
-            <td class="project">
-                <a href="{% url 'project' buildrequest.project.id %}">{{buildrequest.project.name}}</a>
             </td>
         </tr>
           {%endif%}
