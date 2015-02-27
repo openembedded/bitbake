@@ -289,7 +289,7 @@ vim: expandtab tabstop=2
         <a href="{% url 'importlayer' %}">Import layer</a></p>
       <ul class="unstyled configuration-list">
           <li ng-repeat="l in layers track by l.id" class="animate-repeat">
-            <a href="{[l.layerdetailurl]}" target="_#" class="layer-info" data-toggle="tooltip" tooltip="{[l.giturl]} | {[l.branch.name]}">{[l.name]}</a>
+            <a href="{[l.layerdetailurl]}" class="layer-info" data-toggle="tooltip" tooltip="{[l.giturl]} | {[l.branch.name]}">{[l.name]}</a>
             <i class="icon-trash" ng-click="layerDel(l.id)" tooltip="Delete"></i>
                       </li>
       </ul>
