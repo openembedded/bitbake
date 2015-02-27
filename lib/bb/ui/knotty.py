@@ -271,7 +271,7 @@ def main(server, eventHandler, params, tf = TerminalFilter):
         server.terminateServer()
         return
 
-    if consolelogfile and not params.options.show_environment:
+    if consolelogfile and not params.options.show_environment and not params.options.show_versions:
         bb.utils.mkdirhier(os.path.dirname(consolelogfile))
         conlogformat = bb.msg.BBLogFormatter(format_str)
         consolelog = logging.FileHandler(consolelogfile)
