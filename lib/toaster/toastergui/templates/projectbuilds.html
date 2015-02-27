@@ -7,21 +7,19 @@
 {% endblock %}
 
 {% block projectinfomain %}
-                <div class="page-header">
-                    <h1>
- {% if objects.paginator.count == 0 and request.GET.filter or request.GET.search %}
-        No builds found
 
- {% else %}
-    {% if  request.GET.filter or request.GET.search  %}
-            {{objects.paginator.count}} builds found
-    {% else %}
-                        Project builds <small>({{objects.paginator.count}})</small>
-    {% endif %}
- {% endif %}
-                        <i class="icon-question-sign get-help heading-help" title="This page lists all the builds for the current project"></i>
-                    </h1>
-                </div>
+    <div class="page-header">
+      <h1>
+        {% if request.GET.filter and objects.paginator.count > 0 or request.GET.search and objects.paginator.count > 0 %}
+            {{objects.paginator.count}} build{{objects.paginator.count|pluralize}} found
+        {%elif request.GET.filter and objects.paginator.count == 0 or request.GET.search and objects.paginator.count == 0 %}
+            No builds found
+        {%else%}
+            All builds
+        {%endif%}
+        <i class="icon-question-sign get-help heading-help" title="This page lists all the builds for the current project"></i>
+      </h1>
+    </div>
 
 
  {% if objects.paginator.count == 0 %}
