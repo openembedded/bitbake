@@ -202,7 +202,11 @@ vim: expandtab tabstop=2
 
 
           <case ng-switch-when="completed">
-            <div class="lead span3"><a class="success" href="{[b.build[0].build_page_url]}"><span ng-repeat="t in b.targets" ng-include src="'target_display'"></span></a></div>
+            <div class="lead span3">
+              <a ng-class="{'Succeeded': 'success', 'Failed': 'error'}[b.build[0].status]" href="{[b.build[0].build_page_url]}">
+                <span ng-repeat="t in b.targets" ng-include src="'target_display'"></span>
+              </a>
+            </div>
             <div class="span2 lead">
               <ngif ng-if="b.build[0].completed_on - todaydate > 0">
                  {[b.build[0].completed_on|date:'HH:mm']}
