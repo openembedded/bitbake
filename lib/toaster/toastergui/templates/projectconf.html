@@ -14,6 +14,7 @@
     <div style="padding-left:19px;">
 
         <dl class="dl-vertical">
+            {% if distro_defined %}
             <dt>
                 <span class="js-config-var-name js-config-var-managed-name">DISTRO</span>
                 <i class="icon-question-sign get-help" title="The short name of the distribution. If the variable is blank, meta/conf/distro/defaultsetup.conf will be used. <br /><a href='http://www.yoctoproject.org/docs/1.6.1/ref-manual/ref-manual.html#var-DISTRO' target='_blank'>Read more in the manual</a>"></i>
@@ -32,6 +33,9 @@
                     </div>
                 </form>
             </dd>
+            {% endif %}
+
+            {% if fstypes_defined %}
             <dt>
                 <span class="js-config-var-name js-config-var-managed-name">IMAGE_FSTYPES</span>
                 <i class="icon-question-sign get-help" title="Formats of root file system images that you want to have created <br /><a href='http://www.yoctoproject.org/docs/1.6.1/ref-manual/ref-manual.html#var-IMAGE_FSTYPES' target='_blank'>Read more in the manual</a>"></i>
@@ -47,6 +51,9 @@
                     <button id="cancel-change-image_fstypes" type="button" class="btn btn-link">Cancel</button>
                 </form>
             </dd>
+            {% endif %}
+
+            {% if image_install_append_defined %}
             <dt>
                 <span class="js-config-var-name js-config-var-managed-name">IMAGE_INSTALL_append</span>
                 <i class="icon-question-sign get-help" title="Specifies additional packages to install into an image. If your build creates more than one image, the packages will be installed in <strong>all of them</strong> <br /><a href='http://www.yoctoproject.org/docs/1.6.1/ref-manual/ref-manual.html#var-IMAGE_INSTALL' target='_blank'>Read more in the manual</a>"></i>
@@ -66,6 +73,9 @@
                     </div>
                 </form>
             </dd>
+            {% endif %}
+
+            {% if package_classes_defined %}
             <dt>
                 <span class="js-config-var-name js-config-var-managed-name">PACKAGE_CLASSES</span>
                 <i class="icon-question-sign get-help" title="Specifies the package manager to use when packaging data <br /><a href='http://www.yoctoproject.org/docs/1.6.1/ref-manual/ref-manual.html#var-PACKAGE_CLASSES' target='_blank'>Read more in the manual</a>"></i>
@@ -99,6 +109,9 @@
                     </div>
                 </form>
             </dd>
+            {% endif %}
+
+            {% if sdk_machine_defined %}
             <dt>
                 <span class="js-config-var-name js-config-var-managed-name">SDKMACHINE</span>
                 <i class="icon-question-sign get-help" title="Specifies the architecture (i.e. i686 or x86_64) for which to build SDK and ADT items <br /><a href='http://www.yoctoproject.org/docs/1.6.1/ref-manual/ref-manual.html#var-SDKMACHINE' target='_blank'>Read more in the manual</a>"></i>
@@ -121,6 +134,7 @@
                     </div>
                 </form>
             </dd>
+            {% endif %}
 
         </dl>
 
@@ -137,7 +151,7 @@
             <input type="hidden" class="js-config-blacklist-name" value="{{b}}">
         {% endfor %}
         {% for b in vars_managed %}
-            <input type="hidden" class="js-config-var-managed-name" value="{{b}}">
+            <input type="hidden" class="js-config-managed-name" value="{{b}}">
         {% endfor %}
 
         <div class="row-fluid">
@@ -187,6 +201,9 @@
 
     <script>
 
+        // global variables
+        var do_reload=false;
+
         // validate new variable name
         function validate_new_variable() {
             var variable = $("input#variable").val();
@@ -210,6 +227,13 @@
                 }
             }
 
+            var managed_configvars = document.getElementsByClassName('js-config-managed-name');
+            for (var i = 0, length = managed_configvars.length; i < length; i++) {
+                if (managed_configvars[i].value.toUpperCase() == variable.toUpperCase()) {
+                    error_msg = "You cannot set this variable here. Please set it in the <a href=\"{% url 'project' project.id %}\">project main page</a>";
+                }
+            }
+
             var bad_chars  = /[^a-zA-Z0-9\-_]/.test(variable);
             var has_spaces = (0 <= variable.indexOf(" "));
             var only_spaces = (0 < variable.length) && (0 == variable.trim().length);
@@ -223,16 +247,22 @@
             }
 
             if ("" != error_msg) {
-                $('#new-variable-error-message').text(error_msg);
+                $('#new-variable-error-message').html(error_msg);
                 $(".save").attr("disabled","disabled");
 
+                // add one (and only one) error class append
                 var d = document.getElementById("add-configvar-name-div");
-                d.className = d.className + " control-group error";
+                d.className = d.className.replace(" error","");
+                d.className = d.className + " error";
 
                 return false;
+            } else if (0 == variable.length) {
+                $(".save").attr("disabled","disabled");
+                return false;
             }
+
             var d = document.getElementById("add-configvar-name-div");
-            d.className = d.className.replace(" control-group error","");
+            d.className = d.className.replace(" error","");
 
             // now set the "Save" enablement if 'value' also passes
             if (value.trim().length > 0) {
@@ -264,14 +294,16 @@
                 $('#distro-error-message').text(error_msg);
                 $("#apply-change-distro").attr("disabled","disabled");
 
+                // add one (and only one) error class append
                 var d = document.getElementById("edit-distro-name-div");
-                d.className = d.className + " control-group error";
+                d.className = d.className.replace(" error","");
+                d.className = d.className + " error";
 
                 return false;
             }
 
             var d = document.getElementById("edit-distro-name-div");
-            d.className = d.className.replace(" control-group error","");
+            d.className = d.className.replace(" error","");
             $("#apply-change-distro").removeAttr("disabled");
             return true;
         }
@@ -421,7 +453,14 @@
                 alert("error on request:\n" + data.error);
                 return;
             }
-            onEditPageUpdate(data);
+
+            // delayed page reload?
+            if (do_reload) {
+                do_reload=false;
+                location.reload(true);
+            } else {
+                onEditPageUpdate(data);
+            }
         }
 
         function onEditAjaxError(jqXHR, textstatus, error) {
@@ -454,6 +493,7 @@
             // Register handlers for static elements
             //
 
+            {% if distro_defined %}
             // change distro variable
             $('#change-distro-icon').click(function() {
                 $('#change-distro-icon, #distro').hide();
@@ -468,7 +508,7 @@
                     // reset any dangling error state
                     $('#distro-error-message').text("");
                     var d = document.getElementById("edit-distro-name-div");
-                    d.className = d.className.replace(" control-group error","");
+                    d.className = d.className.replace(" error","");
                 });
             });
 
@@ -486,11 +526,12 @@
                     $('#distro, #change-distro-icon').show();
                 });
             });
+            {% endif %}
 
-            // init IMAGE_FSTYPES trash icon
-            setDeleteTooltip($('#delete-image_install-icon'));
 
+            {% if fstypes_defined %}
             // change IMAGE_FSTYPES variable
+
             $('#change-image_fstypes-icon').click(function() {
                 $('#change-image_fstypes-icon, #image_fstypes').hide();
                 $("#change-image_fstypes-form").slideDown();
@@ -524,7 +565,6 @@
                 // clear the previous filter values
                 $("input#filter-image_fstypes").val("");
             });
-
 
             $('#cancel-change-image_fstypes').click(function(){
                 $("#change-image_fstypes-form").slideUp(function() {
@@ -570,7 +610,13 @@
                     $('#image_fstypes, #change-image_fstypes-icon').show();
                 });
             });
+            {% endif %}
 
+
+            {% if image_install_append_defined %}
+
+            // init IMAGE_INSTALL_append trash icon
+            setDeleteTooltip($('#delete-image_install-icon'));
 
             // change IMAGE_INSTALL_append variable
             $('#change-image_install-icon').click(function() {
@@ -630,8 +676,10 @@
                     $('#image_install').parent().fadeIn(1000);
                 });
             });
+            {% endif %}
 
 
+            {% if package_classes_defined %}
             // change PACKAGE_CLASSES variable
             $('#change-package_classes-icon').click(function() {
                 $('#change-package_classes-icon, #package_classes').hide();
@@ -695,8 +743,10 @@
                     $('#package_classes, #change-package_classes-icon').show();
                 });
             });
+            {% endif %}
 
 
+            {% if sdk_machine_defined %}
             // change SDKMACHINE variable
             $('#change-sdkmachine-icon').click(function() {
                 var current_value = document.getElementById("sdkmachine").innerHTML;
@@ -734,6 +784,7 @@
                 });
 
             });
+            {% endif %}
 
 
             // add new variable
@@ -746,6 +797,14 @@
                 // clear the previous values
                 $("input#variable").val("");
                 $("input#value").val("");
+                // Disable add button
+                $(".save").attr("disabled","disabled");
+
+                // Reload page if admin-removed core managed value is manually added back in
+                if (0 <= " DISTRO IMAGE_FSTYPES IMAGE_INSTALL_append PACKAGE_CLASSES SDKMACHINE ".indexOf( " "+variable+" " )) {
+                    // delayed reload to avoid race condition with postEditAjaxRequest
+                    do_reload=true;
+                }
             });
 
             // validate new variable name and value

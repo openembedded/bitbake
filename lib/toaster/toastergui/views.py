@@ -2418,11 +2418,17 @@ if toastermain.settings.MANAGED:
                 t=request.POST['configvarDel'].strip()
                 pt = ProjectVariable.objects.get(pk = int(t)).delete()
 
-            # return all project settings
+            # return all project settings, filter out blacklist and elsewhere-managed variables
             vars_managed,vars_fstypes,vars_blacklist = get_project_configvars_context()
+            configvars_query = ProjectVariable.objects.filter(project_id = pid).all()
+            for var in vars_managed:
+                configvars_query = configvars_query.exclude(name = var)
+            for var in vars_blacklist:
+                configvars_query = configvars_query.exclude(name = var)
+
             return_data = {
                 "error": "ok",
-                'configvars'   : map(lambda x: (x.name, x.value, x.pk), ProjectVariable.objects.filter(project_id = pid).all()),
+                'configvars'   : map(lambda x: (x.name, x.value, x.pk), configvars_query),
                }
             try:
                 return_data['distro'] = ProjectVariable.objects.get(project = prj, name = "DISTRO").value,
@@ -2899,7 +2905,7 @@ if toastermain.settings.MANAGED:
     def get_project_configvars_context():
         # Vars managed outside of this view
         vars_managed = {
-            'MACHINE'
+            'MACHINE', 'BBLAYERS'
         }
 
         vars_blacklist  = {
@@ -2926,9 +2932,16 @@ if toastermain.settings.MANAGED:
         except Project.DoesNotExist:
             return HttpResponseNotFound("<h1>Project id " + pid + " is unavailable</h1>")
 
+        # remove blacklist and externally managed varaibles from this list
         vars_managed,vars_fstypes,vars_blacklist = get_project_configvars_context()
+        configvars = ProjectVariable.objects.filter(project_id = pid).all()
+        for var in vars_managed:
+            configvars = configvars.exclude(name = var)
+        for var in vars_blacklist:
+            configvars = configvars.exclude(name = var)
+
         context = {
-            'configvars':       ProjectVariable.objects.filter(project_id = pid).all(),
+            'configvars':       configvars,
             'vars_managed':     vars_managed,
             'vars_fstypes':     vars_fstypes,
             'vars_blacklist':   vars_blacklist,
@@ -2936,22 +2949,27 @@ if toastermain.settings.MANAGED:
 
         try:
             context['distro'] =  ProjectVariable.objects.get(project = prj, name = "DISTRO").value
+            context['distro_defined'] = "1"
         except ProjectVariable.DoesNotExist:
             pass
         try:
             context['fstypes'] =  ProjectVariable.objects.get(project = prj, name = "IMAGE_FSTYPES").value
+            context['fstypes_defined'] = "1"
         except ProjectVariable.DoesNotExist:
             pass
         try:
             context['image_install_append'] =  ProjectVariable.objects.get(project = prj, name = "IMAGE_INSTALL_append").value
+            context['image_install_append_defined'] = "1"
         except ProjectVariable.DoesNotExist:
             pass
         try:
             context['package_classes'] =  ProjectVariable.objects.get(project = prj, name = "PACKAGE_CLASSES").value
+            context['package_classes_defined'] = "1"
         except ProjectVariable.DoesNotExist:
             pass
         try:
             context['sdk_machine'] =  ProjectVariable.objects.get(project = prj, name = "SDKMACHINE").value
+            context['sdk_machine_defined'] = "1"
         except ProjectVariable.DoesNotExist:
             pass
 
