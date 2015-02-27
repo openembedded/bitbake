@@ -214,6 +214,7 @@ dl textarea { resize: vertical; }
 .new-build .input-append { margin-bottom: 0; }
 #build-selected { margin-top: 15px; }
 div.add-deps { margin-top: 15px; }
+.btn.log { margin-left: 20px; }
 
 
 .animate-repeat {
