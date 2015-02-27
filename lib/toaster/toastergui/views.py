@@ -3400,7 +3400,7 @@ else:
     def xhr_projectbuild(request, pid):
         return render(request, 'landing_not_managed.html')
 
-    def xhr_build(request, pid):
+    def xhr_build(request):
         return render(request, 'landing_not_managed.html')
 
     def xhr_projectinfo(request):
@@ -3412,7 +3412,7 @@ else:
     def xhr_datatypeahead(request):
         return render(request, 'landing_not_managed.html')
 
-    def xhr_configvaredit(request):
+    def xhr_configvaredit(request, pid):
         return render(request, 'landing_not_managed.html')
 
     def importlayer(request):
@@ -3421,22 +3421,19 @@ else:
     def layers(request):
         return render(request, 'landing_not_managed.html')
 
-    def layerdetails(request):
+    def layerdetails(request, layerid):
         return render(request, 'landing_not_managed.html')
 
     def targets(request):
         return render(request, 'landing_not_managed.html')
 
-    def targetdetails(request):
-        return render(request, 'landing_not_managed.html')
-
     def machines(request):
         return render(request, 'landing_not_managed.html')
 
-    def projectconf(request):
+    def projectconf(request, pid):
         return render(request, 'landing_not_managed.html')
 
-    def projectbuilds(request):
+    def projectbuilds(request, pid):
         return render(request, 'landing_not_managed.html')
 
     def build_artifact(request, build_id, artifact_type, artifact_id):
