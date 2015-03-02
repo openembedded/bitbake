@@ -2279,9 +2279,14 @@ if toastermain.settings.MANAGED:
 
 
             def _lv_to_dict(x):
-                return {"id": x.pk, "name": x.layer.name, "tooltip": x.layer.vcs_url+" | "+x.commit,
-                        "detail": "(" + x.layer.vcs_url + (")" if x.up_branch == None else " | "+x.up_branch.name+")"),
-                        "giturl": x.layer.vcs_url, "layerdetailurl" : reverse('layerdetails', args=(x.pk,))}
+                return {"id": x.pk,
+                        "name": x.layer.name,
+                        "tooltip": x.layer.vcs_url+" | "+x.get_vcs_reference(),
+                        "detail": "(" + x.layer.vcs_url + (")" if x.up_branch == None else " | "+x.get_vcs_reference()+")"),
+                        "giturl": x.layer.vcs_url,
+                        "layerdetailurl" : reverse('layerdetails', args=(x.pk,)),
+                        "revision" : x.get_vcs_reference(),
+                       }
 
 
             # returns layers for current project release that are not in the project set, matching the name
