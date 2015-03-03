@@ -792,6 +792,13 @@ def rename_bad_checksum(ud, suffix):
     bb.warn("Renaming %s to %s" % (ud.localpath, new_localpath))
     bb.utils.movefile(ud.localpath, new_localpath)
 
+def safe_symlink(source, link_name):
+    if not os.path.exists(link_name):
+        if os.path.islink(link_name):
+            os.unlink(link_name)
+
+        os.symlink(source, link_name)
+    return
 
 def try_mirror_url(origud, ud, ld, check = False):
     # Return of None or a value means we're finished
@@ -823,21 +830,18 @@ def try_mirror_url(origud, ud, ld, check = False):
                 and os.path.basename(ud.localpath) != os.path.basename(origud.localpath):
             bb.utils.mkdirhier(os.path.dirname(ud.donestamp))
             open(ud.donestamp, 'w').close()
-            dest = os.path.join(dldir, os.path.basename(ud.localpath))
-            if not os.path.exists(dest):
-                os.symlink(ud.localpath, dest)
+            dest = os.path.join(dldir, os.path.basename(ud.localpath)) 
+            safe_symlink(ud.localpath, dest)
+
             if not os.path.exists(origud.donestamp) or origud.method.need_update(origud, ld):
                 origud.method.download(origud, ld)
                 if hasattr(origud.method,"build_mirror_data"):
                     origud.method.build_mirror_data(origud, ld)
             return ud.localpath
-        # Otherwise the result is a local file:// and we symlink to it
-        if not os.path.exists(origud.localpath):
-            if os.path.islink(origud.localpath):
-                # Broken symbolic link
-                os.unlink(origud.localpath)
 
-            os.symlink(ud.localpath, origud.localpath)
+        # Otherwise the result is a local file:// and we symlink to it
+        safe_symlink(ud.localpath, origud.localpath)
+
         update_stamp(origud, ld)
         return ud.localpath
 
