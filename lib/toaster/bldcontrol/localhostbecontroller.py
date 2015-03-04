@@ -180,7 +180,7 @@ class LocalhostBEController(BuildEnvironmentController):
         base = components[-2] if components[-1] == "git" else components[-1]
 
         if branch != "HEAD":
-            return "_%s_%s.toaster_cloned" % (base, branch)
+            return os.path.join(self.be.sourcedir, "_%s_%s.toaster_cloned" % (base, branch))
 
 
         # word of attention; this is a localhost-specific issue; only on the localhost we expect to have "HEAD" releases
@@ -239,7 +239,7 @@ class LocalhostBEController(BuildEnvironmentController):
 
         # 3. checkout the repositories
         for giturl, commit in gitrepos.keys():
-            localdirname = os.path.join(self.be.sourcedir, self.getGitCloneDirectory(giturl, commit))
+            localdirname = self.getGitCloneDirectory(giturl, commit)
             logger.debug("localhostbecontroller: giturl %s:%s checking out in current directory %s" % (giturl, commit, localdirname))
 
             # make sure our directory is a git repository

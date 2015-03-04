@@ -270,15 +270,28 @@ class ORMWrapper(object):
         else:
             # we are under managed mode; we must match the layer used in the Project Layer
             from bldcontrol.models import BuildEnvironment, BuildRequest
-            br, be = brbe.split(":")
+            br_id, be_id = brbe.split(":")
 
-            buildrequest = BuildRequest.objects.get(pk = br)
+            # find layer by checkout path;
+            from bldcontrol import bbcontroller
+            bc = bbcontroller.getBuildEnvironmentController(pk = be_id)
 
             # we might have a race condition here, as the project layers may change between the build trigger and the actual build execution
             # but we can only match on the layer name, so the worst thing can happen is a mis-identification of the layer, not a total failure
-            layer_object = buildrequest.project.projectlayer_set.get(layercommit__layer__name=layer_information['name']).layercommit.layer
 
-            return layer_object
+            from pprint import pformat
+            # note that this is different
+            buildrequest = BuildRequest.objects.get(pk = br_id)
+            for brl in buildrequest.brlayer_set.all():
+                localdirname = os.path.join(bc.getGitCloneDirectory(brl.giturl, brl.commit), brl.dirpath)
+                logger.warn("Matched %s to BRlayer %s" % (pformat(layer_information["local_path"]), localdirname))
+                if localdirname.startswith(layer_information['local_path']):
+                    # we matched the BRLayer, but we need the layer_version that generated this BR; reverse of the Project.schedule_build()
+                    for pl in buildrequest.project.projectlayer_set.filter(layercommit__layer__name = brl.name):
+                        if pl.layercommit.layer.vcs_url == brl.giturl :
+                            return pl.layercommit.layer
+
+            raise Exception("Unidentified layer %s" % pformat(layer_information))
 
 
     def save_target_file_information(self, build_obj, target_obj, filedata):
@@ -683,7 +696,7 @@ class BuildInfoHelper(object):
 
             # Heuristics: we match the path to where the layers have been checked out
             for brl in sorted(BuildRequest.objects.get(pk = br_id).brlayer_set.all(), reverse = True, key = _slkey_managed):
-                localdirname = os.path.join(os.path.join(bc.be.sourcedir, bc.getGitCloneDirectory(brl.giturl, brl.commit)), brl.dirpath)
+                localdirname = os.path.join(bc.getGitCloneDirectory(brl.giturl, brl.commit), brl.dirpath)
                 if path.startswith(localdirname):
                     #logger.warn("-- managed: matched path %s with layer %s " % (path, localdirname))
                     # we matched the BRLayer, but we need the layer_version that generated this br

@@ -195,14 +195,8 @@ class Project(models.Model):
                 dirpath = self.bitbake_version.dirpath)
 
             for l in self.projectlayer_set.all().order_by("pk"):
-                commit = l.layercommit.commit
-                print("ii Building layer ", l.layercommit.layer.name, " at commit ", commit)
-                if l.layercommit.up_branch:
-                    commit = l.layercommit.up_branch.name
-                    print("ii Building layer ", l.layercommit.layer.name, " at upbranch ", commit)
-                if l.layercommit.branch:
-                    commit = l.layercommit.branch
-                    print("ii Building layer ", l.layercommit.layer.name, " at actual_branch ", commit)
+                commit = l.layercommit.get_vcs_reference()
+                print("ii Building layer ", l.layercommit.layer.name, " at vcs point ", commit)
                 BRLayer.objects.create(req = br, name = l.layercommit.layer.name, giturl = l.layercommit.layer.vcs_url, commit = commit, dirpath = l.layercommit.dirpath)
             for t in self.projecttarget_set.all():
                 BRTarget.objects.create(req = br, target = t.target, task = t.task)
