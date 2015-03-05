@@ -13,7 +13,10 @@ import json, os, re, urllib, shlex
 
 
 class Tests(TestCase):
-    fixtures = ['orm_views_testdata.json']
+    # fixtures = ['orm_views_testdata.json']
+
+    def setUp(self):
+        raise Exception("The %s test data is not longer valid, tests disabled" % __name__)
 
     def test_builds(self):
         client = Client()
