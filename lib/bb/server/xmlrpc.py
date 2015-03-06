@@ -235,6 +235,7 @@ class XMLRPCServer(SimpleXMLRPCServer, BaseImplServer):
             fds = [self]
             nextsleep = 0.1
             for function, data in self._idlefuns.items():
+                retval = None
                 try:
                     retval = function(self, data, False)
                     if retval is False:
@@ -248,6 +249,9 @@ class XMLRPCServer(SimpleXMLRPCServer, BaseImplServer):
                 except:
                     import traceback
                     traceback.print_exc()
+                    if retval == None:
+                        # the function execute failed; delete it
+                        del self._idlefuns[function]
                     pass
 
             socktimeout = self.socket.gettimeout() or nextsleep
