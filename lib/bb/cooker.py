@@ -229,7 +229,7 @@ class BBCooker:
 
     def setFeatures(self, features):
         # we only accept a new feature set if we're in state initial, so we can reset without problems
-        if self.state != state.initial and self.state != state.error:
+        if not self.state in [state.initial, state.shutdown, state.forceshutdown, state.stopped, state.error]:
             raise Exception("Illegal state for feature set change")
         original_featureset = list(self.featureset)
         for feature in features:
@@ -1303,8 +1303,8 @@ class BBCooker:
                 return False
 
             if not retval:
-                bb.event.fire(bb.event.BuildCompleted(len(rq.rqdata.runq_fnid), buildname, item, failures), self.expanded_data)
                 self.command.finishAsyncCommand(msg)
+                bb.event.fire(bb.event.BuildCompleted(len(rq.rqdata.runq_fnid), buildname, item, failures), self.expanded_data)
                 return False
             if retval is True:
                 return True
@@ -1336,8 +1336,8 @@ class BBCooker:
                 return False
 
             if not retval:
-                bb.event.fire(bb.event.BuildCompleted(len(rq.rqdata.runq_fnid), buildname, targets, failures), self.data)
                 self.command.finishAsyncCommand(msg)
+                bb.event.fire(bb.event.BuildCompleted(len(rq.rqdata.runq_fnid), buildname, targets, failures), self.data)
                 return False
             if retval is True:
                 return True
