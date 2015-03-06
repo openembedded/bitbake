@@ -299,6 +299,8 @@ class BitBakeXMLRPCServerConnection(BitBakeBaseServerConnection):
 
         _, error = self.connection.runCommand(["setFeatures", self.featureset])
         if error:
+            # disconnect the client, we can't make the setFeature work
+            self.connection.removeClient()
             # no need to log it here, the error shall be sent to the client
             raise BaseException(error)
 
