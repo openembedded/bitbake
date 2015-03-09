@@ -2752,21 +2752,21 @@ if toastermain.settings.MANAGED:
 
         queryset_with_search = _get_queryset(Recipe, queryset_all, None, search_term, ordering_string, '-name')
 
-        # get unique values for 'name' and 'version', and select the maximum ID for each entry (the max id is the newest one)
+        # get unique values for 'name', and select the maximum ID for each entry (the max id is the newest one)
         queryset_with_search_maxids = queryset_with_search.values('name').distinct().annotate(max_id=Max('id')).values_list('max_id')
 
-        queryset_with_search = queryset_with_search.filter(id__in=queryset_with_search_maxids).select_related('layer_version', 'layer_version__layer')
+        queryset_with_search = queryset_with_search.filter(id__in=queryset_with_search_maxids).select_related('layer_version', 'layer_version__layer', 'layer_version__up_branch')
 
-        objects = list(queryset_with_search)
-        for e in objects:
-            e.preffered_layerversion = e.layer_version.get_equivalents_wpriority(prj)[0]
 
         # retrieve the objects that will be displayed in the table; targets a paginator and gets a page range to display
-        target_info = _build_page_range(Paginator(objects, request.GET.get('count', 10)),request.GET.get('page', 1))
+        target_info = _build_page_range(Paginator(queryset_with_search, request.GET.get('count', 10)),request.GET.get('page', 1))
+
+        for e in target_info.object_list:
+            e.preffered_layerversion = e.layer_version.get_equivalents_wpriority(prj)[0]
 
 
         context = {
-            'projectlayerset' : jsonfilter(map(lambda x: x.layercommit.id, prj.projectlayer_set.all())),
+            'projectlayerset' : jsonfilter(map(lambda x: x.layercommit.id, prj.projectlayer_set.all().select_related("layercommit"))),
             'objects' : target_info,
             'objectname' : "targets",
             'default_orderby' : 'name:+',
