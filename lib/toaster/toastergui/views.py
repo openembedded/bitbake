@@ -2353,7 +2353,8 @@ if toastermain.settings.MANAGED:
 
             # returns targets provided by current project layers
             if request.GET['type'] == "targets":
-                queryset_all = Recipe.objects.filter(name__icontains=request.GET.get('value',''))
+                search_token = request.GET.get('value','')
+                queryset_all = Recipe.objects.filter(Q(name__icontains=search_token) | Q(layer_version__layer__name__icontains=search_token) )
                 layer_equivalent_set = []
                 for i in prj.projectlayer_set.all():
                     layer_equivalent_set += i.layercommit.get_equivalents_wpriority(prj)
@@ -2361,11 +2362,11 @@ if toastermain.settings.MANAGED:
 
                 # if we have more than one hit here (for distinct name and version), max the id it out
                 queryset_all_maxids = queryset_all.values('name').distinct().annotate(max_id=Max('id')).values_list('max_id')
-                queryset_all = queryset_all.filter(id__in = queryset_all_maxids).order_by("name")
+                queryset_all = queryset_all.filter(id__in = queryset_all_maxids).order_by("name").select_related("layer_version__layer")
 
 
                 return HttpResponse(jsonfilter({ "error":"ok",
-                    "list" : map ( lambda x: {"id": x.pk, "name": x.name, "detail":"[" + x.layer_version.layer.name + (" | " + x.layer_version.up_branch.name + "]" if x.layer_version.up_branch is not None else "]")},
+                    "list" : map ( lambda x: {"id": x.pk, "name": x.name, "detail":"[" + x.layer_version.layer.name +"]"},
                         queryset_all[:8]),
 
                     }), content_type = "application/json")
@@ -2376,10 +2377,11 @@ if toastermain.settings.MANAGED:
                 if 'project_id' in request.session:
                     queryset_all = queryset_all.filter(layer_version__in =  prj.projectlayer_equivalent_set()).order_by("name")
 
-                return HttpResponse(jsonfilter({ "error":"ok",
-                    "list" : map ( lambda x: {"id": x.pk, "name": x.name, "detail":"[" + x.layer_version.layer.name+ (" | " + x.layer_version.up_branch.name + "]" if x.layer_version.up_branch is not None else "]")},
-                        queryset_all.filter(name__icontains=request.GET.get('value',''))[:8]),
+                search_token = request.GET.get('value','')
+                querysetall = queryset_all.filter(Q(name__icontains=search_token) | Q(description__icontains=search_token))
 
+                return HttpResponse(jsonfilter({ "error":"ok",
+                        "list" : map ( lambda x: {"id": x.pk, "name": x.name, "detail":"[" + x.layer_version.layer.name+ "]"}, queryset_all[:8])
                     }), content_type = "application/json")
 
             # returns all projects
