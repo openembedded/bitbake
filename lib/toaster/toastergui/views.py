@@ -2304,7 +2304,7 @@ if toastermain.settings.MANAGED:
                 # and show only the selected layers for this project
                 final_list = set([x.get_equivalents_wpriority(prj)[0] for x in queryset_all])
 
-                return HttpResponse(jsonfilter( { "error":"ok",  "list" : map( _lv_to_dict, final_list) }), content_type = "application/json")
+                return HttpResponse(jsonfilter( { "error":"ok",  "list" : map( _lv_to_dict, sorted(final_list, key = lambda x: x.layer.name)) }), content_type = "application/json")
 
 
             # returns layer dependencies for a layer, excluding current project layers
@@ -2314,7 +2314,7 @@ if toastermain.settings.MANAGED:
 
                 final_list = set([x.get_equivalents_wpriority(prj)[0] for x in queryset])
 
-                return HttpResponse(jsonfilter( { "error":"ok", "list" : map( _lv_to_dict, final_list) }), content_type = "application/json")
+                return HttpResponse(jsonfilter( { "error":"ok", "list" : map( _lv_to_dict, sorted(final_list, key = lambda x: x.layer.name)) }), content_type = "application/json")
 
 
 
@@ -2361,7 +2361,7 @@ if toastermain.settings.MANAGED:
 
                 # if we have more than one hit here (for distinct name and version), max the id it out
                 queryset_all_maxids = queryset_all.values('name').distinct().annotate(max_id=Max('id')).values_list('max_id')
-                queryset_all = queryset_all.filter(id__in = queryset_all_maxids)
+                queryset_all = queryset_all.filter(id__in = queryset_all_maxids).order_by("name")
 
 
                 return HttpResponse(jsonfilter({ "error":"ok",
@@ -2374,7 +2374,7 @@ if toastermain.settings.MANAGED:
             if request.GET['type'] == "machines":
                 queryset_all = Machine.objects.all()
                 if 'project_id' in request.session:
-                    queryset_all = queryset_all.filter(layer_version__in =  prj.projectlayer_equivalent_set())
+                    queryset_all = queryset_all.filter(layer_version__in =  prj.projectlayer_equivalent_set()).order_by("name")
 
                 return HttpResponse(jsonfilter({ "error":"ok",
                     "list" : map ( lambda x: {"id": x.pk, "name": x.name, "detail":"[" + x.layer_version.layer.name+ (" | " + x.layer_version.up_branch.name + "]" if x.layer_version.up_branch is not None else "]")},
