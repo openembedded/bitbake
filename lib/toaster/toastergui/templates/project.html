@@ -426,7 +426,7 @@ angular.element(document).ready(function() {
   scope.urls.layers = "{% url 'layers' %}";
   scope.urls.targets = "{% url 'targets' %}";
   scope.urls.importlayer = "{% url 'importlayer'%}";
-  scope.urls.layer = "{% url 'layerdetails' %}";
+  scope.urls.layer = "{% url 'base_layerdetails' %}";
   scope.project = {{prj|json}};
   scope.builds = {{builds|json}};
   scope.layers = {{layers|json}};

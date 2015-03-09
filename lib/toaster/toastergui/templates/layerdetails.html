@@ -17,7 +17,7 @@
   $(document).ready(function (){
     var ctx = {
       projectBuildUrl : "{% url 'xhr_build' %}",
-      layerDetailsUrl : "{% url 'layerdetails' %}",
+      layerDetailsUrl : "{% url 'base_layerdetails' %}",
       projectPageUrl : "{% url 'project' project.id %}",
       xhrEditProjectUrl : "{% url 'xhr_projectedit' project.id %}",
       xhrDataTypeaheadUrl : "{% url 'xhr_datatypeahead' %}",
