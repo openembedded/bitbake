@@ -142,7 +142,7 @@ class BBCooker:
                     # read notified events and enqeue them
                     n.read_events()
                     n.process_events()
-            return True
+            return 1.0
 
         self.configuration.server_register_idlecallback(_process_inotify_updates, [self.confignotifier, self.notifier])
 

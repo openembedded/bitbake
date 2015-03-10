@@ -135,6 +135,9 @@ class ProcessServer(Process, BaseImplServer):
                     nextsleep = None
                 elif retval is True:
                     nextsleep = None
+                elif isinstance(retval, float):
+                    if (retval < nextsleep):
+                        nextsleep = retval
                 elif nextsleep is None:
                     continue
                 else:
