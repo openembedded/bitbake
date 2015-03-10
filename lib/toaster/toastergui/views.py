@@ -2378,7 +2378,7 @@ if toastermain.settings.MANAGED:
                     queryset_all = queryset_all.filter(layer_version__in =  prj.projectlayer_equivalent_set()).order_by("name")
 
                 search_token = request.GET.get('value','')
-                querysetall = queryset_all.filter(Q(name__icontains=search_token) | Q(description__icontains=search_token))
+                queryset_all = queryset_all.filter(Q(name__icontains=search_token) | Q(description__icontains=search_token))
 
                 return HttpResponse(jsonfilter({ "error":"ok",
                         "list" : map ( lambda x: {"id": x.pk, "name": x.name, "detail":"[" + x.layer_version.layer.name+ "]"}, queryset_all[:8])
