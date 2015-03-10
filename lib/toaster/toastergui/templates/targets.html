@@ -60,7 +60,7 @@
         <td class="description">{% if o.description %}{{o.description}}{% else %}{{o.summary}}{%endif%}</td>
         <td class="recipe-file">
                 <code>{{o.file_path}}</code>
-                <a href="{{o.get_vcs_link_url}}{{o.file_path}}" target="_blank"><i class="icon-share get-info"></i></a>
+                <a href="{{o.vcs_link_url}}" target="_blank"><i class="icon-share get-info"></i></a>
         </td>
         <td class="target-section">{{o.section}}</td>
         <td class="license">{{o.license}}</td>

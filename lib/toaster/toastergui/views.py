@@ -515,7 +515,9 @@ def target_common( request, build_id, target_id, variant ):
     packages_sum =  queryset.aggregate( Sum( 'installed_size' ))
     queryset = _get_queryset(
             Package, queryset, filter_string, search_term, ordering_string, 'name' )
+    queryset = queryset.select_related("recipe", "recipe__layer_version", "recipe__layer_version__layer")
     packages = _build_page_range( Paginator(queryset, pagesize), request.GET.get( 'page', 1 ))
+
 
 
     build = Build.objects.get( pk = build_id )
@@ -523,9 +525,9 @@ def target_common( request, build_id, target_id, variant ):
     # bring in package dependencies
     for p in packages.object_list:
         p.runtime_dependencies = p.package_dependencies_source.filter(
-            target_id = target_id, dep_type=Package_Dependency.TYPE_TRDEPENDS )
+            target_id = target_id, dep_type=Package_Dependency.TYPE_TRDEPENDS ).select_related("depends_on")
         p.reverse_runtime_dependencies = p.package_dependencies_target.filter(
-            target_id = target_id, dep_type=Package_Dependency.TYPE_TRDEPENDS )
+            target_id = target_id, dep_type=Package_Dependency.TYPE_TRDEPENDS ).select_related("package")
     tc_package = {
         'name'       : 'Package',
         'qhelp'      : 'Packaged output resulting from building a recipe included in this image',
@@ -2755,7 +2757,7 @@ if toastermain.settings.MANAGED:
         # get unique values for 'name', and select the maximum ID for each entry (the max id is the newest one)
         queryset_with_search_maxids = queryset_with_search.values('name').distinct().annotate(max_id=Max('id')).values_list('max_id')
 
-        queryset_with_search = queryset_with_search.filter(id__in=queryset_with_search_maxids).select_related('layer_version', 'layer_version__layer', 'layer_version__up_branch')
+        queryset_with_search = queryset_with_search.filter(id__in=queryset_with_search_maxids).select_related('layer_version', 'layer_version__layer', 'layer_version__up_branch', 'layer_source')
 
 
         # retrieve the objects that will be displayed in the table; targets a paginator and gets a page range to display
@@ -2763,7 +2765,11 @@ if toastermain.settings.MANAGED:
 
         for e in target_info.object_list:
             e.preffered_layerversion = e.layer_version.get_equivalents_wpriority(prj)[0]
-
+            e.vcs_link_url = Layer.objects.filter(name = e.preffered_layerversion.layer.name).exclude(vcs_web_file_base_url__isnull=True)[0].vcs_web_file_base_url
+            if e.vcs_link_url != None:
+                fp = e.preffered_layerversion.dirpath + "/" + e.file_path
+                e.vcs_link_url = e.vcs_link_url.replace('%path%', fp)
+                e.vcs_link_url = e.vcs_link_url.replace('%branch%', e.preffered_layerversion.up_branch.name)
 
         context = {
             'projectlayerset' : jsonfilter(map(lambda x: x.layercommit.id, prj.projectlayer_set.all().select_related("layercommit"))),

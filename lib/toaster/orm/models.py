@@ -182,7 +182,7 @@ class Project(models.Model):
 
     # returns a set of layer-equivalent set of layers already in project
     def projectlayer_equivalent_set(self):
-        return [j for i in [x.layercommit.get_equivalents_wpriority(self) for x in self.projectlayer_set.all()] for j in i]
+        return [j for i in [x.layercommit.get_equivalents_wpriority(self) for x in self.projectlayer_set.all().select_related("up_branch")] for j in i]
 
     def schedule_build(self):
         from bldcontrol.models import BuildRequest, BRTarget, BRLayer, BRVariable, BRBitbake
@@ -545,11 +545,6 @@ class Recipe(models.Model):
     bugtracker = models.URLField(blank=True)
     file_path = models.FilePathField(max_length=255)
 
-    def get_vcs_link_url(self):
-        if self.layer_version.layer.vcs_web_file_base_url is None:
-            return ""
-        return self.layer_version.layer.vcs_web_file_base_url.replace('%path%', self.file_path).replace('%branch%', self.layer_version.up_branch.name)
-
     def get_layersource_view_url(self):
         if self.layer_source is None:
             return ""
@@ -708,8 +703,6 @@ class LayerIndexLayerSource(LayerSource):
         self.sourcetype = LayerSource.TYPE_LAYERINDEX
 
     def get_object_view(self, branch, objectype, upid):
-        if self != branch.layer_source:
-            raise Exception("Invalid branch specification")
         return self.apiurl + "../branch/" + branch.name + "/" + objectype + "/?q=" + str(upid)
 
     def update(self):
@@ -1044,14 +1037,6 @@ class Layer_Version(models.Model):
 
     def get_equivalents_wpriority(self, project):
         """ Returns an ordered layerversion list that satisfies a LayerVersionDependency using the layer name and the current Project Releases' LayerSource priority """
-        def _get_ls_priority(ls):
-            try:
-                # if there is no layer source, we have minus infinite priority, as we don't want this layer selected
-                if ls == None:
-                    return -10000
-                return ls.releaselayersourcepriority_set.get(release=project.release).priority
-            except ReleaseLayerSourcePriority.DoesNotExist:
-                raise
 
         # layers created for this project, or coming from a build inthe project
         query = Q(project = project) | Q(build__project = project)
@@ -1062,8 +1047,27 @@ class Layer_Version(models.Model):
             # or we have a layer in the project that's similar to mine (See the layer.name constraint below)
             query |= Q(projectlayer__project=project)
 
-        return sorted(
-                Layer_Version.objects.filter(layer__name = self.layer.name).filter(query).select_related('layer_source', 'layer').order_by("-id"),
+        candidate_layer_versions = list(Layer_Version.objects.filter(layer__name = self.layer.name).filter(query).select_related('layer_source', 'layer', 'up_branch').order_by("-id"))
+
+        # optimization - if we have only one, we don't need no stinking sort
+        if len(candidate_layer_versions) == 1:
+            return candidate_layer_versions
+
+#        raise Exception(candidate_layer_versions)
+
+        release_priorities = map(lambda x: (x.layer_source_id, x.priority), project.release.releaselayersourcepriority_set.all().order_by("-priority"))
+
+
+        def _get_ls_priority(ls):
+            # if there is no layer source, we have minus infinite priority, as we don't want this layer selected
+            if ls == None:
+                return -10000
+            try:
+                return release_priorities[ls.id]
+            except IndexError:
+                raise Exception("Unknown %d %s" % (ls.id, release_priorities))
+
+        return sorted( candidate_layer_versions ,
                 key = lambda x: _get_ls_priority(x.layer_source),
                 reverse = True)
 
