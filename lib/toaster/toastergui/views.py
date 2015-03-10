@@ -2259,7 +2259,7 @@ if toastermain.settings.MANAGED:
             # return all project settings
             return HttpResponse(jsonfilter( {
                 "error": "ok",
-                "layers" :  map(lambda x: {"id": x.layercommit.pk, "orderid" : x.pk, "name" : x.layercommit.layer.name, "giturl" : x.layercommit.layer.vcs_url, "url": x.layercommit.layer.layer_index_url, "layerdetailurl": reverse("layerdetails", args=(x.layercommit.layer.pk,)), "branch" : { "name" : x.layercommit.get_vcs_reference(), "layersource" : x.layercommit.up_branch.layer_source.name}}, prj.projectlayer_set.all().select_related("layer").order_by("id")),
+                "layers" :  map(lambda x: {"id": x.layercommit.pk, "orderid" : x.pk, "name" : x.layercommit.layer.name, "giturl" : x.layercommit.layer.vcs_url, "url": x.layercommit.layer.layer_index_url, "layerdetailurl": reverse("layerdetails", args=(x.layercommit.pk,)), "branch" : { "name" : x.layercommit.get_vcs_reference(), "layersource" : x.layercommit.up_branch.layer_source.name}}, prj.projectlayer_set.all().select_related("layer").order_by("id")),
                 "builds" : _project_recent_build_list(prj),
                 "variables": map(lambda x: (x.name, x.value), prj.projectvariable_set.all()),
                 "machine": {"name": prj.projectvariable_set.get(name="MACHINE").value},
@@ -2356,11 +2356,13 @@ if toastermain.settings.MANAGED:
             # returns targets provided by current project layers
             if request.GET['type'] == "targets":
                 search_token = request.GET.get('value','')
-                queryset_all = Recipe.objects.filter(Q(name__icontains=search_token) | Q(layer_version__layer__name__icontains=search_token) )
-                layer_equivalent_set = []
-                for i in prj.projectlayer_set.all():
-                    layer_equivalent_set += i.layercommit.get_equivalents_wpriority(prj)
-                queryset_all = queryset_all.filter(layer_version__in =  layer_equivalent_set)
+                queryset_all = Recipe.objects.filter(layer_version__layer__name__in = [x.layercommit.layer.name for x in prj.projectlayer_set.all().select_related("layercommit__layer")]).filter(Q(name__icontains=search_token) | Q(layer_version__layer__name__icontains=search_token))
+
+#                layer_equivalent_set = []
+#                for i in prj.projectlayer_set.all().select_related("layercommit__up_branch", "layercommit__layer"):
+#                    layer_equivalent_set += i.layercommit.get_equivalents_wpriority(prj)
+
+#                queryset_all = queryset_all.filter(layer_version__in =  layer_equivalent_set)
 
                 # if we have more than one hit here (for distinct name and version), max the id it out
                 queryset_all_maxids = queryset_all.values('name').distinct().annotate(max_id=Max('id')).values_list('max_id')
@@ -2368,8 +2370,13 @@ if toastermain.settings.MANAGED:
 
 
                 return HttpResponse(jsonfilter({ "error":"ok",
-                    "list" : map ( lambda x: {"id": x.pk, "name": x.name, "detail":"[" + x.layer_version.layer.name +"]"},
+                    "list" :
+                        # 7152 - sort by token position
+                        sorted (
+                            map ( lambda x: {"id": x.pk, "name": x.name, "detail":"[" + x.layer_version.layer.name +"]"},
                         queryset_all[:8]),
+                            key = lambda i: i["name"].find(search_token) if i["name"].find(search_token) > -1 else 9999,
+                        )
 
                     }), content_type = "application/json")
 
@@ -2383,7 +2390,12 @@ if toastermain.settings.MANAGED:
                 queryset_all = queryset_all.filter(Q(name__icontains=search_token) | Q(description__icontains=search_token))
 
                 return HttpResponse(jsonfilter({ "error":"ok",
-                        "list" : map ( lambda x: {"id": x.pk, "name": x.name, "detail":"[" + x.layer_version.layer.name+ "]"}, queryset_all[:8])
+                        "list" :
+                        # 7152 - sort by the token position
+                        sorted (
+                            map ( lambda x: {"id": x.pk, "name": x.name, "detail":"[" + x.layer_version.layer.name+ "]"}, queryset_all[:8]),
+                            key = lambda i: i["name"].find(search_token) if i["name"].find(search_token) > -1 else 9999,
+                        )
                     }), content_type = "application/json")
 
             # returns all projects
