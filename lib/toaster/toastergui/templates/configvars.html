@@ -55,7 +55,7 @@
         <td class="variable_value"><a data-toggle="modal" href="#variable-{{variable.pk}}">{{variable.variable_value|truncatechars:153}}</a></td>
         <td class="file"><a data-toggle="modal" href="#variable-{{variable.pk}}">
             {% if variable.vhistory.all %} {% autoescape off %}
-                {{variable.vhistory.all | filter_setin_files:file_filter }}
+                {{variable.vhistory.all | filter_setin_files:file_filter | cut_layer_path_prefix:layer_names}}
             {% endautoescape %} {% endif %}
         </a></td>
         <td class="description">
@@ -115,7 +115,7 @@
                 <tbody>
                     {% for vh in variable.vhistory.all %}
                     <tr>
-                        <td>{{forloop.counter}}</td><td>{{vh.file_name}}</td><td>{{vh.operation}}</td><td>{{vh.line_number}}</td>
+                        <td>{{forloop.counter}}</td><td>{{vh.file_name|cut_layer_path_prefix:layer_names}}</td><td>{{vh.operation}}</td><td>{{vh.line_number}}</td>
                     </tr>
                     {%endfor%}
                 </tbody>

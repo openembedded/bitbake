@@ -1261,6 +1261,11 @@ def configvars(request, build_id):
 
     variables = _build_page_range(Paginator(queryset, pagesize), request.GET.get('page', 1))
 
+    layers = Layer.objects.filter(layer_version_layer__projectlayer__project__build=build_id).order_by("-name")
+    layer_names = map(lambda layer : layer.name, layers)
+    # special case for meta built-in layer
+    layer_names.append('meta')
+
     # show all matching files (not just the last one)
     file_filter= search_term + ":"
     if filter_string.find('/conf/') > 0:
@@ -1283,6 +1288,7 @@ def configvars(request, build_id):
                 'total_count':queryset_with_search.count(),
                 'default_orderby' : 'variable_name:+',
                 'search_term':search_term,
+                'layer_names' : layer_names,
             # Specifies the display of columns for the table, appearance in "Edit columns" box, toggling default show/hide, and specifying filters for columns
                 'tablecols' : [
                 {'name': 'Variable',

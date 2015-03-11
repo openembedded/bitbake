@@ -307,3 +307,18 @@ def is_shaid(text):
         return False
     except ValueError:
         return False
+
+@register.filter
+def cut_layer_path_prefix(fullpath,layer_names):
+    ### if some part of the full local path to a layer matches
+    ### an entry in layer_names (sorted desc), return the layer
+    ### name relative path.
+    for lname in layer_names:
+        # import rpdb; rpdb.set_trace()
+        # only try layer names that are non-trivial to avoid false matches
+        if len(lname) >= 4:
+            # match layer name with as a subdir / or for remote layers /_
+            if re.search('/' + lname, fullpath) or re.search('/_' + lname, fullpath):
+                parts = re.split(lname, fullpath, 1)
+                return lname + parts[1]
+    return fullpath
