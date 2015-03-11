@@ -1401,7 +1401,7 @@ def bpackage(request, build_id):
                 'qhelp':'The Git branch of the layer providing the recipe that builds the package',
                 'orderfield': _get_toggle_order(request, "recipe__layer_version__branch"),
                 'ordericon':_get_toggle_order_icon(request, "recipe__layer_version__branch"),
-                'orderkey' : 'recipe__layer_version__layer__branch',
+                'orderkey' : 'recipe__layer_version__branch',
                 'clclass': 'recipe__layer_version__branch', 'hidden': 1,
             },
             {
