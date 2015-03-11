@@ -89,7 +89,7 @@
                         <i class="icon-question-sign get-help" title="The package format used to generate the root file system. Options are <code>dev</code>, <code>ipk</code> and <code>rpm</code>"></i>
                     </label>
                     <select id="package_classes-select">
-                        <option>package_dev</option>
+                        <option>package_deb</option>
                         <option>package_ipk</option>
                         <option>package_rpm</option>
                     </select>
@@ -98,7 +98,7 @@
                         <i class="icon-question-sign get-help" title="Extra package formats to build"></i>
                     </label>
                     <label class="checkbox" id="package_class_1">
-                        <input type="checkbox" id="package_class_1_input"> package_dev
+                        <input type="checkbox" id="package_class_1_input"> package_deb
                     </label>
                     <label class="checkbox" id="package_class_2">
                         <input type="checkbox" id="package_class_2_input"> package_ipk
@@ -325,16 +325,16 @@
         // Preset or reset the Package Class checkbox labels
         function updatePackageClassCheckboxes() {
             $('#package_class_1, #package_class_2').hide();
-            if ($('select').val() == 'package_dev') {
+            if ($('select').val() == 'package_deb') {
                 $('#package_class_1').html('<input type="checkbox" id="package_class_1_input"> package_ipk');
                 $('#package_class_2').html('<input type="checkbox" id="package_class_2_input"> package_rpm');
             }
             if ($('select').val() == 'package_ipk') {
-                $('#package_class_1').html('<input type="checkbox" id="package_class_1_input"> package_dev');
+                $('#package_class_1').html('<input type="checkbox" id="package_class_1_input"> package_deb');
                 $('#package_class_2').html('<input type="checkbox" id="package_class_2_input"> package_rpm');
             }
             if ($('select').val() == 'package_rpm') {
-                $('#package_class_1').html('<input type="checkbox" id="package_class_1_input"> package_dev');
+                $('#package_class_1').html('<input type="checkbox" id="package_class_1_input"> package_deb');
                 $('#package_class_2').html('<input type="checkbox" id="package_class_2_input"> package_ipk');
             }
             $('#package_class_1, #package_class_2').fadeIn(1500);
@@ -687,7 +687,7 @@
 
                 // initialize the pulldown and checkboxes
                 var value = document.getElementById("package_classes").innerHTML;
-                if (0 == value.indexOf("package_dev")) {
+                if (0 == value.indexOf("package_deb")) {
                     $('select').selectedIndex = 0;
                     updatePackageClassCheckboxes();
                     if (0 < value.indexOf("package_ipk")) {document.getElementById("package_class_1_input").checked = true};
@@ -696,13 +696,13 @@
                 if (0 == value.indexOf("package_ipk")) {
                     $('select').selectedIndex = 1;
                     updatePackageClassCheckboxes();
-                    if (0 < value.indexOf("package_dev")) {document.getElementById("package_class_1_input").checked = true;};
+                    if (0 < value.indexOf("package_deb")) {document.getElementById("package_class_1_input").checked = true;};
                     if (0 < value.indexOf("package_rpm")) {document.getElementById("package_class_2_input").checked = true;};
                 }
                 if (0 == value.indexOf("package_rpm")) {
                     $('select').selectedIndex = 2;
                     updatePackageClassCheckboxes();
-                    if (0 < value.indexOf("package_dev")) {document.getElementById("#package_class_1_input").checked = true;};
+                    if (0 < value.indexOf("package_deb")) {document.getElementById("#package_class_1_input").checked = true;};
                     if (0 < value.indexOf("package_ipk")) {document.getElementById("#package_class_2_input").checked = true;};
                 }
             });
@@ -723,16 +723,16 @@
 
                 pc1_checked = document.getElementById("package_class_1_input").checked;
                 pc2_checked = document.getElementById("package_class_2_input").checked;
-                if (val == "package_dev") {
+                if (val == "package_deb") {
                     if (pc1_checked) val = val + " package_ipk";
                     if (pc2_checked) val = val + " package_rpm";
                 }
                 if (val == "package_ipk") {
-                    if (pc1_checked) val = val + " package_dev";
+                    if (pc1_checked) val = val + " package_deb";
                     if (pc2_checked) val = val + " package_rpm";
                 }
                 if (val == "package_rpm") {
-                    if (pc1_checked) val = val + " package_dev";
+                    if (pc1_checked) val = val + " package_deb";
                     if (pc2_checked) val = val + " package_ipk";
                 }
 
