@@ -221,6 +221,9 @@ class ORMWrapper(object):
         assert 'layer_version' in recipe_information
         assert 'file_path' in recipe_information
 
+        if recipe_information['file_path'].startswith(recipe_information['layer_version'].layer.local_path):
+            recipe_information['file_path'] = recipe_information['file_path'][len(recipe_information['layer_version'].layer.local_path):].lstrip("/")
+
         recipe_object, created = self._cached_get_or_create(Recipe, layer_version=recipe_information['layer_version'],
                                      file_path=recipe_information['file_path'])
         if created and must_exist:
@@ -289,7 +292,10 @@ class ORMWrapper(object):
                     # we matched the BRLayer, but we need the layer_version that generated this BR; reverse of the Project.schedule_build()
                     for pl in buildrequest.project.projectlayer_set.filter(layercommit__layer__name = brl.name):
                         if pl.layercommit.layer.vcs_url == brl.giturl :
-                            return pl.layercommit.layer
+                            layer = pl.layercommit.layer
+                            layer.local_path = layer_information['local_path']
+                            layer.save()
+                            return layer
 
             raise Exception("Unidentified layer %s" % pformat(layer_information))
 
