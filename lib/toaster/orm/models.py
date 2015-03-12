@@ -52,7 +52,7 @@ class ToasterSetting(models.Model):
     value = models.CharField(max_length=255)
 
     def __unicode__(self):
-        return "Setting %s" % self.name
+        return "Setting %s = " % (self.name, self.value)
 
 class ProjectManager(models.Manager):
     def create_project(self, name, release):
@@ -100,7 +100,7 @@ class Project(models.Model):
     objects     = ProjectManager()
 
     def __unicode__(self):
-        return "%s (%s, %s)" % (self.name, self.release, self.bitbake_version)
+        return "%s (Release %s, BBV %s)" % (self.name, self.release, self.bitbake_version)
 
     def get_current_machine_name(self):
         try:
@@ -896,7 +896,7 @@ class BitbakeVersion(models.Model):
     dirpath = models.CharField(max_length=255)
 
     def __unicode__(self):
-        return "%s (%s)" % (self.name, self.branch)
+        return "%s (Branch: %s)" % (self.name, self.branch)
 
 
 class Release(models.Model):
@@ -1055,8 +1055,10 @@ class Layer_Version(models.Model):
 
 #        raise Exception(candidate_layer_versions)
 
-        release_priorities = map(lambda x: (x.layer_source_id, x.priority), project.release.releaselayersourcepriority_set.all().order_by("-priority"))
+        release_priorities = {}
 
+        for ls_id, prio in map(lambda x: (x.layer_source_id, x.priority), project.release.releaselayersourcepriority_set.all().order_by("-priority")):
+            release_priorities[ls_id] = prio
 
         def _get_ls_priority(ls):
             # if there is no layer source, we have minus infinite priority, as we don't want this layer selected
@@ -1081,7 +1083,7 @@ class Layer_Version(models.Model):
         raise Exception("Cannot determine the vcs_reference for layer version %s" % vars(self))
 
     def __unicode__(self):
-        return  str(self.layer) + "(%s,%s)" % (self.get_vcs_reference(), self.build.project if self.build is not None else "None")
+        return "%d %s (VCS %s, Project %s)" % (self.pk, str(self.layer), self.get_vcs_reference(), self.build.project if self.build is not None else "No project")
 
     class Meta:
         unique_together = ("layer_source", "up_id")

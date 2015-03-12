@@ -82,6 +82,8 @@ class LocalhostBEController(BuildEnvironmentController):
         assert self.pokydirname and os.path.exists(self.pokydirname)
         self._createdirpath(self.be.builddir)
         self._shellcmd("bash -c \"source %s/oe-init-build-env %s\"" % (self.pokydirname, self.be.builddir))
+        # delete the templateconf.cfg; it may come from an unsupported layer configuration
+        os.remove(os.path.join(self.be.builddir, "conf/templateconf.cfg"))
 
 
     def writeConfFile(self, file_name, variable_list = None, raw = None):
@@ -115,9 +117,10 @@ class LocalhostBEController(BuildEnvironmentController):
                 f.seek(0, 2)    # jump to the end
                 toaster_ui_log_filelength = f.tell()
 
-        cmd = "bash -c \"source %s/oe-init-build-env %s && bitbake --read conf/toaster-pre.conf --postread conf/toaster.conf --server-only -t xmlrpc -B 0.0.0.0:0 >toaster_server.log && DATABASE_URL=%s BBSERVER=0.0.0.0:-1 daemon -d -i -D %s -o toaster_ui.log -- %s --observe-only -u toasterui &\"" % (self.pokydirname, self.be.builddir,
+        cmd = "bash -c \"source %s/oe-init-build-env %s 2>&1 >toaster_server.log && bitbake --read conf/toaster-pre.conf --postread conf/toaster.conf --server-only -t xmlrpc -B 0.0.0.0:0 2>&1 >toaster_server.log && DATABASE_URL=%s BBSERVER=0.0.0.0:-1 daemon -d -i -D %s -o toaster_ui.log -- %s --observe-only -u toasterui &\"" % (self.pokydirname, self.be.builddir,
                 self.dburl, self.be.builddir, own_bitbake)
         port = "-1"
+        logger.debug("localhostbecontroller: starting builder \n%s\n" % cmd)
         cmdoutput = self._shellcmd(cmd)
         for i in cmdoutput.split("\n"):
             if i.startswith("Bitbake server address"):
@@ -136,7 +139,7 @@ class LocalhostBEController(BuildEnvironmentController):
 
         retries = 0
         started = False
-        while not started and retries < 30:
+        while not started and retries < 10:
             started = _toaster_ui_started(toaster_ui_log_filepath, toaster_ui_log_filelength)
             import time
             logger.debug("localhostbecontroller: Waiting bitbake server to start")
@@ -144,7 +147,8 @@ class LocalhostBEController(BuildEnvironmentController):
             retries += 1
 
         if not started:
-            raise BuildSetupException("localhostbecontroller: Bitbake server did not start in 15 seconds, aborting (Error: '%s')" % (cmdoutput))
+            toaster_server_log = open(os.path.join(self.be.builddir, "toaster_server.log"), "r").read()
+            raise BuildSetupException("localhostbecontroller: Bitbake server did not start in 5 seconds, aborting (Error: '%s' '%s')" % (cmdoutput, toaster_server_log))
 
         logger.debug("localhostbecontroller: Started bitbake server")
 
@@ -180,7 +184,7 @@ class LocalhostBEController(BuildEnvironmentController):
         base = components[-2] if components[-1] == "git" else components[-1]
 
         if branch != "HEAD":
-            return os.path.join(self.be.sourcedir, "_%s_%s.toaster_cloned" % (base, branch))
+            return "_%s_%s.toaster_cloned" % (base, branch)
 
 
         # word of attention; this is a localhost-specific issue; only on the localhost we expect to have "HEAD" releases
@@ -239,7 +243,7 @@ class LocalhostBEController(BuildEnvironmentController):
 
         # 3. checkout the repositories
         for giturl, commit in gitrepos.keys():
-            localdirname = self.getGitCloneDirectory(giturl, commit)
+            localdirname = os.path.join(self.be.sourcedir, self.getGitCloneDirectory(giturl, commit))
             logger.debug("localhostbecontroller: giturl %s:%s checking out in current directory %s" % (giturl, commit, localdirname))
 
             # make sure our directory is a git repository
