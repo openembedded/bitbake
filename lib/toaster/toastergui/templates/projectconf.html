@@ -468,7 +468,7 @@
             // re-assert the event handlers
         }
 
-	/* ensure cookie exists {% csrf_token %} */
+        /* ensure cookie exists {% csrf_token %} */
         function postEditAjaxRequest(reqdata) {
             var ajax = $.ajax({
                     type:"POST",
@@ -621,10 +621,13 @@
             // change IMAGE_INSTALL_append variable
             $('#change-image_install-icon').click(function() {
                 // preset the edit value
-                var current_val = $("span#image_install").text();
+                var current_val = $("span#image_install").text().trim();
                 if (current_val == "Not set") {
                     current_val="";
                     $("#apply-change-image_install").attr("disabled","disabled");
+                } else {
+                    // insure these non-empty values have single space prefix
+                    current_val=" " + current_val;
                 }
                 $("input#new-image_install").val(current_val);
 
@@ -643,7 +646,7 @@
             });
 
             $("#new-image_install").on('input', function(){
-                if ($(this).val().length == 0) {
+                if ($(this).val().trim().length == 0) {
                     $("#apply-change-image_install").attr("disabled","disabled");
                 }
                 else {
@@ -652,13 +655,14 @@
             });
 
             $('#apply-change-image_install').click(function(){
-                var name = $('#new-image_install').val();
-                postEditAjaxRequest({"configvarChange" : 'IMAGE_INSTALL_append:'+name});
-                $('#image_install').text(name);
+                // insure these non-empty values have single space prefix
+                var value = " " + $('#new-image_install').val().trim();
+                postEditAjaxRequest({"configvarChange" : 'IMAGE_INSTALL_append:'+value});
+                $('#image_install').text(value);
                 $('#image_install').removeClass('muted');
                 $("#change-image_install-form").slideUp(function () {
                     $('#image_install, #change-image_install-icon').show();
-                    if (name.length > -1) {
+                    if (value.length > -1) {
                         $('#delete-image_install-icon').show();
                         setDeleteTooltip($('#delete-image_install-icon'));
                     }
