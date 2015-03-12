@@ -412,7 +412,7 @@ vim: expandtab tabstop=2
           <option ng-repeat="r in releases" value="{[r.id]}" ng-selected="r.id == project.release.id">{[r.description]}</option>
         </select>
         <input type="submit" class="btn" style="margin-left:5px;" value="Save" ng-disabled="project.release.id == projectVersion"/>
-        <input type="reset"  class="btn btn-link" value="Cancel" ng-click="toggle('#change-project-version')" ng-disabled="project.release.id == projectVersion"/>
+        <input type="reset"  class="btn btn-link" value="Cancel" ng-click="toggle('#change-project-version')"/>
 
       </form>
     </div>
