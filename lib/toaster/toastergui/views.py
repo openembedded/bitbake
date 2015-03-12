@@ -2767,7 +2767,10 @@ if toastermain.settings.MANAGED:
         queryset_with_search = _get_queryset(Recipe, queryset_all, None, search_term, ordering_string, '-name')
 
         # get unique values for 'name', and select the maximum ID for each entry (the max id is the newest one)
-        queryset_with_search_maxids = queryset_with_search.values('name').distinct().annotate(max_id=Max('id')).values_list('max_id')
+
+        # force evaluation of the query here; to process the MAX/GROUP BY, a temporary table is used, on which indexing is very slow
+        # by forcing the evaluation here we also prime the caches
+        queryset_with_search_maxids = map(lambda i: i[0], list(queryset_with_search.values('name').distinct().annotate(max_id=Max('id')).values_list('max_id')))
 
         queryset_with_search = queryset_with_search.filter(id__in=queryset_with_search_maxids).select_related('layer_version', 'layer_version__layer', 'layer_version__up_branch', 'layer_source')
 
