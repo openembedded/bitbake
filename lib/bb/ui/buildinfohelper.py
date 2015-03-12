@@ -33,6 +33,7 @@ from toaster.orm.models import Task_Dependency, Package_Dependency
 from toaster.orm.models import Recipe_Dependency
 from bb.msg import BBLogFormatter as format
 from django.db import models
+from pprint import pformat
 import logging
 
 from django.db import transaction, connection
@@ -282,7 +283,6 @@ class ORMWrapper(object):
             # we might have a race condition here, as the project layers may change between the build trigger and the actual build execution
             # but we can only match on the layer name, so the worst thing can happen is a mis-identification of the layer, not a total failure
 
-            from pprint import pformat
             # note that this is different
             buildrequest = BuildRequest.objects.get(pk = br_id)
             for brl in buildrequest.brlayer_set.all():
@@ -467,7 +467,7 @@ class ORMWrapper(object):
             Package_Dependency.objects.bulk_create(packagedeps_objs)
 
         if (len(errormsg) > 0):
-            raise Exception(errormsg)
+            logger.warn("buildinfohelper: target_package_info could not identify recipes: \n%s" % errormsg)
 
     def save_target_image_file_information(self, target_obj, file_name, file_size):
         target_image_file = Target_Image_File.objects.create( target = target_obj,
@@ -885,9 +885,13 @@ class BuildInfoHelper(object):
             assert localfilepath.startswith("/")
 
             recipe_information = self._get_recipe_information_from_taskfile(taskfile)
-            recipe_object = Recipe.objects.get(layer_version = recipe_information['layer_version'],
+            try:
+                recipe_object = Recipe.objects.get(layer_version = recipe_information['layer_version'],
                             file_path__endswith = recipe_information['file_path'],
                             name = recipename)
+            except Recipe.DoesNotExist:
+                logger.error("Could not find recipe for recipe_information %s name %s" % (pformat(recipe_information), name))
+                raise
 
             task_information = {}
             task_information['build'] = self.internal_state['build']
@@ -1127,7 +1131,7 @@ class BuildInfoHelper(object):
         Task_Dependency.objects.bulk_create(taskdeps_objects)
 
         if (len(errormsg) > 0):
-            raise Exception(errormsg)
+            logger.warn("buildinfohelper: dependency info not identify recipes: \n%s" % errormsg)
 
 
     def store_build_package_information(self, event):

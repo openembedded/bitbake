@@ -327,8 +327,16 @@ def main(server, eventHandler, params ):
         except Exception as e:
             # print errors to log
             import traceback
+            from pprint import pformat
             exception_data = traceback.format_exc()
             logger.error("%s\n%s" % (e, exception_data))
+
+            exc_type, exc_value, tb = sys.exc_info()
+            if tb is not None:
+                curr = tb
+                while curr is not None:
+                    logger.warn("Error data dump %s\n%s\n" % (traceback.format_tb(curr,1), pformat(curr.tb_frame.f_locals)))
+                    curr = curr.tb_next
 
             # save them to database, if possible; if it fails, we already logged to console.
             try:
