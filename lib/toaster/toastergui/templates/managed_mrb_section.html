@@ -3,6 +3,7 @@
 {% load humanize %}
 
 {%if mru|length > 0%}
+{# Template provides the latest builds section requires mru in the context which can be added from _managed_get_latest_builds #}
   <div class="page-header top-air">
       <h1>
           Latest builds
@@ -118,6 +119,7 @@
             <div class="span4 lead">Build queued
               <i title="This build will start as soon as a build server is available" class="icon-question-sign get-help get-help-blue heading-help" data-toggle="tooltip"></i>
             </div>
+            <button class="btn btn-info pull-right cancel-build-btn" data-build-id="{{buildrequest.id}}" data-request-url="{% url 'xhr_projectbuild' buildrequest.project.id %}" >Cancel</button>
 
          {% elif buildrequest.state == buildrequest.REQ_CREATED %}
 
@@ -155,37 +157,25 @@
 
 <script>
 
-/* ensure csrf cookie exists {% csrf_token %} */
-function _makeXHRBuildCall(url, data, onsuccess, onfail) {
-    $.ajax( {
-        type: "POST",
-        url: url,
-        data: data,
-        headers: { 'X-CSRFToken' : $.cookie('csrftoken')},
-        success: function (_data) {
-            if (_data.error != "ok") {
-                alert(_data.error);
-            } else {
-                if (onsuccess != undefined) onsuccess(_data);
-            }
-        },
-        error: function (_data) {
-            alert("Call failed");
-            console.log(_data);
-            if (onfail) onfail(data);
-        } });
-}
-
-
 function scheduleBuild(url, projectName, projectUrl, buildlist) {
   console.log("scheduleBuild");
-  _makeXHRBuildCall(url, {targets: buildlist.join(" ")}, function (_data) {
-
-      $('#latest-builds').prepend("<div class=\"alert alert-info project-name\"><span class=\"label label-info\"><a href=\""+projectUrl+"\">"+projectName+"</a></span><div class=\"row-fluid\">" +
-  "<div class=\"span5 lead\">" + buildlist.join(" ") +
-  "</div><div class=\"span4 lead\">Build queued <i title=\"This build will start as soon as a build server is available\" class=\"icon-question-sign get-help get-help-blue heading-help\"></i></div></div></div>");
-  });
+  libtoaster.startABuild(url, null, buildlist.join(" "), function(){
+    window.location.reload();
+  }, null);
 }
+
+$(document).ready(function(){
+
+  $(".cancel-build-btn").click(function (){
+    var url = $(this).data('request-url');
+    var buildIds = $(this).data('build-id');
+    var btn = $(this);
+
+    libtoaster.cancelABuild(url, buildIds, function(){
+      btn.parents(".alert").fadeOut();
+    }, null);
+  });
+});
 
 </script>
 

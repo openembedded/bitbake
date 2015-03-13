@@ -1871,8 +1871,7 @@ if toastermain.settings.MANAGED:
 
         # build view-specific information; this is rendered specifically in the builds page, at the top of the page (i.e. Recent builds)
         # most recent build is like projects' most recent builds, but across all projects
-        build_mru = BuildRequest.objects.all()
-        build_mru = list(build_mru.filter(Q(state__lt=BuildRequest.REQ_COMPLETED) or Q(state=BuildRequest.REQ_DELETED)).order_by("-pk")) + list(build_mru.filter(state__in=[BuildRequest.REQ_COMPLETED, BuildRequest.REQ_FAILED]).order_by("-pk")[:3])
+        build_mru = _managed_get_latest_builds()
 
         fstypes_map = {};
         for build_request in build_info:
@@ -3130,6 +3129,12 @@ if toastermain.settings.MANAGED:
             }
             return render(request, "unavailable_artifact.html", context)
 
+    # This returns the mru object that is needed for the
+    # managed_mrb_section.html template
+    def _managed_get_latest_builds():
+        build_mru = BuildRequest.objects.all()
+        build_mru = list(build_mru.filter(Q(state__lt=BuildRequest.REQ_COMPLETED) or Q(state=BuildRequest.REQ_DELETED)).order_by("-pk")) + list(build_mru.filter(state__in=[BuildRequest.REQ_COMPLETED, BuildRequest.REQ_FAILED]).order_by("-pk")[:3])
+        return build_mru
 
 
     def projects(request):
@@ -3153,7 +3158,7 @@ if toastermain.settings.MANAGED:
         project_info = _build_page_range(Paginator(queryset, pagesize), request.GET.get('page', 1))
 
         # build view-specific information; this is rendered specifically in the builds page, at the top of the page (i.e. Recent builds)
-        build_mru = Build.objects.order_by("-started_on")[:3]
+        build_mru = _managed_get_latest_builds()
 
         # translate the project's build target strings
         fstypes_map = {};

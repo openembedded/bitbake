@@ -50,9 +50,6 @@
               <span class="lead{%if not MANAGED or not build.project%} pull-right{%endif%}">
                 Build time: <a href="{% url 'buildtime' build.pk %}">{{ build.timespent|sectohms }}</a>
               </span>
-          {% if MANAGED and build.project %}
-              <a class="btn {%if build.outcome == build.SUCCEEDED%}btn-success{%elif build.outcome == build.FAILED%}btn-danger{%else%}btn-info{%endif%} pull-right" onclick="scheduleBuild({% url 'xhr_projectbuild' build.project.id as bpi%}{{bpi|json}}, {{build.project.name|json}}, {{build.get_sorted_target_list|mapselect:'target'|json}})">Run again</a>
-          {% endif %}
             </div>
     {%endif%}
     {%if build.outcome == build.IN_PROGRESS %}
@@ -68,41 +65,5 @@
 
   {% endfor %}
   </div>
-
-<script>
-
-function _makeXHRBuildCall(url, data, onsuccess, onfail) {
-    $.ajax( {
-        type: "POST",
-        url: url,
-        data: data,
-        headers: { 'X-CSRFToken' : $.cookie('csrftoken')},
-        success: function (_data) {
-            if (_data.error != "ok") {
-                console.warn(_data.error);
-            } else {
-                if (onsuccess != undefined) onsuccess(_data);
-            }
-        },
-        error: function (_data) {
-            console.warn("Call failed");
-            console.warn(_data);
-            if (onfail) onfail(data);
-        } });
-}
-
-
-function scheduleBuild(url, projectName, buildlist) {
-  console.warn("scheduleBuild");
-  _makeXHRBuildCall(url, {targets: buildlist.join(" ")}, function (_data) {
-
-      $('#latest-builds').prepend('<div class="alert alert-info" style="padding-top:0px">' + '<span class="label label-info" style="font-weight: normal; margin-bottom: 5px; margin-left:-15px; padding-top:5px;">'+projectName+'</span><div class="row-fluid">' +
-  '<div class="span4 lead">' + buildlist.join(" ") +
-  '</div><div class="span4 lead pull-right">Build queued. Your build will start shortly.</div></div></div>');
-  });
-}
-
-</script>
-
 {%endif%}
 
