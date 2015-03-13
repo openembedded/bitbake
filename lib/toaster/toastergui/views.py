@@ -1924,8 +1924,8 @@ if toastermain.settings.MANAGED:
                      'filter' : {'class' : 'outcome',
                                  'label': 'Show:',
                                  'options' : [
-                                             ('Successful builds', 'state:' + str(BuildRequest.REQ_COMPLETED), queryset_all.filter(state=str(BuildRequest.REQ_COMPLETED)).count()),  # this is the field search expression
-                                             ('Failed builds', 'state:'+ str(BuildRequest.REQ_FAILED), queryset_all.filter(state=str(BuildRequest.REQ_FAILED)).count()),
+                                             ('Successful builds', 'build__outcome:' + str(Build.SUCCEEDED), queryset_all.filter(build__outcome = Build.SUCCEEDED).count()),  # this is the field search expression
+                                             ('Failed builds', 'build__outcome:NOT'+ str(Build.SUCCEEDED), queryset_all.exclude(build__outcome = Build.SUCCEEDED).count()),
                                              ]
                                 }
                     },
