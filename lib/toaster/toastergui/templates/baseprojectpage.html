@@ -11,10 +11,16 @@
             <li><a href="{% url 'all-builds' %}">All builds</a></li>
             {% block parentbreadcrumb %}
         {% if project %}
+          {% if project_html %}
+            <li>
+                {{project.name}}
+            </li>
+          {% else %}
             <li>
                 <a href="{%url 'project' project.id %}"><span id="project_name">{{project.name}}</span>
                 </a>
             </li>
+          {% endif %}
         {% endif %}
             {% endblock %}
             {% block localbreadcrumb %}{% endblock %}

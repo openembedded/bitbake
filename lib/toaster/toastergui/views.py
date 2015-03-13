@@ -2142,6 +2142,7 @@ if toastermain.settings.MANAGED:
             "targets" : map(lambda x: {"target" : x.target, "task" : x.task, "pk": x.pk}, prj.projecttarget_set.all()),
             "freqtargets": freqtargets,
             "releases": map(lambda x: {"id": x.pk, "name": x.name, "description":x.description}, Release.objects.all()),
+            "project_html": 1,
         }
         try:
             context["machine"] = {"name": prj.projectvariable_set.get(name="MACHINE").value}
