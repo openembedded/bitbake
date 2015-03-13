@@ -877,7 +877,10 @@ def tasks_common(request, build_id, variant, task_anchor):
         return _redirect_parameters( variant, request.GET, mandatory_parameters, build_id = build_id)
     (filter_string, search_term, ordering_string) = _search_tuple(request, Task)
     queryset_all = Task.objects.filter(build=build_id).exclude(order__isnull=True).exclude(outcome=Task.OUTCOME_NA)
+    queryset_all = queryset_all.select_related("recipe", "build")
+
     queryset_with_search = _get_queryset(Task, queryset_all, None , search_term, ordering_string, 'order')
+
     if ordering_string.startswith('outcome'):
         queryset = _get_queryset(Task, queryset_all, filter_string, search_term, 'order:+', 'order')
         queryset = sorted(queryset, key=lambda ur: (ur.outcome_text), reverse=ordering_string.endswith('-'))
@@ -887,7 +890,6 @@ def tasks_common(request, build_id, variant, task_anchor):
     else:
         queryset = _get_queryset(Task, queryset_all, filter_string, search_term, ordering_string, 'order')
 
-    queryset = queryset.select_related("recipe", "build")
 
     # compute the anchor's page
     if anchor:
