@@ -2867,15 +2867,17 @@ if toastermain.settings.MANAGED:
         # for that object type. copypasta for all needed table searches
         (filter_string, search_term, ordering_string) = _search_tuple(request, Machine)
 
-        queryset_all = Machine.objects.all()
-        queryset_all = queryset_all.prefetch_related('layer_version')
-
         prj = Project.objects.get(pk = request.session['project_id'])
         compatible_layers = prj.compatible_layerversions()
 
+        queryset_all = Machine.objects.filter(layer_version__in=compatible_layers)
+        queryset_all = _get_queryset(Machine, queryset_all, None, search_term, ordering_string, 'name')
+
+        queryset_all = queryset_all.prefetch_related('layer_version')
+
+
         # Make sure we only show machines / layers which are compatible
         # with the current project
-        queryset_all = queryset_all.filter(layer_version__in=compatible_layers)
 
         project_layers = ProjectLayer.objects.filter(project_id=request.session['project_id']).values_list('layercommit',flat=True)
 
