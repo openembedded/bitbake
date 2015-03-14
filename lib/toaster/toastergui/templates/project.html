@@ -355,7 +355,7 @@ vim: expandtab tabstop=2
               You cannot really compare the builds for the new machine with the previous ones.
         </div>
         <form ng-submit="editProjectSettings('#select-machine')" class="input-append">
-              <input type="text" id="machine" autocomplete="off" ng-model="machineName" typeahead="m.name for m in getAutocompleteSuggestions('machines', $viewValue)" typeahead-template-url="suggestion_details" />
+              <input type="text" id="machine" autocomplete="off" ng-model="machineName" value="{[machine.name]}" typeahead="m.name for m in getAutocompleteSuggestions('machines', $viewValue)" typeahead-template-url="suggestion_details" />
               <input type="submit" id="apply-change-machine" class="btn" type="button" ng-disabled="machineName == machine.name || machineName.length == 0" value="Save"></input>
               <input type="reset" id="cancel-machine" class="btn btn-link" ng-click="toggle('#select-machine')" value="Cancel"></input>
               {% csrf_token %}
@@ -391,7 +391,7 @@ vim: expandtab tabstop=2
     </p>
     <div id="change-project-name" style="display:none;">
       <form ng-submit="editProjectSettings('#change-project-name')" class="input-append">
-        <input type="text" class="input-xlarge" id="type-project-name" ng-model="projectName">
+        <input type="text" class="input-xlarge" id="type-project-name" ng-model="projectName" value="{[project.name]}">
         <input type="submit" class="btn" value="Save" ng-disabled="project.name == projectName"/>
         <input type="reset" class="btn btn-link" value="Cancel" ng-click="toggle('#change-project-name')">
      </form>
