@@ -2204,11 +2204,11 @@ if toastermain.settings.MANAGED:
         freqtargets = []
         try:
             freqtargets += map(lambda x: x.target, reduce(lambda x, y: x + y,   map(lambda x: list(x.target_set.all()), Build.objects.filter(project = prj, outcome__lt = Build.IN_PROGRESS))))
-            freqtargets += map(lambda x: x.target, reduce(lambda x, y: x + y,   map(lambda x: list(x.brtarget_set.all()), BuildRequest.objects.filter(project = prj, state__lte = BuildRequest.REQ_QUEUED))))
+            freqtargets += map(lambda x: x.target, reduce(lambda x, y: x + y,   map(lambda x: list(x.brtarget_set.all()), BuildRequest.objects.filter(project = prj, state = BuildRequest.REQ_FAILED))))
         except TypeError:
             pass
         freqtargets = Counter(freqtargets)
-        freqtargets = sorted(freqtargets, key = lambda x: freqtargets[x])
+        freqtargets = sorted(freqtargets, key = lambda x: freqtargets[x], reverse=True)
 
         context = {
             "project" : prj,
@@ -2228,7 +2228,7 @@ if toastermain.settings.MANAGED:
                         "branch" : { "name" : x.layercommit.get_vcs_reference(), "layersource" : x.layercommit.up_branch.layer_source.name if x.layercommit.up_branch != None else None}},
                     prj.projectlayer_set.all().order_by("id")),
             "targets" : map(lambda x: {"target" : x.target, "task" : x.task, "pk": x.pk}, prj.projecttarget_set.all()),
-            "freqtargets": freqtargets,
+            "freqtargets": freqtargets[:5],
             "releases": map(lambda x: {"id": x.pk, "name": x.name, "description":x.description}, Release.objects.all()),
             "project_html": 1,
         }

@@ -328,10 +328,10 @@ vim: expandtab tabstop=2
         <h4 class="air">
             Most built targets
         </h4>
-        <ul class="unstyled configuration-list">
+          <ul class="unstyled configuration-list {[mutedtargets]}">
           <li ng-repeat="t in frequenttargets">
             <label class="checkbox">
-              <input type="checkbox" ng-model="mostBuiltTargets[t]">{[t]}
+              <input type="checkbox" ng-model="mostBuiltTargets[t]" ng-disabled="disableBuildCheckbox(t)" ng-checked="mostBuiltTargets[t] && !disableBuildCheckbox(t)">{[t]}
             </label>
           </li>
         </ul>
@@ -443,7 +443,8 @@ angular.element(document).ready(function() {
   scope.frequenttargets = {{freqtargets|json}};
   scope.machine = {{machine|json}};
   scope.releases = {{releases|json}};
-
+  scope.layerCount = scope.layers.length;
+  scope.mutedtargets = (scope.layerCount == 0 ? "muted" : "")
   var now = (new Date()).getTime();
   scope.todaydate = now - (now % 86400000);
 
