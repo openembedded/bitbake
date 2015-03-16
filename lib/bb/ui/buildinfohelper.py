@@ -890,7 +890,7 @@ class BuildInfoHelper(object):
                             file_path__endswith = recipe_information['file_path'],
                             name = recipename)
             except Recipe.DoesNotExist:
-                logger.error("Could not find recipe for recipe_information %s name %s" % (pformat(recipe_information), name))
+                logger.error("Could not find recipe for recipe_information %s name %s" % (pformat(recipe_information), recipename))
                 raise
 
             task_information = {}
