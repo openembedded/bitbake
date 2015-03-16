@@ -52,7 +52,7 @@ def logger_create(name, output=sys.stderr):
     logger.setLevel(logging.INFO)
     return logger
 
-logger = logger_create('bitbake-layers')
+logger = logger_create('bitbake-layers', sys.stdout)
 
 
 class Commands():
