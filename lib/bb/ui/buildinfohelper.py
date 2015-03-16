@@ -287,9 +287,13 @@ class ORMWrapper(object):
             buildrequest = BuildRequest.objects.get(pk = br_id)
             for brl in buildrequest.brlayer_set.all():
                 localdirname = os.path.join(bc.getGitCloneDirectory(brl.giturl, brl.commit), brl.dirpath)
-                logger.warn("Matched %s to BRlayer %s" % (pformat(layer_information["local_path"]), localdirname))
+                # we get a relative path, unless running in HEAD mode where the path is absolute
+                if not localdirname.startswith("/"):
+                    localdirname = os.path.join(bc.be.sourcedir, localdirname)
+                #logger.debug(1, "Localdirname %s lcal_path %s" % (localdirname, layer_information['local_path']))
                 if localdirname.startswith(layer_information['local_path']):
                     # we matched the BRLayer, but we need the layer_version that generated this BR; reverse of the Project.schedule_build()
+                    #logger.debug(1, "Matched %s to BRlayer %s" % (pformat(layer_information["local_path"]), localdirname))
                     for pl in buildrequest.project.projectlayer_set.filter(layercommit__layer__name = brl.name):
                         if pl.layercommit.layer.vcs_url == brl.giturl :
                             layer = pl.layercommit.layer
@@ -297,7 +301,7 @@ class ORMWrapper(object):
                             layer.save()
                             return layer
 
-            raise Exception("Unidentified layer %s" % pformat(layer_information))
+            raise NotExisting("Unidentified layer %s" % pformat(layer_information))
 
 
     def save_target_file_information(self, build_obj, target_obj, filedata):
@@ -703,6 +707,9 @@ class BuildInfoHelper(object):
             # Heuristics: we match the path to where the layers have been checked out
             for brl in sorted(BuildRequest.objects.get(pk = br_id).brlayer_set.all(), reverse = True, key = _slkey_managed):
                 localdirname = os.path.join(bc.getGitCloneDirectory(brl.giturl, brl.commit), brl.dirpath)
+                # we get a relative path, unless running in HEAD mode where the path is absolute
+                if not localdirname.startswith("/"):
+                    localdirname = os.path.join(bc.be.sourcedir, localdirname)
                 if path.startswith(localdirname):
                     #logger.warn("-- managed: matched path %s with layer %s " % (path, localdirname))
                     # we matched the BRLayer, but we need the layer_version that generated this br
@@ -775,7 +782,10 @@ class BuildInfoHelper(object):
         layerinfos = BuildInfoHelper._get_data_from_event(event)
         self.internal_state['lvs'] = {}
         for layer in layerinfos:
-            self.internal_state['lvs'][self.orm_wrapper.get_update_layer_object(layerinfos[layer], self.brbe)] = layerinfos[layer]['version']
+            try:
+                self.internal_state['lvs'][self.orm_wrapper.get_update_layer_object(layerinfos[layer], self.brbe)] = layerinfos[layer]['version']
+            except NotExisting as nee:
+                logger.warn("buildinfohelper: cannot identify layer exception:%s " % nee)
 
 
     def store_started_build(self, event):
@@ -886,6 +896,9 @@ class BuildInfoHelper(object):
 
             recipe_information = self._get_recipe_information_from_taskfile(taskfile)
             try:
+                if recipe_information['file_path'].startswith(recipe_information['layer_version'].layer.local_path):
+                    recipe_information['file_path'] = recipe_information['file_path'][len(recipe_information['layer_version'].layer.local_path):].lstrip("/")
+
                 recipe_object = Recipe.objects.get(layer_version = recipe_information['layer_version'],
                             file_path__endswith = recipe_information['file_path'],
                             name = recipename)
