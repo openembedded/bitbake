@@ -1080,7 +1080,7 @@ class Layer_Version(models.Model):
             return self.branch
         if self.up_branch is not None:
             return self.up_branch.name
-        raise Exception("Cannot determine the vcs_reference for layer version %s" % vars(self))
+        return ("Cannot determine the vcs_reference for layer version %s" % vars(self))
 
     def __unicode__(self):
         return "%d %s (VCS %s, Project %s)" % (self.pk, str(self.layer), self.get_vcs_reference(), self.build.project if self.build is not None else "No project")
