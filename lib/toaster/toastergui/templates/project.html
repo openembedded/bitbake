@@ -299,7 +299,7 @@ vim: expandtab tabstop=2
         <a href="{% url 'importlayer' %}">Import layer</a></p>
       <ul class="unstyled configuration-list">
           <li ng-repeat="l in layers track by l.id" class="animate-repeat">
-            <a href="{[l.layerdetailurl]}" class="layer-info" data-toggle="tooltip" tooltip="{[l.giturl]} | {[l.branch.name]}">{[l.name]}</a>
+            <a href="{[l.layerdetailurl]}" class="layer-info" data-toggle="tooltip" tooltip-placement="right" tooltip="{[l.giturl]} | {[l.branch.name]}">{[l.name]}</a>
             <i class="icon-trash" ng-click="layerDel(l.id)" tooltip="Delete"></i>
                       </li>
       </ul>
@@ -434,7 +434,7 @@ angular.element(document).ready(function() {
   scope.urls.xhr_edit = "{% url 'xhr_projectedit' project.id %}";
   scope.urls.xhr_datatypeahead = "{% url 'xhr_datatypeahead' %}";
   scope.urls.layers = "{% url 'layers' %}";
-  scope.urls.targets = "{% url 'targets' %}";
+  scope.urls.targets = "{% url 'all-targets' %}";
   scope.urls.importlayer = "{% url 'importlayer'%}";
   scope.urls.layer = "{% url 'base_layerdetails' %}";
   scope.project = {{prj|json}};
