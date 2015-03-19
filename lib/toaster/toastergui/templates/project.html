@@ -77,14 +77,14 @@ vim: expandtab tabstop=2
   <script type="text/ng-template" id="change_version_modal">
     <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal" aria-hidden="true">x</button>
-        <h3>Changing release to {[releaseName]}</h3>
+        <h3>Changing release to {[releaseDescription]}</h3>
       </div>
       <div class="modal-body">
-        <p>The following project layers do not exist for {[releaseName]}:</p>
+        <p>The following project layers do not exist for the {[releaseDescription]} release:</p>
         <ul>
           <li ng-repeat="i in items"><span class="layer-info" data-toggle="tooltip" tooltip="{[i.detail]}">{[i.name]}</span></li>
         </ul>
-        <p>If you change the release to {[releaseName]}, the above layers will be deleted from your project layers.</p>
+        <p>If you change the release to {[releaseDescription]}, the above layers will be deleted from your project.</p>
       </div>
       <div class="modal-footer">
         <button class="btn btn-primary" ng-click="ok()">Change release and delete layers</button>
