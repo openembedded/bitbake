@@ -106,7 +106,12 @@ class BBUIEventQueue:
 
         self.server.timeout = 1
         while not self.server.quit:
-            self.server.handle_request()
+            try:
+                self.server.handle_request()
+            except Exception as e:
+                import traceback
+                logger.error("BBUIEventQueue.startCallbackHandler: Exception while trying to handle request: %s\n%s" % (e, traceback.format_exc(e)))
+
         self.server.server_close()
 
     def system_quit( self ):
