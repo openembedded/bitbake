@@ -90,7 +90,7 @@ class TinfoilConfigParameters(ConfigParameters):
         self.initial_options = options
         super(TinfoilConfigParameters, self).__init__()
 
-    def parseCommandLine(self):
+    def parseCommandLine(self, argv=sys.argv):
         class DummyOptions:
             def __init__(self, initial_options):
                 for key, val in initial_options.items():
