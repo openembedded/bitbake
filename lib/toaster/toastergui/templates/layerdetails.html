@@ -190,7 +190,8 @@
                 <div name="targets" id="targets" class="tab-pane">
                   {% if total_targets == 0 %}
                   <div class="alert alert-info">
-                    There is no target information for the <strong> {{layerversion.layer.name}} </strong> layer.
+                    <p>Toaster does not have target information for the <strong> {{layerversion.layer.name}} </strong> layer.</p>
+		    <p>Toaster learns about layers when you build them. If this layer provides any targets, they will be listed here after you build the <strong> {{layerversion.layer.name}} </strong> layer.</p>
                   </div>
                   {% else %}
 
@@ -324,7 +325,8 @@
                 <div name="machines" id="machines" class="tab-pane">
                   {% if total_machines == 0 %}
                   <div class="alert alert-info">
-                    There is no machine information for the <strong>{{layerversion.layer.name}}</strong> layer.
+                    <p>Toaster does not have machine information for the <strong> {{layerversion.layer.name}} </strong> layer.</p>
+		    <p>Toaster learns about layers when you build them. If this layer provides any machines, they will be listed here after you build the <strong> {{layerversion.layer.name}} </strong> layer.</p>
                   </div>
                   {% else %}
 
