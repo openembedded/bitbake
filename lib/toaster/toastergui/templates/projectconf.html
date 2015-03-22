@@ -690,24 +690,38 @@
                 $("#change-package_classes-form").slideDown();
 
                 // initialize the pulldown and checkboxes
-                var value = document.getElementById("package_classes").innerHTML;
-                if (0 == value.indexOf("package_deb")) {
-                    $('select').selectedIndex = 0;
+                var value = $("#package_classes").text();
+                if ( value.indexOf("package_deb") == 0 ) {
+                    $("#package_classes-select").prop('selectedIndex', 0);
                     updatePackageClassCheckboxes();
-                    if (0 < value.indexOf("package_ipk")) {document.getElementById("package_class_1_input").checked = true};
-                    if (0 < value.indexOf("package_rpm")) {document.getElementById("package_class_2_input").checked = true};
+                    if ( value.indexOf("_ipk") > 0 ) {
+                        $("#package_class_1_input").attr("checked",true);
+                    }
+                    if ( value.indexOf("_rpm") > 0 ) {
+                        $("#package_class_2_input").attr("checked",true);
+                    }
                 }
-                if (0 == value.indexOf("package_ipk")) {
-                    $('select').selectedIndex = 1;
+
+                if ( value.indexOf("package_ipk") == 0 ) {
+                    $("#package_classes-select").prop('selectedIndex', 1);
                     updatePackageClassCheckboxes();
-                    if (0 < value.indexOf("package_deb")) {document.getElementById("package_class_1_input").checked = true;};
-                    if (0 < value.indexOf("package_rpm")) {document.getElementById("package_class_2_input").checked = true;};
+                    if ( value.indexOf("_deb") > 0 ) {
+                        $("#package_class_1_input").attr("checked",true);
+                    }
+                    if ( value.indexOf("_rpm") > 0 ) {
+                        $("#package_class_2_input").attr("checked",true);
+                    }
                 }
-                if (0 == value.indexOf("package_rpm")) {
-                    $('select').selectedIndex = 2;
+
+                if ( value.indexOf("package_rpm") == 0 ) {
+                    $("#package_classes-select").prop('selectedIndex', 2);
                     updatePackageClassCheckboxes();
-                    if (0 < value.indexOf("package_deb")) {document.getElementById("#package_class_1_input").checked = true;};
-                    if (0 < value.indexOf("package_ipk")) {document.getElementById("#package_class_2_input").checked = true;};
+                    if ( value.indexOf("_deb") > 0 ) {
+                        $("#package_class_1_input").attr("checked",true);
+                    }
+                    if ( value.indexOf("_ipk") > 0 ) {
+                        $("#package_class_2_input").attr("checked",true);
+                    }
                 }
             });
 
