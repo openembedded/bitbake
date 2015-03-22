@@ -125,6 +125,8 @@ def filtered_icon(options, filter):
     for option in options:
         if filter == option[1]:
             return "btn-primary"
+        if ('daterange' == option[1]) and filter.startswith(option[4]):
+            return "btn-primary"
     return ""
 
 @register.filter
@@ -133,6 +135,8 @@ def filtered_tooltip(options, filter):
     """
     for option in options:
         if filter == option[1]:
+            return "Showing only %s"%option[0]
+        if ('daterange' == option[1]) and filter.startswith(option[4]):
             return "Showing only %s"%option[0]
     return ""
 

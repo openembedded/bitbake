@@ -35,7 +35,7 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.http import HttpResponseBadRequest, HttpResponseNotFound
 from django.utils import timezone
 from django.utils.html import escape
-from datetime import timedelta
+from datetime import timedelta, datetime, date
 from django.utils import formats
 from toastergui.templatetags.projecttags import json as jsonfilter
 import json
@@ -278,6 +278,65 @@ def _save_parameters_cookies(response, pagesize, orderby, request):
     response.set_cookie(key='count', value=pagesize, path=request.path)
     response.set_cookie(key='orderby', value=html_parser.unescape(orderby), path=request.path)
     return response
+
+# date range: normalize GUI's dd/mm/yyyy to date object
+def _normalize_input_date(date_str,default):
+    date_str=re.sub('/', '-', date_str)
+    # accept dd/mm/yyyy to d/m/yy
+    try:
+        date_in = datetime.strptime(date_str, "%d-%m-%Y")
+    except ValueError:
+        # courtesy try with two digit year
+        try:
+            date_in = datetime.strptime(date_str, "%d-%m-%y")
+        except ValueError:
+            return default
+    date_in = date_in.replace(tzinfo=default.tzinfo)
+    return date_in
+
+# convert and normalize any received date range filter, for example:
+# "completed_on__gte!completed_on__lt:01/03/2015!02/03/2015_daterange" to
+# "completed_on__gte!completed_on__lt:2015-03-01!2015-03-02"
+def _modify_date_range_filter(filter_string):
+    # was the date range radio button selected?
+    if 0 >  filter_string.find('_daterange'):
+        return filter_string,''
+    # normalize GUI dates to database format
+    filter_string = filter_string.replace('_daterange','').replace(':','!');
+    filter_list = filter_string.split('!');
+    if 4 != len(filter_list):
+        return filter_string
+    today = timezone.localtime(timezone.now())
+    date_id = filter_list[1]
+    date_from = _normalize_input_date(filter_list[2],today)
+    date_to = _normalize_input_date(filter_list[3],today)
+    # swap dates if manually set dates are out of order
+    if  date_to < date_from:
+        date_to,date_from = date_from,date_to
+    # convert to strings, make 'date_to' inclusive by moving to begining of next day
+    date_from_str = date_from.strftime("%Y-%m-%d")
+    date_to_str = (date_to+timedelta(days=1)).strftime("%Y-%m-%d")
+    filter_string=filter_list[0]+'!'+filter_list[1]+':'+date_from_str+'!'+date_to_str
+    daterange_selected = re.sub('__.*','', date_id)
+    return filter_string,daterange_selected
+
+def _add_daterange_context(queryset_all, request, daterange_list):
+    # calculate the exact begining of local today and yesterday
+    today_begin = timezone.localtime(timezone.now())
+    today_begin = date(today_begin.year,today_begin.month,today_begin.day)
+    yesterday_begin = today_begin-timedelta(days=1)
+    # add daterange persistent
+    context_date = {}
+    context_date['last_date_from'] = request.GET.get('last_date_from',timezone.localtime(timezone.now()).strftime("%d/%m/%Y"))
+    context_date['last_date_to'  ] = request.GET.get('last_date_to'  ,context_date['last_date_from'])
+    # calculate the date ranges, avoid second sort for 'created'
+    # fetch the respective max range from the database
+    context_date['daterange_filter']=''
+    for key in daterange_list:
+        queryset_key = queryset_all.order_by(key)
+        context_date['dateMin_'+key]=timezone.localtime(getattr(queryset_key.first(),key)).strftime("%d/%m/%Y")
+        context_date['dateMax_'+key]=timezone.localtime(getattr(queryset_key.last(),key)).strftime("%d/%m/%Y")
+    return context_date,today_begin,yesterday_begin
 
 
 ##
@@ -1868,6 +1927,9 @@ if toastermain.settings.MANAGED:
         # boilerplate code that takes a request for an object type and returns a queryset
         # for that object type. copypasta for all needed table searches
         (filter_string, search_term, ordering_string) = _search_tuple(request, BuildRequest)
+        # post-process any date range filters
+        filter_string,daterange_selected = _modify_date_range_filter(filter_string)
+
         # we don't display in-progress or deleted builds
         queryset_all = buildrequests.exclude(state = BuildRequest.REQ_DELETED)
         queryset_all = queryset_all.select_related("build", "build__project").annotate(Count('brerror'))
@@ -1918,6 +1980,7 @@ if toastermain.settings.MANAGED:
                     'fstypes' : fstypes_map,
                     'search_term' : search_term,
                     'total_count' : queryset_with_search.count(),
+                    'daterange_selected' : daterange_selected,
                 # Specifies the display of columns for the table, appearance in "Edit columns" box, toggling default show/hide, and specifying filters for columns
                     'tablecols' : [
                     {'name': 'Outcome',                                                # column with a single filter
@@ -1956,6 +2019,10 @@ if toastermain.settings.MANAGED:
                     }
             )
 
+        # calculate the exact begining of local today and yesterday
+        context_date,today_begin,yesterday_begin = _add_daterange_context(queryset_all, request, {'created','updated'})
+        context.update(context_date)
+
         context['tablecols'].append(
                     {'name': 'Started on', 'clclass': 'started_on', 'hidden' : 1,      # this is an unchecked box, which hides the column
                      'qhelp': "The date and time you started the build",
@@ -1964,9 +2031,16 @@ if toastermain.settings.MANAGED:
                      'filter' : {'class' : 'created',
                                  'label': 'Show:',
                                  'options' : [
-                                             ("Today's builds" , 'created__gte:'+timezone.now().strftime("%Y-%m-%d"), queryset_all.filter(created__gte=timezone.now()).count()),
-                                             ("Yesterday's builds", 'created__gte:'+(timezone.now()-timedelta(hours=24)).strftime("%Y-%m-%d"), queryset_all.filter(created__gte=(timezone.now()-timedelta(hours=24))).count()),
-                                             ("This week's builds", 'created__gte:'+(timezone.now()-timedelta(days=7)).strftime("%Y-%m-%d"), queryset_all.filter(created__gte=(timezone.now()-timedelta(days=7))).count()),
+                                             ("Today's builds" , 'created__gte:'+today_begin.strftime("%Y-%m-%d"), queryset_all.filter(created__gte=today_begin).count()),
+                                             ("Yesterday's builds",
+                                                 'created__gte!created__lt:'
+                                                     +yesterday_begin.strftime("%Y-%m-%d")+'!'
+                                                     +today_begin.strftime("%Y-%m-%d"),
+                                                 queryset_all.filter(
+                                                     created__gte=yesterday_begin,
+                                                     created__lt=today_begin
+                                                     ).count()),
+                                             ("Build date range", 'daterange', 1, '', 'created'),
                                              ]
                                 }
                     }
@@ -1980,9 +2054,16 @@ if toastermain.settings.MANAGED:
                      'filter' : {'class' : 'updated',
                                  'label': 'Show:',
                                  'options' : [
-                                             ("Today's builds", 'updated__gte:'+timezone.now().strftime("%Y-%m-%d"), queryset_all.filter(updated__gte=timezone.now()).count()),
-                                             ("Yesterday's builds", 'updated__gte:'+(timezone.now()-timedelta(hours=24)).strftime("%Y-%m-%d"), queryset_all.filter(updated__gte=(timezone.now()-timedelta(hours=24))).count()),
-                                             ("This week's builds", 'updated__gte:'+(timezone.now()-timedelta(days=7)).strftime("%Y-%m-%d"), queryset_all.filter(updated__gte=(timezone.now()-timedelta(days=7))).count()),
+                                             ("Today's builds" , 'updated__gte:'+today_begin.strftime("%Y-%m-%d"), queryset_all.filter(updated__gte=today_begin).count()),
+                                             ("Yesterday's builds",
+                                                 'updated__gte!updated__lt:'
+                                                     +yesterday_begin.strftime("%Y-%m-%d")+'!'
+                                                     +today_begin.strftime("%Y-%m-%d"),
+                                                 queryset_all.filter(
+                                                     updated__gte=yesterday_begin,
+                                                     updated__lt=today_begin
+                                                     ).count()),
+                                             ("Build date range", 'daterange', 1, '', 'updated'),
                                              ]
                                 }
                     }
@@ -3280,6 +3361,8 @@ else:
         # boilerplate code that takes a request for an object type and returns a queryset
         # for that object type. copypasta for all needed table searches
         (filter_string, search_term, ordering_string) = _search_tuple(request, Build)
+        # post-process any date range filters
+        filter_string,daterange_selected = _modify_date_range_filter(filter_string)
         queryset_all = Build.objects.exclude(outcome = Build.IN_PROGRESS)
         queryset_with_search = _get_queryset(Build, queryset_all, None, search_term, ordering_string, '-completed_on')
         queryset = _get_queryset(Build, queryset_all, filter_string, search_term, ordering_string, '-completed_on')
@@ -3289,6 +3372,9 @@ else:
 
         # build view-specific information; this is rendered specifically in the builds page, at the top of the page (i.e. Recent builds)
         build_mru = Build.objects.order_by("-started_on")[:3]
+
+        # calculate the exact begining of local today and yesterday, append context
+        context_date,today_begin,yesterday_begin = _add_daterange_context(queryset_all, request, {'started_on','completed_on'})
 
         # set up list of fstypes for each build
         fstypes_map = {};
@@ -3320,6 +3406,7 @@ else:
                     'fstypes' : fstypes_map,
                     'search_term' : search_term,
                     'total_count' : queryset_with_search.count(),
+                    'daterange_selected' : daterange_selected,
                 # Specifies the display of columns for the table, appearance in "Edit columns" box, toggling default show/hide, and specifying filters for columns
                     'tablecols' : [
                     {'name': 'Outcome',                                                # column with a single filter
@@ -3356,12 +3443,19 @@ else:
                      'filter' : {'class' : 'started_on',
                                  'label': 'Show:',
                                  'options' : [
-                                             ("Today's builds" , 'started_on__gte:'+timezone.now().strftime("%Y-%m-%d"), queryset_with_search.filter(started_on__gte=timezone.now()).count()),
-                                             ("Yesterday's builds", 'started_on__gte:'+(timezone.now()-timedelta(hours=24)).strftime("%Y-%m-%d"), queryset_with_search.filter(started_on__gte=(timezone.now()-timedelta(hours=24))).count()),
-                                             ("This week's builds", 'started_on__gte:'+(timezone.now()-timedelta(days=7)).strftime("%Y-%m-%d"), queryset_with_search.filter(started_on__gte=(timezone.now()-timedelta(days=7))).count()),
+                                             ("Today's builds" , 'started_on__gte:'+today_begin.strftime("%Y-%m-%d"), queryset_all.filter(started_on__gte=today_begin).count()),
+                                             ("Yesterday's builds",
+                                                 'started_on__gte!started_on__lt:'
+                                                     +yesterday_begin.strftime("%Y-%m-%d")+'!'
+                                                     +today_begin.strftime("%Y-%m-%d"),
+                                                 queryset_all.filter(
+                                                     started_on__gte=yesterday_begin,
+                                                     started_on__lt=today_begin
+                                                     ).count()),
+                                             ("Build date range", 'daterange', 1, '', 'started_on'),
                                              ]
                                 }
-                    },
+                     },
                     {'name': 'Completed on',
                      'qhelp': "The date and time the build finished",
                      'orderfield': _get_toggle_order(request, "completed_on", True),
@@ -3370,9 +3464,16 @@ else:
                      'filter' : {'class' : 'completed_on',
                                  'label': 'Show:',
                                  'options' : [
-                                             ("Today's builds", 'completed_on__gte:'+timezone.now().strftime("%Y-%m-%d"), queryset_with_search.filter(completed_on__gte=timezone.now()).count()),
-                                             ("Yesterday's builds", 'completed_on__gte:'+(timezone.now()-timedelta(hours=24)).strftime("%Y-%m-%d"), queryset_with_search.filter(completed_on__gte=(timezone.now()-timedelta(hours=24))).count()),
-                                             ("This week's builds", 'completed_on__gte:'+(timezone.now()-timedelta(days=7)).strftime("%Y-%m-%d"), queryset_with_search.filter(completed_on__gte=(timezone.now()-timedelta(days=7))).count()),
+                                             ("Today's builds" , 'completed_on__gte:'+today_begin.strftime("%Y-%m-%d"), queryset_all.filter(completed_on__gte=today_begin).count()),
+                                             ("Yesterday's builds",
+                                                 'completed_on__gte!completed_on__lt:'
+                                                     +yesterday_begin.strftime("%Y-%m-%d")+'!'
+                                                     +today_begin.strftime("%Y-%m-%d"),
+                                                 queryset_all.filter(
+                                                     completed_on__gte=yesterday_begin,
+                                                     completed_on__lt=today_begin
+                                                     ).count()),
+                                             ("Build date range", 'daterange', 1, '', 'completed_on'),
                                              ]
                                 }
                     },
@@ -3432,6 +3533,9 @@ else:
                     },
                     ]
                 }
+
+        # merge daterange values
+        context.update(context_date)
 
         response = render(request, template, context)
         _save_parameters_cookies(response, pagesize, orderby, request)

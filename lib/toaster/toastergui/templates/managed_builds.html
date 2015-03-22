@@ -4,7 +4,24 @@
 {% load projecttags %}
 {% load humanize %}
 
+{% block extraheadcontent %}
+<link rel="stylesheet" href="/static/css/jquery-ui.min.css" type='text/css'>
+<link rel="stylesheet" href="/static/css/jquery-ui.structure.min.css" type='text/css'>
+<link rel="stylesheet" href="/static/css/jquery-ui.theme.min.css" type='text/css'>
+<script src="/static/js/jquery-ui.min.js"></script>
+<script src="/static/js/filtersnippet.js"></script>
+{% endblock %}
+
 {% block pagecontent %}
+
+<script>
+    // initialize the date range controls
+    $(document).ready(function () {
+        date_init('created','{{last_date_from}}','{{last_date_to}}','{{dateMin_created}}','{{dateMax_created}}','{{daterange_selected}}');
+        date_init('updated','{{last_date_from}}','{{last_date_to}}','{{dateMin_updated}}','{{dateMax_updated}}','{{daterange_selected}}');
+    });
+</script>
+
 <div class="row-fluid">
 
   {% include "managed_mrb_section.html" %}
@@ -47,7 +64,7 @@
         {% for buildrequest in objects %}{% if buildrequest.build %}  {% with build=buildrequest.build %} {# if we have a build, just display it #}
         <tr class="data">
             <td class="outcome"><a href="{% url "builddashboard" build.id %}">{%if build.outcome == build.SUCCEEDED%}<i class="icon-ok-sign success"></i>{%elif build.outcome == build.FAILED%}<i class="icon-minus-sign error"></i>{%else%}{%endif%}</a>
-	            {% if build.project %}
+                {% if build.project %}
                         &nbsp; <a href="{% url 'build_artifact' build.id "cookerlog" build.id %}">
                             <i class="icon-download-alt" title="" data-original-title="Download build log"></i>
                         </a>
