@@ -397,12 +397,11 @@ vim: expandtab tabstop=2
      </form>
     </div>
 
-
-    <h3>
+    <h3 ng-if="releases.length > 1">
       Release
       <i class="icon-question-sign get-help heading-help" title="The version of the build system you want to use"></i>
     </h3>
-    <p class="lead" id="change-project-version-opposite">
+    <p ng-if="releases.length > 1" class="lead" id="change-project-version-opposite">
       <span id="project-version">{[project.release.desc]}</span>
       <i id="change-version" class="icon-pencil" ng-click="toggle('#change-project-version')" ></i>
     </p>
