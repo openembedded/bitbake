@@ -120,6 +120,7 @@ select { width: auto; }
 .top-air { margin-top: 40px;}
 .progress { margin-bottom: 0px; }
 .lead .badge { font-size: 18px; font-weight: normal; border-radius: 15px; padding: 9px; }
+.lead ol, .lead ul { padding: 10px 0 0 20px; }
 .lead ol > li, .lead ul > li {
     line-height: 35px;
 }
