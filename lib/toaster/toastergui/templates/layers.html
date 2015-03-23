@@ -9,9 +9,9 @@
 {% block projectinfomain %}
                 <div class="page-header">
                     <h1>
-  {% if request.GET.filter and total_count >  0 or request.GET.search and total_count >  0 %}
-      {{total_count}} layer{{total_count|pluralize}} found
-  {% elif request.GET.filter and total_count ==  0 or request.GET.search and total_count == 0 %}
+  {% if request.GET.filter and objects.paginator.count >  0 or request.GET.search and objects.paginator.count >  0 %}
+      {{objects.paginator.count}} layer{{objects.paginator.count|pluralize}} found
+  {% elif request.GET.filter and objects.paginator.count ==  0 or request.GET.search and objects.paginator.count == 0 %}
       No layers found
   {%else%}
       All compatible layers
@@ -24,6 +24,7 @@
   </div>
 
 {% if objects.paginator.count == 0 %}
+  {% if request.GET.filter or request.GET.search %}
   <div class="row-fluid">
       <div class="alert">
         <form class="no-results input-append" id="searchform">
@@ -33,6 +34,15 @@
         </form>
       </div>
   </div>
+  {% else %}
+    <div class="alert alert-info lead">
+      <p>Toaster has no layer information. To generate layer information you can:</p>
+      <ul>
+       <li><a href="http://www.yoctoproject.org/docs/latest/toaster-manual/toaster-manual.html#layer-source">Configure a layer source</a></li>
+       <li><a href="{% url 'importlayer' %}">Import a layer</a></li>
+      </ul>
+    </div>
+  {% endif %}
 
 {% else %}
 

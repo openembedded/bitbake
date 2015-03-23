@@ -36,14 +36,12 @@
       </div>
   </div>
   {% else %}
-    <div class="alert alert-info">
-      <p class="lead">
-       Toaster has no target information. To generate target information you can:<br/>
-       <ul class="lead">
-       <li style="margin-top: 10px"> <a href="https://wiki.yoctoproject.org/wiki/Setting_up_a_hosted_managed_mode_for_Toaster#LayerSources">Configure a layer source</a></li>
-       <li style="margin-top: 10px">  <a href="{% url 'importlayer' %}">Import a layer</a></li>
-       </ul>
-      </p>
+    <div class="alert alert-info lead">
+      <p>Toaster has no target information. To generate target information you can:</p>
+      <ul>
+       <li><a href="http://www.yoctoproject.org/docs/latest/toaster-manual/toaster-manual.html#layer-source">Configure a layer source</a></li>
+       <li><a href="{% url 'importlayer' %}">Import a layer</a>, then run a build</li>
+      </ul>
     </div>
   {% endif %}
 

@@ -130,10 +130,19 @@ select { width: auto; }
 .task-name { margin-left: 7px; }
 .icon-hand-right {color: #CCCCCC; }
 .help-inline { margin: 5px; }
+.dashboard-section { background-color: transparent; }
+
+/* styles for landing page - analysis mode */
 .hero-unit { margin: 20px 0 30px; }
 .hero-unit > .close { font-size:40px; }
 .hero-actions { margin-top: 30px; }
-.dashboard-section { background-color: transparent; }
+
+/* styles for landing page - build mode */
+.hero-unit p { line-height: 25px; }
+.hero-unit p, .hero-unit .btn-large { margin-top: 15px; }
+.hero-unit ul { margin-top: 20px; }
+.hero-unit li { line-height: 30px; }
+.hero-unit img { background-color: #eee; margin-top: 15px; }
 
 /* make tables Chrome-happy (me, not so much) */
 #otable { table-layout: fixed; word-wrap: break-word; }

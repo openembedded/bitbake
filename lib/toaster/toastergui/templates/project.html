@@ -15,22 +15,22 @@ vim: expandtab tabstop=2
 <script src="{% static "js/angular-sanitize.min.js" %}"></script>
 <script src="{% static "js/ui-bootstrap-tpls-0.11.0.js" %}"></script>
 
-
 {% if lvs_nos == 0 %}
-<div class="alert alert-info">
-			<p>
-			Toaster has no layer information; without layer information, you cannot run builds.<br/> To generate layer information you can:
-			</p>
-			<ul>
-			 <li> <a href="https://wiki.yoctoproject.org/wiki/Setting_up_a_hosted_managed_mode_for_Toaster#LayerSources">Configure a layer source</a>
-			 </li>
-			 <li> <a href="{% url 'importlayer' %}">Import a layer</a>
-			</ul>
+
+  <div class="page-header">
+    <h1> {{ project.name }} </h1>
+  </div>
+  <div class="alert alert-info lead">
+	  <p>Toaster has no layer information. Without layer information, you cannot run builds. To generate layer information you can:</p>
+		<ul>
+			 <li> <a href="http://www.yoctoproject.org/docs/latest/toaster-manual/toaster-manual.html#layer-source">Configure a layer source</a></li>
+			 <li> <a href="{% url 'importlayer' %}">Import a layer</a></li>
+		</ul>
 </div>
 
 {%else%}
-<div id="main" role="main" ng-app="project" ng-controller="prjCtrl" class="top-padded">
 
+<div id="main" role="main" ng-app="project" ng-controller="prjCtrl" class="top-padded">
 
   <!-- project name -->
   <div class="page-header">
