@@ -334,8 +334,14 @@ def _add_daterange_context(queryset_all, request, daterange_list):
     context_date['daterange_filter']=''
     for key in daterange_list:
         queryset_key = queryset_all.order_by(key)
-        context_date['dateMin_'+key]=timezone.localtime(getattr(queryset_key.first(),key)).strftime("%d/%m/%Y")
-        context_date['dateMax_'+key]=timezone.localtime(getattr(queryset_key.last(),key)).strftime("%d/%m/%Y")
+        try:
+            context_date['dateMin_'+key]=timezone.localtime(getattr(queryset_key.first(),key)).strftime("%d/%m/%Y")
+        except AttributeError:
+            context_date['dateMin_'+key]=timezone.localtime(timezone.now())
+        try:
+            context_date['dateMax_'+key]=timezone.localtime(getattr(queryset_key.last(),key)).strftime("%d/%m/%Y")
+        except AttributeError:
+            context_date['dateMax_'+key]=timezone.localtime(timezone.now())
     return context_date,today_begin,yesterday_begin
 
 
