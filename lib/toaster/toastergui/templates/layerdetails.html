@@ -84,7 +84,7 @@
             <a data-toggle="tab" href="#information" id="details-tab">Layer details</a>
           </li>
           <li>
-            <a data-toggle="tab" href="#targets" id="targets-tab">Targets ({{total_targets}})</a>
+            <a data-toggle="tab" href="#targets" id="targets-tab">Recipes ({{total_targets}})</a>
           </li>
           <li>
             <a data-toggle="tab" href="#machines" id="machines-tab">Machines ({{total_machines}})</a>
@@ -190,8 +190,8 @@
                 <div name="targets" id="targets" class="tab-pane">
                   {% if total_targets == 0 %}
                   <div class="alert alert-info">
-                    <p>Toaster does not have target information for the <strong> {{layerversion.layer.name}} </strong> layer.</p>
-		    <p>Toaster learns about layers when you build them. If this layer provides any targets, they will be listed here after you build the <strong> {{layerversion.layer.name}} </strong> layer.</p>
+                    <p>Toaster does not have recipe information for the <strong> {{layerversion.layer.name}} </strong> layer.</p>
+		    <p>Toaster learns about layers when you build them. If this layer provides any recipes, they will be listed here after you build the <strong> {{layerversion.layer.name}} </strong> layer.</p>
                   </div>
                   {% else %}
 
@@ -210,7 +210,7 @@
                       <form class="navbar-search input-append pull-left">
                     {% endif %}
 
-                      <input type="text" id="target-search" name="targets_search" placeholder="Search targets" class="input-xlarge" value="{{request.GET.targets_search}}">
+                      <input type="text" id="target-search" name="targets_search" placeholder="Search recipes" class="input-xlarge" value="{{request.GET.targets_search}}">
                         {% if request.GET.targets_search %}
                         <a class="add-on btn target-search-clear">
                           <i class="icon-remove"></i>
@@ -253,17 +253,17 @@
                     <tr>
                       <th>
                           <i class="icon-question-sign get-help" title="Information about a single piece of software, including where to download the source, configuration options, how to compile the source files and how to package the compiled output"></i>
-                          Target
+                          Recipe
                           {% if request.GET.targets_search %}
                             <span class="badge badge-info">{{targets.paginator.count}}</span>
                           {% endif %}
                         </th>
                         <th>
                           <i class="icon-question-sign get-help" title="The recipe version and revision"></i>
-                          Target version
+                          Recipe version
                         </th>
                         <th class="span4">Summary</th>
-                        <th class="span2">Build target</th>
+                        <th class="span2">Build recipe</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -277,7 +277,7 @@
                         </td>
                         <td>{{target.version}}</td>
                         <td>{{target.summary}}</td>
-                        <td><button class="btn btn-block build-target-btn" data-target-name="{{target.name}}" {% if layer_in_project == 0 %}disabled="disabled"{% endif %} >Build target</button></td>
+                        <td><button class="btn btn-block build-target-btn" data-target-name="{{target.name}}" {% if layer_in_project == 0 %}disabled="disabled"{% endif %} >Build recipe</button></td>
                       </tr>
                       {% endfor %}
                     </tbody>
