@@ -3,20 +3,20 @@
 {% load humanize %}
 
 {% block localbreadcrumb %}
-<li>All compatible targets</li>
+<li>All compatible recipes</li>
 {% endblock %}
 
 {% block projectinfomain %}
                 <div class="page-header">
                     <h1>
   {% if request.GET.filter and objects.paginator.count >  0 or request.GET.search and objects.paginator.count >  0 %}
-      {{objects.paginator.count}} target{{objects.paginator.count|pluralize}} found
+      {{objects.paginator.count}} recipe{{objects.paginator.count|pluralize}} found
   {% elif request.GET.filter and objects.paginator.count ==  0 or request.GET.search and objects.paginator.count == 0 %}
-      No targets found
+      No recipes found
   {%else%}
-      All compatible targets
+      All compatible recipes
   {%endif%}
-                        <i class="icon-question-sign get-help heading-help" title="This page lists all the targets compatible with the release selected for this project, which is {{project.release.description}}"></i>
+                        <i class="icon-question-sign get-help heading-help" title="This page lists all the recipes compatible with the release selected for this project, which is {{project.release.description}}"></i>
                      </h1>
                 </div>
 
@@ -31,13 +31,13 @@
         <form class="no-results input-append" id="searchform">
             <input id="search" name="search" class="input-xxlarge" type="text" value="{{request.GET.search}}"/>{% if request.GET.search %}<a href="javascript:$('#search').val('');searchform.submit()" class="add-on btn" tabindex="-1"><i class="icon-remove"></i></a>{% endif %}
             <button class="btn" type="submit" value="Search">Search</button>
-            <button class="btn btn-link" onclick="javascript:$('#search').val('');searchform.submit()">Show all targets</button>
+            <button class="btn btn-link" onclick="javascript:$('#search').val('');searchform.submit()">Show all recipes</button>
         </form>
       </div>
   </div>
   {% else %}
     <div class="alert alert-info lead">
-      <p>Toaster has no target information. To generate target information you can:</p>
+      <p>Toaster has no recipe information. To generate recipe information you can:</p>
       <ul>
        <li><a href="http://www.yoctoproject.org/docs/latest/toaster-manual/toaster-manual.html#layer-source">Configure a layer source</a></li>
        <li><a href="{% url 'importlayer' %}">Import a layer</a>, then run a build</li>
@@ -78,7 +78,7 @@
         <td class="add-layer" value="{{o.pk}}" layerversion_id="{{o.preffered_layerversion.pk}}">
             <div id="layer-tooltip-{{o.pk}}" style="display: none; font-size: 11px; line-height: 1.3;" class="tooltip-inner">layer was modified</div>
             <a href="{% url 'project' project.id %}#/targetbuild={{o.name}}" id="target-build-{{o.pk}}" class="btn btn-block remove-layer" style="display:none;" >
-                Build target
+                Build recipe
             </a>
             <a id="layer-add-{{o.pk}}" class="btn btn-block" style="display:none;" href="javascript:layerAdd({{o.preffered_layerversion.pk}}, '{{o.preffered_layerversion.layer.name}}', '{%url 'layerdetails' o.preffered_layerversion.pk%}', {{o.pk}})" >
                 <i class="icon-plus"></i>

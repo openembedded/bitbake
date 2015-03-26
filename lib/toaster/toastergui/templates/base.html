@@ -100,9 +100,9 @@
                     <p><a href="{% if project.id %}{% url 'project' project.id %}{% endif %}">View project configuration</a></p>
                   </div>
                   <li id="targets-form">
-                    <h6>Target(s):</h6>
+                    <h6>Recipe(s):</h6>
                     <form>
-                      <input type="text" class="input-xlarge" id="build-target-input" placeholder="Type a target name" autocomplete="off" data-minLength="1" data-autocomplete="off" data-provide="typeahead" />
+                      <input type="text" class="input-xlarge" id="build-target-input" placeholder="Type a recipe name" autocomplete="off" data-minLength="1" data-autocomplete="off" data-provide="typeahead" />
                       <div>
                         <a class="btn btn-primary" id="build-button" disabled="disabled" data-project-id="{{project.id}}">Build</a>
                       </div>
