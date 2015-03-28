@@ -1242,6 +1242,8 @@ class RunQueue:
                 prevh = __find_md5__.search(latestmatch).group(0)
                 output = bb.siggen.compare_sigfiles(latestmatch, match, recursecb)
                 bb.plain("\nTask %s:%s couldn't be used from the cache because:\n  We need hash %s, closest matching task was %s\n  " % (pn, taskname, h, prevh) + '\n  '.join(output))
+            else:
+                bb.plain("Error, can't find multiple tasks at divergence point? Was there a previously run task?")
 
 class RunQueueExecute:
 
