@@ -80,7 +80,7 @@
             {% endwith %}
         </td>
         <!-- Recipe file -->
-        <td class="recipe_file">{{recipe.file_path}}</td>
+        <td class="recipe_file">{{recipe.get_local_path}}</td>
         <!-- Section -->
         <td class="recipe_section">{{recipe.section}}</td>
         <!-- License -->

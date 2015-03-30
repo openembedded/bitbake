@@ -557,7 +557,13 @@ class Recipe(models.Model):
 
     def get_local_path(self):
         if settings.MANAGED and self.layer_version.build.project is not None:
-            return self.file_path[len(self.layer_version.layer.local_path)+1:]
+            # strip any tag prefixes ('virtual:native:')
+            layer_path=self.layer_version.layer.local_path.split(":")[-1]
+            recipe_path=self.file_path.split(":")[-1]
+            if 0 == recipe_path.find(layer_path):
+                return recipe_path[len(layer_path)+1:]
+            else:
+                return recipe_path
 
         return self.file_path
 
