@@ -640,17 +640,25 @@ class LayerSource(models.Model):
         raise Exception("Abstract, update() must be implemented by all LayerSource-derived classes (object is %s)" % str(vars(self)))
 
     def save(self, *args, **kwargs):
-        if isinstance(self, LocalLayerSource):
-            self.sourcetype = LayerSource.TYPE_LOCAL
-        elif isinstance(self, LayerIndexLayerSource):
-            self.sourcetype = LayerSource.TYPE_LAYERINDEX
-        elif isinstance(self, ImportedLayerSource):
-            self.sourcetype = LayerSource.TYPE_IMPORTED
+        if self.sourcetype == LayerSource.TYPE_LOCAL:
+            self.__class__ = LocalLayerSource
+        elif self.sourcetype == LayerSource.TYPE_LAYERINDEX:
+            self.__class__ = LayerIndexLayerSource
+        elif self.sourcetype == LayerSource.TYPE_IMPORTED:
+            self.__class__ = ImportedLayerSource
         elif self.sourcetype == None:
             raise Exception("Unknown LayerSource-derived class. If you added a new layer source type, fill out all code stubs.")
         return super(LayerSource, self).save(*args, **kwargs)
 
     def get_object(self):
+        # preset an un-initilized object
+        if None == self.name:
+            self.name=""
+        if None == self.apiurl:
+            self.apiurl=""
+        if None == self.sourcetype:
+            self.sourcetype=LayerSource.TYPE_LOCAL
+
         if self.sourcetype == LayerSource.TYPE_LOCAL:
             self.__class__ = LocalLayerSource
         elif self.sourcetype == LayerSource.TYPE_LAYERINDEX:
