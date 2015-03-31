@@ -3330,7 +3330,10 @@ if toastermain.settings.MANAGED:
                     },
                     ]
             }
-        return render(request, template, context)
+
+        response = render(request, template, context)
+        _save_parameters_cookies(response, pagesize, orderby, request)
+        return response
 
     def buildrequestdetails(request, pid, brid):
         template = "buildrequestdetails.html"
