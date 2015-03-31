@@ -106,7 +106,7 @@ class BuildRequest(models.Model):
         (REQ_ARCHIVE, "archive"),
     )
 
-    search_allowed_fields = ("brtarget__target", "build__project__name", "build__machine")
+    search_allowed_fields = ("brtarget__target", "build__project__name")
 
     project     = models.ForeignKey(Project)
     build       = models.OneToOneField(Build, null = True)     # TODO: toasterui should set this when Build is created
