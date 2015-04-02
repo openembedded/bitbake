@@ -395,9 +395,8 @@ class Git(FetchMethod):
         return ud.revisions[name]
 
     def checkstatus(self, ud, d):
-        fetchcmd = "%s ls-remote %s" % (ud.basecmd, ud.url)
         try:
-            runfetchcmd(fetchcmd, d, quiet=True)
+            self._lsremote(ud, d, "")
             return True
         except FetchError:
             return False
