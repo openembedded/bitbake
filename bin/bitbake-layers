@@ -501,7 +501,13 @@ skipped recipes will also be listed, with a " (skipped)" suffix.
 
             if len(allproviders[p]) > 1 or not show_multi_provider_only:
                 pref = preferred_versions[p]
-                preffile = bb.cache.Cache.virtualfn2realfn(pref[1])[0]
+                realfn = bb.cache.Cache.virtualfn2realfn(pref[1])
+                preffile = realfn[0]
+                # We only display once per recipe, we should prefer non extended versions of the
+                # recipe if present (so e.g. in OpenEmbedded, openssl rather than nativesdk-openssl
+                # which would otherwise sort first).
+                if realfn[1] and realfn[0] in self.bbhandler.cooker.recipecache.pkg_fn:
+                    continue
                 if preffile not in preffiles:
                     preflayer = self.get_file_layer(preffile)
                     multilayer = False
