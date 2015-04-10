@@ -176,9 +176,23 @@ class BBCooker:
         bb.parse.update_cache(event.path)
         self.parsecache_valid = False
 
-    def add_filewatch(self, deps):
+    def add_filewatch(self, deps, watcher=None):
+        if not watcher:
+            watcher = self.watcher
         for i in deps:
-            self.watcher.add_watch(i[0], self.watchmask, rec=True)
+            f = i[0]
+            while True:
+                # We try and add watches for files that don't exist but if they did, would influence
+                # the parser. The parent directory of these files may not exist, in which case we need 
+                # to watch any parent that does exist for changes.
+                try:
+                    watcher.add_watch(f, self.watchmask, quiet=False)
+                    break
+                except pyinotify.WatchManagerError as e:
+                    if 'ENOENT' in str(e):
+                        f = os.path.dirname(f)
+                        continue
+                    raise
 
     def sigterm_exception(self, signum, stackframe):
         if signum == signal.SIGTERM:
@@ -1342,8 +1356,7 @@ class BBCooker:
             (filelist, masked) = self.collection.collect_bbfiles(self.data, self.event_data)
 
             self.data.renameVar("__depends", "__base_depends")
-            for i in self.data.getVar("__base_depends"):
-                self.wdd = self.configwatcher.add_watch(i[0], self.watchmask, rec=True)
+            self.add_filewatch(self.data.getVar("__base_depends"), self.configwatcher)
 
             self.parser = CookerParser(self, filelist, masked)
             self.parsecache_valid = True
