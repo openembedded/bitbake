@@ -180,7 +180,10 @@ class BBCooker:
         if not watcher:
             watcher = self.watcher
         for i in deps:
-            f = i[0]
+            f = os.path.dirname(i[0])
+            if f in watcher.bbseen:
+                continue
+            watcher.bbseen.append(f)
             while True:
                 # We try and add watches for files that don't exist but if they did, would influence
                 # the parser. The parent directory of these files may not exist, in which case we need 
