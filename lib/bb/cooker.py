@@ -39,6 +39,7 @@ from bb import utils, data, parse, event, cache, providers, taskdata, runqueue
 import Queue
 import signal
 import prserv.serv
+import pyinotify
 
 logger      = logging.getLogger("BitBake")
 collectlog  = logging.getLogger("BitBake.Collection")
@@ -120,7 +121,18 @@ class BBCooker:
 
         self.configuration = configuration
 
+        self.configwatcher = pyinotify.WatchManager()
+        self.confignotifier = pyinotify.Notifier(self.configwatcher, self.config_notifications)
+        self.watchmask = pyinotify.IN_CLOSE_WRITE | pyinotify.IN_CREATE | pyinotify.IN_DELETE | \
+                         pyinotify.IN_DELETE_SELF | pyinotify.IN_MODIFY | pyinotify.IN_MOVE_SELF | \
+                         pyinotify.IN_MOVED_FROM | pyinotify.IN_MOVED_TO 
+        self.watcher = pyinotify.WatchManager()
+        self.notifier = pyinotify.Notifier(self.watcher, self.notifications)
+
+
         self.initConfigurationData()
+        self.baseconfig_valid = True
+        self.parsecache_valid = False
 
         # Take a lock so only one copy of bitbake can run against a given build
         # directory at a time
@@ -155,6 +167,18 @@ class BBCooker:
         signal.signal(signal.SIGTERM, self.sigterm_exception)
         # Let SIGHUP exit as SIGTERM
         signal.signal(signal.SIGHUP, self.sigterm_exception)
+
+    def config_notifications(self, event):
+        bb.parse.update_cache(event.path)
+        self.baseconfig_valid = False
+
+    def notifications(self, event):
+        bb.parse.update_cache(event.path)
+        self.parsecache_valid = False
+
+    def add_filewatch(self, deps):
+        for i in deps:
+            self.watcher.add_watch(i[0], self.watchmask, rec=True)
 
     def sigterm_exception(self, signum, stackframe):
         if signum == signal.SIGTERM:
@@ -1292,6 +1316,18 @@ class BBCooker:
             raise bb.BBHandledException()
 
         if self.state != state.parsing:
+            for n in [self.confignotifier, self.notifier]:
+                if n.check_events(timeout=0):
+                    # read notified events and enqeue them
+                    n.read_events()
+                n.process_events()
+            if not self.baseconfig_valid:
+                logger.debug(1, "Reloading base configuration data")
+                self.initConfigurationData()
+                self.baseconfig_valid = True
+                self.parsecache_valid = False
+
+        if self.state != state.parsing and not self.parsecache_valid:
             self.parseConfiguration ()
             if CookerFeatures.SEND_SANITYEVENTS in self.featureset:
                 bb.event.fire(bb.event.SanityCheck(False), self.data)
@@ -1306,9 +1342,13 @@ class BBCooker:
             (filelist, masked) = self.collection.collect_bbfiles(self.data, self.event_data)
 
             self.data.renameVar("__depends", "__base_depends")
+            for i in self.data.getVar("__base_depends"):
+                self.wdd = self.configwatcher.add_watch(i[0], self.watchmask, rec=True)
 
             self.parser = CookerParser(self, filelist, masked)
-            self.state = state.parsing
+            self.parsecache_valid = True
+
+        self.state = state.parsing
 
         if not self.parser.parse_next():
             collectlog.debug(1, "parsing complete")
@@ -1870,7 +1910,7 @@ class CookerParser(object):
                 self.skipped += 1
                 self.cooker.skiplist[virtualfn] = SkippedPackage(info_array[0])
             self.bb_cache.add_info(virtualfn, info_array, self.cooker.recipecache,
-                                        parsed=parsed)
+                                        parsed=parsed, watcher = self.cooker.add_filewatch)
         return True
 
     def reparse(self, filename):

@@ -623,9 +623,12 @@ class Cache(object):
     def mtime(cachefile):
         return bb.parse.cached_mtime_noerror(cachefile)
 
-    def add_info(self, filename, info_array, cacheData, parsed=None):
+    def add_info(self, filename, info_array, cacheData, parsed=None, watcher=None):
         if isinstance(info_array[0], CoreRecipeInfo) and (not info_array[0].skipped):
             cacheData.add_from_recipeinfo(filename, info_array)
+
+            if watcher:
+                watcher(info_array[0].file_depends)
 
         if not self.has_cache:
             return
