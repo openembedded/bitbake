@@ -241,6 +241,9 @@ class XMLRPCServer(SimpleXMLRPCServer, BaseImplServer):
                         del self._idlefuns[function]
                     elif retval is True:
                         nextsleep = 0
+                    elif isinstance(retval, float):
+                        if (retval < nextsleep):
+                            nextsleep = retval
                     else:
                         fds = fds + retval
                 except SystemExit:
