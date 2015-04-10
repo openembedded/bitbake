@@ -133,6 +133,19 @@ class BBCooker:
 
 
         self.initConfigurationData()
+
+        self.inotify_modified_files = []
+
+        def _process_inotify_updates(server, notifier_list, abort):
+            for n in notifier_list:
+                if n.check_events(timeout=0):
+                    # read notified events and enqeue them
+                    n.read_events()
+                    n.process_events()
+            return True
+
+        self.configuration.server_register_idlecallback(_process_inotify_updates, [self.confignotifier, self.notifier])
+
         self.baseconfig_valid = True
         self.parsecache_valid = False
 
@@ -171,11 +184,13 @@ class BBCooker:
         signal.signal(signal.SIGHUP, self.sigterm_exception)
 
     def config_notifications(self, event):
-        bb.parse.update_cache(event.path)
+        if not event.path in self.inotify_modified_files:
+            self.inotify_modified_files.append(event.path)
         self.baseconfig_valid = False
 
     def notifications(self, event):
-        bb.parse.update_cache(event.path)
+        if not event.path in self.inotify_modified_files:
+            self.inotify_modified_files.append(event.path)
         self.parsecache_valid = False
 
     def add_filewatch(self, deps, watcher=None):
@@ -1336,11 +1351,12 @@ class BBCooker:
             raise bb.BBHandledException()
 
         if self.state != state.parsing:
-            for n in [self.confignotifier, self.notifier]:
-                if n.check_events(timeout=0):
-                    # read notified events and enqeue them
-                    n.read_events()
-                n.process_events()
+
+            # reload files for which we got notifications
+            for p in self.inotify_modified_files:
+                bb.parse.update_cache(p)
+            self.inotify_modified_files = []
+
             if not self.baseconfig_valid:
                 logger.debug(1, "Reloading base configuration data")
                 self.initConfigurationData()
