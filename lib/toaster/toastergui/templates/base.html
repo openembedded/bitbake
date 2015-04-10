@@ -26,20 +26,27 @@
   libtoaster.debug = true;
  </script>
 {% endif %}
+<script>
+  libtoaster.ctx = {
+    projectId : {{project.id|default:'undefined'}},
+    xhrDataTypeaheadUrl : "{% url 'xhr_datatypeahead' %}",
+    {% if project.id %}
+    xhrProjectEditUrl : "{% url 'xhr_projectedit' project.id %}",
+    projectPageUrl : "{% url 'project' project.id %}",
+    projectName : "{{project.name}}",
+    {% endif %}
+  };
+</script>
 <script src="{% static 'js/base.js' %}"></script>
 {%if MANAGED %}
 <script>
   $(document).ready(function () {
     /* Vars needed for base.js */
     var ctx = {};
-    ctx.xhrDataTypeaheadUrl = "{% url 'xhr_datatypeahead' %}";
     ctx.projectBuildUrl = "{% url 'xhr_build' %}";
-    ctx.projectPageUrl = "{% url 'base_project' %}";
+    ctx.projectBasePageUrl = "{% url 'base_project' %}";
     ctx.projectInfoUrl = "{% url 'xhr_projectinfo' %}";
     ctx.numProjects = {{projects|length}};
-    {% if project %}
-      ctx.projectId = {{project.id}};
-    {% endif %}
     ctx.currentUrl = "{{request.path|escapejs}}";
 
     basePageInit(ctx);

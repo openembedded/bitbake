@@ -13,12 +13,8 @@
                   <script>
                     $(document).ready(function (){
                       var ctx = {
-                        xhrDataTypeaheadUrl : "{% url 'xhr_datatypeahead' %}",
                         layerDetailsUrl : "{% url 'base_layerdetails' %}",
                         xhrImportLayerUrl : "{% url 'xhr_importlayer' %}",
-                        xhrEditProjectUrl : "{% url 'xhr_projectedit' project.id %}",
-                        projectPageUrl : "{% url 'project' project.id %}",
-                        projectId : {{project.id}}
                       };
 
                       try {

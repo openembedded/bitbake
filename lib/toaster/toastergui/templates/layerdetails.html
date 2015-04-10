@@ -18,12 +18,7 @@
     var ctx = {
       projectBuildUrl : "{% url 'xhr_build' %}",
       layerDetailsUrl : "{% url 'base_layerdetails' %}",
-      projectPageUrl : "{% url 'project' project.id %}",
-      xhrEditProjectUrl : "{% url 'xhr_projectedit' project.id %}",
-      xhrDataTypeaheadUrl : "{% url 'xhr_datatypeahead' %}",
       xhrUpdateLayerUrl : "{% url 'xhr_updatelayer' %}",
-      projectId : {{project.id}},
-      projectName : "{{project.name}}",
       numTargets : {{total_targets}},
       numMachines: {{machines|length}},
       layerVersion : {
