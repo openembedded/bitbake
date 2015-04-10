@@ -122,11 +122,13 @@ class BBCooker:
         self.configuration = configuration
 
         self.configwatcher = pyinotify.WatchManager()
+        self.configwatcher.bbseen = []
         self.confignotifier = pyinotify.Notifier(self.configwatcher, self.config_notifications)
         self.watchmask = pyinotify.IN_CLOSE_WRITE | pyinotify.IN_CREATE | pyinotify.IN_DELETE | \
                          pyinotify.IN_DELETE_SELF | pyinotify.IN_MODIFY | pyinotify.IN_MOVE_SELF | \
                          pyinotify.IN_MOVED_FROM | pyinotify.IN_MOVED_TO 
         self.watcher = pyinotify.WatchManager()
+        self.watcher.bbseen = []
         self.notifier = pyinotify.Notifier(self.watcher, self.notifications)
 
 
@@ -180,7 +182,7 @@ class BBCooker:
         if not watcher:
             watcher = self.watcher
         for i in deps:
-            f = os.path.dirname(i[0])
+            f = i[0]
             if f in watcher.bbseen:
                 continue
             watcher.bbseen.append(f)
@@ -194,6 +196,7 @@ class BBCooker:
                 except pyinotify.WatchManagerError as e:
                     if 'ENOENT' in str(e):
                         f = os.path.dirname(f)
+                        watcher.bbseen.append(f)
                         continue
                     raise
 
