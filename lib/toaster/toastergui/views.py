@@ -1554,7 +1554,7 @@ dependencies.  The return value is a dictionary consisting of two other
 lists: a list of 'runtime' dependencies, that is, having RDEPENDS
 values in source package's recipe, and a list of other dependencies, that is
 the list of possible recipe variables as found in OTHER_DEPENDS_BASE plus
-the RRECOMENDS or TRECOMENDS value.
+the RRECOMMENDS or TRECOMMENDS value.
 The lists are built in the sort order specified for the package runtime
 dependency views.
 """
