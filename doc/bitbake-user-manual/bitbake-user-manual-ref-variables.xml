@@ -872,7 +872,7 @@
                     that run on the target <filename>MACHINE</filename>;
                     "nativesdk", which targets the SDK machine instead of
                     <filename>MACHINE</filename>; and "mulitlibs" in the form
-                    "<filename>multilib:&lt;multilib_name&gt;</filename>".
+                    "<filename>multilib:</filename><replaceable>multilib_name</replaceable>".
                 </para>
 
                 <para>
@@ -884,7 +884,7 @@
                     metadata:
                     <literallayout class='monospaced'>
      BBCLASSEXTEND =+ "native nativesdk"
-     BBCLASSEXTEND =+ "multilib:&lt;multilib_name&gt;"
+     BBCLASSEXTEND =+ "multilib:<replaceable>multilib_name</replaceable>"
                     </literallayout>
                 </para>
              </glossdef>
@@ -1091,9 +1091,9 @@
                     Set the variable as you would any environment variable
                     and then run BitBake:
                     <literallayout class='monospaced'>
-     $ BBPATH="&lt;build_directory&gt;"
+     $ BBPATH="<replaceable>build_directory</replaceable>"
      $ export BBPATH
-     $ bitbake &lt;target&gt;
+     $ bitbake <replaceable>target</replaceable>
                     </literallayout>
                 </para>
             </glossdef>
@@ -1888,7 +1888,7 @@
                     Here is the general syntax to specify versions with
                     the <filename>RDEPENDS</filename> variable:
                     <literallayout class='monospaced'>
-     RDEPENDS_${PN} = "&lt;package&gt; (&lt;operator&gt; &lt;version&gt;)"
+     RDEPENDS_${PN} = "<replaceable>package</replaceable> (<replaceable>operator</replaceable> <replaceable>version</replaceable>)"
                     </literallayout>
                     For <filename>operator</filename>, you can specify the
                     following:
@@ -1954,7 +1954,7 @@
                     Here is the general syntax to specify versions with
                     the <filename>RRECOMMENDS</filename> variable:
                     <literallayout class='monospaced'>
-     RRECOMMENDS_${PN} = "&lt;package&gt; (&lt;operator&gt; &lt;version&gt;)"
+     RRECOMMENDS_${PN} = "<replaceable>package</replaceable> (<replaceable>operator</replaceable> <replaceable>version</replaceable>)"
                     </literallayout>
                     For <filename>operator</filename>, you can specify the
                     following:

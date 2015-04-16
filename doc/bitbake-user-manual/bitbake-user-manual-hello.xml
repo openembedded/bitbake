@@ -221,7 +221,7 @@
                 <para>From your shell, enter the following commands to set and
                 export the <filename>BBPATH</filename> variable:
                 <literallayout class='monospaced'>
-     $ BBPATH="&lt;projectdirectory&gt;"
+     $ BBPATH="<replaceable>projectdirectory</replaceable>"
      $ export BBPATH
                 </literallayout>
                 Use your actual project directory in the command.

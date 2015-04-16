@@ -157,8 +157,8 @@
             <filename>SRC_URI</filename> variable with the appropriate
             varflags as follows:
             <literallayout class='monospaced'>
-     SRC_URI[md5sum] = "value"
-     SRC_URI[sha256sum] = "value"
+     SRC_URI[md5sum] = "<replaceable>value</replaceable>"
+     SRC_URI[sha256sum] = "<replaceable>value</replaceable>"
             </literallayout>
             You can also specify the checksums as parameters on the
             <filename>SRC_URI</filename> as shown below:
@@ -646,13 +646,19 @@
                         </para></listitem>
                     <listitem><para><emphasis><filename>module</filename></emphasis>:
                         The module, which must include the
-                        prepending "/" character, in the selected VOB
-                        The <filename>module</filename> and <filename>vob</filename>
-                        options are combined to create the following load rule in
-                        the view config spec:
-                        <literallayout class='monospaced'>
-     load &lt;vob&gt;&lt;module&gt;
-                        </literallayout>
+                        prepending "/" character, in the selected VOB.
+                        <note>
+                            The <filename>module</filename> and <filename>vob</filename>
+                            options are combined to create the <filename>load</filename> rule in
+                            the view config spec.
+                            As an example, consider the <filename>vob</filename> and 
+                            <filename>module</filename> values from the 
+                            <filename>SRC_URI</filename> statement at the start of this section.
+                            Combining those values results in the following:
+                            <literallayout class='monospaced'>
+     load /example_vob/example_module
+                            </literallayout>
+                        </note>
                         </para></listitem>
                     <listitem><para><emphasis><filename>proto</filename></emphasis>:
                         The protocol, which can be either <filename>http</filename> or

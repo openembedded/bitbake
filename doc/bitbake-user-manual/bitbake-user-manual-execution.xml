@@ -21,7 +21,7 @@
         The execution process is launched using the following command
         form:
         <literallayout class='monospaced'>
-     $ bitbake &lt;target&gt;
+     $ bitbake <replaceable>target</replaceable>
         </literallayout>
         For information on the BitBake command and its options,
         see
@@ -37,14 +37,16 @@
             </para>
 
             <para>
-                A common way to determine this value for your build host is to run:
+                A common method to determine this value for your build host is to run
+                the following:
                 <literallayout class='monospaced'>
      $ grep processor /proc/cpuinfo
                 </literallayout>
-                and count the number of processors displayed. Note that the number of
-                processors will take into account hyper-threading, so that a quad-core
-                build host with hyper-threading will most likely show eight processors,
-                which is the value you would then assign to that variable.
+                This command returns the number of processors, which takes into 
+                account hyper-threading. 
+                Thus, a quad-core build host with hyper-threading most likely 
+                shows eight processors, which is the value you would then assign to
+                <filename>BB_NUMBER_THREADS</filename>.
             </para>
 
             <para>
@@ -782,13 +784,13 @@
             make some dependency and hash information available to the build.
             This information includes:
             <itemizedlist>
-                <listitem><para><filename>BB_BASEHASH_task-&lt;taskname&gt;</filename>:
+                <listitem><para><filename>BB_BASEHASH_task-</filename><replaceable>taskname</replaceable>:
                     The base hashes for each task in the recipe.
                     </para></listitem>
-                <listitem><para><filename>BB_BASEHASH_&lt;filename:taskname&gt;</filename>:
+                <listitem><para><filename>BB_BASEHASH_</filename><replaceable>filename</replaceable><filename>:</filename><replaceable>taskname</replaceable>:
                     The base hashes for each dependent task.
                     </para></listitem>
-                <listitem><para><filename>BBHASHDEPS_&lt;filename:taskname&gt;</filename>:
+                <listitem><para><filename>BBHASHDEPS_</filename><replaceable>filename</replaceable><filename>:</filename><replaceable>taskname</replaceable>:
                     The task dependencies for each task.
                     </para></listitem>
                 <listitem><para><filename>BB_TASKHASH</filename>:

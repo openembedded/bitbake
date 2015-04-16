@@ -952,7 +952,7 @@
                     <listitem><para>
                         The class needs to define the function as follows:
                         <literallayout class='monospaced'>
-     &lt;classname&gt;_&lt;functionname&gt;
+     <replaceable>classname</replaceable><filename>_</filename><replaceable>functionname</replaceable>
                         </literallayout>
                         For example, if you have a class file
                         <filename>bar.bbclass</filename> and a function named
@@ -966,7 +966,7 @@
                         The class needs to contain the <filename>EXPORT_FUNCTIONS</filename>
                         statement as follows:
                         <literallayout class='monospaced'>
-     EXPORT_FUNCTIONS &lt;functionname&gt;
+     EXPORT_FUNCTIONS <replaceable>functionname</replaceable>
                         </literallayout>
                         For example, continuing with the same example, the
                         statement in the <filename>bar.bbclass</filename> would be
@@ -1164,7 +1164,7 @@
             BitBake reads and writes varflags to the datastore using the following
             command forms:
             <literallayout class='monospaced'>
-     &lt;variable&gt; = d.getVarFlags("&lt;variable&gt;")
+     <replaceable>variable</replaceable> = d.getVarFlags("<replaceable>variable</replaceable>")
      self.d.setVarFlags("FOO", {"func": True})
             </literallayout>
         </para>
