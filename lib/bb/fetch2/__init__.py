@@ -61,6 +61,17 @@ class BBFetchException(Exception):
     def __str__(self):
          return self.msg
 
+class UntrustedUrl(BBFetchException):
+    """Exception raised when encountering a host not listed in BB_ALLOWED_NETWORKS"""
+    def __init__(self, url, message=''):
+        if message:
+            msg = message
+        else:
+            msg = "The URL: '%s' is not trusted and cannot be used" % url
+        self.url = url
+        BBFetchException.__init__(self, msg)
+        self.args = (url,)
+
 class MalformedUrl(BBFetchException):
     """Exception raised when encountering an invalid url"""
     def __init__(self, url, message=''):
@@ -852,6 +863,11 @@ def build_mirroruris(origud, mirrors, ld):
             newuri = uri_replace(ud, find, replace, replacements, ld)
             if not newuri or newuri in uris or newuri == origud.url:
                 continue
+
+            if not trusted_network(ld, newuri):
+                logger.debug(1, "Mirror %s not in the list of trusted networks, skipping" %  (newuri))
+                continue
+
             try:
                 newud = FetchData(newuri, ld)
                 newud.setup_localpath(ld)
@@ -971,6 +987,41 @@ def try_mirrors(d, origud, mirrors, check = False):
         if ret != False:
             return ret
     return None
+
+def trusted_network(d, url):
+    """
+    Use a trusted url during download if networking is enabled and
+    BB_ALLOWED_NETWORKS is set globally or for a specific recipe.
+    Note: modifies SRC_URI & mirrors.
+    """
+    if d.getVar('BB_NO_NETWORK', True) == "1":
+        return True
+
+    pkgname = d.expand(d.getVar('PN'))
+    trusted_hosts = d.getVarFlag('BB_ALLOWED_NETWORKS', pkgname)
+
+    if not trusted_hosts:
+        trusted_hosts = d.getVar('BB_ALLOWED_NETWORKS', True)
+
+    # Not enabled.
+    if not trusted_hosts:
+        return True
+
+    scheme, network, path, user, passwd, param = decodeurl(url)
+
+    if not network:
+        return True
+
+    network = network.lower()
+
+    for host in trusted_hosts.split(" "):
+        host = host.lower()
+        if host.startswith("*.") and ("." + network).endswith(host[1:]):
+            return True
+        if host == network:
+            return True
+
+    return False
 
 def srcrev_internal_helper(ud, d, name):
     """
@@ -1530,6 +1581,8 @@ class Fetch(object):
                 firsterr = None
                 if not localpath and ((not verify_donestamp(ud, self.d)) or m.need_update(ud, self.d)):
                     try:
+                        if not trusted_network(self.d, ud.url):
+                            raise UntrustedUrl(ud.url)
                         logger.debug(1, "Trying Upstream")
                         m.download(ud, self.d)
                         if hasattr(m, "build_mirror_data"):
