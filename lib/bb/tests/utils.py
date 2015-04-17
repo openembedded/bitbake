@@ -21,6 +21,7 @@
 
 import unittest
 import bb
+import os
 
 class VerCmpString(unittest.TestCase):
 
@@ -88,3 +89,19 @@ class VerCmpString(unittest.TestCase):
 
         # Check that clearly invalid operator raises an exception
         self.assertRaises(bb.utils.VersionStringException, bb.utils.vercmp_string_op, '0', '0', '$')
+
+
+class Path(unittest.TestCase):
+    def test_unsafe_delete_path(self):
+        checkitems = [('/', True),
+                      ('//', True),
+                      ('///', True),
+                      (os.getcwd().count(os.sep) * ('..' + os.sep), True),
+                      (os.environ.get('HOME', '/home/test'), True),
+                      ('/home/someone', True),
+                      ('/home/other/', True),
+                      ('/home/other/subdir', False),
+                      ('', False)]
+        for arg1, correctresult in checkitems:
+            result = bb.utils._check_unsafe_delete_path(arg1)
+            self.assertEqual(result, correctresult, '_check_unsafe_delete_path("%s") != %s' % (arg1, correctresult))
