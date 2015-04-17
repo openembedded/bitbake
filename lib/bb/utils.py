@@ -601,11 +601,30 @@ def build_environment(d):
         if export:
             os.environ[var] = d.getVar(var, True) or ""
 
+def _check_unsafe_delete_path(path):
+    """
+    Basic safeguard against recursively deleting something we shouldn't. If it returns True,
+    the caller should raise an exception with an appropriate message.
+    NOTE: This is NOT meant to be a security mechanism - just a guard against silly mistakes
+    with potentially disastrous results.
+    """
+    extra = ''
+    # HOME might not be /home/something, so in case we can get it, check against it
+    homedir = os.environ.get('HOME', '')
+    if homedir:
+        extra = '|%s' % homedir
+    if re.match('(/|//|/home|/home/[^/]*%s)$' % extra, os.path.abspath(path)):
+        return True
+    return False
+
 def remove(path, recurse=False):
     """Equivalent to rm -f or rm -rf"""
     if not path:
         return
     if recurse:
+        for name in glob.glob(path):
+            if _check_unsafe_delete_path(path):
+                raise Exception('bb.utils.remove: called with dangerous path "%s" and recurse=True, refusing to delete!' % path)
         # shutil.rmtree(name) would be ideal but its too slow
         subprocess.call(['rm', '-rf'] + glob.glob(path))
         return
@@ -619,6 +638,8 @@ def remove(path, recurse=False):
 def prunedir(topdir):
     # Delete everything reachable from the directory named in 'topdir'.
     # CAUTION:  This is dangerous!
+    if _check_unsafe_delete_path(topdir):
+        raise Exception('bb.utils.prunedir: called with dangerous path "%s", refusing to delete!' % topdir)
     for root, dirs, files in os.walk(topdir, topdown = False):
         for name in files:
             os.remove(os.path.join(root, name))
