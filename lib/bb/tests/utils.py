@@ -21,6 +21,7 @@
 
 import unittest
 import bb
+import os
 
 class VerCmpString(unittest.TestCase):
 
@@ -51,3 +52,52 @@ class VerCmpString(unittest.TestCase):
         result = bb.utils.explode_dep_versions2("foo ( =1.10 )")
         self.assertEqual(result, correctresult)
 
+    def test_vercmp_string_op(self):
+        compareops = [('1', '1', '=', True),
+                      ('1', '1', '==', True),
+                      ('1', '1', '!=', False),
+                      ('1', '1', '>', False),
+                      ('1', '1', '<', False),
+                      ('1', '1', '>=', True),
+                      ('1', '1', '<=', True),
+                      ('1', '0', '=', False),
+                      ('1', '0', '==', False),
+                      ('1', '0', '!=', True),
+                      ('1', '0', '>', True),
+                      ('1', '0', '<', False),
+                      ('1', '0', '>>', True),
+                      ('1', '0', '<<', False),
+                      ('1', '0', '>=', True),
+                      ('1', '0', '<=', False),
+                      ('0', '1', '=', False),
+                      ('0', '1', '==', False),
+                      ('0', '1', '!=', True),
+                      ('0', '1', '>', False),
+                      ('0', '1', '<', True),
+                      ('0', '1', '>>', False),
+                      ('0', '1', '<<', True),
+                      ('0', '1', '>=', False),
+                      ('0', '1', '<=', True)]
+
+        for arg1, arg2, op, correctresult in compareops:
+            result = bb.utils.vercmp_string_op(arg1, arg2, op)
+            self.assertEqual(result, correctresult, 'vercmp_string_op("%s", "%s", "%s") != %s' % (arg1, arg2, op, correctresult))
+
+        # Check that clearly invalid operator raises an exception
+        self.assertRaises(bb.utils.VersionStringException, bb.utils.vercmp_string_op, '0', '0', '$')
+
+
+class Path(unittest.TestCase):
+    def test_unsafe_delete_path(self):
+        checkitems = [('/', True),
+                      ('//', True),
+                      ('///', True),
+                      (os.getcwd().count(os.sep) * ('..' + os.sep), True),
+                      (os.environ.get('HOME', '/home/test'), True),
+                      ('/home/someone', True),
+                      ('/home/other/', True),
+                      ('/home/other/subdir', False),
+                      ('', False)]
+        for arg1, correctresult in checkitems:
+            result = bb.utils._check_unsafe_delete_path(arg1)
+            self.assertEqual(result, correctresult, '_check_unsafe_delete_path("%s") != %s' % (arg1, correctresult))
