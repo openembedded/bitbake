@@ -269,8 +269,11 @@ class CookerDataBuilder(object):
             layers = (data.getVar('BBLAYERS', True) or "").split()
 
             data = bb.data.createCopy(data)
+            approved = bb.utils.approved_variables()
             for layer in layers:
                 parselog.debug(2, "Adding layer %s", layer)
+                if 'HOME' in approved and '~' in layer:
+                    layer = os.path.expanduser(layer)
                 data.setVar('LAYERDIR', layer)
                 data = parse_config_file(os.path.join(layer, "conf", "layer.conf"), data)
                 data.expandVarref('LAYERDIR')
