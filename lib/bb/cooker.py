@@ -35,7 +35,7 @@ from contextlib import closing
 from functools import wraps
 from collections import defaultdict
 import bb, bb.exceptions, bb.command
-from bb import utils, data, parse, event, cache, providers, taskdata, runqueue
+from bb import utils, data, parse, event, cache, providers, taskdata, runqueue, build
 import Queue
 import signal
 import prserv.serv
@@ -1343,6 +1343,7 @@ class BBCooker:
                 return True
             return retval
 
+        build.reset_cache()
         self.buildSetVars()
 
         taskdata, runlist, fulltargetlist = self.buildTaskData(targets, task, self.configuration.abort)

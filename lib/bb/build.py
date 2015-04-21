@@ -31,6 +31,7 @@ import logging
 import shlex
 import glob
 import time
+import stat
 import bb
 import bb.msg
 import bb.process
@@ -41,6 +42,20 @@ bblogger = logging.getLogger('BitBake')
 logger = logging.getLogger('BitBake.Build')
 
 NULL = open(os.devnull, 'r+')
+
+__mtime_cache = {}
+
+def cached_mtime_noerror(f):
+    if f not in __mtime_cache:
+        try:
+            __mtime_cache[f] = os.stat(f)[stat.ST_MTIME]
+        except OSError:
+            return 0
+    return __mtime_cache[f]
+
+def reset_cache():
+    global __mtime_cache
+    __mtime_cache = {}
 
 # When we execute a Python function, we'd like certain things
 # in all namespaces, hence we add them to __builtins__.
@@ -535,7 +550,7 @@ def stamp_internal(taskname, d, file_name, baseonly=False):
     stamp = bb.parse.siggen.stampfile(stamp, file_name, taskname, extrainfo)
 
     stampdir = os.path.dirname(stamp)
-    if bb.parse.cached_mtime_noerror(stampdir) == 0:
+    if cached_mtime_noerror(stampdir) == 0:
         bb.utils.mkdirhier(stampdir)
 
     return stamp
