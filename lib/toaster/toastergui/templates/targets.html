@@ -1,14 +1,34 @@
 {% extends "baseprojectpage.html" %}
 {% load projecttags %}
 {% load humanize %}
+{% load static %}
 
 {% block localbreadcrumb %}
 <li>All compatible recipes</li>
 {% endblock %}
 
 {% block projectinfomain %}
-                <div class="page-header">
-                    <h1>
+
+<script src="{% static 'js/layerBtn.js' %}"></script>
+<script>
+
+  $(document).ready(function (){
+    var ctx = {
+      projectLayers : {{projectlayerset}},
+    };
+
+    try {
+      layerBtnsInit(ctx);
+    } catch (e) {
+      document.write("Sorry, An error has occurred loading this page");
+      console.warn(e);
+    }
+  });
+</script>
+
+
+<div class="page-header">
+  <h1>
   {% if request.GET.filter and objects.paginator.count >  0 or request.GET.search and objects.paginator.count >  0 %}
       {{objects.paginator.count}} recipe{{objects.paginator.count|pluralize}} found
   {% elif request.GET.filter and objects.paginator.count ==  0 or request.GET.search and objects.paginator.count == 0 %}
@@ -16,14 +36,16 @@
   {%else%}
       All compatible recipes
   {%endif%}
-                        <i class="icon-question-sign get-help heading-help" title="This page lists all the recipes compatible with the release selected for this project, which is {{project.release.description}}"></i>
-                     </h1>
-                </div>
+  <i class="icon-question-sign get-help heading-help" title="This page lists all the recipes compatible with the release selected for this project, which is {{project.release.description}}"></i>
+  </h1>
+</div>
 
-  <div id="zone1alerts">
-
+<div id="zone1alerts" style="display:none">
+  <div class="alert alert-info lead">
+    <button type="button" class="close" id="hide-alert">&times;</button>
+    <span id="alert-msg"></span>
   </div>
-
+</div>
 {% if objects.paginator.count == 0 %}
   {% if request.GET.filter or request.GET.search %}
   <div class="row-fluid">
@@ -75,17 +97,16 @@
             </a>
             {% endif %}
         </td>
-        <td class="add-layer" value="{{o.pk}}" layerversion_id="{{o.preffered_layerversion.pk}}">
-            <div id="layer-tooltip-{{o.pk}}" style="display: none; font-size: 11px; line-height: 1.3;" class="tooltip-inner">layer was modified</div>
-            <a href="{% url 'project' project.id %}#/targetbuild={{o.name}}" id="target-build-{{o.pk}}" class="btn btn-block remove-layer" style="display:none;" >
-                Build recipe
-            </a>
-            <a id="layer-add-{{o.pk}}" class="btn btn-block" style="display:none;" href="javascript:layerAdd({{o.preffered_layerversion.pk}}, '{{o.preffered_layerversion.layer.name}}', '{%url 'layerdetails' o.preffered_layerversion.pk%}', {{o.pk}})" >
-                <i class="icon-plus"></i>
-                Add layer
-                <i title="" class="icon-question-sign get-help" data-original-title="To build this target, you must first add the {{o.preffered_layerversion.layer.name}} layer to your project"></i>
-            </a>
-        </td>
+        <td class="add-layer" value="{{o.pk}}">
+          <a href="{% url 'project' project.id %}#/targetbuild={{o.name}}" class="btn btn-block layer-exists-{{o.preffered_layerversion.pk}}" style="display:none; margin-top: 5px;" >
+            Build recipe
+          </a>
+          <button class="btn btn-block layerbtn layer-add-{{o.preffered_layerversion.pk}}" data-layer='{ "id": {{o.preffered_layerversion.pk}}, "name":  "{{o.preffered_layerversion.layer.name}}", "url": "{%url 'layerdetails' o.preffered_layerversion.pk%}"}' data-directive="add">
+            <i class="icon-plus"></i>
+            Add layer
+            <i title="" class="icon-question-sign get-help" data-original-title="To build this target, you must first add the {{o.preffered_layerversion.layer.name}} layer to your project"></i></i>
+        </button>
+      </td>
     </tr>
     {% endfor %}
 {% include "basetable_bottom.html" %}
@@ -115,165 +136,6 @@
 
 {% if project %}
 <script>
-
-var tooltipUpdateText;
-
-/* ensure csrf cookie exists {% csrf_token %} */
-function _makeXHREditCall(data, onsuccess, onfail) {
-    $.ajax( {
-        type: "POST",
-        url: "{% url 'xhr_projectedit' project.id %}",
-        data: data,
-        headers: { 'X-CSRFToken' : $.cookie('csrftoken')},
-        success: function (_data) {
-            if (_data.error != "ok") {
-                console.warn(_data.error);
-            } else {
-                updateButtons(_data.layers.map(function (e) {return e.id}));
-                if (onsuccess != undefined) onsuccess(_data);
-            }
-        },
-        error: function (_data) {
-            console.warn("Call failed");
-            console.warn(_data);
-        }
-    });
-}
-
-function show_alert(text, cls) {
-    $("#zone1alerts").html("<div class=\"alert alert-info lead\"><button type=\"button\" class=\"close\" data-dismiss=\"alert\">&times;</button>" + text + "</div>");
-}
-
-
-function show_dependencies_modal(layerId, layerName, layerURL, dependencies) {
-    // update layer name
-    $('.layer-name').text(layerName);
-    var deplistHtml = "";
-    for (var i = 0; i < dependencies.length; i++) {
-        deplistHtml += "<li><label class=\"checkbox\"><input name=\"dependencies\" value=\""
-        deplistHtml += dependencies[i].id;
-        deplistHtml +="\" type=\"checkbox\" checked=\"checked\"/>";
-        deplistHtml += dependencies[i].name;
-        deplistHtml += "</label></li>";
-    }
-    $('#dependencies_list').html(deplistHtml);
-
-    var selected = [layerId];
-    var layer_link_list = undefined;
-
-    $("#dependencies_modal_form").submit(function (e) {
-        e.preventDefault();
-        $("input[name='dependencies']:checked").map(function () { selected.push(parseInt($(this).val()))});
-        layer_link_list = "<a href='"+layerURL+"'>"+layerName+"</a>";
-        if (selected.length > 1) {
-            tooltipUpdateText = "" + selected.length + " layers added";
-        } else {
-            tooltipUpdateText = "1 layer added";
-        }
-
-        for (var i = 0; i < selected.length; i++) {
-            for (var j = 0; j < dependencies.length; j++) {
-                if (dependencies[j].id == selected[i]) {
-                    layer_link_list+= ", <a href='"+dependencies[j].layerdetailurl+"'>"+dependencies[j].name+"</a>"
-                    break;
-                }
-            }
-        }
-
-        $('#dependencies_modal').modal('hide');
-
-    {% if project %}
-        _makeXHREditCall({ 'layerAdd': selected.join(",") }, function onXHRSuccess() {
-            show_alert("You have added <strong>"+selected.length+"</strong> layer(s) to <a href=\"{% url 'project' project.id%}\">{{project.name}}</a>: " + layer_link_list);
-        });
-    {% endif %}
-
-    });
-    $('#dependencies_modal').modal('show');
-}
-
-function updateLayerCountLabels (amount) {
-    /* Update the filter labels */
-    var countLabel = $("#layer_version__projectlayer__project\\:{{project.id}}_count");
-    countLabel.text(Number(countLabel.text())+amount);
-
-    var countLabelRemaining = $("#layer_version__projectlayer__project\\:NOT{{project.id}}_count");
-    countLabelRemaining.text(Number(countLabelRemaining.text())-amount);
-}
-
-var pressedButton = undefined;
-
-function layerAdd(layerId, layerName, layerURL, pressedButtonId) {
-    pressedButton = pressedButtonId;
-    $.ajax({
-        url: '{% url "xhr_datatypeahead" %}',
-        data: {'type': 'layerdeps','value':layerId},
-        success: function(_data) {
-                if (_data.error != "ok") {
-                    console.warn(_data.error);
-                } else {
-                    updateLayerCountLabels(_data.list.length+1);
-
-                    if (_data.list.length > 0) {
-                        show_dependencies_modal(layerId, layerName, layerURL, _data.list);
-                    }
-                    else {
-                        tooltipUpdateText = "1 layer added";
-                        _makeXHREditCall({ 'layerAdd': layerId }, function () {
-        show_alert("You have added <strong>1</strong> layer to <a href=\"{% url 'project' project.id%}\">{{project.name}}</a>: <a href=\""+layerURL+"\">" + layerName +"</a>");
-                        });
-                    }
-                }
-            }
-    })
-}
-
-function buttonSet(id, state) {
-    var tohide, toshow;
-    if (state == "add")
-    {
-        toshow = "#layer-add-";
-        tohide = "#target-build-";
-    }
-    else if (state == "build")
-    {
-        tohide = "#layer-add-";
-        toshow = "#target-build-";
-    }
-
-    var previouslyvisible = $(tohide + id).is(":visible");
-    if (previouslyvisible && id == pressedButton) {
-        $(tohide + id).fadeOut( function() {
-            $("#layer-tooltip-" + id).text(tooltipUpdateText);
-            $("#layer-tooltip-" + id).fadeIn().delay(2000).fadeOut(function(){
-                $(toshow + id).delay(300).fadeIn();
-            });
-        });
-    } else {
-        $(tohide + id).hide();
-        $("#layer-tooltip-" + id).hide();
-        $(toshow + id).show();
-    }
-};
-
-
-function updateButtons(projectLayers) {
-    var displayedLayers = [];
-    $(".add-layer").map(function () { displayedLayers.push( { "l": parseInt($(this).attr('layerversion_id')), "i": parseInt($(this).attr('value'))})});
-    for (var i=0; i < displayedLayers.length; i++) {
-        if (projectLayers.indexOf(displayedLayers[i].l) > -1) {
-            buttonSet(displayedLayers[i].i, "build");
-        }
-        else {
-            buttonSet(displayedLayers[i].i, "add");
-        }
-    }
-}
-
-$(document).ready(function (){
-    updateButtons({{projectlayerset}});
-});
-
 </script>
 {%endif%}
 

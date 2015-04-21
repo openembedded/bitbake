@@ -158,7 +158,7 @@ select { width: auto; }
 .project-name .label > a { color: #fff; font-weight: normal; }
 
 /* Remove bottom margin for forms inside modal dialogs */
-#dependencies_modal_form { margin-bottom: 0px; }
+#dependencies-modal-form { margin-bottom: 0px; }
 
 /* Configuration styles */
 .icon-trash { color: #B94A48; font-size: 16px; padding-left: 5px; }

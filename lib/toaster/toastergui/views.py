@@ -2987,7 +2987,7 @@ if toastermain.settings.MANAGED:
 
         context = {
             'objects' : machine_info,
-            'project_layers' : project_layers,
+            'projectlayerset' : jsonfilter(map(lambda x: x.layercommit.id, prj.projectlayer_set.all())),
             'objectname' : "machines",
             'default_orderby' : 'name:+',
 

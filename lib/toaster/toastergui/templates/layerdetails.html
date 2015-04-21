@@ -58,7 +58,6 @@
 </style>
 {% endif %}
 
-{% include "layers_dep_modal.html" %}
   <div class="row-fluid span11">
       <div class="page-header">
         <h1>{{layerversion.layer.name}} <small class="commit"
@@ -404,7 +403,8 @@
                           {% endif %}
                         </td>
                         <td>{{machine.description}}</td>
-                        <td><button class="btn btn-block select-machine-btn" data-machine-name="{{machine.name}}" {% if layer_in_project == 0 %}disabled="disabled"{% endif %}}>Select machine</button></td>
+                        <td>
+                          <a href="{% url 'project' project.id %}#/machineselect={{machine.name}}" class="btn btn-block select-machine-btn" {% if layer_in_project == 0 %}disabled="disabled"{% endif %}>Select machine</a>
                       </tr>
                       {% endfor %}
                     </tbody>

@@ -9,6 +9,7 @@
 
 {% block projectinfomain %}
 
+                  <script src="{% static 'js/layerDepsModal.js' %}"></script>
                   <script src="{% static 'js/importlayer.js' %}"></script>
                   <script>
                     $(document).ready(function (){
@@ -30,7 +31,6 @@
                     <h1>Import layer</h1>
                 </div>
 
-                {% include "layers_dep_modal.html" %}
                 <form>
         {% if project %}
                     <span class="help-block" style="padding-left:19px;">The layer you are importing must be compatible with <strong>{{project.release.description}}</strong>, which is the release you are using in this project.</span>

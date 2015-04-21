@@ -7,22 +7,23 @@
 {% endblock %}
 
 {% block projectinfomain %}
-<script src="{% static 'js/machines.js' %}"></script>
+
+<script src="{% static 'js/layerBtn.js' %}"></script>
 <script>
 
   $(document).ready(function (){
     var ctx = {
+      projectLayers : {{projectlayerset}},
     };
 
     try {
-      machinesPageInit(ctx);
+      layerBtnsInit(ctx);
     } catch (e) {
       document.write("Sorry, An error has occurred loading this page");
       console.warn(e);
     }
   });
 </script>
-{% include "layers_dep_modal.html" %}
 <div class="page-header">
   <h1>
     {% if request.GET.search or request.GET.filter %}
@@ -33,14 +34,17 @@
        {% endif %}
     {% else %}
 
-    All machines
+    All compatible machines
     <i class="icon-question-sign get-help heading-help" title="This page lists all the machines compatible with the current project that Toaster knows about. They include community-created targets suitable for use on top of OpenEmbedded Core and any targets you have imported"></i>
     {% endif %}
   </h1>
 </div>
-<div class="alert alert-info lead" id="alert-area" style="display:none">
-  <button type="button" class="close" id="dismiss-alert">&times;</button>
-  <span id="alert-msg"></span>
+
+<div id="zone1alerts" style="display:none">
+  <div class="alert alert-info lead">
+    <button type="button" class="close" id="hide-alert">&times;</button>
+    <span id="alert-msg"></span>
+  </div>
 </div>
 {% if objects.paginator.count == 0 %}
     {% if request.GET.search %}
@@ -68,19 +72,16 @@
     <td class="layer"><a href="{%url "layerdetails" o.layer_version.id %}">{{o.layer_version.layer.name}}</a></td>
     <td class="branch">{{o.layer_version.get_vcs_reference}}</td>
     <td class="machinefile"><code>/machine/conf/{{o.name}}.conf</code><a href="{{o.get_vcs_machine_file_link_url}}" target="_blank"><i class="icon-share get-info"></i></a></td>
-    <td class="select-or-add">
-      <a href="#" class="btn btn-block select-machine-btn" data-machine-name="{{o.name}}" data-layer-version-id="{{o.layer_version.id}}"
-          {%if o.layer_version.id not in project_layers %}style="display:none" {%endif%}  >Select machine</a>
-      <a  href="#" class="btn btn-block nopop add-layer" data-layer-version-id="{{o.layer_version.id}}" data-layer-name="{{o.layer_version.layer.name}}" {%if o.layer_version.id in project_layers %}style="display:none" {%endif%}
-          >
+    <td class="select-or-add" style="height: 32px;">
+      <a href="{% url 'project' project.id %}#/machineselect={{o.name}}" class="btn btn-block layer-exists-{{o.layer_version.id}}" style="margin-top: 5px; display:none">Select machine</a>
+      <button class="btn btn-block layerbtn layer-add-{{o.layer_version.id}}" data-layer='{ "id": {{o.layer_version.id}}, "name":  "{{o.layer_version.layer.name}}", "url": "{%url 'layerdetails' o.layer_version.id %}"}' data-directive="add">
         <i class="icon-plus"></i>
         Add layer
-        <i class="icon-question-sign get-help" title="To build this machine, you must first add the {{o.layer_version.layer.name}} layer to your project"></i>
-      </a>
+        <i title="" class="icon-question-sign get-help" data-original-title="To enable this machine, you must first add the {{o.layer_version.layer.name}} layer to your project"></i></i>
+     </button>
     </td>
   </tr>
   {% endfor %}
-
   {% include "basetable_bottom.html" %}
 {% endif %}
 

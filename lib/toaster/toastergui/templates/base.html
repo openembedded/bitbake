@@ -30,6 +30,8 @@
   libtoaster.ctx = {
     projectId : {{project.id|default:'undefined'}},
     xhrDataTypeaheadUrl : "{% url 'xhr_datatypeahead' %}",
+    jsUrl : "{% static 'js/' %}",
+    htmlUrl : "{% static 'html/' %}",
     {% if project.id %}
     xhrProjectEditUrl : "{% url 'xhr_projectedit' project.id %}",
     projectPageUrl : "{% url 'project' project.id %}",
