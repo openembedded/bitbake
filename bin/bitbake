@@ -41,16 +41,13 @@ if __name__ == "__main__":
     if __version__ != bb.__version__:
         sys.exit("Bitbake core version and program version mismatch!")
     try:
-        ret = bitbake_main(BitBakeConfigParameters(sys.argv),
-                           cookerdata.CookerConfiguration())
+        sys.exit(bitbake_main(BitBakeConfigParameters(sys.argv),
+                              cookerdata.CookerConfiguration()))
     except BBMainException as err:
-        print >>sys.stderr, err
-        ret = 1
+        sys.exit(err)
     except bb.BBHandledException:
-        ret = 1
+        sys.exit(1)
     except Exception:
-        ret = 1
         import traceback
         traceback.print_exc()
-    sys.exit(ret)
-
+        sys.exit(1)
