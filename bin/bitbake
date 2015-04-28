@@ -33,12 +33,15 @@ except RuntimeError as exc:
     sys.exit(str(exc))
 
 from bb import cookerdata
-from bb.main import bitbake_main, BitBakeConfigParameters
+from bb.main import bitbake_main, BitBakeConfigParameters, BBMainException
 
 if __name__ == "__main__":
     try:
         ret = bitbake_main(BitBakeConfigParameters(sys.argv),
                            cookerdata.CookerConfiguration())
+    except BBMainException as err:
+        print >>sys.stderr, err
+        ret = 1
     except bb.BBHandledException:
         ret = 1
     except Exception:

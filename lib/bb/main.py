@@ -39,7 +39,7 @@ from bb import cookerdata
 __version__ = "1.27.0"
 logger = logging.getLogger("BitBake")
 
-class BBMainException(bb.BBHandledException):
+class BBMainException(Exception):
     pass
 
 def get_ui(config):
