@@ -36,7 +36,6 @@ from bb import ui
 from bb import server
 from bb import cookerdata
 
-__version__ = "1.27.0"
 logger = logging.getLogger("BitBake")
 
 class BBMainException(Exception):
@@ -83,7 +82,7 @@ class BitBakeConfigParameters(cookerdata.ConfigParameters):
 
     def parseCommandLine(self, argv=sys.argv):
         parser = optparse.OptionParser(
-            version = "BitBake Build Tool Core version %s, %%prog version %s" % (bb.__version__, __version__),
+            version = "BitBake Build Tool Core version %s" % bb.__version__,
             usage = """%prog [options] [recipename/target ...]
 
     Executes the specified task (default is 'build') for a given set of target recipes (.bb files).
