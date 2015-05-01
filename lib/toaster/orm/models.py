@@ -52,7 +52,7 @@ class ToasterSetting(models.Model):
     value = models.CharField(max_length=255)
 
     def __unicode__(self):
-        return "Setting %s = " % (self.name, self.value)
+        return "Setting %s = %s" % (self.name, self.value)
 
 class ProjectManager(models.Manager):
     def create_project(self, name, release):
