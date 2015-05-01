@@ -88,7 +88,7 @@ def main(server, eventHandler, params ):
 
     if not params.observe_only:
         logger.error("ToasterUI can only work in observer mode")
-        return
+        return 1
 
 
     main.shutdown = 0
@@ -144,7 +144,6 @@ def main(server, eventHandler, params ):
                 buildinfohelper.store_log_event(event)
                 if event.levelno >= format.ERROR:
                     errors = errors + 1
-                    return_value = 1
                 elif event.levelno == format.WARNING:
                     warnings = warnings + 1
                 # For "normal" logging conditions, don't show note logs from tasks
@@ -158,7 +157,6 @@ def main(server, eventHandler, params ):
 
             if isinstance(event, bb.build.TaskFailed):
                 buildinfohelper.update_and_store_task(event)
-                return_value = 1
                 logfile = event.logfile
                 if logfile and os.path.exists(logfile):
                     bb.error("Logfile of failure stored in: %s" % logfile)
@@ -188,7 +186,6 @@ def main(server, eventHandler, params ):
                 continue
 
             if isinstance(event, bb.event.NoProvider):
-                return_value = 1
                 errors = errors + 1
                 if event._runtime:
                     r = "R"
@@ -316,6 +313,7 @@ def main(server, eventHandler, params ):
                 continue
 
             logger.error("Unknown event: %s", event)
+            return_value += 1
 
         except EnvironmentError as ioerror:
             # ignore interrupted io
@@ -344,10 +342,13 @@ def main(server, eventHandler, params ):
             except Exception as ce:
                 logger.error("CRITICAL - Failed to to save toaster exception to the database: %s" % str(ce))
 
+            # make sure we return with an error
+            return_value += 1
             pass
 
     if interrupted:
         if return_value == 0:
-            return_value = 1
+            return_value += 1
 
+    logger.warn("Return value is %d", return_value)
     return return_value

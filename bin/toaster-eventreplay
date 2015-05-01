@@ -26,6 +26,7 @@
 # as a build eventlog, and the ToasterUI is used to process events in the file
 # and log data in the database
 
+from __future__ import print_function
 import os
 import sys, logging
 
@@ -38,12 +39,6 @@ import bb.cooker
 from bb.ui import toasterui
 import sys
 import logging
-
-logger = logging.getLogger(__name__)
-console = logging.StreamHandler(sys.stdout)
-format_str = "%(levelname)s: %(message)s"
-logging.basicConfig(format=format_str)
-
 
 import json, pickle
 
@@ -168,12 +163,12 @@ class MockConfigParameters():
 # run toaster ui on our mock bitbake class
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        logger.error("Usage: %s event.log " % sys.argv[0])
+        print("Usage: %s event.log " % sys.argv[0])
         sys.exit(1)
 
     file_name = sys.argv[-1]
     mock_connection = FileReadEventsServerConnection(file_name)
     configParams = MockConfigParameters()
 
-    # run the main program
-    toasterui.main(mock_connection.connection, mock_connection.events, configParams)
+    # run the main program and set exit code to the returned value
+    sys.exit(toasterui.main(mock_connection.connection, mock_connection.events, configParams))

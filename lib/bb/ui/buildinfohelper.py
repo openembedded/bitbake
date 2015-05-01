@@ -718,11 +718,14 @@ class BuildInfoHelper(object):
                             return lvo
 
         #if we get here, we didn't read layers correctly; dump whatever information we have on the error log
-        logger.error("Could not match layer version for recipe path %s : %s" % (path, self.orm_wrapper.layer_version_objects))
+        logger.warn("Could not match layer version for recipe path %s : %s" % (path, self.orm_wrapper.layer_version_objects))
 
         #mockup the new layer
         unknown_layer, created = Layer.objects.get_or_create(name="__FIXME__unidentified_layer", local_path="/", layer_index_url="")
         unknown_layer_version_obj, created = Layer_Version.objects.get_or_create(layer = unknown_layer, build = self.internal_state['build'])
+
+        # append it so we don't run into this error again and again
+        self.orm_wrapper.layer_version_objects.append(unknown_layer_version_obj)
 
         return unknown_layer_version_obj
 
