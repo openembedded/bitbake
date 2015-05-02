@@ -1266,43 +1266,15 @@ def recipes(request, build_id):
 def configuration(request, build_id):
     template = 'configuration.html'
 
-    variables = Variable.objects.filter(build=build_id)
-
-    def _get_variable_or_empty(variable_name):
-        from django.core.exceptions import ObjectDoesNotExist
-        try:
-            return variables.get(variable_name=variable_name).variable_value
-        except ObjectDoesNotExist:
-            return ''
-
-    BB_VERSION=_get_variable_or_empty(variable_name='BB_VERSION')
-    BUILD_SYS=_get_variable_or_empty(variable_name='BUILD_SYS')
-    NATIVELSBSTRING=_get_variable_or_empty(variable_name='NATIVELSBSTRING')
-    TARGET_SYS=_get_variable_or_empty(variable_name='TARGET_SYS')
-    MACHINE=_get_variable_or_empty(variable_name='MACHINE')
-    DISTRO=_get_variable_or_empty(variable_name='DISTRO')
-    DISTRO_VERSION=_get_variable_or_empty(variable_name='DISTRO_VERSION')
-    TUNE_FEATURES=_get_variable_or_empty(variable_name='TUNE_FEATURES')
-    TARGET_FPU=_get_variable_or_empty(variable_name='TARGET_FPU')
-
-    targets = Target.objects.filter(build=build_id)
-
-    context = {
-                'objectname': 'configuration',
-                'object_search_display':'variables',
-                'filter_search_display':'variables',
-                'build': Build.objects.get(pk=build_id),
-                'BB_VERSION':BB_VERSION,
-                'BUILD_SYS':BUILD_SYS,
-                'NATIVELSBSTRING':NATIVELSBSTRING,
-                'TARGET_SYS':TARGET_SYS,
-                'MACHINE':MACHINE,
-                'DISTRO':DISTRO,
-                'DISTRO_VERSION':DISTRO_VERSION,
-                'TUNE_FEATURES':TUNE_FEATURES,
-                'TARGET_FPU':TARGET_FPU,
-                'targets':targets,
-        }
+    var_names = ('BB_VERSION', 'BUILD_SYS', 'NATIVELSBSTRING', 'TARGET_SYS',
+                 'MACHINE', 'DISTRO', 'DISTRO_VERSION', 'TUNE_FEATURES', 'TARGET_FPU')
+    context = dict(Variable.objects.filter(build=build_id, variable_name__in=var_names)\
+                                           .values_list('variable_name', 'variable_value'))
+    context.update({'objectname': 'configuration',
+                    'object_search_display':'variables',
+                    'filter_search_display':'variables',
+                    'build': Build.objects.get(pk=build_id),
+                    'targets': Target.objects.filter(build=build_id)})
     return render(request, template, context)
 
 
