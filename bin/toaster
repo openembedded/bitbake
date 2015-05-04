@@ -30,65 +30,65 @@
 
 function webserverKillAll()
 {
-	local pidfile
-	for pidfile in ${BUILDDIR}/.toastermain.pid; do
-		if [ -f ${pidfile} ]; then
-		while kill -0 $(< ${pidfile}) 2>/dev/null; do
-			kill -SIGTERM -$(< ${pidfile}) 2>/dev/null
-			sleep 1;
-			# Kill processes if they are still running - may happen in interactive shells
-			pkill -U $UID -f "python.*manage.py runserver"
-		done;
-		rm  ${pidfile}
-		fi
-	done
+    local pidfile
+    for pidfile in ${BUILDDIR}/.toastermain.pid; do
+        if [ -f ${pidfile} ]; then
+        while kill -0 $(< ${pidfile}) 2>/dev/null; do
+            kill -SIGTERM -$(< ${pidfile}) 2>/dev/null
+            sleep 1
+            # Kill processes if they are still running - may happen in interactive shells
+            pkill -U $UID -f "python.*manage.py runserver"
+        done;
+        rm  ${pidfile}
+        fi
+    done
 }
 
 function webserverStartAll()
 {
-	# do not start if toastermain points to a valid process
-	if ! cat "${BUILDDIR}/.toastermain.pid" 2>/dev/null | xargs -I{} kill -0 {} ; then
+    # do not start if toastermain points to a valid process
+    if ! cat "${BUILDDIR}/.toastermain.pid" 2>/dev/null | xargs -I{} kill -0 {} ; then
+        retval=1
+        rm "${BUILDDIR}/.toastermain.pid"
+    fi
+
+    retval=0
+    python $BBBASEDIR/lib/toaster/manage.py syncdb || retval=1
+    python $BBBASEDIR/lib/toaster/manage.py migrate orm || retval=2
+    if [ $retval -eq 1 ]; then
+        echo "Failed db sync, stopping system start" 1>&2
+    elif [ $retval -eq 2 ]; then
+        echo -e "\nError on migration, trying to recover... \n"
+        python $BBBASEDIR/lib/toaster/manage.py migrate orm 0001_initial --fake
+        retval=0
+        python $BBBASEDIR/lib/toaster/manage.py migrate orm || retval=1
+    fi
+    if [ "$TOASTER_MANAGED" '==' '1' ]; then
+        python $BBBASEDIR/lib/toaster/manage.py migrate bldcontrol || retval=1
+        python $BBBASEDIR/lib/toaster/manage.py checksettings  --traceback || retval=1
+    fi
+    if [ $retval -eq 0 ]; then
+        echo "Starting webserver..."
+        python $BBBASEDIR/lib/toaster/manage.py runserver "0.0.0.0:$WEB_PORT" </dev/null >>${BUILDDIR}/toaster_web.log 2>&1 & echo $! >${BUILDDIR}/.toastermain.pid
+        sleep 1
+        if ! cat "${BUILDDIR}/.toastermain.pid" | xargs -I{} kill -0 {} ; then
             retval=1
             rm "${BUILDDIR}/.toastermain.pid"
+        else
+            echo "Webserver address:  http://0.0.0.0:$WEB_PORT/"
         fi
-
-        retval=0
-        python $BBBASEDIR/lib/toaster/manage.py syncdb || retval=1
-        python $BBBASEDIR/lib/toaster/manage.py migrate orm || retval=2
-        if [ $retval -eq 1 ]; then
-                echo "Failed db sync, stopping system start" 1>&2
-        elif [ $retval -eq 2 ]; then
-            echo -e "\nError on migration, trying to recover... \n"
-            python $BBBASEDIR/lib/toaster/manage.py migrate orm 0001_initial --fake
-            retval=0
-            python $BBBASEDIR/lib/toaster/manage.py migrate orm || retval=1
-        fi
-	if [ "$TOASTER_MANAGED" '==' '1' ]; then
-	        python $BBBASEDIR/lib/toaster/manage.py migrate bldcontrol || retval=1
-		python $BBBASEDIR/lib/toaster/manage.py checksettings  --traceback || retval=1
-	fi
-        if [ $retval -eq 0 ]; then
-	    echo "Starting webserver..."
-            python $BBBASEDIR/lib/toaster/manage.py runserver "0.0.0.0:$WEB_PORT" </dev/null >>${BUILDDIR}/toaster_web.log 2>&1 & echo $! >${BUILDDIR}/.toastermain.pid
-            sleep 1
-            if ! cat "${BUILDDIR}/.toastermain.pid" | xargs -I{} kill -0 {} ; then
-                retval=1
-                rm "${BUILDDIR}/.toastermain.pid"
-	    else
-		echo "Webserver address:  http://0.0.0.0:$WEB_PORT/"
-            fi
-        fi
-        return $retval
+    fi
+    return $retval
 }
 
 # Helper functions to add a special configuration file
 
 function addtoConfiguration()
 {
-        file=$1
-        shift
-        echo "#Created by toaster start script" > ${BUILDDIR}/conf/$file
-        for var in "$@"; do echo $var >> ${BUILDDIR}/conf/$file; done
+    file=$1
+    shift
+    echo "#Created by toaster start script" > ${BUILDDIR}/conf/$file
+    for var in "$@"; do echo $var >> ${BUILDDIR}/conf/$file; done
 }
 
 INSTOPSYSTEM=0
@@ -127,7 +127,7 @@ function notify_chldexit() {
 
 
 function verify_prereq() {
-	# Verify prerequisites
+    # Verify prerequisites
 
     if ! echo "import django; print (1,) == django.VERSION[0:1] and django.VERSION[1:2][0] in (6,)" | python 2>/dev/null | grep True >/dev/null; then
         echo -e "This program needs Django 1.6. Please install with\n\npip install django==1.6\n"
@@ -174,25 +174,25 @@ if [ `basename \"$0\"` = `basename \"${SRCFILE}\"` ]; then
     # Start just the web server, point the web browser to the interface, and start any Django services.
 
     if ! verify_prereq; then
-        echo -e "Error: Could not verify that the needed dependencies are installed. Please use virtualenv and pip to install dependencies listed in toaster-requirements.txt" 1>&2;
-        exit 1;
+        echo -e "Error: Could not verify that the needed dependencies are installed. Please use virtualenv and pip to install dependencies listed in toaster-requirements.txt" 1>&2
+        exit 1
     fi
 
     if [ -n "$BUILDDIR" ]; then
-	echo -e "Error: It looks like you sourced oe-init-build-env. Toaster cannot start in build mode from an oe-core build environment.\n You should be starting Toaster from a new terminal window." 1>&2;
-        exit 1;
+        echo -e "Error: It looks like you sourced oe-init-build-env. Toaster cannot start in build mode from an oe-core build environment.\n You should be starting Toaster from a new terminal window." 1>&2
+        exit 1
     fi
 
     if ! which daemon >/dev/null 2>&1; then
-        echo -e "Failed dependency; toaster needs the 'daemon' program in order to be able to start builds'. Please install the 'daemon' program from your distribution repositories or http://www.libslack.org/daemon/" 1>&2;
-	exit 1;
+        echo -e "Failed dependency; toaster needs the 'daemon' program in order to be able to start builds'. Please install the 'daemon' program from your distribution repositories or http://www.libslack.org/daemon/" 1>&2
+        exit 1
     fi
 
     # Define a fake builddir where only the pid files are actually created. No real builds will take place here.
     BUILDDIR=/tmp/toaster_$$
     if [ -d "$BUILDDIR" ]; then
         echo -e "Previous toaster run directory $BUILDDIR found, cowardly refusing to start. Please remove the directory when that toaster instance is over" 2>&1
-        exit 1;
+        exit 1
     fi
 
     mkdir -p "$BUILDDIR"
@@ -219,14 +219,14 @@ if [ `basename \"$0\"` = `basename \"${SRCFILE}\"` ]; then
         else
             echo "No errors found, removing the run directory '$BUILDDIR'"
             do_cleanup
-        fi;
+        fi
     }
     TOASTER_MANAGED=1
     export TOASTER_MANAGED=1
     if [ $WEBSERVER -gt 0 ] && ! webserverStartAll; then
-        echo "Failed to start the web server, stopping" 1>&2;
+        echo "Failed to start the web server, stopping" 1>&2
         cleanup
-        exit 1;
+        exit 1
     fi
     if [ $WEBSERVER -gt 0 ]; then
         echo "Starting browser..."
@@ -245,14 +245,14 @@ fi
 
 
 if ! verify_prereq; then
-	echo -e "Error: Could not verify that the needed dependencies are installed. Please use virtualenv and pip to install dependencies listed in toaster-requirements.txt" 1>&2;
-	return 1;
+    echo -e "Error: Could not verify that the needed dependencies are installed. Please use virtualenv and pip to install dependencies listed in toaster-requirements.txt" 1>&2
+    return 1
 fi
 
 
 # We make sure we're running in the current shell and in a good environment
 if [ -z "$BUILDDIR" ] ||  ! which bitbake >/dev/null 2>&1 ; then
-    echo "Error: Build environment is not setup or bitbake is not in path." 1>&2;
+    echo "Error: Build environment is not setup or bitbake is not in path." 1>&2
     return 2
 fi
 
@@ -265,7 +265,7 @@ else
         CMD="start"
     else
         CMD="stop"
-    fi;
+    fi
 fi
 
 echo "The system will $CMD."
@@ -303,7 +303,7 @@ case $CMD in
         unset BBSERVER
         PREREAD=""
         if [ -e ${BUILDDIR}/conf/toaster-pre.conf ]; then
-		rm ${BUILDDIR}/conf/toaster-pre.conf
+            rm ${BUILDDIR}/conf/toaster-pre.conf
         fi
         bitbake $PREREAD --postread conf/toaster.conf --server-only -t xmlrpc -B 0.0.0.0:0
         if [ $? -ne 0 ]; then
@@ -336,5 +336,4 @@ case $CMD in
         echo "Successful ${CMD}."
     ;;
 esac
-
 
