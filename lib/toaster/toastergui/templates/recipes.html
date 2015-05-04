@@ -41,8 +41,12 @@
     {% for recipe in objects %}
 
     <tr class="data">
-        <td><a href="{% url "recipe" build.pk recipe.pk %}">{{recipe.name}}</a></td>
-        <td><a href="{% url "recipe" build.pk recipe.pk %}">{{recipe.version}}</a></td>
+        <td class="recipe__name">
+            <a href="{% url "recipe" build.pk recipe.pk %}">{{recipe.name}}</a>
+        </td>
+        <td class="recipe__version">
+            <a href="{% url "recipe" build.pk recipe.pk %}">{{recipe.version}}</a>
+        </td>
         <!-- Depends -->
         <td class="depends_on">
             {% with deps=recipe_deps|get_dict_value:recipe.pk %}
