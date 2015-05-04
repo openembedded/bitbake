@@ -1,7 +1,6 @@
 import os,sys,logging
-import signal, time, atexit, threading
+import signal, time
 from SimpleXMLRPCServer import SimpleXMLRPCServer, SimpleXMLRPCRequestHandler
-import xmlrpclib
 import threading
 import Queue
 
