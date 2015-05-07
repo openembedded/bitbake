@@ -73,14 +73,14 @@
 {% include "basetable_top_layers.html" %}
     {% for o in objects %}
     <tr class="data">
-            <td class="layer"><a href="{% url 'layerdetails' o.id %}">{{o.layer.name}}</a></td>
+            <td class="layer"><a href="{% url 'layerdetails' project.id o.id %}">{{o.layer.name}}</a></td>
             <td class="description">{% if o.layer.summary %}{{o.layer.summary}}{%endif%}</td>
-            <td class="git-repo"><a href="{% url 'layerdetails' o.pk %}"><code>{{o.layer.vcs_url}}</code></a>
+            <td class="git-repo"><a href="{% url 'layerdetails' project.id o.pk %}"><code>{{o.layer.vcs_url}}</code></a>
             {% if o.get_vcs_link_url %}
             <a target="_blank" href="{{ o.get_vcs_link_url }}"><i class="icon-share get-info"></i></a>
         {% endif %}
         </td>
-            <td class="git-subdir" style="display: table-cell;"><a href="{% url 'layerdetails' o.pk %}"><code>{{o.dirpath}}</code></a>
+            <td class="git-subdir" style="display: table-cell;"><a href="{% url 'layerdetails' project.id o.pk %}"><code>{{o.dirpath}}</code></a>
                 {% if o.dirpath and o.get_vcs_dirpath_link_url %}
             <a target="_blank" href="{{ o.get_vcs_dirpath_link_url }}"><i class="icon-share get-info"></i></a>
                 {% endif %}
@@ -100,10 +100,10 @@
         {% with ods=o.dependencies.all%}
             {% if ods.count %}
                     <a class="btn"
-                        title="<a href='{% url "layerdetails" o.pk %}'>{{o.layer.name}}</a> dependencies"
+                        title="<a href='{% url "layerdetails" project.id o.pk %}'>{{o.layer.name}}</a> dependencies"
                         data-content="<ul class='unstyled'>
                           {% for i in ods%}
-                            <li><a href='{% url "layerdetails" i.depends_on.pk %}'>{{i.depends_on.layer.name}}</a></li>
+                            <li><a href='{% url "layerdetails" project.id i.depends_on.pk %}'>{{i.depends_on.layer.name}}</a></li>
                           {% endfor %}
                         </ul>">
                         {{ods.count}}
@@ -113,11 +113,11 @@
             </td>
             {% if project %}
             <td class="add-del-layers" value="{{o.pk}}">
-                <button class="btn btn-danger btn-block layer-exists-{{o.pk}} layerbtn" style="display:none;" data-layer='{ "id": {{o.pk}}, "name":  "{{o.layer.name}}", "url": "{%url 'layerdetails' o.pk%}"}' data-directive="remove" >
+                <button class="btn btn-danger btn-block layer-exists-{{o.pk}} layerbtn" style="display:none;" data-layer='{ "id": {{o.pk}}, "name":  "{{o.layer.name}}", "url": "{%url 'layerdetails' project.id o.pk%}"}' data-directive="remove" >
                     <i class="icon-trash"></i>
                     Delete layer
                 </button>
-                <button class="btn btn-block layer-add-{{o.pk}} layerbtn" data-layer='{ "id": {{o.pk}}, "name":  "{{o.layer.name}}", "url": "{%url 'layerdetails' o.pk%}"}' data-directive="add">
+                <button class="btn btn-block layer-add-{{o.pk}} layerbtn" data-layer='{ "id": {{o.pk}}, "name":  "{{o.layer.name}}", "url": "{%url 'layerdetails' project.id o.pk%}"}' data-directive="add">
                     <i class="icon-plus"></i>
                     Add layer
                 </button>

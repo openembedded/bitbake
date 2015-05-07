@@ -3,7 +3,7 @@
 {% load humanize %}
 {% load static %}
 {% block localbreadcrumb %}
-<li><a href="{% url 'layers' %}">All compatible layers</a></li>
+<li><a href="{% url 'all-layers' project.id %}">All compatible layers</a></li>
 <li>
   {{layerversion.layer.name}} ({{layerversion.get_vcs_reference|truncatechars:13}})
 </li>
@@ -17,7 +17,7 @@
   $(document).ready(function (){
     var ctx = {
       projectBuildUrl : "{% url 'xhr_build' %}",
-      layerDetailsUrl : "{% url 'base_layerdetails' %}",
+      layerDetailsUrl : "{% url 'base_layerdetails' project.id %}",
       xhrUpdateLayerUrl : "{% url 'xhr_updatelayer' %}",
       numTargets : {{total_targets}},
       numMachines: {{machines|length}},
@@ -26,7 +26,7 @@
         id : {{layerversion.id}},
         commit: "{{layerversion.get_vcs_reference}}",
         inCurrentPrj : {{layer_in_project}},
-        url : "{% url 'layerdetails' layerversion.id  %}",
+        url : "{% url 'layerdetails' project.id layerversion.id  %}",
         sourceId: {{layerversion.layer_source_id}},
       }
     };
@@ -164,7 +164,7 @@
                       {% for ld in layerversion.dependencies.all %}
                       <span class="current-value">
                       <li data-layer-id="{{ld.depends_on.id}}">
-                        <a data-toggle="tooltip" title="{{ld.depends_on.layer.vcs_url}} | {{ld.depends_on.get_vcs_reference}}" href="{% url 'layerdetails' ld.depends_on.id %}">{{ld.depends_on.layer.name}}</a>
+                        <a data-toggle="tooltip" title="{{ld.depends_on.layer.vcs_url}} | {{ld.depends_on.get_vcs_reference}}" href="{% url 'layerdetails' project.id ld.depends_on.id %}">{{ld.depends_on.layer.name}}</a>
                         <span class="icon-trash " data-toggle="tooltip" title="Delete"></span>
                       </li>
                       </span>

@@ -76,20 +76,25 @@ urlpatterns = patterns('toastergui.views',
 
         # project URLs
         url(r'^newproject/$', 'newproject', name='newproject'),
-        url(r'^importlayer/$', 'importlayer', name='importlayer'),
 
-        url(r'^layers/$', 'layers', name='layers'),
-        url(r'^layer/(?P<layerid>\d+)/$', 'layerdetails', name='layerdetails'),
-        url(r'^layer/$', lambda x: HttpResponseBadRequest(), name='base_layerdetails'),
-        url(r'^targets/$', 'targets', name='all-targets'),
-        url(r'^machines/$', 'machines', name='machines'),
 
         url(r'^projects/$', 'projects', name='all-projects'),
 
         url(r'^project/$', lambda x: HttpResponseBadRequest(), name='base_project'),
-        url(r'^project/(?P<pid>\d+)/$', 'project', name='project'),
+
+        url(r'^project/(?P<pid>\d+)$', 'project', name='project'),
         url(r'^project/(?P<pid>\d+)/configuration$', 'projectconf', name='projectconf'),
-        url(r'^project/(?P<pid>\d+)/builds$', 'projectbuilds', name='projectbuilds'),
+        url(r'^project/(?P<pid>\d+)/builds/$', 'projectbuilds', name='projectbuilds'),
+
+        url(r'^project/(?P<pid>\d+)/layers/$', 'layers', name='all-layers'),
+        url(r'^project/(?P<pid>\d+)/layer/(?P<layerid>\d+)$', 'layerdetails', name='layerdetails'),
+        url(r'^project/(?P<pid>\d+)/layer/$', lambda x: HttpResponseBadRequest(), name='base_layerdetails'),
+
+        # the import layer is a project-specific functionality;
+        url(r'^project/(?P<pid>\d+)/importlayer$', 'importlayer', name='importlayer'),
+
+        url(r'^project/(?P<pid>\d+)/targets/$', 'targets', name='all-targets'),
+        url(r'^project/(?P<pid>\d+)/machines/$', 'machines', name='all-machines'),
 
         url(r'^xhr_build/$', 'xhr_build', name='xhr_build'),
         url(r'^xhr_projectbuild/(?P<pid>\d+)/$', 'xhr_projectbuild', name='xhr_projectbuild'),

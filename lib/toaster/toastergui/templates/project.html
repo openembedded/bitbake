@@ -24,7 +24,7 @@ vim: expandtab tabstop=2
 	  <p>Toaster has no layer information. Without layer information, you cannot run builds. To generate layer information you can:</p>
 		<ul>
 			 <li> <a href="http://www.yoctoproject.org/docs/latest/toaster-manual/toaster-manual.html#layer-source">Configure a layer source</a></li>
-			 <li> <a href="{% url 'importlayer' %}">Import a layer</a></li>
+			 <li> <a href="{% url 'importlayer' project.id %}">Import a layer</a></li>
 		</ul>
 </div>
 
@@ -111,7 +111,7 @@ vim: expandtab tabstop=2
       </div>
       <i class="icon-question-sign get-help get-help-blue" title="Type the name of one or more recipes you want to build, separated by a space. You can also specify a task by appending a semicolon and a task name to a recipe name, like so: <code>core-image-minimal:do_build</code>"></i>
       <p>
-        <a href="{% url 'all-targets' %}">View all compatible recipes</a>
+        <a href="{% url 'all-targets' project.id %}">View all compatible recipes</a>
         <i class="icon-question-sign get-help get-help-blue heading-help" title="View all the recipes you can build with the release selected for this project, which is {[project.release.desc]}"></i>
         {% if completedbuilds.count %}
           | <a href="{% url 'projectbuilds' project.id %}">View all project builds ({{completedbuilds.count}})</a>
@@ -278,8 +278,8 @@ vim: expandtab tabstop=2
         <p>
         You can:
           <ul>
-            <li> <a href="{% url 'layers'%}">View all compatible layers available in Toaster</a>
-            <li> <a href="{% url 'importlayer' %}">Import a layer</a>
+            <li> <a href="{% url 'all-layers' project.id %}">View all compatible layers available in Toaster</a>
+            <li> <a href="{% url 'importlayer' project.id %}">Import a layer</a>
             <li> <a href="https://www.yoctoproject.org/docs/1.6.1/dev-manual/dev-manual.html#understanding-and-creating-layers" target="_blank">Read about layers in the manual</a>
           </ul>
         Or type a layer name below.
@@ -293,10 +293,10 @@ vim: expandtab tabstop=2
         {% csrf_token %}
       </form>
       <p>
-        <a href="{% url 'layers' %}">View all compatible layers</a>
+        <a href="{% url 'all-layers' project.id %}">View all compatible layers</a>
         <i class="icon-question-sign get-help" title="View all the layers you can build with the release selected for this project, which is {[project.release.desc]}"></i>
         |
-        <a href="{% url 'importlayer' %}">Import layer</a></p>
+        <a href="{% url 'importlayer' project.id %}">Import layer</a></p>
       <ul class="unstyled configuration-list">
           <li ng-repeat="l in layers track by l.id" class="animate-repeat">
             <a href="{[l.layerdetailurl]}" class="layer-info" data-toggle="tooltip" tooltip-placement="right" tooltip="{[l.giturl]} | {[l.branch.name]}">{[l.name]}</a>
@@ -321,7 +321,7 @@ vim: expandtab tabstop=2
           {% csrf_token %}
         </form>
         <p>
-          <a href="{% url 'all-targets' %}">View all compatible recipes</a>
+          <a href="{% url 'all-targets' project.id %}">View all compatible recipes</a>
           <i class="icon-question-sign get-help" title="View all the recipes you can build with the release selected for this project, which is {[project.release.desc]}"></i>
         </p>
         <div ng-if="frequenttargets.length">
@@ -361,7 +361,7 @@ vim: expandtab tabstop=2
               {% csrf_token %}
         </form>
         <p>
-          <a href="{% url 'machines' %}" class="link">View all compatible machines</a>
+          <a href="{% url 'all-machines' project.id %}" class="link">View all compatible machines</a>
         <i class="icon-question-sign get-help" title="View all the machines you can set with the release selected for this project, which is {[project.release.desc]}"></i>
       </p>
       </div>
@@ -432,10 +432,10 @@ angular.element(document).ready(function() {
   scope.urls.xhr_build = "{% url 'xhr_projectbuild' project.id %}";
   scope.urls.xhr_edit = "{% url 'xhr_projectedit' project.id %}";
   scope.urls.xhr_datatypeahead = "{% url 'xhr_datatypeahead' %}";
-  scope.urls.layers = "{% url 'layers' %}";
-  scope.urls.targets = "{% url 'all-targets' %}";
-  scope.urls.importlayer = "{% url 'importlayer'%}";
-  scope.urls.layer = "{% url 'base_layerdetails' %}";
+  scope.urls.layers = "{% url 'all-layers' project.id %}";
+  scope.urls.targets = "{% url 'all-targets' project.id %}";
+  scope.urls.importlayer = "{% url 'importlayer' project.id %}";
+  scope.urls.layer = "{% url 'base_layerdetails' project.id %}";
   scope.project = {{prj|json}};
   scope.builds = {{builds|json}};
   scope.layers = {{layers|json}};

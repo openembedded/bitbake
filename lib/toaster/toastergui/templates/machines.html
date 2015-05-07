@@ -69,12 +69,12 @@
   <tr class="data">
     <td class="machine">{{o.name}}</td>
     <td class="description">{{o.description}}</td>
-    <td class="layer"><a href="{%url "layerdetails" o.layer_version.id %}">{{o.layer_version.layer.name}}</a></td>
+    <td class="layer"><a href="{%url "layerdetails" project.id o.layer_version.id %}">{{o.layer_version.layer.name}}</a></td>
     <td class="branch">{{o.layer_version.get_vcs_reference}}</td>
     <td class="machinefile"><code>/machine/conf/{{o.name}}.conf</code><a href="{{o.get_vcs_machine_file_link_url}}" target="_blank"><i class="icon-share get-info"></i></a></td>
     <td class="select-or-add" style="height: 32px;">
       <a href="{% url 'project' project.id %}#/machineselect={{o.name}}" class="btn btn-block layer-exists-{{o.layer_version.id}}" style="margin-top: 5px; display:none">Select machine</a>
-      <button class="btn btn-block layerbtn layer-add-{{o.layer_version.id}}" data-layer='{ "id": {{o.layer_version.id}}, "name":  "{{o.layer_version.layer.name}}", "url": "{%url 'layerdetails' o.layer_version.id %}"}' data-directive="add">
+      <button class="btn btn-block layerbtn layer-add-{{o.layer_version.id}}" data-layer='{ "id": {{o.layer_version.id}}, "name":  "{{o.layer_version.layer.name}}", "url": "{%url 'layerdetails' project.id o.layer_version.id %}"}' data-directive="add">
         <i class="icon-plus"></i>
         Add layer
         <i title="" class="icon-question-sign get-help" data-original-title="To enable this machine, you must first add the {{o.layer_version.layer.name}} layer to your project"></i></i>

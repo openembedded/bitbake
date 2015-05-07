@@ -62,7 +62,7 @@
       <p>Toaster has no recipe information. To generate recipe information you can:</p>
       <ul>
        <li><a href="http://www.yoctoproject.org/docs/latest/toaster-manual/toaster-manual.html#layer-source">Configure a layer source</a></li>
-       <li><a href="{% url 'importlayer' %}">Import a layer</a>, then run a build</li>
+       <li><a href="{% url 'importlayer' project.id %}">Import a layer</a>, then run a build</li>
       </ul>
     </div>
   {% endif %}
@@ -84,7 +84,7 @@
         </td>
         <td class="target-section">{{o.section}}</td>
         <td class="license">{{o.license}}</td>
-        <td class="layer"><a href="{% url 'layerdetails' o.preffered_layerversion.id%}">{{o.preffered_layerversion.layer.name}}</a></td>
+        <td class="layer"><a href="{% url 'layerdetails' project.id o.preffered_layerversion.id%}">{{o.preffered_layerversion.layer.name}}</a></td>
         <td class="branch">
         {% if o.preffered_layerversion.up_branch %}
             {{o.preffered_layerversion.up_branch.name}}
@@ -101,7 +101,7 @@
           <a href="{% url 'project' project.id %}#/targetbuild={{o.name}}" class="btn btn-block layer-exists-{{o.preffered_layerversion.pk}}" style="display:none; margin-top: 5px;" >
             Build recipe
           </a>
-          <button class="btn btn-block layerbtn layer-add-{{o.preffered_layerversion.pk}}" data-layer='{ "id": {{o.preffered_layerversion.pk}}, "name":  "{{o.preffered_layerversion.layer.name}}", "url": "{%url 'layerdetails' o.preffered_layerversion.pk%}"}' data-directive="add">
+          <button class="btn btn-block layerbtn layer-add-{{o.preffered_layerversion.pk}}" data-layer='{ "id": {{o.preffered_layerversion.pk}}, "name":  "{{o.preffered_layerversion.layer.name}}", "url": "{%url 'layerdetails' project.id o.preffered_layerversion.pk%}"}' data-directive="add">
             <i class="icon-plus"></i>
             Add layer
             <i title="" class="icon-question-sign get-help" data-original-title="To build this target, you must first add the {{o.preffered_layerversion.layer.name}} layer to your project"></i></i>

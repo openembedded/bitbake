@@ -1806,6 +1806,20 @@ def package_included_reverse_dependencies(request, build_id, target_id, package_
 def image_information_dir(request, build_id, target_id, packagefile_id):
     # stubbed for now
     return redirect(builds)
+    # the context processor that supplies data used across all the pages
+
+
+def managedcontextprocessor(request):
+    import subprocess
+    ret = {
+        "projects": Project.objects.all(),
+        "MANAGED" : toastermain.settings.MANAGED,
+        "DEBUG" : toastermain.settings.DEBUG,
+        "TOASTER_BRANCH": toastermain.settings.TOASTER_BRANCH,
+        "TOASTER_REVISION" : toastermain.settings.TOASTER_REVISION,
+    }
+    return ret
+
 
 
 import toastermain.settings
@@ -1826,23 +1840,6 @@ if toastermain.settings.MANAGED:
     import traceback
 
     class BadParameterException(Exception): pass        # error thrown on invalid POST requests
-
-    # the context processor that supplies data used across all the pages
-    def managedcontextprocessor(request):
-        import subprocess
-        ret = {
-            "projects": Project.objects.all(),
-            "MANAGED" : toastermain.settings.MANAGED,
-            "DEBUG" : toastermain.settings.DEBUG,
-            "TOASTER_BRANCH": toastermain.settings.TOASTER_BRANCH,
-            "TOASTER_REVISION" : toastermain.settings.TOASTER_REVISION,
-        }
-        if 'project_id' in request.session:
-            try:
-                ret['project'] = Project.objects.get(pk = request.session['project_id'])
-            except Project.DoesNotExist:
-                del request.session['project_id']
-        return ret
 
 
     class InvalidRequestException(Exception):
@@ -2176,7 +2173,7 @@ if toastermain.settings.MANAGED:
             puser = None
 
         # we use implicit knowledge of the current user's project to filter layer information, e.g.
-        request.session['project_id'] = prj.id
+        pid = prj.id
 
         from collections import Counter
         freqtargets = []
@@ -2201,7 +2198,7 @@ if toastermain.settings.MANAGED:
                         "name" : x.layercommit.layer.name,
                         "giturl": x.layercommit.layer.vcs_url,
                         "url": x.layercommit.layer.layer_index_url,
-                        "layerdetailurl": reverse("layerdetails", args=(x.layercommit.pk,)),
+                        "layerdetailurl": reverse("layerdetails", args=(prj.id, x.layercommit.pk,)),
                 # This branch name is actually the release
                         "branch" : { "name" : x.layercommit.get_vcs_reference(), "layersource" : x.layercommit.up_branch.layer_source.name if x.layercommit.up_branch != None else None}},
                     prj.projectlayer_set.all().order_by("id")),
@@ -2237,7 +2234,7 @@ if toastermain.settings.MANAGED:
         try:
             if request.method != "POST":
                 raise BadParameterException("invalid method")
-            request.session['project_id'] = pid
+            pid = pid
             prj = Project.objects.get(id = pid)
 
 
@@ -2326,7 +2323,7 @@ if toastermain.settings.MANAGED:
             # return all project settings
             return HttpResponse(jsonfilter( {
                 "error": "ok",
-                "layers" :  map(lambda x: {"id": x.layercommit.pk, "orderid" : x.pk, "name" : x.layercommit.layer.name, "giturl" : x.layercommit.layer.vcs_url, "url": x.layercommit.layer.layer_index_url, "layerdetailurl": reverse("layerdetails", args=(x.layercommit.pk,)), "branch" : { "name" : x.layercommit.get_vcs_reference(), "layersource" : x.layercommit.up_branch.layer_source.name}}, prj.projectlayer_set.all().select_related("layer").order_by("id")),
+                "layers" :  map(lambda x: {"id": x.layercommit.pk, "orderid" : x.pk, "name" : x.layercommit.layer.name, "giturl" : x.layercommit.layer.vcs_url, "url": x.layercommit.layer.layer_index_url, "layerdetailurl": reverse("layerdetails", args=(prj.id, x.layercommit.pk,)), "branch" : { "name" : x.layercommit.get_vcs_reference(), "layersource" : x.layercommit.up_branch.layer_source.name}}, prj.projectlayer_set.all().select_related("layer").order_by("id")),
                 "builds" : _project_recent_build_list(prj),
                 "variables": map(lambda x: (x.name, x.value), prj.projectvariable_set.all()),
                 "machine": {"name": prj.projectvariable_set.get(name="MACHINE").value},
@@ -2344,8 +2341,6 @@ if toastermain.settings.MANAGED:
             prj = None
             if request.GET.has_key('project_id'):
                 prj = Project.objects.get(pk = request.GET['project_id'])
-            elif 'project_id' in request.session:
-                prj = Project.objects.get(pk = request.session['project_id'])
             else:
                 raise Exception("No valid project selected")
 
@@ -2389,8 +2384,6 @@ if toastermain.settings.MANAGED:
 
             # returns layer versions that would be deleted on the new release__pk
             if request.GET['type'] == "versionlayers":
-                if not 'project_id' in request.session:
-                    raise Exception("This call cannot makes no sense outside a project context")
 
                 retval = []
                 for i in prj.projectlayer_set.all():
@@ -2689,16 +2682,15 @@ if toastermain.settings.MANAGED:
 
 
 
-    def importlayer(request):
+    def importlayer(request, pid):
         template = "importlayer.html"
         context = {
+            'project': Project.objects.get(id=pid),
         }
         return render(request, template, context)
 
 
-    def layers(request):
-        if not 'project_id' in request.session:
-            raise Exception("invalid page: cannot show page without a project")
+    def layers(request, pid):
 
         template = "layers.html"
         # define here what parameters the view needs in the GET portion in order to
@@ -2708,13 +2700,13 @@ if toastermain.settings.MANAGED:
         mandatory_parameters = { 'count': pagesize,  'page' : 1, 'orderby' : orderby };
         retval = _verify_parameters( request.GET, mandatory_parameters )
         if retval:
-            return _redirect_parameters( 'layers', request.GET, mandatory_parameters)
+            return _redirect_parameters( 'all-layers', request.GET, mandatory_parameters, pid=pid)
 
         # boilerplate code that takes a request for an object type and returns a queryset
         # for that object type. copypasta for all needed table searches
         (filter_string, search_term, ordering_string) = _search_tuple(request, Layer_Version)
 
-        prj = Project.objects.get(pk = request.session['project_id'])
+        prj = Project.objects.get(pk = pid)
 
         queryset_all = prj.compatible_layerversions()
 
@@ -2729,6 +2721,7 @@ if toastermain.settings.MANAGED:
 
 
         context = {
+            'project' : prj,
             'projectlayerset' : jsonfilter(map(lambda x: x.layercommit.id, prj.projectlayer_set.all())),
             'objects' : layer_info,
             'objectname' : "layers",
@@ -2773,7 +2766,7 @@ if toastermain.settings.MANAGED:
 
         return response
 
-    def layerdetails(request, layerid):
+    def layerdetails(request, pid, layerid):
         template = "layerdetails.html"
         limit = 10
 
@@ -2806,8 +2799,9 @@ if toastermain.settings.MANAGED:
         machines = _build_page_range(Paginator(machines_query.order_by("name"), limit), request.GET.get('mpage', 1))
 
         context = {
+            'project' : Project.objects.get(pk=pid),
             'layerversion': layer_version,
-            'layer_in_project' : ProjectLayer.objects.filter(project_id=request.session['project_id'],layercommit=layerid).count(),
+            'layer_in_project' : ProjectLayer.objects.filter(project_id=pid,layercommit=layerid).count(),
             'machines': machines,
             'targets': targets,
             'total_targets': Recipe.objects.filter(layer_version=layer_version).count(),
@@ -2816,19 +2810,16 @@ if toastermain.settings.MANAGED:
         }
         return render(request, template, context)
 
-    def targets(request):
-        if not 'project_id' in request.session:
-            raise Exception("invalid page: cannot show page without a project")
-
+    def targets(request, pid):
         template = 'targets.html'
         (pagesize, orderby) = _get_parameters_values(request, 100, 'name:+')
         mandatory_parameters = { 'count': pagesize,  'page' : 1, 'orderby' : orderby }
         retval = _verify_parameters( request.GET, mandatory_parameters )
         if retval:
-            return _redirect_parameters( 'all-targets', request.GET, mandatory_parameters)
+            return _redirect_parameters( 'all-targets', request.GET, mandatory_parameters, pid = pid)
         (filter_string, search_term, ordering_string) = _search_tuple(request, Recipe)
 
-        prj = Project.objects.get(pk = request.session['project_id'])
+        prj = Project.objects.get(pk = pid)
         queryset_all = Recipe.objects.filter(Q(layer_version__up_branch__name= prj.release.name) | Q(layer_version__build__in = prj.build_set.all())).filter(name__regex=r'.{1,}.*')
 
         queryset_with_search = _get_queryset(Recipe, queryset_all, None, search_term, ordering_string, '-name')
@@ -2854,6 +2845,7 @@ if toastermain.settings.MANAGED:
                 e.vcs_link_url = e.vcs_link_url.replace('%branch%', e.preffered_layerversion.up_branch.name)
 
         context = {
+            'project' : prj,
             'projectlayerset' : jsonfilter(map(lambda x: x.layercommit.id, prj.projectlayer_set.all().select_related("layercommit"))),
             'objects' : target_info,
             'objectname' : "recipes",
@@ -2916,10 +2908,7 @@ if toastermain.settings.MANAGED:
 
         return response
 
-    def machines(request):
-        if not 'project_id' in request.session:
-            raise Exception("invalid page: cannot show page without a project")
-
+    def machines(request, pid):
         template = "machines.html"
         # define here what parameters the view needs in the GET portion in order to
         # be able to display something.  'count' and 'page' are mandatory for all views
@@ -2928,13 +2917,13 @@ if toastermain.settings.MANAGED:
         mandatory_parameters = { 'count': pagesize,  'page' : 1, 'orderby' : orderby };
         retval = _verify_parameters( request.GET, mandatory_parameters )
         if retval:
-            return _redirect_parameters( 'machines', request.GET, mandatory_parameters)
+            return _redirect_parameters( 'all-machines', request.GET, mandatory_parameters, pid = pid)
 
         # boilerplate code that takes a request for an object type and returns a queryset
         # for that object type. copypasta for all needed table searches
         (filter_string, search_term, ordering_string) = _search_tuple(request, Machine)
 
-        prj = Project.objects.get(pk = request.session['project_id'])
+        prj = Project.objects.get(pk = pid)
         compatible_layers = prj.compatible_layerversions()
 
         queryset_all = Machine.objects.filter(layer_version__in=compatible_layers)
@@ -2946,7 +2935,7 @@ if toastermain.settings.MANAGED:
         # Make sure we only show machines / layers which are compatible
         # with the current project
 
-        project_layers = ProjectLayer.objects.filter(project_id=request.session['project_id']).values_list('layercommit',flat=True)
+        project_layers = ProjectLayer.objects.filter(project_id=pid).values_list('layercommit',flat=True)
 
         # Now we need to weed out the layers which will appear as duplicated
         # because they're from a layer source which doesn't need to be used
@@ -2958,6 +2947,7 @@ if toastermain.settings.MANAGED:
         machine_info = _build_page_range(Paginator(queryset_all, request.GET.get('count', 100)),request.GET.get('page', 1))
 
         context = {
+            'project': prj,
             'objects' : machine_info,
             'projectlayerset' : jsonfilter(map(lambda x: x.layercommit.id, prj.projectlayer_set.all())),
             'objectname' : "machines",
@@ -3041,6 +3031,7 @@ if toastermain.settings.MANAGED:
             configvars = configvars.exclude(name = var)
 
         context = {
+            'project':          prj,
             'configvars':       configvars,
             'vars_managed':     vars_managed,
             'vars_fstypes':     vars_fstypes,
@@ -3316,17 +3307,6 @@ if toastermain.settings.MANAGED:
 
 
 else:
-    # these are pages that are NOT available in interactive mode
-    def managedcontextprocessor(request):
-        return {
-            "projects": [],
-            "MANAGED" : toastermain.settings.MANAGED,
-            "DEBUG" : toastermain.settings.DEBUG,
-            "TOASTER_BRANCH": toastermain.settings.TOASTER_BRANCH,
-            "TOASTER_REVISION" : toastermain.settings.TOASTER_REVISION,
-        }
-
-
     # shows the "all builds" page for interactive mode; this is the old code, simply moved
     def builds(request):
         template = 'build.html'

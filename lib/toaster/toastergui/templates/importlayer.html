@@ -14,7 +14,7 @@
                   <script>
                     $(document).ready(function (){
                       var ctx = {
-                        layerDetailsUrl : "{% url 'base_layerdetails' %}",
+                        layerDetailsUrl : "{% url 'base_layerdetails' project.id %}",
                         xhrImportLayerUrl : "{% url 'xhr_importlayer' %}",
                       };
 
