@@ -1,0 +1,25 @@
+{% extends "baseprojectpage.html" %}
+{% load projecttags %}
+{% load humanize %}
+{% load static %}
+
+{% block localbreadcrumb %}
+
+
+<li>{{title}}</li>{% endblock %}
+
+{% block projectinfomain %}
+<div class="page-header">
+  <h1>{{title}} (<span class="table-count-{{table_name}}"></span>)
+    <i class="icon-question-sign get-help heading-help" title="This page lists {{title}} compatible with the release selected for this project, which is {{project.release.description}}"></i>
+  </h1>
+</div>
+<div id="zone1alerts" style="display:none">
+  <div class="alert alert-info lead">
+    <button type="button" class="close" id="hide-alert">&times;</button>
+    <span id="alert-msg"></span>
+  </div>
+</div>
+{% url table_name project.id as xhr_table_url %}
+{% include "toastertable.html" %}
+{% endblock %}
