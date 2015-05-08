@@ -1479,35 +1479,6 @@ def bfile(request, build_id, package_id):
     context = {'build': Build.objects.get(pk=build_id), 'objects' : files}
     return render(request, template, context)
 
-def tpackage(request, build_id, target_id):
-    template = 'package.html'
-    packages = map(lambda x: x.package, list(Target_Installed_Package.objects.filter(target=target_id)))
-    context = {'build': Build.objects.get(pk=build_id), 'objects' : packages}
-    return render(request, template, context)
-
-def layer(request):
-    template = 'layer.html'
-    layer_info = Layer.objects.all()
-
-    for li in layer_info:
-        li.versions = Layer_Version.objects.filter(layer = li)
-        for liv in li.versions:
-            liv.count = Recipe.objects.filter(layer_version__id = liv.id).count()
-
-    context = {'objects': layer_info}
-
-    return render(request, template, context)
-
-
-def layer_versions_recipes(request, layerversion_id):
-    template = 'recipe.html'
-    recipes = Recipe.objects.filter(layer_version__id = layerversion_id)
-
-    context = {'objects': recipes,
-            'layer_version' : Layer_Version.objects.get( id = layerversion_id )
-    }
-
-    return render(request, template, context)
 
 # A set of dependency types valid for both included and built package views
 OTHER_DEPENDS_BASE = [
