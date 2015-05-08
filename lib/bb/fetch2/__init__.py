@@ -783,6 +783,7 @@ def runfetchcmd(cmd, d, quiet = False, cleanup = []):
                   'NO_PROXY', 'no_proxy',
                   'ALL_PROXY', 'all_proxy',
                   'GIT_PROXY_COMMAND',
+                  'GIT_SSL_CAINFO',
                   'SSH_AUTH_SOCK', 'SSH_AGENT_PID',
                   'SOCKS5_USER', 'SOCKS5_PASSWD']
 
