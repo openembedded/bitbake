@@ -256,3 +256,6 @@ div.add-deps { margin-top: 15px; }
 .machines-highlight { -webkit-animation: machines-fade 7s 1; -moz-animation: machines-fade 7s 1; animation: machines-fade 7s 1; }
 
 .tab-pane table { margin-top: 10px; }
+
+thead .description, .get_description_or_summary { width: 364px; }
+thead .add-del-layers { width: 124px; }

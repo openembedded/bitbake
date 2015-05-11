@@ -2317,7 +2317,7 @@ if toastermain.settings.MANAGED:
                         "tooltip": x.layer.vcs_url+" | "+x.get_vcs_reference(),
                         "detail": "(" + x.layer.vcs_url + (")" if x.up_branch == None else " | "+x.get_vcs_reference()+")"),
                         "giturl": x.layer.vcs_url,
-                        "layerdetailurl" : reverse('layerdetails', args=(pid, x.pk,)),
+                        "layerdetailurl" : reverse('layerdetails', args=(prj.id,x.pk)),
                         "revision" : x.get_vcs_reference(),
                        }
 
@@ -2656,81 +2656,6 @@ if toastermain.settings.MANAGED:
         return render(request, template, context)
 
 
-    def layers(request, pid):
-
-        template = "layers.html"
-        # define here what parameters the view needs in the GET portion in order to
-        # be able to display something.  'count' and 'page' are mandatory for all views
-        # that use paginators.
-        (pagesize, orderby) = _get_parameters_values(request, 100, 'layer__name:+')
-        mandatory_parameters = { 'count': pagesize,  'page' : 1, 'orderby' : orderby };
-        retval = _verify_parameters( request.GET, mandatory_parameters )
-        if retval:
-            return _redirect_parameters( 'all-layers', request.GET, mandatory_parameters, pid=pid)
-
-        # boilerplate code that takes a request for an object type and returns a queryset
-        # for that object type. copypasta for all needed table searches
-        (filter_string, search_term, ordering_string) = _search_tuple(request, Layer_Version)
-
-        prj = Project.objects.get(pk = pid)
-
-        queryset_all = prj.compatible_layerversions()
-
-        queryset_all = _get_queryset(Layer_Version, queryset_all, filter_string, search_term, ordering_string, '-layer__name')
-
-        object_list = set([x.get_equivalents_wpriority(prj)[0] for x in queryset_all])
-        object_list = list(object_list)
-
-
-        # retrieve the objects that will be displayed in the table; layers a paginator and gets a page range to display
-        layer_info = _build_page_range(Paginator(object_list, request.GET.get('count', 10)),request.GET.get('page', 1))
-
-
-        context = {
-            'project' : prj,
-            'projectlayerset' : jsonfilter(map(lambda x: x.layercommit.id, prj.projectlayer_set.all())),
-            'objects' : layer_info,
-            'objectname' : "layers",
-            'default_orderby' : 'layer__name:+',
-
-            'tablecols' : [
-                {   'name': 'Layer',
-                    'orderfield': _get_toggle_order(request, "layer__name"),
-                    'ordericon' : _get_toggle_order_icon(request, "layer__name"),
-                },
-                {   'name': 'Description',
-                    'dclass': 'span4',
-                    'clclass': 'description',
-                },
-                {   'name': 'Git repository URL',
-                    'dclass': 'span6',
-                    'clclass': 'git-repo', 'hidden': 1,
-                    'qhelp': "The Git repository for the layer source code",
-                },
-                {   'name': 'Subdirectory',
-                    'clclass': 'git-subdir',
-                    'hidden': 1,
-                    'qhelp': "The layer directory within the Git repository",
-                },
-                {   'name': 'Revision',
-                    'clclass': 'branch',
-                    'qhelp': "The Git branch, tag or commit. For the layers from the OpenEmbedded layer source, the revision is always the branch compatible with the Yocto Project version you selected for this project",
-                },
-                {   'name': 'Dependencies',
-                    'clclass': 'dependencies',
-                    'qhelp': "Other layers a layer depends upon",
-                },
-                {   'name': 'Add | Delete',
-                    'dclass': 'span2',
-                    'qhelp': "Add or delete layers to / from your project ",
-                },
-            ]
-        }
-
-        response = render(request, template, context)
-        _save_parameters_cookies(response, pagesize, orderby, request)
-
-        return response
 
     def layerdetails(request, pid, layerid):
         template = "layerdetails.html"
@@ -2775,187 +2700,6 @@ if toastermain.settings.MANAGED:
             'total_machines': Machine.objects.filter(layer_version=layer_version).count(),
         }
         return render(request, template, context)
-
-    def targets(request, pid):
-        template = 'targets.html'
-        (pagesize, orderby) = _get_parameters_values(request, 100, 'name:+')
-        mandatory_parameters = { 'count': pagesize,  'page' : 1, 'orderby' : orderby }
-        retval = _verify_parameters( request.GET, mandatory_parameters )
-        if retval:
-            return _redirect_parameters( 'all-targets', request.GET, mandatory_parameters, pid = pid)
-        (filter_string, search_term, ordering_string) = _search_tuple(request, Recipe)
-
-        prj = Project.objects.get(pk = pid)
-        queryset_all = Recipe.objects.filter(Q(layer_version__up_branch__name= prj.release.name) | Q(layer_version__build__in = prj.build_set.all())).filter(name__regex=r'.{1,}.*')
-
-        queryset_with_search = _get_queryset(Recipe, queryset_all, None, search_term, ordering_string, '-name')
-
-        # get unique values for 'name', and select the maximum ID for each entry (the max id is the newest one)
-
-        # force evaluation of the query here; to process the MAX/GROUP BY, a temporary table is used, on which indexing is very slow
-        # by forcing the evaluation here we also prime the caches
-        queryset_with_search_maxids = map(lambda i: i[0], list(queryset_with_search.values('name').distinct().annotate(max_id=Max('id')).values_list('max_id')))
-
-        queryset_with_search = queryset_with_search.filter(id__in=queryset_with_search_maxids).select_related('layer_version', 'layer_version__layer', 'layer_version__up_branch', 'layer_source')
-
-
-        # retrieve the objects that will be displayed in the table; targets a paginator and gets a page range to display
-        target_info = _build_page_range(Paginator(queryset_with_search, request.GET.get('count', 10)),request.GET.get('page', 1))
-
-        for e in target_info.object_list:
-            e.preffered_layerversion = e.layer_version.get_equivalents_wpriority(prj)[0]
-            e.vcs_link_url = Layer.objects.filter(name = e.preffered_layerversion.layer.name).exclude(vcs_web_file_base_url__isnull=True)[0].vcs_web_file_base_url
-            if e.vcs_link_url != None:
-                fp = e.preffered_layerversion.dirpath + "/" + e.file_path
-                e.vcs_link_url = e.vcs_link_url.replace('%path%', fp)
-                e.vcs_link_url = e.vcs_link_url.replace('%branch%', e.preffered_layerversion.up_branch.name)
-
-        context = {
-            'project' : prj,
-            'projectlayerset' : jsonfilter(map(lambda x: x.layercommit.id, prj.projectlayer_set.all().select_related("layercommit"))),
-            'objects' : target_info,
-            'objectname' : "recipes",
-            'default_orderby' : 'name:+',
-
-            'tablecols' : [
-                {   'name': 'Recipe',
-                    'orderfield': _get_toggle_order(request, "name"),
-                    'ordericon' : _get_toggle_order_icon(request, "name"),
-                },
-                {   'name': 'Recipe version',
-                    'dclass': 'span2',
-                },
-                {   'name': 'Description',
-                    'dclass': 'span5',
-                    'clclass': 'description',
-                },
-                {   'name': 'Recipe file',
-                    'clclass': 'recipe-file',
-                    'hidden': 1,
-                    'dclass': 'span5',
-                },
-                {   'name': 'Section',
-                    'clclass': 'target-section',
-                    'hidden': 1,
-                    'orderfield': _get_toggle_order(request, "section"),
-                    'ordericon': _get_toggle_order_icon(request, "section"),
-                    'orderkey': "section",
-                },
-                {   'name': 'License',
-                    'clclass': 'license',
-                    'hidden': 1,
-                    'orderfield': _get_toggle_order(request, "license"),
-                    'ordericon': _get_toggle_order_icon(request, "license"),
-                    'orderkey': "license",
-                },
-                {   'name': 'Layer',
-                    'clclass': 'layer',
-                    'orderfield': _get_toggle_order(request, "layer_version__layer__name"),
-                    'ordericon': _get_toggle_order_icon(request, "layer_version__layer__name"),
-                    'orderkey': "layer_version__layer__name",
-                },
-                {   'name': 'Revision',
-                    'clclass': 'branch',
-                    'qhelp': "The Git branch, tag or commit. For the layers from the OpenEmbedded layer source, the revision is always the branch compatible with the Yocto Project version you selected for this project.",
-                    'hidden': 1,
-                },
-            ]
-        }
-
-        context['tablecols'] += [
-                {   'name': 'Build',
-                    'dclass': 'span2',
-                    'qhelp': "Add or delete targets to / from your project ",
-                }, ]
-
-        response = render(request, template, context)
-        _save_parameters_cookies(response, pagesize, orderby, request)
-
-        return response
-
-    def machines(request, pid):
-        template = "machines.html"
-        # define here what parameters the view needs in the GET portion in order to
-        # be able to display something.  'count' and 'page' are mandatory for all views
-        # that use paginators.
-        (pagesize, orderby) = _get_parameters_values(request, 100, 'name:+')
-        mandatory_parameters = { 'count': pagesize,  'page' : 1, 'orderby' : orderby };
-        retval = _verify_parameters( request.GET, mandatory_parameters )
-        if retval:
-            return _redirect_parameters( 'all-machines', request.GET, mandatory_parameters, pid = pid)
-
-        # boilerplate code that takes a request for an object type and returns a queryset
-        # for that object type. copypasta for all needed table searches
-        (filter_string, search_term, ordering_string) = _search_tuple(request, Machine)
-
-        prj = Project.objects.get(pk = pid)
-        compatible_layers = prj.compatible_layerversions()
-
-        queryset_all = Machine.objects.filter(layer_version__in=compatible_layers)
-        queryset_all = _get_queryset(Machine, queryset_all, None, search_term, ordering_string, 'name')
-
-        queryset_all = queryset_all.prefetch_related('layer_version')
-
-
-        # Make sure we only show machines / layers which are compatible
-        # with the current project
-
-        project_layers = ProjectLayer.objects.filter(project_id=pid).values_list('layercommit',flat=True)
-
-        # Now we need to weed out the layers which will appear as duplicated
-        # because they're from a layer source which doesn't need to be used
-        for machine in queryset_all:
-            to_rm = machine.layer_version.get_equivalents_wpriority(prj)[1:]
-            if len(to_rm) > 0:
-               queryset_all = queryset_all.exclude(layer_version__in=to_rm)
-
-        machine_info = _build_page_range(Paginator(queryset_all, request.GET.get('count', 100)),request.GET.get('page', 1))
-
-        context = {
-            'project': prj,
-            'objects' : machine_info,
-            'projectlayerset' : jsonfilter(map(lambda x: x.layercommit.id, prj.projectlayer_set.all())),
-            'objectname' : "machines",
-            'default_orderby' : 'name:+',
-
-            'tablecols' : [
-                {   'name': 'Machine',
-                    'orderfield': _get_toggle_order(request, "name"),
-                    'ordericon' : _get_toggle_order_icon(request, "name"),
-                    'orderkey' : "name",
-                },
-                {   'name': 'Description',
-                    'dclass': 'span5',
-                    'clclass': 'description',
-                },
-                {   'name': 'Layer',
-                    'clclass': 'layer',
-                    'orderfield': _get_toggle_order(request, "layer_version__layer__name"),
-                    'ordericon' : _get_toggle_order_icon(request, "layer_version__layer__name"),
-                    'orderkey' : "layer_version__layer__name",
-                },
-                {   'name': 'Revision',
-                    'clclass': 'branch',
-                    'qhelp' : "The Git branch, tag or commit. For the layers from the OpenEmbedded layer source, the revision is always the branch compatible with the Yocto Project version you selected for this project",
-                    'hidden': 1,
-                },
-                {   'name' : 'Machine file',
-                    'clclass' : 'machinefile',
-                    'hidden' : 1,
-                },
-                {   'name': 'Select',
-                    'dclass': 'select span2',
-                    'qhelp': "Sets the selected machine as the project machine. You can only have one machine per project",
-                },
-
-            ]
-        }
-
-        response = render(request, template, context)
-        _save_parameters_cookies(response, pagesize, orderby, request)
-
-        return response
-
 
     def get_project_configvars_context():
         # Vars managed outside of this view
@@ -3497,16 +3241,7 @@ else:
     def importlayer(request):
         return render(request, 'landing_not_managed.html')
 
-    def layers(request):
-        return render(request, 'landing_not_managed.html')
-
     def layerdetails(request, layerid):
-        return render(request, 'landing_not_managed.html')
-
-    def targets(request, pid):
-        return render(request, 'landing_not_managed.html')
-
-    def machines(request):
         return render(request, 'landing_not_managed.html')
 
     def projectconf(request, pid):

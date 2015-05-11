@@ -567,6 +567,17 @@ class Recipe(models.Model):
 
         return self.file_path
 
+    def get_vcs_recipe_file_link_url(self):
+        return self.layer_version.get_vcs_file_link_url(self.file_path)
+
+    def get_description_or_summary(self):
+        if self.description:
+            return self.description
+        elif self.summary:
+            return self.summary
+        else:
+            return ""
+
     class Meta:
         unique_together = ("layer_version", "file_path")
 

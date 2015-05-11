@@ -17,9 +17,11 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 from django.conf.urls import patterns, include, url
-from django.views.generic import RedirectView
+from django.views.generic import RedirectView, TemplateView
 
 from django.http import HttpResponseBadRequest
+import tables
+from widgets import ToasterTemplateView
 
 urlpatterns = patterns('toastergui.views',
         # landing page
@@ -77,19 +79,34 @@ urlpatterns = patterns('toastergui.views',
 
         url(r'^project/$', lambda x: HttpResponseBadRequest(), name='base_project'),
 
-        url(r'^project/(?P<pid>\d+)$', 'project', name='project'),
+        url(r'^project/(?P<pid>\d+)/$', 'project', name='project'),
         url(r'^project/(?P<pid>\d+)/configuration$', 'projectconf', name='projectconf'),
         url(r'^project/(?P<pid>\d+)/builds/$', 'projectbuilds', name='projectbuilds'),
 
-        url(r'^project/(?P<pid>\d+)/layers/$', 'layers', name='all-layers'),
         url(r'^project/(?P<pid>\d+)/layer/(?P<layerid>\d+)$', 'layerdetails', name='layerdetails'),
         url(r'^project/(?P<pid>\d+)/layer/$', lambda x,pid: HttpResponseBadRequest(), name='base_layerdetails'),
 
         # the import layer is a project-specific functionality;
         url(r'^project/(?P<pid>\d+)/importlayer$', 'importlayer', name='importlayer'),
 
-        url(r'^project/(?P<pid>\d+)/targets/$', 'targets', name='all-targets'),
-        url(r'^project/(?P<pid>\d+)/machines/$', 'machines', name='all-machines'),
+        url(r'^project/(?P<pid>\d+)/machines/$',
+            ToasterTemplateView.as_view(template_name="generic-toastertable-page.html"),
+            { 'table_name': tables.MachinesTable.__name__.lower(),
+              'title' : 'All compatible machines' },
+            name="all-machines"),
+
+        url(r'^project/(?P<pid>\d+)/recipes/$',
+            ToasterTemplateView.as_view(template_name="generic-toastertable-page.html"),
+            { 'table_name': tables.RecipesTable.__name__.lower(),
+              'title' : 'All compatible recipes' },
+            name="all-targets"),
+
+        url(r'^project/(?P<pid>\d+)/layers/$',
+            ToasterTemplateView.as_view(template_name="generic-toastertable-page.html"),
+            { 'table_name': tables.LayersTable.__name__.lower(),
+              'title' : 'All compatible layers' },
+            name="all-layers"),
+
 
         url(r'^xhr_build/$', 'xhr_build', name='xhr_build'),
         url(r'^xhr_projectbuild/(?P<pid>\d+)$', 'xhr_projectbuild', name='xhr_projectbuild'),
@@ -100,6 +117,7 @@ urlpatterns = patterns('toastergui.views',
         url(r'^xhr_datatypeahead/(?P<pid>\d+)$', 'xhr_datatypeahead', name='xhr_datatypeahead'),
         url(r'^xhr_importlayer/$', 'xhr_importlayer', name='xhr_importlayer'),
         url(r'^xhr_updatelayer/$', 'xhr_updatelayer', name='xhr_updatelayer'),
+        url(r'^xhr_tables/(?P<pid>\d+)/', include('toastergui.tables')),
 
         # dashboard for failed build requests
         url(r'^project/(?P<pid>\d+)/buildrequest/(?P<brid>\d+)$', 'buildrequestdetails', name='buildrequestdetails'),

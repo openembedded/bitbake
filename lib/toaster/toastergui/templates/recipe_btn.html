@@ -1,0 +1,8 @@
+<a href="{% url 'project' extra.pid %}#/targetbuild={{data.name}}" class="btn btn-block layer-exists-{{data.layer_version.pk}}" style="display:none; margin-top: 5px;" >
+  Build recipe
+</a>
+<button class="btn btn-block layerbtn layer-add-{{data.layer_version.pk}}" data-layer='{ "id": {{data.layer_version.pk}}, "name":  "{{data.layer_version.layer.name}}", "url": "{%url 'layerdetails' extra.pid data.layer_version.pk%}"}' data-directive="add">
+  <i class="icon-plus"></i>
+  Add layer
+  <i title="" class="icon-question-sign get-help" data-original-title="To build this target, you must first add the {{data.layer_version.layer.name}} layer to your project"></i>
+</button>
