@@ -9,6 +9,23 @@
 </li>
 {% endblock %}
 {% block projectinfomain %}
+{# If this is not an imported layer then hide the edit ui #}
+{% if not layerversion.layer_source_id or layerversion.layer_source.sourcetype != layerversion.layer_source.TYPE_IMPORTED %}
+<style scoped>
+ .icon-pencil {
+   display:none;
+ }
+.delete-current-value{
+  display: none;
+}
+ li .icon-trash {
+   display:none;
+ }
+ .add-deps {
+   display:none;
+ }
+</style>
+{% endif %}
 
 
 <script src="{% static 'js/layerdetails.js' %}"></script>
@@ -27,7 +44,7 @@
         commit: "{{layerversion.get_vcs_reference}}",
         inCurrentPrj : {{layer_in_project}},
         url : "{% url 'layerdetails' project.id layerversion.id  %}",
-        sourceId: {{layerversion.layer_source_id}},
+        sourceId: {{layerversion.layer_source_id|json}},
       }
     };
 
@@ -39,24 +56,6 @@
     }
   });
 </script>
-
-{# If this is not an imported layer then hide the edit ui #}
-{% if layerversion.layer_source_id != 3 %}
-<style>
- .icon-pencil {
-   display:none;
- }
-.delete-current-value{
-  display: none;
-}
- li .icon-trash {
-   display:none;
- }
- .add-deps {
-   display:none;
- }
-</style>
-{% endif %}
 
   <div class="row-fluid span11">
       <div class="page-header">
@@ -100,7 +99,7 @@
         </span>
 
         <!-- layer details pane -->
-        <div name="information" id="information" class="tab-pane active">
+        <div id="information" class="tab-pane active">
           <dl class="dl-horizontal">
             <dt class="">
               <i class="icon-question-sign get-help" title="Fetch/clone URL of the repository"></i>
@@ -160,19 +159,17 @@
                     Layer dependencies
                   </dt>
                   <dd>
-                    <ul class="unstyled" id="layer-deps-list">
+                    <ul class="unstyled current-value" id="layer-deps-list">
                       {% for ld in layerversion.dependencies.all %}
-                      <span class="current-value">
                       <li data-layer-id="{{ld.depends_on.id}}">
                         <a data-toggle="tooltip" title="{{ld.depends_on.layer.vcs_url}} | {{ld.depends_on.get_vcs_reference}}" href="{% url 'layerdetails' project.id ld.depends_on.id %}">{{ld.depends_on.layer.name}}</a>
                         <span class="icon-trash " data-toggle="tooltip" title="Delete"></span>
                       </li>
-                      </span>
                       {% endfor %}
                     </ul>
                     <div class="input-append add-deps">
                       <input type="text" autocomplete="off" data-minLength="1" data-autocomplete="off"  placeholder="Type a layer name" id="layer-dep-input">
-                        <a class="btn" type="button" id="add-layer-dependency-btn" disabled>
+                        <a class="btn" id="add-layer-dependency-btn" >
                           Add layer
                         </a>
                       </div>
@@ -181,7 +178,7 @@
                   </dl>
                 </div>
                 <!-- targets tab -->
-                <div name="targets" id="targets" class="tab-pane">
+                <div id="targets" class="tab-pane">
                   {% if total_targets == 0 %}
                   <div class="alert alert-info">
                     <p>Toaster does not have recipe information for the <strong> {{layerversion.layer.name}} </strong> layer.</p>
@@ -316,7 +313,7 @@
                 </div>
 
 
-                <div name="machines" id="machines" class="tab-pane">
+                <div id="machines" class="tab-pane">
                   {% if total_machines == 0 %}
                   <div class="alert alert-info">
                     <p>Toaster does not have machine information for the <strong> {{layerversion.layer.name}} </strong> layer.</p>
@@ -481,7 +478,6 @@
                   </form>
                   <i class="icon-pencil"></i>
                   <span class="icon-trash delete-current-value" data-toggle="tooltip" title="Delete"></span>
-                </dd>
                 </dd>
                 {% if layerversion.layer.up_id %}
                 <dt>Layer index</dt>

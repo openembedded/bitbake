@@ -45,7 +45,7 @@
         </li>
     </ul>
     <div class="tab-content">
-        <div class="tab-pane {{tab_states.1}}" id="information" name="information">
+        <div class="tab-pane {{tab_states.1}}" id="information">
             <dl class="dl-horizontal">
                 <dt>
                     <i class="icon-question-sign get-help" title="The name of the layer providing the recipe"></i>
@@ -144,7 +144,7 @@
             </table>
             {% endif %}
         </div>
-        <div class="tab-pane {{tab_states.3}}" id="dependencies" name="dependencies">
+        <div class="tab-pane {{tab_states.3}}" id="dependencies">
 
             {% if not object.r_dependencies_recipe.all %}
             <div class="alert alert-info">
@@ -176,7 +176,7 @@
             {% endif %}
 
         </div>
-        <div class="tab-pane {{tab_states.4}}" id="brought-in-by" name="brought-in-by">
+        <div class="tab-pane {{tab_states.4}}" id="brought-in-by">
 
             {% if not object.r_dependencies_depends.all %}
             <div class="alert alert-info">

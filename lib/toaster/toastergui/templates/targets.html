@@ -97,14 +97,14 @@
             </a>
             {% endif %}
         </td>
-        <td class="add-layer" value="{{o.pk}}">
+        <td class="add-layer" data-value="{{o.pk}}">
           <a href="{% url 'project' project.id %}#/targetbuild={{o.name}}" class="btn btn-block layer-exists-{{o.preffered_layerversion.pk}}" style="display:none; margin-top: 5px;" >
             Build recipe
           </a>
           <button class="btn btn-block layerbtn layer-add-{{o.preffered_layerversion.pk}}" data-layer='{ "id": {{o.preffered_layerversion.pk}}, "name":  "{{o.preffered_layerversion.layer.name}}", "url": "{%url 'layerdetails' project.id o.preffered_layerversion.pk%}"}' data-directive="add">
             <i class="icon-plus"></i>
             Add layer
-            <i title="" class="icon-question-sign get-help" data-original-title="To build this target, you must first add the {{o.preffered_layerversion.layer.name}} layer to your project"></i></i>
+            <i title="" class="icon-question-sign get-help" data-original-title="To build this target, you must first add the {{o.preffered_layerversion.layer.name}} layer to your project"></i>
         </button>
       </td>
     </tr>

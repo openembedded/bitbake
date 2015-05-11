@@ -743,9 +743,9 @@ def targetpkg( request, build_id, target_id ):
 
 from django.core.serializers.json import DjangoJSONEncoder
 from django.http import HttpResponse
-def dirinfo_ajax(request, build_id, target_id):
+def xhr_dirinfo(request, build_id, target_id):
     top = request.GET.get('start', '/')
-    return HttpResponse(_get_dir_entries(build_id, target_id, top))
+    return HttpResponse(_get_dir_entries(build_id, target_id, top), content_type = "application/json")
 
 from django.utils.functional import Promise
 from django.utils.encoding import force_text
@@ -1961,7 +1961,7 @@ if toastermain.settings.MANAGED:
 
         if (insert_projects):
             context['tablecols'].append(
-                    {'name': 'Project', 'clclass': 'project',
+                    {'name': 'Project', 'clclass': 'project_column',
                     }
             )
 
@@ -2307,14 +2307,9 @@ if toastermain.settings.MANAGED:
 
     from django.views.decorators.csrf import csrf_exempt
     @csrf_exempt
-    def xhr_datatypeahead(request):
+    def xhr_datatypeahead(request, pid):
         try:
-            prj = None
-            if request.GET.has_key('project_id'):
-                prj = Project.objects.get(pk = request.GET['project_id'])
-            else:
-                raise Exception("No valid project selected")
-
+            prj = Project.objects.get(pk = pid)
 
             def _lv_to_dict(x):
                 return {"id": x.pk,
@@ -2322,7 +2317,7 @@ if toastermain.settings.MANAGED:
                         "tooltip": x.layer.vcs_url+" | "+x.get_vcs_reference(),
                         "detail": "(" + x.layer.vcs_url + (")" if x.up_branch == None else " | "+x.get_vcs_reference()+")"),
                         "giturl": x.layer.vcs_url,
-                        "layerdetailurl" : reverse('layerdetails', args=(x.pk,)),
+                        "layerdetailurl" : reverse('layerdetails', args=(pid, x.pk,)),
                         "revision" : x.get_vcs_reference(),
                        }
 
@@ -2867,8 +2862,7 @@ if toastermain.settings.MANAGED:
             ]
         }
 
-        if 'project_id' in request.session:
-            context['tablecols'] += [
+        context['tablecols'] += [
                 {   'name': 'Build',
                     'dclass': 'span2',
                     'qhelp': "Add or delete targets to / from your project ",
@@ -3509,7 +3503,7 @@ else:
     def layerdetails(request, layerid):
         return render(request, 'landing_not_managed.html')
 
-    def targets(request):
+    def targets(request, pid):
         return render(request, 'landing_not_managed.html')
 
     def machines(request):

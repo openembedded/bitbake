@@ -22,19 +22,20 @@
 </h2>
 {%if task.task_executed %}
     {# executed tasks outcome #}
-    <dl class="dl-horizontal">
-	{% if task.logfile %}
-	{% if MANAGED and build.project %}
+    {% if task.logfile %}
+      {% if MANAGED and build.project %}
             <a class="btn btn-large" href="{% url 'build_artifact' build.id "tasklogfile" task.pk %}" style="margin:15px;">Download task log</a>
-	{% else %}
+      {% else %}
+       <dl class="dl-horizontal">
         <dt>
             <i class="icon-question-sign get-help" title="Path the task log file"></i> Log file
         </dt>
         <dd>
              <code>{{task.logfile}}</code>
         </dd>
-	{% endif %}
-	{% endif %}
+       </dl>
+      {% endif %}
+    {% endif %}
         {# show stack trace for failed task #}
         {% if task.outcome == task.OUTCOME_FAILED and log_head %}
             <h3>Python stack trace</h3>
@@ -45,7 +46,6 @@
                         <code>{{log_body}}</code><br><a id="full-trace-hide" class="btn btn-mini collapsed" style="font-family:Helvetica Neue" data-target="#fulltrace" data-toggle="collapse">Collapse stack trace<i class="icon-caret-up"></i></a></div></pre>
             </div>
         {% endif %}
-    </dl>
 {% else %}
 {# not executed tasks outcome #}
     {% if task.outcome == task.OUTCOME_PREBUILT %}
@@ -155,15 +155,16 @@
 
 {# Execution section #}
     {% if task.task_executed %}
-	<h2>
+    <h2>
         Executed
         <i class="icon-question-sign get-help heading-help" title="'Executed' tasks are those that need to run in order to generate the task output"></i>
     {% else %}
-	<h2 class="muted">
+    <h2 class="muted">
         Not Executed
         <i class="icon-question-sign get-help heading-help" title="'Not executed' tasks don't need to run because their outcome is provided by another task"></i>
     {% endif %}
-	</h2>
+    </h2>
+
 <dl class="dl-horizontal">
     <dt>
         <i class="icon-question-sign get-help" title="To make builds more efficient, the build system detects changes in the 'inputs' to a given task by creating a 'task signature'. If the signature changes, the build system assumes the inputs have changed and the task needs to be rerun"></i>
@@ -172,12 +173,12 @@
     <dd>
         {{task.sstate_checksum}}
     </dd>
+</dl>
     {% if task.sstate_result != task.SSTATE_NA %}
-		</dl>
         <div class="alert alert-info">Attempting to restore output from sstate cache
             <i class="icon-question-sign get-help get-help-blue" title="The build system is searching for the task output in your <code>sstate-cache</code> directory and mirrors. If the build system finds the task output, it will reuse it instead of building it from scratch by running the real task. Reusing the task output makes the build faster"></i>
         </div>
-		<dl class="dl-horizontal">
+        <dl class="dl-horizontal">
             <dt>
                 <i class="icon-question-sign get-help" title="The name of the file searched for in your <code>sstate-cache</code> directory and mirrors"></i>
                 File searched for
@@ -274,27 +275,27 @@
     <h2 class="details">Performance</h2>
 {% endif %}
     <dl class="dl-horizontal">
-		{% if task.elapsed_time %}
+        {% if task.elapsed_time %}
         <dt>
             <i class="icon-question-sign get-help" title="How long it took the task to finish in seconds"></i>
             Time (secs)
         </dt>
         <dd>{{task.elapsed_time|format_none_and_zero|floatformat:2}}</dd>
-		{% endif %}
-		{% if task.cpu_usage > 0 %}
+        {% endif %}
+        {% if task.cpu_usage > 0 %}
         <dt>
             <i class="icon-question-sign get-help" title="The percentage of task CPU utilization"></i>
             CPU usage
         </dt>
         <dd>{{task.cpu_usage|format_none_and_zero|floatformat:2}}%</dd>
-		{% endif %}
-		{% if task.disk_io > 0 %}
+        {% endif %}
+        {% if task.disk_io > 0 %}
         <dt>
             <i class="icon-question-sign get-help" title="Number of miliseconds the task spent doing disk input and output"></i>
             Disk I/O (ms)
         </dt>
         <dd>{{task.disk_io|format_none_and_zero}}</dd>
-		{% endif %}
+        {% endif %}
     </dl>
 
 </div>

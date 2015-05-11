@@ -30,7 +30,7 @@ vim: expandtab tabstop=2
 
 {%else%}
 
-<div id="main" role="main" ng-app="project" ng-controller="prjCtrl" class="top-padded">
+<div id="main" role="main" data-ng-app="project" data-ng-controller="prjCtrl" class="top-padded">
 
   <!-- project name -->
   <div class="page-header">
@@ -38,9 +38,9 @@ vim: expandtab tabstop=2
   </div>
 
   <!-- alerts section 1-->
-  <div ng-repeat="a in zone1alerts">
-    <div class="alert alert-dismissible lead" role="alert" ng-class="a.type"><button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">&times;</span></button>
-      <span ng-bind-html="a.text"></span>
+  <div data-ng-repeat="a in zone1alerts">
+    <div class="alert alert-dismissible lead" role="alert" data-ng-class="a.type"><button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">&times;</span></button>
+      <span data-ng-bind-html="a.text"></span>
     </div>
   </div>
 
@@ -54,21 +54,21 @@ vim: expandtab tabstop=2
   <script type="text/ng-template" id="dependencies_modal">
     <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal" aria-hidden="true">x</button>
-        <h3><span ng-bind="layerAddName"></span> dependencies</h3>
+        <h3><span data-ng-bind="layerAddName"></span> dependencies</h3>
     </div>
     <div class="modal-body">
         <p><strong>{[layerAddName]}</strong> depends on some layers that are not added to your project. Select the ones you want to add:</p>
         <ul class="unstyled">
-            <li ng-repeat="ld in items">
+            <li data-ng-repeat="ld in items">
                 <label class="checkbox">
-                    <input type="checkbox" ng-model="selectedItems[ld.id]"> {[ld.name]}
+                    <input type="checkbox" data-ng-model="selectedItems[ld.id]"> {[ld.name]}
                 </label>
             </li>
         </ul>
     </div>
     <div class="modal-footer">
-        <button class="btn btn-primary" ng-click="ok()">Add layers</button>
-        <button class="btn" ng-click="cancel()">Cancel</button>
+        <button class="btn btn-primary" data-ng-click="ok()">Add layers</button>
+        <button class="btn" data-ng-click="cancel()">Cancel</button>
     </div>
     </form>
   </script>
@@ -82,30 +82,30 @@ vim: expandtab tabstop=2
       <div class="modal-body">
         <p>The following project layers do not exist for the {[releaseDescription]} release:</p>
         <ul>
-          <li ng-repeat="i in items"><span class="layer-info" data-toggle="tooltip" tooltip="{[i.detail]}">{[i.name]}</span></li>
+          <li data-ng-repeat="i in items"><span class="layer-info" data-toggle="tooltip" tooltip="{[i.detail]}">{[i.name]}</span></li>
         </ul>
         <p>If you change the release to {[releaseDescription]}, the above layers will be deleted from your project.</p>
       </div>
       <div class="modal-footer">
-        <button class="btn btn-primary" ng-click="ok()">Change release and delete layers</button>
-        <button class="btn" ng-click="cancel()">Cancel</button>
+        <button class="btn btn-primary" data-ng-click="ok()">Change release and delete layers</button>
+        <button class="btn" data-ng-click="cancel()">Cancel</button>
       </div>
   </script>
 
   <script type="text/ng-template" id="target_display">
-      <div ng-switch on="t.task.length">
-        <div ng-switch-when="0">{[t.target]}</div>
-        <div ng-switch-default>{[t.target]}:{[t.task]}</div>
+      <div data-ng-switch on="t.task.length">
+        <div data-ng-switch-when="0">{[t.target]}</div>
+        <div data-ng-switch-default>{[t.target]}:{[t.task]}</div>
       </div>
   </script>
 
 
   <!-- build form -->
   <div class="well">
-    <form class="build-form" ng-submit="buildNamedTarget()">
+    <form class="build-form" data-ng-submit="buildNamedTarget()">
       <div class="input-append controls">
-        <input type="text" class="huge input-xxlarge" placeholder="Type the recipe(s) you want to build" autocomplete="off" ng-model="targetName" typeahead="e.name for e in getAutocompleteSuggestions('targets', $viewValue)|filter:$viewValue" typeahead-template-url="suggestion_details" ng-disabled="!layers.length"/>
-        <button type="submit" class="btn btn-large btn-primary" ng-disabled="!targetName.length">
+        <input type="text" class="huge input-xxlarge" placeholder="Type the recipe(s) you want to build" autocomplete="off" data-ng-model="targetName" data-typeahead="e.name for e in getAutocompleteSuggestions('targets', $viewValue)|filter:$viewValue" data-typeahead-template-url="suggestion_details" data-ng-disabled="!layers.length"/>
+        <button type="submit" class="btn btn-large btn-primary" data-ng-disabled="!targetName.length">
         Build
         </button>
       </div>
@@ -124,27 +124,27 @@ vim: expandtab tabstop=2
   <!-- latest builds list -->
 
   <a id="buildslist"></a>
-  <h2 class="air" ng-if="builds.length">Latest builds</h2>
-  <div class="animate-repeat alert"  ng-repeat="b in builds track by b.id" ng-class="{'queued':'alert-info', 'deleted':'alert-info', 'in progress': 'alert-info', 'failed':'alert-error', 'completed':{'In Progress':'alert-info', 'Succeeded':'alert-success', 'Failed':'alert-error'}[b.build[0].status]}[b.status]">
+  <h2 class="air" data-ng-if="builds.length">Latest builds</h2>
+  <div class="animate-repeat alert"  data-ng-repeat="b in builds track by b.id" data-ng-class="{'queued':'alert-info', 'deleted':'alert-info', 'in progress': 'alert-info', 'failed':'alert-error', 'completed':{'In Progress':'alert-info', 'Succeeded':'alert-success', 'Failed':'alert-error'}[b.build[0].status]}[b.status]">
     <div class="row-fluid">
-        <switch ng-switch="b.status">
+        <switch data-ng-switch="b.status">
 
-          <case ng-switch-when="failed">
+          <case data-ng-switch-when="failed">
             <div class="lead span3">
-              <a ng-class="{'succeeded': 'success', 'failed': 'error'}[b.status]" href="{[b.br_page_url]}">
-                <span ng-repeat="t in b.targets" ng-include src="'target_display'"></span>
+              <a data-ng-class="{'succeeded': 'success', 'failed': 'error'}[b.status]" href="{[b.br_page_url]}">
+                <span data-ng-repeat="t in b.targets" data-ng-include src="'target_display'"></span>
               </a>
             </div>
             <div class="span2 lead">
-              <ngif ng-if="b.updated - todaydate > 0">
+              <ngif data-ng-if="b.updated - todaydate > 0">
                  {[b.updated|date:'HH:mm']}
               </ngif>
-              <ngif ng-if="b.updated - todaydate < 0">
+              <ngif data-ng-if="b.updated - todaydate < 0">
                  {[b.updated|date:'dd/MM/yy HH:mm']}
               </ngif>
             </div>
             <div class="span2">
-              <ngif ng-if="b.errors.length">
+              <ngif data-ng-if="b.errors.length">
                 <span>
                   <i class="icon-minus-sign red lead"></i>
                   <a href="{[b.br_page_url]}#errors" class="lead error">{[b.errors.length]}
@@ -156,47 +156,47 @@ vim: expandtab tabstop=2
               <!-- we don't have warnings in this case -->
             </div>
             <div> <span class="lead">Build time: {[b.command_time|timediff]}</span>
-                <button class="btn pull-right" ng-class="{'succeeded':  'btn-success', 'failed': 'btn-danger'}[b.status]"
-                    ng-click="buildExistingTarget(b.targets)">Run again</button>
+                <button class="btn pull-right" data-ng-class="{'succeeded':  'btn-success', 'failed': 'btn-danger'}[b.status]"
+                    data-ng-click="buildExistingTarget(b.targets)">Run again</button>
 
             </div>
           </case>
 
-          <case ng-switch-when="queued">
-            <div class="lead span5"> <span ng-repeat="t in b.targets" ng-include src="'target_display'"></span>   </div>
+          <case data-ng-switch-when="queued">
+            <div class="lead span5"> <span data-ng-repeat="t in b.targets" data-ng-include src="'target_display'"></span>   </div>
             <div class="span4 lead" >Build queued
               <i title="This build will start as soon as a build server is available" class="icon-question-sign get-help get-help-blue heading-help" data-toggle="tooltip"></i>
             </div>
-            <button class="btn pull-right btn-info" ng-click="buildCancel(b)">Cancel</button>
+            <button class="btn pull-right btn-info" data-ng-click="buildCancel(b)">Cancel</button>
           </case>
 
-          <case ng-switch-when="created">
-            <div class="lead span5"> <span ng-repeat="t in b.targets" ng-include src="'target_display'"></span>   </div>
+          <case data-ng-switch-when="created">
+            <div class="lead span5"> <span data-ng-repeat="t in b.targets" data-ng-include src="'target_display'"></span>   </div>
             <div class="span4">
               <span class="lead">Creating build</span>
             </div>
-            <button class="btn pull-right btn-info" ng-click="buildCancel(b)">Cancel</button>
+            <button class="btn pull-right btn-info" data-ng-click="buildCancel(b)">Cancel</button>
           </case>
 
-          <case ng-switch-when="deleted">
-            <div class="lead span5"> <span ng-repeat="t in b.targets" ng-include src="'target_display'"></span>   </div>
+          <case data-ng-switch-when="deleted">
+            <div class="lead span5"> <span data-ng-repeat="t in b.targets" data-ng-include src="'target_display'"></span>   </div>
             <div class="span4" id="{[b.id]}-deleted" >
               <span class="lead">Build cancelled</span>
             </div>
-            <button class="btn pull-right btn-info" ng-click="buildDelete(b)">Close</button>
+            <button class="btn pull-right btn-info" data-ng-click="buildDelete(b)">Close</button>
           </case>
 
 
-          <case ng-switch-when="in progress">
-            <switch ng-switch="b.build.length">
-              <case ng-switch-when="0">
-                <div class="lead span5"> <span ng-repeat="t in b.targets" ng-include src="'target_display'"></span>   </div>
+          <case data-ng-switch-when="in progress">
+            <switch data-ng-switch="b.build.length">
+              <case data-ng-switch-when="0">
+                <div class="lead span5"> <span data-ng-repeat="t in b.targets" data-ng-include src="'target_display'"></span>   </div>
                 <div class="span4 lead">
                   Checking out layers
                 </div>
               </case>
-              <case ng-switch-default="">
-                <div class="lead span3"> <span ng-repeat="t in b.targets" ng-include src="'target_display'"></span>   </div>
+              <case data-ng-switch-default="">
+                <div class="lead span3"> <span data-ng-repeat="t in b.targets" data-ng-include src="'target_display'"></span>   </div>
                 <div class="span4 offset1" >
                   <div class="progress" style="margin-top:5px;" data-toggle="tooltip" tooltip="{[b.build[0].completeper]}% of tasks complete">
                       <div style="width: {[b.build[0].completeper]}%;" class="bar"></div>
@@ -207,22 +207,22 @@ vim: expandtab tabstop=2
           </case>
 
 
-          <case ng-switch-when="completed">
+          <case data-ng-switch-when="completed">
             <div class="lead span3">
-              <a ng-class="{'Succeeded': 'success', 'Failed': 'error'}[b.build[0].status]" href="{[b.build[0].build_page_url]}">
-                <span ng-repeat="t in b.targets" ng-include src="'target_display'"></span>
+              <a data-ng-class="{'Succeeded': 'success', 'Failed': 'error'}[b.build[0].status]" href="{[b.build[0].build_page_url]}">
+                <span data-ng-repeat="t in b.targets" data-ng-include src="'target_display'"></span>
               </a>
             </div>
             <div class="span2 lead">
-              <ngif ng-if="b.build[0].completed_on - todaydate > 0">
+              <ngif data-ng-if="b.build[0].completed_on - todaydate > 0">
                  {[b.build[0].completed_on|date:'HH:mm']}
               </ngif>
-              <ngif ng-if="b.build[0].completed_on - todaydate < 0">
+              <ngif data-ng-if="b.build[0].completed_on - todaydate < 0">
                  {[b.build[0].completed_on|date:'dd/MM/yy HH:mm']}
               </ngif>
             </div>
             <div class="span2">
-              <ngif ng-if="b.build[0].errors">
+              <ngif data-ng-if="b.build[0].errors">
                 <span>
                   <i class="icon-minus-sign red lead"></i>
                   <a href="{[b.build[0].build_page_url]}#errors" class="lead error">{[b.build[0].errors]}
@@ -231,7 +231,7 @@ vim: expandtab tabstop=2
               </ngif>
             </div>
             <div class="span2">
-              <ngif ng-if="b.build[0].warnings">
+              <ngif data-ng-if="b.build[0].warnings">
                 <span>
                   <i class="icon-warning-sign yellow lead"></i>
                   <a href="{[b.build[0].build_page_url]}#warnings" class="lead warning">{[b.build[0].warnings]}
@@ -240,14 +240,14 @@ vim: expandtab tabstop=2
               </ngif>
             </div>
             <div> <span class="lead">Build time: <a href="{[b.build[0].build_time_page_url]}">{[b.build[0].build_time|timediff]}</a></span>
-                <button class="btn pull-right" ng-class="{'Succeeded':  'btn-success', 'Failed': 'btn-danger'}[b.build[0].status]"
-                    ng-click="buildExistingTarget(b.targets)">Run again</button>
+                <button class="btn pull-right" data-ng-class="{'Succeeded':  'btn-success', 'Failed': 'btn-danger'}[b.build[0].status]"
+                    data-ng-click="buildExistingTarget(b.targets)">Run again</button>
 
             </div>
           </case>
 
 
-          <case ng-switch-default="">
+          <case data-ng-switch-default="">
           <div>FIXME!</div>
           </case>
         </switch>
@@ -259,9 +259,9 @@ vim: expandtab tabstop=2
   <h2 class="air">Project configuration</h2>
 
   <!-- alerts section 2 -->
-  <div ng-repeat="a in zone2alerts">
-    <div class="alert alert-dismissible lead" role="alert" ng-class="a.type"><button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">&times;</span></button>
-      <span ng-bind-html="a.text"></span>
+  <div data-ng-repeat="a in zone2alerts">
+    <div class="alert alert-dismissible lead" role="alert" data-ng-class="a.type"><button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">&times;</span></button>
+      <span data-ng-bind-html="a.text"></span>
     </div>
   </div>
 
@@ -273,7 +273,7 @@ vim: expandtab tabstop=2
         Layers <span class="muted counter">({[layers.length]})</span>
         <i class="icon-question-sign get-help heading-help" title="Bitbake reads metadata files from modules called 'layers'. Layers allow you to isolate different types of customizations from each other. <a href='http://www.yoctoproject.org/docs/current/dev-manual/dev-manual.html#understanding-and-creating-layers' target='_blank'>More on layers</a>"></i>
       </h3>
-      <div class="alert" ng-if="!layers.length">
+      <div class="alert" data-ng-if="!layers.length">
         <b>You need to add some layers </b>
         <p>
         You can:
@@ -285,10 +285,10 @@ vim: expandtab tabstop=2
         Or type a layer name below.
         </p>
       </div>
-      <form ng-submit="layerAdd()">
+      <form data-ng-submit="layerAdd()">
         <div class="input-append">
-          <input type="text" class="input-xlarge" id="layer" autocomplete="off" placeholder="Type a layer name" data-minLength="1" ng-model="layerAddName" typeahead="e.name for e in getAutocompleteSuggestions('layers', $viewValue)|filter:$viewValue" typeahead-template-url="suggestion_details" typeahead-on-select="onLayerSelect($item, $model, $label)" typeahead-editable="false" ng-class="{ 'has-error': layerAddName.$invalid }" />
-          <input type="submit" id="add-layer" class="btn" value="Add" ng-disabled="!layerAddName.length"/>
+          <input type="text" class="input-xlarge" id="layer" autocomplete="off" placeholder="Type a layer name" data-minLength="1" data-ng-model="layerAddName" data-typeahead="e.name for e in getAutocompleteSuggestions('layers', $viewValue)|filter:$viewValue" data-typeahead-template-url="suggestion_details" data-typeahead-on-select="onLayerSelect($item, $model, $label)" data-typeahead-editable="false" data-ng-class="{ 'has-error': layerAddName.$invalid }" />
+          <input type="submit" id="add-layer" class="btn" value="Add" data-ng-disabled="!layerAddName.length"/>
         </div>
         {% csrf_token %}
       </form>
@@ -298,9 +298,9 @@ vim: expandtab tabstop=2
         |
         <a href="{% url 'importlayer' project.id %}">Import layer</a></p>
       <ul class="unstyled configuration-list">
-          <li ng-repeat="l in layers track by l.id" class="animate-repeat">
+          <li data-ng-repeat="l in layers track by l.id" class="animate-repeat">
             <a href="{[l.layerdetailurl]}" class="layer-info" data-toggle="tooltip" tooltip-placement="right" tooltip="{[l.giturl]} | {[l.branch.name]}">{[l.name]}</a>
-            <i class="icon-trash" ng-click="layerDel(l.id)" tooltip="Delete"></i>
+            <i class="icon-trash" data-ng-click="layerDel(l.id)" tooltip="Delete"></i>
                       </li>
       </ul>
     </div>
@@ -312,10 +312,10 @@ vim: expandtab tabstop=2
         Recipes
         <i class="icon-question-sign get-help heading-help" title="What you build, often an image recipe that produces a root file system file. Something like <code>core-image-minimal</code> or <code>core-image-sato</code>"></i>
       </h3>
-        <form ng-submit="buildNamedTarget()">
+        <form data-ng-submit="buildNamedTarget()">
           <div class="input-append">
-            <input type="text" class="input-xlarge" placeholder="Type the recipe(s) you want to build" autocomplete="off" data-minLength="1"  ng-model="targetName1" typeahead="e.name for e in getAutocompleteSuggestions('targets', $viewValue)|filter:$viewValue" typeahead-template-url="suggestion_details" ng-disabled="!layers.length">
-            <button type="submit" class="btn btn-primary" ng-disabled="!targetName1.length">
+            <input type="text" class="input-xlarge" placeholder="Type the recipe(s) you want to build" autocomplete="off" data-minLength="1"  data-ng-model="targetName1" data-typeahead="e.name for e in getAutocompleteSuggestions('targets', $viewValue)|filter:$viewValue" data-typeahead-template-url="suggestion_details" data-ng-disabled="!layers.length">
+            <button type="submit" class="btn btn-primary" data-ng-disabled="!targetName1.length">
               Build </button>
           </div>
           {% csrf_token %}
@@ -324,18 +324,18 @@ vim: expandtab tabstop=2
           <a href="{% url 'all-targets' project.id %}">View all compatible recipes</a>
           <i class="icon-question-sign get-help" title="View all the recipes you can build with the release selected for this project, which is {[project.release.desc]}"></i>
         </p>
-        <div ng-if="frequenttargets.length">
+        <div data-ng-if="frequenttargets.length">
         <h4 class="air">
             Most built recipes
         </h4>
           <ul class="unstyled configuration-list {[mutedtargets]}">
-          <li ng-repeat="t in frequenttargets">
+          <li data-ng-repeat="t in frequenttargets">
             <label class="checkbox">
-              <input type="checkbox" ng-model="mostBuiltTargets[t]" ng-disabled="disableBuildCheckbox(t)" ng-checked="mostBuiltTargets[t] && !disableBuildCheckbox(t)">{[t]}
+              <input type="checkbox" data-ng-model="mostBuiltTargets[t]" data-ng-disabled="disableBuildCheckbox(t)" data-ng-checked="mostBuiltTargets[t] && !disableBuildCheckbox(t)">{[t]}
             </label>
           </li>
         </ul>
-        <button class="btn btn-large btn-primary" ng-disabled="enableBuildSelectedTargets()" ng-click="buildSelectedTargets()">Build selected recipes</button>
+        <button class="btn btn-large btn-primary" data-ng-disabled="enableBuildSelectedTargets()" data-ng-click="buildSelectedTargets()">Build selected recipes</button>
         </div>
     </div>
 
@@ -347,17 +347,17 @@ vim: expandtab tabstop=2
       </h3>
       <p class="lead" id="select-machine-opposite">
         <span>{[machine.name]}</span>
-        <i id="change-machine" class="icon-pencil" ng-click="toggle('#select-machine')"></i>
+        <i id="change-machine" class="icon-pencil" data-ng-click="toggle('#select-machine')"></i>
       </p>
       <div id="select-machine" style="display: none">
         <div class="alert alert-info">
           <strong>Machine changes have a big impact on build outcome.</strong>
               You cannot really compare the builds for the new machine with the previous ones.
         </div>
-        <form ng-submit="editProjectSettings('#select-machine')" class="input-append">
-              <input type="text" id="machine" autocomplete="off" ng-model="machineName" value="{[machine.name]}" typeahead="m.name for m in getAutocompleteSuggestions('machines', $viewValue)" typeahead-template-url="suggestion_details" />
-              <input type="submit" id="apply-change-machine" class="btn" type="button" ng-disabled="machineName == machine.name || machineName.length == 0" value="Save"></input>
-              <input type="reset" id="cancel-machine" class="btn btn-link" ng-click="toggle('#select-machine')" value="Cancel"></input>
+        <form data-ng-submit="editProjectSettings('#select-machine')" class="input-append">
+              <input type="text" id="machine" autocomplete="off" data-ng-model="machineName" value="{[machine.name]}" data-typeahead="m.name for m in getAutocompleteSuggestions('machines', $viewValue)" data-typeahead-template-url="suggestion_details" />
+              <input type="submit" id="apply-change-machine" class="btn" data-ng-disabled="machineName == machine.name || machineName.length == 0" value="Save"/>
+              <input type="reset" id="cancel-machine" class="btn btn-link" data-ng-click="toggle('#select-machine')" value="Cancel"/>
               {% csrf_token %}
         </form>
         <p>
@@ -376,9 +376,9 @@ vim: expandtab tabstop=2
   <h2>Project details</h2>
 
   <!-- alerts section 3 -->
-  <div ng-repeat="a in zone3alerts">
-    <div class="alert alert-dismissible lead" role="alert" ng-class="a.type"><button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">&times;</span></button>
-      <span ng-bind-html="a.text"></span>
+  <div data-ng-repeat="a in zone3alerts">
+    <div class="alert alert-dismissible lead" role="alert" data-ng-class="a.type"><button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">&times;</span></button>
+      <span data-ng-bind-html="a.text"></span>
     </div>
   </div>
 
@@ -387,31 +387,31 @@ vim: expandtab tabstop=2
     <h3>Project name</h3>
     <p class="lead" id="change-project-name-opposite">
       <span >{[project.name]}</span>
-      <i class="icon-pencil" ng-click="toggle('#change-project-name')" ></i>
+      <i class="icon-pencil" data-ng-click="toggle('#change-project-name')" ></i>
     </p>
     <div id="change-project-name" style="display:none;">
-      <form ng-submit="editProjectSettings('#change-project-name')" class="input-append">
-        <input type="text" class="input-xlarge" id="type-project-name" ng-model="projectName" value="{[project.name]}">
-        <input type="submit" class="btn" value="Save" ng-disabled="project.name == projectName"/>
-        <input type="reset" class="btn btn-link" value="Cancel" ng-click="toggle('#change-project-name')">
+      <form data-ng-submit="editProjectSettings('#change-project-name')" class="input-append">
+        <input type="text" class="input-xlarge" id="type-project-name" data-ng-model="projectName" value="{[project.name]}">
+        <input type="submit" class="btn" value="Save" data-ng-disabled="project.name == projectName"/>
+        <input type="reset" class="btn btn-link" value="Cancel" data-ng-click="toggle('#change-project-name')">
      </form>
     </div>
 
-    <h3 ng-if="releases.length > 1">
+    <h3 data-ng-if="releases.length > 1">
       Release
       <i class="icon-question-sign get-help heading-help" title="The version of the build system you want to use"></i>
     </h3>
-    <p ng-if="releases.length > 1" class="lead" id="change-project-version-opposite">
+    <p data-ng-if="releases.length > 1" class="lead" id="change-project-version-opposite">
       <span id="project-version">{[project.release.desc]}</span>
-      <i id="change-version" class="icon-pencil" ng-click="toggle('#change-project-version')" ></i>
+      <i id="change-version" class="icon-pencil" data-ng-click="toggle('#change-project-version')" ></i>
     </p>
     <div class="div-inline" id="change-project-version" style="display:none;">
-      <form ng-submit="testProjectSettingsChange('#change-project-version')" class="input-append">
-        <select id="select-version" ng-model="projectVersion">
-          <option ng-repeat="r in releases" value="{[r.id]}" ng-selected="r.id == project.release.id">{[r.description]}</option>
+      <form data-ng-submit="testProjectSettingsChange('#change-project-version')" class="input-append">
+        <select id="select-version" data-ng-model="projectVersion">
+          <option data-ng-repeat="r in releases" value="{[r.id]}" data-ng-selected="r.id == project.release.id">{[r.description]}</option>
         </select>
-        <input type="submit" class="btn" style="margin-left:5px;" value="Save" ng-disabled="project.release.id == projectVersion"/>
-        <input type="reset"  class="btn btn-link" value="Cancel" ng-click="toggle('#change-project-version')"/>
+        <input type="submit" class="btn" style="margin-left:5px;" value="Save" data-ng-disabled="project.release.id == projectVersion"/>
+        <input type="reset"  class="btn btn-link" value="Cancel" data-ng-click="toggle('#change-project-version')"/>
 
       </form>
     </div>
@@ -431,7 +431,7 @@ angular.element(document).ready(function() {
   scope.urls = {};
   scope.urls.xhr_build = "{% url 'xhr_projectbuild' project.id %}";
   scope.urls.xhr_edit = "{% url 'xhr_projectedit' project.id %}";
-  scope.urls.xhr_datatypeahead = "{% url 'xhr_datatypeahead' %}";
+  scope.urls.xhr_datatypeahead = "{% url 'xhr_datatypeahead' project.id %}";
   scope.urls.layers = "{% url 'all-layers' project.id %}";
   scope.urls.targets = "{% url 'all-targets' project.id %}";
   scope.urls.importlayer = "{% url 'importlayer' project.id %}";

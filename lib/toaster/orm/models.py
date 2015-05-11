@@ -556,7 +556,7 @@ class Recipe(models.Model):
         return "Recipe " + self.name + ":" + self.version
 
     def get_local_path(self):
-        if settings.MANAGED and self.layer_version.build.project is not None:
+        if settings.MANAGED and self.layer_version.build is not None and self.layer_version.build.project is not None:
             # strip any tag prefixes ('virtual:native:')
             layer_path=self.layer_version.layer.local_path.split(":")[-1]
             recipe_path=self.file_path.split(":")[-1]

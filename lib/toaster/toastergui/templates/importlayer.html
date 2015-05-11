@@ -39,7 +39,7 @@
                       <legend>Layer repository information</legend>
                       <div class="alert alert-error" id="import-error" style="display:none">
                         <button type="button" class="close" data-dismiss="alert">&times;</button>
-                        <h3></h3>
+                        <h3>&nbsp;</h3>
                         <p></p>
                         <ul></ul>
                       </div>
@@ -56,7 +56,7 @@
                         </div>
 
                       </div>
-                      <span id="duplicate-layer-info" style="display:none">
+                      <div id="duplicate-layer-info" style="display:none">
                         <div class="alert warning">
                           <h3>A layer called <a href="" class="dup-layer-link"><span class="dup-layer-name"></span></a> already exists</h3>
                           <p>Layer names must be unqiue. Please use a different layer name.</p>
@@ -79,9 +79,9 @@
 
                         <p><a href="" class="dup-layer-link">View the <span class="dup-layer-name"></span> layer information</a></p>
 
-                      </span>
+                      </div>
 
-                      <span class="fields-apart-from-layer-name">
+                      <div class="fields-apart-from-layer-name">
                         <label for="layer-git-repo-url" class="project-form">
                             Git repository URL
                             <span class="icon-question-sign get-help" title="Fetch/clone URL of the repository. Currently, Toaster only supports Git repositories." ></span>
@@ -104,11 +104,11 @@
                                 <span class="help-inline" style="diaply:none;" id="invalid-layer-revision-hint"></span>
                             </div>
                           </div>
-                        </span>
+                       </div>
 
                     </fieldset>
 
-                    <span class="fields-apart-from-layer-name">
+                    <div class="fields-apart-from-layer-name">
                     <fieldset class="air">
                         <legend>
                             Layer dependencies
@@ -119,7 +119,7 @@
                         </ul>
                         <div class="input-append">
                             <input type="text" autocomplete="off" data-minLength="1" data-autocomplete="off" data-provide="typeahead" placeholder="Type a layer name" id="layer-dependency" class="input-xlarge">
-                            <a class="btn" type="button" id="add-layer-dependency-btn" disabled>
+                            <a class="btn" id="add-layer-dependency-btn">
                                 Add layer
                             </a>
                         </div>
@@ -129,7 +129,7 @@
                       <button class="btn btn-primary btn-large" data-toggle="modal" id="import-and-add-btn" data-target="#dependencies-message" disabled>Import and add to project</button>
                         <span class="help-inline" id="import-and-add-hint" style="vertical-align: middle;">To import a layer you need to enter a layer name, a Git repository URL and a revision (branch, tag or commit)</span>
                     </div>
-                  </span>
+                  </div>
                   </form>
 
 {% endblock %}

@@ -53,7 +53,7 @@ urlpatterns = patterns('toastergui.views',
         # images are known as targets in the internal model
         url(r'^build/(?P<build_id>\d+)/target/(?P<target_id>\d+)$', 'target', name='target'),
         url(r'^build/(?P<build_id>\d+)/target/(?P<target_id>\d+)/targetpkg$', 'targetpkg', name='targetpkg'),
-        url(r'^dentries/build/(?P<build_id>\d+)/target/(?P<target_id>\d+)$', 'dirinfo_ajax', name='dirinfo_ajax'),
+        url(r'^dentries/build/(?P<build_id>\d+)/target/(?P<target_id>\d+)$', 'xhr_dirinfo', name='dirinfo_ajax'),
         url(r'^build/(?P<build_id>\d+)/target/(?P<target_id>\d+)/dirinfo$', 'dirinfo', name='dirinfo'),
         url(r'^build/(?P<build_id>\d+)/target/(?P<target_id>\d+)/dirinfo_filepath/_(?P<file_path>(?:/[^/\n]+)*)$', 'dirinfo', name='dirinfo_filepath'),
         url(r'^build/(?P<build_id>\d+)/configuration$', 'configuration', name='configuration'),
@@ -83,7 +83,7 @@ urlpatterns = patterns('toastergui.views',
 
         url(r'^project/(?P<pid>\d+)/layers/$', 'layers', name='all-layers'),
         url(r'^project/(?P<pid>\d+)/layer/(?P<layerid>\d+)$', 'layerdetails', name='layerdetails'),
-        url(r'^project/(?P<pid>\d+)/layer/$', lambda x: HttpResponseBadRequest(), name='base_layerdetails'),
+        url(r'^project/(?P<pid>\d+)/layer/$', lambda x,pid: HttpResponseBadRequest(), name='base_layerdetails'),
 
         # the import layer is a project-specific functionality;
         url(r'^project/(?P<pid>\d+)/importlayer$', 'importlayer', name='importlayer'),
@@ -92,12 +92,12 @@ urlpatterns = patterns('toastergui.views',
         url(r'^project/(?P<pid>\d+)/machines/$', 'machines', name='all-machines'),
 
         url(r'^xhr_build/$', 'xhr_build', name='xhr_build'),
-        url(r'^xhr_projectbuild/(?P<pid>\d+)/$', 'xhr_projectbuild', name='xhr_projectbuild'),
+        url(r'^xhr_projectbuild/(?P<pid>\d+)$', 'xhr_projectbuild', name='xhr_projectbuild'),
         url(r'^xhr_projectinfo/$', 'xhr_projectinfo', name='xhr_projectinfo'),
-        url(r'^xhr_projectedit/(?P<pid>\d+)/$', 'xhr_projectedit', name='xhr_projectedit'),
-        url(r'^xhr_configvaredit/(?P<pid>\d+)/$', 'xhr_configvaredit', name='xhr_configvaredit'),
+        url(r'^xhr_projectedit/(?P<pid>\d+)$', 'xhr_projectedit', name='xhr_projectedit'),
+        url(r'^xhr_configvaredit/(?P<pid>\d+)$', 'xhr_configvaredit', name='xhr_configvaredit'),
 
-        url(r'^xhr_datatypeahead/$', 'xhr_datatypeahead', name='xhr_datatypeahead'),
+        url(r'^xhr_datatypeahead/(?P<pid>\d+)$', 'xhr_datatypeahead', name='xhr_datatypeahead'),
         url(r'^xhr_importlayer/$', 'xhr_importlayer', name='xhr_importlayer'),
         url(r'^xhr_updatelayer/$', 'xhr_updatelayer', name='xhr_updatelayer'),
 

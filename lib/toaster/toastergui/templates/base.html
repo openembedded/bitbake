@@ -29,10 +29,10 @@
 <script>
   libtoaster.ctx = {
     projectId : {{project.id|default:'undefined'}},
-    xhrDataTypeaheadUrl : "{% url 'xhr_datatypeahead' %}",
     jsUrl : "{% static 'js/' %}",
     htmlUrl : "{% static 'html/' %}",
     {% if project.id %}
+    xhrDataTypeaheadUrl : "{% url 'xhr_datatypeahead' project.id %}",
     xhrProjectEditUrl : "{% url 'xhr_projectedit' project.id %}",
     projectPageUrl : "{% url 'project' project.id %}",
     projectName : "{{project.name}}",
@@ -104,16 +104,16 @@
                       <p><a id="view-all-projects" href="{% url 'all-projects' %}">View all projects</a></p>
                     </form>
                   </li>
-                  <div class="alert" style="display:none">
+                  <li style="display: none">
                     This project's configuration is incomplete,<br/>so you cannot run builds.<br/>
                     <p><a href="{% if project.id %}{% url 'project' project.id %}{% endif %}">View project configuration</a></p>
-                  </div>
+                  </li>
                   <li id="targets-form">
                     <h6>Recipe(s):</h6>
                     <form>
                       <input type="text" class="input-xlarge" id="build-target-input" placeholder="Type a recipe name" autocomplete="off" data-minLength="1" data-autocomplete="off" data-provide="typeahead" />
                       <div>
-                        <a class="btn btn-primary" id="build-button" disabled="disabled" data-project-id="{{project.id}}">Build</a>
+                        <a class="btn btn-primary" id="build-button" data-project-id="{{project.id}}">Build</a>
                       </div>
                     </form>
                   </li>

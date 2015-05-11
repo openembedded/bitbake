@@ -112,7 +112,7 @@
         {% endwith %}
             </td>
             {% if project %}
-            <td class="add-del-layers" value="{{o.pk}}">
+            <td class="add-del-layers" data-value="{{o.pk}}">
                 <button class="btn btn-danger btn-block layer-exists-{{o.pk}} layerbtn" style="display:none;" data-layer='{ "id": {{o.pk}}, "name":  "{{o.layer.name}}", "url": "{%url 'layerdetails' project.id o.pk%}"}' data-directive="remove" >
                     <i class="icon-trash"></i>
                     Delete layer
