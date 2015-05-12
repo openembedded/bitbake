@@ -1795,6 +1795,7 @@ def managedcontextprocessor(request):
 
 import toastermain.settings
 
+from orm.models import Project, ProjectLayer, ProjectTarget, ProjectVariable
 
 # we have a set of functions if we're in managed mode, or
 # a default "page not available" simple functions for interactive mode
@@ -1804,7 +1805,6 @@ if toastermain.settings.MANAGED:
     from django.contrib.auth import authenticate, login
     from django.contrib.auth.decorators import login_required
 
-    from orm.models import Project, ProjectLayer, ProjectTarget, ProjectVariable
     from orm.models import Branch, LayerSource, ToasterSetting, Release, Machine, LayerVersionDependency
     from bldcontrol.models import BuildRequest
 
