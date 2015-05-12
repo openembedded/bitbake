@@ -64,7 +64,9 @@ class Hg(FetchMethod):
         elif not ud.revision:
             ud.revision = self.latest_revision(ud, d)
 
-        ud.localfile = data.expand('%s_%s_%s_%s.tar.gz' % (ud.module.replace('/', '.'), ud.host, ud.path.replace('/', '.'), ud.revision), d)
+        ud.localfile = ud.moddir
+
+        ud.basecmd = data.getVar("FETCHCMD_hg", d, True) or "/usr/bin/env hg"
 
     def need_update(self, ud, d):
         revTag = ud.parm.get('rev', 'tip')
@@ -79,8 +81,6 @@ class Hg(FetchMethod):
         Build up an hg commandline based on ud
         command is "fetch", "update", "info"
         """
-
-        basecmd = data.expand('${FETCHCMD_hg}', d)
 
         proto = ud.parm.get('protocol', 'http')
 
@@ -98,7 +98,7 @@ class Hg(FetchMethod):
                 hgroot = ud.user + "@" + host + ud.path
 
         if command == "info":
-            return "%s identify -i %s://%s/%s" % (basecmd, proto, hgroot, ud.module)
+            return "%s identify -i %s://%s/%s" % (ud.basecmd, proto, hgroot, ud.module)
 
         options = [];
 
@@ -111,22 +111,22 @@ class Hg(FetchMethod):
 
         if command == "fetch":
             if ud.user and ud.pswd:
-                cmd = "%s --config auth.default.prefix=* --config auth.default.username=%s --config auth.default.password=%s --config \"auth.default.schemes=%s\" clone %s %s://%s/%s %s" % (basecmd, ud.user, ud.pswd, proto, " ".join(options), proto, hgroot, ud.module, ud.module)
+                cmd = "%s --config auth.default.prefix=* --config auth.default.username=%s --config auth.default.password=%s --config \"auth.default.schemes=%s\" clone %s %s://%s/%s %s" % (ud.basecmd, ud.user, ud.pswd, proto, " ".join(options), proto, hgroot, ud.module, ud.module)
             else:
-                cmd = "%s clone %s %s://%s/%s %s" % (basecmd, " ".join(options), proto, hgroot, ud.module, ud.module)	      
+                cmd = "%s clone %s %s://%s/%s %s" % (ud.basecmd, " ".join(options), proto, hgroot, ud.module, ud.module)
         elif command == "pull":
             # do not pass options list; limiting pull to rev causes the local
             # repo not to contain it and immediately following "update" command
             # will crash
             if ud.user and ud.pswd:
-                cmd = "%s --config auth.default.prefix=* --config auth.default.username=%s --config auth.default.password=%s --config \"auth.default.schemes=%s\" pull" % (basecmd, ud.user, ud.pswd, proto)
+                cmd = "%s --config auth.default.prefix=* --config auth.default.username=%s --config auth.default.password=%s --config \"auth.default.schemes=%s\" pull" % (ud.basecmd, ud.user, ud.pswd, proto)
             else:
-                cmd = "%s pull" % (basecmd)
+                cmd = "%s pull" % (ud.basecmd)
         elif command == "update":
             if ud.user and ud.pswd:
-                cmd = "%s --config auth.default.prefix=* --config auth.default.username=%s --config auth.default.password=%s --config \"auth.default.schemes=%s\" update -C %s" % (basecmd, ud.user, ud.pswd, proto, " ".join(options))
+                cmd = "%s --config auth.default.prefix=* --config auth.default.username=%s --config auth.default.password=%s --config \"auth.default.schemes=%s\" update -C %s" % (ud.basecmd, ud.user, ud.pswd, proto, " ".join(options))
             else:
-                cmd = "%s update -C %s" % (basecmd, " ".join(options))
+                cmd = "%s update -C %s" % (ud.basecmd, " ".join(options))
         else:
             raise FetchError("Invalid hg command %s" % command, ud.url)
 
@@ -163,15 +163,6 @@ class Hg(FetchMethod):
         logger.debug(1, "Running %s", updatecmd)
         runfetchcmd(updatecmd, d)
 
-        scmdata = ud.parm.get("scmdata", "")
-        if scmdata == "keep":
-            tar_flags = ""
-        else:
-            tar_flags = "--exclude '.hg' --exclude '.hgrags'"
-
-        os.chdir(ud.pkgdir)
-        runfetchcmd("tar %s -czf %s %s" % (tar_flags, ud.localpath, ud.module), d, cleanup = [ud.localpath])
-
     def supports_srcrev(self):
         return True
 
@@ -191,3 +182,29 @@ class Hg(FetchMethod):
         Return a unique key for the url
         """
         return "hg:" + ud.moddir
+
+    def localpath(self, ud, d):
+        return ud.moddir
+
+    def unpack(self, ud, destdir, d):
+        """
+        Make a local clone or export for the url
+        """
+
+        revflag = "-r %s" % ud.revision
+        subdir = ud.parm.get("destsuffix", ud.module)
+        codir = "%s/%s" % (destdir, subdir)
+
+        scmdata = ud.parm.get("scmdata", "")
+        if scmdata != "nokeep":
+            if not os.access(os.path.join(codir, '.hg'), os.R_OK):
+                logger.debug(2, "Unpack: creating new hg repository in '" + codir + "'")
+                runfetchcmd("%s init %s" % (ud.basecmd, codir), d)
+            logger.debug(2, "Unpack: updating source in '" + codir + "'")
+            os.chdir(codir)
+            runfetchcmd("%s pull %s" % (ud.basecmd, ud.moddir), d)
+            runfetchcmd("%s up -C %s" % (ud.basecmd, revflag), d)
+        else:
+            logger.debug(2, "Unpack: extracting source to '" + codir + "'")
+            os.chdir(ud.moddir)
+            runfetchcmd("%s archive -t files %s %s" % (ud.basecmd, revflag, codir), d)
