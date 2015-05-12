@@ -32,8 +32,6 @@ from django.contrib import admin
 admin.autodiscover()
 
 urlpatterns = patterns('',
-    # the api-s are not auto-discoverable
-    url(r'^api/1.0/', include('bldviewer.api')),
 
     # Examples:
     # url(r'^toaster/', include('toaster.foo.urls')),
