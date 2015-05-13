@@ -355,7 +355,8 @@ class Git(FetchMethod):
             for l in output.split('\n'):
                 if s in l:
                     return l.split()[0]
-        raise bb.fetch2.FetchError("Unable to resolve '%s' in upstream git repository in git ls-remote output" % ud.unresolvedrev[name])
+        raise bb.fetch2.FetchError("Unable to resolve '%s' in upstream git repository in git ls-remote output for %s" % \
+            (ud.unresolvedrev[name], ud.host+ud.path))
 
     def latest_versionstring(self, ud, d):
         """
