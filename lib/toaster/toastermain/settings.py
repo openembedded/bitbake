@@ -258,8 +258,13 @@ TEMPLATE_CONTEXT_PROCESSORS = ('django.contrib.auth.context_processors.auth',
  )
 
 INSTALLED_APPS = (
-    #'django.contrib.sites',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.messages',
+    'django.contrib.sessions',
+    'django.contrib.admin',
     'django.contrib.staticfiles',
+
     # Uncomment the next line to enable admin documentation:
     # 'django.contrib.admindocs',
     'django.contrib.humanize',
@@ -306,16 +311,6 @@ if os.environ.get('TOASTER_DEVEL', None) is not None:
 
 
 SOUTH_TESTS_MIGRATE = False
-
-# if we run in managed mode, we need user support
-if MANAGED:
-    INSTALLED_APPS = ('django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.messages',
-    'django.contrib.sessions',
-    # Uncomment the next line to enable the admin:
-    'django.contrib.admin',
-        ) + INSTALLED_APPS
 
 
 # We automatically detect and install applications here if

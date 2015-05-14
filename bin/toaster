@@ -53,7 +53,11 @@ function webserverStartAll()
     fi
 
     retval=0
-    python $BBBASEDIR/lib/toaster/manage.py syncdb || retval=1
+    if [ "$TOASTER_MANAGED" '==' '1' ]; then
+        python $BBBASEDIR/lib/toaster/manage.py syncdb || retval=1
+    else
+        python $BBBASEDIR/lib/toaster/manage.py syncdb --noinput || retval=1
+    fi
     python $BBBASEDIR/lib/toaster/manage.py migrate orm || retval=2
     if [ $retval -eq 1 ]; then
         echo "Failed db sync, stopping system start" 1>&2

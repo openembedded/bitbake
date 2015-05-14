@@ -266,8 +266,10 @@ def _get_queryset(model, queryset, filter_string, search_term, ordering_string, 
 # if the value is given explicitly as a GET parameter it will be the first selected,
 # otherwise the cookie value will be used.
 def _get_parameters_values(request, default_count, default_order):
-    pagesize = request.GET.get('count', request.COOKIES.get('count', default_count))
-    orderby = request.GET.get('orderby', request.COOKIES.get('orderby', default_order))
+    from django.core.urlresolvers import resolve
+    current_url = resolve(request.path_info).url_name
+    pagesize = request.GET.get('count', request.session.get('%s_count' % current_url, default_count))
+    orderby = request.GET.get('orderby', request.session.get('%s_orderby' % current_url, default_order))
     return (pagesize, orderby)
 
 
