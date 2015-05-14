@@ -1154,9 +1154,14 @@ class RunQueue:
             sq_hash.append(self.rqdata.runq_hash[task])
             sq_taskname.append(taskname)
             sq_task.append(task)
-        call = self.hashvalidate + "(sq_fn, sq_task, sq_hash, sq_hashfn, d)"
         locs = { "sq_fn" : sq_fn, "sq_task" : sq_taskname, "sq_hash" : sq_hash, "sq_hashfn" : sq_hashfn, "d" : self.cooker.expanded_data }
-        valid = bb.utils.better_eval(call, locs)
+        try:
+            call = self.hashvalidate + "(sq_fn, sq_task, sq_hash, sq_hashfn, d, siginfo=True)"
+            valid = bb.utils.better_eval(call, locs)
+        # Handle version with no siginfo parameter
+        except TypeError:
+            call = self.hashvalidate + "(sq_fn, sq_task, sq_hash, sq_hashfn, d)"
+            valid = bb.utils.better_eval(call, locs)
         for v in valid:
             valid_new.add(sq_task[v])
 
