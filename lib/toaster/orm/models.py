@@ -457,7 +457,7 @@ class Task_Dependency(models.Model):
     depends_on = models.ForeignKey(Task, related_name='task_dependencies_depends')
 
 class Package(models.Model):
-    search_allowed_fields = ['name', 'version', 'revision', 'recipe__name', 'recipe__version', 'recipe__license', 'recipe__layer_version__layer__name', 'recipe__layer_version__branch', 'recipe__layer_version__commit', 'recipe__layer_version__layer__local_path', 'installed_name']
+    search_allowed_fields = ['name', 'version', 'revision', 'recipe__name', 'recipe__version', 'recipe__license', 'recipe__layer_version__layer__name', 'recipe__layer_version__branch', 'recipe__layer_version__commit', 'recipe__layer_version__local_path', 'installed_name']
     build = models.ForeignKey('Build')
     recipe = models.ForeignKey('Recipe', null=True)
     name = models.CharField(max_length=100)
@@ -528,7 +528,7 @@ class Package_File(models.Model):
     size = models.IntegerField()
 
 class Recipe(models.Model):
-    search_allowed_fields = ['name', 'version', 'file_path', 'section', 'summary', 'description', 'license', 'layer_version__layer__name', 'layer_version__branch', 'layer_version__commit', 'layer_version__layer__local_path', 'layer_version__layer_source__name']
+    search_allowed_fields = ['name', 'version', 'file_path', 'section', 'summary', 'description', 'license', 'layer_version__layer__name', 'layer_version__branch', 'layer_version__commit', 'layer_version__local_path', 'layer_version__layer_source__name']
 
     layer_source = models.ForeignKey('LayerSource', default = None, null = True)  # from where did we get this recipe
     up_id = models.IntegerField(null = True, default = None)                    # id of entry in the source
@@ -544,6 +544,7 @@ class Recipe(models.Model):
     homepage = models.URLField(blank=True)
     bugtracker = models.URLField(blank=True)
     file_path = models.FilePathField(max_length=255)
+    pathflags = models.CharField(max_length=200, blank=True)
 
     def get_layersource_view_url(self):
         if self.layer_source is None:
@@ -554,18 +555,6 @@ class Recipe(models.Model):
 
     def __unicode__(self):
         return "Recipe " + self.name + ":" + self.version
-
-    def get_local_path(self):
-        if settings.MANAGED and self.layer_version.build is not None and self.layer_version.build.project is not None:
-            # strip any tag prefixes ('virtual:native:')
-            layer_path=self.layer_version.layer.local_path.split(":")[-1]
-            recipe_path=self.file_path.split(":")[-1]
-            if 0 == recipe_path.find(layer_path):
-                return recipe_path[len(layer_path)+1:]
-            else:
-                return recipe_path
-
-        return self.file_path
 
     def get_vcs_recipe_file_link_url(self):
         return self.layer_version.get_vcs_file_link_url(self.file_path)
@@ -579,7 +568,8 @@ class Recipe(models.Model):
             return ""
 
     class Meta:
-        unique_together = ("layer_version", "file_path")
+        unique_together = (("layer_version", "file_path", "pathflags"), )
+
 
 class Recipe_DependencyManager(models.Manager):
     use_for_related_fields = True
@@ -976,7 +966,6 @@ class Layer(models.Model):
     up_date = models.DateTimeField(null = True, default = None)
 
     name = models.CharField(max_length=100)
-    local_path = models.FilePathField(max_length=255, null = True, default = None)
     layer_index_url = models.URLField()
     vcs_url = GitURLField(default = None, null = True)
     vcs_web_url = models.URLField(null = True, default = None)
@@ -1008,6 +997,8 @@ class Layer_Version(models.Model):
     commit = models.CharField(max_length=100)           # LayerBranch.vcs_last_rev
     dirpath = models.CharField(max_length=255, null = True, default = None)          # LayerBranch.vcs_subdir
     priority = models.IntegerField(default = 0)         # if -1, this is a default layer
+
+    local_path = models.FilePathField(max_length=1024, default = "/")  # where this layer was checked-out
 
     project = models.ForeignKey('Project', null = True, default = None)   # Set if this layer is project-specific; always set for imported layers, and project-set branches
 

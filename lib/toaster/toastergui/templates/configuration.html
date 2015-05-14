@@ -64,7 +64,7 @@
                     {{lv.commit|truncatechars:13}}
                 </a></td>
           {% if not MANAGED or not build.project %}
-            <td>{{lv.layer.local_path}}</td>
+            <td>{{lv.local_path}}</td>
           {% endif %}
         </tr>{% endfor %}
       </tbody>

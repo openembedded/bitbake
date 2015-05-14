@@ -89,7 +89,7 @@
             </td>
             <!-- Layer directory -->
             {% if not MANAGED or not build.project %}
-                <td class="recipe__layer_version__layer__local_path">{{package.recipe.layer_version.layer.local_path}}</td>
+                <td class="recipe__layer_version__local_path">{{package.recipe.layer_version.local_path}}</td>
             {% endif %}
         {%else%}
             <td class="recipe__name"></td>
@@ -97,7 +97,7 @@
             <td class="recipe__layer_version__layer__name"></td>
             <td class="recipe__layer_version__branch"></td>
             <td class="recipe__layer_version__layer__commit"></td>
-            <td class="recipe__layer_version__layer__local_path"></td>
+            <td class="recipe__layer_version__local_path"></td>
         {%endif%}
 
     </tr>

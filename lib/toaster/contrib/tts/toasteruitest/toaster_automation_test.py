@@ -926,7 +926,7 @@ class toaster_cases(toaster_cases_base):
         self.driver.find_element_by_id("depends_on").click()
         self.driver.find_element_by_id("layer_version__branch").click()
         self.driver.find_element_by_id("layer_version__layer__commit").click()
-        self.driver.find_element_by_id("layer_version__layer__local_path").click()
+        self.driver.find_element_by_id("layer_version__local_path").click()
         self.driver.find_element_by_id("depends_by").click()
         self.driver.find_element_by_css_selector("button.btn.dropdown-toggle").click()
 
@@ -945,7 +945,7 @@ class toaster_cases(toaster_cases_base):
 
         table_head_dict = {'Recipe file':'recipe_file', 'Section':'recipe_section', \
                 'License':'recipe_license', 'Layer':'layer_version__layer__name', \
-                'Layer branch':'layer_version__branch', 'Layer directory':'layer_version__layer__local_path'}
+                'Layer branch':'layer_version__branch', 'Layer directory':'layer_version__local_path'}
         for key in table_head_dict:
             self.find_element_by_link_text_in_table(self.table_name, key).click()
             column_list = self.get_table_column_text("class", table_head_dict[key])
@@ -1066,7 +1066,7 @@ class toaster_cases(toaster_cases_base):
         self.driver.find_element_by_id("depends_on").click()
         self.driver.find_element_by_id("layer_version__branch").click()
         self.driver.find_element_by_id("layer_version__layer__commit").click()
-        self.driver.find_element_by_id("layer_version__layer__local_path").click()
+        self.driver.find_element_by_id("layer_version__local_path").click()
         self.driver.find_element_by_id("depends_by").click()
         self.driver.find_element_by_css_selector("button.btn.dropdown-toggle").click()
         # check if columns selected above is shown
@@ -1081,7 +1081,7 @@ class toaster_cases(toaster_cases_base):
         self.driver.find_element_by_id("depends_on").click()
         self.driver.find_element_by_id("layer_version__branch").click()
         self.driver.find_element_by_id("layer_version__layer__commit").click()
-        self.driver.find_element_by_id("layer_version__layer__local_path").click()
+        self.driver.find_element_by_id("layer_version__local_path").click()
         self.driver.find_element_by_id("depends_by").click()
         self.driver.find_element_by_css_selector("button.btn.dropdown-toggle").click()
         # don't exist any more
@@ -1425,7 +1425,7 @@ class toaster_cases(toaster_cases_base):
 # Step 4
         # pulldown menu
         option_ids = ['recipe__layer_version__layer__name', 'recipe__layer_version__branch', \
-                      'recipe__layer_version__layer__commit', 'recipe__layer_version__layer__local_path', \
+                      'recipe__layer_version__layer__commit', 'recipe__layer_version__local_path', \
                       'license', 'recipe__version']
         self.driver.find_element_by_css_selector("button.btn.dropdown-toggle").click()
         for item in option_ids:
@@ -1470,7 +1470,7 @@ class toaster_cases(toaster_cases_base):
         self.driver.find_element_by_css_selector("button.btn.dropdown-toggle").click()
         self.driver.find_element_by_id("layer_version__branch").click()
         self.driver.find_element_by_id("layer_version__layer__commit").click()
-        self.driver.find_element_by_id("layer_version__layer__local_path").click()
+        self.driver.find_element_by_id("layer_version__local_path").click()
         self.driver.find_element_by_css_selector("button.btn.dropdown-toggle").click()
         # otable is the recipes table here
         otable_head_text = self.get_table_head_text('otable')
@@ -1488,7 +1488,7 @@ class toaster_cases(toaster_cases_base):
         self.driver.find_element_by_id("recipe__layer_version__layer__name").click()
         self.driver.find_element_by_id("recipe__layer_version__branch").click()
         self.driver.find_element_by_id("recipe__layer_version__layer__commit").click()
-        self.driver.find_element_by_id("recipe__layer_version__layer__local_path").click()
+        self.driver.find_element_by_id("recipe__layer_version__local_path").click()
         self.driver.find_element_by_css_selector("button.btn.dropdown-toggle").click()
         otable_head_text = self.get_table_head_text("otable")
         for item in ["Layer", "Layer branch", "Layer commit", "Layer directory"]:

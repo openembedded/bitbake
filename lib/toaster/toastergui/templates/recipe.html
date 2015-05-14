@@ -58,13 +58,13 @@
                     <i class="icon-question-sign get-help" title="Path to the layer providing the recipe"></i>
                     Layer directory
                 </dt>
-                <dd><code>{{layer.local_path}}</code></dd>
+                <dd><code>{{object.layer_version.local_path}}</code></dd>
           {% endif %}
                 <dt>
                     <i class="icon-question-sign get-help" title="Path to the recipe .bb file"></i>
                     Recipe file
                 </dt>
-                <dd><code>{{object.get_local_path}}</code></dd>
+                <dd><code>{{object.file_path}} {% if object.pathflags %}<i>({{object.pathflags}})</i>{% endif %}</code></dd>
                 {% if layer_version.branch %}
                 <dt>
                     <i class="icon-question-sign get-help" title="The Git branch of the layer providing the recipe"></i>

@@ -725,9 +725,9 @@ eans multiple licenses exist that cover different parts of the source',
         tc_layerDir = {
             'name':'Layer directory',
             'qhelp':'Location in disk of the layer providing the recipe that builds the package',
-            'orderfield' : _get_toggle_order( request, "recipe__layer_version__layer__local_path" ),
-            'ordericon'  : _get_toggle_order_icon( request, "recipe__layer_version__layer__local_path" ),
-            'orderkey'   : "recipe__layer_version__layer__local_path",
+            'orderfield' : _get_toggle_order( request, "recipe__layer_version__local_path" ),
+            'ordericon'  : _get_toggle_order_icon( request, "recipe__layer_version__local_path" ),
+            'orderkey'   : "recipe__layer_version__local_path",
             'clclass'    : 'layer_directory',
             'hidden'     : 1,
         }
@@ -1254,10 +1254,10 @@ def recipes(request, build_id):
             {
                 'name':'Layer directory',
                 'qhelp':'Path to the layer prodiving the recipe',
-                'orderfield': _get_toggle_order(request, "layer_version__layer__local_path"),
-                'ordericon':_get_toggle_order_icon(request, "layer_version__layer__local_path"),
-                'orderkey' : 'layer_version__layer__local_path',
-                'clclass': 'layer_version__layer__local_path', 'hidden': 1,
+                'orderfield': _get_toggle_order(request, "layer_version__local_path"),
+                'ordericon':_get_toggle_order_icon(request, "layer_version__local_path"),
+                'orderkey' : 'layer_version__local_path',
+                'clclass': 'layer_version__local_path', 'hidden': 1,
             })
 
 
@@ -1464,10 +1464,10 @@ def bpackage(request, build_id):
         tc_layerDir = {
                 'name':'Layer directory',
                 'qhelp':'Path to the layer providing the recipe that builds the package',
-                'orderfield': _get_toggle_order(request, "recipe__layer_version__layer__local_path"),
-                'ordericon':_get_toggle_order_icon(request, "recipe__layer_version__layer__local_path"),
-                'orderkey' : 'recipe__layer_version__layer__local_path',
-                'clclass': 'recipe__layer_version__layer__local_path', 'hidden': 1,
+                'orderfield': _get_toggle_order(request, "recipe__layer_version__local_path"),
+                'ordericon':_get_toggle_order_icon(request, "recipe__layer_version__local_path"),
+                'orderkey' : 'recipe__layer_version__local_path',
+                'clclass': 'recipe__layer_version__local_path', 'hidden': 1,
         }
         context['tablecols'].append(tc_layerDir)
 

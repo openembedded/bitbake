@@ -84,7 +84,7 @@
             {% endwith %}
         </td>
         <!-- Recipe file -->
-        <td class="recipe_file">{{recipe.get_local_path}}</td>
+        <td class="recipe_file">{{recipe.file_path}} {% if recipe.pathflags %}<i>({{recipe.pathflags}})</i>{% endif %}</td>
         <!-- Section -->
         <td class="recipe_section">{{recipe.section}}</td>
         <!-- License -->
@@ -105,7 +105,7 @@
 
         {% if not MANAGED or not build.project %}
             <!-- Layer directory -->
-            <td class="layer_version__layer__local_path">{{recipe.layer_version.layer.local_path}}</td>
+            <td class="layer_version__local_path">{{recipe.layer_version.local_path}}</td>
         {% endif %}
     </tr>
 
