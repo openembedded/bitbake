@@ -39,6 +39,7 @@ else:
              "bb.tests.cow",
              "bb.tests.data",
              "bb.tests.fetch",
+             "bb.tests.parse",
              "bb.tests.utils"]
 
 for t in tests:
