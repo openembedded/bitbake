@@ -32,7 +32,7 @@ import bb.build, bb.utils
 from bb import data
 
 from . import ConfHandler
-from .. import resolve_file, ast, logger
+from .. import resolve_file, ast, logger, ParseError
 from .ConfHandler import include, init
 
 # For compatibility
@@ -48,7 +48,7 @@ __def_regexp__           = re.compile( r"def\s+(\w+).*:" )
 __python_func_regexp__   = re.compile( r"(\s+.*)|(^$)" )
 
 
-__infunc__ = ""
+__infunc__ = []
 __inpython__ = False
 __body__   = []
 __classname__ = ""
@@ -120,7 +120,7 @@ def get_statements(filename, absolute_filename, base_name):
 def handle(fn, d, include):
     global __func_start_regexp__, __inherit_regexp__, __export_func_regexp__, __addtask_regexp__, __addhandler_regexp__, __infunc__, __body__, __residue__, __classname__
     __body__ = []
-    __infunc__ = ""
+    __infunc__ = []
     __classname__ = ""
     __residue__ = []
 
@@ -159,6 +159,11 @@ def handle(fn, d, include):
         if include == 0:
             return { "" : d }
 
+    if __infunc__:
+        raise ParseError("Shell function %s is never closed" % __infunc__[0], __infunc__[1], __infunc__[2])
+    if __residue__:
+        raise ParseError("Leftover unparsed (incomplete?) data %s from %s" % __residue__, fn)
+
     if ext != ".bbclass" and include == 0:
         return ast.multi_finalize(fn, d)
 
@@ -172,8 +177,8 @@ def feeder(lineno, s, fn, root, statements):
     if __infunc__:
         if s == '}':
             __body__.append('')
-            ast.handleMethod(statements, fn, lineno, __infunc__, __body__)
-            __infunc__ = ""
+            ast.handleMethod(statements, fn, lineno, __infunc__[0], __body__)
+            __infunc__ = []
             __body__ = []
         else:
             __body__.append(s)
@@ -217,8 +222,8 @@ def feeder(lineno, s, fn, root, statements):
 
     m = __func_start_regexp__.match(s)
     if m:
-        __infunc__ = m.group("func") or "__anonymous"
-        ast.handleMethodFlags(statements, fn, lineno, __infunc__, m)
+        __infunc__ = [m.group("func") or "__anonymous", fn, lineno]
+        ast.handleMethodFlags(statements, fn, lineno, __infunc__[0], m)
         return
 
     m = __def_regexp__.match(s)
