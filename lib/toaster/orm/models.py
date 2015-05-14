@@ -81,15 +81,18 @@ class ProjectManager(models.Manager):
     def create(self, *args, **kwargs):
         raise Exception("Invalid call to Project.objects.create. Use Project.objects.create_project() to create a project")
 
-    def get_or_create(self, *args, **kwargs):
+    def get_or_create(self, **kwargs):
+        # allow project creation for default data
+        if 'pk' in kwargs and kwargs['pk'] == 0:
+            return super(ProjectManager, self).get_or_create(**kwargs)
         raise Exception("Invalid call to Project.objects.get_or_create. Use Project.objects.create_project() to create a project")
 
 class Project(models.Model):
     search_allowed_fields = ['name', 'short_description', 'release__name', 'release__branch_name']
     name = models.CharField(max_length=100)
     short_description = models.CharField(max_length=50, blank=True)
-    bitbake_version = models.ForeignKey('BitbakeVersion')
-    release     = models.ForeignKey("Release")
+    bitbake_version = models.ForeignKey('BitbakeVersion', null=True)
+    release     = models.ForeignKey("Release", null=True)
     created     = models.DateTimeField(auto_now_add = True)
     updated     = models.DateTimeField(auto_now = True)
     # This is a horrible hack; since Toaster has no "User" model available when
@@ -223,7 +226,7 @@ class Build(models.Model):
 
     search_allowed_fields = ['machine', 'cooker_log_path', "target__target", "target__target_image_file__file_name"]
 
-    project = models.ForeignKey(Project, null = True)
+    project = models.ForeignKey(Project)            # must have a project
     machine = models.CharField(max_length=100)
     distro = models.CharField(max_length=100)
     distro_version = models.CharField(max_length=100)
@@ -435,8 +438,8 @@ class Task(models.Model):
     script_type = models.IntegerField(choices=TASK_CODING, default=CODING_NA)
     line_number = models.IntegerField(default=0)
     disk_io = models.IntegerField(null=True)
-    cpu_usage = models.DecimalField(max_digits=6, decimal_places=2, null=True)
-    elapsed_time = models.DecimalField(max_digits=6, decimal_places=2, null=True)
+    cpu_usage = models.DecimalField(max_digits=8, decimal_places=2, null=True)
+    elapsed_time = models.DecimalField(max_digits=8, decimal_places=2, null=True)
     sstate_result = models.IntegerField(choices=SSTATE_RESULT, default=SSTATE_NA)
     message = models.CharField(max_length=240)
     logfile = models.FilePathField(max_length=255, blank=True)

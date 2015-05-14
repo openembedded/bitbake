@@ -37,7 +37,7 @@ from django.views.decorators.csrf import csrf_exempt
 def eventfile(request):
     """ Receives a file by POST, and runs toaster-eventreply on this file """
     if request.method != "POST":
-        return HttpResponseBadRequest("This API only accepts POST requests. Post a file with:\n\ncurl -F eventlog=@bitbake_eventlog.json http[s]://[server-address]/orm/eventfile\n", content_type="text/plain;utf8")
+        return HttpResponseBadRequest("This API only accepts POST requests. Post a file with:\n\ncurl -F eventlog=@bitbake_eventlog.json %s\n" % request.build_absolute_uri(reverse('eventfile')), content_type="text/plain;utf8")
 
     # write temporary file
     (handle, abstemppath) = tempfile.mkstemp(dir="/tmp/")

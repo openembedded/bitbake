@@ -31,6 +31,9 @@ from toaster.orm.models import Variable, VariableHistory
 from toaster.orm.models import Package, Package_File, Target_Installed_Package, Target_File
 from toaster.orm.models import Task_Dependency, Package_Dependency
 from toaster.orm.models import Recipe_Dependency
+
+from toaster.orm.models import Project
+
 from bb.msg import BBLogFormatter as format
 from django.db import models
 from pprint import pformat
@@ -103,7 +106,7 @@ class ORMWrapper(object):
 
         return vars(self)[dictname][key]
 
-    def create_build_object(self, build_info, brbe):
+    def create_build_object(self, build_info, brbe, project_id):
         assert 'machine' in build_info
         assert 'distro' in build_info
         assert 'distro_version' in build_info
@@ -112,7 +115,26 @@ class ORMWrapper(object):
         assert 'build_name' in build_info
         assert 'bitbake_version' in build_info
 
+        prj = None
+        buildrequest = None
+        if brbe is not None:            # this build was triggered by a request from a user
+            logger.debug(1, "buildinfohelper: brbe is %s" % brbe)
+            from bldcontrol.models import BuildEnvironment, BuildRequest
+            br, be = brbe.split(":")
+            buildrequest = BuildRequest.objects.get(pk = br)
+            prj = buildrequest.project
+
+        elif project_id is not None:    # this build was triggered by an external system for a specific project
+            logger.debug(1, "buildinfohelper: project is %s" % prj)
+            prj = Project.objects.get(pk = project_id)
+
+        else:                           # this build was triggered by a legacy system, or command line interactive mode
+            prj, created = Project.objects.get_or_create(pk=0, name="Default Project")
+            logger.debug(1, "buildinfohelper: project is not specified, defaulting to %s" % prj)
+
+
         build = Build.objects.create(
+                                    project = prj,
                                     machine=build_info['machine'],
                                     distro=build_info['distro'],
                                     distro_version=build_info['distro_version'],
@@ -123,17 +145,11 @@ class ORMWrapper(object):
                                     bitbake_version=build_info['bitbake_version'])
 
         logger.debug(1, "buildinfohelper: build is created %s" % build)
-        if brbe is not None:
-            logger.debug(1, "buildinfohelper: brbe is %s" % brbe)
-            from bldcontrol.models import BuildEnvironment, BuildRequest
-            br, be = brbe.split(":")
 
-            buildrequest = BuildRequest.objects.get(pk = br)
+        if buildrequest is not None:
             buildrequest.build = build
             buildrequest.save()
 
-            build.project_id = buildrequest.project_id
-            build.save()
         return build
 
     def create_target_objects(self, target_info):
@@ -638,6 +654,7 @@ class BuildInfoHelper(object):
         self.has_build_history = has_build_history
         self.tmp_dir = self.server.runCommand(["getVariable", "TMPDIR"])[0]
         self.brbe    = self.server.runCommand(["getVariable", "TOASTER_BRBE"])[0]
+        self.project = self.server.runCommand(["getVariable", "TOASTER_PROJECT"])[0]
         logger.debug(1, "buildinfohelper: Build info helper inited %s" % vars(self))
 
 
@@ -804,7 +821,7 @@ class BuildInfoHelper(object):
         assert '_pkgs' in vars(event)
         build_information = self._get_build_information()
 
-        build_obj = self.orm_wrapper.create_build_object(build_information, self.brbe)
+        build_obj = self.orm_wrapper.create_build_object(build_information, self.brbe, self.project)
 
         self.internal_state['build'] = build_obj
 
@@ -1233,7 +1250,7 @@ class BuildInfoHelper(object):
                 logger.debug(1, "buildinfohelper: Saving stored event %s " % tempevent)
                 self.store_log_event(tempevent)
             else:
-                logger.error("buildinfohelper: Events not saved: %s" % self.internal_state['backlog'])
+                logger.info("buildinfohelper: All events saved")
                 del self.internal_state['backlog']
 
         log_information = {}
