@@ -315,6 +315,7 @@ class URITest(unittest.TestCase):
 class FetcherTest(unittest.TestCase):
 
     def setUp(self):
+        self.origdir = os.getcwd()
         self.d = bb.data.init()
         self.tempdir = tempfile.mkdtemp()
         self.dldir = os.path.join(self.tempdir, "download")
@@ -326,6 +327,7 @@ class FetcherTest(unittest.TestCase):
         self.d.setVar("PERSISTENT_DIR", persistdir)
 
     def tearDown(self):
+        os.chdir(self.origdir)
         bb.utils.prunedir(self.tempdir)
 
 class MirrorUriTest(FetcherTest):
