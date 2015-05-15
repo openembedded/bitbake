@@ -44,7 +44,7 @@ class TestPySystemStart(unittest.TestCase):
 
     def test_start_interactive_mode(self):
         try:
-            run_shell_cmd("bash -c 'source %s/oe-init-build-env && source toaster start && source toaster stop'" % config.testdir, config.testdir)
+            run_shell_cmd("bash -c 'source %s/oe-init-build-env && source toaster start webport=56789 && source toaster stop'" % config.testdir, config.testdir)
         except ShellCmdException as e:
             self.fail("Failed starting interactive mode: %s" % (e))
 

@@ -1,2 +1,0 @@
-michaelw/toaster-frontend-cleanups|PENDING
-adamian/test_0|PENDING

@@ -87,7 +87,7 @@ if __name__ == "__main__":
         errtext = None
         out = None
         try:
-            out = shellutils.run_shell_cmd("./runner.py %s" % next_task)
+            out = shellutils.run_shell_cmd("%s %s" % (os.path.join(os.path.dirname(__file__), "runner.py"), next_task))
             pass
         except ShellCmdException as e:
             print("Failed while running the test runner: %s", e)

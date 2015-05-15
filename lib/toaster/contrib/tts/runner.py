@@ -168,7 +168,7 @@ def read_settings():
 # cleanup !
 def clean_up(testdir):
     # TODO: delete the test dir
-    #run_shell_cmd("rm -rf -- '%s'" % testdir)
+    run_shell_cmd("rm -rf -- '%s'" % testdir)
     pass
 
 if __name__ == "__main__":
