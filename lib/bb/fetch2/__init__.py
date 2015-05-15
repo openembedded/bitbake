@@ -876,7 +876,9 @@ def build_mirroruris(origud, mirrors, ld):
                 logger.debug(1, "Mirror fetch failure for url %s (original url: %s)" % (newuri, origud.url))
                 logger.debug(1, str(e))
                 try:
-                    ud.method.clean(ud, ld)
+                    # setup_localpath of file:// urls may fail, we should still see 
+                    # if mirrors of the url exist
+                    adduri(newud, uris, uds)
                 except UnboundLocalError:
                     pass
                 continue   
