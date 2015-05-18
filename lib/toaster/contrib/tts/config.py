@@ -22,12 +22,33 @@
 # everything that would be a global variable goes here
 
 import os, sys, logging
+import socket
 
 LOGDIR = "log"
 SETTINGS_FILE = os.path.join(os.path.dirname(__file__), "settings.json")
 TEST_DIR_NAME = "tts_testdir"
 
 OWN_PID = os.getpid()
+
+W3C_VALIDATOR = "http://icarus.local/w3c-validator/check?doctype=HTML5&uri="
+
+#TODO assign port dynamically
+TOASTER_PORT=56789
+
+#we parse the w3c URL to know where to connect
+
+import urlparse
+
+def get_public_ip():
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    p = urlparse.urlparse("http://icarus.local/w3c-validator/check?doctype=HTML5&uri=")
+    s.connect(( p.netloc, 80 if p.port is None else p.port))
+    hn = s.getsockname()[0]
+    s.close()
+    return hn
+
+TOASTER_BASEURL="http://%s:%d/" % (get_public_ip(), TOASTER_PORT)
+
 
 OWN_EMAIL_ADDRESS = "Toaster Testing Framework <alexandru.damian@intel.com>"
 REPORT_EMAIL_ADDRESS = "alexandru.damian@intel.com"
