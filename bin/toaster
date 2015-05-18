@@ -154,6 +154,7 @@ NOTOASTERUI=0
 WEBSERVER=1
 TOASTER_BRBE=""
 WEB_PORT="8000"
+NOBROWSER=0
 
 for param in $*; do
     case $param in
@@ -162,6 +163,9 @@ for param in $*; do
     ;;
     noweb )
             WEBSERVER=0
+    ;;
+    nobrowser )
+            NOBROWSER=1
     ;;
     brbe=* )
             TOASTER_BRBE=$'\n'"TOASTER_BRBE=\""${param#*=}"\""
@@ -227,7 +231,7 @@ if [ `basename \"$0\"` = `basename \"${SRCFILE}\"` ]; then
         cleanup
         exit 1
     fi
-    if [ $WEBSERVER -gt 0 ]; then
+    if [ $WEBSERVER -gt 0 ] && [ $NOBROWSER -eq 0 ]  ; then
         echo "Starting browser..."
         xdg-open http://127.0.0.1:$WEB_PORT/ >/dev/null 2>&1 &
     fi
