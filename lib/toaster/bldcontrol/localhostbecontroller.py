@@ -122,10 +122,11 @@ class LocalhostBEController(BuildEnvironmentController):
         port = "-1"
         logger.debug("localhostbecontroller: starting builder \n%s\n" % cmd)
         cmdoutput = self._shellcmd(cmd)
-        for i in cmdoutput.split("\n"):
-            if i.startswith("Bitbake server address"):
-                port = i.split(" ")[-1]
-                logger.debug("localhostbecontroller: Found bitbake server port %s" % port)
+        with open(self.be.builddir + "/toaster_server.log", "r") as f:
+            for i in f.readlines():
+                if i.startswith("Bitbake server address"):
+                    port = i.split(" ")[-1]
+                    logger.debug("localhostbecontroller: Found bitbake server port %s" % port)
 
         def _toaster_ui_started(filepath, filepos = 0):
             if not os.path.exists(filepath):
