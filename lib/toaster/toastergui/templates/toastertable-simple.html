@@ -1,0 +1,112 @@
+
+{% load static %}
+{% load projecttags %}
+
+<script src="{% static 'js/table.js' %}"></script>
+<script src="{% static 'js/layerBtn.js' %}"></script>
+<script>
+  $(document).ready(function() {
+    (function(){
+
+    var ctx = {
+      tableName : "{{table_name}}",
+      url : "{{ xhr_table_url }}",
+      title : "{{title}}",
+      projectLayers : {{projectlayers|json}},
+    };
+
+    try {
+      tableInit(ctx);
+    } catch (e) {
+      document.write("Problem loading table widget: " + e);
+    }
+    })();
+  });
+</script>
+
+<!-- filter modal -->
+<div id="filter-modal" class="modal hide fade" tabindex="-1" role="dialog" aria-hidden="false">
+  <form id="filter-modal-form" style="margin-bottom: 0px">
+    <div class="modal-header">
+      <button type="button" class="close" data-dismiss="modal" aria-hidden="true">x</button>
+      <h3 id="filter-modal-title">&nbsp;</h3>
+    </div>
+    <div class="modal-body">
+      <p>Show:</p>
+      <span id="filter-actions"></span>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" type="submit">Apply</button>
+    </div>
+  </form>
+</div>
+<button id="clear-filter-btn" style="display:none"></button>
+
+<div class="row-fluid" id="no-results-{{table_name}}" style="display:none">
+  <div class="alert">
+    <form class="no-results input-append">
+      <input class="input-xlarge" id="new-search-input-{{table_name}}" name="search" type="text" placeholder="Search {{title|lower}}" value="{{request.GET.search}}"/>
+      <a href="#" class="add-on btn remove-search-btn-{{table_name}}" tabindex="-1">
+        <i class="icon-remove"></i>
+      </a>
+      <button class="btn search-submit-{{table_name}}" >Search</button>
+      <button class="btn btn-link remove-search-btn-{{table_name}}">Show {{title|lower}}
+      </button>
+    </form>
+  </div>
+</div>
+
+
+<div id="table-container-{{table_name}}">
+  <!-- control header -->
+  <div class="row-fluid" id="table-chrome-{{table_name}}">
+      <div class="navbar-search input-append pull-left">
+
+        <input class="input-xlarge" id="search-input-{{table_name}}" name="search" type="text" placeholder="Search {{title|lower}}" value="{{request.GET.search}}"/>
+        <a href="#" style="display:none" class="add-on btn remove-search-btn-{{table_name}}" tabindex="-1">
+          <i class="icon-remove"></i>
+        </a>
+        <button class="btn" id="search-submit-{{table_name}}" >Search</button>
+      </div>
+
+      <div class="pull-right">
+
+        <div style="display:inline">
+          <span class="divider-vertical"></span>
+          <span class="help-inline" style="padding-top:5px;">Show rows:</span>
+          <select style="margin-top:5px;margin-bottom:0px;" class="pagesize-{{table_name}}">
+            {% with "10 25 50 100 150" as list%}
+            {% for i in list.split %}
+            <option value="{{i}}">{{i}}</option>
+            {% endfor %}
+            {% endwith %}
+          </select>
+        </div>
+      </div>
+  </div>
+
+  <!-- The actual table -->
+  <table class="table table-bordered table-hover tablesorter" id="{{table_name}}">
+    <thead>
+      <tr><th></th></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <!-- Pagination controls -->
+  <div class="pagination pagination-centered">
+    <ul id="pagination-{{table_name}}" class="pagination" style="display: block-inline">
+    </ul>
+
+    <div class="pull-right">
+      <span class="help-inline" style="padding-top:5px;">Show rows:</span>
+      <select style="margin-top:5px;margin-bottom:0px;" class="pagesize-{{table_name}}">
+        {% with "10 25 50 100 150" as list%}
+        {% for i in list.split %}
+        <option value="{{i}}">{{i}}</option>
+        {% endfor %}
+        {% endwith %}
+      </select>
+    </div>
+  </div>
+</div>
