@@ -2664,52 +2664,6 @@ if toastermain.settings.MANAGED:
         }
         return render(request, template, context)
 
-
-
-    def layerdetails(request, pid, layerid):
-        template = "layerdetails.html"
-        limit = 10
-
-        if request.GET.has_key("limit"):
-            request.session['limit'] = request.GET['limit']
-
-        if request.session.has_key('limit'):
-            limit = request.session['limit']
-
-        layer_version = Layer_Version.objects.get(pk = layerid)
-
-        targets_query = Recipe.objects.filter(layer_version=layer_version)
-
-        # Targets tab query functionality
-        if request.GET.has_key('targets_search'):
-            targets_query = targets_query.filter(
-                Q(name__icontains=request.GET['targets_search']) |
-                Q(summary__icontains=request.GET['targets_search']))
-
-        targets = _build_page_range(Paginator(targets_query.order_by("name"), limit), request.GET.get('tpage', 1))
-
-        machines_query = Machine.objects.filter(layer_version=layer_version)
-
-        # Machines tab query functionality
-        if request.GET.has_key('machines_search'):
-            machines_query = machines_query.filter(
-                Q(name__icontains=request.GET['machines_search']) |
-                Q(description__icontains=request.GET['machines_search']))
-
-        machines = _build_page_range(Paginator(machines_query.order_by("name"), limit), request.GET.get('mpage', 1))
-
-        context = {
-            'project' : Project.objects.get(pk=pid),
-            'layerversion': layer_version,
-            'layer_in_project' : ProjectLayer.objects.filter(project_id=pid,layercommit=layerid).count(),
-            'machines': machines,
-            'targets': targets,
-            'total_targets': Recipe.objects.filter(layer_version=layer_version).count(),
-
-            'total_machines': Machine.objects.filter(layer_version=layer_version).count(),
-        }
-        return render(request, template, context)
-
     def get_project_configvars_context():
         # Vars managed outside of this view
         vars_managed = {
@@ -3248,9 +3202,6 @@ else:
         return render(request, 'landing_not_managed.html')
 
     def importlayer(request):
-        return render(request, 'landing_not_managed.html')
-
-    def layerdetails(request, layerid):
         return render(request, 'landing_not_managed.html')
 
     def projectconf(request, pid):

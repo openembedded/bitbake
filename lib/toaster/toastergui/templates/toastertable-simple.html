@@ -24,23 +24,7 @@
   });
 </script>
 
-<!-- filter modal -->
-<div id="filter-modal" class="modal hide fade" tabindex="-1" role="dialog" aria-hidden="false">
-  <form id="filter-modal-form" style="margin-bottom: 0px">
-    <div class="modal-header">
-      <button type="button" class="close" data-dismiss="modal" aria-hidden="true">x</button>
-      <h3 id="filter-modal-title">&nbsp;</h3>
-    </div>
-    <div class="modal-body">
-      <p>Show:</p>
-      <span id="filter-actions"></span>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-primary" type="submit">Apply</button>
-    </div>
-  </form>
-</div>
-<button id="clear-filter-btn" style="display:none"></button>
+{% include 'toastertable-filter.html' %}
 
 <div class="row-fluid" id="no-results-{{table_name}}" style="display:none">
   <div class="alert">
@@ -55,9 +39,7 @@
     </form>
   </div>
 </div>
-
-
-<div id="table-container-{{table_name}}">
+<div id="table-container-{{table_name}}" style="visibility: hidden">
   <!-- control header -->
   <div class="row-fluid" id="table-chrome-{{table_name}}">
       <div class="navbar-search input-append pull-left">
@@ -94,8 +76,8 @@
   </table>
 
   <!-- Pagination controls -->
-  <div class="pagination pagination-centered">
-    <ul id="pagination-{{table_name}}" class="pagination" style="display: block-inline">
+  <div class="pagination pagination-centered" id="pagination-{{table_name}}">
+    <ul class="pagination" style="display: block-inline">
     </ul>
 
     <div class="pull-right">

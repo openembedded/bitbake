@@ -132,7 +132,6 @@ class LayersTable(ToasterTable):
                         static_data_name="add-del-layers",
                         static_data_template='{% include "layer_btn.html" %}')
 
-
 class MachinesTable(ToasterTable):
     """Table of Machines in Toaster"""
 
@@ -178,8 +177,7 @@ class MachinesTable(ToasterTable):
         self.add_column(title="Machine file",
                         hidden=True,
                         static_data_name="machinefile",
-                        static_data_template=machine_file_template,
-                        field_name="name")
+                        static_data_template=machine_file_template)
 
         self.add_column(title="Select",
                         help_text="Sets the selected machine as the project machine. You can only have one machine per project",
@@ -188,6 +186,33 @@ class MachinesTable(ToasterTable):
                         static_data_template='{% include "machine_btn.html" %}',
                         field_name="layer_version__id")
 
+
+class LayerMachinesTable(MachinesTable):
+    """ Smaller version of the Machines table for use in layer details """
+
+    def __init__(self, *args, **kwargs):
+        MachinesTable.__init__(self)
+
+    def setup_queryset(self, *args, **kwargs):
+        MachinesTable.setup_queryset(self, *args, **kwargs)
+
+        self.queryset = self.queryset.filter(layer_version__pk=int(kwargs['layerid']))
+        self.static_context_extra['in_prj'] = ProjectLayer.objects.filter(Q(project=kwargs['pid']) and Q(layercommit=kwargs['layerid'])).count()
+
+    def setup_columns(self, *args, **kwargs):
+        self.add_column(title="Machine",
+                        hideable=False,
+                        orderable=True,
+                        field_name="name")
+
+        self.add_column(title="Description",
+                        field_name="description")
+
+        select_btn_template = '<a href="{% url "project" extra.pid %}#/machineselect={{data.name}}" class="btn btn-block select-machine-btn" {% if extra.in_prj == 0%}disabled="disabled"{%endif%}>Select machine</a>'
+
+        self.add_column(title="Select machine",
+                        static_data_name="add-del-layers",
+                        static_data_template=select_btn_template)
 
 
 class RecipesTable(ToasterTable):
@@ -267,13 +292,57 @@ class RecipesTable(ToasterTable):
                         static_data_name="add-del-layers",
                         static_data_template='{% include "recipe_btn.html" %}')
 
+class LayerRecipesTable(RecipesTable):
+    """ Smaller version of the Machines table for use in layer details """
+
+    def __init__(self, *args, **kwargs):
+        RecipesTable.__init__(self)
+
+    def setup_queryset(self, *args, **kwargs):
+        RecipesTable.setup_queryset(self, *args, **kwargs)
+        self.queryset = self.queryset.filter(layer_version__pk=int(kwargs['layerid']))
+
+        self.static_context_extra['in_prj'] = ProjectLayer.objects.filter(Q(project=kwargs['pid']) and Q(layercommit=kwargs['layerid'])).count()
+
+    def setup_columns(self, *args, **kwargs):
+        self.add_column(title="Recipe",
+                        help_text="Information about a single piece of software, including where to download the source, configuration options, how to compile the source files and how to package the compiled output",
+                        hideable=False,
+                        orderable=True,
+                        field_name="name")
+
+        self.add_column(title="Description",
+                        field_name="get_description_or_summary")
+
+
+        build_recipe_template ='<button class="btn btn-block build-target-btn" data-target-name="{{data.name}}" {%if extra.in_prj == 0 %}disabled="disabled"{%endif%}>Build recipe</button>'
+
+        self.add_column(title="Build recipe",
+                        static_data_name="add-del-layers",
+                        static_data_template=build_recipe_template)
+
+
+
+
+
+
+
+
 # This needs to be staticaly defined here as django reads the url patterns
 # on start up
 urlpatterns = (
-  url(r'^machines/(?P<cmd>\w+)*', MachinesTable.as_view(),
-      name=MachinesTable.__name__.lower()),
-  url(r'^layers/(?P<cmd>\w+)*', LayersTable.as_view(),
-      name=LayersTable.__name__.lower()),
-  url(r'^recipes/(?P<cmd>\w+)*', RecipesTable.as_view(),
-      name=RecipesTable.__name__.lower()),
+    url(r'^machines/(?P<cmd>\w+)*', MachinesTable.as_view(),
+        name=MachinesTable.__name__.lower()),
+    url(r'^layers/(?P<cmd>\w+)*', LayersTable.as_view(),
+        name=LayersTable.__name__.lower()),
+    url(r'^recipes/(?P<cmd>\w+)*', RecipesTable.as_view(),
+        name=RecipesTable.__name__.lower()),
+
+    # layer details tables
+    url(r'^layer/(?P<layerid>\d+)/recipes/(?P<cmd>\w+)*',
+        LayerRecipesTable.as_view(),
+        name=LayerRecipesTable.__name__.lower()),
+    url(r'^layer/(?P<layerid>\d+)/machines/(?P<cmd>\w+)*',
+        LayerMachinesTable.as_view(),
+        name=LayerMachinesTable.__name__.lower()),
 )

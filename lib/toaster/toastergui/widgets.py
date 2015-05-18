@@ -26,7 +26,7 @@ from django.core import serializers
 from django.core.cache import cache
 from django.core.paginator import Paginator, EmptyPage
 from django.db.models import Q
-from orm.models import Project, ProjectLayer
+from orm.models import Project, ProjectLayer, Layer_Version
 from django.template import Context, Template
 from django.core.serializers.json import DjangoJSONEncoder
 from django.core.exceptions import FieldError
@@ -43,9 +43,13 @@ class ToasterTemplateView(TemplateView):
     def get_context_data(self, **kwargs):
       context = super(ToasterTemplateView, self).get_context_data(**kwargs)
       if 'pid' in kwargs:
-        context['project'] = Project.objects.get(pk=kwargs['pid'])
+          context['project'] = Project.objects.get(pk=kwargs['pid'])
 
-        context['projectlayers'] = map(lambda prjlayer: prjlayer.layercommit.id, ProjectLayer.objects.filter(project=context['project']))
+          context['projectlayers'] = map(lambda prjlayer: prjlayer.layercommit.id, ProjectLayer.objects.filter(project=context['project']))
+
+      if 'layerid' in kwargs:
+          context['layerversion'] = Layer_Version.objects.get(pk=kwargs['layerid'])
+
       return context
 
 
@@ -269,13 +273,6 @@ class ToasterTable(View):
             'rows' : [],
         }
 
-        # Flatten all the fields we will need into one list
-        fields = []
-        for col in self.columns:
-            if type(col['field_name']) is list:
-                fields.extend(col['field_name'])
-            else:
-                fields.append(col['field_name'])
 
         try:
             for row in page.object_list:
