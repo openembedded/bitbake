@@ -28,6 +28,8 @@ from django.shortcuts import render, redirect
 from orm.models import Build, Target, Task, Layer, Layer_Version, Recipe, LogMessage, Variable
 from orm.models import Task_Dependency, Recipe_Dependency, Package, Package_File, Package_Dependency
 from orm.models import Target_Installed_Package, Target_File, Target_Image_File, BuildArtifact
+from bldcontrol.models import BuildEnvironment, BuildRequest
+from bldcontrol import bbcontroller
 from django.views.decorators.cache import cache_control
 from django.core.urlresolvers import reverse
 from django.core.exceptions import MultipleObjectsReturned
@@ -39,6 +41,7 @@ from datetime import timedelta, datetime, date
 from django.utils import formats
 from toastergui.templatetags.projecttags import json as jsonfilter
 import json
+from os.path import dirname
 
 # all new sessions should come through the landing page;
 # determine in which mode we are running in, and redirect appropriately
@@ -1300,11 +1303,6 @@ def configvars(request, build_id):
 
     variables = _build_page_range(Paginator(queryset, pagesize), request.GET.get('page', 1))
 
-    layers = Layer.objects.filter(layer_version_layer__projectlayer__project__build=build_id).order_by("-name")
-    layer_names = map(lambda layer : layer.name, layers)
-    # special case for meta built-in layer
-    layer_names.append('meta')
-
     # show all matching files (not just the last one)
     file_filter= search_term + ":"
     if filter_string.find('/conf/') > 0:
@@ -1317,6 +1315,15 @@ def configvars(request, build_id):
         file_filter += '/bitbake.conf'
     build_dir=re.sub("/tmp/log/.*","",Build.objects.get(pk=build_id).cooker_log_path)
 
+    clones = []
+    for breq in BuildRequest.objects.filter(build_id=build_id):
+        bc = bbcontroller.getBuildEnvironmentController(pk = breq.environment.id)
+        for brl in breq.brlayer_set.all():
+            localdirname = bc.getGitCloneDirectory(brl.giturl, brl.commit)
+            if not localdirname.startswith("/"):
+                localdirname = os.path.join(bc.be.sourcedir, localdirname)
+            clones.append(localdirname)
+
     context = {
                 'objectname': 'configvars',
                 'object_search_display':'BitBake variables',
@@ -1327,7 +1334,7 @@ def configvars(request, build_id):
                 'total_count':queryset_with_search.count(),
                 'default_orderby' : 'variable_name:+',
                 'search_term':search_term,
-                'layer_names' : layer_names,
+                'dirstostrip': clones + [dirname(build_dir), dirname(dirname(build_dir))],
             # Specifies the display of columns for the table, appearance in "Edit columns" box, toggling default show/hide, and specifying filters for columns
                 'tablecols' : [
                 {'name': 'Variable',

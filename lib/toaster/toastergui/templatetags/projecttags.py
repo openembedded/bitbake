@@ -20,6 +20,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 from datetime import datetime, timedelta
+from os.path import relpath
 import re
 from django import template
 from django.utils import timezone
@@ -182,47 +183,23 @@ def variable_parent_name(value):
     return re.sub('_[a-z].*', '', value)
 
 @register.filter
-def filter_setin_files(file_list,matchstr):
-    """ filter/search the 'set in' file lists. Note
-        that this output is not autoescaped to allow
-        the <p> marks, but this is safe as the data
-        is file paths
-    """
+def filter_setin_files(file_list, matchstr):
+    """Filter/search the 'set in' file lists."""
+    result = []
+    search, filter = matchstr.split(':')
+    for pattern in (search, filter):
+        if pattern:
+            for fobj in file_list:
+                fname = fobj.file_name
+                if fname not in result and re.search(pattern, fname):
+                    result.append(fname)
 
-    # no filters, show last file (if any)
-    if matchstr == ":":
-        if file_list:
-            return file_list[len(file_list)-1].file_name
-        else:
-            return ''
+    # no filter, show last file (if any)
+    last = list(file_list)[-1].file_name
+    if not filter and last not in result:
+        result.append(last)
 
-    search, filter = matchstr.partition(':')[::2]
-    htmlstr=""
-    # match only filters
-    if search == '':
-        for i in range(len(file_list)):
-            if re.search(filter, file_list[i].file_name):
-                if htmlstr.find(file_list[i].file_name + "<p>") < 0:
-                    htmlstr += file_list[i].file_name + "<p>"
-        return htmlstr
-
-    # match only search string, plus always last file
-    if filter == "":
-        for i in range(len(file_list)-1):
-            if re.search(search,file_list[i].file_name):
-                if htmlstr.find(file_list[i].file_name + "<p>") < 0:
-                    htmlstr += file_list[i].file_name + "<p>"
-        if htmlstr.find(file_list[len(file_list)-1].file_name) < 0:
-            htmlstr += file_list[len(file_list)-1].file_name
-        return htmlstr
-
-    # match filter or search string
-    for i in range(len(file_list)):
-        if re.search(filter, file_list[i].file_name) or re.search(search,file_list[i].file_name):
-            if htmlstr.find(file_list[i].file_name + "<p>") < 0:
-                htmlstr += file_list[i].file_name + "<p>"
-    return htmlstr
-
+    return result
 
 @register.filter
 def string_slice(strvar,slicevar):
@@ -313,16 +290,9 @@ def is_shaid(text):
         return False
 
 @register.filter
-def cut_layer_path_prefix(fullpath,layer_names):
-    ### if some part of the full local path to a layer matches
-    ### an entry in layer_names (sorted desc), return the layer
-    ### name relative path.
-    for lname in layer_names:
-        # import rpdb; rpdb.set_trace()
-        # only try layer names that are non-trivial to avoid false matches
-        if len(lname) >= 4:
-            # match layer name with as a subdir / or for remote layers /_
-            if re.search('/' + lname, fullpath) or re.search('/_' + lname, fullpath):
-                parts = re.split(lname, fullpath, 1)
-                return lname + parts[1]
+def cut_path_prefix(fullpath, prefixes):
+    """Cut path prefix from fullpath."""
+    for prefix in prefixes:
+        if fullpath.startswith(prefix):
+            return relpath(fullpath, prefix)
     return fullpath
