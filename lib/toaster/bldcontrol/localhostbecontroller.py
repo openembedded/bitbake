@@ -117,16 +117,21 @@ class LocalhostBEController(BuildEnvironmentController):
                 f.seek(0, 2)    # jump to the end
                 toaster_ui_log_filelength = f.tell()
 
-        cmd = "bash -c \"source %s/oe-init-build-env %s 2>&1 >toaster_server.log && bitbake --read conf/toaster-pre.conf --postread conf/toaster.conf --server-only -t xmlrpc -B 0.0.0.0:0 2>&1 >toaster_server.log && DATABASE_URL=%s BBSERVER=0.0.0.0:-1 daemon -d -i -D %s -o toaster_ui.log -- %s --observe-only -u toasterui &\"" % (self.pokydirname, self.be.builddir,
-                self.dburl, self.be.builddir, own_bitbake)
+        cmd = "bash -c \"source %s/oe-init-build-env %s 2>&1 >toaster_server.log && bitbake --read conf/toaster-pre.conf --postread conf/toaster.conf --server-only -t xmlrpc -B 0.0.0.0:0 2>&1 >>toaster_server.log \"" % (self.pokydirname, self.be.builddir)
+
         port = "-1"
         logger.debug("localhostbecontroller: starting builder \n%s\n" % cmd)
+
         cmdoutput = self._shellcmd(cmd)
         with open(self.be.builddir + "/toaster_server.log", "r") as f:
             for i in f.readlines():
                 if i.startswith("Bitbake server address"):
                     port = i.split(" ")[-1]
                     logger.debug("localhostbecontroller: Found bitbake server port %s" % port)
+
+        cmd = "bash -c \"source %s/oe-init-build-env-memres -1 %s && DATABASE_URL=%s %s --observe-only -u toasterui --remote-server=0.0.0.0:-1 -t xmlrpc\"" % (self.pokydirname, self.be.builddir, self.dburl, own_bitbake)
+        with open(toaster_ui_log_filepath, "a+") as f:
+            p = subprocess.Popen(cmd, cwd = self.be.builddir, shell=True, stdout=f, stderr=f)
 
         def _toaster_ui_started(filepath, filepos = 0):
             if not os.path.exists(filepath):
@@ -148,8 +153,9 @@ class LocalhostBEController(BuildEnvironmentController):
             retries += 1
 
         if not started:
+            toaster_ui_log = open(os.path.join(self.be.builddir, "toaster_ui.log"), "r").read()
             toaster_server_log = open(os.path.join(self.be.builddir, "toaster_server.log"), "r").read()
-            raise BuildSetupException("localhostbecontroller: Bitbake server did not start in 5 seconds, aborting (Error: '%s' '%s')" % (cmdoutput, toaster_server_log))
+            raise BuildSetupException("localhostbecontroller: Bitbake server did not start in 5 seconds, aborting (Error: '%s' '%s')" % (toaster_ui_log, toaster_server_log))
 
         logger.debug("localhostbecontroller: Started bitbake server")
 

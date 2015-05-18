@@ -183,11 +183,6 @@ if [ `basename \"$0\"` = `basename \"${SRCFILE}\"` ]; then
         exit 1
     fi
 
-    if ! which daemon >/dev/null 2>&1; then
-        echo -e "Failed dependency; toaster needs the 'daemon' program in order to be able to start builds'. Please install the 'daemon' program from your distribution repositories or http://www.libslack.org/daemon/" 1>&2
-        exit 1
-    fi
-
     # Define a fake builddir where only the pid files are actually created. No real builds will take place here.
     BUILDDIR=/tmp/toaster_$$
     if [ -d "$BUILDDIR" ]; then
