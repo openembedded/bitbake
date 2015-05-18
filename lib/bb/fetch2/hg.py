@@ -163,6 +163,11 @@ class Hg(FetchMethod):
         logger.debug(1, "Running %s", updatecmd)
         runfetchcmd(updatecmd, d)
 
+    def clean(self, ud, d):
+        """ Clean the hg dir """
+
+        bb.utils.remove(ud.localpath, True)
+
     def supports_srcrev(self):
         return True
 
