@@ -974,6 +974,7 @@ def edit_metadata_file(meta_file, variables, func):
 
     updated = False
     varset_start = ''
+    varlines = []
     newlines = []
     in_var = None
     full_value = ''
@@ -1001,14 +1002,19 @@ def edit_metadata_file(meta_file, variables, func):
             else:
                 newlines.append('%s "%s"\n' % (varset_start, newvalue))
             return True
-        return False
+        else:
+            # Put the old lines back where they were
+            newlines.extend(varlines)
+            return False
 
     with open(meta_file, 'r') as f:
         for line in f:
             if in_var:
                 value = line.rstrip()
+                varlines.append(line)
                 full_value += value[:-1]
                 if value.endswith('"') or value.endswith("'"):
+                    full_value = full_value[:-1]
                     if handle_var_end():
                         updated = True
                     in_var = None
@@ -1022,11 +1028,13 @@ def edit_metadata_file(meta_file, variables, func):
                         if value.endswith('\\'):
                             value = value[:-1]
                         full_value = value
+                        varlines = [line]
+                        in_var = varname
                         if value.endswith('"') or value.endswith("'"):
+                            full_value = full_value[:-1]
                             if handle_var_end():
                                 updated = True
-                        else:
-                            in_var = varname
+                            in_var = None
                         matched = True
                         break
                 if not matched:
