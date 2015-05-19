@@ -245,6 +245,9 @@ class ToasterTable(View):
         for key, val in request.GET.iteritems():
             cache_name = cache_name + str(key) + str(val)
 
+        for key, val in kwargs.iteritems():
+            cache_name = cache_name + str(key) + str(val)
+
         data = cache.get(cache_name)
 
         if data:
@@ -306,8 +309,7 @@ class ToasterTable(View):
         except FieldError:
             print "Error: Requested field does not exist"
 
-
         data = json.dumps(data, indent=2, cls=DjangoJSONEncoder)
-        cache.set(cache_name, data, 10)
+        cache.set(cache_name, data, 60*30)
 
         return data

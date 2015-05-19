@@ -26,6 +26,7 @@ from django.utils import timezone
 
 from django.core import validators
 from django.conf import settings
+import django.db.models.signals
 
 class GitURLValidator(validators.URLValidator):
     import re
@@ -1176,3 +1177,14 @@ class LogMessage(models.Model):
     message=models.CharField(max_length=240)
     pathname = models.FilePathField(max_length=255, blank=True)
     lineno = models.IntegerField(null=True)
+
+def invalidate_cache(**kwargs):
+    from django.core.cache import cache
+    try:
+      cache.clear()
+    except Exception as e:
+      print "Problem with cache backend: Failed to clear cache"
+      pass
+
+django.db.models.signals.post_save.connect(invalidate_cache)
+django.db.models.signals.post_delete.connect(invalidate_cache)

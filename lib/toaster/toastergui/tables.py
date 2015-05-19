@@ -323,11 +323,6 @@ class LayerRecipesTable(RecipesTable):
 
 
 
-
-
-
-
-
 # This needs to be staticaly defined here as django reads the url patterns
 # on start up
 urlpatterns = (
