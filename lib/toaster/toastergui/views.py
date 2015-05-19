@@ -20,7 +20,6 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 import operator,re
-import HTMLParser
 
 from django.db.models import Q, Sum, Count, Max
 from django.db import IntegrityError
@@ -278,11 +277,11 @@ def _get_parameters_values(request, default_count, default_order):
 
 # set cookies for parameters. this is usefull in case parameters are set
 # manually from the GET values of the link
-def _save_parameters_cookies(response, pagesize, orderby, request):
-    html_parser = HTMLParser.HTMLParser()
-    response.set_cookie(key='count', value=pagesize, path=request.path)
-    response.set_cookie(key='orderby', value=html_parser.unescape(orderby), path=request.path)
-    return response
+def _set_parameters_values(pagesize, orderby, request):
+    from django.core.urlresolvers import resolve
+    current_url = resolve(request.path_info).url_name
+    request.session['%s_count' % current_url] = pagesize
+    request.session['%s_orderby' % current_url] =orderby
 
 # date range: normalize GUI's dd/mm/yyyy to date object
 def _normalize_input_date(date_str,default):
@@ -563,7 +562,7 @@ def recipe_packages(request, build_id, recipe_id):
            ]
        }
     response = render(request, template, context)
-    _save_parameters_cookies(response, pagesize, orderby, request)
+    _set_parameters_values(pagesize, orderby, request)
     return response
 
 def target_common( request, build_id, target_id, variant ):
@@ -737,7 +736,7 @@ eans multiple licenses exist that cover different parts of the source',
         context['tablecols'].append(tc_layerDir)
 
     response = render(request, template, context)
-    _save_parameters_cookies(response, pagesize, orderby, request)
+    _set_parameters_values(pagesize, orderby, request)
     return response
 
 def target( request, build_id, target_id ):
@@ -1129,7 +1128,7 @@ def tasks_common(request, build_id, variant, task_anchor):
         context['tablecols'].append(tc_log)
 
     response = render(request, template, context)
-    _save_parameters_cookies(response, pagesize, orderby, request)
+    _set_parameters_values(pagesize, orderby, request)
     return response
 
 def tasks(request, build_id):
@@ -1265,7 +1264,7 @@ def recipes(request, build_id):
 
 
     response = render(request, template, context)
-    _save_parameters_cookies(response, pagesize, orderby, request)
+    _set_parameters_values(pagesize, orderby, request)
     return response
 
 def configuration(request, build_id):
@@ -1378,7 +1377,7 @@ def configvars(request, build_id):
             }
 
     response = render(request, template, context)
-    _save_parameters_cookies(response, pagesize, orderby, request)
+    _set_parameters_values(pagesize, orderby, request)
     return response
 
 def bpackage(request, build_id):
@@ -1479,7 +1478,7 @@ def bpackage(request, build_id):
         context['tablecols'].append(tc_layerDir)
 
     response = render(request, template, context)
-    _save_parameters_cookies(response, pagesize, orderby, request)
+    _set_parameters_values(pagesize, orderby, request)
     return response
 
 def bfile(request, build_id, package_id):
@@ -1640,7 +1639,7 @@ def package_built_detail(request, build_id, package_id):
         context['disable_sort'] = True;
 
     response = render(request, template, context)
-    _save_parameters_cookies(response, pagesize, orderby, request)
+    _set_parameters_values(pagesize, orderby, request)
     return response
 
 def package_built_dependencies(request, build_id, package_id):
@@ -1705,7 +1704,7 @@ def package_included_detail(request, build_id, target_id, package_id):
     if paths.all().count() < 2:
         context['disable_sort'] = True
     response = render(request, template, context)
-    _save_parameters_cookies(response, pagesize, orderby, request)
+    _set_parameters_values(pagesize, orderby, request)
     return response
 
 def package_included_dependencies(request, build_id, target_id, package_id):
@@ -1780,7 +1779,7 @@ def package_included_reverse_dependencies(request, build_id, target_id, package_
     if objects.all().count() < 2:
         context['disable_sort'] = True
     response = render(request, template, context)
-    _save_parameters_cookies(response, pagesize, orderby, request)
+    _set_parameters_values(pagesize, orderby, request)
     return response
 
 def image_information_dir(request, build_id, target_id, packagefile_id):
@@ -1842,7 +1841,7 @@ if toastermain.settings.MANAGED:
             return _redirect_parameters( builds, request.GET, e.response)
 
         response = render(request, template, context)
-        _save_parameters_cookies(response, pagesize, orderby, request)
+        _set_parameters_values(pagesize, orderby, request)
         return response
 
 
@@ -2748,7 +2747,7 @@ if toastermain.settings.MANAGED:
             return _redirect_parameters(projectbuilds, request.GET, e.response, pid = pid)
 
         response = render(request, template, context)
-        _save_parameters_cookies(response, pagesize, orderby, request)
+        _set_parameters_values(pagesize, orderby, request)
 
         return response
 
@@ -2967,7 +2966,7 @@ if toastermain.settings.MANAGED:
             }
 
         response = render(request, template, context)
-        _save_parameters_cookies(response, pagesize, orderby, request)
+        _set_parameters_values(pagesize, orderby, request)
         return response
 
     def buildrequestdetails(request, pid, brid):
@@ -3171,7 +3170,7 @@ else:
         context.update(context_date)
 
         response = render(request, template, context)
-        _save_parameters_cookies(response, pagesize, orderby, request)
+        _set_parameters_values(pagesize, orderby, request)
         return response
 
 

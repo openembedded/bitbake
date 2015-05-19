@@ -41,17 +41,12 @@
     // load cookie for number of entries to be displayed on page
     if ({{request.GET.count}} != "") {
       pagesize = {{request.GET.count}};
-    } else {
-      pagesize = $.cookie('_count');
     }
-
     $('.pagesize option').prop('selected', false)
                          .filter('[value="' + pagesize + '"]')
                          .attr('selected', true);
 
     $(".pagesize").change(function () {
-        // save cookie with pagesize
-        $.cookie("_count", $(this).val(), { path : $(location).attr('pathname') });
         reload_params({"count":$(this).val()});
     });
 });
