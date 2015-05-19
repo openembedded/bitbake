@@ -44,9 +44,10 @@ def sectohms(time):
     return "%02d:%02d:%02d" % (hours, int((tdsec - (hours * 3600))/ 60), int(tdsec) % 60)
 
 
-@register.filter(name = 'mapselect')
-def mapselect(value, argument):
-    return map(lambda x: vars(x)[argument], value)
+@register.filter(name = 'get_tasks')
+def get_tasks(queryset):
+    return list(target + ':' + task if task else target \
+                    for target, task in queryset.values_list('target', 'task'))
 
 
 @register.filter(name = "json")

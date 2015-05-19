@@ -54,7 +54,17 @@
                 Build time: <a href="{% url 'buildtime' build.pk %}">{{ build.timespent|sectohms }}</a>
               </span>
           {% if build.project %}
-              <button class="btn {%if build.outcome == build.SUCCEEDED%}btn-success{%elif build.outcome == build.FAILED%}btn-danger{%else%}btn-info{%endif%} pull-right" onclick='scheduleBuild({% url 'xhr_projectbuild' build.project.id as bpi%}{{bpi|json}}, {{build.project.name|json}}, {% url 'project' buildrequest.project.id as bpurl%}{{bpurl|json}}, {{build.get_sorted_target_list|mapselect:'target'|json}})'>Run again</button>
+              <button class="btn
+                  {% if build.outcome == build.SUCCEEDED %}
+                      btn-success
+                  {% elif build.outcome == build.FAILED %}
+                      btn-danger
+                  {% else %}
+                      btn-info
+                  {%endif%}
+                  pull-right"
+                  {% include "runagain.html" %}
+              </button>
           {% endif %}
             </div>
     {%endif%}
@@ -104,8 +114,10 @@
               <span class="lead{%if not MANAGED or not buildrequest.project%} pull-right{%endif%}">
                 Build time: {{ buildrequest.get_duration|sectohms }}
               </span>
-              <button class="btn btn-danger pull-right" onclick='scheduleBuild({% url 'xhr_projectbuild' buildrequest.project.id as bpi%}{{bpi|json}},  {{buildrequest.project.name|json}}, {% url 'project' buildrequest.project.id as bpurl%}{{bpurl|json}}, {{buildrequest.get_sorted_target_list|mapselect:'target'|json}})'>Run again</button>
 
+              <button class="btn btn-danger pull-right"
+                  {% include "runagain.html" %}
+              </button>
             </div>
 
 
