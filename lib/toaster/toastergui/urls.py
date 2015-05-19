@@ -77,8 +77,6 @@ urlpatterns = patterns('toastergui.views',
 
         url(r'^projects/$', 'projects', name='all-projects'),
 
-        url(r'^project/$', lambda x: HttpResponseBadRequest(), name='base_project'),
-
         url(r'^project/(?P<pid>\d+)/$', 'project', name='project'),
         url(r'^project/(?P<pid>\d+)/configuration$', 'projectconf', name='projectconf'),
         url(r'^project/(?P<pid>\d+)/builds/$', 'projectbuilds', name='projectbuilds'),
@@ -110,7 +108,6 @@ urlpatterns = patterns('toastergui.views',
             name="all-layers"),
 
 
-        url(r'^xhr_build/$', 'xhr_build', name='xhr_build'),
         url(r'^xhr_projectbuild/(?P<pid>\d+)$', 'xhr_projectbuild', name='xhr_projectbuild'),
         url(r'^xhr_projectinfo/$', 'xhr_projectinfo', name='xhr_projectinfo'),
         url(r'^xhr_projectedit/(?P<pid>\d+)$', 'xhr_projectedit', name='xhr_projectedit'),

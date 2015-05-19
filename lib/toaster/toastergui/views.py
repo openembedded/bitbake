@@ -129,7 +129,19 @@ def _redirect_parameters(view, g, mandatory_parameters, *args, **kwargs):
         if not i in params:
             params[i] = urllib.unquote(str(mandatory_parameters[i]))
 
-    return redirect(url + "?%s" % urllib.urlencode(params), *args, **kwargs)
+    return redirect(url + "?%s" % urllib.urlencode(params), permanent = False, *args, **kwargs)
+
+class RedirectException(Exception):
+    def __init__(self, view, g, mandatory_parameters, *args, **kwargs):
+        super(RedirectException, self).__init__()
+        self.view = view
+        self.g = g
+        self.mandatory_parameters = mandatory_parameters
+        self.oargs  = args
+        self.okwargs = kwargs
+
+    def get_redirect_response(self):
+        return _redirect_parameters(self.view, self.g, self.mandatory_parameters, self.oargs, self.okwargs)
 
 FIELD_SEPARATOR = ":"
 AND_VALUE_SEPARATOR = "!"
@@ -2200,14 +2212,6 @@ if toastermain.settings.MANAGED:
         response['Pragma'] = "no-cache"
         return response
 
-    # This is a wrapper for xhr_projectbuild which allows for a project id
-    # which only becomes known client side.
-    def xhr_build(request):
-        if request.POST.has_key("project_id"):
-            pid = request.POST['project_id']
-            return xhr_projectbuild(request, pid)
-        else:
-            raise BadParameterException("invalid project id")
 
     def xhr_projectbuild(request, pid):
         try:
@@ -2333,7 +2337,7 @@ if toastermain.settings.MANAGED:
             # returns layers for current project release that are not in the project set, matching the name
             if request.GET['type'] == "layers":
                 # all layers for the current project
-                queryset_all = prj.compatible_layerversions().filter(layer__name__icontains=request.GET.get('value',''))
+                queryset_all = prj.compatible_layerversions().filter(layer__name__icontains=request.GET.get('search',''))
 
                 # but not layers with equivalent layers already in project
                 if not request.GET.has_key('include_added'):
@@ -2348,7 +2352,7 @@ if toastermain.settings.MANAGED:
             # returns layer dependencies for a layer, excluding current project layers
             if request.GET['type'] == "layerdeps":
                 queryset = prj.compatible_layerversions().exclude(pk__in = [x.id for x in prj.projectlayer_equivalent_set()]).filter(
-                    layer__name__in = [ x.depends_on.layer.name for x in LayerVersionDependency.objects.filter(layer_version_id = request.GET['value'])])
+                    layer__name__in = [ x.depends_on.layer.name for x in LayerVersionDependency.objects.filter(layer_version_id = request.GET['search'])])
 
                 final_list = set([x.get_equivalents_wpriority(prj)[0] for x in queryset])
 
@@ -2361,7 +2365,7 @@ if toastermain.settings.MANAGED:
 
                 retval = []
                 for i in prj.projectlayer_set.all():
-                    lv = prj.compatible_layerversions(release = Release.objects.get(pk=request.GET['value'])).filter(layer__name = i.layercommit.layer.name)
+                    lv = prj.compatible_layerversions(release = Release.objects.get(pk=request.GET['search'])).filter(layer__name = i.layercommit.layer.name)
                     # there is no layer_version with the new release id, and the same name
                     if lv.count() < 1:
                         retval.append(i)
@@ -2374,10 +2378,10 @@ if toastermain.settings.MANAGED:
             # returns layer versions that provide the named targets
             if request.GET['type'] == "layers4target":
                 # we return data only if the recipe can't be provided by the current project layer set
-                if reduce(lambda x, y: x + y, [x.recipe_layer_version.filter(name=request.GET['value']).count() for x in prj.projectlayer_equivalent_set()], 0):
+                if reduce(lambda x, y: x + y, [x.recipe_layer_version.filter(name=request.GET['search']).count() for x in prj.projectlayer_equivalent_set()], 0):
                     final_list = []
                 else:
-                    queryset_all = prj.compatible_layerversions().filter(recipe_layer_version__name = request.GET['value'])
+                    queryset_all = prj.compatible_layerversions().filter(recipe_layer_version__name = request.GET['search'])
 
                     # exclude layers in the project
                     queryset_all = queryset_all.exclude(pk__in = [x.id for x in prj.projectlayer_equivalent_set()])
@@ -2389,7 +2393,7 @@ if toastermain.settings.MANAGED:
 
             # returns targets provided by current project layers
             if request.GET['type'] == "targets":
-                search_token = request.GET.get('value','')
+                search_token = request.GET.get('search','')
                 queryset_all = Recipe.objects.filter(layer_version__layer__name__in = [x.layercommit.layer.name for x in prj.projectlayer_set.all().select_related("layercommit__layer")]).filter(Q(name__icontains=search_token) | Q(layer_version__layer__name__icontains=search_token))
 
 #                layer_equivalent_set = []
@@ -2420,7 +2424,7 @@ if toastermain.settings.MANAGED:
                 if 'project_id' in request.session:
                     queryset_all = queryset_all.filter(layer_version__in =  prj.projectlayer_equivalent_set()).order_by("name")
 
-                search_token = request.GET.get('value','')
+                search_token = request.GET.get('search','')
                 queryset_all = queryset_all.filter(Q(name__icontains=search_token) | Q(description__icontains=search_token))
 
                 return HttpResponse(jsonfilter({ "error":"ok",
@@ -2431,15 +2435,6 @@ if toastermain.settings.MANAGED:
                             key = lambda i: i["name"].find(search_token) if i["name"].find(search_token) > -1 else 9999,
                         )
                     }), content_type = "application/json")
-
-            # returns all projects
-            if request.GET['type'] == "projects":
-                queryset_all = Project.objects.all()
-                ret = { "error": "ok",
-                       "list": map (lambda x: {"id":x.pk, "name": x.name},
-                                    queryset_all.filter(name__icontains=request.GET.get('value',''))[:8])}
-
-                return HttpResponse(jsonfilter(ret), content_type = "application/json")
 
             raise Exception("Unknown request! " + request.GET.get('type', "No parameter supplied"))
         except Exception as e:
@@ -2866,14 +2861,38 @@ if toastermain.settings.MANAGED:
         return build_mru
 
 
-    def projects(request):
-        template="projects.html"
+    def template_renderer(template):
+        def func_wrapper(view):
+            def returned_wrapper(request, *args, **kwargs):
+                try:
+                    context = view(request, *args, **kwargs)
+                except RedirectException as e:
+                    return e.get_redirect_response()
 
+                if request.GET.get('format', None) == 'json':
+                    # objects is a special keyword - it's a Page, but we need the actual objects here
+                    # in XHR, the objects come in the "list" property
+                    if "objects" in context:
+                        context["list"] = context["objects"].object_list
+                        del context["objects"]
+
+                    # we're about to return; to keep up with the XHR API, we set the error to OK
+                    context["error"] = "ok"
+
+                    return HttpResponse(jsonfilter(context, default=lambda obj: obj.isoformat() if isinstance(obj, datetime) else obj.__dict__ ),
+                                content_type = "application/json; charset=utf-8")
+                else:
+                    return render(request, template, context)
+            return returned_wrapper
+        return func_wrapper
+
+    @template_renderer("projects.html")
+    def projects(request):
         (pagesize, orderby) = _get_parameters_values(request, 10, 'updated:-')
         mandatory_parameters = { 'count': pagesize,  'page' : 1, 'orderby' : orderby }
         retval = _verify_parameters( request.GET, mandatory_parameters )
         if retval:
-            return _redirect_parameters( 'all-projects', request.GET, mandatory_parameters)
+            raise RedirectException( 'all-projects', request.GET, mandatory_parameters )
 
         queryset_all = Project.objects.all()
 
@@ -2885,6 +2904,14 @@ if toastermain.settings.MANAGED:
 
         # retrieve the objects that will be displayed in the table; projects a paginator and gets a page range to display
         project_info = _build_page_range(Paginator(queryset, pagesize), request.GET.get('page', 1))
+
+        # add fields needed in JSON dumps for API call support
+        for p in project_info.object_list:
+            p.id = p.pk
+            p.xhrProjectDataTypeaheadUrl = reverse('xhr_datatypeahead', args=(p.id,))
+            p.projectPageUrl = reverse('project', args=(p.id,))
+            p.xhrProjectEditUrl = reverse('xhr_projectedit', args=(p.id,))
+            p.projectBuildUrl = reverse('xhr_projectbuild', args=(p.id,))
 
         # build view-specific information; this is rendered specifically in the builds page, at the top of the page (i.e. Recent builds)
         build_mru = _managed_get_latest_builds()
@@ -2965,9 +2992,8 @@ if toastermain.settings.MANAGED:
                     ]
             }
 
-        response = render(request, template, context)
         _set_parameters_values(pagesize, orderby, request)
-        return response
+        return context
 
     def buildrequestdetails(request, pid, brid):
         template = "buildrequestdetails.html"
@@ -3183,9 +3209,6 @@ else:
         return render(request, 'landing_not_managed.html')
 
     def xhr_projectbuild(request, pid):
-        return render(request, 'landing_not_managed.html')
-
-    def xhr_build(request):
         return render(request, 'landing_not_managed.html')
 
     def xhr_projectinfo(request):

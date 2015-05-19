@@ -51,11 +51,11 @@ def get_tasks(queryset):
 
 
 @register.filter(name = "json")
-def json(value):
+def json(value, default = None):
     # JSON spec says that "\/" is functionally identical to "/" to allow for HTML-tag embedding in JSON strings
     # unfortunately, I can't find any option in the json module to turn on forward-slash escaping, so we do
     # it manually here
-    return mark_safe(JsonLib.dumps(value, ensure_ascii=False).replace('</', '<\\/'))
+    return mark_safe(JsonLib.dumps(value, default = default, ensure_ascii=False).replace('</', '<\\/'))
 
 @register.assignment_tag
 def query(qs, **kwargs):
