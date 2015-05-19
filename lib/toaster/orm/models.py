@@ -267,6 +267,9 @@ class Build(models.Model):
     def toaster_exceptions(self):
         return self.logmessage_set.filter(level=LogMessage.EXCEPTION)
 
+    def __str__(self):
+        return "%d %s %s" % (self.id, self.project, ",".join([t.target for t in self.target_set.all()]))
+
 
 # an Artifact is anything that results from a Build, and may be of interest to the user, and is not stored elsewhere
 class BuildArtifact(models.Model):

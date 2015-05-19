@@ -2,7 +2,7 @@ from django.core.management.base import NoArgsCommand, CommandError
 from django.db import transaction
 from bldcontrol.bbcontroller import getBuildEnvironmentController, ShellCmdException
 from bldcontrol.models import BuildRequest, BuildEnvironment, BRError
-from orm.models import ToasterSetting
+from orm.models import ToasterSetting, Build
 import os
 
 def DN(path):
@@ -61,7 +61,7 @@ class Command(NoArgsCommand):
         return DN(self._find_first_path_for_file(DN(self.guesspath), "bblayers.conf", 4))
 
 
-    def handle(self, **options):
+    def _verify_artifact_storage_dir(self):
         # verify that we have a settings for downloading artifacts
         while ToasterSetting.objects.filter(name="ARTIFACTS_STORAGE_DIR").count() == 0:
             guessedpath = os.getcwd() + "/toaster_build_artifacts/"
@@ -78,7 +78,10 @@ class Command(NoArgsCommand):
                     else:
                         raise ose
                 ToasterSetting.objects.create(name="ARTIFACTS_STORAGE_DIR", value=artifacts_storage_dir)
+        return 0
 
+
+    def _verify_build_environment(self):
         self.guesspath = DN(DN(DN(DN(DN(DN(DN(__file__)))))))
         # refuse to start if we have no build environments
         while BuildEnvironment.objects.count() == 0:
@@ -197,12 +200,16 @@ class Command(NoArgsCommand):
 
             while (_verify_be()):
                 pass
+        return 0
 
+    def _verify_default_settings(self):
         # verify that default settings are there
         if ToasterSetting.objects.filter(name = 'DEFAULT_RELEASE').count() != 1:
             ToasterSetting.objects.filter(name = 'DEFAULT_RELEASE').delete()
             ToasterSetting.objects.get_or_create(name = 'DEFAULT_RELEASE', value = '')
+        return 0
 
+    def _verify_builds_in_progress(self):
         # we are just starting up. we must not have any builds in progress, or build environments taken
         for b in BuildRequest.objects.filter(state = BuildRequest.REQ_INPROGRESS):
             BRError.objects.create(req = b, errtype = "toaster", errmsg = "Toaster found this build IN PROGRESS while Toaster started up. This is an inconsistent state, and the build was marked as failed")
@@ -211,4 +218,19 @@ class Command(NoArgsCommand):
 
         BuildEnvironment.objects.update(lock = BuildEnvironment.LOCK_FREE)
 
+        # also mark "In Progress builds as failures"
+        from django.utils import timezone
+        Build.objects.filter(outcome = Build.IN_PROGRESS).update(outcome = Build.FAILED, completed_on = timezone.now())
+
         return 0
+
+
+
+    def handle(self, **options):
+        retval = 0
+        retval += self._verify_artifact_storage_dir()
+        retval += self._verify_build_environment()
+        retval += self._verify_default_settings()
+        retval += self._verify_builds_in_progress()
+
+        return retval
