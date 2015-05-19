@@ -26,8 +26,7 @@
     {%if build.outcome == build.SUCCEEDED or build.outcome == build.FAILED %}
                 <a href="{%url 'builddashboard' build.pk%}" class="{%if build.outcome == build.SUCCEEDED %}success{%else%}error{%endif%}">
     {% endif %}
-                <span data-toggle="tooltip" {%if build.target_set.all.count > 1%}title="Targets: {%for target in build.target_set.all%}{{target.target}} {%endfor%}"{%endif%}>{{build.target_set.all.0.target}} {%if build.target_set.all.count > 1%}(+ {{build.target_set.all.count|add:"-1"}}){%endif%}
-                </span>
+    {% include "brtargets.html" %}
     {%if build.outcome == build.SUCCEEDED or build.outcome == build.FAILED %}
                 </a>
     {% endif %}
@@ -84,7 +83,7 @@
           {% if buildrequest.state == buildrequest.REQ_FAILED %}
             <div class="span3 lead">
                 <a href="{%url 'buildrequestdetails' buildrequest.project.id buildrequest.pk%}" class="error">
-                  <span data-toggle="tooltip" {%if buildrequest.brtarget_set.all.count > 1%}title="Targets: {%for target in buildrequest.brtarget_set.all%}{{target.target}} {%endfor%}"{%endif%}>{{buildrequest.brtarget_set.all.0.target}} {%if buildrequest.brtarget_set.all.count > 1%}(+ {{buildrequest.brtarget_set.all.count|add:"-1"}}){%endif%} </span>
+                  {% include "brtargets.html" %}
                 </a>
             </div>
             <div class="span2 lead">
@@ -113,8 +112,7 @@
          {% elif buildrequest.state == buildrequest.REQ_QUEUED %}
 
             <div class="lead span5">
-
-                <span data-toggle="tooltip" {%if buildrequest.brtarget_set.all.count > 1%}title="Targets: {%for target in buildrequest.brtarget_set.all%}{{target.target}} {%endfor%}"{%endif%}>{{buildrequest.brtarget_set.all.0.target}} {%if buildrequest.brtarget_set.all.count > 1%}(+ {{buildrequest.brtarget_set.all.count|add:"-1"}}){%endif%} </span>
+                {% include "brtargets.html" %}
             </div>
             <div class="span4 lead">Build queued
               <i title="This build will start as soon as a build server is available" class="icon-question-sign get-help get-help-blue heading-help" data-toggle="tooltip"></i>
@@ -124,7 +122,7 @@
          {% elif buildrequest.state == buildrequest.REQ_CREATED %}
 
             <div class="lead span3">
-                <span data-toggle="tooltip" {%if buildrequest.brtarget_set.all.count > 1%}title="Targets: {%for target in buildrequest.brtarget_set.all%}{{target.target}} {%endfor%}"{%endif%}>{{buildrequest.brtarget_set.all.0.target}} {%if buildrequest.brtarget_set.all.count > 1%}(+ {{buildrequest.brtarget_set.all.count|add:"-1"}}){%endif%} </span>
+                {% include "brtargets.html" %}
             </div>
             <div class="span6" >
               <span class="lead">Creating build</span>
@@ -133,7 +131,7 @@
          {% elif buildrequest.state == buildrequest.REQ_INPROGRESS %}
 
                 <div class="lead span5">
-                  <span data-toggle="tooltip" {%if buildrequest.brtarget_set.all.count > 1%}title="Targets: {%for target in buildrequest.brtarget_set.all%}{{target.target}} {%endfor%}"{%endif%}>{{buildrequest.brtarget_set.all.0.target}} {%if buildrequest.brtarget_set.all.count > 1%}(+ {{buildrequest.brtarget_set.all.count|add:"-1"}}){%endif%} </span>
+                  {% include "brtargets.html" %}
                 </div>
                 <div class="span4 lead">
                   Checking out layers
