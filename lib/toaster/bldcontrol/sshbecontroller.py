@@ -31,6 +31,9 @@ from toastermain import settings
 
 from bbcontroller import BuildEnvironmentController, ShellCmdException, BuildSetupException
 
+class NotImplementedException(Exception):
+    pass
+
 def DN(path):
     return "/".join(path.split("/")[0:-1])
 
@@ -125,7 +128,7 @@ class SSHBEController(BuildEnvironmentController):
         # set layers in the layersource
 
 
-        raise Exception("Not implemented: SSH setLayers")
+        raise NotImplementedException("Not implemented: SSH setLayers")
         # 3. configure the build environment, so we have a conf/bblayers.conf
         assert self.pokydirname is not None
         self._setupBE()

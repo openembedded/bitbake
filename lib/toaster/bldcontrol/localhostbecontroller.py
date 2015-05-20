@@ -117,7 +117,7 @@ class LocalhostBEController(BuildEnvironmentController):
                 f.seek(0, 2)    # jump to the end
                 toaster_ui_log_filelength = f.tell()
 
-        cmd = "bash -c \"source %s/oe-init-build-env %s 2>&1 >toaster_server.log && bitbake --read conf/toaster-pre.conf --postread conf/toaster.conf --server-only -t xmlrpc -B 0.0.0.0:0 2>&1 >>toaster_server.log \"" % (self.pokydirname, self.be.builddir)
+        cmd = "bash -c \"source %s/oe-init-build-env %s 2>&1 >toaster_server.log && bitbake --read %s/conf/toaster-pre.conf --postread %s/conf/toaster.conf --server-only -t xmlrpc -B 0.0.0.0:0 2>&1 >>toaster_server.log \"" % (self.pokydirname, self.be.builddir, self.be.builddir, self.be.builddir)
 
         port = "-1"
         logger.debug("localhostbecontroller: starting builder \n%s\n" % cmd)
