@@ -1,4 +1,4 @@
-from django.test import TestCase
+from django.test import TestCase, TransactionTestCase
 from orm.models import LocalLayerSource, LayerIndexLayerSource, ImportedLayerSource, LayerSource
 from orm.models import Branch
 
@@ -6,6 +6,10 @@ from orm.models import Project, Build, Layer, Layer_Version, Branch, ProjectLaye
 from orm.models import Release, ReleaseLayerSourcePriority, BitbakeVersion
 
 from django.utils import timezone
+
+import os
+
+# set TTS_LAYER_INDEX to the base url to use a different instance of the layer index
 
 # tests to verify inheritance for the LayerSource proxy-inheritance classes
 class LayerSourceVerifyInheritanceSaveLoad(TestCase):
@@ -29,17 +33,20 @@ class LayerSourceVerifyInheritanceSaveLoad(TestCase):
         self.assertRaises(Exception, duplicate)
 
 
-# test to verify the layer source update functionality for layerindex. edit to pass the URL to a layerindex application
-class LILSUpdateTestCase(TestCase):
+class LILSUpdateTestCase(TransactionTestCase):
+    def setUp(self):
+        # create release
+        bbv = BitbakeVersion.objects.create(name="master", giturl="git://git.openembedded.org/bitbake")
+        release = Release.objects.create(name="default-release", bitbake_version = bbv, branch_name = "master")
+
     def test_update(self):
-        lils = LayerSource.objects.create(name = "b1", sourcetype = LayerSource.TYPE_LAYERINDEX, apiurl = "http://adamian-desk.local:8080/layerindex/api/")
+        layer_index_url = os.getenv("TTS_LAYER_INDEX")
+        if layer_index_url == None:
+            print "Using layers.openembedded.org for layer index. override with TTS_LAYER_INDEX enviroment variable"
+            layer_index_url = "http://layers.openembedded.org/"
+
+        lils = LayerSource.objects.create(name = "b1", sourcetype = LayerSource.TYPE_LAYERINDEX, apiurl = layer_index_url + "layerindex/api/")
         lils.update()
-
-        # run second update
-        # lils.update()
-
-        # print vars(lils)
-        #print map(lambda x: vars(x), Branch.objects.all())
 
         # run asserts
         self.assertTrue(lils.branch_set.all().count() > 0, "update() needs to fetch some branches")
@@ -58,6 +65,7 @@ class LayerVersionEquivalenceTestCase(TestCase):
         release = Release.objects.create(name="default-release", bitbake_version = bbv, branch_name = "master")
         # attach layer source to release
         ReleaseLayerSourcePriority.objects.create(release = release, layer_source = ls, priority = 1)
+
 
         # create layer attach
         self.layer = Layer.objects.create(name="meta-testlayer", layer_source = ls)
@@ -84,7 +92,7 @@ class LayerVersionEquivalenceTestCase(TestCase):
 
     def test_dual_layersource(self):
         # if we have two layers with the same name, from different layer sources, we expect both layers in, in increasing priority of the layer source
-        ls2 = LayerSource.objects.create(name = "dummy-layersource2", sourcetype = LayerSource.TYPE_LOCAL)
+        ls2 = LayerSource.objects.create(name = "dummy-layersource2", sourcetype = LayerSource.TYPE_LOCAL, apiurl="test")
 
         # assign a lower priority for the second layer source
         Release.objects.get(name="default-release").releaselayersourcepriority_set.create(layer_source = ls2, priority = 2)
@@ -149,7 +157,7 @@ class ProjectLVSelectionTestCase(TestCase):
 
     def test_dual_layersource(self):
          # if we have two layers with the same name, from different layer sources, we expect both layers in, in increasing priority of the layer source
-        ls2 = LayerSource.objects.create(name = "dummy-layersource2", sourcetype = LayerSource.TYPE_LOCAL)
+        ls2 = LayerSource.objects.create(name = "dummy-layersource2", sourcetype = LayerSource.TYPE_LOCAL, apiurl="testing")
 
         # assign a lower priority for the second layer source
         Release.objects.get(name="default-release").releaselayersourcepriority_set.create(layer_source = ls2, priority = 2)

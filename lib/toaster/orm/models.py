@@ -782,8 +782,11 @@ class LayerIndexLayerSource(LayerSource):
             print "EE: could not connect to %s, skipping update: %s\n%s" % (self.apiurl, e, traceback.format_exc(e))
             return
 
-        # update branches; only those that we already have names listed in the Releases table
+        # update branches; only those that we already have names listed in the
+        # Releases table
         whitelist_branch_names = map(lambda x: x.branch_name, Release.objects.all())
+        if len(whitelist_branch_names) == 0:
+            raise Exception("Failed to make list of branches to fetch")
 
         print "Fetching branches"
         branches_info = _get_json_response(apilinks['branches']
