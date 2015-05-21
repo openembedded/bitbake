@@ -24,6 +24,15 @@ if sys.argv[1] == "decafbadbad":
     except:
         import profile
 
+# Unbuffer stdout to avoid log truncation in the event
+# of an unorderly exit as well as to provide timely
+# updates to log files for use with tail
+try:
+    if sys.stdout.name == '<stdout>':
+        sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
+except:
+    pass
+
 logger = logging.getLogger("BitBake")
 
 try:
