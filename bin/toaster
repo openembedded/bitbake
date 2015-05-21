@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # (c) 2013 Intel Corp.
 
 # This program is free software; you can redistribute it and/or modify
@@ -54,7 +54,7 @@ webserverStartAll()
     fi
 
     retval=0
-    if [ "$TOASTER_MANAGED" '==' '1' ]; then
+    if [ "$TOASTER_MANAGED" '=' '1' ]; then
         python $BBBASEDIR/lib/toaster/manage.py syncdb || retval=1
     else
         python $BBBASEDIR/lib/toaster/manage.py syncdb --noinput || retval=1
@@ -68,7 +68,7 @@ webserverStartAll()
         retval=0
         python $BBBASEDIR/lib/toaster/manage.py migrate orm || retval=1
     fi
-    if [ "$TOASTER_MANAGED" '==' '1' ]; then
+    if [ "$TOASTER_MANAGED" = '1' ]; then
         python $BBBASEDIR/lib/toaster/manage.py migrate bldcontrol || retval=1
         python $BBBASEDIR/lib/toaster/manage.py checksettings  --traceback || retval=1
     fi
@@ -148,7 +148,16 @@ verify_prereq() {
 
 
 # read command line parameters
-BBBASEDIR=`dirname ${BASH_SOURCE:-${(%):-%x}}`/..
+if [ -n "$BASH_SOURCE" ] ; then
+    TOASTER=${BASH_SOURCE}
+elif [ -n "$ZSH_NAME" ] ; then
+    TOASTER=${(%):-%x}
+else
+    TOASTER=$0
+fi
+
+BBBASEDIR=`dirname $TOASTER`/..
+
 RUNNING=0
 
 NOTOASTERUI=0
@@ -176,7 +185,7 @@ for param in $*; do
     esac
 done
 
-[ -z "$ZSH_NAME" ] && SRCFILE=${BASH_SOURCE} || SRCFILE=$_
+[ -n "${BASH_SOURCE}" ] && SRCFILE=${BASH_SOURCE} || SRCFILE=$_
 
 if [ `basename \"$0\"` = `basename \"${SRCFILE}\"` ]; then
     # We are called as standalone. We refuse to run in a build environment - we need the interactive mode for that.
@@ -236,7 +245,7 @@ if [ `basename \"$0\"` = `basename \"${SRCFILE}\"` ]; then
         echo "Starting browser..."
         xdg-open http://127.0.0.1:$WEB_PORT/ >/dev/null 2>&1 &
     fi
-    trap trap_ctrlc SIGINT
+    trap trap_ctrlc 2
     echo "Toaster is now running. You can stop it with Ctrl-C"
     while [ $RUNNING -gt 0 ]; do
         python $BBBASEDIR/lib/toaster/manage.py runbuilds 2>&1 | tee -a "$BUILDDIR/toaster.log"
@@ -262,7 +271,7 @@ fi
 
 
 # Determine the action. If specified by arguments, fine, if not, toggle it
-if [ "$1" '==' 'start' ] || [ "$1" '==' 'stop' ]; then
+if [ "$1" = 'start' ] || [ "$1" = 'stop' ]; then
     CMD="$1"
 else
     if [ -z "$BBSERVER" ]; then
@@ -281,13 +290,13 @@ if [ -e $BUILDDIR/bitbake.lock ]; then
     python -c "import fcntl; fcntl.flock(open(\"$BUILDDIR/bitbake.lock\"), fcntl.LOCK_EX|fcntl.LOCK_NB)" 2>/dev/null || lock=0
 fi
 
-if [ ${CMD} '==' 'start' ] && [ $lock -eq 0 ]; then
+if [ ${CMD} = 'start' ] && [ $lock -eq 0 ]; then
     echo "Error: bitbake lock state error. File locks show that the system is on." 1>&2
     echo "Please wait for the current build to finish, stop and then start the system again." 1>&2
     return 3
 fi
 
-if [ ${CMD} '==' 'start' ] && [ -e $BUILDDIR/.toastermain.pid ] && kill -0 `cat $BUILDDIR/.toastermain.pid`; then
+if [ ${CMD} = 'start' ] && [ -e $BUILDDIR/.toastermain.pid ] && kill -0 `cat $BUILDDIR/.toastermain.pid`; then
     echo "Warning: bitbake appears to be dead, but the Toaster web server is running. Something fishy is going on." 1>&2
     echo "Cleaning up the web server to start from a clean slate."
     webserverKillAll
