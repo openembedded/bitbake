@@ -536,6 +536,7 @@ class DataSmart(MutableMapping):
                 self._seen_overrides[override].remove(var)
 
     def setVarFlag(self, var, flag, value, **loginfo):
+        self.expand_cache = {}
         if 'op' not in loginfo:
             loginfo['op'] = "set"
         loginfo['flag'] = flag
@@ -624,6 +625,7 @@ class DataSmart(MutableMapping):
         return value
 
     def delVarFlag(self, var, flag, **loginfo):
+        self.expand_cache = {}
         local_var = self._findVar(var)
         if not local_var:
             return
@@ -653,6 +655,7 @@ class DataSmart(MutableMapping):
         self.setVarFlag(var, flag, newvalue, ignore=True)
 
     def setVarFlags(self, var, flags, **loginfo):
+        self.expand_cache = {}
         infer_caller_details(loginfo)
         if not var in self.dict:
             self._makeShadowCopy(var)
@@ -682,6 +685,7 @@ class DataSmart(MutableMapping):
 
 
     def delVarFlags(self, var, **loginfo):
+        self.expand_cache = {}
         if not var in self.dict:
             self._makeShadowCopy(var)
 
