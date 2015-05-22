@@ -398,6 +398,31 @@ class Git(FetchMethod):
     def _build_revision(self, ud, d, name):
         return ud.revisions[name]
 
+    def gitpkgv_revision(self, ud, d, name):
+        """
+        Return a sortable revision number by counting commits in the history
+        Based on gitpkgv.bblass in meta-openembedded
+        """
+        rev = self._build_revision(ud, d, name)
+        localpath = ud.localpath
+        rev_file = os.path.join(localpath, "oe-gitpkgv_" + rev)
+        if not os.path.exists(localpath):
+            commits = None
+        else:
+            if not os.path.exists(rev_file) or not os.path.getsize(rev_file):
+                from pipes import quote
+                commits = bb.fetch2.runfetchcmd(
+                        "git rev-list %s -- | wc -l" % (quote(rev)),
+                        d, quiet=True).strip().lstrip('0')
+                if commits:
+                    open(rev_file, "w").write("%d\n" % int(commits))
+            else:
+                commits = open(rev_file, "r").readline(128).strip()
+        if commits:
+            return False, "%s+%s" % (commits, rev[:7])
+        else:
+            return True, str(rev)
+
     def checkstatus(self, ud, d):
         try:
             self._lsremote(ud, d, "")
