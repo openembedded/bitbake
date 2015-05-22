@@ -1065,12 +1065,40 @@
             <title>Deleting a Task</title>
 
             <para>
-                As well as being able to add tasks, tasks can also be deleted.
-                This is done simply with <filename>deltask</filename> command.
+                As well as being able to add tasks, you can delete them.
+                Simply use the <filename>deltask</filename> command to
+                delete a task.
                 For example, to delete the example task used in the previous
                 sections, you would use:
                 <literallayout class='monospaced'>
      deltask printdate
+                </literallayout>
+                If you delete a task using the <filename>deltask</filename>
+                command and the task has dependencies, the dependencies are
+                not reconnected.
+                For example, suppose you have three tasks named
+                <filename>do_a</filename>, <filename>do_b</filename>, and
+                <filename>do_c</filename>.
+                Furthermore, <filename>do_c</filename> is dependent on
+                <filename>do_b</filename>, which in turn is dependent on
+                <filename>do_a</filename>.
+                Given this scenario, if you use <filename>deltask</filename>
+                to delete <filename>do_b</filename>, the implicit dependency
+                relationship between <filename>do_c</filename> and
+                <filename>do_a</filename> through <filename>do_b</filename>
+                no longer exists, and <filename>do_c</filename> dependencies
+                are not updated to include <filename>do_a</filename>.
+                Thus, <filename>do_c</filename> is free to run before
+                <filename>do_a</filename>.
+            </para>
+
+            <para>
+                If you want dependencies such as these to remain intact, use
+                the <filename>noexec</filename> varflag to disable the task
+                instead of using the <filename>deltask</filename> command to
+                delete it:
+                <literallayout class='monospaced'>
+     do_b[noexec] = "1"
                 </literallayout>
             </para>
         </section>
