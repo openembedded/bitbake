@@ -43,6 +43,13 @@ class Hg(FetchMethod):
         """
         return ud.type in ['hg']
 
+    def supports_checksum(self, urldata):
+        """
+        Don't require checksums for local archives created from
+        repository checkouts.
+        """ 
+        return False
+
     def urldata_init(self, ud, d):
         """
         init hg specific variable within url data
