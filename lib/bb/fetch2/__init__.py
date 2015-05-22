@@ -720,7 +720,7 @@ def get_autorev(d):
         d.setVar('__BB_DONT_CACHE', '1')
     return "AUTOINC"
 
-def get_srcrev(d):
+def get_srcrev(d, method_name='sortable_revision'):
     """
     Return the revsion string, usually for use in the version string (PV) of the current package
     Most packages usually only have one SCM so we just pass on the call.
@@ -729,6 +729,9 @@ def get_srcrev(d):
 
     The idea here is that we put the string "AUTOINC+" into return value if the revisions are not 
     incremental, other code is then responsible for turning that into an increasing value (if needed)
+
+    A method_name can be supplied to retrieve an alternatively formatted revision from a fetcher, if
+    that fetcher provides a method with the given name and the same signature as sortable_revision.
     """
 
     scms = []
@@ -742,7 +745,7 @@ def get_srcrev(d):
         raise FetchError("SRCREV was used yet no valid SCM was found in SRC_URI")
 
     if len(scms) == 1 and len(urldata[scms[0]].names) == 1:
-        autoinc, rev = urldata[scms[0]].method.sortable_revision(urldata[scms[0]], d, urldata[scms[0]].names[0])
+        autoinc, rev = getattr(urldata[scms[0]].method, method_name)(urldata[scms[0]], d, urldata[scms[0]].names[0])
         if len(rev) > 10:
             rev = rev[:10]
         if autoinc:
@@ -760,7 +763,7 @@ def get_srcrev(d):
     for scm in scms:
         ud = urldata[scm]
         for name in ud.names:
-            autoinc, rev = ud.method.sortable_revision(ud, d, name)
+            autoinc, rev = getattr(ud.method, method_name)(ud, d, name)
             seenautoinc = seenautoinc or autoinc
             if len(rev) > 10:
                 rev = rev[:10]
