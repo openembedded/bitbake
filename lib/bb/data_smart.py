@@ -231,6 +231,10 @@ class VariableHistory(object):
 
         if var not in self.variables:
             self.variables[var] = []
+        if not isinstance(self.variables[var], list):
+            return
+        if 'nodups' in loginfo and loginfo in self.variables[var]:
+            return
         self.variables[var].append(loginfo.copy())
 
     def variable(self, var):
@@ -460,6 +464,7 @@ class DataSmart(MutableMapping):
                 loginfo = event.copy()
                 loginfo['variable'] = shortvar
                 loginfo['op'] = 'override[%s]:%s' % (override, loginfo['op'])
+                loginfo['nodups'] = True
                 self.varhistory.record(**loginfo)
 
             override = None
