@@ -85,7 +85,7 @@ class DataNode(AstNode):
         if 'flag' in self.groupd and self.groupd['flag'] != None:
             return data.getVarFlag(key, self.groupd['flag'], noweakdefault=True)
         else:
-            return data.getVar(key, False, noweakdefault=True)
+            return data.getVar(key, False, noweakdefault=True, parsing=True)
 
     def eval(self, data):
         groupd = self.groupd
@@ -136,7 +136,7 @@ class DataNode(AstNode):
         if flag:
             data.setVarFlag(key, flag, val, **loginfo)
         else:
-            data.setVar(key, val, **loginfo)
+            data.setVar(key, val, parsing=True, **loginfo)
 
 class MethodNode(AstNode):
     tr_tbl = string.maketrans('/.+-@%&', '_______')
@@ -155,10 +155,10 @@ class MethodNode(AstNode):
             anonfuncs = data.getVar('__BBANONFUNCS', False) or []
             anonfuncs.append(funcname)
             data.setVar('__BBANONFUNCS', anonfuncs)
-            data.setVar(funcname, text)
+            data.setVar(funcname, text, parsing=True)
         else:
             data.setVarFlag(self.func_name, "func", 1)
-            data.setVar(self.func_name, text)
+            data.setVar(self.func_name, text, parsing=True)
 
 class PythonMethodNode(AstNode):
     def __init__(self, filename, lineno, function, modulename, body):
@@ -175,7 +175,7 @@ class PythonMethodNode(AstNode):
         bb.methodpool.insert_method(self.modulename, text, self.filename)
         data.setVarFlag(self.function, "func", 1)
         data.setVarFlag(self.function, "python", 1)
-        data.setVar(self.function, text)
+        data.setVar(self.function, text, parsing=True)
 
 class MethodFlagsNode(AstNode):
     def __init__(self, filename, lineno, key, m):
@@ -224,11 +224,11 @@ class ExportFuncsNode(AstNode):
                     data.setVarFlag(calledfunc, flag, data.getVarFlag(func, flag))
 
             if data.getVarFlag(calledfunc, "python"):
-                data.setVar(func, "    bb.build.exec_func('" + calledfunc + "', d)\n")
+                data.setVar(func, "    bb.build.exec_func('" + calledfunc + "', d)\n", parsing=True)
             else:
                 if "-" in self.classname:
                    bb.fatal("The classname %s contains a dash character and is calling an sh function %s using EXPORT_FUNCTIONS. Since a dash is illegal in sh function names, this cannot work, please rename the class or don't use EXPORT_FUNCTIONS." % (self.classname, calledfunc))
-                data.setVar(func, "    " + calledfunc + "\n")
+                data.setVar(func, "    " + calledfunc + "\n", parsing=True)
             data.setVarFlag(func, 'export_func', '1')
 
 class AddTaskNode(AstNode):

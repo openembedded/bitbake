@@ -386,6 +386,10 @@ class DataSmart(MutableMapping):
 
     def setVar(self, var, value, **loginfo):
         #print("var=" + str(var) + "  val=" + str(value))
+        parsing=False
+        if 'parsing' in loginfo:
+            parsing=True
+
         if 'op' not in loginfo:
             loginfo['op'] = "set"
         self.expand_cache = {}
@@ -421,12 +425,13 @@ class DataSmart(MutableMapping):
         if not var in self.dict:
             self._makeShadowCopy(var)
 
-        if "_append" in self.dict[var]:
-            del self.dict[var]["_append"]
-        if "_prepend" in self.dict[var]:
-            del self.dict[var]["_prepend"]
-        if "_overrides" in self.dict[var]:
-            del self.dict[var]["_overrides"]
+        if not parsing:
+            if "_append" in self.dict[var]:
+                del self.dict[var]["_append"]
+            if "_prepend" in self.dict[var]:
+                del self.dict[var]["_prepend"]
+            if "_overrides" in self.dict[var]:
+                del self.dict[var]["_overrides"]
 
         # more cookies for the cookie monster
         if '_' in var:
@@ -464,20 +469,20 @@ class DataSmart(MutableMapping):
                 if len(shortvar) == 0:
                     override = None
 
-    def getVar(self, var, expand=False, noweakdefault=False):
-        return self.getVarFlag(var, "_content", expand, noweakdefault)
+    def getVar(self, var, expand=False, noweakdefault=False, parsing=False):
+        return self.getVarFlag(var, "_content", expand, noweakdefault, parsing)
 
     def renameVar(self, key, newkey, **loginfo):
         """
         Rename the variable key to newkey
         """
-        val = self.getVar(key, 0)
+        val = self.getVar(key, 0, parsing=True)
         if val is not None:
             loginfo['variable'] = newkey
             loginfo['op'] = 'rename from %s' % key
             loginfo['detail'] = val
             self.varhistory.record(**loginfo)
-            self.setVar(newkey, val, ignore=True)
+            self.setVar(newkey, val, ignore=True, parsing=True)
 
         for i in (__setvar_keyword__):
             src = self.getVarFlag(key, i)
@@ -545,11 +550,10 @@ class DataSmart(MutableMapping):
                 self.dict["__exportlist"]["_content"] = set()
             self.dict["__exportlist"]["_content"].add(var)
 
-    def getVarFlag(self, var, flag, expand=False, noweakdefault=False):
+    def getVarFlag(self, var, flag, expand=False, noweakdefault=False, parsing=False):
         local_var = self._findVar(var)
         value = None
-
-        if flag == "_content" and local_var is not None and "_overrides" in local_var:
+        if flag == "_content" and local_var is not None and "_overrides" in local_var and not parsing:
             match = False
             active = {}
             for (r, o) in local_var["_overrides"]:
@@ -580,7 +584,8 @@ class DataSmart(MutableMapping):
             elif flag == "_content" and "_defaultval" in local_var and not noweakdefault:
                 value = copy.copy(local_var["_defaultval"])
 
-        if flag == "_content" and local_var is not None and "_append" in local_var:
+
+        if flag == "_content" and local_var is not None and "_append" in local_var and not parsing:
             if not value:
                 value = ""
             for (r, o) in local_var["_append"]:
@@ -592,10 +597,11 @@ class DataSmart(MutableMapping):
                 if match:
                     value = value + r
 
-        if flag == "_content" and local_var is not None and "_prepend" in local_var:
+        if flag == "_content" and local_var is not None and "_prepend" in local_var and not parsing:
             if not value:
                 value = ""
             for (r, o) in local_var["_prepend"]:
+
                 match = True
                 if o:
                     for o2 in o.split("_"):
