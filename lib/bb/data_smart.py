@@ -310,6 +310,8 @@ class DataSmart(MutableMapping):
         self.expand_cache = {}
 
         # cookie monster tribute
+        self.overridedata = {}
+
         self.overrides = []
         self.overridevars = set(["OVERRIDES", "FILE"])
 
@@ -434,8 +436,18 @@ class DataSmart(MutableMapping):
                 del self.dict[var]["_append"]
             if "_prepend" in self.dict[var]:
                 del self.dict[var]["_prepend"]
-            if "_overrides" in self.dict[var]:
-                del self.dict[var]["_overrides"]
+            if var in self.overridedata:
+                active = []
+                self.need_overrides()
+                for (r, o) in self.overridedata[var]:
+                    if o in self.overrides:
+                        active.append(r)
+                    elif "_" in o:
+                        if set(o.split("_")).issubset(set(self.overrides)):
+                            active.append(r)
+                for a in active:
+                    self.delVar(a)
+                del self.overridedata[var]
 
         # more cookies for the cookie monster
         if '_' in var:
@@ -454,10 +466,10 @@ class DataSmart(MutableMapping):
         override = var[var.rfind('_')+1:]
         shortvar = var[:var.rfind('_')]
         while override:
-            l = self.getVarFlag(shortvar, "_overrides") or []
-            if [var, override] not in l:
-                l.append([var, override])
-                self.setVarFlag(shortvar, "_overrides", l, ignore=True)
+            if shortvar not in self.overridedata:
+                self.overridedata[shortvar] = []
+            if [var, override] not in self.overridedata[shortvar]:
+                self.overridedata[shortvar].append([var, override])
             for event in self.varhistory.variable(var):
                 if 'flag' in loginfo and not loginfo['flag'].startswith("_"):
                     continue
@@ -498,6 +510,12 @@ class DataSmart(MutableMapping):
             dest.extend(src)
             self.setVarFlag(newkey, i, dest, ignore=True)
 
+        if key in self.overridedata:
+            self.overridedata[newkey] = []
+            for (v, o) in self.overridedata[key]:
+                self.overridedata[newkey].append([v.replace(key, newkey), o])
+                self.renameVar(v, v.replace(key, newkey))
+
         if '_' in newkey and val is None:
             self._setvar_update_overrides(newkey, **loginfo)
 
@@ -525,15 +543,23 @@ class DataSmart(MutableMapping):
         self.varhistory.record(**loginfo)
         self.expand_cache = {}
         self.dict[var] = {}
+        if var in self.overridedata:
+            del self.overridedata[var]
         if '_' in var:
             override = var[var.rfind('_')+1:]
             shortvar = var[:var.rfind('_')]
-            l = self.getVarFlag(shortvar, "_overrides") or []
-            try:
-                l.remove([var, override])
-            except ValueError as e:
-                pass
-            self.setVarFlag(shortvar, "_overrides", l, ignore=True)
+            while override:
+                try:
+                    if shortvar in self.overridedata:
+                        self.overridedata[shortvar].remove([var, override])
+                except ValueError as e:
+                    pass
+                override = None
+                if "_" in shortvar:
+                    override = var[shortvar.rfind('_')+1:]
+                    shortvar = var[:shortvar.rfind('_')]
+                    if len(shortvar) == 0:
+                         override = None
 
     def setVarFlag(self, var, flag, value, **loginfo):
         self.expand_cache = {}
@@ -558,10 +584,10 @@ class DataSmart(MutableMapping):
     def getVarFlag(self, var, flag, expand=False, noweakdefault=False, parsing=False):
         local_var = self._findVar(var)
         value = None
-        if flag == "_content" and local_var is not None and "_overrides" in local_var and not parsing:
+        if flag == "_content" and var in self.overridedata and not parsing:
             match = False
             active = {}
-            for (r, o) in local_var["_overrides"]:
+            for (r, o) in self.overridedata[var]:
                 # What about double overrides both with "_" in the name?
                 if o in self.overrides:
                     active[o] = r
@@ -738,6 +764,7 @@ class DataSmart(MutableMapping):
 
         data.overrides = copy.copy(self.overrides)
         data.overridevars = copy.copy(self.overridevars)
+        data.overridedata = copy.copy(self.overridedata)
 
         return data
 
