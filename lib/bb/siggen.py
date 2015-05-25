@@ -419,12 +419,16 @@ def compare_sigfiles(a, b, recursecb = None):
         for f in removed:
             output.append("Dependency on checksum of file %s was removed" % (f))
 
-    changed = []
-    for idx, task in enumerate(a_data['runtaskdeps']):
-        a = a_data['runtaskdeps'][idx]
-        b = b_data['runtaskdeps'][idx]
-        if a_data['runtaskhashes'][a] != b_data['runtaskhashes'][b]:
-            changed.append("%s with hash %s\n changed to\n%s with hash %s" % (a, a_data['runtaskhashes'][a], b, b_data['runtaskhashes'][b]))
+
+    if len(a_data['runtaskdeps']) != len(b_data['runtaskdeps']):
+        changed = ["Number of task dependencies changed"]
+    else:
+        changed = []
+        for idx, task in enumerate(a_data['runtaskdeps']):
+            a = a_data['runtaskdeps'][idx]
+            b = b_data['runtaskdeps'][idx]
+            if a_data['runtaskhashes'][a] != b_data['runtaskhashes'][b]:
+                changed.append("%s with hash %s\n changed to\n%s with hash %s" % (a, a_data['runtaskhashes'][a], b, b_data['runtaskhashes'][b]))
 
     if changed:
         output.append("runtaskdeps changed from %s to %s" % (clean_basepaths_list(a_data['runtaskdeps']), clean_basepaths_list(b_data['runtaskdeps'])))
