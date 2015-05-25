@@ -156,17 +156,17 @@ def expandKeys(alterdata, readdata = None):
         if key == ekey:
             continue
         todolist[key] = ekey
+        newval = alterdata.getVar(ekey, 0)
+        if newval:
+            val = alterdata.getVar(key, 0)
+            if val is not None and newval is not None:
+                bb.warn("Variable key %s (%s) replaces original key %s (%s)." % (key, val, ekey, newval))
 
     # These two for loops are split for performance to maximise the
     # usefulness of the expand cache
 
     for key in todolist:
         ekey = todolist[key]
-        newval = alterdata.getVar(ekey, 0)
-        if newval:
-            val = alterdata.getVar(key, 0)
-            if val is not None and newval is not None:
-                bb.warn("Variable key %s (%s) replaces original key %s (%s)." % (key, val, ekey, newval))
         alterdata.renameVar(key, ekey)
 
 def inheritFromOS(d, savedenv, permitted):
