@@ -659,25 +659,25 @@ class Cache(object):
         """
         chdir_back = False
 
-        from bb import data, parse
+        from bb import parse
 
         # expand tmpdir to include this topdir
-        data.setVar('TMPDIR', data.getVar('TMPDIR', config, 1) or "", config)
+        config.setVar('TMPDIR', config.getVar('TMPDIR', True) or "")
         bbfile_loc = os.path.abspath(os.path.dirname(bbfile))
         oldpath = os.path.abspath(os.getcwd())
         parse.cached_mtime_noerror(bbfile_loc)
-        bb_data = data.init_db(config)
+        bb_data = config.createCopy()
         # The ConfHandler first looks if there is a TOPDIR and if not
         # then it would call getcwd().
         # Previously, we chdir()ed to bbfile_loc, called the handler
         # and finally chdir()ed back, a couple of thousand times. We now
         # just fill in TOPDIR to point to bbfile_loc if there is no TOPDIR yet.
-        if not data.getVar('TOPDIR', bb_data):
+        if not bb_data.getVar('TOPDIR', False):
             chdir_back = True
-            data.setVar('TOPDIR', bbfile_loc, bb_data)
+            bb_data.setVar('TOPDIR', bbfile_loc)
         try:
             if appends:
-                data.setVar('__BBAPPEND', " ".join(appends), bb_data)
+                bb_data.setVar('__BBAPPEND', " ".join(appends))
             bb_data = parse.handle(bbfile, bb_data)
             if chdir_back:
                 os.chdir(oldpath)
