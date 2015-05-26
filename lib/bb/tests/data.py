@@ -325,6 +325,20 @@ class TestOverrides(unittest.TestCase):
         bb.data.update_data(self.d)
         self.assertEqual(self.d.getVar("TEST", True), "testvalue3")
 
+class TestKeyExpansion(unittest.TestCase):
+    def setUp(self):
+        self.d = bb.data.init()
+        self.d.setVar("FOO", "foo")
+        self.d.setVar("BAR", "foo")
+
+    def test_keyexpand(self):
+        self.d.setVar("VAL_${FOO}", "A")
+        self.d.setVar("VAL_${BAR}", "B")
+        with LogRecord() as logs:
+            bb.data.expandKeys(self.d)
+            self.assertTrue(logContains("Variable key VAL_${FOO} (A) replaces original key VAL_foo (B)", logs))
+        self.assertEqual(self.d.getVar("VAL_foo", True), "A")
+
 class TestFlags(unittest.TestCase):
     def setUp(self):
         self.d = bb.data.init()
