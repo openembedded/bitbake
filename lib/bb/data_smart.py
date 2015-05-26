@@ -311,8 +311,7 @@ class DataSmart(MutableMapping):
 
         # cookie monster tribute
         self.overridedata = {}
-
-        self.overrides = []
+        self.overrides = None
         self.overridevars = set(["OVERRIDES", "FILE"])
 
     def enableTracking(self):
@@ -360,8 +359,13 @@ class DataSmart(MutableMapping):
 
     def internal_finalize(self, parent = False):
         """Performs final steps upon the datastore, including application of overrides"""
+        self.overrides = None
 
-        self.overrides = (self.getVar("OVERRIDES", True) or "").split(":") or []
+    def need_overrides(self):
+        if self.overrides is None:
+            self.overrides = []
+            self.overrides = (self.getVar("OVERRIDES", True) or "").split(":") or []
+            self.expand_cache = {}
 
     def initVar(self, var):
         self.expand_cache = {}
@@ -587,6 +591,7 @@ class DataSmart(MutableMapping):
         if flag == "_content" and var in self.overridedata and not parsing:
             match = False
             active = {}
+            self.need_overrides()
             for (r, o) in self.overridedata[var]:
                 # What about double overrides both with "_" in the name?
                 if o in self.overrides:
@@ -619,6 +624,7 @@ class DataSmart(MutableMapping):
         if flag == "_content" and local_var is not None and "_append" in local_var and not parsing:
             if not value:
                 value = ""
+            self.need_overrides()
             for (r, o) in local_var["_append"]:
                 match = True
                 if o:
@@ -631,6 +637,7 @@ class DataSmart(MutableMapping):
         if flag == "_content" and local_var is not None and "_prepend" in local_var and not parsing:
             if not value:
                 value = ""
+            self.need_overrides()
             for (r, o) in local_var["_prepend"]:
 
                 match = True
@@ -652,6 +659,7 @@ class DataSmart(MutableMapping):
 
         if value and flag == "_content" and local_var is not None and "_remove" in local_var:
             removes = []
+            self.need_overrides()
             for (r, o) in local_var["_remove"]:
                 match = True
                 if o:
@@ -762,7 +770,7 @@ class DataSmart(MutableMapping):
 
         data._tracking = self._tracking
 
-        data.overrides = copy.copy(self.overrides)
+        data.overrides = None
         data.overridevars = copy.copy(self.overridevars)
         data.overridedata = copy.copy(self.overridedata)
 
