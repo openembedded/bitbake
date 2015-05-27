@@ -24,6 +24,30 @@ import unittest
 import bb
 import bb.data
 import bb.parse
+import logging
+
+class LogRecord():
+    def __enter__(self):
+        logs = []
+        class LogHandler(logging.Handler):
+            def emit(self, record):
+                logs.append(record)
+        logger = logging.getLogger("BitBake")
+        handler = LogHandler()
+        self.handler = handler
+        logger.addHandler(handler)
+        return logs
+    def __exit__(self, type, value, traceback):
+        logger = logging.getLogger("BitBake")
+        logger.removeHandler(self.handler)
+        return
+
+def logContains(item, logs):
+    for l in logs:
+        m = l.getMessage()
+        if item in m:
+            return True
+    return False
 
 class DataExpansions(unittest.TestCase):
     def setUp(self):
@@ -300,7 +324,6 @@ class TestOverrides(unittest.TestCase):
         self.d.setVar("TEST_foo", "testvalue4")
         bb.data.update_data(self.d)
         self.assertEqual(self.d.getVar("TEST", True), "testvalue3")
-
 
 class TestFlags(unittest.TestCase):
     def setUp(self):
