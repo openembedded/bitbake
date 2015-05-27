@@ -97,7 +97,6 @@ def include(parentfn, fn, lineno, data, error_out):
         if error_out:
             raise ParseError("Could not %(error_out)s file %(fn)s" % vars(), parentfn, lineno)
         logger.debug(2, "CONF file '%s' not found", fn)
-        bb.parse.mark_dependency(data, fn)
 
 # We have an issue where a UI might want to enforce particular settings such as
 # an empty DISTRO variable. If configuration files do something like assigning
