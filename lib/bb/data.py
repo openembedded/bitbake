@@ -159,7 +159,7 @@ def expandKeys(alterdata, readdata = None):
 
     # These two for loops are split for performance to maximise the
     # usefulness of the expand cache
-    for key in todolist:
+    for key in sorted(todolist):
         ekey = todolist[key]
         newval = alterdata.getVar(ekey, 0)
         if newval is not None:
