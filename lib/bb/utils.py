@@ -908,11 +908,17 @@ def cpu_count():
 def nonblockingfd(fd):
     fcntl.fcntl(fd, fcntl.F_SETFL, fcntl.fcntl(fd, fcntl.F_GETFL) | os.O_NONBLOCK)
 
-def process_profilelog(fn):
-    pout = open(fn + '.processed', 'w')
+def process_profilelog(fn, pout = None):
+    # Either call with a list of filenames and set pout or a filename and optionally pout.
+    if not pout:
+        pout = fn + '.processed'
+    pout = open(pout, 'w')
    
     import pstats
-    p = pstats.Stats(fn, stream=pout)
+    if isinstance(fn, list):
+        p = pstats.Stats(*fn, stream=pout)
+    else:
+        p = pstats.Stats(fn, stream=pout)
     p.sort_stats('time')
     p.print_stats()
     p.print_callers()

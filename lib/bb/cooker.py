@@ -1798,8 +1798,6 @@ class Parser(multiprocessing.Process):
         finally:
             logfile = "profile-parse-%s.log" % multiprocessing.current_process().name
             prof.dump_stats(logfile)
-            bb.utils.process_profilelog(logfile)
-            print("Raw profiling information saved to %s and processed statistics to %s.processed" % (logfile, logfile))
 
     def realrun(self):
         if self.init:
@@ -1869,6 +1867,7 @@ class CookerParser(object):
         self.current = 0
         self.num_processes = int(self.cfgdata.getVar("BB_NUMBER_PARSE_THREADS", True) or
                                  multiprocessing.cpu_count())
+        self.process_names = []
 
         self.bb_cache = bb.cache.Cache(self.cfgdata, self.cfghash, cooker.caches_array)
         self.fromcache = []
@@ -1904,6 +1903,7 @@ class CookerParser(object):
             for i in range(0, self.num_processes):
                 parser = Parser(self.jobs, self.result_queue, self.parser_quit, init, self.cooker.configuration.profile)
                 parser.start()
+                self.process_names.append(parser.name)
                 self.processes.append(parser)
 
             self.results = itertools.chain(self.results, self.parse_generator())
@@ -1947,6 +1947,16 @@ class CookerParser(object):
         multiprocessing.util.Finalize(None, sync.join, exitpriority=-100)
         bb.codeparser.parser_cache_savemerge(self.cooker.data)
         bb.fetch.fetcher_parse_done(self.cooker.data)
+        if self.cooker.configuration.profile:
+            profiles = []
+            for i in self.process_names:
+                logfile = "profile-parse-%s.log" % i
+                if os.path.exists(logfile):
+                    profiles.append(logfile)
+
+            pout = "profile-parse.log.processed"
+            bb.utils.process_profilelog(profiles, pout = pout)
+            print("Processed parsing statistics saved to %s" % (pout))
 
     def load_cached(self):
         for filename, appends in self.fromcache:
