@@ -67,3 +67,49 @@ C = "3"
         f = self.parsehelper(testfileB)
         with self.assertRaises(bb.parse.ParseError):
             d = bb.parse.handle(f.name, self.d)['']
+
+    overridetest = """
+RRECOMMENDS_${PN} = "a"
+RRECOMMENDS_${PN}_libc = "b"
+OVERRIDES = "libc:${PN}"
+PN = "gtk+"
+"""
+
+    def test_parse_overrides(self):
+        f = self.parsehelper(self.overridetest)
+        d = bb.parse.handle(f.name, self.d)['']
+        self.assertEqual(d.getVar("RRECOMMENDS", True), "b")
+        bb.data.expandKeys(d)
+        self.assertEqual(d.getVar("RRECOMMENDS", True), "b")
+        d.setVar("RRECOMMENDS_gtk+", "c")
+        self.assertEqual(d.getVar("RRECOMMENDS", True), "c")
+
+    overridetest2 = """
+EXTRA_OECONF = ""
+EXTRA_OECONF_class-target = "b"
+EXTRA_OECONF_append = " c"
+"""
+
+    def test_parse_overrides(self):
+        f = self.parsehelper(self.overridetest2)
+        d = bb.parse.handle(f.name, self.d)['']
+        d.appendVar("EXTRA_OECONF", " d")
+        d.setVar("OVERRIDES", "class-target")
+        self.assertEqual(d.getVar("EXTRA_OECONF", True), "b c d")
+
+    overridetest3 = """
+DESCRIPTION = "A"
+DESCRIPTION_${PN}-dev = "${DESCRIPTION} B"
+PN = "bc"
+"""
+
+    def test_parse_combinations(self):
+        f = self.parsehelper(self.overridetest3)
+        d = bb.parse.handle(f.name, self.d)['']
+        bb.data.expandKeys(d)
+        self.assertEqual(d.getVar("DESCRIPTION_bc-dev", True), "A B")
+        d.setVar("DESCRIPTION", "E")
+        d.setVar("DESCRIPTION_bc-dev", "C D")
+        d.setVar("OVERRIDES", "bc-dev")
+        self.assertEqual(d.getVar("DESCRIPTION", True), "C D")
+
