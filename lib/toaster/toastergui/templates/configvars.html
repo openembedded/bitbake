@@ -56,7 +56,7 @@
         <td class="file"><a data-toggle="modal" href="#variable-{{variable.pk}}">
             {% if variable.vhistory.all %}
                 {% for path in variable.vhistory.all|filter_setin_files:file_filter %}
-                    {{path|cut_path_prefix:dirstostrip}}<p>
+                    {{path|cut_path_prefix:dirstostrip}}<br/>
                 {% endfor %}
             {% endif %}
         </a></td>

@@ -209,6 +209,7 @@
                     <a class="error" href="{% url "task" build.id exectask.0.id %}">
                         {{exectask.0.recipe.name}}
                         <span class="task-name">{{exectask.0.task_name}}</span>
+                    </a>
 
                       {% if MANAGED and build.project %}
                         <a href="{% url 'build_artifact' build.id "tasklogfile" exectask.0.id %}">
@@ -216,7 +217,6 @@
                         </a>
                       {% endif %}
 
-                    </a>
                 {% elif exectask.count > 1%}
                     <a class="error" href="{% url "tasks" build.id %}?filter=outcome%3A4">{{exectask.count}}</a>
                 {% endif %}
