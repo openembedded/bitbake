@@ -369,7 +369,9 @@ class DataSmart(MutableMapping):
             self.inoverride = True
             # Can end up here recursively so setup dummy values
             self.overrides = []
+            self.overridesset = set()
             self.overrides = (self.getVar("OVERRIDES", True) or "").split(":") or []
+            self.overridesset = set(self.overrides)
             self.inoverride = False
             self.expand_cache = {}
 
@@ -450,10 +452,10 @@ class DataSmart(MutableMapping):
                 active = []
                 self.need_overrides()
                 for (r, o) in self.overridedata[var]:
-                    if o in self.overrides:
+                    if o in self.overridesset:
                         active.append(r)
                     elif "_" in o:
-                        if set(o.split("_")).issubset(set(self.overrides)):
+                        if set(o.split("_")).issubset(self.overridesset):
                             active.append(r)
                 for a in active:
                     self.delVar(a)
@@ -600,10 +602,12 @@ class DataSmart(MutableMapping):
             self.need_overrides()
             for (r, o) in self.overridedata[var]:
                 # What about double overrides both with "_" in the name?
-                if o in self.overrides:
+                if o in self.overridesset:
                     active[o] = r
-                elif set(o.split("_")).issubset(set(self.overrides)):
-                    active[o] = r
+                elif "_" in o:
+                    if set(o.split("_")).issubset(self.overridesset):
+                        active[o] = r
+
             mod = True
             while mod:
                 mod = False
