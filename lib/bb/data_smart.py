@@ -809,12 +809,15 @@ class DataSmart(MutableMapping):
 
     def __iter__(self):
         deleted = set()
+        overrides = set()
         def keylist(d):        
             klist = set()
             for key in d:
                 if key == "_data":
                     continue
                 if key in deleted:
+                    continue
+                if key in overrides:
                     continue
                 if not d[key]:
                     deleted.add(key)
@@ -826,7 +829,19 @@ class DataSmart(MutableMapping):
 
             return klist
 
+        self.need_overrides()
+        for var in self.overridedata:
+            for (r, o) in self.overridedata[var]:
+                if o in self.overridesset:
+                    overrides.add(var)
+                elif "_" in o:
+                    if set(o.split("_")).issubset(self.overridesset):
+                        overrides.add(var)
+
         for k in keylist(self.dict):
+             yield k
+
+        for k in overrides:
              yield k
 
     def __len__(self):
