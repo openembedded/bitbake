@@ -313,6 +313,7 @@ class DataSmart(MutableMapping):
         self.overridedata = {}
         self.overrides = None
         self.overridevars = set(["OVERRIDES", "FILE"])
+        self.inoverride = False
 
     def enableTracking(self):
         self._tracking = True
@@ -363,8 +364,13 @@ class DataSmart(MutableMapping):
 
     def need_overrides(self):
         if self.overrides is None:
+            if self.inoverride:
+                return
+            self.inoverride = True
+            # Can end up here recursively so setup dummy values
             self.overrides = []
             self.overrides = (self.getVar("OVERRIDES", True) or "").split(":") or []
+            self.inoverride = False
             self.expand_cache = {}
 
     def initVar(self, var):
