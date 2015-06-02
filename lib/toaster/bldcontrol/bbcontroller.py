@@ -190,6 +190,9 @@ class BuildEnvironmentController(object):
         """
         raise Exception("Must override BE release")
 
+    def triggerBuild(self, bitbake, layers, variables, targets):
+        raise Exception("Must override BE release")
+
 class ShellCmdException(Exception):
     pass
 
