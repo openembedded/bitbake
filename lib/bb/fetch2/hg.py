@@ -59,10 +59,12 @@ class Hg(FetchMethod):
 
         ud.module = ud.parm["module"]
 
-        # Create paths to mercurial checkouts
-        relpath = self._strip_leading_slashes(ud.path)
-        ud.pkgdir = os.path.join(data.expand('${HGDIR}', d), ud.host, relpath)
-        ud.moddir = os.path.join(ud.pkgdir, ud.module)
+        if 'protocol' in ud.parm:
+            ud.proto = ud.parm['protocol']
+        elif not ud.host:
+            ud.proto = 'file'
+        else:
+            ud.proto = "hg"
 
         ud.setup_revisons(d)
 
@@ -71,9 +73,19 @@ class Hg(FetchMethod):
         elif not ud.revision:
             ud.revision = self.latest_revision(ud, d)
 
-        ud.localfile = ud.moddir
+        # Create paths to mercurial checkouts
+        hgsrcname = '%s_%s_%s' % (ud.module.replace('/', '.'), \
+                            ud.host, ud.path.replace('/', '.'))
+        ud.mirrortarball = 'hg_%s.tar.gz' % hgsrcname
+        ud.fullmirror = os.path.join(d.getVar("DL_DIR", True), ud.mirrortarball)
 
+        hgdir = d.getVar("HGDIR", True) or (d.getVar("DL_DIR", True) + "/hg/")
+        ud.pkgdir = os.path.join(hgdir, hgsrcname)
+        ud.moddir = os.path.join(ud.pkgdir, ud.module)
+        ud.localfile = ud.moddir
         ud.basecmd = data.getVar("FETCHCMD_hg", d, True) or "/usr/bin/env hg"
+
+        ud.write_tarballs = d.getVar("BB_GENERATE_MIRROR_TARBALLS", True)
 
     def need_update(self, ud, d):
         revTag = ud.parm.get('rev', 'tip')
@@ -82,6 +94,15 @@ class Hg(FetchMethod):
         if not os.path.exists(ud.localpath):
             return True
         return False
+
+    def try_premirror(self, ud, d):
+        # If we don't do this, updating an existing checkout with only premirrors
+        # is not possible
+        if d.getVar("BB_FETCH_PREMIRRORONLY", True) is not None:
+            return True
+        if os.path.exists(ud.moddir):
+            return False
+        return True
 
     def _buildhgcommand(self, ud, d, command):
         """
@@ -142,18 +163,36 @@ class Hg(FetchMethod):
     def download(self, ud, d):
         """Fetch url"""
 
+        ud.repochanged = not os.path.exists(ud.fullmirror)
+
         logger.debug(2, "Fetch: checking for module directory '" + ud.moddir + "'")
 
+        # If the checkout doesn't exist and the mirror tarball does, extract it
+        if not os.path.exists(ud.pkgdir) and os.path.exists(ud.fullmirror):
+            bb.utils.mkdirhier(ud.pkgdir)
+            os.chdir(ud.pkgdir)
+            runfetchcmd("tar -xzf %s" % (ud.fullmirror), d)
+
         if os.access(os.path.join(ud.moddir, '.hg'), os.R_OK):
-            updatecmd = self._buildhgcommand(ud, d, "pull")
-            logger.info("Update " + ud.url)
-            # update sources there
+            # Found the source, check whether need pull
+            updatecmd = self._buildhgcommand(ud, d, "update")
             os.chdir(ud.moddir)
             logger.debug(1, "Running %s", updatecmd)
-            bb.fetch2.check_network_access(d, updatecmd, ud.url)
-            runfetchcmd(updatecmd, d)
+            try:
+                runfetchcmd(updatecmd, d)
+            except bb.fetch2.FetchError:
+                # Runnning pull in the repo
+                pullcmd = self._buildhgcommand(ud, d, "pull")
+                logger.info("Pulling " + ud.url)
+                # update sources there
+                os.chdir(ud.moddir)
+                logger.debug(1, "Running %s", pullcmd)
+                bb.fetch2.check_network_access(d, pullcmd, ud.url)
+                runfetchcmd(pullcmd, d)
+                ud.repochanged = True
 
-        else:
+        # No source found, clone it.
+        if not os.path.exists(ud.moddir):
             fetchcmd = self._buildhgcommand(ud, d, "fetch")
             logger.info("Fetch " + ud.url)
             # check out sources there
@@ -174,6 +213,8 @@ class Hg(FetchMethod):
         """ Clean the hg dir """
 
         bb.utils.remove(ud.localpath, True)
+        bb.utils.remove(ud.fullmirror)
+        bb.utils.remove(ud.fullmirror + ".done")
 
     def supports_srcrev(self):
         return True
@@ -195,8 +236,20 @@ class Hg(FetchMethod):
         """
         return "hg:" + ud.moddir
 
+    def build_mirror_data(self, ud, d):
+        # Generate a mirror tarball if needed
+        if ud.write_tarballs == "1" and (ud.repochanged or not os.path.exists(ud.fullmirror)):
+            # it's possible that this symlink points to read-only filesystem with PREMIRROR
+            if os.path.islink(ud.fullmirror):
+                os.unlink(ud.fullmirror)
+
+            os.chdir(ud.pkgdir)
+            logger.info("Creating tarball of hg repository")
+            runfetchcmd("tar -czf %s %s" % (ud.fullmirror, ud.module), d)
+            runfetchcmd("touch %s.done" % (ud.fullmirror), d)
+
     def localpath(self, ud, d):
-        return ud.moddir
+        return ud.pkgdir
 
     def unpack(self, ud, destdir, d):
         """
