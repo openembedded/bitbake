@@ -87,6 +87,55 @@ def _project_recent_build_list(prj):
             list(prj.buildrequest_set.filter(state__in=[BuildRequest.REQ_COMPLETED, BuildRequest.REQ_FAILED]).order_by("-pk")[:3]))
 
 
+def _template_renderer(template):
+    def func_wrapper(view):
+        def returned_wrapper(request, *args, **kwargs):
+            try:
+                context = view(request, *args, **kwargs)
+            except RedirectException as e:
+                return e.get_redirect_response()
+
+            if request.GET.get('format', None) == 'json':
+                # objects is a special keyword - it's a Page, but we need the actual objects here
+                # in XHR, the objects come in the "list" property
+                if "objects" in context:
+                    context["list"] = context["objects"].object_list
+                    del context["objects"]
+
+                # we're about to return; to keep up with the XHR API, we set the error to OK
+                context["error"] = "ok"
+                def _objtojson(obj):
+                    from django.db.models.query import QuerySet
+                    from django.db.models import Model, IntegerField
+                    if isinstance(obj, datetime):
+                        return obj.isoformat()
+                    elif isinstance(obj, timedelta):
+                        return obj.total_seconds()
+                    elif isinstance(obj, QuerySet) or isinstance(obj, set):
+                        return list(obj)
+                    elif hasattr( obj, '__dict__'):
+                        d = obj.__dict__
+                        nd = dict(d)
+                        for di in d:
+                            if di.startswith("_"):
+                                del nd[di]
+                            elif isinstance(d[di], Model):
+                                nd[di] = d[di].pk
+                            elif isinstance(d[di], int) and hasattr(obj, "get_%s_display" % di):
+                                nd[di] = getattr(obj, "get_%s_display" % di)()
+                        return nd
+                    else:
+                        raise TypeError("Unserializable object %s of type %s" % ( obj, type(obj)))
+
+                return HttpResponse(jsonfilter(context, default=_objtojson ),
+                            content_type = "application/json; charset=utf-8")
+            else:
+                return render(request, template, context)
+        return returned_wrapper
+    return func_wrapper
+
+
+
 def _build_page_range(paginator, index = 1):
     try:
         page = paginator.page(index)
@@ -129,7 +178,7 @@ def _redirect_parameters(view, g, mandatory_parameters, *args, **kwargs):
         if not i in params:
             params[i] = urllib.unquote(str(mandatory_parameters[i]))
 
-    return redirect(url + "?%s" % urllib.urlencode(params), permanent = False, *args, **kwargs)
+    return redirect(url + "?%s" % urllib.urlencode(params), permanent = False, **kwargs)
 
 class RedirectException(Exception):
     def __init__(self, view, g, mandatory_parameters, *args, **kwargs):
@@ -141,7 +190,7 @@ class RedirectException(Exception):
         self.okwargs = kwargs
 
     def get_redirect_response(self):
-        return _redirect_parameters(self.view, self.g, self.mandatory_parameters, self.oargs, self.okwargs)
+        return _redirect_parameters(self.view, self.g, self.mandatory_parameters, self.oargs, **self.okwargs)
 
 FIELD_SEPARATOR = ":"
 AND_VALUE_SEPARATOR = "!"
@@ -1839,8 +1888,8 @@ if toastermain.settings.MANAGED:
 
 
     # shows the "all builds" page for managed mode; it displays build requests (at least started!) instead of actual builds
+    @_template_renderer("managed_builds.html")
     def builds(request):
-        template = 'managed_builds.html'
         # define here what parameters the view needs in the GET portion in order to
         # be able to display something.  'count' and 'page' are mandatory for all views
         # that use paginators.
@@ -1850,12 +1899,10 @@ if toastermain.settings.MANAGED:
         try:
             context, pagesize, orderby = _build_list_helper(request, buildrequests, True)
         except InvalidRequestException as e:
-            return _redirect_parameters( builds, request.GET, e.response)
+            raise RedirectException( builds, request.GET, e.response)
 
-        response = render(request, template, context)
         _set_parameters_values(pagesize, orderby, request)
-        return response
-
+        return context
 
 
     # helper function, to be used on "all builds" and "project builds" pages
@@ -2151,8 +2198,8 @@ if toastermain.settings.MANAGED:
 
 
     # Shows the edit project page
+    @_template_renderer('project.html')
     def project(request, pid):
-        template = "project.html"
         try:
             prj = Project.objects.get(id = pid)
         except Project.DoesNotExist:
@@ -2207,10 +2254,7 @@ if toastermain.settings.MANAGED:
         except ProjectVariable.DoesNotExist:
             context["distro"] = "-- not set yet"
 
-        response = render(request, template, context)
-        response['Cache-Control'] = "no-cache, must-revalidate, no-store"
-        response['Pragma'] = "no-cache"
-        return response
+        return context
 
 
     def xhr_projectbuild(request, pid):
@@ -2680,8 +2724,8 @@ if toastermain.settings.MANAGED:
 
         return(vars_managed,sorted(vars_fstypes),vars_blacklist)
 
+    @_template_renderer("projectconf.html")
     def projectconf(request, pid):
-        template = "projectconf.html"
 
         try:
             prj = Project.objects.get(id = pid)
@@ -2730,21 +2774,20 @@ if toastermain.settings.MANAGED:
         except ProjectVariable.DoesNotExist:
             pass
 
-        return render(request, template, context)
+        return context
 
+    @_template_renderer('projectbuilds.html')
     def projectbuilds(request, pid):
-        template = 'projectbuilds.html'
         buildrequests = BuildRequest.objects.filter(project_id = pid).exclude(state__lte = BuildRequest.REQ_INPROGRESS).exclude(state=BuildRequest.REQ_DELETED)
 
         try:
             context, pagesize, orderby = _build_list_helper(request, buildrequests, False)
         except InvalidRequestException as e:
-            return _redirect_parameters(projectbuilds, request.GET, e.response, pid = pid)
+            raise RedirectException('projectbuilds', request.GET, e.response, pid = pid)
 
-        response = render(request, template, context)
         _set_parameters_values(pagesize, orderby, request)
 
-        return response
+        return context
 
 
     def _file_name_for_artifact(b, artifact_type, artifact_id):
@@ -2861,32 +2904,8 @@ if toastermain.settings.MANAGED:
         return build_mru
 
 
-    def template_renderer(template):
-        def func_wrapper(view):
-            def returned_wrapper(request, *args, **kwargs):
-                try:
-                    context = view(request, *args, **kwargs)
-                except RedirectException as e:
-                    return e.get_redirect_response()
 
-                if request.GET.get('format', None) == 'json':
-                    # objects is a special keyword - it's a Page, but we need the actual objects here
-                    # in XHR, the objects come in the "list" property
-                    if "objects" in context:
-                        context["list"] = context["objects"].object_list
-                        del context["objects"]
-
-                    # we're about to return; to keep up with the XHR API, we set the error to OK
-                    context["error"] = "ok"
-
-                    return HttpResponse(jsonfilter(context, default=lambda obj: obj.isoformat() if isinstance(obj, datetime) else obj.__dict__ ),
-                                content_type = "application/json; charset=utf-8")
-                else:
-                    return render(request, template, context)
-            return returned_wrapper
-        return func_wrapper
-
-    @template_renderer("projects.html")
+    @_template_renderer("projects.html")
     def projects(request):
         (pagesize, orderby) = _get_parameters_values(request, 10, 'updated:-')
         mandatory_parameters = { 'count': pagesize,  'page' : 1, 'orderby' : orderby }
@@ -2995,18 +3014,19 @@ if toastermain.settings.MANAGED:
         _set_parameters_values(pagesize, orderby, request)
         return context
 
+    @_template_renderer("buildrequestdetails.html")
     def buildrequestdetails(request, pid, brid):
-        template = "buildrequestdetails.html"
         context = {
             'buildrequest' : BuildRequest.objects.get(pk = brid, project_id = pid)
         }
-        return render(request, template, context)
+        return context
 
 
 else:
     # shows the "all builds" page for interactive mode; this is the old code, simply moved
+
+    @_template_renderer('build.html')
     def builds(request):
-        template = 'build.html'
         # define here what parameters the view needs in the GET portion in order to
         # be able to display something.  'count' and 'page' are mandatory for all views
         # that use paginators.
@@ -3014,7 +3034,7 @@ else:
         mandatory_parameters = { 'count': pagesize,  'page' : 1, 'orderby' : orderby }
         retval = _verify_parameters( request.GET, mandatory_parameters )
         if retval:
-            return _redirect_parameters( 'all-builds', request.GET, mandatory_parameters)
+            raise RedirectException( 'all-builds', request.GET, mandatory_parameters)
 
         # boilerplate code that takes a request for an object type and returns a queryset
         # for that object type. copypasta for all needed table searches
@@ -3194,55 +3214,69 @@ else:
 
         # merge daterange values
         context.update(context_date)
-
-        response = render(request, template, context)
         _set_parameters_values(pagesize, orderby, request)
-        return response
+
+        return context
 
 
 
 
+    @_template_renderer('landing_not_managed.html')
     def newproject(request):
-        return render(request, 'landing_not_managed.html')
+        return {}
 
+    @_template_renderer('landing_not_managed.html')
     def project(request, pid):
-        return render(request, 'landing_not_managed.html')
+        return {}
 
+    @_template_renderer('landing_not_managed.html')
     def xhr_projectbuild(request, pid):
-        return render(request, 'landing_not_managed.html')
+        return {}
 
+    @_template_renderer('landing_not_managed.html')
     def xhr_projectinfo(request):
-        return render(request, 'landing_not_managed.html')
+        return {}
 
+    @_template_renderer('landing_not_managed.html')
     def xhr_projectedit(request, pid):
-        return render(request, 'landing_not_managed.html')
+        return {}
 
+    @_template_renderer('landing_not_managed.html')
     def xhr_datatypeahead(request):
-        return render(request, 'landing_not_managed.html')
+        return {}
 
+    @_template_renderer('landing_not_managed.html')
     def xhr_configvaredit(request, pid):
-        return render(request, 'landing_not_managed.html')
+        return {}
 
+    @_template_renderer('landing_not_managed.html')
     def importlayer(request):
-        return render(request, 'landing_not_managed.html')
+        return {}
 
+    @_template_renderer('landing_not_managed.html')
     def projectconf(request, pid):
-        return render(request, 'landing_not_managed.html')
+        return {}
 
+    @_template_renderer('landing_not_managed.html')
     def projectbuilds(request, pid):
-        return render(request, 'landing_not_managed.html')
+        return {}
 
+    @_template_renderer('landing_not_managed.html')
     def build_artifact(request, build_id, artifact_type, artifact_id):
-        return render(request, 'landing_not_managed.html')
+        return {}
 
+    @_template_renderer('landing_not_managed.html')
     def projects(request):
-        return render(request, 'landing_not_managed.html')
+        return {}
 
+    @_template_renderer('landing_not_managed.html')
     def xhr_importlayer(request):
-        return render(request, 'landing_not_managed.html')
+        return {}
 
+    @_template_renderer('landing_not_managed.html')
     def xhr_updatelayer(request):
-        return render(request, 'landing_not_managed.html')
+        return {}
 
+    @_template_renderer('landing_not_managed.html')
     def buildrequestdetails(request, pid, brid):
-        return render(request, 'landing_not_managed.html')
+        return {}
