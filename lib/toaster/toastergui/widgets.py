@@ -32,29 +32,17 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django.core.exceptions import FieldError
 from django.conf.urls import url, patterns
 
-import urls
 import types
 import json
 import collections
 import operator
 
 
-class ToasterTemplateView(TemplateView):
-    def get_context_data(self, **kwargs):
-      context = super(ToasterTemplateView, self).get_context_data(**kwargs)
-      if 'pid' in kwargs:
-          context['project'] = Project.objects.get(pk=kwargs['pid'])
-
-          context['projectlayers'] = map(lambda prjlayer: prjlayer.layercommit.id, ProjectLayer.objects.filter(project=context['project']))
-
-      if 'layerid' in kwargs:
-          context['layerversion'] = Layer_Version.objects.get(pk=kwargs['layerid'])
-
-      return context
-
-
-class ToasterTable(View):
-    def __init__(self):
+class ToasterTable(TemplateView):
+    def __init__(self, *args, **kwargs):
+        super(ToasterTable, self).__init__()
+        if 'template_name' in kwargs:
+            self.template_name = kwargs['template_name']
         self.title = None
         self.queryset = None
         self.columns = []
@@ -66,20 +54,23 @@ class ToasterTable(View):
         self.default_orderby = ""
 
     def get(self, request, *args, **kwargs):
-        self.setup_queryset(*args, **kwargs)
+        if request.GET.get('format', None) == 'json':
 
-        # Put the project id into the context for the static_data_template
-        if 'pid' in kwargs:
-            self.static_context_extra['pid'] = kwargs['pid']
+            self.setup_queryset(*args, **kwargs)
+            # Put the project id into the context for the static_data_template
+            if 'pid' in kwargs:
+                self.static_context_extra['pid'] = kwargs['pid']
 
-        cmd = kwargs['cmd']
-        if cmd and 'filterinfo' in cmd:
-            data = self.get_filter_info(request)
-        else:
-            # If no cmd is specified we give you the table data
-            data = self.get_data(request, **kwargs)
+            cmd = request.GET.get('cmd', None)
+            if cmd and 'filterinfo' in cmd:
+                data = self.get_filter_info(request)
+            else:
+                # If no cmd is specified we give you the table data
+                data = self.get_data(request, **kwargs)
 
-        return HttpResponse(data, content_type="application/json")
+            return HttpResponse(data, content_type="application/json")
+
+        return super(ToasterTable, self).get(request, *args, **kwargs)
 
     def get_filter_info(self, request):
         data = None

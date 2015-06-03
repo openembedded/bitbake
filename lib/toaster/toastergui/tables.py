@@ -19,7 +19,7 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-from widgets import ToasterTable
+from toastergui.widgets import ToasterTable
 from orm.models import Recipe, ProjectLayer, Layer_Version, Machine, Project
 from django.db.models import Q, Max
 from django.conf.urls import url
@@ -29,8 +29,18 @@ class LayersTable(ToasterTable):
     """Table of layers in Toaster"""
 
     def __init__(self, *args, **kwargs):
-        ToasterTable.__init__(self)
+        super(LayersTable, self).__init__(*args, **kwargs)
         self.default_orderby = "layer__name"
+
+    def get_context_data(self, **kwargs):
+        context = super(LayersTable, self).get_context_data(**kwargs)
+
+        context['project'] = Project.objects.get(pk=kwargs['pid'])
+
+        context['projectlayers'] = map(lambda prjlayer: prjlayer.layercommit.id, ProjectLayer.objects.filter(project=context['project']))
+
+        return context
+
 
     def setup_queryset(self, *args, **kwargs):
         prj = Project.objects.get(pk = kwargs['pid'])
@@ -132,13 +142,30 @@ class LayersTable(ToasterTable):
                         static_data_name="add-del-layers",
                         static_data_template='{% include "layer_btn.html" %}')
 
+class LayerDetails(TemplateView):
+    def get_context_data(self, **kwargs):
+        context = super(LayerDetails, self).get_context_data(**kwargs)
+
+        context['project'] = Project.objects.get(pk=kwargs['pid'])
+        context['layerversion'] = Layer_Version.objects.get(pk=kwargs['layerid'])
+        context['projectlayers'] = map(lambda prjlayer: prjlayer.layercommit.id, ProjectLayer.objects.filter(project=context['project']))
+
+        return context
+
 class MachinesTable(ToasterTable):
     """Table of Machines in Toaster"""
 
     def __init__(self, *args, **kwargs):
-        ToasterTable.__init__(self)
+        super(MachinesTable, self).__init__(*args, **kwargs)
         self.empty_state = "No machines maybe you need to do a build?"
         self.default_orderby = "name"
+
+    def get_context_data(self, **kwargs):
+        context = super(MachinesTable, self).get_context_data(**kwargs)
+        context['project'] = Project.objects.get(pk=kwargs['pid'])
+        context['projectlayers'] = map(lambda prjlayer: prjlayer.layercommit.id, ProjectLayer.objects.filter(project=context['project']))
+        return context
+
 
     def setup_queryset(self, *args, **kwargs):
         prj = Project.objects.get(pk = kwargs['pid'])
@@ -191,7 +218,13 @@ class LayerMachinesTable(MachinesTable):
     """ Smaller version of the Machines table for use in layer details """
 
     def __init__(self, *args, **kwargs):
-        MachinesTable.__init__(self)
+        super(LayerMachinesTable, self).__init__(*args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super(LayerMachinesTable, self).get_context_data(**kwargs)
+        context['layerversion'] = Layer_Version.objects.get(pk=kwargs['layerid'])
+        return context
+
 
     def setup_queryset(self, *args, **kwargs):
         MachinesTable.setup_queryset(self, *args, **kwargs)
@@ -219,9 +252,19 @@ class RecipesTable(ToasterTable):
     """Table of Recipes in Toaster"""
 
     def __init__(self, *args, **kwargs):
-        ToasterTable.__init__(self)
+        super(RecipesTable, self).__init__(*args, **kwargs)
         self.empty_state = "Toaster has no recipe information. To generate recipe information you can configure a layer source then run a build."
         self.default_orderby = "name"
+
+    def get_context_data(self, **kwargs):
+        context = super(RecipesTable, self).get_context_data(**kwargs)
+
+        context['project'] = Project.objects.get(pk=kwargs['pid'])
+
+        context['projectlayers'] = map(lambda prjlayer: prjlayer.layercommit.id, ProjectLayer.objects.filter(project=context['project']))
+
+        return context
+
 
     def setup_queryset(self, *args, **kwargs):
         prj = Project.objects.get(pk = kwargs['pid'])
@@ -293,10 +336,16 @@ class RecipesTable(ToasterTable):
                         static_data_template='{% include "recipe_btn.html" %}')
 
 class LayerRecipesTable(RecipesTable):
-    """ Smaller version of the Machines table for use in layer details """
+    """ Smaller version of the Recipes table for use in layer details """
 
     def __init__(self, *args, **kwargs):
-        RecipesTable.__init__(self)
+        super(LayerRecipesTable, self).__init__(*args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super(LayerRecipesTable, self).get_context_data(**kwargs)
+        context['layerversion'] = Layer_Version.objects.get(pk=kwargs['layerid'])
+        return context
+
 
     def setup_queryset(self, *args, **kwargs):
         RecipesTable.setup_queryset(self, *args, **kwargs)
@@ -320,24 +369,3 @@ class LayerRecipesTable(RecipesTable):
         self.add_column(title="Build recipe",
                         static_data_name="add-del-layers",
                         static_data_template=build_recipe_template)
-
-
-
-# This needs to be staticaly defined here as django reads the url patterns
-# on start up
-urlpatterns = (
-    url(r'^machines/(?P<cmd>\w+)*', MachinesTable.as_view(),
-        name=MachinesTable.__name__.lower()),
-    url(r'^layers/(?P<cmd>\w+)*', LayersTable.as_view(),
-        name=LayersTable.__name__.lower()),
-    url(r'^recipes/(?P<cmd>\w+)*', RecipesTable.as_view(),
-        name=RecipesTable.__name__.lower()),
-
-    # layer details tables
-    url(r'^layer/(?P<layerid>\d+)/recipes/(?P<cmd>\w+)*',
-        LayerRecipesTable.as_view(),
-        name=LayerRecipesTable.__name__.lower()),
-    url(r'^layer/(?P<layerid>\d+)/machines/(?P<cmd>\w+)*',
-        LayerMachinesTable.as_view(),
-        name=LayerMachinesTable.__name__.lower()),
-)
