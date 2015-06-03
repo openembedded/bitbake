@@ -2379,7 +2379,7 @@ if toastermain.settings.MANAGED:
 
 
             # returns layers for current project release that are not in the project set, matching the name
-            if request.GET['type'] == "layers":
+            if request.GET.get('type', None) == "layers":
                 # all layers for the current project
                 queryset_all = prj.compatible_layerversions().filter(layer__name__icontains=request.GET.get('search',''))
 
@@ -2394,9 +2394,9 @@ if toastermain.settings.MANAGED:
 
 
             # returns layer dependencies for a layer, excluding current project layers
-            if request.GET['type'] == "layerdeps":
+            if request.GET.get('type', None) == "layerdeps":
                 queryset = prj.compatible_layerversions().exclude(pk__in = [x.id for x in prj.projectlayer_equivalent_set()]).filter(
-                    layer__name__in = [ x.depends_on.layer.name for x in LayerVersionDependency.objects.filter(layer_version_id = request.GET['search'])])
+                    layer__name__in = [ x.depends_on.layer.name for x in LayerVersionDependency.objects.filter(layer_version_id = request.GET.get('search', None))])
 
                 final_list = set([x.get_equivalents_wpriority(prj)[0] for x in queryset])
 
@@ -2405,11 +2405,11 @@ if toastermain.settings.MANAGED:
 
 
             # returns layer versions that would be deleted on the new release__pk
-            if request.GET['type'] == "versionlayers":
+            if request.GET.get('type', None) == "versionlayers":
 
                 retval = []
                 for i in prj.projectlayer_set.all():
-                    lv = prj.compatible_layerversions(release = Release.objects.get(pk=request.GET['search'])).filter(layer__name = i.layercommit.layer.name)
+                    lv = prj.compatible_layerversions(release = Release.objects.get(pk=request.GET.get('search', None))).filter(layer__name = i.layercommit.layer.name)
                     # there is no layer_version with the new release id, and the same name
                     if lv.count() < 1:
                         retval.append(i)
@@ -2420,12 +2420,12 @@ if toastermain.settings.MANAGED:
 
 
             # returns layer versions that provide the named targets
-            if request.GET['type'] == "layers4target":
+            if request.GET.get('type', None) == "layers4target":
                 # we return data only if the recipe can't be provided by the current project layer set
-                if reduce(lambda x, y: x + y, [x.recipe_layer_version.filter(name=request.GET['search']).count() for x in prj.projectlayer_equivalent_set()], 0):
+                if reduce(lambda x, y: x + y, [x.recipe_layer_version.filter(name=request.GET.get('search', None)).count() for x in prj.projectlayer_equivalent_set()], 0):
                     final_list = []
                 else:
-                    queryset_all = prj.compatible_layerversions().filter(recipe_layer_version__name = request.GET['search'])
+                    queryset_all = prj.compatible_layerversions().filter(recipe_layer_version__name = request.GET.get('search', None))
 
                     # exclude layers in the project
                     queryset_all = queryset_all.exclude(pk__in = [x.id for x in prj.projectlayer_equivalent_set()])
@@ -2436,7 +2436,7 @@ if toastermain.settings.MANAGED:
                 return HttpResponse(jsonfilter( { "error":"ok",  "list" : map( _lv_to_dict, final_list) }), content_type = "application/json")
 
             # returns targets provided by current project layers
-            if request.GET['type'] == "targets":
+            if request.GET.get('type', None) == "targets":
                 search_token = request.GET.get('search','')
                 queryset_all = Recipe.objects.filter(layer_version__layer__name__in = [x.layercommit.layer.name for x in prj.projectlayer_set.all().select_related("layercommit__layer")]).filter(Q(name__icontains=search_token) | Q(layer_version__layer__name__icontains=search_token))
 
@@ -2463,7 +2463,7 @@ if toastermain.settings.MANAGED:
                     }), content_type = "application/json")
 
             # returns machines provided by the current project layers
-            if request.GET['type'] == "machines":
+            if request.GET.get('type', None) == "machines":
                 queryset_all = Machine.objects.all()
                 if 'project_id' in request.session:
                     queryset_all = queryset_all.filter(layer_version__in =  prj.projectlayer_equivalent_set()).order_by("name")
