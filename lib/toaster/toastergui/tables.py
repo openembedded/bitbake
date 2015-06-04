@@ -227,8 +227,7 @@ class MachinesTable(ToasterTable):
                         help_text="Sets the selected machine as the project machine. You can only have one machine per project",
                         hideable=False,
                         static_data_name="add-del-layers",
-                        static_data_template='{% include "machine_btn.html" %}',
-                        field_name="layer_version__id")
+                        static_data_template='{% include "machine_btn.html" %}')
 
 
 class LayerMachinesTable(MachinesTable):
