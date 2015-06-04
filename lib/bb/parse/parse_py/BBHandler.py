@@ -148,7 +148,7 @@ def handle(fn, d, include):
     statements = get_statements(fn, abs_fn, base_name)
 
     # DONE WITH PARSING... time to evaluate
-    if ext != ".bbclass":
+    if ext != ".bbclass" and abs_fn != oldfile:
         d.setVar('FILE', abs_fn)
 
     try:
@@ -166,7 +166,7 @@ def handle(fn, d, include):
     if ext != ".bbclass" and include == 0:
         return ast.multi_finalize(fn, d)
 
-    if oldfile:
+    if ext != ".bbclass" and oldfile and abs_fn != oldfile:
         d.setVar("FILE", oldfile)
 
     return d
