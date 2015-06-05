@@ -207,7 +207,8 @@ class ToasterTable(TemplateView):
         try:
             self.filter_actions[filter_action]()
         except KeyError:
-            print "Filter and Filter action pair not found"
+            # pass it to the user - programming error here
+            raise
 
     def apply_orderby(self, orderby):
         # Note that django will execute this when we try to retrieve the data
@@ -217,8 +218,7 @@ class ToasterTable(TemplateView):
         """Creates a query based on the model's search_allowed_fields"""
 
         if not hasattr(self.queryset.model, 'search_allowed_fields'):
-            print "Err Search fields aren't defined in the model"
-            return
+            raise Exception("Err Search fields aren't defined in the model")
 
         search_queries = []
         for st in search_term.split(" "):
@@ -228,8 +228,9 @@ class ToasterTable(TemplateView):
             search_queries.append(reduce(operator.or_, q_map))
 
         search_queries = reduce(operator.and_, search_queries)
-        print "applied the search to the queryset"
+
         self.queryset = self.queryset.filter(search_queries)
+
 
     def get_data(self, request, **kwargs):
         """Returns the data for the page requested with the specified
@@ -318,7 +319,8 @@ class ToasterTable(TemplateView):
                 data['rows'].append(required_data)
 
         except FieldError:
-            print "Error: Requested field does not exist"
+            # pass  it to the user - programming-error here
+            raise
         data = json.dumps(data, indent=2, default=objtojson)
         cache.set(cache_name, data, 60*30)
 
