@@ -79,7 +79,7 @@ class LayersTable(ToasterTable):
         self.add_column(title="Git repository URL",
                         help_text="The Git repository for the layer source code",
                         hidden=True,
-                        static_data_name="git_url",
+                        static_data_name="layer__vcs_url",
                         static_data_template=git_url_template)
 
         git_dir_template = '''
@@ -328,12 +328,16 @@ class RecipesTable(ToasterTable):
         self.add_column(title="Revision",
                         field_name="layer_version__get_vcs_reference")
 
-
         self.add_column(title="Build",
                         help_text="Add or delete recipes to and from your project",
                         hideable=False,
                         static_data_name="add-del-layers",
                         static_data_template='{% include "recipe_btn.html" %}')
+
+        self.add_column(title="Project compatible Layer ID",
+                        displayable = False,
+                        field_name = "projectcompatible_layer",
+                        computation = lambda x: (x.layer_version.get_equivalents_wpriority(Project.objects.get(pk=kwargs['pid']))[0]))
 
 class LayerRecipesTable(RecipesTable):
     """ Smaller version of the Recipes table for use in layer details """

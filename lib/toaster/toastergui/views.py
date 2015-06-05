@@ -112,6 +112,9 @@ def objtojson(obj):
             elif isinstance(d[di], int) and hasattr(obj, "get_%s_display" % di):
                 nd[di] = getattr(obj, "get_%s_display" % di)()
         return nd
+    elif isinstance( obj, type(lambda x:x)):
+        import inspect
+        return inspect.getsourcelines(obj)[0]
     else:
         raise TypeError("Unserializable object %s (%s) of type %s" % ( obj, dir(obj), type(obj)))
 

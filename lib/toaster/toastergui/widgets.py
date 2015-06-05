@@ -54,6 +54,13 @@ class ToasterTable(TemplateView):
         self.empty_state = "Sorry - no data found"
         self.default_orderby = ""
 
+        # add the "id" column, undisplayable, by default
+        self.add_column(title="Id",
+                        displayable=False,
+                        orderable=True,
+                        field_name="id")
+
+
     def get(self, request, *args, **kwargs):
         if request.GET.get('format', None) == 'json':
 
@@ -142,6 +149,7 @@ class ToasterTable(TemplateView):
     def add_column(self, title="", help_text="",
                    orderable=False, hideable=True, hidden=False,
                    field_name="", filter_name=None, static_data_name=None,
+                   displayable=True, computation=None,
                    static_data_template=None):
         """Add a column to the table.
 
@@ -168,6 +176,8 @@ class ToasterTable(TemplateView):
                              'filter_name' : filter_name,
                              'static_data_name': static_data_name,
                              'static_data_template': static_data_template,
+                             'displayable': displayable,
+                             'computation': computation,
                             })
 
     def render_static_data(self, template, row):
@@ -289,8 +299,11 @@ class ToasterTable(TemplateView):
 
                         col['field_name'] = col['static_data_name']
 
-                    if True:        # we add the raw model data at all times
-                        model_data = row
+                    # compute the computation on the raw data if needed
+                    model_data = row
+                    if col['computation']:
+                        model_data = col['computation'](row)
+                    else:
                         # Traverse to any foriegn key in the object hierachy
                         for subfield in field.split("__"):
                             if hasattr(model_data, subfield):
@@ -300,7 +313,7 @@ class ToasterTable(TemplateView):
                         if isinstance(model_data, types.MethodType):
                           model_data = model_data()
 
-                        required_data[field] = model_data
+                    required_data[col['field_name']] = model_data
 
                 data['rows'].append(required_data)
 
