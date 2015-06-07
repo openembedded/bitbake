@@ -1477,6 +1477,11 @@ class BBCooker:
             self.handlePrefProviders()
             self.recipecache.bbfile_priority = self.collection.collection_priorities(self.recipecache.pkg_fn, self.data)
             self.state = state.running
+
+            # Send an event listing all stamps reachable after parsing
+            # which the metadata may use to clean up stale data
+            event = bb.event.ReachableStamps(self.recipecache.stamp)
+            bb.event.fire(event, self.expanded_data)
             return None
 
         return True

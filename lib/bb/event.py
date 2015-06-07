@@ -497,6 +497,16 @@ class TargetsTreeGenerated(Event):
         Event.__init__(self)
         self._model = model
 
+class ReachableStamps(Event):
+    """
+    An event listing all stamps reachable after parsing
+    which the metadata may use to clean up stale data
+    """
+
+    def __init__(self, stamps):
+        Event.__init__(self)
+        self.stamps = stamps
+
 class FilesMatchingFound(Event):
     """
     Event when a list of files matching the supplied pattern has
