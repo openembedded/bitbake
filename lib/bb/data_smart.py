@@ -682,7 +682,7 @@ class DataSmart(MutableMapping):
             filtered = filter(lambda v: v not in removes,
                               value.split())
             value = " ".join(filtered)
-            if expand:
+            if expand and var in self.expand_cache:
                  # We need to ensure the expand cache has the correct value
                  # flag == "_content" here
                 self.expand_cache[var].value = value
