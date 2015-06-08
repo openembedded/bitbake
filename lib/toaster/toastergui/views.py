@@ -87,6 +87,35 @@ def _project_recent_build_list(prj):
             list(prj.buildrequest_set.filter(state__in=[BuildRequest.REQ_COMPLETED, BuildRequest.REQ_FAILED]).order_by("-pk")[:3]))
 
 
+
+def objtojson(obj):
+    from django.db.models.query import QuerySet
+    from django.db.models import Model, IntegerField
+    from django.db.models.fields.related import ForeignKey
+
+    if isinstance(obj, datetime):
+        return obj.isoformat()
+    elif isinstance(obj, timedelta):
+        return obj.total_seconds()
+    elif isinstance(obj, QuerySet) or isinstance(obj, set):
+        return list(obj)
+    elif type(obj).__name__ == "RelatedManager":
+        return [x.pk for x in obj.all()]
+    elif hasattr( obj, '__dict__') and isinstance(obj, Model):
+        d = obj.__dict__
+        nd = dict(d)
+        for di in d.keys():
+            if di.startswith("_"):
+                del nd[di]
+            elif isinstance(d[di], Model):
+                nd[di] = d[di].pk
+            elif isinstance(d[di], int) and hasattr(obj, "get_%s_display" % di):
+                nd[di] = getattr(obj, "get_%s_display" % di)()
+        return nd
+    else:
+        raise TypeError("Unserializable object %s (%s) of type %s" % ( obj, dir(obj), type(obj)))
+
+
 def _template_renderer(template):
     def func_wrapper(view):
         def returned_wrapper(request, *args, **kwargs):
@@ -127,7 +156,7 @@ def _template_renderer(template):
                     else:
                         raise TypeError("Unserializable object %s of type %s" % ( obj, type(obj)))
 
-                return HttpResponse(jsonfilter(context, default=_objtojson ),
+                return HttpResponse(jsonfilter(context, default=objtojson ),
                             content_type = "application/json; charset=utf-8")
             else:
                 return render(request, template, context)

@@ -37,6 +37,7 @@ import json
 import collections
 import operator
 
+from toastergui.views import objtojson
 
 class ToasterTable(TemplateView):
     def __init__(self, *args, **kwargs):
@@ -275,19 +276,25 @@ class ToasterTable(TemplateView):
 
                 for col in self.columns:
                     field = col['field_name']
+                    if not field:
+                        field = col['static_data_name']
+                    if not field:
+                        raise Exception("Must supply a field_name or static_data_name for column %s.%s" % (self.__class__.__name__,col))
                     # Check if we need to process some static data
                     if "static_data_name" in col and col['static_data_name']:
-                        required_data[col['static_data_name']] = self.render_static_data(col['static_data_template'], row)
+                        required_data["static:%s" % col['static_data_name']] = self.render_static_data(col['static_data_template'], row)
 
                         # Overwrite the field_name with static_data_name
                         # so that this can be used as the html class name
 
                         col['field_name'] = col['static_data_name']
-                    else:
+
+                    if True:        # we add the raw model data at all times
                         model_data = row
                         # Traverse to any foriegn key in the object hierachy
                         for subfield in field.split("__"):
-                            model_data = getattr(model_data, subfield)
+                            if hasattr(model_data, subfield):
+                                model_data = getattr(model_data, subfield)
                         # The field could be a function on the model so check
                         # If it is then call it
                         if isinstance(model_data, types.MethodType):
@@ -299,8 +306,7 @@ class ToasterTable(TemplateView):
 
         except FieldError:
             print "Error: Requested field does not exist"
-
-        data = json.dumps(data, indent=2, cls=DjangoJSONEncoder)
+        data = json.dumps(data, indent=2, default=objtojson)
         cache.set(cache_name, data, 60*30)
 
         return data
