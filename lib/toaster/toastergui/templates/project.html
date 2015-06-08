@@ -430,7 +430,7 @@ angular.element(document).ready(function() {
   scope = angular.element("#main").scope();
   scope.urls = {};
   scope.urls.xhr_build = "{% url 'xhr_projectbuild' project.id %}";
-  scope.urls.xhr_edit = "{% url 'xhr_projectedit' project.id %}";
+  scope.urls.xhr_edit = "{% url 'project' project.id %}?format=json";
   scope.urls.xhr_datatypeahead = "{% url 'xhr_datatypeahead' project.id %}";
   scope.urls.layers = "{% url 'all-layers' project.id %}";
   scope.urls.targets = "{% url 'all-targets' project.id %}";

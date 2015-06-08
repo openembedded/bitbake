@@ -40,7 +40,6 @@ class AllProjectsViewTestCase(ProvisionedProjectTestCase):
         self.assertTrue("id" in data["list"][0])
         self.assertTrue("xhrProjectDataTypeaheadUrl" in data["list"][0])
         self.assertTrue("projectPageUrl" in data["list"][0])
-        self.assertTrue("xhrProjectEditUrl" in data["list"][0])
         self.assertTrue("projectBuildUrl" in data["list"][0])
 
 class ProvisionedLayersProjectTestCase(ProvisionedProjectTestCase):

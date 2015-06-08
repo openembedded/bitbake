@@ -122,8 +122,6 @@ urlpatterns = patterns('toastergui.views',
             name=tables.LayerMachinesTable.__name__.lower()),
 
         url(r'^xhr_projectbuild/(?P<pid>\d+)$', 'xhr_projectbuild', name='xhr_projectbuild'),
-        url(r'^xhr_projectinfo/$', 'xhr_projectinfo', name='xhr_projectinfo'),
-        url(r'^xhr_projectedit/(?P<pid>\d+)$', 'xhr_projectedit', name='xhr_projectedit'),
         url(r'^xhr_configvaredit/(?P<pid>\d+)$', 'xhr_configvaredit', name='xhr_configvaredit'),
 
         url(r'^xhr_datatypeahead/(?P<pid>\d+)$', 'xhr_datatypeahead', name='xhr_datatypeahead'),

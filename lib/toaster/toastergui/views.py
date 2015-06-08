@@ -2210,6 +2210,45 @@ if toastermain.settings.MANAGED:
         except User.DoesNotExist:
             puser = None
 
+        # execute POST requests
+        if request.method == "POST":
+            # add layers
+            if 'layerAdd' in request.POST:
+                for lc in Layer_Version.objects.filter(pk__in=request.POST['layerAdd'].split(",")):
+                    ProjectLayer.objects.get_or_create(project = prj, layercommit = lc)
+
+            # remove layers
+            if 'layerDel' in request.POST:
+                for t in request.POST['layerDel'].strip().split(" "):
+                    pt = ProjectLayer.objects.filter(project = prj, layercommit_id = int(t)).delete()
+
+            if 'projectName' in request.POST:
+                prj.name = request.POST['projectName']
+                prj.save();
+
+            if 'projectVersion' in request.POST:
+                prj.release = Release.objects.get(pk = request.POST['projectVersion'])
+                # we need to change the bitbake version
+                prj.bitbake_version = prj.release.bitbake_version
+                prj.save()
+                # we need to change the layers
+                for i in prj.projectlayer_set.all():
+                    # find and add a similarly-named layer on the new branch
+                    try:
+                        lv = prj.compatible_layerversions(layer_name = i.layercommit.layer.name)[0]
+                        ProjectLayer.objects.get_or_create(project = prj, layercommit = lv)
+                    except IndexError:
+                        pass
+                    finally:
+                        # get rid of the old entry
+                        i.delete()
+
+            if 'machineName' in request.POST:
+                machinevar = prj.projectvariable_set.get(name="MACHINE")
+                machinevar.value=request.POST['machineName']
+                machinevar.save()
+
+
         # we use implicit knowledge of the current user's project to filter layer information, e.g.
         pid = prj.id
 
@@ -2241,10 +2280,12 @@ if toastermain.settings.MANAGED:
                         "branch" : { "name" : x.layercommit.get_vcs_reference(), "layersource" : x.layercommit.up_branch.layer_source.name if x.layercommit.up_branch != None else None}},
                     prj.projectlayer_set.all().order_by("id")),
             "targets" : map(lambda x: {"target" : x.target, "task" : x.task, "pk": x.pk}, prj.projecttarget_set.all()),
+            "variables": map(lambda x: (x.name, x.value), prj.projectvariable_set.all()),
             "freqtargets": freqtargets[:5],
             "releases": map(lambda x: {"id": x.pk, "name": x.name, "description":x.description}, Release.objects.all()),
             "project_html": 1,
         }
+
         try:
             context["machine"] = {"name": prj.projectvariable_set.get(name="MACHINE").value}
         except ProjectVariable.DoesNotExist:
@@ -2297,66 +2338,6 @@ if toastermain.settings.MANAGED:
             return HttpResponse(jsonfilter({"error":"ok",
                 "builds" : _project_recent_build_list(prj),
             }), content_type = "application/json")
-        except Exception as e:
-            return HttpResponse(jsonfilter({"error":str(e) + "\n" + traceback.format_exc()}), content_type = "application/json")
-
-    # This is a wraper for xhr_projectedit which allows for a project id
-    # which only becomes known client side
-    def xhr_projectinfo(request):
-        if request.POST.has_key("project_id") == False:
-            raise BadParameterException("invalid project id")
-
-        return xhr_projectedit(request, request.POST['project_id'])
-
-    def xhr_projectedit(request, pid):
-        try:
-            prj = Project.objects.get(id = pid)
-            # add layers
-            if 'layerAdd' in request.POST:
-                for lc in Layer_Version.objects.filter(pk__in=request.POST['layerAdd'].split(",")):
-                    ProjectLayer.objects.get_or_create(project = prj, layercommit = lc)
-
-            # remove layers
-            if 'layerDel' in request.POST:
-                for t in request.POST['layerDel'].strip().split(" "):
-                    pt = ProjectLayer.objects.filter(project = prj, layercommit_id = int(t)).delete()
-
-            if 'projectName' in request.POST:
-                prj.name = request.POST['projectName']
-                prj.save();
-
-            if 'projectVersion' in request.POST:
-                prj.release = Release.objects.get(pk = request.POST['projectVersion'])
-                # we need to change the bitbake version
-                prj.bitbake_version = prj.release.bitbake_version
-                prj.save()
-                # we need to change the layers
-                for i in prj.projectlayer_set.all():
-                    # find and add a similarly-named layer on the new branch
-                    try:
-                        lv = prj.compatible_layerversions(layer_name = i.layercommit.layer.name)[0]
-                        ProjectLayer.objects.get_or_create(project = prj, layercommit = lv)
-                    except IndexError:
-                        pass
-                    finally:
-                        # get rid of the old entry
-                        i.delete()
-
-            if 'machineName' in request.POST:
-                machinevar = prj.projectvariable_set.get(name="MACHINE")
-                machinevar.value=request.POST['machineName']
-                machinevar.save()
-
-            # return all project settings
-            return HttpResponse(jsonfilter( {
-                "error": "ok",
-                "layers" :  map(lambda x: {"id": x.layercommit.pk, "orderid" : x.pk, "name" : x.layercommit.layer.name, "giturl" : x.layercommit.layer.vcs_url, "url": x.layercommit.layer.layer_index_url, "layerdetailurl": reverse("layerdetails", args=(prj.id, x.layercommit.pk,)), "branch" : { "name" : x.layercommit.get_vcs_reference(), "layersource" : x.layercommit.up_branch.layer_source.name}}, prj.projectlayer_set.all().select_related("layer").order_by("id")),
-                "builds" : _project_recent_build_list(prj),
-                "variables": map(lambda x: (x.name, x.value), prj.projectvariable_set.all()),
-                "machine": {"name": prj.projectvariable_set.get(name="MACHINE").value},
-                "prj": {"name": prj.name, "release": { "id": prj.release.pk, "name": prj.release.name, "desc": prj.release.description}},
-                }), content_type = "application/json")
-
         except Exception as e:
             return HttpResponse(jsonfilter({"error":str(e) + "\n" + traceback.format_exc()}), content_type = "application/json")
 
@@ -2929,7 +2910,6 @@ if toastermain.settings.MANAGED:
             p.id = p.pk
             p.xhrProjectDataTypeaheadUrl = reverse('xhr_datatypeahead', args=(p.id,))
             p.projectPageUrl = reverse('project', args=(p.id,))
-            p.xhrProjectEditUrl = reverse('xhr_projectedit', args=(p.id,))
             p.projectBuildUrl = reverse('xhr_projectbuild', args=(p.id,))
 
         # build view-specific information; this is rendered specifically in the builds page, at the top of the page (i.e. Recent builds)
@@ -3231,14 +3211,6 @@ else:
 
     @_template_renderer('landing_not_managed.html')
     def xhr_projectbuild(request, pid):
-        return {}
-
-    @_template_renderer('landing_not_managed.html')
-    def xhr_projectinfo(request):
-        return {}
-
-    @_template_renderer('landing_not_managed.html')
-    def xhr_projectedit(request, pid):
         return {}
 
     @_template_renderer('landing_not_managed.html')
