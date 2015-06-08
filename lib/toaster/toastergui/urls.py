@@ -80,11 +80,8 @@ urlpatterns = patterns('toastergui.views',
         url(r'^project/(?P<pid>\d+)/configuration$', 'projectconf', name='projectconf'),
         url(r'^project/(?P<pid>\d+)/builds/$', 'projectbuilds', name='projectbuilds'),
 
-        url(r'^project/(?P<pid>\d+)/layer/$', lambda x,pid: HttpResponseBadRequest(), name='base_layerdetails'),
-
         # the import layer is a project-specific functionality;
         url(r'^project/(?P<pid>\d+)/importlayer$', 'importlayer', name='importlayer'),
-
 
         # the table pages that have been converted to ToasterTable widget
         url(r'^project/(?P<pid>\d+)/machines/$',

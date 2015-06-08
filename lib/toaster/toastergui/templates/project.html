@@ -455,7 +455,6 @@ angular.element(document).ready(function() {
   scope.urls.targets = "{% url 'projecttargets' project.id %}";
   scope.urls.machines = "{% url 'projectmachines' project.id %}";
   scope.urls.importlayer = "{% url 'importlayer' project.id %}";
-  scope.urls.layer = "{% url 'base_layerdetails' project.id %}";
   scope.project = {{prj|json}};
   scope.builds = {{builds|json}};
   scope.layers = {{layers|json}};

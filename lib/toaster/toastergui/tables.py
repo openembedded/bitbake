@@ -23,6 +23,7 @@ from toastergui.widgets import ToasterTable, ToasterTemplateView
 from orm.models import Recipe, ProjectLayer, Layer_Version, Machine, Project
 from django.db.models import Q, Max
 from django.conf.urls import url
+from django.core.urlresolvers import reverse
 from django.views.generic import TemplateView
 
 class LayersTable(ToasterTable):
@@ -35,9 +36,9 @@ class LayersTable(ToasterTable):
     def get_context_data(self, **kwargs):
         context = super(LayersTable, self).get_context_data(**kwargs)
 
-        context['project'] = Project.objects.get(pk=kwargs['pid'])
-
-        context['projectlayers'] = map(lambda prjlayer: prjlayer.layercommit.id, ProjectLayer.objects.filter(project=context['project']))
+        project = Project.objects.get(pk=kwargs['pid'])
+        context['project'] = project
+        context['projectlayers'] = map(lambda prjlayer: prjlayer.layercommit.id, ProjectLayer.objects.filter(project=project))
 
         return context
 
@@ -142,6 +143,13 @@ class LayersTable(ToasterTable):
                         static_data_name="add-del-layers",
                         static_data_template='{% include "layer_btn.html" %}')
 
+        project = Project.objects.get(pk=kwargs['pid'])
+        self.add_column(title="LayerDetailsUrl",
+                        displayable = False,
+                        field_name="layerDetailsUrl",
+                        computation = lambda x: reverse('layerdetails', args=(project.id, x.id)))
+
+
 
 
 class LayerDetails(ToasterTemplateView):
@@ -152,7 +160,8 @@ class LayerDetails(ToasterTemplateView):
         context['project'] = Project.objects.get(pk=kwargs['pid'])
         context['layerversion'] = Layer_Version.objects.get(pk=kwargs['layerid'])
         context['layerdict'] = _lv_to_dict(context['project'], context['layerversion'])
-        context['layerdeps'] = {"list": [x.depends_on.get_equivalents_wpriority(context['project'])[0] for x in context['layerversion'].dependencies.all()]}
+        context['layerdeps'] = {"list": [
+            [{"id": y.id, "name": y.layer.name} for y in x.depends_on.get_equivalents_wpriority(context['project'])][0] for x in context['layerversion'].dependencies.all()]}
         context['projectlayers'] = map(lambda prjlayer: prjlayer.layercommit.id, ProjectLayer.objects.filter(project=context['project']))
 
         self.context_entries = ['project', 'layerversion', 'projectlayers', 'layerdict', 'layerdeps']
@@ -265,9 +274,10 @@ class RecipesTable(ToasterTable):
         self.default_orderby = "name"
 
     def get_context_data(self, **kwargs):
+        project = Project.objects.get(pk=kwargs['pid'])
         context = super(RecipesTable, self).get_context_data(**kwargs)
 
-        context['project'] = Project.objects.get(pk=kwargs['pid'])
+        context['project'] = project
 
         context['projectlayers'] = map(lambda prjlayer: prjlayer.layercommit.id, ProjectLayer.objects.filter(project=context['project']))
 
@@ -342,10 +352,11 @@ class RecipesTable(ToasterTable):
                         static_data_name="add-del-layers",
                         static_data_template='{% include "recipe_btn.html" %}')
 
+        project = Project.objects.get(pk=kwargs['pid'])
         self.add_column(title="Project compatible Layer ID",
                         displayable = False,
                         field_name = "projectcompatible_layer",
-                        computation = lambda x: (x.layer_version.get_equivalents_wpriority(Project.objects.get(pk=kwargs['pid']))[0]))
+                        computation = lambda x: (x.layer_version.get_equivalents_wpriority(project)[0]))
 
 class LayerRecipesTable(RecipesTable):
     """ Smaller version of the Recipes table for use in layer details """

@@ -2238,7 +2238,7 @@ if toastermain.settings.MANAGED:
         if request.method == "POST":
             # add layers
             if 'layerAdd' in request.POST:
-                for lc in Layer_Version.objects.filter(pk__in=request.POST['layerAdd'].split(",")):
+                for lc in Layer_Version.objects.filter(pk__in=[i for i in request.POST['layerAdd'].split(",") if len(i) > 0]):
                     ProjectLayer.objects.get_or_create(project = prj, layercommit = lc)
 
             # remove layers
@@ -2327,15 +2327,6 @@ if toastermain.settings.MANAGED:
     def xhr_datatypeahead(request, pid):
         try:
             prj = Project.objects.get(pk = pid)
-
-            # returns layer dependencies for a layer, excluding current project layers
-            if request.GET.get('type', None) == "layerdeps":
-                queryset = prj.compatible_layerversions().exclude(pk__in = [x.id for x in prj.projectlayer_equivalent_set()]).filter(
-                    layer__name__in = [ x.depends_on.layer.name for x in LayerVersionDependency.objects.filter(layer_version_id = request.GET.get('search', None))])
-
-                final_list = set([x.get_equivalents_wpriority(prj)[0] for x in queryset])
-
-                return HttpResponse(jsonfilter( { "error":"ok", "list" : map( _lv_to_dict(prj), sorted(final_list, key = lambda x: x.layer.name)) }), content_type = "application/json")
 
 
             # returns layer versions that would be deleted on the new release__pk

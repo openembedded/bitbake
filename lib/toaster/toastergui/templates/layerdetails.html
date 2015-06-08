@@ -34,7 +34,6 @@
   $(document).ready(function (){
     var ctx = {
       projectBuildsUrl : "{% url 'projectbuilds' project.id %}",
-      layerDetailsUrl : "{% url 'base_layerdetails' project.id %}",
       xhrUpdateLayerUrl : "{% url 'xhr_updatelayer' %}",
       layerVersion : {
         name : "{{layerversion.layer.name}}",
