@@ -91,19 +91,19 @@ urlpatterns = patterns('toastergui.views',
             tables.MachinesTable.as_view(template_name="generic-toastertable-page.html"),
             { 'table_name': tables.MachinesTable.__name__.lower(),
               'title' : 'All compatible machines' },
-            name="all-machines"),
+            name="projectmachines"),
 
         url(r'^project/(?P<pid>\d+)/recipes/$',
             tables.RecipesTable.as_view(template_name="generic-toastertable-page.html"),
             { 'table_name': tables.RecipesTable.__name__.lower(),
               'title' : 'All compatible recipes' },
-            name="all-targets"),
+            name="projecttargets"),
 
         url(r'^project/(?P<pid>\d+)/layers/$',
             tables.LayersTable.as_view(template_name="generic-toastertable-page.html"),
             { 'table_name': tables.LayersTable.__name__.lower(),
               'title' : 'All compatible layers' },
-            name="all-layers"),
+            name="projectlayers"),
 
         url(r'^project/(?P<pid>\d+)/layer/(?P<layerid>\d+)$',
             tables.LayerDetails.as_view(template_name='layerdetails.html'),
@@ -121,10 +121,8 @@ urlpatterns = patterns('toastergui.views',
               'title' : 'All machines in layer' },
             name=tables.LayerMachinesTable.__name__.lower()),
 
-        url(r'^xhr_projectbuild/(?P<pid>\d+)$', 'xhr_projectbuild', name='xhr_projectbuild'),
         url(r'^xhr_configvaredit/(?P<pid>\d+)$', 'xhr_configvaredit', name='xhr_configvaredit'),
 
-        url(r'^xhr_datatypeahead/(?P<pid>\d+)$', 'xhr_datatypeahead', name='xhr_datatypeahead'),
         url(r'^xhr_importlayer/$', 'xhr_importlayer', name='xhr_importlayer'),
         url(r'^xhr_updatelayer/$', 'xhr_updatelayer', name='xhr_updatelayer'),
 

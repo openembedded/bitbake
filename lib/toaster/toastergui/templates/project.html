@@ -30,7 +30,7 @@ vim: expandtab tabstop=2
 
 {%else%}
 
-<div id="main" role="main" data-ng-app="project" data-ng-controller="prjCtrl" class="top-padded">
+<div id="main" role="main" data-ng-app="project" data-ng-controller="prjCtrl" class="top-padded" data-ng-cloak>
 
   <!-- project name -->
   <div class="page-header">
@@ -46,9 +46,29 @@ vim: expandtab tabstop=2
 
   <!-- custom templates for ng -->
 
-  <script type="text/ng-template" id="suggestion_details">
-    <a> {[match.model.name]} {[match.model.detail]} </a>
+  <style>
+  .missing-layer {
+    color: lightgrey;
+  }
+  </style>
+  <script type="text/ng-template" id="recipes_suggestion_details">
+    <a> {[match.model.name]}
+      <span data-ng-class="{'missing-layer':($parent.$parent.$parent.$parent.filterProjectLayerIds().indexOf(match.model.projectcompatible_layer.id) == -1)}">
+          [{[match.model.layer_version__layer__name]}]
+      </span>
+    </a>
   </script>
+
+  <script type="text/ng-template" id="machines_suggestion_details">
+    <a>  {[match.model.name]} <span class="{'missing-layer':(filterProjectLayerIds().indexOf(match.model.layer_version_compatible_id) == -1)}">[{[match.model.layer_version__layer__name]}]</span> </a>
+  </script>
+
+  <script type="text/ng-template" id="layers_suggestion_details">
+    <a>  {[match.model['layer__name']]} ( {[match.model.layer__vcs_url]} ) </a>
+  </script>
+
+
+
 
   <!-- modal dialogs -->
   <script type="text/ng-template" id="dependencies_modal">
@@ -104,14 +124,14 @@ vim: expandtab tabstop=2
   <div class="well">
     <form class="build-form" data-ng-submit="buildNamedTarget()">
       <div class="input-append controls">
-        <input type="text" class="huge input-xxlarge" placeholder="Type the recipe(s) you want to build" autocomplete="off" data-ng-model="targetName" data-typeahead="e.name for e in getAutocompleteSuggestions('targets', $viewValue)|filter:$viewValue" data-typeahead-template-url="suggestion_details" data-ng-disabled="!layers.length"/>
+        <input type="text" class="huge input-xxlarge" placeholder="Type the recipe(s) you want to build" autocomplete="off" data-ng-model="targetName" data-typeahead="a.name for a in getRecipesAutocompleteSuggestions($viewValue)" data-typeahead-template-url="recipes_suggestion_details" data-ng-disabled="!layers.length"/>
         <button type="submit" class="btn btn-large btn-primary" data-ng-disabled="!targetName.length">
         Build
         </button>
       </div>
       <i class="icon-question-sign get-help get-help-blue" title="Type the name of one or more recipes you want to build, separated by a space. You can also specify a task by appending a semicolon and a task name to a recipe name, like so: <code>core-image-minimal:do_build</code>"></i>
       <p>
-        <a href="{% url 'all-targets' project.id %}">View all compatible recipes</a>
+        <a href="{% url 'projecttargets' project.id %}">View all compatible recipes</a>
         <i class="icon-question-sign get-help get-help-blue heading-help" title="View all the recipes you can build with the release selected for this project, which is {[project.release.desc]}"></i>
         {% if completedbuilds.count %}
           | <a href="{% url 'projectbuilds' project.id %}">View all project builds ({{completedbuilds.count}})</a>
@@ -278,7 +298,7 @@ vim: expandtab tabstop=2
         <p>
         You can:
           <ul>
-            <li> <a href="{% url 'all-layers' project.id %}">View all compatible layers available in Toaster</a>
+            <li> <a href="{% url 'projectlayers' project.id %}">View all compatible layers available in Toaster</a>
             <li> <a href="{% url 'importlayer' project.id %}">Import a layer</a>
             <li> <a href="https://www.yoctoproject.org/docs/1.6.1/dev-manual/dev-manual.html#understanding-and-creating-layers" target="_blank">Read about layers in the manual</a>
           </ul>
@@ -287,13 +307,13 @@ vim: expandtab tabstop=2
       </div>
       <form data-ng-submit="layerAdd()">
         <div class="input-append">
-          <input type="text" class="input-xlarge" id="layer" autocomplete="off" placeholder="Type a layer name" data-minLength="1" data-ng-model="layerAddName" data-typeahead="e.name for e in getAutocompleteSuggestions('layers', $viewValue)|filter:$viewValue" data-typeahead-template-url="suggestion_details" data-typeahead-on-select="onLayerSelect($item, $model, $label)" data-typeahead-editable="false" data-ng-class="{ 'has-error': layerAddName.$invalid }" />
+          <input type="text" class="input-xlarge" id="layer" autocomplete="off" placeholder="Type a layer name" data-minLength="1" data-ng-model="layerAddName" data-typeahead="e for e in getLayersAutocompleteSuggestions($viewValue)" data-typeahead-template-url="layers_suggestion_details" data-typeahead-on-select="onLayerSelect($item, $model, $label)" data-typeahead-editable="false" data-ng-class="{ 'has-error': layerAddName.$invalid }" />
           <input type="submit" id="add-layer" class="btn" value="Add" data-ng-disabled="!layerAddName.length"/>
         </div>
         {% csrf_token %}
       </form>
       <p>
-        <a href="{% url 'all-layers' project.id %}">View all compatible layers</a>
+        <a href="{% url 'projectlayers' project.id %}">View all compatible layers</a>
         <i class="icon-question-sign get-help" title="View all the layers you can build with the release selected for this project, which is {[project.release.desc]}"></i>
         |
         <a href="{% url 'importlayer' project.id %}">Import layer</a></p>
@@ -314,14 +334,14 @@ vim: expandtab tabstop=2
       </h3>
         <form data-ng-submit="buildNamedTarget()">
           <div class="input-append">
-            <input type="text" class="input-xlarge" placeholder="Type the recipe(s) you want to build" autocomplete="off" data-minLength="1"  data-ng-model="targetName1" data-typeahead="e.name for e in getAutocompleteSuggestions('targets', $viewValue)|filter:$viewValue" data-typeahead-template-url="suggestion_details" data-ng-disabled="!layers.length">
+            <input type="text" class="input-xlarge" placeholder="Type the recipe(s) you want to build" autocomplete="off" data-minLength="1"  data-ng-model="targetName1" data-typeahead="a.name for a in getRecipesAutocompleteSuggestions($viewValue)" data-typeahead-template-url="recipes_suggestion_details" data-ng-disabled="!layers.length">
             <button type="submit" class="btn btn-primary" data-ng-disabled="!targetName1.length">
               Build </button>
           </div>
           {% csrf_token %}
         </form>
         <p>
-          <a href="{% url 'all-targets' project.id %}">View all compatible recipes</a>
+          <a href="{% url 'projecttargets' project.id %}">View all compatible recipes</a>
           <i class="icon-question-sign get-help" title="View all the recipes you can build with the release selected for this project, which is {[project.release.desc]}"></i>
         </p>
         <div data-ng-if="frequenttargets.length">
@@ -355,13 +375,13 @@ vim: expandtab tabstop=2
               You cannot really compare the builds for the new machine with the previous ones.
         </div>
         <form data-ng-submit="editProjectSettings('#select-machine')" class="input-append">
-              <input type="text" id="machine" autocomplete="off" data-ng-model="machineName" value="{[machine.name]}" data-typeahead="m.name for m in getAutocompleteSuggestions('machines', $viewValue)" data-typeahead-template-url="suggestion_details" />
+              <input type="text" id="machine" autocomplete="off" data-ng-model="machineName" value="{[machine.name]}" data-typeahead="m.name for m in getMachinesAutocompleteSuggestions($viewValue)" data-typeahead-template-url="machines_suggestion_details" />
               <input type="submit" id="apply-change-machine" class="btn" data-ng-disabled="machineName == machine.name || machineName.length == 0" value="Save"/>
               <input type="reset" id="cancel-machine" class="btn btn-link" data-ng-click="toggle('#select-machine')" value="Cancel"/>
               {% csrf_token %}
         </form>
         <p>
-          <a href="{% url 'all-machines' project.id %}" class="link">View all compatible machines</a>
+          <a href="{% url 'projectmachines' project.id %}" class="link">View all compatible machines</a>
         <i class="icon-question-sign get-help" title="View all the machines you can set with the release selected for this project, which is {[project.release.desc]}"></i>
       </p>
       </div>
@@ -429,11 +449,11 @@ vim: expandtab tabstop=2
 angular.element(document).ready(function() {
   scope = angular.element("#main").scope();
   scope.urls = {};
-  scope.urls.xhr_build = "{% url 'xhr_projectbuild' project.id %}";
+  scope.urls.xhr_build = "{% url 'projectbuilds' project.id %}";
   scope.urls.xhr_edit = "{% url 'project' project.id %}?format=json";
-  scope.urls.xhr_datatypeahead = "{% url 'xhr_datatypeahead' project.id %}";
-  scope.urls.layers = "{% url 'all-layers' project.id %}";
-  scope.urls.targets = "{% url 'all-targets' project.id %}";
+  scope.urls.layers = "{% url 'projectlayers' project.id %}";
+  scope.urls.targets = "{% url 'projecttargets' project.id %}";
+  scope.urls.machines = "{% url 'projectmachines' project.id %}";
   scope.urls.importlayer = "{% url 'importlayer' project.id %}";
   scope.urls.layer = "{% url 'base_layerdetails' project.id %}";
   scope.project = {{prj|json}};

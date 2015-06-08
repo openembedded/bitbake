@@ -129,7 +129,7 @@
             <div class="span4 lead">Build queued
               <i title="This build will start as soon as a build server is available" class="icon-question-sign get-help get-help-blue heading-help" data-toggle="tooltip"></i>
             </div>
-            <button class="btn btn-info pull-right cancel-build-btn" data-build-id="{{buildrequest.id}}" data-request-url="{% url 'xhr_projectbuild' buildrequest.project.id %}" >Cancel</button>
+            <button class="btn btn-info pull-right cancel-build-btn" data-build-id="{{buildrequest.id}}" data-request-url="{% url 'projectbuilds' buildrequest.project.id %}" >Cancel</button>
 
          {% elif buildrequest.state == buildrequest.REQ_CREATED %}
 

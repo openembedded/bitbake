@@ -253,8 +253,8 @@ class ToasterTable(TemplateView):
 
         data = cache.get(cache_name)
 
-        if data:
-            return data
+        #if data:
+        #    return data
 
         self.setup_columns(**kwargs)
 
@@ -277,8 +277,8 @@ class ToasterTable(TemplateView):
             'default_orderby' : self.default_orderby,
             'columns' : self.columns,
             'rows' : [],
+            'error' : "ok",
         }
-
 
         try:
             for row in page.object_list:

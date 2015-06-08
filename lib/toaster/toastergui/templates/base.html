@@ -33,12 +33,10 @@
     htmlUrl : "{% static 'html/' %}",
     projectsUrl : "{% url 'all-projects' %}",
     {% if project.id %}
-      xhrProjectDataTypeaheadUrl : "{% url 'xhr_datatypeahead' project.id %}",
       projectPageUrl : "{% url 'project' project.id %}",
       projectName : "{{project.name}}",
       projectId : {{project.id}},
     {% else %}
-      xhrProjectDataTypeaheadUrl : undefined,
       projectPageUrl : undefined,
       projectName : undefined,
       projectId : undefined,

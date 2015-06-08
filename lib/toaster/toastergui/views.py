@@ -136,28 +136,6 @@ def _template_renderer(template):
 
                 # we're about to return; to keep up with the XHR API, we set the error to OK
                 context["error"] = "ok"
-                def _objtojson(obj):
-                    from django.db.models.query import QuerySet
-                    from django.db.models import Model, IntegerField
-                    if isinstance(obj, datetime):
-                        return obj.isoformat()
-                    elif isinstance(obj, timedelta):
-                        return obj.total_seconds()
-                    elif isinstance(obj, QuerySet) or isinstance(obj, set):
-                        return list(obj)
-                    elif hasattr( obj, '__dict__'):
-                        d = obj.__dict__
-                        nd = dict(d)
-                        for di in d:
-                            if di.startswith("_"):
-                                del nd[di]
-                            elif isinstance(d[di], Model):
-                                nd[di] = d[di].pk
-                            elif isinstance(d[di], int) and hasattr(obj, "get_%s_display" % di):
-                                nd[di] = getattr(obj, "get_%s_display" % di)()
-                        return nd
-                    else:
-                        raise TypeError("Unserializable object %s of type %s" % ( obj, type(obj)))
 
                 return HttpResponse(jsonfilter(context, default=objtojson ),
                             content_type = "application/json; charset=utf-8")
@@ -166,6 +144,21 @@ def _template_renderer(template):
         return returned_wrapper
     return func_wrapper
 
+
+def _lv_to_dict(prj, x = None):
+    if x is None:
+        def wrapper(x):
+            return _lv_to_dict(prj, x)
+        return wrapper
+
+    return {"id": x.pk,
+            "name": x.layer.name,
+            "tooltip": x.layer.vcs_url+" | "+x.get_vcs_reference(),
+            "detail": "(" + x.layer.vcs_url + (")" if x.up_branch == None else " | "+x.get_vcs_reference()+")"),
+            "giturl": x.layer.vcs_url,
+            "layerdetailurl" : reverse('layerdetails', args=(prj.id,x.pk)),
+            "revision" : x.get_vcs_reference(),
+           }
 
 
 def _build_page_range(paginator, index = 1):
@@ -335,7 +328,6 @@ def _search_tuple(request, model):
 def _get_queryset(model, queryset, filter_string, search_term, ordering_string, ordering_secondary=''):
     if filter_string:
         filter_query = _get_filtering_query(filter_string)
-#        raise Exception(filter_query)
         queryset = queryset.filter(filter_query)
     else:
         queryset = queryset.all()
@@ -2330,81 +2322,11 @@ if toastermain.settings.MANAGED:
         return context
 
 
-    def xhr_projectbuild(request, pid):
-        try:
-            if request.method != "POST":
-                raise BadParameterException("invalid method")
-            pid = pid
-            prj = Project.objects.get(id = pid)
-
-
-            if 'buildCancel' in request.POST:
-                for i in request.POST['buildCancel'].strip().split(" "):
-                    try:
-                        br = BuildRequest.objects.select_for_update().get(project = prj, pk = i, state__lte = BuildRequest.REQ_QUEUED)
-                        br.state = BuildRequest.REQ_DELETED
-                        br.save()
-                    except BuildRequest.DoesNotExist:
-                        pass
-
-            if 'buildDelete' in request.POST:
-                for i in request.POST['buildDelete'].strip().split(" "):
-                    try:
-                        br = BuildRequest.objects.select_for_update().get(project = prj, pk = i, state__lte = BuildRequest.REQ_DELETED).delete()
-                    except BuildRequest.DoesNotExist:
-                        pass
-
-            if 'targets' in request.POST:
-                ProjectTarget.objects.filter(project = prj).delete()
-                s = str(request.POST['targets'])
-                for t in s.translate(None, ";%|\"").split(" "):
-                    if ":" in t:
-                        target, task = t.split(":")
-                    else:
-                        target = t
-                        task = ""
-                    ProjectTarget.objects.create(project = prj, target = target, task = task)
-
-                br = prj.schedule_build()
-
-            return HttpResponse(jsonfilter({"error":"ok",
-                "builds" : _project_recent_build_list(prj),
-            }), content_type = "application/json")
-        except Exception as e:
-            return HttpResponse(jsonfilter({"error":str(e) + "\n" + traceback.format_exc()}), content_type = "application/json")
-
-
     from django.views.decorators.csrf import csrf_exempt
     @csrf_exempt
     def xhr_datatypeahead(request, pid):
         try:
             prj = Project.objects.get(pk = pid)
-
-            def _lv_to_dict(x):
-                return {"id": x.pk,
-                        "name": x.layer.name,
-                        "tooltip": x.layer.vcs_url+" | "+x.get_vcs_reference(),
-                        "detail": "(" + x.layer.vcs_url + (")" if x.up_branch == None else " | "+x.get_vcs_reference()+")"),
-                        "giturl": x.layer.vcs_url,
-                        "layerdetailurl" : reverse('layerdetails', args=(prj.id,x.pk)),
-                        "revision" : x.get_vcs_reference(),
-                       }
-
-
-            # returns layers for current project release that are not in the project set, matching the name
-            if request.GET.get('type', None) == "layers":
-                # all layers for the current project
-                queryset_all = prj.compatible_layerversions().filter(layer__name__icontains=request.GET.get('search',''))
-
-                # but not layers with equivalent layers already in project
-                if not request.GET.has_key('include_added'):
-                    queryset_all = queryset_all.exclude(pk__in = [x.id for x in prj.projectlayer_equivalent_set()])[:8]
-
-                # and show only the selected layers for this project
-                final_list = set([x.get_equivalents_wpriority(prj)[0] for x in queryset_all])
-
-                return HttpResponse(jsonfilter( { "error":"ok",  "list" : map( _lv_to_dict, sorted(final_list, key = lambda x: x.layer.name)) }), content_type = "application/json")
-
 
             # returns layer dependencies for a layer, excluding current project layers
             if request.GET.get('type', None) == "layerdeps":
@@ -2413,8 +2335,7 @@ if toastermain.settings.MANAGED:
 
                 final_list = set([x.get_equivalents_wpriority(prj)[0] for x in queryset])
 
-                return HttpResponse(jsonfilter( { "error":"ok", "list" : map( _lv_to_dict, sorted(final_list, key = lambda x: x.layer.name)) }), content_type = "application/json")
-
+                return HttpResponse(jsonfilter( { "error":"ok", "list" : map( _lv_to_dict(prj), sorted(final_list, key = lambda x: x.layer.name)) }), content_type = "application/json")
 
 
             # returns layer versions that would be deleted on the new release__pk
@@ -2428,7 +2349,7 @@ if toastermain.settings.MANAGED:
                         retval.append(i)
 
                 return HttpResponse(jsonfilter( {"error":"ok",
-                    "list" : map( _lv_to_dict,  map(lambda x: x.layercommit, retval ))
+                    "list" : map( _lv_to_dict(prj),  map(lambda x: x.layercommit, retval ))
                     }), content_type = "application/json")
 
 
@@ -2446,52 +2367,8 @@ if toastermain.settings.MANAGED:
                     # and show only the selected layers for this project
                     final_list = set([x.get_equivalents_wpriority(prj)[0] for x in queryset_all])
 
-                return HttpResponse(jsonfilter( { "error":"ok",  "list" : map( _lv_to_dict, final_list) }), content_type = "application/json")
+                return HttpResponse(jsonfilter( { "error":"ok",  "list" : map( _lv_to_dict(prj), final_list) }), content_type = "application/json")
 
-            # returns targets provided by current project layers
-            if request.GET.get('type', None) == "targets":
-                search_token = request.GET.get('search','')
-                queryset_all = Recipe.objects.filter(layer_version__layer__name__in = [x.layercommit.layer.name for x in prj.projectlayer_set.all().select_related("layercommit__layer")]).filter(Q(name__icontains=search_token) | Q(layer_version__layer__name__icontains=search_token))
-
-#                layer_equivalent_set = []
-#                for i in prj.projectlayer_set.all().select_related("layercommit__up_branch", "layercommit__layer"):
-#                    layer_equivalent_set += i.layercommit.get_equivalents_wpriority(prj)
-
-#                queryset_all = queryset_all.filter(layer_version__in =  layer_equivalent_set)
-
-                # if we have more than one hit here (for distinct name and version), max the id it out
-                queryset_all_maxids = queryset_all.values('name').distinct().annotate(max_id=Max('id')).values_list('max_id')
-                queryset_all = queryset_all.filter(id__in = queryset_all_maxids).order_by("name").select_related("layer_version__layer")
-
-
-                return HttpResponse(jsonfilter({ "error":"ok",
-                    "list" :
-                        # 7152 - sort by token position
-                        sorted (
-                            map ( lambda x: {"id": x.pk, "name": x.name, "detail":"[" + x.layer_version.layer.name +"]"},
-                        queryset_all[:8]),
-                            key = lambda i: i["name"].find(search_token) if i["name"].find(search_token) > -1 else 9999,
-                        )
-
-                    }), content_type = "application/json")
-
-            # returns machines provided by the current project layers
-            if request.GET.get('type', None) == "machines":
-                queryset_all = Machine.objects.all()
-                if 'project_id' in request.session:
-                    queryset_all = queryset_all.filter(layer_version__in =  prj.projectlayer_equivalent_set()).order_by("name")
-
-                search_token = request.GET.get('search','')
-                queryset_all = queryset_all.filter(Q(name__icontains=search_token) | Q(description__icontains=search_token))
-
-                return HttpResponse(jsonfilter({ "error":"ok",
-                        "list" :
-                        # 7152 - sort by the token position
-                        sorted (
-                            map ( lambda x: {"id": x.pk, "name": x.name, "detail":"[" + x.layer_version.layer.name+ "]"}, queryset_all[:8]),
-                            key = lambda i: i["name"].find(search_token) if i["name"].find(search_token) > -1 else 9999,
-                        )
-                    }), content_type = "application/json")
 
             raise Exception("Unknown request! " + request.GET.get('type', "No parameter supplied"))
         except Exception as e:
@@ -2791,7 +2668,41 @@ if toastermain.settings.MANAGED:
 
     @_template_renderer('projectbuilds.html')
     def projectbuilds(request, pid):
-        buildrequests = BuildRequest.objects.filter(project_id = pid).exclude(state__lte = BuildRequest.REQ_INPROGRESS).exclude(state=BuildRequest.REQ_DELETED)
+        # process any build request
+        prj = Project.objects.get(id = pid)
+        if request.method == "POST":
+
+            if 'buildCancel' in request.POST:
+                for i in request.POST['buildCancel'].strip().split(" "):
+                    try:
+                        br = BuildRequest.objects.select_for_update().get(project = prj, pk = i, state__lte = BuildRequest.REQ_QUEUED)
+                        br.state = BuildRequest.REQ_DELETED
+                        br.save()
+                    except BuildRequest.DoesNotExist:
+                        pass
+
+            if 'buildDelete' in request.POST:
+                for i in request.POST['buildDelete'].strip().split(" "):
+                    try:
+                        br = BuildRequest.objects.select_for_update().get(project = prj, pk = i, state__lte = BuildRequest.REQ_DELETED).delete()
+                    except BuildRequest.DoesNotExist:
+                        pass
+
+            if 'targets' in request.POST:
+                ProjectTarget.objects.filter(project = prj).delete()
+                s = str(request.POST['targets'])
+                for t in s.translate(None, ";%|\"").split(" "):
+                    if ":" in t:
+                        target, task = t.split(":")
+                    else:
+                        target = t
+                        task = ""
+                    ProjectTarget.objects.create(project = prj, target = target, task = task)
+
+                br = prj.schedule_build()
+
+
+        buildrequests = BuildRequest.objects.filter(project = prj).exclude(state__lte = BuildRequest.REQ_INPROGRESS).exclude(state=BuildRequest.REQ_DELETED)
 
         try:
             context, pagesize, orderby = _build_list_helper(request, buildrequests, False)
@@ -2940,9 +2851,10 @@ if toastermain.settings.MANAGED:
         # add fields needed in JSON dumps for API call support
         for p in project_info.object_list:
             p.id = p.pk
-            p.xhrProjectDataTypeaheadUrl = reverse('xhr_datatypeahead', args=(p.id,))
             p.projectPageUrl = reverse('project', args=(p.id,))
-            p.projectBuildUrl = reverse('xhr_projectbuild', args=(p.id,))
+            p.projectLayersUrl = reverse('projectlayers', args=(p.id,))
+            p.projectBuildsUrl = reverse('projectbuilds', args=(p.id,))
+            p.projectTargetsUrl = reverse('projecttargets', args=(p.id,))
 
         # build view-specific information; this is rendered specifically in the builds page, at the top of the page (i.e. Recent builds)
         build_mru = _managed_get_latest_builds()
@@ -3239,14 +3151,6 @@ else:
 
     @_template_renderer('landing_not_managed.html')
     def project(request, pid):
-        return {}
-
-    @_template_renderer('landing_not_managed.html')
-    def xhr_projectbuild(request, pid):
-        return {}
-
-    @_template_renderer('landing_not_managed.html')
-    def xhr_datatypeahead(request):
         return {}
 
     @_template_renderer('landing_not_managed.html')

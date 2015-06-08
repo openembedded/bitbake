@@ -38,9 +38,9 @@ class AllProjectsViewTestCase(ProvisionedProjectTestCase):
 
         self.assertTrue(AllProjectsViewTestCase.TEST_PROJECT_NAME in map(lambda x: x["name"], data["list"]))
         self.assertTrue("id" in data["list"][0])
-        self.assertTrue("xhrProjectDataTypeaheadUrl" in data["list"][0])
+        self.assertTrue("projectLayersUrl" in data["list"][0])
         self.assertTrue("projectPageUrl" in data["list"][0])
-        self.assertTrue("projectBuildUrl" in data["list"][0])
+        self.assertTrue("projectBuildsUrl" in data["list"][0])
 
 class ProvisionedLayersProjectTestCase(ProvisionedProjectTestCase):
     LAYER_NAME = "base-layer"
@@ -59,7 +59,7 @@ class XHRDataTypeAheadTestCase(ProvisionedLayersProjectTestCase):
         self.assertTrue(self.lv in self.project.compatible_layerversions())
 
     def test_xhr_datatypeahead_layer(self):
-        response = self.client.get(reverse('xhr_datatypeahead', args=(self.project.id,)), {"type": "layers"})
+        response = self.client.get(reverse('xhr_datatypeahead', args=(self.project.id,)), {"type": "layerdeps"})
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response['Content-Type'].startswith('application/json'))
 

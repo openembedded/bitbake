@@ -1,6 +1,6 @@
 {% load projecttags %}
 onclick='scheduleBuild(
-    {% url 'xhr_projectbuild' buildrequest.project.id as bpi %}{{bpi|json}},
+    {% url 'projectbuilds' buildrequest.project.id as bpi %}{{bpi|json}},
     {{buildrequest.project.name|json}},
     {% url 'project' buildrequest.project.id as bpurl %}{{bpurl|json}},
     {{buildrequest.brtarget_set.all|get_tasks|json}})

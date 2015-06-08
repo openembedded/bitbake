@@ -3,7 +3,7 @@
 {% load humanize %}
 {% load static %}
 {% block localbreadcrumb %}
-<li><a href="{% url 'all-layers' project.id %}">All compatible layers</a></li>
+<li><a href="{% url 'projectlayers' project.id %}">All compatible layers</a></li>
 <li>
   {{layerversion.layer.name}} ({{layerversion.get_vcs_reference|truncatechars:13}})
 </li>
@@ -33,7 +33,7 @@
 
   $(document).ready(function (){
     var ctx = {
-      projectBuildUrl : "{% url 'xhr_projectbuild' project.id %}",
+      projectBuildsUrl : "{% url 'projectbuilds' project.id %}",
       layerDetailsUrl : "{% url 'base_layerdetails' project.id %}",
       xhrUpdateLayerUrl : "{% url 'xhr_updatelayer' %}",
       layerVersion : {
