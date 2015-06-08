@@ -287,7 +287,7 @@ class RecipesTable(ToasterTable):
     def setup_queryset(self, *args, **kwargs):
         prj = Project.objects.get(pk = kwargs['pid'])
 
-        self.queryset = Recipe.objects.filter(Q(layer_version__up_branch__name= prj.release.name) | Q(layer_version__build__in = prj.build_set.all())).filter(name__regex=r'.{1,}.*')
+        self.queryset = Recipe.objects.filter(layer_version__in = prj.compatible_layerversions())
 
         search_maxids = map(lambda i: i[0], list(self.queryset.values('name').distinct().annotate(max_id=Max('id')).values_list('max_id')))
 
@@ -392,3 +392,11 @@ class LayerRecipesTable(RecipesTable):
         self.add_column(title="Build recipe",
                         static_data_name="add-del-layers",
                         static_data_template=build_recipe_template)
+
+class ProjectLayersRecipesTable(RecipesTable):
+    """ Table that lists only recipes available for layers added to the project """
+
+    def setup_queryset(self, *args, **kwargs):
+        super(ProjectLayersRecipesTable, self).setup_queryset(*args, **kwargs)
+        prj = Project.objects.get(pk = kwargs['pid'])
+        self.queryset = self.queryset.filter(layer_version__in = prj.projectlayer_equivalent_set())

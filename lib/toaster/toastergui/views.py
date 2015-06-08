@@ -129,9 +129,9 @@ def _template_renderer(template):
 
             if request.GET.get('format', None) == 'json':
                 # objects is a special keyword - it's a Page, but we need the actual objects here
-                # in XHR, the objects come in the "list" property
+                # in XHR, the objects come in the "rows" property
                 if "objects" in context:
-                    context["list"] = context["objects"].object_list
+                    context["rows"] = context["objects"].object_list
                     del context["objects"]
 
                 # we're about to return; to keep up with the XHR API, we set the error to OK
@@ -2340,7 +2340,7 @@ if toastermain.settings.MANAGED:
                         retval.append(i)
 
                 return HttpResponse(jsonfilter( {"error":"ok",
-                    "list" : map( _lv_to_dict(prj),  map(lambda x: x.layercommit, retval ))
+                    "rows" : map( _lv_to_dict(prj),  map(lambda x: x.layercommit, retval ))
                     }), content_type = "application/json")
 
 
@@ -2358,7 +2358,7 @@ if toastermain.settings.MANAGED:
                     # and show only the selected layers for this project
                     final_list = set([x.get_equivalents_wpriority(prj)[0] for x in queryset_all])
 
-                return HttpResponse(jsonfilter( { "error":"ok",  "list" : map( _lv_to_dict(prj), final_list) }), content_type = "application/json")
+                return HttpResponse(jsonfilter( { "error":"ok",  "rows" : map( _lv_to_dict(prj), final_list) }), content_type = "application/json")
 
 
             raise Exception("Unknown request! " + request.GET.get('type', "No parameter supplied"))
@@ -2845,7 +2845,7 @@ if toastermain.settings.MANAGED:
             p.projectPageUrl = reverse('project', args=(p.id,))
             p.projectLayersUrl = reverse('projectlayers', args=(p.id,))
             p.projectBuildsUrl = reverse('projectbuilds', args=(p.id,))
-            p.projectTargetsUrl = reverse('projecttargets', args=(p.id,))
+            p.projectTargetsUrl = reverse('projectavailabletargets', args=(p.id,))
 
         # build view-specific information; this is rendered specifically in the builds page, at the top of the page (i.e. Recent builds)
         build_mru = _managed_get_latest_builds()
@@ -3143,6 +3143,13 @@ else:
     @_template_renderer('landing_not_managed.html')
     def project(request, pid):
         return {}
+
+    from django.views.decorators.csrf import csrf_exempt
+    @csrf_exempt
+    @_template_renderer('landing_not_managed.html')
+    def xhr_datatypeahead(request, pid):
+        return {}
+
 
     @_template_renderer('landing_not_managed.html')
     def xhr_configvaredit(request, pid):

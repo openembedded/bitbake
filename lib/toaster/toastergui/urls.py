@@ -96,6 +96,12 @@ urlpatterns = patterns('toastergui.views',
               'title' : 'All compatible recipes' },
             name="projecttargets"),
 
+        url(r'^project/(?P<pid>\d+)/availablerecipes/$',
+            tables.ProjectLayersRecipesTable.as_view(template_name="generic-toastertable-page.html"),
+            { 'table_name': tables.ProjectLayersRecipesTable.__name__.lower(),
+              'title' : 'Recipes available for layers in the current project' },
+            name="projectavailabletargets"),
+
         url(r'^project/(?P<pid>\d+)/layers/$',
             tables.LayersTable.as_view(template_name="generic-toastertable-page.html"),
             { 'table_name': tables.LayersTable.__name__.lower(),
@@ -118,6 +124,8 @@ urlpatterns = patterns('toastergui.views',
               'title' : 'All machines in layer' },
             name=tables.LayerMachinesTable.__name__.lower()),
 
+
+        url(r'^xhr_datatypeahead/(?P<pid>\d+)$', 'xhr_datatypeahead', name='xhr_datatypeahead'),
         url(r'^xhr_configvaredit/(?P<pid>\d+)$', 'xhr_configvaredit', name='xhr_configvaredit'),
 
         url(r'^xhr_importlayer/$', 'xhr_importlayer', name='xhr_importlayer'),
