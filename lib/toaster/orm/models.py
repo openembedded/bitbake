@@ -20,7 +20,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 from django.db import models
-from django.db.models import F, Q
+from django.db.models import F, Q, Avg
 from django.utils import timezone
 
 
@@ -180,7 +180,7 @@ class Project(models.Model):
             queryset = queryset.filter(layer__name = layer_name)
 
         # order by layer version priority
-        queryset = queryset.filter(layer_source__releaselayersourcepriority__release = release).order_by("-layer_source__releaselayersourcepriority__priority")
+        queryset = queryset.filter(Q(layer_source=None) | Q(layer_source__releaselayersourcepriority__release = release)).select_related('layer_source', 'layer', 'up_branch').annotate(prio=Avg("layer_source__releaselayersourcepriority__priority")).order_by("-prio")
 
         return queryset
 
@@ -1062,42 +1062,7 @@ class Layer_Version(models.Model):
         return self._handle_url_path(self.layer.vcs_web_tree_base_url, '')
 
     def get_equivalents_wpriority(self, project):
-        """ Returns an ordered layerversion list that satisfies a LayerVersionDependency using the layer name and the current Project Releases' LayerSource priority """
-
-        # layers created for this project, or coming from a build inthe project
-        query = Q(project = project) | Q(build__project = project)
-        if self.up_branch is not None:
-            # the same up_branch name
-            query |= Q(up_branch__name=self.up_branch.name)
-        else:
-            # or we have a layer in the project that's similar to mine (See the layer.name constraint below)
-            query |= Q(projectlayer__project=project)
-
-        candidate_layer_versions = list(Layer_Version.objects.filter(layer__name = self.layer.name).filter(query).select_related('layer_source', 'layer', 'up_branch').order_by("-id"))
-
-        # optimization - if we have only one, we don't need no stinking sort
-        if len(candidate_layer_versions) == 1:
-            return candidate_layer_versions
-
-#        raise Exception(candidate_layer_versions)
-
-        release_priorities = {}
-
-        for ls_id, prio in map(lambda x: (x.layer_source_id, x.priority), project.release.releaselayersourcepriority_set.all().order_by("-priority")):
-            release_priorities[ls_id] = prio
-
-        def _get_ls_priority(ls):
-            # if there is no layer source, we have minus infinite priority, as we don't want this layer selected
-            if ls == None:
-                return -10000
-            try:
-                return release_priorities[ls.id]
-            except IndexError:
-                raise Exception("Unknown %d %s" % (ls.id, release_priorities))
-
-        return sorted( candidate_layer_versions ,
-                key = lambda x: _get_ls_priority(x.layer_source),
-                reverse = True)
+        return project.compatible_layerversions(layer_name = self.layer.name)
 
     def get_vcs_reference(self):
         if self.commit is not None and len(self.commit) > 0:
