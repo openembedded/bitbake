@@ -807,18 +807,6 @@ eans multiple licenses exist that cover different parts of the source',
                 ]
         }
 
-    if not toastermain.settings.MANAGED or build.project is None:
-
-        tc_layerDir = {
-            'name':'Layer directory',
-            'qhelp':'Location in disk of the layer providing the recipe that builds the package',
-            'orderfield' : _get_toggle_order( request, "recipe__layer_version__local_path" ),
-            'ordericon'  : _get_toggle_order_icon( request, "recipe__layer_version__local_path" ),
-            'orderkey'   : "recipe__layer_version__local_path",
-            'clclass'    : 'layer_directory',
-            'hidden'     : 1,
-        }
-        context['tablecols'].append(tc_layerDir)
 
     response = render(request, template, context)
     _set_parameters_values(pagesize, orderby, request)
@@ -1209,9 +1197,6 @@ def tasks_common(request, build_id, variant, task_anchor):
                 ]}
 
 
-    if not toastermain.settings.MANAGED or build.project is None:
-        context['tablecols'].append(tc_log)
-
     response = render(request, template, context)
     _set_parameters_values(pagesize, orderby, request)
     return response
@@ -1335,18 +1320,6 @@ def recipes(request, build_id):
             },
             ]
         }
-
-    if not toastermain.settings.MANAGED or build.project is None:
-        context['tablecols'].append(
-            {
-                'name':'Layer directory',
-                'qhelp':'Path to the layer prodiving the recipe',
-                'orderfield': _get_toggle_order(request, "layer_version__local_path"),
-                'ordericon':_get_toggle_order_icon(request, "layer_version__local_path"),
-                'orderkey' : 'layer_version__local_path',
-                'clclass': 'layer_version__local_path', 'hidden': 1,
-            })
-
 
     response = render(request, template, context)
     _set_parameters_values(pagesize, orderby, request)
@@ -1549,18 +1522,6 @@ def bpackage(request, build_id):
             },
             ]
         }
-
-    if not toastermain.settings.MANAGED or build.project is None:
-
-        tc_layerDir = {
-                'name':'Layer directory',
-                'qhelp':'Path to the layer providing the recipe that builds the package',
-                'orderfield': _get_toggle_order(request, "recipe__layer_version__local_path"),
-                'ordericon':_get_toggle_order_icon(request, "recipe__layer_version__local_path"),
-                'orderkey' : 'recipe__layer_version__local_path',
-                'clclass': 'recipe__layer_version__local_path', 'hidden': 1,
-        }
-        context['tablecols'].append(tc_layerDir)
 
     response = render(request, template, context)
     _set_parameters_values(pagesize, orderby, request)
@@ -1877,7 +1838,6 @@ def managedcontextprocessor(request):
     import subprocess
     ret = {
         "projects": Project.objects.all(),
-        "MANAGED" : toastermain.settings.MANAGED,
         "DEBUG" : toastermain.settings.DEBUG,
         "TOASTER_BRANCH": toastermain.settings.TOASTER_BRANCH,
         "TOASTER_REVISION" : toastermain.settings.TOASTER_REVISION,
@@ -1892,8 +1852,8 @@ from orm.models import Project, ProjectLayer, ProjectTarget, ProjectVariable
 
 # we have a set of functions if we're in managed mode, or
 # a default "page not available" simple functions for interactive mode
-if toastermain.settings.MANAGED:
 
+if True:
     from django.contrib.auth.models import User
     from django.contrib.auth import authenticate, login
     from django.contrib.auth.decorators import login_required
@@ -2937,11 +2897,8 @@ if toastermain.settings.MANAGED:
         return context
 
 
-else:
-    # shows the "all builds" page for interactive mode; this is the old code, simply moved
-
-    @_template_renderer('build.html')
-    def builds(request):
+    @_template_renderer('builds.html')
+    def builds_old(request):
         # define here what parameters the view needs in the GET portion in order to
         # be able to display something.  'count' and 'page' are mandatory for all views
         # that use paginators.
@@ -3132,57 +3089,3 @@ else:
         _set_parameters_values(pagesize, orderby, request)
 
         return context
-
-
-
-
-    @_template_renderer('landing_not_managed.html')
-    def newproject(request):
-        return {}
-
-    @_template_renderer('landing_not_managed.html')
-    def project(request, pid):
-        return {}
-
-    from django.views.decorators.csrf import csrf_exempt
-    @csrf_exempt
-    @_template_renderer('landing_not_managed.html')
-    def xhr_datatypeahead(request, pid):
-        return {}
-
-
-    @_template_renderer('landing_not_managed.html')
-    def xhr_configvaredit(request, pid):
-        return {}
-
-    @_template_renderer('landing_not_managed.html')
-    def importlayer(request):
-        return {}
-
-    @_template_renderer('landing_not_managed.html')
-    def projectconf(request, pid):
-        return {}
-
-    @_template_renderer('landing_not_managed.html')
-    def projectbuilds(request, pid):
-        return {}
-
-    @_template_renderer('landing_not_managed.html')
-    def build_artifact(request, build_id, artifact_type, artifact_id):
-        return {}
-
-    @_template_renderer('landing_not_managed.html')
-    def projects(request):
-        return {}
-
-    @_template_renderer('landing_not_managed.html')
-    def xhr_importlayer(request):
-        return {}
-
-    @_template_renderer('landing_not_managed.html')
-    def xhr_updatelayer(request):
-        return {}
-
-    @_template_renderer('landing_not_managed.html')
-    def buildrequestdetails(request, pid, brid):
-        return {}

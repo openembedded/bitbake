@@ -288,9 +288,7 @@ class BuildArtifact(models.Model):
 
 
     def is_available(self):
-        if settings.MANAGED and build.project is not None:
-            return build.buildrequest.environment.has_artifact(file_path)
-        return False
+        return build.buildrequest.environment.has_artifact(file_path)
 
 class ProjectTarget(models.Model):
     project = models.ForeignKey(Project)

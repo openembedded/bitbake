@@ -37,9 +37,7 @@
     <span > <i class="icon-warning-sign yellow"></i><strong><a href="#warnings" class="warning show-warnings"> {{build.warnings_no}} warning{{build.warnings_no|pluralize}}</a></strong></span>
 {% endif %}
             <span class="pull-right">Build time: <a href="{% url 'buildtime' build.pk %}">{{ build.timespent|sectohms }}</a>
-      {% if MANAGED and build.project %}
             <a class="btn {%if build.outcome == build.SUCCEEDED%}btn-success{%else%}btn-danger{%endif%} pull-right log" href="{% url 'build_artifact' build.id "cookerlog" build.id %}">Download build log</a>
-      {% endif %}
             </span>
 {%endif%}
     </div>
@@ -117,19 +115,11 @@
             <dt>
                 <i class="icon-question-sign get-help" title="The location in disk of the license manifest, a document listing all packages installed in your image and their licenses"></i>
 
-            {% if MANAGED and build.project %}
                 License manifest
-            {% else %}
-                <a href="{% url 'targetpkg' build.pk target.target.pk %}">License manifest</a>
-            {% endif %}
             </dt>
-            {% if MANAGED and build.project %}
             <dd>
                 <a href="{% url 'targetpkg' build.pk target.target.pk %}">View in Toaster</a> |
                 <a href="{% url 'build_artifact' build.pk 'licensemanifest' target.target.pk %}">Download</a></dd>
-            {% else %}
-            <dd><code>{{target.target.license_manifest_path}}</code></dd>
-            {% endif %}
             <dt>
                 <i class="icon-question-sign get-help" title="Image files are stored in <code>/build/tmp/deploy/images/</code>"></i>
                 Image files
@@ -170,13 +160,9 @@
                 Other artifacts</dt>
             <dd><div>
               {% for ba in build.buildartifact_set.all|dictsort:"file_name" %}
-                {% if MANAGED and build.project %}
                 <a href="{%url 'build_artifact' build.id 'buildartifact' ba.id %}">
-                {% endif %}
                     {{ba.get_local_file_name}}
-                {% if MANAGED and build.project %}
                 </a>
-                {% endif %}
 
                 ({{ba.file_size|filtered_filesizeformat}}) <br/>
               {% endfor %}
@@ -211,11 +197,9 @@
                         <span class="task-name">{{exectask.0.task_name}}</span>
                     </a>
 
-                      {% if MANAGED and build.project %}
                         <a href="{% url 'build_artifact' build.id "tasklogfile" exectask.0.id %}">
                             <i class="icon-download-alt" title="" data-original-title="Download task log file"></i>
                         </a>
-                      {% endif %}
 
                 {% elif exectask.count > 1%}
                     <a class="error" href="{% url "tasks" build.id %}?filter=outcome%3A4">{{exectask.count}}</a>

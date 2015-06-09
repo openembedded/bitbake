@@ -48,7 +48,6 @@
   };
 </script>
 <script src="{% static 'js/base.js' %}"></script>
-{%if MANAGED %}
 <script>
   $(document).ready(function () {
     /* Vars needed for base.js */
@@ -58,10 +57,6 @@
 
     basePageInit(ctx);
   });
-</script>
-{% endif %}
-<script>
-
 </script>
 
 {% block extraheadcontent %}
@@ -80,14 +75,13 @@
             <span class="brand">
                 <a href="/">Toaster</a>
                 {% if DEBUG %}
-                    <i class="icon-info-sign" title="<strong>Toaster version information</strong>" data-content="<dl><dt>Branch</dt><dd>{{TOASTER_BRANCH}}</dd><dt>Revision</dt><dd>{{TOASTER_REVISION}}</dd><dt>Mode</dt><dd>{%if MANAGED%}Build{%else%}Analysis{%endif%}</dd></dl>"></i>
+                    <i class="icon-info-sign" title="<strong>Toaster version information</strong>" data-content="<dl><dt>Branch</dt><dd>{{TOASTER_BRANCH}}</dd><dt>Revision</dt><dd>{{TOASTER_REVISION}}</dd></dl>"></i>
                 {% endif %}
             </span>
             <a class="pull-right manual" target="_blank" href="http://www.yoctoproject.org/docs/latest/toaster-manual/toaster-manual.html">
                 <i class="icon-book"></i>
                 Toaster manual
             </a>
-            {%if MANAGED %}
             <div class="btn-group pull-right">
                   <a class="btn" id="new-project-button" href="{% url 'newproject' %}">New project</a>
             </div>
@@ -132,7 +126,6 @@
               </ul>
             </div>
 
-            {%endif%}
 
     </div>
 </div>

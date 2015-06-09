@@ -68,11 +68,9 @@
                 {% query build.task_build outcome=4 order__gt=0 as exectask%}
                     {% if exectask.count == 1 %}
                         <a href="{% url "task" build.id exectask.0.id %}">{{exectask.0.recipe.name}}.{{exectask.0.task_name}}</a>
-                      {% if MANAGED and build.project %}
                         <a href="{% url 'build_artifact' build.id "tasklogfile" exectask.0.id %}">
                             <i class="icon-download-alt" title="" data-original-title="Download task log file"></i>
                         </a>
-                      {% endif %}
                     {% elif exectask.count > 1%}
                         <a href="{% url "tasks" build.id %}?filter=outcome%3A4">{{exectask.count}} task{{exectask.count|pluralize}}</a>
                     {%endif%}
@@ -84,21 +82,15 @@
             </td>
             <td class="warnings_no">{% if  build.warnings_no %}<a class="warnings_no warning" href="{% url "builddashboard" build.id %}#warnings">{{build.warnings_no}} warning{{build.warnings_no|pluralize}}</a>{%endif%}</td>
             <td class="time"><a href="{% url "buildtime" build.id %}">{{build.timespent|sectohms}}</a></td>
-            {% if not MANAGED or not build.project %}
-                <td class="log">{{build.cooker_log_path}}</td>
-            {% endif %}
             <td class="output">
               {% if build.outcome == build.SUCCEEDED %}
               <a href="{%url "builddashboard" build.id%}#images">{{fstypes|get_dict_value:build.id}}</a>
               {% endif %}
             </td>
-   {% if MANAGED %}
-            <td class="project">
             {% if build.project %}
                 <a href="{% url 'project' build.project.id %}">{{build.project.name}}</a>
             {% endif %}
             </td>
-   {% endif %}
         </tr>
 
         {% endfor %}
