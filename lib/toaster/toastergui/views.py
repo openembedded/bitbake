@@ -27,7 +27,6 @@ from django.shortcuts import render, redirect
 from orm.models import Build, Target, Task, Layer, Layer_Version, Recipe, LogMessage, Variable
 from orm.models import Task_Dependency, Recipe_Dependency, Package, Package_File, Package_Dependency
 from orm.models import Target_Installed_Package, Target_File, Target_Image_File, BuildArtifact
-from bldcontrol.models import BuildEnvironment, BuildRequest
 from bldcontrol import bbcontroller
 from django.views.decorators.cache import cache_control
 from django.core.urlresolvers import reverse
@@ -41,36 +40,33 @@ from django.utils import formats
 from toastergui.templatetags.projecttags import json as jsonfilter
 import json
 from os.path import dirname
+import itertools
 
 # all new sessions should come through the landing page;
 # determine in which mode we are running in, and redirect appropriately
 def landing(request):
-    if toastermain.settings.MANAGED:
-        from bldcontrol.models import BuildRequest
-        if BuildRequest.objects.count() == 0 and Project.objects.count() > 0:
-            return redirect(reverse('all-projects'), permanent = False)
+    if Build.objects.count() == 0 and Project.objects.count() > 0:
+        return redirect(reverse('all-projects'), permanent = False)
 
-        if BuildRequest.objects.all().count() > 0:
-            return redirect(reverse('all-builds'), permanent = False)
-    else:
-        if Build.objects.all().count() > 0:
-            return redirect(reverse('all-builds'), permanent = False)
+    if Build.objects.all().count() > 0:
+        return redirect(reverse('all-builds'), permanent = False)
 
-    context = {}
-    if toastermain.settings.MANAGED:
-        context['lvs_nos'] = Layer_Version.objects.all().count()
+    context = {'lvs_nos' : Layer_Version.objects.all().count()}
 
     return render(request, 'landing.html', context)
 
 # returns a list for most recent builds; for use in the Project page, xhr_ updates,  and other places, as needed
 def _project_recent_build_list(prj):
-    return map(lambda x: {
+    data = []
+    # take the most recent 3 completed builds, plus any builds in progress
+    for x in itertools.chain(prj.build_set.filter(outcome__lt=Build.IN_PROGRESS).order_by("-pk")[:3], prj.build_set.filter(outcome=Build.IN_PROGRESS).order_by("-pk")):
+        d = {
             "id":  x.pk,
-            "targets" : map(lambda y: {"target": y.target, "task": y.task }, x.brtarget_set.all()),
-            "status": x.get_state_display(),
-            "errors": map(lambda y: {"type": y.errtype, "msg": y.errmsg, "tb": y.traceback}, x.brerror_set.all()),
-            "updated": x.updated.strftime('%s')+"000",
-            "command_time": (x.updated - x.created).total_seconds(),
+            "targets" : map(lambda y: {"target": y.target, "task": None }, x.target_set.all()), # TODO: create the task entry in the Target table
+            "status": x.get_outcome_display(),
+            "errors": map(lambda y: {"type": y.lineno, "msg": y.message, "tb": y.pathname}, x.logmessage_set.filter(level__gte=LogMessage.WARNING)),
+            "updated": x.completed_on.strftime('%s')+"000",
+            "command_time": (x.completed_on - x.started_on).total_seconds(),
             "br_page_url": reverse('buildrequestdetails', args=(x.project.id, x.pk) ),
             "build" : map( lambda y: {"id": y.pk,
                         "status": y.get_outcome_display(),
@@ -82,9 +78,11 @@ def _project_recent_build_list(prj):
                         "warnings": y.warnings_no,
                         "completeper": y.completeper() if y.outcome == Build.IN_PROGRESS else "0",
                         "eta": y.eta().strftime('%s')+"000" if y.outcome == Build.IN_PROGRESS else "0",
-                        }, Build.objects.filter(buildrequest = x)),
-        }, list(prj.buildrequest_set.filter(Q(state__lt=BuildRequest.REQ_COMPLETED) or Q(state=BuildRequest.REQ_DELETED)).order_by("-pk")) +
-            list(prj.buildrequest_set.filter(state__in=[BuildRequest.REQ_COMPLETED, BuildRequest.REQ_FAILED]).order_by("-pk")[:3]))
+                        }, [x]),
+            }
+        data.append(d)
+
+    return data
 
 
 
@@ -1372,15 +1370,6 @@ def configvars(request, build_id):
         file_filter += '/bitbake.conf'
     build_dir=re.sub("/tmp/log/.*","",Build.objects.get(pk=build_id).cooker_log_path)
 
-    clones = []
-    for breq in BuildRequest.objects.filter(build_id=build_id):
-        bc = bbcontroller.getBuildEnvironmentController(pk = breq.environment.id)
-        for brl in breq.brlayer_set.all():
-            localdirname = bc.getGitCloneDirectory(brl.giturl, brl.commit)
-            if not localdirname.startswith("/"):
-                localdirname = os.path.join(bc.be.sourcedir, localdirname)
-            clones.append(localdirname)
-
     context = {
                 'objectname': 'configvars',
                 'object_search_display':'BitBake variables',
@@ -1391,7 +1380,6 @@ def configvars(request, build_id):
                 'total_count':queryset_with_search.count(),
                 'default_orderby' : 'variable_name:+',
                 'search_term':search_term,
-                'dirstostrip': clones + [dirname(build_dir), dirname(dirname(build_dir))],
             # Specifies the display of columns for the table, appearance in "Edit columns" box, toggling default show/hide, and specifying filters for columns
                 'tablecols' : [
                 {'name': 'Variable',
@@ -1872,7 +1860,7 @@ if True:
 
 
     # shows the "all builds" page for managed mode; it displays build requests (at least started!) instead of actual builds
-    @_template_renderer("managed_builds.html")
+    @_template_renderer("builds.html")
     def builds(request):
         # define here what parameters the view needs in the GET portion in order to
         # be able to display something.  'count' and 'page' are mandatory for all views
@@ -2184,10 +2172,7 @@ if True:
     # Shows the edit project page
     @_template_renderer('project.html')
     def project(request, pid):
-        try:
-            prj = Project.objects.get(id = pid)
-        except Project.DoesNotExist:
-            return HttpResponseNotFound("<h1>Project id " + pid + " is unavailable</h1>")
+        prj = Project.objects.get(id = pid)
 
         try:
             puser = User.objects.get(id = prj.user_id)
@@ -2249,8 +2234,8 @@ if True:
         context = {
             "project" : prj,
             "lvs_nos" : Layer_Version.objects.all().count(),
-            "completedbuilds": BuildRequest.objects.filter(project_id = pid).exclude(state__lte = BuildRequest.REQ_INPROGRESS).exclude(state=BuildRequest.REQ_DELETED),
-            "prj" : {"name": prj.name, "release": { "id": prj.release.pk, "name": prj.release.name, "desc": prj.release.description}},
+            "completedbuilds": Build.objects.filter(project_id = pid).filter(outcome__lte = Build.IN_PROGRESS),
+            "prj" : {"name": prj.name, },
             #"buildrequests" : prj.buildrequest_set.filter(state=BuildRequest.REQ_QUEUED),
             "builds" : _project_recent_build_list(prj),
             "layers" :  map(lambda x: {
@@ -2269,6 +2254,9 @@ if True:
             "releases": map(lambda x: {"id": x.pk, "name": x.name, "description":x.description}, Release.objects.all()),
             "project_html": 1,
         }
+
+        if prj.release is not None:
+            context["prj"]["release"] = { "id": prj.release.pk, "name": prj.release.name, "desc": prj.release.description}
 
         try:
             context["machine"] = {"name": prj.projectvariable_set.get(name="MACHINE").value}

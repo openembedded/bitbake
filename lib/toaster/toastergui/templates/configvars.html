@@ -56,7 +56,7 @@
         <td class="file"><a data-toggle="modal" href="#variable-{{variable.pk}}">
             {% if variable.vhistory.all %}
                 {% for path in variable.vhistory.all|filter_setin_files:file_filter %}
-                    {{path|cut_path_prefix:dirstostrip}}<br/>
+                    {{path}}<br/>
                 {% endfor %}
             {% endif %}
         </a></td>
@@ -117,7 +117,7 @@
                 <tbody>
                     {% for vh in variable.vhistory.all %}
                     <tr>
-                        <td>{{forloop.counter}}</td><td>{{vh.file_name|cut_path_prefix:dirstostrip}}</td><td>{{vh.operation}}</td><td>{{vh.line_number}}</td>
+                        <td>{{forloop.counter}}</td><td>{{vh.file_name}}</td><td>{{vh.operation}}</td><td>{{vh.line_number}}</td>
                     </tr>
                     {%endfor%}
                 </tbody>
