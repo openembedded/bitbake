@@ -29,17 +29,18 @@
 {% endif %}
 <script>
   libtoaster.ctx = {
-    projectId : {{project.id|default:'undefined'}},
     jsUrl : "{% static 'js/' %}",
     htmlUrl : "{% static 'html/' %}",
     projectsUrl : "{% url 'all-projects' %}",
     {% if project.id %}
+      projectId : {{project.id}},
       projectPageUrl : {% url 'project' project.id as purl%}{{purl|json}},
       projectName : {{project.name|json}},
       projectTargetsUrl: {% url 'projectavailabletargets' project.id as paturl%}{{paturl|json}},
       projectBuildsUrl: {% url 'projectbuilds' project.id as pburl %}{{pburl|json}},
       projectId : {{project.id}},
     {% else %}
+      projectId : undefined,
       projectPageUrl : undefined,
       projectName : undefined,
       projectId : undefined,
@@ -101,8 +102,10 @@
                   <h3>New build</h3>
                   <h6>Project:</h6>
                   <span id="project">
-                    <a class="lead" href="{% if project.id %}{% url 'project' project.id %}{% endif %}">{{project.name}}</a>
-                    <i class="icon-pencil"></i>
+                    {% if project.id %}
+                      <a class="lead" href="{% url 'project' project.id %}">{{project.name}}</a>
+                      <i class="icon-pencil"></i>
+                    {% endif %}
                   </span>
                   <form id="change-project-form" style="display:none;">
                     <div class="input-append">
@@ -122,7 +125,7 @@
                     <form>
                       <input type="text" class="input-xlarge" id="build-target-input" placeholder="Type a recipe name" autocomplete="off" data-minLength="1" data-autocomplete="off" data-provide="typeahead" disabled/>
                       <div>
-                        <button class="btn btn-primary" id="build-button" data-project-id="{{project.id}}" disabled>Build</button>
+                        <button class="btn btn-primary" id="build-button" disabled>Build</button>
                       </div>
                     </form>
                   </li>

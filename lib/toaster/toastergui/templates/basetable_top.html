@@ -162,7 +162,7 @@
 <div class="navbar">
     <div class="navbar-inner">
         <form class="navbar-search input-append pull-left" id="searchform">
-            <input class="input-xxlarge" id="search" name="search" type="text" placeholder="Search {%if object_search_display %}{{object_search_display}}{%else%}{{objectname}}{%endif%}" value="{{request.GET.search}}"/>{% if request.GET.search %}<a href="javascript:$('#search').val('');searchform.submit()" class="add-on btn" tabindex="-1"><i class="icon-remove"></i></a>{%endif%}
+            <input class="input-xxlarge" id="search" name="search" type="text" placeholder="Search {%if object_search_display %}{{object_search_display}}{%else%}{{objectname}}{%endif%}" value="{%if request.GET.search %}{{request.GET.search}}{% endif %}"/>{% if request.GET.search %}<a href="javascript:$('#search').val('');searchform.submit()" class="add-on btn" tabindex="-1"><i class="icon-remove"></i></a>{%endif%}
             <input type="hidden" name="orderby" value="{{request.GET.orderby}}">
             <input type="hidden" name="page" value="1">
             <button class="btn" type="submit" value="Search">Search</button>
@@ -191,7 +191,12 @@
                                        onclick="showhideTableColumn(
                                            $(this).attr('id'),
                                            $(this).is(':checked'),
-                                           '{{i.orderkey}}' )"
+                                           {% if i.ordericon %}
+                                              '{{i.orderkey}}'
+                                           {% else %}
+                                              undefined
+                                           {% endif %}
+                                       )"
                                    {%else%}
                                        checked disabled
                                    {% endif %}/>   {{i.name}}
@@ -221,7 +226,7 @@
     <thead>
         <!-- Table header row; generated from "tablecols" entry in the context dict -->
         <tr>
-            {% for tc in tablecols %}<th class="{{tc.dclass}} {{tc.clclass}}">
+            {% for tc in tablecols %}<th class="{%if tc.dclass%}{{tc.dclass}}{%endif%} {% if tc.clclass %}{{tc.clclass}}{% endif %}">
                 {%if tc.qhelp%}<i class="icon-question-sign get-help" title="{{tc.qhelp}}"></i>{%endif%}
                 {%if tc.orderfield%}<a {%if tc.ordericon%} class="sorted" {%endif%}href="javascript:reload_params({'page': 1, 'orderby' : '{{tc.orderfield}}' })">{{tc.name}}</a>{%else%}<span class="muted">{{tc.name}}</span>{%endif%}
                 {%if tc.ordericon%} <i class="icon-caret-{{tc.ordericon}}"></i>{%endif%}
