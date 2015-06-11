@@ -74,8 +74,8 @@ def _project_recent_build_list(prj):
     for x in _get_latest_builds(prj):
         d = {
             "id":  x.pk,
-            "targets" : map(lambda y: {"target": y.target, "task": None }, x.target_set.all()), # TODO: create the task entry in the Target table
-            "status": x.get_outcome_display(),
+            "targets" : map(lambda y: {"target": y.target, "task": y.task }, x.target_set.all()), # TODO: create the task entry in the Target table
+            "status": x.get_current_status(),
             "errors": map(lambda y: {"type": y.lineno, "msg": y.message, "tb": y.pathname}, x.logmessage_set.filter(level__gte=LogMessage.WARNING)),
             "updated": x.completed_on.strftime('%s')+"000",
             "command_time": (x.completed_on - x.started_on).total_seconds(),

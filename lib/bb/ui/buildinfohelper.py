@@ -133,7 +133,21 @@ class ORMWrapper(object):
             logger.debug(1, "buildinfohelper: project is not specified, defaulting to %s" % prj)
 
 
-        build = Build.objects.create(
+        if buildrequest is not None:
+            build = buildrequest.build
+            build.machine=build_info['machine'],
+            build.distro=build_info['distro'],
+            build.distro_version=build_info['distro_version'],
+            build.completed_on=build_info['started_on'],
+            build.cooker_log_path=build_info['cooker_log_path'],
+            build.build_name=build_info['build_name'],
+            build.bitbake_version=build_info['bitbake_version']
+            build.save()
+
+            build.target_set.delete()
+
+        else:
+            build = Build.objects.create(
                                     project = prj,
                                     machine=build_info['machine'],
                                     distro=build_info['distro'],

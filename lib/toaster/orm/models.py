@@ -201,16 +201,32 @@ class Project(models.Model):
                 commit = l.layercommit.get_vcs_reference()
                 print("ii Building layer ", l.layercommit.layer.name, " at vcs point ", commit)
                 BRLayer.objects.create(req = br, name = l.layercommit.layer.name, giturl = l.layercommit.layer.vcs_url, commit = commit, dirpath = l.layercommit.dirpath)
+
+            br.state = BuildRequest.REQ_QUEUED
+            now = timezone.now()
+            br.build = Build.objects.create(project = self,
+                                completed_on=now,
+                                started_on=now,
+                                )
             for t in self.projecttarget_set.all():
                 BRTarget.objects.create(req = br, target = t.target, task = t.task)
+                Target.objects.create(build = br.build, target = t.target)
+
             for v in self.projectvariable_set.all():
                 BRVariable.objects.create(req = br, name = v.name, value = v.value)
 
-            br.state = BuildRequest.REQ_QUEUED
+
+            try:
+                br.build.machine = self.projectvariable_set.get(name = 'MACHINE').value
+                br.build.save()
+            except ProjectVariable.DoesNotExist:
+                pass
             br.save()
         except Exception as e:
             br.delete()
-            raise e
+            import sys
+            et, ei, tb = sys.exc_info()
+            raise type(e), e, tb
         return br
 
 class Build(models.Model):
@@ -250,7 +266,6 @@ class Build(models.Model):
         return completeper
 
     def eta(self):
-        from django.utils import timezone
         eta = timezone.now()
         completeper = self.completeper()
         if self.completeper() > 0:
@@ -265,6 +280,12 @@ class Build(models.Model):
     @property
     def toaster_exceptions(self):
         return self.logmessage_set.filter(level=LogMessage.EXCEPTION)
+
+
+    def get_current_status(self):
+        if self.outcome == Build.IN_PROGRESS and self.build_name == "":
+            return "Queued"
+        return self.get_outcome_display()
 
     def __str__(self):
         return "%d %s %s" % (self.id, self.project, ",".join([t.target for t in self.target_set.all()]))
@@ -299,6 +320,7 @@ class Target(models.Model):
     search_allowed_fields = ['target', 'file_name']
     build = models.ForeignKey(Build)
     target = models.CharField(max_length=100)
+    task = models.CharField(max_length=100, null=True)
     is_image = models.BooleanField(default = False)
     image_size = models.IntegerField(default=0)
     license_manifest_path = models.CharField(max_length=500, null=True)

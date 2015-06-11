@@ -114,7 +114,7 @@ vim: expandtab tabstop=2
 
   <script type="text/ng-template" id="target_display">
       <div data-ng-switch on="t.task.length">
-        <div data-ng-switch-when="0">{[t.target]}</div>
+        <div data-ng-switch-when="undefined">{[t.target]}</div>
         <div data-ng-switch-default>{[t.target]}:{[t.task]}</div>
       </div>
   </script>
@@ -145,13 +145,13 @@ vim: expandtab tabstop=2
 
   <a id="buildslist"></a>
   <h2 class="air" data-ng-if="builds.length">Latest builds</h2>
-  <div class="animate-repeat alert"  data-ng-repeat="b in builds track by b.id" data-ng-class="{'In Progress':'alert-info', 'Succeeded':'alert-success', 'Failed':'alert-error'}[b.status]">
+  <div class="animate-repeat alert"  data-ng-repeat="b in builds track by b.id" data-ng-class="{'Queued':'alert-info', 'In Progress':'alert-info', 'Succeeded':'alert-success', 'Failed':'alert-error'}[b.status]">
     <div class="row-fluid">
         <switch data-ng-switch="b.status">
 
           <case data-ng-switch-when="Failed">
             <div class="lead span3">
-              <a data-ng-class="{'succeeded': 'success', 'failed': 'error'}[b.status]" href="{[b.br_page_url]}">
+              <a data-ng-class="{'Succeeded': 'success', 'Failed': 'error'}[b.status]" href="{[b.br_page_url]}">
                 <span data-ng-repeat="t in b.targets" data-ng-include src="'target_display'"></span>
               </a>
             </div>
@@ -176,12 +176,19 @@ vim: expandtab tabstop=2
               <!-- we don't have warnings in this case -->
             </div>
             <div> <span class="lead">Build time: {[b.command_time|timediff]}</span>
-                <button class="btn pull-right" data-ng-class="{'succeeded':  'btn-success', 'failed': 'btn-danger'}[b.status]"
+                <button class="btn pull-right" data-ng-class="{'Succeeded':  'btn-success', 'Failed': 'btn-danger'}[b.status]"
                     data-ng-click="buildExistingTarget(b.targets)">Run again</button>
 
             </div>
           </case>
 
+          <case data-ng-switch-when="Queued">
+            <div class="lead span5"> <span data-ng-repeat="t in b.targets" data-ng-include src="'target_display'"></span>   </div>
+            <div class="span4 lead" >Build queued
+              <i title="This build will start as soon as a build server is available" class="icon-question-sign get-help get-help-blue heading-help" data-toggle="tooltip"></i>
+            </div>
+            <button class="btn pull-right btn-info" data-ng-click="buildCancel(b)">Cancel</button>
+          </case>
 
           <case data-ng-switch-when="In Progress">
             <switch data-ng-switch="b.build.length">

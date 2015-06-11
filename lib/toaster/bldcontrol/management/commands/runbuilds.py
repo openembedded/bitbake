@@ -1,6 +1,6 @@
 from django.core.management.base import NoArgsCommand, CommandError
 from django.db import transaction
-from orm.models import Build, ToasterSetting
+from orm.models import Build, ToasterSetting, LogMessage, Target
 from bldcontrol.bbcontroller import getBuildEnvironmentController, ShellCmdException, BuildSetupException
 from bldcontrol.models import BuildRequest, BuildEnvironment, BRError, BRVariable
 import os
@@ -109,6 +109,36 @@ class Command(NoArgsCommand):
         from datetime import timedelta
         # DISABLED environments locked for more than 30 seconds - they should be unlocked
         #BuildEnvironment.objects.filter(lock=BuildEnvironment.LOCK_LOCK).filter(updated__lt = timezone.now() - timedelta(seconds = 30)).update(lock = BuildEnvironment.LOCK_FREE)
+
+
+        # update all Builds that failed to start
+
+        for br in BuildRequest.objects.filter(state = BuildRequest.REQ_FAILED):
+            br.build.outcome = Build.FAILED
+            # transpose the launch errors in ToasterExceptions
+            for brerror in br.brerror_set.all():
+                LogMessage.objects.create(build = br.build, level = LogMessage.EXCEPTION, message = brerror.errmsg)
+            br.build.save()
+
+
+
+        # update all BuildRequests without a build created
+        for br in BuildRequest.objects.filter(build = None):
+            br.build = Build.objects.create(project = br.project, completed_on = br.updated, started_on = br.created)
+            br.build.outcome = Build.REQ_FAILED
+            try:
+                br.build.machine = br.brvariable_set.get(name='MACHINE').value
+            except BRVariable.DoesNotExist:
+                pass
+            br.save()
+            # transpose target information
+            for brtarget in br.brtarget_set.all():
+                Target.objects.create(build = br.build, target= brtarget.target)
+            # transpose the launch errors in ToasterExceptions
+            for brerror in br.brerror_set.all():
+                LogMessage.objects.create(build = br.build, level = LogMessage.EXCEPTION, message = brerror.errmsg)
+
+            br.build.save()
         pass
 
 
