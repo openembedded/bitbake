@@ -540,14 +540,12 @@ class DataSmart(MutableMapping):
     def appendVar(self, var, value, **loginfo):
         loginfo['op'] = 'append'
         self.varhistory.record(**loginfo)
-        newvalue = (self.getVar(var, False) or "") + value
-        self.setVar(var, newvalue, ignore=True)
+        self.setVar(var + "_append", value, ignore=True, parsing=True)
 
     def prependVar(self, var, value, **loginfo):
         loginfo['op'] = 'prepend'
         self.varhistory.record(**loginfo)
-        newvalue = value + (self.getVar(var, False) or "")
-        self.setVar(var, newvalue, ignore=True)
+        self.setVar(var + "_prepend", value, ignore=True, parsing=True)
 
     def delVar(self, var, **loginfo):
         loginfo['detail'] = ""
