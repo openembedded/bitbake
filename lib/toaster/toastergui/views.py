@@ -55,11 +55,23 @@ def landing(request):
 
     return render(request, 'landing.html', context)
 
-# returns a list for most recent builds; for use in the Project page, xhr_ updates,  and other places, as needed
+
+
+# returns a list for most recent builds;
+def _get_latest_builds(prj=None):
+    queryset = Build.objects.all()
+
+    if prj is not None:
+        queryset = queryset.filter(project = prj)
+
+    return itertools.chain(queryset.filter(outcome__lt=Build.IN_PROGRESS).order_by("-pk")[:3], queryset.filter(outcome=Build.IN_PROGRESS).order_by("-pk"))
+
+
+# a JSON-able dict of recent builds; for use in the Project page, xhr_ updates,  and other places, as needed
 def _project_recent_build_list(prj):
     data = []
     # take the most recent 3 completed builds, plus any builds in progress
-    for x in itertools.chain(prj.build_set.filter(outcome__lt=Build.IN_PROGRESS).order_by("-pk")[:3], prj.build_set.filter(outcome=Build.IN_PROGRESS).order_by("-pk")):
+    for x in _get_latest_builds(prj):
         d = {
             "id":  x.pk,
             "targets" : map(lambda y: {"target": y.target, "task": None }, x.target_set.all()), # TODO: create the task entry in the Target table
@@ -1866,10 +1878,10 @@ if True:
         # be able to display something.  'count' and 'page' are mandatory for all views
         # that use paginators.
 
-        buildrequests = BuildRequest.objects.exclude(state__lte = BuildRequest.REQ_INPROGRESS).exclude(state=BuildRequest.REQ_DELETED)
+        queryset = Build.objects.filter(outcome__lte = Build.IN_PROGRESS)
 
         try:
-            context, pagesize, orderby = _build_list_helper(request, buildrequests, True)
+            context, pagesize, orderby = _build_list_helper(request, queryset)
         except InvalidRequestException as e:
             raise RedirectException( builds, request.GET, e.response)
 
@@ -1878,66 +1890,37 @@ if True:
 
 
     # helper function, to be used on "all builds" and "project builds" pages
-    def _build_list_helper(request, buildrequests, insert_projects):
-        # ATTN: we use here the ordering parameters for interactive mode; the translation for BuildRequest fields will happen below
+    def _build_list_helper(request, queryset_all):
+
         default_orderby = 'completed_on:-'
         (pagesize, orderby) = _get_parameters_values(request, 10, default_orderby)
         mandatory_parameters = { 'count': pagesize,  'page' : 1, 'orderby' : orderby }
         retval = _verify_parameters( request.GET, mandatory_parameters )
         if retval:
-            raise InvalidRequestException(mandatory_parameters)
-
-        orig_orderby = orderby
-        # translate interactive mode ordering to managed mode ordering
-        ordering_params = orderby.split(":")
-        if ordering_params[0] == "completed_on":
-            ordering_params[0] = "updated"
-        if ordering_params[0] == "started_on":
-            ordering_params[0] = "created"
-        if ordering_params[0] == "errors_no":
-            ordering_params[0] = "build__errors_no"
-        if ordering_params[0] == "warnings_no":
-            ordering_params[0] = "build__warnings_no"
-        if ordering_params[0] == "machine":
-            ordering_params[0] = "build__machine"
-        if ordering_params[0] == "target__target":
-            ordering_params[0] = "brtarget__target"
-        if ordering_params[0] == "timespent":
-            ordering_params[0] = "id"
-            orderby = default_orderby
-
-        request.GET = request.GET.copy()        # get a mutable copy of the GET QueryDict
-        request.GET['orderby'] = ":".join(ordering_params)
+            raise RedirectException( 'all-builds', request.GET, mandatory_parameters)
 
         # boilerplate code that takes a request for an object type and returns a queryset
         # for that object type. copypasta for all needed table searches
-        (filter_string, search_term, ordering_string) = _search_tuple(request, BuildRequest)
+        (filter_string, search_term, ordering_string) = _search_tuple(request, Build)
         # post-process any date range filters
         filter_string,daterange_selected = _modify_date_range_filter(filter_string)
-
-        # we don't display in-progress or deleted builds
-        queryset_all = buildrequests.exclude(state = BuildRequest.REQ_DELETED)
-        queryset_all = queryset_all.select_related("build", "build__project").annotate(Count('brerror'))
-        queryset_with_search = _get_queryset(BuildRequest, queryset_all, filter_string, search_term, ordering_string, '-updated')
-
+        queryset_all = queryset_all.select_related("project")
+        queryset_with_search = _get_queryset(Build, queryset_all, None, search_term, ordering_string, '-completed_on')
+        queryset = _get_queryset(Build, queryset_all, filter_string, search_term, ordering_string, '-completed_on')
 
         # retrieve the objects that will be displayed in the table; builds a paginator and gets a page range to display
-        build_info = _build_page_range(Paginator(queryset_with_search, pagesize), request.GET.get('page', 1))
+        build_info = _build_page_range(Paginator(queryset, pagesize), request.GET.get('page', 1))
 
         # build view-specific information; this is rendered specifically in the builds page, at the top of the page (i.e. Recent builds)
-        # most recent build is like projects' most recent builds, but across all projects
-        build_mru = _managed_get_latest_builds()
+        build_mru = Build.objects.order_by("-started_on")[:3]
 
+        # calculate the exact begining of local today and yesterday, append context
+        context_date,today_begin,yesterday_begin = _add_daterange_context(queryset_all, request, {'started_on','completed_on'})
+
+        # set up list of fstypes for each build
         fstypes_map = {};
-        for build_request in build_info:
-            # set display variables for build request
-            build_request.machine = build_request.brvariable_set.get(name="MACHINE").value
-            build_request.timespent = build_request.updated - build_request.created
-
-            # set up list of fstypes for each build
-            if build_request.build is None:
-                continue
-            targets = Target.objects.filter( build_id = build_request.build.id )
+        for build in build_info:
+            targets = Target.objects.filter( build_id = build.id )
             comma = "";
             extensions = "";
             for t in targets:
@@ -1951,8 +1934,7 @@ if True:
                     if None == re.search(s,extensions):
                         extensions += comma + s
                         comma = ", "
-            fstypes_map[build_request.build.id]=extensions
-
+            fstypes_map[build.id]=extensions
 
         # send the data to the template
         context = {
@@ -1961,7 +1943,7 @@ if True:
                 # TODO: common objects for all table views, adapt as needed
                     'objects' : build_info,
                     'objectname' : "builds",
-                    'default_orderby' : 'updated:-',
+                    'default_orderby' : default_orderby,
                     'fstypes' : fstypes_map,
                     'search_term' : search_term,
                     'total_count' : queryset_with_search.count(),
@@ -1971,150 +1953,136 @@ if True:
                     {'name': 'Outcome',                                                # column with a single filter
                      'qhelp' : "The outcome tells you if a build successfully completed or failed",     # the help button content
                      'dclass' : "span2",                                                # indication about column width; comes from the design
-                     'orderfield': _get_toggle_order(request, "state"),               # adds ordering by the field value; default ascending unless clicked from ascending into descending
-                     'ordericon':_get_toggle_order_icon(request, "state"),
+                     'orderfield': _get_toggle_order(request, "outcome"),               # adds ordering by the field value; default ascending unless clicked from ascending into descending
+                     'ordericon':_get_toggle_order_icon(request, "outcome"),
                       # filter field will set a filter on that column with the specs in the filter description
                       # the class field in the filter has no relation with clclass; the control different aspects of the UI
                       # still, it is recommended for the values to be identical for easy tracking in the generated HTML
                      'filter' : {'class' : 'outcome',
                                  'label': 'Show:',
                                  'options' : [
-                                             ('Successful builds', 'build__outcome:' + str(Build.SUCCEEDED), queryset_all.filter(build__outcome = Build.SUCCEEDED).count()),  # this is the field search expression
-                                             ('Failed builds', 'build__outcome:NOT'+ str(Build.SUCCEEDED), queryset_all.exclude(build__outcome = Build.SUCCEEDED).count()),
+                                             ('Successful builds', 'outcome:' + str(Build.SUCCEEDED), queryset_with_search.filter(outcome=str(Build.SUCCEEDED)).count()),  # this is the field search expression
+                                             ('Failed builds', 'outcome:'+ str(Build.FAILED), queryset_with_search.filter(outcome=str(Build.FAILED)).count()),
                                              ]
                                 }
                     },
                     {'name': 'Recipe',                                                 # default column, disabled box, with just the name in the list
                      'qhelp': "What you built (i.e. one or more recipes or image recipes)",
-                     'orderfield': _get_toggle_order(request, "brtarget__target"),
-                     'ordericon':_get_toggle_order_icon(request, "brtarget__target"),
+                     'orderfield': _get_toggle_order(request, "target__target"),
+                     'ordericon':_get_toggle_order_icon(request, "target__target"),
                     },
                     {'name': 'Machine',
                      'qhelp': "The machine is the hardware for which you are building a recipe or image recipe",
-                     'orderfield': _get_toggle_order(request, "build__machine"),
-                     'ordericon':_get_toggle_order_icon(request, "build__machine"),
+                     'orderfield': _get_toggle_order(request, "machine"),
+                     'ordericon':_get_toggle_order_icon(request, "machine"),
                      'dclass': 'span3'
                     },                           # a slightly wider column
-                    ]
-                }
-
-        if (insert_projects):
-            context['tablecols'].append(
-                    {'name': 'Project', 'clclass': 'project_column',
-                    }
-            )
-
-        # calculate the exact begining of local today and yesterday
-        context_date,today_begin,yesterday_begin = _add_daterange_context(queryset_all, request, {'created','updated'})
-        context.update(context_date)
-
-        context['tablecols'].append(
                     {'name': 'Started on', 'clclass': 'started_on', 'hidden' : 1,      # this is an unchecked box, which hides the column
                      'qhelp': "The date and time you started the build",
-                     'orderfield': _get_toggle_order(request, "created", True),
-                     'ordericon':_get_toggle_order_icon(request, "created"),
-                     'filter' : {'class' : 'created',
+                     'orderfield': _get_toggle_order(request, "started_on", True),
+                     'ordericon':_get_toggle_order_icon(request, "started_on"),
+                     'orderkey' : "started_on",
+                     'filter' : {'class' : 'started_on',
                                  'label': 'Show:',
                                  'options' : [
-                                             ("Today's builds" , 'created__gte:'+today_begin.strftime("%Y-%m-%d"), queryset_all.filter(created__gte=today_begin).count()),
+                                             ("Today's builds" , 'started_on__gte:'+today_begin.strftime("%Y-%m-%d"), queryset_all.filter(started_on__gte=today_begin).count()),
                                              ("Yesterday's builds",
-                                                 'created__gte!created__lt:'
+                                                 'started_on__gte!started_on__lt:'
                                                      +yesterday_begin.strftime("%Y-%m-%d")+'!'
                                                      +today_begin.strftime("%Y-%m-%d"),
                                                  queryset_all.filter(
-                                                     created__gte=yesterday_begin,
-                                                     created__lt=today_begin
+                                                     started_on__gte=yesterday_begin,
+                                                     started_on__lt=today_begin
                                                      ).count()),
-                                             ("Build date range", 'daterange', 1, '', 'created'),
+                                             ("Build date range", 'daterange', 1, '', 'started_on'),
                                              ]
                                 }
-                    }
-            )
-        context['tablecols'].append(
+                     },
                     {'name': 'Completed on',
                      'qhelp': "The date and time the build finished",
-                     'orderfield': _get_toggle_order(request, "updated", True),
-                     'ordericon':_get_toggle_order_icon(request, "updated"),
-                     'orderkey' : 'updated',
-                     'filter' : {'class' : 'updated',
+                     'orderfield': _get_toggle_order(request, "completed_on", True),
+                     'ordericon':_get_toggle_order_icon(request, "completed_on"),
+                     'orderkey' : 'completed_on',
+                     'filter' : {'class' : 'completed_on',
                                  'label': 'Show:',
                                  'options' : [
-                                             ("Today's builds" , 'updated__gte:'+today_begin.strftime("%Y-%m-%d"), queryset_all.filter(updated__gte=today_begin).count()),
+                                             ("Today's builds" , 'completed_on__gte:'+today_begin.strftime("%Y-%m-%d"), queryset_all.filter(completed_on__gte=today_begin).count()),
                                              ("Yesterday's builds",
-                                                 'updated__gte!updated__lt:'
+                                                 'completed_on__gte!completed_on__lt:'
                                                      +yesterday_begin.strftime("%Y-%m-%d")+'!'
                                                      +today_begin.strftime("%Y-%m-%d"),
                                                  queryset_all.filter(
-                                                     updated__gte=yesterday_begin,
-                                                     updated__lt=today_begin
+                                                     completed_on__gte=yesterday_begin,
+                                                     completed_on__lt=today_begin
                                                      ).count()),
-                                             ("Build date range", 'daterange', 1, '', 'updated'),
+                                             ("Build date range", 'daterange', 1, '', 'completed_on'),
                                              ]
                                 }
-                    }
-            )
-        context['tablecols'].append(
+                    },
                     {'name': 'Failed tasks', 'clclass': 'failed_tasks',                # specifing a clclass will enable the checkbox
                      'qhelp': "How many tasks failed during the build",
                      'filter' : {'class' : 'failed_tasks',
                                  'label': 'Show:',
                                  'options' : [
-                                             ('Builds with failed tasks', 'build__task_build__outcome:%d' % Task.OUTCOME_FAILED,
-                                                queryset_all.filter(build__task_build__outcome=Task.OUTCOME_FAILED).count()),
-                                             ('Builds without failed tasks', 'build__task_build__outcome:%d' % Task.OUTCOME_FAILED,
-                                                queryset_all.filter(~Q(build__task_build__outcome=Task.OUTCOME_FAILED)).count()),
+                                             ('Builds with failed tasks', 'task_build__outcome:4', queryset_with_search.filter(task_build__outcome=4).count()),
+                                             ('Builds without failed tasks', 'task_build__outcome:NOT4', queryset_with_search.filter(~Q(task_build__outcome=4)).count()),
                                              ]
                                 }
-                    }
-            )
-        context['tablecols'].append(
+                    },
                     {'name': 'Errors', 'clclass': 'errors_no',
                      'qhelp': "How many errors were encountered during the build (if any)",
-                     'orderfield': _get_toggle_order(request, "build__errors_no", True),
-                     'ordericon':_get_toggle_order_icon(request, "build__errors_no"),
+                     'orderfield': _get_toggle_order(request, "errors_no", True),
+                     'ordericon':_get_toggle_order_icon(request, "errors_no"),
                      'orderkey' : 'errors_no',
                      'filter' : {'class' : 'errors_no',
                                  'label': 'Show:',
                                  'options' : [
-                                             ('Builds with errors', 'build|build__errors_no__gt:None|0',
-                                                queryset_all.filter(Q(build=None) | Q(build__errors_no__gt=0)).count()),
-                                             ('Builds without errors', 'build__errors_no:0',
-                                                queryset_all.filter(build__errors_no=0).count()),
+                                             ('Builds with errors', 'errors_no__gte:1', queryset_with_search.filter(errors_no__gte=1).count()),
+                                             ('Builds without errors', 'errors_no:0', queryset_with_search.filter(errors_no=0).count()),
                                              ]
                                 }
-                    }
-            )
-        context['tablecols'].append(
+                    },
                     {'name': 'Warnings', 'clclass': 'warnings_no',
                      'qhelp': "How many warnings were encountered during the build (if any)",
-                     'orderfield': _get_toggle_order(request, "build__warnings_no", True),
-                     'ordericon':_get_toggle_order_icon(request, "build__warnings_no"),
-                     'orderkey' : 'build__warnings_no',
-                     'filter' : {'class' : 'build__warnings_no',
+                     'orderfield': _get_toggle_order(request, "warnings_no", True),
+                     'ordericon':_get_toggle_order_icon(request, "warnings_no"),
+                     'orderkey' : 'warnings_no',
+                     'filter' : {'class' : 'warnings_no',
                                  'label': 'Show:',
                                  'options' : [
-                                             ('Builds with warnings','build__warnings_no__gte:1', queryset_all.filter(build__warnings_no__gte=1).count()),
-                                             ('Builds without warnings','build__warnings_no:0', queryset_all.filter(build__warnings_no=0).count()),
+                                             ('Builds with warnings','warnings_no__gte:1', queryset_with_search.filter(warnings_no__gte=1).count()),
+                                             ('Builds without warnings','warnings_no:0', queryset_with_search.filter(warnings_no=0).count()),
                                              ]
                                 }
-                    }
-            )
-        context['tablecols'].append(
+                    },
+                    {'name': 'Log',
+                     'dclass': "span4",
+                     'qhelp': "Path to the build main log file",
+                     'clclass': 'log', 'hidden': 1,
+                     'orderfield': _get_toggle_order(request, "cooker_log_path"),
+                     'ordericon':_get_toggle_order_icon(request, "cooker_log_path"),
+                     'orderkey' : 'cooker_log_path',
+                    },
                     {'name': 'Time', 'clclass': 'time', 'hidden' : 1,
                      'qhelp': "How long it took the build to finish",
-#                    'orderfield': _get_toggle_order(request, "timespent", True),
-#                    'ordericon':_get_toggle_order_icon(request, "timespent"),
+                     'orderfield': _get_toggle_order(request, "timespent", True),
+                     'ordericon':_get_toggle_order_icon(request, "timespent"),
                      'orderkey' : 'timespent',
-                    }
-            )
-        context['tablecols'].append(
+                    },
                     {'name': 'Image files', 'clclass': 'output',
                      'qhelp': "The root file system types produced by the build. You can find them in your <code>/build/tmp/deploy/images/</code> directory",
                         # TODO: compute image fstypes from Target_Image_File
+                    },
+                    {'name': 'Project', 'clcalss': 'project_column',
                     }
-            )
+                    ]
+                }
 
+        # merge daterange values
+        context.update(context_date)
         return context, pagesize, orderby
+
+
 
     # new project
     def newproject(request):
@@ -2236,7 +2204,7 @@ if True:
             "lvs_nos" : Layer_Version.objects.all().count(),
             "completedbuilds": Build.objects.filter(project_id = pid).filter(outcome__lte = Build.IN_PROGRESS),
             "prj" : {"name": prj.name, },
-            #"buildrequests" : prj.buildrequest_set.filter(state=BuildRequest.REQ_QUEUED),
+            "buildrequests" : prj.build_set.filter(outcome=Build.IN_PROGRESS),
             "builds" : _project_recent_build_list(prj),
             "layers" :  map(lambda x: {
                         "id": x.layercommit.pk,
@@ -2607,9 +2575,10 @@ if True:
 
     @_template_renderer('projectbuilds.html')
     def projectbuilds(request, pid):
-        # process any build request
         prj = Project.objects.get(id = pid)
+
         if request.method == "POST":
+            # process any build request
 
             if 'buildCancel' in request.POST:
                 for i in request.POST['buildCancel'].strip().split(" "):
@@ -2641,10 +2610,10 @@ if True:
                 br = prj.schedule_build()
 
 
-        buildrequests = BuildRequest.objects.filter(project = prj).exclude(state__lte = BuildRequest.REQ_INPROGRESS).exclude(state=BuildRequest.REQ_DELETED)
+        queryset = Build.objects.filter(outcome__lte = Build.IN_PROGRESS)
 
         try:
-            context, pagesize, orderby = _build_list_helper(request, buildrequests, False)
+            context, pagesize, orderby = _build_list_helper(request, queryset)
         except InvalidRequestException as e:
             raise RedirectException('projectbuilds', request.GET, e.response, pid = pid)
 
@@ -2759,12 +2728,6 @@ if True:
             }
             return render(request, "unavailable_artifact.html", context)
 
-    # This returns the mru object that is needed for the
-    # managed_mrb_section.html template
-    def _managed_get_latest_builds():
-        build_mru = BuildRequest.objects.all()
-        build_mru = list(build_mru.filter(Q(state__lt=BuildRequest.REQ_COMPLETED) or Q(state=BuildRequest.REQ_DELETED)).order_by("-pk")) + list(build_mru.filter(state__in=[BuildRequest.REQ_COMPLETED, BuildRequest.REQ_FAILED]).order_by("-pk")[:3])
-        return build_mru
 
 
 
@@ -2796,7 +2759,7 @@ if True:
             p.projectTargetsUrl = reverse('projectavailabletargets', args=(p.id,))
 
         # build view-specific information; this is rendered specifically in the builds page, at the top of the page (i.e. Recent builds)
-        build_mru = _managed_get_latest_builds()
+        build_mru = _get_latest_builds()
 
         # translate the project's build target strings
         fstypes_map = {};
@@ -2878,202 +2841,8 @@ if True:
         return context
 
     @_template_renderer("buildrequestdetails.html")
-    def buildrequestdetails(request, pid, brid):
+    def buildrequestdetails(request, pid, bid):
         context = {
-            'buildrequest' : BuildRequest.objects.get(pk = brid, project_id = pid)
+            'buildrequest' : Build.objects.get(pk = bid, project_id = pid).buildrequest
         }
-        return context
-
-
-    @_template_renderer('builds.html')
-    def builds_old(request):
-        # define here what parameters the view needs in the GET portion in order to
-        # be able to display something.  'count' and 'page' are mandatory for all views
-        # that use paginators.
-        (pagesize, orderby) = _get_parameters_values(request, 10, 'completed_on:-')
-        mandatory_parameters = { 'count': pagesize,  'page' : 1, 'orderby' : orderby }
-        retval = _verify_parameters( request.GET, mandatory_parameters )
-        if retval:
-            raise RedirectException( 'all-builds', request.GET, mandatory_parameters)
-
-        # boilerplate code that takes a request for an object type and returns a queryset
-        # for that object type. copypasta for all needed table searches
-        (filter_string, search_term, ordering_string) = _search_tuple(request, Build)
-        # post-process any date range filters
-        filter_string,daterange_selected = _modify_date_range_filter(filter_string)
-        queryset_all = Build.objects.exclude(outcome = Build.IN_PROGRESS)
-        queryset_with_search = _get_queryset(Build, queryset_all, None, search_term, ordering_string, '-completed_on')
-        queryset = _get_queryset(Build, queryset_all, filter_string, search_term, ordering_string, '-completed_on')
-
-        # retrieve the objects that will be displayed in the table; builds a paginator and gets a page range to display
-        build_info = _build_page_range(Paginator(queryset, pagesize), request.GET.get('page', 1))
-
-        # build view-specific information; this is rendered specifically in the builds page, at the top of the page (i.e. Recent builds)
-        build_mru = Build.objects.order_by("-started_on")[:3]
-
-        # calculate the exact begining of local today and yesterday, append context
-        context_date,today_begin,yesterday_begin = _add_daterange_context(queryset_all, request, {'started_on','completed_on'})
-
-        # set up list of fstypes for each build
-        fstypes_map = {};
-        for build in build_info:
-            targets = Target.objects.filter( build_id = build.id )
-            comma = "";
-            extensions = "";
-            for t in targets:
-                if ( not t.is_image ):
-                    continue
-                tif = Target_Image_File.objects.filter( target_id = t.id )
-                for i in tif:
-                    s=re.sub('.*tar.bz2', 'tar.bz2', i.file_name)
-                    if s == i.file_name:
-                        s=re.sub('.*\.', '', i.file_name)
-                    if None == re.search(s,extensions):
-                        extensions += comma + s
-                        comma = ", "
-            fstypes_map[build.id]=extensions
-
-        # send the data to the template
-        context = {
-                # specific info for
-                    'mru' : build_mru,
-                # TODO: common objects for all table views, adapt as needed
-                    'objects' : build_info,
-                    'objectname' : "builds",
-                    'default_orderby' : 'completed_on:-',
-                    'fstypes' : fstypes_map,
-                    'search_term' : search_term,
-                    'total_count' : queryset_with_search.count(),
-                    'daterange_selected' : daterange_selected,
-                # Specifies the display of columns for the table, appearance in "Edit columns" box, toggling default show/hide, and specifying filters for columns
-                    'tablecols' : [
-                    {'name': 'Outcome',                                                # column with a single filter
-                     'qhelp' : "The outcome tells you if a build successfully completed or failed",     # the help button content
-                     'dclass' : "span2",                                                # indication about column width; comes from the design
-                     'orderfield': _get_toggle_order(request, "outcome"),               # adds ordering by the field value; default ascending unless clicked from ascending into descending
-                     'ordericon':_get_toggle_order_icon(request, "outcome"),
-                      # filter field will set a filter on that column with the specs in the filter description
-                      # the class field in the filter has no relation with clclass; the control different aspects of the UI
-                      # still, it is recommended for the values to be identical for easy tracking in the generated HTML
-                     'filter' : {'class' : 'outcome',
-                                 'label': 'Show:',
-                                 'options' : [
-                                             ('Successful builds', 'outcome:' + str(Build.SUCCEEDED), queryset_with_search.filter(outcome=str(Build.SUCCEEDED)).count()),  # this is the field search expression
-                                             ('Failed builds', 'outcome:'+ str(Build.FAILED), queryset_with_search.filter(outcome=str(Build.FAILED)).count()),
-                                             ]
-                                }
-                    },
-                    {'name': 'Recipe',                                                 # default column, disabled box, with just the name in the list
-                     'qhelp': "What you built (i.e. one or more recipes or image recipes)",
-                     'orderfield': _get_toggle_order(request, "target__target"),
-                     'ordericon':_get_toggle_order_icon(request, "target__target"),
-                    },
-                    {'name': 'Machine',
-                     'qhelp': "The machine is the hardware for which you are building a recipe or image recipe",
-                     'orderfield': _get_toggle_order(request, "machine"),
-                     'ordericon':_get_toggle_order_icon(request, "machine"),
-                     'dclass': 'span3'
-                    },                           # a slightly wider column
-                    {'name': 'Started on', 'clclass': 'started_on', 'hidden' : 1,      # this is an unchecked box, which hides the column
-                     'qhelp': "The date and time you started the build",
-                     'orderfield': _get_toggle_order(request, "started_on", True),
-                     'ordericon':_get_toggle_order_icon(request, "started_on"),
-                     'filter' : {'class' : 'started_on',
-                                 'label': 'Show:',
-                                 'options' : [
-                                             ("Today's builds" , 'started_on__gte:'+today_begin.strftime("%Y-%m-%d"), queryset_all.filter(started_on__gte=today_begin).count()),
-                                             ("Yesterday's builds",
-                                                 'started_on__gte!started_on__lt:'
-                                                     +yesterday_begin.strftime("%Y-%m-%d")+'!'
-                                                     +today_begin.strftime("%Y-%m-%d"),
-                                                 queryset_all.filter(
-                                                     started_on__gte=yesterday_begin,
-                                                     started_on__lt=today_begin
-                                                     ).count()),
-                                             ("Build date range", 'daterange', 1, '', 'started_on'),
-                                             ]
-                                }
-                     },
-                    {'name': 'Completed on',
-                     'qhelp': "The date and time the build finished",
-                     'orderfield': _get_toggle_order(request, "completed_on", True),
-                     'ordericon':_get_toggle_order_icon(request, "completed_on"),
-                     'orderkey' : 'completed_on',
-                     'filter' : {'class' : 'completed_on',
-                                 'label': 'Show:',
-                                 'options' : [
-                                             ("Today's builds" , 'completed_on__gte:'+today_begin.strftime("%Y-%m-%d"), queryset_all.filter(completed_on__gte=today_begin).count()),
-                                             ("Yesterday's builds",
-                                                 'completed_on__gte!completed_on__lt:'
-                                                     +yesterday_begin.strftime("%Y-%m-%d")+'!'
-                                                     +today_begin.strftime("%Y-%m-%d"),
-                                                 queryset_all.filter(
-                                                     completed_on__gte=yesterday_begin,
-                                                     completed_on__lt=today_begin
-                                                     ).count()),
-                                             ("Build date range", 'daterange', 1, '', 'completed_on'),
-                                             ]
-                                }
-                    },
-                    {'name': 'Failed tasks', 'clclass': 'failed_tasks',                # specifing a clclass will enable the checkbox
-                     'qhelp': "How many tasks failed during the build",
-                     'filter' : {'class' : 'failed_tasks',
-                                 'label': 'Show:',
-                                 'options' : [
-                                             ('Builds with failed tasks', 'task_build__outcome:4', queryset_with_search.filter(task_build__outcome=4).count()),
-                                             ('Builds without failed tasks', 'task_build__outcome:NOT4', queryset_with_search.filter(~Q(task_build__outcome=4)).count()),
-                                             ]
-                                }
-                    },
-                    {'name': 'Errors', 'clclass': 'errors_no',
-                     'qhelp': "How many errors were encountered during the build (if any)",
-                     'orderfield': _get_toggle_order(request, "errors_no", True),
-                     'ordericon':_get_toggle_order_icon(request, "errors_no"),
-                     'orderkey' : 'errors_no',
-                     'filter' : {'class' : 'errors_no',
-                                 'label': 'Show:',
-                                 'options' : [
-                                             ('Builds with errors', 'errors_no__gte:1', queryset_with_search.filter(errors_no__gte=1).count()),
-                                             ('Builds without errors', 'errors_no:0', queryset_with_search.filter(errors_no=0).count()),
-                                             ]
-                                }
-                    },
-                    {'name': 'Warnings', 'clclass': 'warnings_no',
-                     'qhelp': "How many warnings were encountered during the build (if any)",
-                     'orderfield': _get_toggle_order(request, "warnings_no", True),
-                     'ordericon':_get_toggle_order_icon(request, "warnings_no"),
-                     'orderkey' : 'warnings_no',
-                     'filter' : {'class' : 'warnings_no',
-                                 'label': 'Show:',
-                                 'options' : [
-                                             ('Builds with warnings','warnings_no__gte:1', queryset_with_search.filter(warnings_no__gte=1).count()),
-                                             ('Builds without warnings','warnings_no:0', queryset_with_search.filter(warnings_no=0).count()),
-                                             ]
-                                }
-                    },
-                    {'name': 'Log',
-                     'dclass': "span4",
-                     'qhelp': "Path to the build main log file",
-                     'clclass': 'log', 'hidden': 1,
-                     'orderfield': _get_toggle_order(request, "cooker_log_path"),
-                     'ordericon':_get_toggle_order_icon(request, "cooker_log_path"),
-                     'orderkey' : 'cooker_log_path',
-                    },
-                    {'name': 'Time', 'clclass': 'time', 'hidden' : 1,
-                     'qhelp': "How long it took the build to finish",
-                     'orderfield': _get_toggle_order(request, "timespent", True),
-                     'ordericon':_get_toggle_order_icon(request, "timespent"),
-                     'orderkey' : 'timespent',
-                    },
-                    {'name': 'Image files', 'clclass': 'output',
-                     'qhelp': "The root file system types produced by the build. You can find them in your <code>/build/tmp/deploy/images/</code> directory",
-                        # TODO: compute image fstypes from Target_Image_File
-                    },
-                    ]
-                }
-
-        # merge daterange values
-        context.update(context_date)
-        _set_parameters_values(pagesize, orderby, request)
-
         return context

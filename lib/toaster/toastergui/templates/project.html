@@ -124,7 +124,7 @@ vim: expandtab tabstop=2
   <div class="well">
     <form class="build-form" data-ng-submit="buildNamedTarget()">
       <div class="input-append controls">
-        <input type="text" class="huge input-xxlarge" placeholder="Type the recipe(s) you want to build" autocomplete="off" data-ng-model="targetName" data-typeahead="a.name for a in getRecipesAutocompleteSuggestions($viewValue)" data-typeahead-template-url="recipes_suggestion_details" data-ng-disabled="!layers.length"/>
+        <input type="text" class="huge input-xxlarge" placeholder="Type the recipe(s) you want to build" autocomplete="off" data-ng-model="targetName" data-typeahead="a.name for a in getRecipesAutocompleteSuggestions($viewValue)" data-typeahead-template-url="recipes_suggestion_details" data-ng-disabled="!project.release || !layers.length"/>
         <button type="submit" class="btn btn-large btn-primary" data-ng-disabled="!targetName.length">
         Build
         </button>
@@ -145,11 +145,11 @@ vim: expandtab tabstop=2
 
   <a id="buildslist"></a>
   <h2 class="air" data-ng-if="builds.length">Latest builds</h2>
-  <div class="animate-repeat alert"  data-ng-repeat="b in builds track by b.id" data-ng-class="{'queued':'alert-info', 'deleted':'alert-info', 'in progress': 'alert-info', 'failed':'alert-error', 'completed':{'In Progress':'alert-info', 'Succeeded':'alert-success', 'Failed':'alert-error'}[b.build[0].status]}[b.status]">
+  <div class="animate-repeat alert"  data-ng-repeat="b in builds track by b.id" data-ng-class="{'In Progress':'alert-info', 'Succeeded':'alert-success', 'Failed':'alert-error'}[b.status]">
     <div class="row-fluid">
         <switch data-ng-switch="b.status">
 
-          <case data-ng-switch-when="failed">
+          <case data-ng-switch-when="Failed">
             <div class="lead span3">
               <a data-ng-class="{'succeeded': 'success', 'failed': 'error'}[b.status]" href="{[b.br_page_url]}">
                 <span data-ng-repeat="t in b.targets" data-ng-include src="'target_display'"></span>
@@ -182,32 +182,8 @@ vim: expandtab tabstop=2
             </div>
           </case>
 
-          <case data-ng-switch-when="queued">
-            <div class="lead span5"> <span data-ng-repeat="t in b.targets" data-ng-include src="'target_display'"></span>   </div>
-            <div class="span4 lead" >Build queued
-              <i title="This build will start as soon as a build server is available" class="icon-question-sign get-help get-help-blue heading-help" data-toggle="tooltip"></i>
-            </div>
-            <button class="btn pull-right btn-info" data-ng-click="buildCancel(b)">Cancel</button>
-          </case>
 
-          <case data-ng-switch-when="created">
-            <div class="lead span5"> <span data-ng-repeat="t in b.targets" data-ng-include src="'target_display'"></span>   </div>
-            <div class="span4">
-              <span class="lead">Creating build</span>
-            </div>
-            <button class="btn pull-right btn-info" data-ng-click="buildCancel(b)">Cancel</button>
-          </case>
-
-          <case data-ng-switch-when="deleted">
-            <div class="lead span5"> <span data-ng-repeat="t in b.targets" data-ng-include src="'target_display'"></span>   </div>
-            <div class="span4" id="{[b.id]}-deleted" >
-              <span class="lead">Build cancelled</span>
-            </div>
-            <button class="btn pull-right btn-info" data-ng-click="buildDelete(b)">Close</button>
-          </case>
-
-
-          <case data-ng-switch-when="in progress">
+          <case data-ng-switch-when="In Progress">
             <switch data-ng-switch="b.build.length">
               <case data-ng-switch-when="0">
                 <div class="lead span5"> <span data-ng-repeat="t in b.targets" data-ng-include src="'target_display'"></span>   </div>
@@ -227,7 +203,7 @@ vim: expandtab tabstop=2
           </case>
 
 
-          <case data-ng-switch-when="completed">
+          <case data-ng-switch-when="Succeeded">
             <div class="lead span3">
               <a data-ng-class="{'Succeeded': 'success', 'Failed': 'error'}[b.build[0].status]" href="{[b.build[0].build_page_url]}">
                 <span data-ng-repeat="t in b.targets" data-ng-include src="'target_display'"></span>
@@ -293,7 +269,7 @@ vim: expandtab tabstop=2
         Layers <span class="muted counter">({[layers.length]})</span>
         <i class="icon-question-sign get-help heading-help" title="Bitbake reads metadata files from modules called 'layers'. Layers allow you to isolate different types of customizations from each other. <a href='http://www.yoctoproject.org/docs/current/dev-manual/dev-manual.html#understanding-and-creating-layers' target='_blank'>More on layers</a>"></i>
       </h3>
-      <div class="alert" data-ng-if="!layers.length">
+      <div class="alert" data-ng-if="project.release && !layers.length">
         <b>You need to add some layers </b>
         <p>
         You can:
@@ -307,7 +283,7 @@ vim: expandtab tabstop=2
       </div>
       <form data-ng-submit="layerAdd()">
         <div class="input-append">
-          <input type="text" class="input-xlarge" id="layer" autocomplete="off" placeholder="Type a layer name" data-minLength="1" data-ng-model="layerAddName" data-typeahead="e for e in getLayersAutocompleteSuggestions($viewValue)" data-typeahead-template-url="layers_suggestion_details" data-typeahead-on-select="onLayerSelect($item, $model, $label)" data-typeahead-editable="false" data-ng-class="{ 'has-error': layerAddName.$invalid }" />
+          <input type="text" class="input-xlarge" id="layer" autocomplete="off" placeholder="Type a layer name" data-minLength="1" data-ng-model="layerAddName" data-typeahead="e for e in getLayersAutocompleteSuggestions($viewValue)" data-typeahead-template-url="layers_suggestion_details" data-typeahead-on-select="onLayerSelect($item, $model, $label)" data-typeahead-editable="false" data-ng-class="{ 'has-error': layerAddName.$invalid }" data-ng-disabled="!project.release" />
           <input type="submit" id="add-layer" class="btn" value="Add" data-ng-disabled="!layerAddName.length"/>
         </div>
         {% csrf_token %}
@@ -334,7 +310,7 @@ vim: expandtab tabstop=2
       </h3>
         <form data-ng-submit="buildNamedTarget()">
           <div class="input-append">
-            <input type="text" class="input-xlarge" placeholder="Type the recipe(s) you want to build" autocomplete="off" data-minLength="1"  data-ng-model="targetName1" data-typeahead="a.name for a in getRecipesAutocompleteSuggestions($viewValue)" data-typeahead-template-url="recipes_suggestion_details" data-ng-disabled="!layers.length">
+            <input type="text" class="input-xlarge" placeholder="Type the recipe(s) you want to build" autocomplete="off" data-minLength="1"  data-ng-model="targetName1" data-typeahead="a.name for a in getRecipesAutocompleteSuggestions($viewValue)" data-typeahead-template-url="recipes_suggestion_details" data-ng-disabled="!project.release || !layers.length">
             <button type="submit" class="btn btn-primary" data-ng-disabled="!targetName1.length">
               Build </button>
           </div>

@@ -132,7 +132,7 @@ urlpatterns = patterns('toastergui.views',
         url(r'^xhr_updatelayer/$', 'xhr_updatelayer', name='xhr_updatelayer'),
 
         # dashboard for failed build requests
-        url(r'^project/(?P<pid>\d+)/buildrequest/(?P<brid>\d+)$', 'buildrequestdetails', name='buildrequestdetails'),
+        url(r'^project/(?P<pid>\d+)/buildrequest/(?P<bid>\d+)$', 'buildrequestdetails', name='buildrequestdetails'),
 
         # default redirection
         url(r'^$', RedirectView.as_view( url= 'landing')),

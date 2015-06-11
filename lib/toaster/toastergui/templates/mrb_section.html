@@ -12,18 +12,24 @@
   </div>
   <div id="latest-builds">
   {% for build in mru %}
-    <div class="alert {%if build.outcome == build.SUCCEEDED%}alert-success{%elif build.outcome == build.FAILED%}alert-error{%else%}alert-info{%endif%} {% if MANAGED and build.project %}project-name{% endif %} ">
-    {% if MANAGED and build.project %}
+    <div class="alert {%if build.outcome == build.SUCCEEDED%}alert-success{%elif build.outcome == build.FAILED%}alert-error{%else%}alert-info{%endif%} project-name ">
        <span class="label {%if build.outcome == build.SUCCEEDED%}label-success{%elif build.outcome == build.FAILED%}label-danger{%else%}label-info{%endif%}"> {{build.project.name}} </span>
-    {% endif %}
 
         <div class="row-fluid">
             <div class="span3 lead">
     {%if build.outcome == build.SUCCEEDED or build.outcome == build.FAILED %}
                 <a href="{%url 'builddashboard' build.pk%}" class="{%if build.outcome == build.SUCCEEDED %}success{%else%}error{%endif%}">
     {% endif %}
-                <span data-toggle="tooltip" {%if build.target_set.all.count > 1%}title="Targets: {%for target in build.target_set.all%}{{target.target}} {%endfor%}"{%endif%}>{{build.target_set.all.0.target}} {%if build.target_set.all.count > 1%}(+ {{build.target_set.all.count|add:"-1"}}){%endif%}
-		        </span>
+            {% if build.target_set.all.count > 0 %}
+                <span data-toggle="tooltip"
+                  {%if build.target_set.all.count > 1%}
+                    title="Targets: {%for target in build.target_set.all%}{{target.target}} {%endfor%}"
+                  {%endif%}
+                >
+
+                  {{build.target_set.all.0.target}} {%if build.target_set.all.count > 1%}(+ {{build.target_set.all.count|add:"-1"}}){%endif%}
+                </span>
+             {% endif %}
     {%if build.outcome == build.SUCCEEDED or build.outcome == build.FAILED %}
                 </a>
     {% endif %}
@@ -65,5 +71,30 @@
 
   {% endfor %}
   </div>
+
+<script>
+
+function scheduleBuild(url, projectName, projectUrl, buildlist) {
+  console.log("scheduleBuild");
+  libtoaster.startABuild(url, null, buildlist.join(" "), function(){
+    window.location.reload();
+  }, null);
+}
+
+$(document).ready(function(){
+
+  $(".cancel-build-btn").click(function (){
+    var url = $(this).data('request-url');
+    var buildIds = $(this).data('build-id');
+    var btn = $(this);
+
+    libtoaster.cancelABuild(url, buildIds, function(){
+      btn.parents(".alert").fadeOut();
+    }, null);
+  });
+});
+
+</script>
+
 {%endif%}
 

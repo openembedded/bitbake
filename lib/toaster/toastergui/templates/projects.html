@@ -7,7 +7,7 @@
 {% block pagecontent %}
 
 
-  {% include "managed_mrb_section.html" %}
+  {% include "mrb_section.html" %}
 
 
   <div class="page-header top-air">
@@ -39,7 +39,13 @@
     <tr class="data">
       <td><a href="{% url 'project' o.id %}">{{o.name}}</a></td>
       <td class="updated"><a href="{% url 'project' o.id %}">{{o.updated|date:"d/m/y H:i"}}</a></td>
-      <td><a href="{% url 'project' o.id %}#project-details">{{o.release.name}}</a></td>
+      <td>
+        {% if o.release %}
+            <a href="{% url 'project' o.id %}#project-details">{{o.release.name}}</a>
+        {% else %}
+            No release available
+        {% endif %}
+      </td>
       <td><a href="{% url 'project' o.id %}#machine-distro">{{o.get_current_machine_name}}</a></td>
       {% if o.get_number_of_builds == 0 %}
       <td class="muted">{{o.get_number_of_builds}}</td>
@@ -52,13 +58,13 @@
       <td><a href="{% url 'projectbuilds' o.id %}">{{o.get_number_of_builds}}</a></td>
       <td class="loutcome"><a href="{% url "builddashboard" o.get_last_build_id %}">{%if o.get_last_outcome == build_SUCCEEDED%}<i class="icon-ok-sign success"></i>{%elif o.get_last_outcome == build_FAILED%}<i class="icon-minus-sign error"></i>{%else%}{%endif%}</a></td>
       <td class="ltarget"><a href="{% url "builddashboard" o.get_last_build_id %}">{{o.get_last_target}} </a></td>
-	  <td class="lerrors">{% if o.get_last_errors %}<a class="errors_no error" href="{% url "builddashboard" o.get_last_build_id %}#errors">{{o.get_last_errors}} error{{o.get_last_errors|pluralize}}</a>{%endif%}</td>
-	  <td class="lwarnings">{% if o.get_last_warnings %}<a class="warnings_no warning" href="{% url "builddashboard" o.get_last_build_id %}#warnings">{{o.get_last_warnings}} warning{{o.get_last_warnings|pluralize}}</a>{%endif%}</td>
+      <td class="lerrors">{% if o.get_last_errors %}<a class="errors_no error" href="{% url "builddashboard" o.get_last_build_id %}#errors">{{o.get_last_errors}} error{{o.get_last_errors|pluralize}}</a>{%endif%}</td>
+      <td class="lwarnings">{% if o.get_last_warnings %}<a class="warnings_no warning" href="{% url "builddashboard" o.get_last_build_id %}#warnings">{{o.get_last_warnings}} warning{{o.get_last_warnings|pluralize}}</a>{%endif%}</td>
       <td class="limagefiles">
-	    {% if o.get_last_outcome == build_SUCCEEDED %}
-	    <a href="{%url "builddashboard" o.get_last_build_id %}#images">{{fstypes|get_dict_value:o.id}}</a>
-	    {% endif %}
-	  </td>
+        {% if o.get_last_outcome == build_SUCCEEDED %}
+        <a href="{%url "builddashboard" o.get_last_build_id %}#images">{{fstypes|get_dict_value:o.id}}</a>
+        {% endif %}
+      </td>
 
       {% endif %}
     </tr>
