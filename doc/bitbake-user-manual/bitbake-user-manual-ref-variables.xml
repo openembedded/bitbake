@@ -102,6 +102,56 @@
             </glossdef>
         </glossentry>
 
+        <glossentry id='var-BB_ALLOWED_NETWORKS'><glossterm>BB_ALLOWED_NETWORKS</glossterm>
+            <glossdef>
+                <para>
+                    Specifies a space-delimited list of hosts that the fetcher
+                    is allowed to use to obtain the required source code.
+                    Following are considerations surrounding this variable:
+                    <itemizedlist>
+                        <listitem><para>
+                            This host list is only used if
+                            <link linkend='var-BB_NO_NETWORK'><filename>BB_NO_NETWORK</filename></link>
+                            is either not set or set to "0".
+                            </para></listitem>
+                        <listitem><para>
+                            Limited support for wildcard matching against the
+                            beginning of host names exists.
+                            For example, the following setting matches
+                            <filename>git.gnu.org</filename>,
+                            <filename>ftp.gnu.org</filename>, and
+                            <filename>foo.git.gnu.org</filename>.
+                            <literallayout class='monospaced'>
+     BB_ALLOWED_NETWORKS = "*.gnu.org"
+                            </literallayout>
+                            </para></listitem>
+                        <listitem><para>
+                            Mirrors not in the host list are skipped and
+                            logged in debug.
+                            </para></listitem>
+                        <listitem><para>
+                            Attempts to access networks not in the host list
+                            cause a failure.
+                            </para></listitem>
+                    </itemizedlist>
+                    Using <filename>BB_ALLOWED_NETWORKS</filename> in
+                    conjunction with
+                    <link linkend='var-PREMIRRORS'><filename>PREMIRRORS</filename></link>
+                    is very useful.
+                    Adding the host you want to use to
+                    <filename>PREMIRRORS</filename> results in the source code
+                    being fetched from an allowed location and avoids raising
+                    an error when a host that is not allowed is in a
+                    <link linkend='var-SRC_URI'><filename>SRC_URI</filename></link>
+                    statement.
+                    This is because the fetcher does not attempt to use the
+                    host listed in <filename>SRC_URI</filename> after a
+                    successful fetch from the
+                    <filename>PREMIRRORS</filename> occurs.
+                </para>
+            </glossdef>
+        </glossentry>
+
         <glossentry id='var-BB_CONSOLELOG'><glossterm>BB_CONSOLELOG</glossterm>
             <glossdef>
                 <para>
