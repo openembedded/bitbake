@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.admin.filters import RelatedFieldListFilter
-from .models import BitbakeVersion, Release, LayerSource, ToasterSetting
+from orm.models import BitbakeVersion, Release, LayerSource, ToasterSetting
 from django.forms.widgets import Textarea
 from django import forms
 import django.db.models as models
@@ -31,4 +31,3 @@ admin.site.register(LayerSource, LayerSourceAdmin)
 admin.site.register(BitbakeVersion, BitbakeVersionAdmin)
 admin.site.register(Release, ReleaseAdmin)
 admin.site.register(ToasterSetting, ToasterSettingAdmin)
-
