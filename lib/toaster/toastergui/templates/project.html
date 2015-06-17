@@ -145,7 +145,7 @@ vim: expandtab tabstop=2
 
   <a id="buildslist"></a>
   <h2 class="air" data-ng-if="builds.length">Latest builds</h2>
-  <div class="animate-repeat alert"  data-ng-repeat="b in builds track by b.id" data-ng-class="{'Queued':'alert-info', 'In Progress':'alert-info', 'Succeeded':'alert-success', 'Failed':'alert-error'}[b.status]">
+  <div class="animate-repeat alert"  data-ng-repeat="b in builds track by b.id" data-ng-class="{'queued':'alert-info', 'In Progress':'alert-info', 'Succeeded':'alert-success', 'Failed':'alert-error'}[b.status]">
     <div class="row-fluid">
         <switch data-ng-switch="b.status">
 
@@ -182,7 +182,7 @@ vim: expandtab tabstop=2
             </div>
           </case>
 
-          <case data-ng-switch-when="Queued">
+          <case data-ng-switch-when="queued">
             <div class="lead span5"> <span data-ng-repeat="t in b.targets" data-ng-include src="'target_display'"></span>   </div>
             <div class="span4 lead" >Build queued
               <i title="This build will start as soon as a build server is available" class="icon-question-sign get-help get-help-blue heading-help" data-toggle="tooltip"></i>

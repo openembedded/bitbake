@@ -283,8 +283,9 @@ class Build(models.Model):
 
 
     def get_current_status(self):
-        if self.outcome == Build.IN_PROGRESS and self.build_name == "":
-            return "Queued"
+        from bldcontrol.models import BuildRequest
+        if self.outcome == Build.IN_PROGRESS and self.buildrequest.state != BuildRequest.REQ_INPROGRESS:
+            return self.buildrequest.get_state_display()
         return self.get_outcome_display()
 
     def __str__(self):
@@ -1167,6 +1168,9 @@ class LogMessage(models.Model):
     message=models.CharField(max_length=240)
     pathname = models.FilePathField(max_length=255, blank=True)
     lineno = models.IntegerField(null=True)
+
+    def __str__(self):
+        return "%s %s %s" % (self.get_level_display(), self.message, self.build)
 
 def invalidate_cache(**kwargs):
     from django.core.cache import cache

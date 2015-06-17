@@ -64,7 +64,9 @@ def _get_latest_builds(prj=None):
     if prj is not None:
         queryset = queryset.filter(project = prj)
 
-    return itertools.chain(queryset.filter(outcome__lt=Build.IN_PROGRESS).order_by("-pk")[:3], queryset.filter(outcome=Build.IN_PROGRESS).order_by("-pk"))
+    return itertools.chain(
+        queryset.filter(outcome=Build.IN_PROGRESS).order_by("-pk"),
+        queryset.filter(outcome__lt=Build.IN_PROGRESS).order_by("-pk")[:3] )
 
 
 # a JSON-able dict of recent builds; for use in the Project page, xhr_ updates,  and other places, as needed
@@ -76,7 +78,7 @@ def _project_recent_build_list(prj):
             "id":  x.pk,
             "targets" : map(lambda y: {"target": y.target, "task": y.task }, x.target_set.all()), # TODO: create the task entry in the Target table
             "status": x.get_current_status(),
-            "errors": map(lambda y: {"type": y.lineno, "msg": y.message, "tb": y.pathname}, x.logmessage_set.filter(level__gte=LogMessage.WARNING)),
+            "errors": map(lambda y: {"type": y.lineno, "msg": y.message, "tb": y.pathname}, (x.logmessage_set.filter(level__gte=LogMessage.WARNING)|x.logmessage_set.filter(level=LogMessage.EXCEPTION))),
             "updated": x.completed_on.strftime('%s')+"000",
             "command_time": (x.completed_on - x.started_on).total_seconds(),
             "br_page_url": reverse('buildrequestdetails', args=(x.project.id, x.pk) ),

@@ -159,3 +159,6 @@ class BRError(models.Model):
     errtype     = models.CharField(max_length=100)
     errmsg      = models.TextField()
     traceback   = models.TextField()
+
+    def __str__(self):
+        return "%s (%s)" % (self.errmsg, self.req)

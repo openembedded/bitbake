@@ -8,46 +8,19 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
+        # Adding field 'Target.task'
+        db.add_column(u'orm_target', 'task',
+                      self.gf('django.db.models.fields.CharField')(max_length=100, null=True),
+                      keep_default=False)
 
-        # Changing field 'Build.project'
-        db.alter_column(u'orm_build', 'project_id', self.gf('django.db.models.fields.related.ForeignKey')(default=0, to=orm['orm.Project']))
 
-        # Changing field 'Project.bitbake_version'
-        db.alter_column(u'orm_project', 'bitbake_version_id', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['orm.BitbakeVersion'], null=True))
 
-        # Changing field 'Project.release'
-        db.alter_column(u'orm_project', 'release_id', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['orm.Release'], null=True))
 
-        # Changing field 'Task.cpu_usage'
-        db.alter_column(u'orm_task', 'cpu_usage', self.gf('django.db.models.fields.DecimalField')(null=True, max_digits=8, decimal_places=2))
-
-        # Changing field 'Task.elapsed_time'
-        db.alter_column(u'orm_task', 'elapsed_time', self.gf('django.db.models.fields.DecimalField')(null=True, max_digits=8, decimal_places=2))
 
     def backwards(self, orm):
+        # Deleting field 'Target.task'
+        db.delete_column(u'orm_target', 'task')
 
-        # Changing field 'Build.project'
-        db.alter_column(u'orm_build', 'project_id', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['orm.Project'], null=True))
-
-        # User chose to not deal with backwards NULL issues for 'Project.bitbake_version'
-        raise RuntimeError("Cannot reverse this migration. 'Project.bitbake_version' and its values cannot be restored.")
-        
-        # The following code is provided here to aid in writing a correct migration
-        # Changing field 'Project.bitbake_version'
-        db.alter_column(u'orm_project', 'bitbake_version_id', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['orm.BitbakeVersion']))
-
-        # User chose to not deal with backwards NULL issues for 'Project.release'
-        raise RuntimeError("Cannot reverse this migration. 'Project.release' and its values cannot be restored.")
-        
-        # The following code is provided here to aid in writing a correct migration
-        # Changing field 'Project.release'
-        db.alter_column(u'orm_project', 'release_id', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['orm.Release']))
-
-        # Changing field 'Task.cpu_usage'
-        db.alter_column(u'orm_task', 'cpu_usage', self.gf('django.db.models.fields.DecimalField')(null=True, max_digits=6, decimal_places=2))
-
-        # Changing field 'Task.elapsed_time'
-        db.alter_column(u'orm_task', 'elapsed_time', self.gf('django.db.models.fields.DecimalField')(null=True, max_digits=6, decimal_places=2))
 
     models = {
         u'orm.bitbakeversion': {
@@ -282,7 +255,8 @@ class Migration(SchemaMigration):
             'image_size': ('django.db.models.fields.IntegerField', [], {'default': '0'}),
             'is_image': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'license_manifest_path': ('django.db.models.fields.CharField', [], {'max_length': '500', 'null': 'True'}),
-            'target': ('django.db.models.fields.CharField', [], {'max_length': '100'})
+            'target': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
+            'task': ('django.db.models.fields.CharField', [], {'max_length': '100', 'null': 'True'})
         },
         u'orm.target_file': {
             'Meta': {'object_name': 'Target_File'},

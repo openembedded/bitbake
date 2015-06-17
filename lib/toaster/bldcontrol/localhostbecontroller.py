@@ -322,7 +322,7 @@ class LocalhostBEController(BuildEnvironmentController):
     def triggerBuild(self, bitbake, layers, variables, targets):
         # set up the buid environment with the needed layers
         self.setLayers(bitbake, layers)
-        self.writeConfFile("conf/toaster-pre.conf", )
+        self.writeConfFile("conf/toaster-pre.conf", variables)
         self.writeConfFile("conf/toaster.conf", raw = "INHERIT+=\"toaster buildhistory\"")
 
         # get the bb server running with the build req id and build env id

@@ -6,7 +6,7 @@ from bldcontrol.models import BuildRequest, BuildEnvironment, BRError, BRVariabl
 import os
 import logging
 
-logger = logging.getLogger("toaster")
+logger = logging.getLogger("ToasterScheduler")
 
 class Command(NoArgsCommand):
     args    = ""
@@ -35,7 +35,7 @@ class Command(NoArgsCommand):
                 # select the build environment and the request to build
                 br = self._selectBuildRequest()
             except IndexError as e:
-                # logger.debug("runbuilds: No build request")
+                #logger.debug("runbuilds: No build request")
                 return
             try:
                 bec = self._selectBuildEnvironment()
@@ -113,10 +113,11 @@ class Command(NoArgsCommand):
 
         # update all Builds that failed to start
 
-        for br in BuildRequest.objects.filter(state = BuildRequest.REQ_FAILED):
+        for br in BuildRequest.objects.filter(state = BuildRequest.REQ_FAILED, build__outcome = Build.IN_PROGRESS):
             br.build.outcome = Build.FAILED
             # transpose the launch errors in ToasterExceptions
             for brerror in br.brerror_set.all():
+                logger.debug("Saving error %s" % brerror)
                 LogMessage.objects.create(build = br.build, level = LogMessage.EXCEPTION, message = brerror.errmsg)
             br.build.save()
 
