@@ -10,7 +10,7 @@ This code was based on the work of others found on the internet:
 4. https://groups.google.com/forum/?fromgroups=#!topic/django-users/vVprMpsAnPo
 '''
 from __future__ import unicode_literals
-import six
+from django.utils import six
 import django
 from django.db.models.aggregates import Aggregate as DjangoAggregate
 from django.db.models.sql.aggregates import Aggregate as DjangoSqlAggregate
