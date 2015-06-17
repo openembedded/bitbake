@@ -23,22 +23,23 @@
               </strong> on
             {{build.completed_on|date:"d/m/y H:i"}}
 </span>
-{% if  build.warnings_no or build.errors_no %}
+{% if  build.warnings.count or build.errors.count %}
 &nbsp;with
 {% endif %}
 {%if build.outcome == build.SUCCEEDED or build.outcome == build.FAILED %}
-{% if  build.errors_no %}
-     <span > <i class="icon-minus-sign red"></i><strong><a href="#errors" class="error show-errors"> {{build.errors_no}} error{{build.errors_no|pluralize}}</a></strong></span>
+{% if  build.errors.count %}
+     <span > <i class="icon-minus-sign red"></i><strong><a href="#errors" class="error show-errors"> {{build.errors.count}} error{{build.errors.count|pluralize}}</a></strong></span>
 {% endif %}
-{% if  build.warnings_no %}
-{% if  build.errors_no %}
+{% if  build.warnings.count %}
+{% if  build.errors.count %}
     and
 {% endif %}
-    <span > <i class="icon-warning-sign yellow"></i><strong><a href="#warnings" class="warning show-warnings"> {{build.warnings_no}} warning{{build.warnings_no|pluralize}}</a></strong></span>
+    <span > <i class="icon-warning-sign yellow"></i><strong><a href="#warnings" class="warning show-warnings"> {{build.warnings.count}} warning{{build.warnings.count|pluralize}}</a></strong></span>
 {% endif %}
-            <span class="pull-right">Build time: <a href="{% url 'buildtime' build.pk %}">{{ build.timespent|sectohms }}</a>
+            <span class="pull-right">Build time: <a href="{% url 'buildtime' build.pk %}">{{ build.timespent_seconds|sectohms }}</a>
             <a class="btn {%if build.outcome == build.SUCCEEDED%}btn-success{%else%}btn-danger{%endif%} pull-right log" href="{% url 'build_artifact' build.id "cookerlog" build.id %}">Download build log</a>
             </span>
+
 {%endif%}
     </div>
     {% if build.toaster_exceptions.count > 0 %}
@@ -52,14 +53,14 @@
   </div>
 </div>
 
-{% if build.errors_no %}
+{% if build.errors.count %}
 <div class="accordion span10 pull-right" id="errors">
   <div class="accordion-group">
     <div class="accordion-heading">
             <a class="accordion-toggle error toggle-errors">
          <h2 id="error-toggle">
            <i class="icon-minus-sign"></i>
-           {{build.errors_no}} error{{build.errors_no|pluralize}}
+           {{build.errors.count}} error{{build.errors.count|pluralize}}
          </h2>
       </a>
     </div>
@@ -241,14 +242,14 @@
     </div>
 </div>
 
-{% if build.warnings_no %}
+{% if build.warnings.count %}
 <div class="accordion span10 pull-right" id="warnings">
   <div class="accordion-group">
     <div class="accordion-heading">
       <a class="accordion-toggle warning toggle-warnings">
         <h2 id="warning-toggle">
           <i class="icon-warning-sign"></i>
-          {{build.warnings_no}} warning{{build.warnings_no|pluralize}}
+          {{build.warnings.count}} warning{{build.warnings.count|pluralize}}
         </h2>
       </a>
     </div>

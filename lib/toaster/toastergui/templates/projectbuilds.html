@@ -79,25 +79,20 @@
                 {% query build.task_build outcome=4 order__gt=0 as exectask%}
                     {% if exectask.count == 1 %}
                         <a href="{% url "task" build.id exectask.0.id %}">{{exectask.0.recipe.name}}.{{exectask.0.task_name}}</a>
-                      {% if MANAGED and build.project %}
                         <a href="{% url 'build_artifact' build.id "tasklogfile" exectask.0.id %}">
                             <i class="icon-download-alt" title="" data-original-title="Download task log file"></i>
                         </a>
-                      {% endif %}
                     {% elif exectask.count > 1%}
                         <a href="{% url "tasks" build.id %}?filter=outcome%3A4">{{exectask.count}} task{{exectask.count|pluralize}}</a>
                     {%endif%}
             </td>
-            <td class="errors_no">
-                {% if  build.errors_no %}
-                    <a class="errors_no error" href="{% url "builddashboard" build.id %}#errors">{{build.errors_no}} error{{build.errors_no|pluralize}}</a>
+            <td class="errors.count">
+                {% if  build.errors.count %}
+                    <a class="errors.count error" href="{% url "builddashboard" build.id %}#errors">{{build.errors.count}} error{{build.errors.count|pluralize}}</a>
                 {%endif%}
             </td>
-            <td class="warnings_no">{% if  build.warnings_no %}<a class="warnings_no warning" href="{% url "builddashboard" build.id %}#warnings">{{build.warnings_no}} warning{{build.warnings_no|pluralize}}</a>{%endif%}</td>
-            <td class="time"><a href="{% url "buildtime" build.id %}">{{build.timespent|sectohms}}</a></td>
-            {% if not MANAGED or not build.project %}
-                <td class="log">{{build.cooker_log_path}}</td>
-            {% endif %}
+            <td class="warnings.count">{% if  build.warnings.count %}<a class="warnings.count warning" href="{% url "builddashboard" build.id %}#warnings">{{build.warnings.count}} warning{{build.warnings.count|pluralize}}</a>{%endif%}</td>
+            <td class="time"><a href="{% url "buildtime" build.id %}">{{build.timespent_seconds|sectohms}}</a></td>
             <td class="output">
               {% if build.outcome == build.SUCCEEDED %}
               <a href="{%url "builddashboard" build.id%}#images">{{fstypes|get_dict_value:build.id}}</a>
@@ -113,23 +108,23 @@
         <tr class="data">
             <td class="outcome">{% if br.state == br.REQ_FAILED %}<i class="icon-minus-sign error"></i>{%else%}FIXME_build_request_state{%endif%}</td>
             <td class="target">
-                <a href="{% url "buildrequestdetails" br.project.id br.id %}"><span data-toggle="tooltip" {%if br.brtarget_set.all.count > 1%}title="Targets: {%for target in br.brtarget_set.all%}{{target.target}} {%endfor%}"{%endif%}>{{br.brtarget_set.all.0.target}} {%if br.brtarget_set.all.count > 1%}(+ {{br.brtarget_set.all.count|add:"-1"}}){%endif%} </span></a>
+                <a href="{% url "builddashboard" br.id %}"><span data-toggle="tooltip" {%if br.brtarget_set.all.count > 1%}title="Targets: {%for target in br.brtarget_set.all%}{{target.target}} {%endfor%}"{%endif%}>{{br.brtarget_set.all.0.target}} {%if br.brtarget_set.all.count > 1%}(+ {{br.brtarget_set.all.count|add:"-1"}}){%endif%} </span></a>
             </td>
             <td class="machine">
-                <a href="{% url "buildrequestdetails" br.project.id br.id %}">{{br.machine}}</a>
+                <a href="{% url "builddashboard" br.id %}">{{br.machine}}</a>
             </td>
             <td class="started_on">
-                <a href="{% url "buildrequestdetails" br.project.id br.id %}">{{br.created|date:"d/m/y H:i"}}</a>
+                <a href="{% url "builddashboard" br.id %}">{{br.created|date:"d/m/y H:i"}}</a>
             </td>
             <td class="completed_on">
-                <a href="{% url "buildrequestdetails" br.project.id br.id %}">{{br.updated|date:"d/m/y H:i"}}</a>
+                <a href="{% url "builddashboard" br.id %}">{{br.updated|date:"d/m/y H:i"}}</a>
             </td>
             <td class="failed_tasks error">
             </td>
-            <td class="errors_no">
-        <a class="errors_no error" href="{% url "buildrequestdetails" br.project.id br.id %}#errors">{{br.brerror_set.all.count}} error{{br.brerror_set.all.count|pluralize}}</a>
+            <td class="errors.count">
+        <a class="errors.count error" href="{% url "builddashboard" br.id %}#errors">{{br.brerror_set.all.count}} error{{br.brerror_set.all.count|pluralize}}</a>
             </td>
-            <td class="warnings_no">
+            <td class="warnings.count">
             </td>
             <td class="time">
                 {{br.timespent.total_seconds|sectohms}}

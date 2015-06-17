@@ -16,7 +16,6 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-import datetime
 import sys
 import bb
 import re
@@ -24,6 +23,7 @@ import ast
 
 os.environ["DJANGO_SETTINGS_MODULE"] = "toaster.toastermain.settings"
 
+from django.utils import timezone
 import toaster.toastermain.settings as toaster_django_settings
 from toaster.orm.models import Build, Task, Recipe, Layer_Version, Layer, Target, LogMessage, HelpText
 from toaster.orm.models import Target_Image_File, BuildArtifact
@@ -41,7 +41,7 @@ import logging
 
 from django.db import transaction, connection
 
-logger = logging.getLogger("BitBake")
+logger = logging.getLogger("ToasterLogger")
 
 
 class NotExisting(Exception):
@@ -135,16 +135,18 @@ class ORMWrapper(object):
 
         if buildrequest is not None:
             build = buildrequest.build
-            build.machine=build_info['machine'],
-            build.distro=build_info['distro'],
-            build.distro_version=build_info['distro_version'],
-            build.completed_on=build_info['started_on'],
-            build.cooker_log_path=build_info['cooker_log_path'],
-            build.build_name=build_info['build_name'],
+            logger.info("Updating existing build, with %s" % build_info)
+            build.machine=build_info['machine']
+            build.distro=build_info['distro']
+            build.distro_version=build_info['distro_version']
+            started_on=build_info['started_on']
+            completed_on=build_info['started_on']
+            build.cooker_log_path=build_info['cooker_log_path']
+            build.build_name=build_info['build_name']
             build.bitbake_version=build_info['bitbake_version']
             build.save()
 
-            build.target_set.delete()
+            Target.objects.filter(build = build).delete()
 
         else:
             build = Build.objects.create(
@@ -188,10 +190,7 @@ class ORMWrapper(object):
         if errors or taskfailures:
             outcome = Build.FAILED
 
-        build.completed_on = datetime.datetime.now()
-        build.timespent = int((build.completed_on - build.started_on).total_seconds())
-        build.errors_no = errors
-        build.warnings_no = warnings
+        build.completed_on = timezone.now()
         build.outcome = outcome
         build.save()
 
@@ -687,8 +686,8 @@ class BuildInfoHelper(object):
         build_info['machine'] = self.server.runCommand(["getVariable", "MACHINE"])[0]
         build_info['distro'] = self.server.runCommand(["getVariable", "DISTRO"])[0]
         build_info['distro_version'] = self.server.runCommand(["getVariable", "DISTRO_VERSION"])[0]
-        build_info['started_on'] = datetime.datetime.now()
-        build_info['completed_on'] = datetime.datetime.now()
+        build_info['started_on'] = timezone.now()
+        build_info['completed_on'] = timezone.now()
         build_info['cooker_log_path'] = self.server.runCommand(["getVariable", "BB_CONSOLELOG"])[0]
         build_info['build_name'] = self.server.runCommand(["getVariable", "BUILDNAME"])[0]
         build_info['bitbake_version'] = self.server.runCommand(["getVariable", "BB_VERSION"])[0]
@@ -857,6 +856,30 @@ class BuildInfoHelper(object):
 
         # Save build configuration
         data = self.server.runCommand(["getAllKeysWithFlags", ["doc", "func"]])[0]
+
+        # convert the paths from absolute to relative to either the build directory or layer checkouts
+        path_prefixes = []
+
+        br_id, be_id = self.brbe.split(":")
+        from bldcontrol.models import BuildEnvironment, BuildRequest
+        be = BuildEnvironment.objects.get(pk = be_id)
+        path_prefixes.append(be.builddir)
+
+        for layer in sorted(self.orm_wrapper.layer_version_objects, key = lambda x:len(x.local_path), reverse=True):
+            path_prefixes.append(layer.local_path)
+
+        # we strip the prefixes
+        for k in data:
+            if not bool(data[k]['func']):
+                for vh in data[k]['history']:
+                    if not 'documentation.conf' in vh['file']:
+                        abs_file_name = vh['file']
+                        for pp in path_prefixes:
+                            if abs_file_name.startswith(pp + "/"):
+                                vh['file']=abs_file_name[len(pp + "/"):]
+                                break
+
+        # save the variables
         self.orm_wrapper.save_build_variables(build_obj, data)
 
         return self.brbe
@@ -1031,7 +1054,7 @@ class BuildInfoHelper(object):
             mevent.taskhash = taskhash
             task_information = self._get_task_information(mevent,recipe)
 
-            task_information['start_time'] = datetime.datetime.now()
+            task_information['start_time'] = timezone.now()
             task_information['outcome'] = Task.OUTCOME_NA
             task_information['sstate_checksum'] = taskhash
             task_information['sstate_result'] = Task.SSTATE_MISS
@@ -1206,6 +1229,7 @@ class BuildInfoHelper(object):
                             )
 
     def _store_build_done(self, errorcode):
+        logger.info("Build exited with errorcode %d", errorcode)
         br_id, be_id = self.brbe.split(":")
         from bldcontrol.models import BuildEnvironment, BuildRequest
         be = BuildEnvironment.objects.get(pk = be_id)
@@ -1225,7 +1249,7 @@ class BuildInfoHelper(object):
         mockevent.levelno = format.ERROR
         mockevent.msg = text
         mockevent.pathname = '-- None'
-        mockevent.lineno = -1
+        mockevent.lineno = LogMessage.ERROR
         self.store_log_event(mockevent)
 
     def store_log_exception(self, text, backtrace = ""):
@@ -1249,13 +1273,12 @@ class BuildInfoHelper(object):
                 if not 'backlog' in self.internal_state:
                     self.internal_state['backlog'] = []
                 self.internal_state['backlog'].append(event)
-            else:   # we're under Toaster control, post the errors to the build request
+                return
+            else:   # we're under Toaster control, the build is already created
                 from bldcontrol.models import BuildRequest, BRError
                 br, be = self.brbe.split(":")
                 buildrequest = BuildRequest.objects.get(pk = br)
-                brerror = BRError.objects.create(req = buildrequest, errtype="build", errmsg = event.msg)
-
-            return
+                self.internal_state['build'] = buildrequest.build
 
         if 'build' in self.internal_state and 'backlog' in self.internal_state:
             # if we have a backlog of events, do our best to save them here
@@ -1273,14 +1296,15 @@ class BuildInfoHelper(object):
             log_information['level'] = LogMessage.ERROR
         elif event.levelno == format.WARNING:
             log_information['level'] = LogMessage.WARNING
-        elif event.levelno == -1:   # toaster self-logging
-            log_information['level'] = -1
+        elif event.levelno == -2:   # toaster self-logging
+            log_information['level'] = -2
         else:
             log_information['level'] = LogMessage.INFO
 
         log_information['message'] = event.msg
         log_information['pathname'] = event.pathname
         log_information['lineno'] = event.lineno
+        logger.info("Logging error 2: %s" % log_information)
         self.orm_wrapper.create_logmessage(log_information)
 
     def close(self, errorcode):

@@ -9,7 +9,7 @@
   <div class="container-fluid">
    <div class="row-fluid">
     <!-- Empty - no data in database -->
-    <div class="hero-unit span12 {%if MANAGED%}well-transparent{%endif%}">
+    <div class="hero-unit span12 well-transparent">
      <div class="row-fluid">
       <div class="span6">
        <h1>
@@ -17,7 +17,6 @@
        </h1>
        <p>A web interface to <a href="http://www.openembedded.org">OpenEmbedded</a> and <a href="http://www.yoctoproject.org/tools-resources/projects/bitbake">BitBake</a>, the <a href="http://www.yoctoproject.org">Yocto Project</a> build system.</p>
 
-	{% if MANAGED %}
 
 		{% if lvs_nos %}
 		    <p class="hero-actions">
@@ -37,7 +36,7 @@
 			        </li>
 			    </ul>
 		    </div>
-        {% endif %}
+	        {% endif %}
 
         <ul class="unstyled">
             <li>
@@ -48,18 +47,6 @@
             </li>
         </ul>
 
-        {% else %}
-
-        <p class="hero-actions">
-            <a class="btn btn-primary btn-large" href="http://www.yoctoproject.org/docs/latest/toaster-manual/toaster-manual.html">
-                Show me the manual
-            </a>
-            <a class="btn btn-large" href="https://wiki.yoctoproject.org/wiki/Contribute_to_Toaster">
-                I want to contribute
-	        </a>
-	    </p>
-
-	    {% endif %}
       </div>
       <div class="span6">
         {% if MANAGED %}
@@ -70,26 +57,6 @@
       </div>
      </div>
     </div>
-
-   {% if not MANAGED %}
-    <!-- Empty - no data in database -->
-    <div class="page-header top-air">
-     <h1>
-      All builds
-     </h1>
-    </div>
-    <div class="alert alert-info lead">
-     Toaster has not recorded any builds yet. Go build something with
-     <a href="http://www.yoctoproject.org/docs/current/yocto-project-qs/yocto-project-qs.html#test-run">
-      Knotty
-     </a>
-     or
-     <a href="https://www.yoctoproject.org/documentation/hob-manual">
-      Hob
-     </a>
-    </div>
-   {% endif %}
-
    </div>
 
 {% endblock %}

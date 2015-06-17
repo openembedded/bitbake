@@ -140,6 +140,9 @@ def main(server, eventHandler, params ):
                 continue
 
             if isinstance(event, logging.LogRecord):
+                if event.levelno == -1:
+                    event.levelno = format.ERROR
+
                 buildinfohelper.store_log_event(event)
                 if event.levelno >= format.ERROR:
                     errors = errors + 1

@@ -147,7 +147,7 @@ class Project(models.Model):
         if (-1 == build_id):
             return( 0 )
         try:
-            return Build.objects.filter(id = build_id)[ 0 ].errors_no
+            return Build.objects.filter(id = build_id)[ 0 ].errors.count()
         except (Build.DoesNotExist,IndexError):
             return( "not_found" )
 
@@ -156,7 +156,7 @@ class Project(models.Model):
         if (-1 == build_id):
             return( 0 )
         try:
-            return Build.objects.filter(id = build_id)[ 0 ].warnings_no
+            return Build.objects.filter(id = build_id)[ 0 ].warnings.count()
         except (Build.DoesNotExist,IndexError):
             return( "not_found" )
 
@@ -248,10 +248,7 @@ class Build(models.Model):
     distro_version = models.CharField(max_length=100)
     started_on = models.DateTimeField()
     completed_on = models.DateTimeField()
-    timespent = models.IntegerField(default=0)
     outcome = models.IntegerField(choices=BUILD_OUTCOME, default=IN_PROGRESS)
-    errors_no = models.IntegerField(default=0)
-    warnings_no = models.IntegerField(default=0)
     cooker_log_path = models.CharField(max_length=500)
     build_name = models.CharField(max_length=100)
     bitbake_version = models.CharField(max_length=50)
@@ -281,6 +278,17 @@ class Build(models.Model):
     def toaster_exceptions(self):
         return self.logmessage_set.filter(level=LogMessage.EXCEPTION)
 
+    @property
+    def errors(self):
+        return (self.logmessage_set.filter(level=LogMessage.ERROR)|self.logmessage_set.filter(level=LogMessage.EXCEPTION))
+
+    @property
+    def warnings(self):
+        return self.logmessage_set.filter(level=LogMessage.WARNING)
+
+    @property
+    def timespent_seconds(self):
+        return (self.completed_on - self.started_on).total_seconds()
 
     def get_current_status(self):
         from bldcontrol.models import BuildRequest
@@ -297,7 +305,6 @@ class BuildArtifact(models.Model):
     build = models.ForeignKey(Build)
     file_name = models.FilePathField()
     file_size = models.IntegerField()
-
 
     def get_local_file_name(self):
         try:

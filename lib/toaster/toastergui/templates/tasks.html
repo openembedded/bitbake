@@ -93,7 +93,7 @@
             </td>
             <td class="outcome">
                 <a href="{%url "task" build.pk task.pk%}">{{task.get_outcome_display}} </a>
-                {% if MANAGED and build.project and task.outcome = task.OUTCOME_FAILED %}
+                {% if task.outcome = task.OUTCOME_FAILED %}
                     <a href="{% url 'build_artifact' build.pk "tasklogfile" task.pk %}">
                         <i class="icon-download-alt" title="Download task log file"></i>
                     </a>
@@ -113,11 +113,6 @@
                 {{task.disk_io|format_none_and_zero}}
             </td>
 
-        {% if not MANAGED or not build.project %}
-            <td class="task_log">
-                {{task.logfile}}
-            </td>
-        {% endif %}
         </tr>
     {% endfor %}
 

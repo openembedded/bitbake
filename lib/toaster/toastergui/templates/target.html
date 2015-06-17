@@ -152,11 +152,6 @@
                 {{package.recipe.layer_version.commit|truncatechars:13}}
             </a>
         </td>
-        {% if not MANAGED or not build.project %}
-            <td class="layer_directory">
-                {{ package.recipe.layer_version.local_path }}
-            </td>
-        {% endif %}
     </tr>
     {% endfor %}
 

@@ -28,7 +28,7 @@
   <div class="row-fluid">
       <div class="alert">
         <form class="no-results input-append" id="searchform">
-            <input id="search" name="search" class="input-xxlarge" type="text" value="{{request.GET.search}}"/>{% if request.GET.search %}<a href="javascript:$('#search').val('');searchform.submit()" class="add-on btn" tabindex="-1"><i class="icon-remove"></i></a>{% endif %}
+            <input id="search" name="search" class="input-xxlarge" type="text" value="{%if request.GET.search%}{{request.GET.search}}{%endif%}"/>{% if request.GET.search %}<a href="javascript:$('#search').val('');searchform.submit()" class="add-on btn" tabindex="-1"><i class="icon-remove"></i></a>{% endif %}
             <button class="btn" type="submit" value="Search">Search</button>
             <button class="btn btn-link" onclick="javascript:$('#search').val('');searchform.submit()">Show all recipes</button>
         </form>
@@ -102,11 +102,6 @@
                 {{recipe.layer_version.commit|truncatechars:13}}
             </a>
         </td>
-
-        {% if not MANAGED or not build.project %}
-            <!-- Layer directory -->
-            <td class="layer_version__local_path">{{recipe.layer_version.local_path}}</td>
-        {% endif %}
     </tr>
 
     {% endfor %}

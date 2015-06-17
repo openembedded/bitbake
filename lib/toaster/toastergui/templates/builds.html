@@ -46,7 +46,11 @@
     <div class="row-fluid">
       <div class="alert">
         <form class="no-results input-append" id="searchform">
-            <input id="search" name="search" class="input-xxlarge" type="text" value="{{request.GET.search}}"/>{% if request.GET.search %}<a href="javascript:$('#search').val('');searchform.submit()" class="add-on btn" tabindex="-1"><i class="icon-remove"></i></a>{% endif %}
+            <input id="search" name="search" class="input-xxlarge" type="text" value="
+            {% if request.GET.search %}
+                {{request.GET.search}}
+        {% endif %}"/>
+            {% if request.GET.search %}<a href="javascript:$('#search').val('');searchform.submit()" class="add-on btn" tabindex="-1"><i class="icon-remove"></i></a>{% endif %}
             <button class="btn" type="submit" value="Search">Search</button>
             <button class="btn btn-link" onclick="javascript:$('#search').val('');searchform.submit()">Show all builds</button>
         </form>
@@ -60,8 +64,8 @@
         {% for build in objects %}
         <tr class="data">
             <td class="outcome">
-	    <a href="{% url "builddashboard" build.id %}">{%if build.outcome == build.SUCCEEDED%}<i class="icon-ok-sign success"></i>{%elif build.outcome == build.FAILED%}<i class="icon-minus-sign error"></i>{%else%}{%endif%}</a> &nbsp;
-	    </td>
+        <a href="{% url "builddashboard" build.id %}">{%if build.outcome == build.SUCCEEDED%}<i class="icon-ok-sign success"></i>{%elif build.outcome == build.FAILED%}<i class="icon-minus-sign error"></i>{%else%}{%endif%}</a> &nbsp;
+        </td>
             <td class="target">{% for t in build.target_set.all %} <a href="{% url "builddashboard" build.id %}"> {{t.target}} </a> <br />{% endfor %}</td>
             <td class="machine"><a href="{% url "builddashboard" build.id %}">{{build.machine}}</a></td>
             <td class="started_on"><a href="{% url "builddashboard" build.id %}">{{build.started_on|date:"d/m/y H:i"}}</a></td>
@@ -77,19 +81,19 @@
                         <a href="{% url "tasks" build.id %}?filter=outcome%3A4">{{exectask.count}} task{{exectask.count|pluralize}}</a>
                     {%endif%}
             </td>
-            <td class="errors_no">
-                {% if  build.errors_no %}
-                    <a class="errors_no error" href="{% url "builddashboard" build.id %}#errors">{{build.errors_no}} error{{build.errors_no|pluralize}}</a>
+            <td class="errors.count">
+                {% if  build.errors.count %}
+                    <a class="errors.count error" href="{% url "builddashboard" build.id %}#errors">{{build.errors.count}} error{{build.errors.count|pluralize}}</a>
                 {%endif%}
             </td>
-            <td class="warnings_no">{% if  build.warnings_no %}<a class="warnings_no warning" href="{% url "builddashboard" build.id %}#warnings">{{build.warnings_no}} warning{{build.warnings_no|pluralize}}</a>{%endif%}</td>
-            <td class="time"><a href="{% url "buildtime" build.id %}">{{build.timespent|sectohms}}</a></td>
+            <td class="warnings.count">{% if  build.warnings.count %}<a class="warnings.count warning" href="{% url "builddashboard" build.id %}#warnings">{{build.warnings.count}} warning{{build.warnings.count|pluralize}}</a>{%endif%}</td>
+            <td class="time"><a href="{% url "buildtime" build.id %}">{{build.timespent_seconds|sectohms}}</a></td>
             <td class="output">
               {% if build.outcome == build.SUCCEEDED %}
               <a href="{%url "builddashboard" build.id%}#images">{{fstypes|get_dict_value:build.id}}</a>
               {% endif %}
             </td>
-	    <td>
+        <td>
                 <a href="{% url 'project' build.project.id %}">{{build.project.name}}</a>
             </td>
         </tr>

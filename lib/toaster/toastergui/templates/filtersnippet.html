@@ -40,8 +40,10 @@
                 {% endif %}
             {% endfor %}
         <!-- daterange persistence -->
+        {% if last_date_from and last_date_to %}
         <input type="hidden" id="last_date_from_{{key}}" name="last_date_from" value="{{last_date_from}}"/>
         <input type="hidden" id="last_date_to_{{key}}" name="last_date_to"   value="{{last_date_to}}"/>
+        {% endif %}
         </div>
         <div class="modal-footer">
             <button type="submit" class="btn btn-primary" data-key="{{key}}">Apply</button>

@@ -107,19 +107,23 @@ class Command(NoArgsCommand):
     def cleanup(self):
         from django.utils import timezone
         from datetime import timedelta
-        # DISABLED environments locked for more than 30 seconds - they should be unlocked
-        #BuildEnvironment.objects.filter(lock=BuildEnvironment.LOCK_LOCK).filter(updated__lt = timezone.now() - timedelta(seconds = 30)).update(lock = BuildEnvironment.LOCK_FREE)
+        # environments locked for more than 30 seconds - they should be unlocked
+        BuildEnvironment.objects.filter(buildrequest__state__in=[BuildRequest.REQ_FAILED, BuildRequest.REQ_COMPLETED]).filter(lock=BuildEnvironment.LOCK_LOCK).filter(updated__lt = timezone.now() - timedelta(seconds = 30)).update(lock = BuildEnvironment.LOCK_FREE)
 
 
         # update all Builds that failed to start
 
         for br in BuildRequest.objects.filter(state = BuildRequest.REQ_FAILED, build__outcome = Build.IN_PROGRESS):
-            br.build.outcome = Build.FAILED
             # transpose the launch errors in ToasterExceptions
+            br.build.outcome = Build.FAILED
             for brerror in br.brerror_set.all():
                 logger.debug("Saving error %s" % brerror)
                 LogMessage.objects.create(build = br.build, level = LogMessage.EXCEPTION, message = brerror.errmsg)
             br.build.save()
+
+            # we don't have a true build object here; hence, toasterui didn't have a change to release the BE lock
+            br.environment.lock = BuildEnvironment.LOCK_FREE
+            br.environment.save()
 
 
 

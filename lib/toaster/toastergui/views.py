@@ -21,7 +21,7 @@
 
 import operator,re
 
-from django.db.models import Q, Sum, Count, Max
+from django.db.models import F, Q, Sum, Count, Max
 from django.db import IntegrityError
 from django.shortcuts import render, redirect
 from orm.models import Build, Target, Task, Layer, Layer_Version, Recipe, LogMessage, Variable
@@ -81,15 +81,15 @@ def _project_recent_build_list(prj):
             "errors": map(lambda y: {"type": y.lineno, "msg": y.message, "tb": y.pathname}, (x.logmessage_set.filter(level__gte=LogMessage.WARNING)|x.logmessage_set.filter(level=LogMessage.EXCEPTION))),
             "updated": x.completed_on.strftime('%s')+"000",
             "command_time": (x.completed_on - x.started_on).total_seconds(),
-            "br_page_url": reverse('buildrequestdetails', args=(x.project.id, x.pk) ),
+            "br_page_url": reverse('builddashboard', args=(x.pk,) ),
             "build" : map( lambda y: {"id": y.pk,
                         "status": y.get_outcome_display(),
                         "completed_on" : y.completed_on.strftime('%s')+"000",
                         "build_time" : (y.completed_on - y.started_on).total_seconds(),
                         "build_page_url" : reverse('builddashboard', args=(y.pk,)),
                         'build_time_page_url': reverse('buildtime', args=(y.pk,)),
-                        "errors": y.errors_no,
-                        "warnings": y.warnings_no,
+                        "errors": y.errors.count(),
+                        "warnings": y.warnings.count(),
                         "completeper": y.completeper() if y.outcome == Build.IN_PROGRESS else "0",
                         "eta": y.eta().strftime('%s')+"000" if y.outcome == Build.IN_PROGRESS else "0",
                         }, [x]),
@@ -1906,7 +1906,7 @@ if True:
         (filter_string, search_term, ordering_string) = _search_tuple(request, Build)
         # post-process any date range filters
         filter_string,daterange_selected = _modify_date_range_filter(filter_string)
-        queryset_all = queryset_all.select_related("project")
+        queryset_all = queryset_all.select_related("project").annotate(errors_no = Count('logmessage', only=Q(logmessage__level=LogMessage.ERROR)|Q(logmessage__level=LogMessage.EXCEPTION))).annotate(warnings_no = Count('logmessage', only=Q(logmessage__level=LogMessage.WARNING))).extra(select={'timespent':'completed_on - started_on'})
         queryset_with_search = _get_queryset(Build, queryset_all, None, search_term, ordering_string, '-completed_on')
         queryset = _get_queryset(Build, queryset_all, filter_string, search_term, ordering_string, '-completed_on')
 
@@ -2840,11 +2840,4 @@ if True:
             }
 
         _set_parameters_values(pagesize, orderby, request)
-        return context
-
-    @_template_renderer("buildrequestdetails.html")
-    def buildrequestdetails(request, pid, bid):
-        context = {
-            'buildrequest' : Build.objects.get(pk = bid, project_id = pid).buildrequest
-        }
         return context

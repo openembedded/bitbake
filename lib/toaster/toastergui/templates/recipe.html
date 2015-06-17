@@ -53,13 +53,6 @@
                 </dt>
                 <dd>{{layer.name}}</dd>
 
-          {% if not MANAGED or not build.project %}
-                <dt>
-                    <i class="icon-question-sign get-help" title="Path to the layer providing the recipe"></i>
-                    Layer directory
-                </dt>
-                <dd><code>{{object.layer_version.local_path}}</code></dd>
-          {% endif %}
                 <dt>
                     <i class="icon-question-sign get-help" title="Path to the recipe .bb file"></i>
                     Recipe file
@@ -126,7 +119,7 @@
 
                     <td>
                         <a {{ task|task_color }} href="{% url "task" build.pk task.pk %}">{{task.get_outcome_display}} </a>
-                        {% if MANAGED and build.project and task.outcome = task.OUTCOME_FAILED %}
+                        {% if task.outcome = task.OUTCOME_FAILED %}
                             <a href="{% url 'build_artifact' build.pk "tasklogfile" task.pk %}">
                                 <i class="icon-download-alt" title="Download task log file"></i>
                             </a>

@@ -23,18 +23,7 @@
 {%if task.task_executed %}
     {# executed tasks outcome #}
     {% if task.logfile %}
-      {% if MANAGED and build.project %}
             <a class="btn btn-large" href="{% url 'build_artifact' build.id "tasklogfile" task.pk %}" style="margin:15px;">Download task log</a>
-      {% else %}
-       <dl class="dl-horizontal">
-        <dt>
-            <i class="icon-question-sign get-help" title="Path the task log file"></i> Log file
-        </dt>
-        <dd>
-             <code>{{task.logfile}}</code>
-        </dd>
-       </dl>
-      {% endif %}
     {% endif %}
         {# show stack trace for failed task #}
         {% if task.outcome == task.OUTCOME_FAILED and log_head %}
@@ -130,22 +119,12 @@
             </dd>
         </dl>
     {%elif task.outcome == task.OUTCOME_CACHED%}
-        {% if MANAGED and build.project %}
             {% for t in task.get_related_setscene %}
                 {% if forloop.last %}
                     <a class="btn btn-large" href="{% url 'build_artifact' build.id "tasklogfile" t.pk %}" style="margin:15px;">Download task log</a>
                 {% endif %}
             {% endfor %}
-        {% else %}
-        <dl class="dl-horizontal">
-            <dt>
-                <i class="icon-question-sign get-help" title="Path the task log file"></i> Log file
-            </dt>
-            <dd>
-                <code>{% for t in task.get_related_setscene %} {{t.logfile}} {% endfor %}</code>
-            </dd>
-        </dl>
-        {% endif %}
+
     {%elif task.outcome == task.OUTCOME_EMPTY%}
         <div class="alert alert-info details">
             This task is empty because it has the <code>noexec</code> flag set to <code>1</code>, or the task function is empty
@@ -200,20 +179,7 @@
             <strong>Failed</strong> to restore output from sstate cache. The file was found but could not be unpacked.
         </div>
         <dl class="dl-horizontal">
-          {% if MANAGED and build.project %}
             <a href="{% url 'build_artifact' build.id "tasklogfile" task.pk %}" style="margin:15px;">Download log</a>
-          {% else %}
-            <dt>
-                <i class="icon-question-sign get-help" title="Path to the cache attempt log file"></i>
-                Log file
-            </dt>
-            <dd><code>{{task.logfile}}</code></dd>
-            <dt>
-                <i class="icon-question-sign get-help" title="How long it took the cache attempt to finish in seconds"></i>
-                Time (secs)
-            </dt>
-            <dd>{{task.elapsed_time|format_none_and_zero}}</dd>
-          {% endif %}
         </dl>
         <div class="alert alert-info">
             Running the real task instead.

@@ -113,7 +113,7 @@ class LocalhostBEController(BuildEnvironmentController):
         # get the file length; we need to detect the _last_ start of the toaster UI, not the first
         toaster_ui_log_filelength = 0
         if os.path.exists(toaster_ui_log_filepath):
-            with open(toaster_ui_log_filepath, "r") as f:
+            with open(toaster_ui_log_filepath, "w") as f:
                 f.seek(0, 2)    # jump to the end
                 toaster_ui_log_filelength = f.tell()
 
