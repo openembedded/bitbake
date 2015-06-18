@@ -58,7 +58,7 @@ __require_regexp__ = re.compile( r"require\s+(.+)" )
 __export_regexp__ = re.compile( r"export\s+([a-zA-Z0-9\-_+.${}/]+)$" )
 
 def init(data):
-    topdir = data.getVar('TOPDIR')
+    topdir = data.getVar('TOPDIR', False)
     if not topdir:
         data.setVar('TOPDIR', os.getcwd())
 
@@ -112,7 +112,7 @@ def handle(fn, data, include):
     if include == 0:
         oldfile = None
     else:
-        oldfile = data.getVar('FILE')
+        oldfile = data.getVar('FILE', False)
 
     abs_fn = resolve_file(fn, data)
     f = open(abs_fn, 'r')

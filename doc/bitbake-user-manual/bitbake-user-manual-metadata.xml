@@ -327,8 +327,8 @@
                 The following lines select the values of a package name
                 and its version number, respectively:
                 <literallayout class='monospaced'>
-     PN = "${@bb.parse.BBHandler.vars_from_file(d.getVar('FILE'),d)[0] or 'defaultpkgname'}"
-     PV = "${@bb.parse.BBHandler.vars_from_file(d.getVar('FILE'),d)[1] or '1.0'}"
+     PN = "${@bb.parse.BBHandler.vars_from_file(d.getVar('FILE', False),d)[0] or 'defaultpkgname'}"
+     PV = "${@bb.parse.BBHandler.vars_from_file(d.getVar('FILE', False),d)[1] or '1.0'}"
                 </literallayout>
             </para>
         </section>
@@ -1163,7 +1163,7 @@
             <para>
                 The <filename>BB_ORIGENV</filename> variable returns a datastore
                 object that can be queried using the standard datastore operators
-                such as <filename>getVar()</filename>.
+                such as <filename>getVar(, False)</filename>.
                 The datastore object is useful, for example, to find the original
                 <filename>DISPLAY</filename> variable.
                 Here is an example:

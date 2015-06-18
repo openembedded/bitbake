@@ -9,7 +9,7 @@ Usage in the recipe:
 
     SRC_URI = "ccrc://cc.example.org/ccrc;vob=/example_vob;module=/example_module"
     SRCREV = "EXAMPLE_CLEARCASE_TAG"
-    PV = "${@d.getVar("SRCREV").replace("/", "+")}"
+    PV = "${@d.getVar("SRCREV", False).replace("/", "+")}"
 
 The fetcher uses the rcleartool or cleartool remote client, depending on which one is available.
 
@@ -113,7 +113,7 @@ class ClearCase(FetchMethod):
         if data.getVar("SRCREV", d, True) == "INVALID":
           raise FetchError("Set a valid SRCREV for the clearcase fetcher in your recipe, e.g. SRCREV = \"/main/LATEST\" or any other label of your choice.")
 
-        ud.label = d.getVar("SRCREV")
+        ud.label = d.getVar("SRCREV", False)
         ud.customspec = d.getVar("CCASE_CUSTOM_CONFIG_SPEC", True)
 
         ud.server     = "%s://%s%s" % (ud.proto, ud.host, ud.path)

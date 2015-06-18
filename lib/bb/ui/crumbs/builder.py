@@ -309,7 +309,7 @@ class Parameters:
 
 def hob_conf_filter(fn, data):
     if fn.endswith("/local.conf"):
-        distro = data.getVar("DISTRO_HOB")
+        distro = data.getVar("DISTRO_HOB", False)
         if distro:
             if distro != "defaultsetup":
                 data.setVar("DISTRO", distro)
@@ -320,13 +320,13 @@ def hob_conf_filter(fn, data):
                 "BB_NUMBER_THREADS_HOB", "PARALLEL_MAKE_HOB", "DL_DIR_HOB", \
                 "SSTATE_DIR_HOB", "SSTATE_MIRRORS_HOB", "INCOMPATIBLE_LICENSE_HOB"]
         for key in keys:
-            var_hob = data.getVar(key)
+            var_hob = data.getVar(key, False)
             if var_hob:
                 data.setVar(key.split("_HOB")[0], var_hob)
         return
 
     if fn.endswith("/bblayers.conf"):
-        layers = data.getVar("BBLAYERS_HOB")
+        layers = data.getVar("BBLAYERS_HOB", False)
         if layers:
             data.setVar("BBLAYERS", layers)
         return

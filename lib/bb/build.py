@@ -159,7 +159,7 @@ class LogTee(object):
 def exec_func(func, d, dirs = None):
     """Execute a BB 'function'"""
 
-    body = d.getVar(func)
+    body = d.getVar(func, False)
     if not body:
         if body is None:
             logger.warn("Function %s doesn't exist", func)
@@ -646,7 +646,7 @@ def stampfile(taskname, d, file_name = None):
     return stamp_internal(taskname, d, file_name)
 
 def add_tasks(tasklist, deltasklist, d):
-    task_deps = d.getVar('_task_deps')
+    task_deps = d.getVar('_task_deps', False)
     if not task_deps:
         task_deps = {}
     if not 'tasks' in task_deps:
@@ -696,7 +696,7 @@ def addtask(task, before, after, d):
         task = "do_" + task
 
     d.setVarFlag(task, "task", 1)
-    bbtasks = d.getVar('__BBTASKS') or []
+    bbtasks = d.getVar('__BBTASKS', False) or []
     if not task in bbtasks:
         bbtasks.append(task)
     d.setVar('__BBTASKS', bbtasks)
@@ -719,7 +719,7 @@ def deltask(task, d):
     if task[:3] != "do_":
         task = "do_" + task
 
-    bbtasks = d.getVar('__BBDELTASKS') or []
+    bbtasks = d.getVar('__BBDELTASKS', False) or []
     if not task in bbtasks:
         bbtasks.append(task)
     d.setVar('__BBDELTASKS', bbtasks)

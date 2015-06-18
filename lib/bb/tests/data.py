@@ -134,12 +134,12 @@ class DataExpansions(unittest.TestCase):
 
     def test_rename(self):
         self.d.renameVar("foo", "newfoo")
-        self.assertEqual(self.d.getVar("newfoo"), "value_of_foo")
-        self.assertEqual(self.d.getVar("foo"), None)
+        self.assertEqual(self.d.getVar("newfoo", False), "value_of_foo")
+        self.assertEqual(self.d.getVar("foo", False), None)
 
     def test_deletion(self):
         self.d.delVar("foo")
-        self.assertEqual(self.d.getVar("foo"), None)
+        self.assertEqual(self.d.getVar("foo", False), None)
 
     def test_keys(self):
         keys = self.d.keys()
@@ -196,28 +196,28 @@ class TestMemoize(unittest.TestCase):
     def test_memoized(self):
         d = bb.data.init()
         d.setVar("FOO", "bar")
-        self.assertTrue(d.getVar("FOO") is d.getVar("FOO"))
+        self.assertTrue(d.getVar("FOO", False) is d.getVar("FOO", False))
 
     def test_not_memoized(self):
         d1 = bb.data.init()
         d2 = bb.data.init()
         d1.setVar("FOO", "bar")
         d2.setVar("FOO", "bar2")
-        self.assertTrue(d1.getVar("FOO") is not d2.getVar("FOO"))
+        self.assertTrue(d1.getVar("FOO", False) is not d2.getVar("FOO", False))
 
     def test_changed_after_memoized(self):
         d = bb.data.init()
         d.setVar("foo", "value of foo")
-        self.assertEqual(str(d.getVar("foo")), "value of foo")
+        self.assertEqual(str(d.getVar("foo", False)), "value of foo")
         d.setVar("foo", "second value of foo")
-        self.assertEqual(str(d.getVar("foo")), "second value of foo")
+        self.assertEqual(str(d.getVar("foo", False)), "second value of foo")
 
     def test_same_value(self):
         d = bb.data.init()
         d.setVar("foo", "value of")
         d.setVar("bar", "value of")
-        self.assertEqual(d.getVar("foo"),
-                         d.getVar("bar"))
+        self.assertEqual(d.getVar("foo", False),
+                         d.getVar("bar", False))
 
 class TestConcat(unittest.TestCase):
     def setUp(self):

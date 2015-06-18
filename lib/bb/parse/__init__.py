@@ -81,7 +81,7 @@ def update_cache(f):
 def mark_dependency(d, f):
     if f.startswith('./'):
         f = "%s/%s" % (os.getcwd(), f[2:])
-    deps = (d.getVar('__depends') or [])
+    deps = (d.getVar('__depends', False) or [])
     s = (f, cached_mtime_noerror(f))
     if s not in deps:
         deps.append(s)
@@ -89,7 +89,7 @@ def mark_dependency(d, f):
 
 def check_dependency(d, f):
     s = (f, cached_mtime_noerror(f))
-    deps = (d.getVar('__depends') or [])
+    deps = (d.getVar('__depends', False) or [])
     return s in deps
    
 def supports(fn, data):

@@ -301,15 +301,15 @@ class CookerDataBuilder(object):
 
         # Nomally we only register event handlers at the end of parsing .bb files
         # We register any handlers we've found so far here...
-        for var in data.getVar('__BBHANDLERS') or []:
-            bb.event.register(var, data.getVar(var),  (data.getVarFlag(var, "eventmask", True) or "").split())
+        for var in data.getVar('__BBHANDLERS', False) or []:
+            bb.event.register(var, data.getVar(var, False),  (data.getVarFlag(var, "eventmask", True) or "").split())
 
         if data.getVar("BB_WORKERCONTEXT", False) is None:
             bb.fetch.fetcher_init(data)
         bb.codeparser.parser_cache_init(data)
         bb.event.fire(bb.event.ConfigParsed(), data)
 
-        if data.getVar("BB_INVALIDCONF") is True:
+        if data.getVar("BB_INVALIDCONF", False) is True:
             data.setVar("BB_INVALIDCONF", False)
             self.parseConfigurationFiles(self.prefiles, self.postfiles)
             return

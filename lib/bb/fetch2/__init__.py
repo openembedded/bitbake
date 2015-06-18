@@ -1003,7 +1003,7 @@ def trusted_network(d, url):
     if d.getVar('BB_NO_NETWORK', True) == "1":
         return True
 
-    pkgname = d.expand(d.getVar('PN'))
+    pkgname = d.expand(d.getVar('PN', False))
     trusted_hosts = d.getVarFlag('BB_ALLOWED_NETWORKS', pkgname)
 
     if not trusted_hosts:

@@ -419,7 +419,7 @@ def generate_dependencies(d):
     deps = {}
     values = {}
 
-    tasklist = d.getVar('__BBTASKS') or []
+    tasklist = d.getVar('__BBTASKS', False) or []
     for task in tasklist:
         deps[task], values[task] = build_dependencies(task, keys, shelldeps, varflagsexcl, d)
         newdeps = deps[task]

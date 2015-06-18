@@ -628,7 +628,7 @@
                 <literallayout class='monospaced'>
      SRC_URI = "ccrc://cc.example.org/ccrc;vob=/example_vob;module=/example_module"
      SRCREV = "EXAMPLE_CLEARCASE_TAG"
-     PV = "${@d.getVar("SRCREV").replace("/", "+")}"
+     PV = "${@d.getVar("SRCREV", False).replace("/", "+")}"
                 </literallayout>
                 The fetcher uses the <filename>rcleartool</filename> or
                 <filename>cleartool</filename> remote client, depending on
