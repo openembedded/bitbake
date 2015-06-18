@@ -26,6 +26,24 @@ from django.conf.urls import url
 from django.core.urlresolvers import reverse
 from django.views.generic import TemplateView
 
+
+class ProjectFiltersMixin(object):
+    """Common mixin for recipe, machine in project filters"""
+
+    def filter_in_project(self, count_only=False):
+        query = self.queryset.filter(layer_version__in=self.project_layers)
+        if count_only:
+            return query.count()
+
+        self.queryset = query
+
+    def filter_not_in_project(self, count_only=False):
+        query = self.queryset.exclude(layer_version__in=self.project_layers)
+        if count_only:
+            return query.count()
+
+        self.queryset = query
+
 class LayersTable(ToasterTable):
     """Table of layers in Toaster"""
 
@@ -37,10 +55,38 @@ class LayersTable(ToasterTable):
         context = super(LayersTable, self).get_context_data(**kwargs)
 
         project = Project.objects.get(pk=kwargs['pid'])
+
         context['project'] = project
         context['projectlayers'] = map(lambda prjlayer: prjlayer.layercommit.id, ProjectLayer.objects.filter(project=project))
 
         return context
+
+
+    def setup_filters(self, *args, **kwargs):
+        project = Project.objects.get(pk=kwargs['pid'])
+        self.project_layers = ProjectLayer.objects.filter(project=project)
+
+
+        self.add_filter(title="Filter by project layers",
+                        name="in_current_project",
+                        filter_actions=[
+                            self.make_filter_action("in_project", "Layers added to this project", self.filter_in_project),
+                            self.make_filter_action("not_in_project", "Layers not added to this project", self.filter_not_in_project)
+                        ])
+
+    def filter_in_project(self, count_only=False):
+        query = self.queryset.filter(projectlayer__in=self.project_layers)
+        if count_only:
+            return query.count()
+
+        self.queryset = query
+
+    def filter_not_in_project(self, count_only=False):
+        query = self.queryset.exclude(projectlayer__in=self.project_layers)
+        if count_only:
+            return query.count()
+
+        self.queryset = query
 
 
     def setup_queryset(self, *args, **kwargs):
@@ -140,6 +186,7 @@ class LayersTable(ToasterTable):
         self.add_column(title="Add | Delete",
                         help_text="Add or delete layers to / from your project",
                         hideable=False,
+                        filter_name="in_current_project",
                         static_data_name="add-del-layers",
                         static_data_template='{% include "layer_btn.html" %}')
 
@@ -169,7 +216,7 @@ class LayerDetails(ToasterTemplateView):
         return context
 
 
-class MachinesTable(ToasterTable):
+class MachinesTable(ToasterTable, ProjectFiltersMixin):
     """Table of Machines in Toaster"""
 
     def __init__(self, *args, **kwargs):
@@ -183,6 +230,16 @@ class MachinesTable(ToasterTable):
         context['projectlayers'] = map(lambda prjlayer: prjlayer.layercommit.id, ProjectLayer.objects.filter(project=context['project']))
         return context
 
+    def setup_filters(self, *args, **kwargs):
+        project = Project.objects.get(pk=kwargs['pid'])
+        self.project_layers = project.projectlayer_equivalent_set()
+
+        self.add_filter(title="Filter by project machines",
+                        name="in_current_project",
+                        filter_actions=[
+                            self.make_filter_action("in_project", "Machines provided by layers added to this project", self.filter_in_project),
+                            self.make_filter_action("not_in_project", "Machines provided by layers not added to this project", self.filter_not_in_project)
+                        ])
 
     def setup_queryset(self, *args, **kwargs):
         prj = Project.objects.get(pk = kwargs['pid'])
@@ -226,6 +283,7 @@ class MachinesTable(ToasterTable):
         self.add_column(title="Select",
                         help_text="Sets the selected machine as the project machine. You can only have one machine per project",
                         hideable=False,
+                        filter_name="in_current_project",
                         static_data_name="add-del-layers",
                         static_data_template='{% include "machine_btn.html" %}')
 
@@ -264,7 +322,7 @@ class LayerMachinesTable(MachinesTable):
                         static_data_template=select_btn_template)
 
 
-class RecipesTable(ToasterTable):
+class RecipesTable(ToasterTable, ProjectFiltersMixin):
     """Table of Recipes in Toaster"""
 
     def __init__(self, *args, **kwargs):
@@ -281,6 +339,17 @@ class RecipesTable(ToasterTable):
         context['projectlayers'] = map(lambda prjlayer: prjlayer.layercommit.id, ProjectLayer.objects.filter(project=context['project']))
 
         return context
+
+    def setup_filters(self, *args, **kwargs):
+        project = Project.objects.get(pk=kwargs['pid'])
+        self.project_layers = project.projectlayer_equivalent_set()
+
+        self.add_filter(title="Filter by project recipes",
+                        name="in_current_project",
+                        filter_actions=[
+                            self.make_filter_action("in_project", "Recipes provided by layers added to this project", self.filter_in_project),
+                            self.make_filter_action("not_in_project", "Recipes provided by layers not added to this project", self.filter_not_in_project)
+                        ])
 
 
     def setup_queryset(self, *args, **kwargs):
@@ -318,6 +387,7 @@ class RecipesTable(ToasterTable):
 
         self.add_column(title="Recipe file",
                         help_text="Path to the recipe .bb file",
+                        hidden=True,
                         static_data_name="recipe-file",
                         static_data_template=recipe_file_template)
 
@@ -348,6 +418,7 @@ class RecipesTable(ToasterTable):
         self.add_column(title="Build",
                         help_text="Add or delete recipes to and from your project",
                         hideable=False,
+                        filter_name="in_current_project",
                         static_data_name="add-del-layers",
                         static_data_template='{% include "recipe_btn.html" %}')
 
