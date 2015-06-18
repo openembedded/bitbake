@@ -72,7 +72,7 @@ class ToasterTable(TemplateView):
 
             cmd = request.GET.get('cmd', None)
             if cmd and 'filterinfo' in cmd:
-                data = self.get_filter_info(request)
+                data = self.get_filter_info(request, **kwargs)
             else:
                 # If no cmd is specified we give you the table data
                 data = self.get_data(request, **kwargs)
@@ -81,10 +81,10 @@ class ToasterTable(TemplateView):
 
         return super(ToasterTable, self).get(request, *args, **kwargs)
 
-    def get_filter_info(self, request):
+    def get_filter_info(self, request, **kwargs):
         data = None
 
-        self.setup_filters()
+        self.setup_filters(**kwargs)
 
         search = request.GET.get("search", None)
         if search:
@@ -194,8 +194,8 @@ class ToasterTable(TemplateView):
 
         return template.render(context)
 
-    def apply_filter(self, filters):
-        self.setup_filters()
+    def apply_filter(self, filters, **kwargs):
+        self.setup_filters(**kwargs)
 
         try:
             filter_name, filter_action = filters.split(':')
@@ -264,7 +264,7 @@ class ToasterTable(TemplateView):
         if search:
             self.apply_search(search)
         if filters:
-            self.apply_filter(filters)
+            self.apply_filter(filters, **kwargs)
         if orderby:
             self.apply_orderby(orderby)
 
