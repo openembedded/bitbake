@@ -166,6 +166,8 @@ class Command(NoArgsCommand):
                             conffilepath, error = subprocess.Popen('bash -c ". '+os.path.join(dirname, ".templateconf")+'; echo \"\$TEMPLATECONF\""', shell=True, stdout=subprocess.PIPE).communicate()
                             conffilepath = os.path.join(conffilepath.strip(), "toasterconf.json")
                             candidatefilepath = os.path.join(dirname, conffilepath)
+                            if "toaster_cloned" in candidatefilepath:
+                                continue
                             if os.path.exists(candidatefilepath):
                                 config_files.append(candidatefilepath)
 
