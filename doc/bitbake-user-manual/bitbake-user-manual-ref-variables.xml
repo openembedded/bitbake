@@ -1066,6 +1066,20 @@
             </glossdef>
         </glossentry>
 
+        <glossentry id='var-BBLAYERS_FETCH_DIR'><glossterm>BBLAYERS_FETCH_DIR</glossterm>
+            <glossdef>
+                <para>
+                    Sets the base location where layers are stored.
+                    By default, this location is set to
+                    <filename>${COREBASE}</filename>.
+                    This setting is used in conjunction with
+                    <filename>bitbake-layers layerindex-fetch</filename> and
+                    tells <filename>bitbake-layers</filename> where to place
+                    the fetched layers.
+                </para>
+            </glossdef>
+        </glossentry>
+
         <glossentry id='var-BBMASK'><glossterm>BBMASK</glossterm>
             <glossdef>
                 <para>
