@@ -1280,6 +1280,9 @@ class RunQueueExecute:
         if rq.fakeworkerpipe:
             rq.fakeworkerpipe.setrunqueueexec(self)
 
+        if self.number_tasks <= 0:
+             bb.fatal("Invalid BB_NUMBER_THREADS %s" % self.number_tasks)
+
     def runqueue_process_waitpid(self, task, status):
 
         # self.build_stamps[pid] may not exist when use shared work directory.
