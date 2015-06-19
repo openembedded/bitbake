@@ -144,8 +144,9 @@ class ProcessServer(Process, BaseImplServer):
                     fds = fds + retval
             except SystemExit:
                 raise
-            except Exception:
-                logger.exception('Running idle function')
+            except Exception as exc:
+                if not isinstance(exc, bb.BBHandledException):
+                    logger.exception('Running idle function')
                 del self._idlefuns[function]
                 self.quit = True
 
