@@ -40,6 +40,10 @@ urlpatterns = patterns('',
     # url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
 
 
+    # This is here to maintain backward compatibility and will be deprecated
+    # in the future.
+    url(r'^orm/eventfile$', 'bldcollector.views.eventfile'),
+
     # if no application is selected, we have the magic toastergui app here
     url(r'^$', never_cache(RedirectView.as_view(url='/toastergui/'))),
 )
