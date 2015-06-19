@@ -1570,7 +1570,12 @@ class RunQueueExecuteTasks(RunQueueExecute):
             taskdep = self.rqdata.dataCache.task_deps[fn]
             if 'fakeroot' in taskdep and taskname in taskdep['fakeroot'] and not self.cooker.configuration.dry_run:
                 if not self.rq.fakeworker:
-                    self.rq.start_fakeworker(self)
+                    try:
+                        self.rq.start_fakeworker(self)
+                    except OSError as exc:
+                        logger.critical("Failed to spawn fakeroot worker to run %s:%s: %s" % (fn, taskname, str(exc)))
+                        self.rq.state = runQueueFailed
+                        return True
                 self.rq.fakeworker.stdin.write("<runtask>" + pickle.dumps((fn, task, taskname, False, self.cooker.collection.get_file_appends(fn), taskdepdata)) + "</runtask>")
                 self.rq.fakeworker.stdin.flush()
             else:
