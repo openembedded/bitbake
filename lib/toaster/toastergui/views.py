@@ -2104,8 +2104,11 @@ if True:
             # render new project page
             return render(request, template, context)
         elif request.method == "POST":
-            mandatory_fields = ['projectname', 'projectversion']
+            mandatory_fields = ['projectname', 'ptype']
             try:
+                ptype = request.POST.get('ptype')
+                if ptype == "build":
+                    mandatory_fields.append('projectversion')
                 # make sure we have values for all mandatory_fields
                 if reduce( lambda x, y: x or y, map(lambda x: len(request.POST.get(x, '')) == 0, mandatory_fields)):
                 # set alert for missing fields
@@ -2121,7 +2124,11 @@ if True:
                     login(request, user)
 
                 #  save the project
-                prj = Project.objects.create_project(name = request.POST['projectname'], release = Release.objects.get(pk = request.POST['projectversion']))
+                release = Release.objects.get(pk = request.POST.get('projectversion', None ))
+                if ptype == "analysis":
+                    release = None
+
+                prj = Project.objects.create_project(name = request.POST['projectname'], release = release)
                 prj.user_id = request.user.pk
                 prj.save()
                 return redirect(reverse(project, args=(prj.pk,)) + "#/newproject")

@@ -57,7 +57,11 @@ class ToasterSetting(models.Model):
 
 class ProjectManager(models.Manager):
     def create_project(self, name, release):
-        prj = self.model(name = name, bitbake_version = release.bitbake_version, release = release)
+        if release is not None:
+            prj = self.model(name = name, bitbake_version = release.bitbake_version, release = release)
+        else:
+            prj = self.model(name = name, bitbake_version = None, release = None)
+
         prj.save()
 
         for defaultconf in ToasterSetting.objects.filter(name__startswith="DEFCONF_"):
@@ -66,6 +70,8 @@ class ProjectManager(models.Manager):
                 name = name,
                 value = defaultconf.value)
 
+        if release is None:
+            return prj
 
         for rdl in release.releasedefaultlayer_set.all():
             try:
