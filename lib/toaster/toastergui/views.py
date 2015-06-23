@@ -64,9 +64,9 @@ def _get_latest_builds(prj=None):
     if prj is not None:
         queryset = queryset.filter(project = prj)
 
-    return itertools.chain(
+    return list(itertools.chain(
         queryset.filter(outcome=Build.IN_PROGRESS).order_by("-pk"),
-        queryset.filter(outcome__lt=Build.IN_PROGRESS).order_by("-pk")[:3] )
+        queryset.filter(outcome__lt=Build.IN_PROGRESS).order_by("-pk")[:3] ))
 
 
 # a JSON-able dict of recent builds; for use in the Project page, xhr_ updates,  and other places, as needed
