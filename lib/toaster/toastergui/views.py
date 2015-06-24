@@ -165,8 +165,8 @@ def _lv_to_dict(prj, x = None):
 
     return {"id": x.pk,
             "name": x.layer.name,
-            "tooltip": x.layer.vcs_url+" | "+x.get_vcs_reference(),
-            "detail": "(" + x.layer.vcs_url + (")" if x.up_branch == None else " | "+x.get_vcs_reference()+")"),
+            "tooltip": "%s | %s" % (x.layer.vcs_url,x.get_vcs_reference()),
+            "detail": "(%s" % x.layer.vcs_url + (")" if x.up_branch == None else " | "+x.get_vcs_reference()+")"),
             "giturl": x.layer.vcs_url,
             "layerdetailurl" : reverse('layerdetails', args=(prj.id,x.pk)),
             "revision" : x.get_vcs_reference(),
@@ -559,10 +559,10 @@ def task( request, build_id, task_id ):
     uri_list= [ ]
     variables = Variable.objects.filter(build=build_id)
     v=variables.filter(variable_name='SSTATE_DIR')
-    if v.count > 0:
+    if v.count() > 0:
         uri_list.append(v[0].variable_value)
     v=variables.filter(variable_name='SSTATE_MIRRORS')
-    if (v.count > 0):
+    if (v.count() > 0):
         for mirror in v[0].variable_value.split('\\n'):
             s=re.sub('.* ','',mirror.strip(' \t\n\r'))
             if len(s): uri_list.append(s)
@@ -2124,9 +2124,10 @@ if True:
                     login(request, user)
 
                 #  save the project
-                release = Release.objects.get(pk = request.POST.get('projectversion', None ))
                 if ptype == "analysis":
                     release = None
+                else:
+                    release = Release.objects.get(pk = request.POST.get('projectversion', None ))
 
                 prj = Project.objects.create_project(name = request.POST['projectname'], release = release)
                 prj.user_id = request.user.pk

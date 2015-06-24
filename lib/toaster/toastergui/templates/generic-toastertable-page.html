@@ -11,7 +11,9 @@
 {% block projectinfomain %}
 <div class="page-header">
   <h1>{{title}} (<span class="table-count-{{table_name}}"></span>)
+    {% if project.release %}
     <i class="icon-question-sign get-help heading-help" title="This page lists {{title}} compatible with the release selected for this project, which is {{project.release.description}}"></i>
+    {% endif %}
   </h1>
 </div>
 <div id="zone1alerts" style="display:none">

@@ -28,7 +28,7 @@ $(document).ready(function() {
     <form id="searchform" class="navbar-search input-append pull-left">
   {% endif %}
 
-      <input id="search" class="input-xlarge" type="text" placeholder="Search {{search_what}}" name="search" value="{{request.GET.search}}">
+      <input id="search" class="input-xlarge" type="text" placeholder="Search {{search_what}}" name="search" value="{% if request.GET.search %}{{request.GET.search}}{% endif %}">
       <input type="hidden" value="name:+" name="orderby">
       <input type="hidden" value="l" name="page">
   {% if request.GET.search %}

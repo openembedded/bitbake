@@ -9,6 +9,7 @@
 
 {% block projectinfomain %}
 
+        {% if project and project.release %}
                   <script src="{% static 'js/layerDepsModal.js' %}"></script>
                   <script src="{% static 'js/importlayer.js' %}"></script>
                   <script>
@@ -31,9 +32,7 @@
                 </div>
 
                 <form>
-        {% if project %}
                     <span class="help-block" style="padding-left:19px;">The layer you are importing must be compatible with <strong>{{project.release.description}}</strong>, which is the release you are using in this project.</span>
-          {% endif %}
                    <fieldset class="air">
                       <legend>Layer repository information</legend>
                       <div class="alert alert-error" id="import-error" style="display:none">
@@ -130,5 +129,17 @@
                     </div>
                   </div>
                   </form>
+
+          {% else %} {#project and project release#}
+                <div class="page-header">
+                    <h1>Import layer</h1>
+                </div>
+                      <div class="alert alert-info" id="import-error" >
+                        <h3>Unsupported project type</h3>
+                        <p>This project does not support importing layers.</p>
+                        <ul></ul>
+                      </div>
+
+          {% endif %}
 
 {% endblock %}
