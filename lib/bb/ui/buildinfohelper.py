@@ -860,10 +860,11 @@ class BuildInfoHelper(object):
         # convert the paths from absolute to relative to either the build directory or layer checkouts
         path_prefixes = []
 
-        br_id, be_id = self.brbe.split(":")
-        from bldcontrol.models import BuildEnvironment, BuildRequest
-        be = BuildEnvironment.objects.get(pk = be_id)
-        path_prefixes.append(be.builddir)
+        if self.brbe is not None:
+            br_id, be_id = self.brbe.split(":")
+            from bldcontrol.models import BuildEnvironment, BuildRequest
+            be = BuildEnvironment.objects.get(pk = be_id)
+            path_prefixes.append(be.builddir)
 
         for layer in sorted(self.orm_wrapper.layer_version_objects, key = lambda x:len(x.local_path), reverse=True):
             path_prefixes.append(layer.local_path)
