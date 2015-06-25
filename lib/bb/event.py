@@ -72,7 +72,10 @@ _eventfilter = None
 
 def execute_handler(name, handler, event, d):
     event.data = d
-    __builtins__['d'] = d
+    addedd = False
+    if 'd' not in __builtins__:
+        __builtins__['d'] = d
+        addedd = True
     try:
         ret = handler(event)
     except (bb.parse.SkipRecipe, bb.BBHandledException):
@@ -88,7 +91,8 @@ def execute_handler(name, handler, event, d):
         raise
     finally:
         del event.data
-        del __builtins__['d']
+        if addedd:
+            del __builtins__['d']
 
 def fire_class_handlers(event, d):
     if isinstance(event, logging.LogRecord):
