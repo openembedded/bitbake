@@ -123,7 +123,7 @@ class Perforce(FetchMethod):
         if depot.find('/...') != -1:
             path = depot[:depot.find('/...')]
         else:
-            path = depot
+            path = depot[:depot.rfind('/')]
 
         module = parm.get('module', os.path.basename(path))
 
