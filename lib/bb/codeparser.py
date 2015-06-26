@@ -240,6 +240,9 @@ class PythonParser():
         self.unhandled_message = "while parsing %s, %s" % (name, self.unhandled_message)
 
     def parse_python(self, node):
+        if not node or not node.strip():
+            return
+
         h = hash(str(node))
 
         if h in codeparsercache.pythoncache:
