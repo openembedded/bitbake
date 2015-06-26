@@ -92,6 +92,9 @@ class pythonCacheLine(object):
         for c in sorted(self.contains.keys()):
             l = l + (c, hash(self.contains[c]))
         return hash(l)
+    def __repr__(self):
+        return " ".join([str(self.refs), str(self.execs), str(self.contains)]) 
+
 
 class shellCacheLine(object):
     def __init__(self, execs):
@@ -105,6 +108,8 @@ class shellCacheLine(object):
         self.__init__(execs)
     def __hash__(self):
         return hash(self.execs)
+    def __repr__(self):
+        return str(self.execs)
 
 class CodeParserCache(MultiProcessCache):
     cache_file_name = "bb_codeparser.dat"
