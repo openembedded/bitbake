@@ -20,7 +20,7 @@
               <label>Project name <span class="muted">(required)</span></label>
               <input type="text" class="input-xlarge" required id="new-project-name" name="projectname">
             </fieldset>
-
+<!--
             <fieldset>
                 <label class="project-form">Project type</label>
                     <label class="project-form radio"><input type="radio" name="ptype" value="analysis" checked/> Analysis Project</label>
@@ -28,7 +28,8 @@
                 {% if releases.count > 0 %}
                     <label class="project-form radio"><input type="radio" name="ptype" value="build" checked /> Build Project</label>
                 {% endif %}
-            </fieldset>
+              </fieldset> -->
+        <input type="hidden" name="ptype" value="build" />
 
         {% if releases.count > 0 %}
             <fieldset class="release">
@@ -63,7 +64,7 @@
             </div>
         </form>
         </div>
-
+        <!--
         <div class="span5 well">
                 <span class="help-block">
                  <h4>Toaster project types</h4>
@@ -76,7 +77,7 @@
                  <h4>Release</h4>
                  <p>If you create a <strong>build project</strong>, you will need to select a <strong>release</strong>,
                  which is the version of the build system you want to use to run your builds.</p>
-               </div>
+             </div> -->
         </div>
     </div>
 
@@ -109,7 +110,7 @@
                 $('#description-' + new_release).fadeIn();
             });
 
-			// Hide the project release when you select an analysis project
+/*			// Hide the project release when you select an analysis project
 			function projectType() {
 				if ($("input[type='radio']:checked").val() == 'build') {
 					$('.release').fadeIn();
@@ -122,8 +123,8 @@
 
 			$('input:radio').change(function(){
 				projectType();
-			});
-        })
+			}); */
+        });
     </script>
 
 {% endblock %}
