@@ -7,9 +7,6 @@
 {% block pagecontent %}
 
 
-  {% include "mrb_section.html" %}
-
-
   <div class="page-header top-air">
       <h1>
       {% if request.GET.filter and objects.paginator.count > 0 or request.GET.search and objects.paginator.count > 0 %}
