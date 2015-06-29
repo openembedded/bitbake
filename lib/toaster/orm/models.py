@@ -180,9 +180,8 @@ class Project(models.Model):
         if release == None:
             release = self.release
         # layers on the same branch or layers specifically set for this project
-        queryset = Layer_Version.objects.filter(Q(project = self) | Q(build__project = self))
-        if release is not None:
-            queryset = queryset.filter(Q(up_branch__name = release.branch_name) & Q(project = None))
+        queryset = Layer_Version.objects.filter((Q(up_branch__name = release.branch_name) & Q(project = None)) | Q(project = self) | Q(build__project = self))
+
         if layer_name is not None:
             # we select only a layer name
             queryset = queryset.filter(layer__name = layer_name)
