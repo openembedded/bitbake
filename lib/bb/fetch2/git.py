@@ -423,7 +423,7 @@ class Git(FetchMethod):
         else:
             return True, str(rev)
 
-    def checkstatus(self, ud, d):
+    def checkstatus(self, fetch, ud, d):
         try:
             self._lsremote(ud, d, "")
             return True

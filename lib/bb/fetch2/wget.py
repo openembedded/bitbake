@@ -100,7 +100,7 @@ class Wget(FetchMethod):
 
         return True
 
-    def checkstatus(self, ud, d):
+    def checkstatus(self, fetch, ud, d):
 
         uri = ud.url.split(";")[0]
         fetchcmd = self.basecmd + " --spider '%s'" % uri

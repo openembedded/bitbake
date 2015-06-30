@@ -112,7 +112,7 @@ class Local(FetchMethod):
 
         return True
 
-    def checkstatus(self, urldata, d):
+    def checkstatus(self, fetch, urldata, d):
         """
         Check the status of the url
         """
