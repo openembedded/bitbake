@@ -239,6 +239,7 @@ def main(server, eventHandler, params ):
 
             if isinstance(event, (bb.event.BuildCompleted, bb.command.CommandFailed)):
 
+		errorcode = 0
                 if (isinstance(event, bb.command.CommandFailed)):
                     errors += 1
                     errorcode = 1
