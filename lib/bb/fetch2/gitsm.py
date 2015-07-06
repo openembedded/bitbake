@@ -109,6 +109,7 @@ class GitSM(Git):
         runfetchcmd("sed " + gitdir + "/config -i -e 's/bare.*=.*true/bare = false/'", d)
         os.chdir(tmpclonedir)
         runfetchcmd(ud.basecmd + " reset --hard", d)
+        runfetchcmd(ud.basecmd + " checkout " + ud.revisions[ud.names[0]], d)
         runfetchcmd(ud.basecmd + " submodule init", d)
         runfetchcmd(ud.basecmd + " submodule update", d)
         self._set_relative_paths(tmpclonedir)
