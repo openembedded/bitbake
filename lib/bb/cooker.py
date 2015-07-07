@@ -151,9 +151,7 @@ class BBCooker:
 
         # Take a lock so only one copy of bitbake can run against a given build
         # directory at a time
-        lockfile = self.data.expand("${TOPDIR}/bitbake.lock")
-        self.lock = bb.utils.lockfile(lockfile, False, False)
-        if not self.lock:
+        if not self.lockBitbake():
             bb.fatal("Only one copy of bitbake should be run against a build directory")
         try:
             self.lock.seek(0)
@@ -1546,6 +1544,19 @@ class BBCooker:
 
     def reset(self):
         self.initConfigurationData()
+
+    def lockBitbake(self):
+        if not hasattr(self, 'lock'):
+            self.lock = None
+            if self.data:
+                lockfile = self.data.expand("${TOPDIR}/bitbake.lock")
+                if lockfile:
+                    self.lock = bb.utils.lockfile(lockfile, False, False)
+        return self.lock
+
+    def unlockBitbake(self):
+        if hasattr(self, 'lock') and self.lock:
+            bb.utils.unlockfile(self.lock)
 
 def server_main(cooker, func, *args):
     cooker.pre_serve()
