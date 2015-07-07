@@ -406,7 +406,7 @@ class Wget(FetchMethod):
         version_dir = ['', '', '']
         version = ['', '', '']
 
-        dirver_regex = re.compile("(\D*)((\d+[\.-_])+(\d+))")
+        dirver_regex = re.compile("(\D*)((\d+[\.\-_])+(\d+))")
         s = dirver_regex.search(dirver)
         if s:
             version_dir[1] = s.group(2)
@@ -465,7 +465,7 @@ class Wget(FetchMethod):
         pn_regex = "(%s|%s|%s)" % (pn_prefix1, pn_prefix2, pn_prefix3)
 
         # match version
-        pver_regex = "(([A-Z]*\d+[a-zA-Z]*[\.-_]*)+)"
+        pver_regex = "(([A-Z]*\d+[a-zA-Z]*[\.\-_]*)+)"
 
         # match arch
         parch_regex = "-source|_all_"
