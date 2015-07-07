@@ -83,7 +83,7 @@ class BitBakeConfigParameters(cookerdata.ConfigParameters):
     def parseCommandLine(self, argv=sys.argv):
         parser = optparse.OptionParser(
             version = "BitBake Build Tool Core version %s" % bb.__version__,
-            usage = """%prog [options] [recipename/target ...]
+            usage = """%prog [options] [recipename/target recipe:do_task ...]
 
     Executes the specified task (default is 'build') for a given set of target recipes (.bb files).
     It is assumed there is a conf/bblayers.conf available in cwd or in BBPATH which
