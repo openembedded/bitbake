@@ -1174,9 +1174,12 @@ class BBCooker:
         """
         Setup any variables needed before starting a build
         """
+        t = time.gmtime() 
         if not self.data.getVar("BUILDNAME", False):
-            self.data.setVar("BUILDNAME", time.strftime('%Y%m%d%H%M'))
-        self.data.setVar("BUILDSTART", time.strftime('%m/%d/%Y %H:%M:%S', time.gmtime()))
+            self.data.setVar("BUILDNAME", "${DATE}${TIME}")
+        self.data.setVar("BUILDSTART", time.strftime('%m/%d/%Y %H:%M:%S', t))
+        self.data.setVar("DATE", time.strftime('%Y%m%d', t))
+        self.data.setVar("TIME", time.strftime('%H%M%S', t))
 
     def matchFiles(self, bf):
         """
@@ -1275,7 +1278,7 @@ class BBCooker:
         taskdata = bb.taskdata.TaskData(self.configuration.abort)
         taskdata.add_provider(self.data, self.recipecache, item)
 
-        buildname = self.data.getVar("BUILDNAME", False)
+        buildname = self.data.getVar("BUILDNAME", True)
         bb.event.fire(bb.event.BuildStarted(buildname, [item]), self.expanded_data)
 
         # Execute the runqueue
