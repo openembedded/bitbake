@@ -238,7 +238,22 @@ class Wget(FetchMethod):
             return "HEAD"
 
         exported_proxies = export_proxies(d)
-        if exported_proxies == True:
+
+        # XXX: Since Python 2.7.9 ssl cert validation is enabled by default
+        # see PEP-0476, this causes verification errors on some https servers
+        # so disable by default.
+        import ssl
+        ssl_context = None
+        if hasattr(ssl, '_create_unverified_context'):
+            ssl_context = ssl._create_unverified_context()
+
+        if exported_proxies == True and ssl_context is not None:
+            opener = urllib2.build_opener(urllib2.ProxyHandler, CacheHTTPHandler,
+                    urllib2.HTTPSHandler(context=ssl_context))
+        elif exported_proxies == False and ssl_context is not None:
+            opener = urllib2.build_opener(CacheHTTPHandler,
+                    urllib2.HTTPSHandler(context=ssl_context))
+        elif exported_proxies == True and ssl_context is None:
             opener = urllib2.build_opener(urllib2.ProxyHandler, CacheHTTPHandler)
         else:
             opener = urllib2.build_opener(CacheHTTPHandler)
@@ -247,8 +262,9 @@ class Wget(FetchMethod):
         urllib2.install_opener(opener)
 
         uri = ud.url.split(";")[0]
+
         try:
-            f = urllib2.urlopen(uri)
+            urllib2.urlopen(uri)
         except:
             return False
         return True
