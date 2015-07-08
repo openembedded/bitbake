@@ -221,17 +221,29 @@ class Wget(FetchMethod):
         def export_proxies(d):
             variables = ['http_proxy', 'HTTP_PROXY', 'https_proxy', 'HTTPS_PROXY',
                             'ftp_proxy', 'FTP_PROXY', 'no_proxy', 'NO_PROXY']
+            exported = False
 
             for v in variables:
-                if not v in os.environ.keys():
-                    os.environ[v] = d.getVar(v, True) or ''
+                if v in os.environ.keys():
+                    exported = True
+                else:
+                    v_proxy = d.getVar(v, True)
+                    if v_proxy is not None:
+                        os.environ[v] = v_proxy
+                        exported = True
+
+            return exported
 
         def head_method(self):
             return "HEAD"
 
-        export_proxies(d)
+        exported_proxies = export_proxies(d)
+        if exported_proxies == True:
+            opener = urllib2.build_opener(urllib2.ProxyHandler, CacheHTTPHandler)
+        else:
+            opener = urllib2.build_opener(CacheHTTPHandler)
+
         urllib2.Request.get_method = head_method
-        opener = urllib2.build_opener(urllib2.ProxyHandler, CacheHTTPHandler)
         urllib2.install_opener(opener)
 
         uri = ud.url.split(";")[0]
