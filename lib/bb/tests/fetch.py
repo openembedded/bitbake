@@ -719,8 +719,14 @@ class FetchCheckStatusTest(FetcherTest):
                       "http://downloads.yoctoproject.org/releases/sato/sato-engine-0.1.tar.gz",
                       "http://downloads.yoctoproject.org/releases/sato/sato-engine-0.2.tar.gz",
                       "http://downloads.yoctoproject.org/releases/sato/sato-engine-0.3.tar.gz",
+                      "https://yoctoproject.org/",
+                      "https://yoctoproject.org/documentation",
                       "http://downloads.yoctoproject.org/releases/opkg/opkg-0.1.7.tar.gz",
-                      "http://downloads.yoctoproject.org/releases/opkg/opkg-0.3.0.tar.gz"]
+                      "http://downloads.yoctoproject.org/releases/opkg/opkg-0.3.0.tar.gz",
+                      "ftp://ftp.gnu.org/gnu/autoconf/autoconf-2.60.tar.gz",
+                      "ftp://ftp.gnu.org/gnu/chess/gnuchess-5.08.tar.gz",
+                      "ftp://ftp.gnu.org/gnu/gmp/gmp-4.0.tar.gz",
+                      ]
 
     if os.environ.get("BB_SKIP_NETTESTS") == "yes":
         print("Unset BB_SKIP_NETTESTS to run network tests")
