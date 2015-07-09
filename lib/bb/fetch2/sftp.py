@@ -99,7 +99,7 @@ class SFTP(FetchMethod):
         """Fetch urls"""
 
         urlo = URI(ud.url)
-        basecmd = 'sftp -oPasswordAuthentication=no'
+        basecmd = 'sftp -oBatchMode=yes'
         port = ''
         if urlo.port:
             port = '-P %d' % urlo.port
