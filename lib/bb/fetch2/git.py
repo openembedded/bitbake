@@ -279,8 +279,15 @@ class Git(FetchMethod):
             if subdir != "":
                 runfetchcmd("%s read-tree %s%s" % (ud.basecmd, ud.revisions[ud.names[0]], readpathspec), d)
                 runfetchcmd("%s checkout-index -q -f -a" % ud.basecmd, d)
+            elif not ud.nobranch:
+                branchname =  ud.branches[ud.names[0]]
+                runfetchcmd("%s checkout -B %s %s" % (ud.basecmd, branchname, \
+                            ud.revisions[ud.names[0]]), d)
+                runfetchcmd("%s branch --set-upstream %s origin/%s" % (ud.basecmd, branchname, \
+                            branchname), d)
             else:
                 runfetchcmd("%s checkout %s" % (ud.basecmd, ud.revisions[ud.names[0]]), d)
+
         return True
 
     def clean(self, ud, d):
