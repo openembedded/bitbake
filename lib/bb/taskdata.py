@@ -41,7 +41,7 @@ class TaskData:
     """
     BitBake Task Data implementation
     """
-    def __init__(self, abort = True, tryaltconfigs = False, skiplist = None):
+    def __init__(self, abort = True, tryaltconfigs = False, skiplist = None, allowincomplete = False):
         self.build_names_index = []
         self.run_names_index = []
         self.fn_index = []
@@ -70,6 +70,7 @@ class TaskData:
 
         self.abort = abort
         self.tryaltconfigs = tryaltconfigs
+        self.allowincomplete = allowincomplete
 
         self.skiplist = skiplist
 
@@ -594,9 +595,10 @@ class TaskData:
                     added = added + 1
                 except bb.providers.NoProvider:
                     targetid = self.getbuild_id(target)
-                    if self.abort and targetid in self.external_targets:
+                    if self.abort and targetid in self.external_targets and not self.allowincomplete:
                         raise
-                    self.remove_buildtarget(targetid)
+                    if not self.allowincomplete:
+                        self.remove_buildtarget(targetid)
             for target in self.get_unresolved_run_targets(dataCache):
                 try:
                     self.add_rprovider(cfgData, dataCache, target)

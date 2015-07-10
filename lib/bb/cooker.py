@@ -581,7 +581,7 @@ class BBCooker:
             if pkgs_to_build[0] in set(ignore.split()):
                 bb.fatal("%s is in ASSUME_PROVIDED" % pkgs_to_build[0])
 
-            taskdata, runlist, pkgs_to_build = self.buildTaskData(pkgs_to_build, None, self.configuration.abort)
+            taskdata, runlist, pkgs_to_build = self.buildTaskData(pkgs_to_build, None, self.configuration.abort, allowincomplete=True)
 
             targetid = taskdata.getbuild_id(pkgs_to_build[0])
             fnid = taskdata.build_targets[targetid][0]
@@ -614,7 +614,7 @@ class BBCooker:
                 logger.plain("\npython %s () {\n%s}\n", e, envdata.getVar(e, True))
 
 
-    def buildTaskData(self, pkgs_to_build, task, abort):
+    def buildTaskData(self, pkgs_to_build, task, abort, allowincomplete=False):
         """
         Prepare a runqueue and taskdata object for iteration over pkgs_to_build
         """
@@ -629,7 +629,7 @@ class BBCooker:
         localdata = data.createCopy(self.data)
         bb.data.update_data(localdata)
         bb.data.expandKeys(localdata)
-        taskdata = bb.taskdata.TaskData(abort, skiplist=self.skiplist)
+        taskdata = bb.taskdata.TaskData(abort, skiplist=self.skiplist, allowincomplete=allowincomplete)
 
         current = 0
         runlist = []
@@ -654,7 +654,7 @@ class BBCooker:
 
         # We set abort to False here to prevent unbuildable targets raising
         # an exception when we're just generating data
-        taskdata, runlist, pkgs_to_build = self.buildTaskData(pkgs_to_build, task, False)
+        taskdata, runlist, pkgs_to_build = self.buildTaskData(pkgs_to_build, task, False, allowincomplete=True)
 
         return runlist, taskdata
 
