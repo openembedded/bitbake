@@ -64,7 +64,7 @@ class Popen(subprocess.Popen):
         options.update(kwargs)
         subprocess.Popen.__init__(self, *args, **options)
 
-def _logged_communicate(pipe, log, input):
+def _logged_communicate(pipe, log, input, extrafiles):
     if pipe.stdin:
         if input is not None:
             pipe.stdin.write(input)
@@ -79,6 +79,19 @@ def _logged_communicate(pipe, log, input):
     if pipe.stderr is not None:
         bb.utils.nonblockingfd(pipe.stderr.fileno())
         rin.append(pipe.stderr)
+    for fobj, _ in extrafiles:
+        bb.utils.nonblockingfd(fobj.fileno())
+        rin.append(fobj)
+
+    def readextras():
+        for fobj, func in extrafiles:
+            try:
+                data = fobj.read()
+            except IOError as err:
+                if err.errno == errno.EAGAIN or err.errno == errno.EWOULDBLOCK:
+                    data = None
+            if data is not None:
+                func(data)
 
     try:
         while pipe.poll() is None:
@@ -100,15 +113,21 @@ def _logged_communicate(pipe, log, input):
                 if data is not None:
                     errdata.append(data)
                     log.write(data)
+
+            readextras()
+
     finally:    
         log.flush()
+
+    readextras()
+
     if pipe.stdout is not None:
         pipe.stdout.close()
     if pipe.stderr is not None:
         pipe.stderr.close()
     return ''.join(outdata), ''.join(errdata)
 
-def run(cmd, input=None, log=None, **options):
+def run(cmd, input=None, log=None, extrafiles=[], **options):
     """Convenience function to run a command and return its output, raising an
     exception when the command fails"""
 
@@ -124,7 +143,7 @@ def run(cmd, input=None, log=None, **options):
             raise CmdError(cmd, exc)
 
     if log:
-        stdout, stderr = _logged_communicate(pipe, log, input)
+        stdout, stderr = _logged_communicate(pipe, log, input, extrafiles)
     else:
         stdout, stderr = pipe.communicate(input)
 
