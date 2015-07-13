@@ -350,6 +350,8 @@ exit $?
                 # The caller will call exit themselves, so bb.error() is
                 # what we want here rather than bb.fatal()
                 bb.error(value)
+            elif cmd == 'bbfatal_log':
+                bb.error(value, forcelog=True)
             elif cmd == 'bbdebug':
                 splitval = value.split(' ', 1)
                 level = int(splitval[0])
@@ -446,7 +448,10 @@ def _exec_task(fn, task, d, quieterr):
             self.triggered = False
             logging.Handler.__init__(self, logging.ERROR)
         def emit(self, record):
-            self.triggered = True
+            if getattr(record, 'forcelog', False):
+                self.triggered = False
+            else:
+                self.triggered = True
 
     # Handle logfiles
     si = open('/dev/null', 'r')

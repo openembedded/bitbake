@@ -94,11 +94,11 @@ def note(*args):
 def warn(*args):
     logger.warn(''.join(args))
 
-def error(*args):
-    logger.error(''.join(args))
+def error(*args, **kwargs):
+    logger.error(''.join(args), extra=kwargs)
 
-def fatal(*args):
-    logger.critical(''.join(args))
+def fatal(*args, **kwargs):
+    logger.critical(''.join(args), extra=kwargs)
     raise BBHandledException()
 
 def deprecated(func, name=None, advice=""):
