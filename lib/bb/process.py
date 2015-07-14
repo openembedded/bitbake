@@ -83,15 +83,16 @@ def _logged_communicate(pipe, log, input, extrafiles):
         bb.utils.nonblockingfd(fobj.fileno())
         rin.append(fobj)
 
-    def readextras():
+    def readextras(selected):
         for fobj, func in extrafiles:
-            try:
-                data = fobj.read()
-            except IOError as err:
-                if err.errno == errno.EAGAIN or err.errno == errno.EWOULDBLOCK:
-                    data = None
-            if data is not None:
-                func(data)
+            if fobj in selected:
+                try:
+                    data = fobj.read()
+                except IOError as err:
+                    if err.errno == errno.EAGAIN or err.errno == errno.EWOULDBLOCK:
+                        data = None
+                if data is not None:
+                    func(data)
 
     try:
         while pipe.poll() is None:
@@ -114,12 +115,12 @@ def _logged_communicate(pipe, log, input, extrafiles):
                     errdata.append(data)
                     log.write(data)
 
-            readextras()
+            readextras(r)
 
     finally:    
         log.flush()
 
-    readextras()
+    readextras([fobj for fobj, _ in extrafiles])
 
     if pipe.stdout is not None:
         pipe.stdout.close()
