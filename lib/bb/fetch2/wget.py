@@ -507,12 +507,12 @@ class Wget(FetchMethod):
         if not re.search("\d+", package):
             current_version[1] = re.sub('_', '.', current_version[1])
             current_version[1] = re.sub('-', '.', current_version[1])
-            return current_version[1]
+            return (current_version[1], '')
 
         package_regex = self._init_regexes(package, ud, d)
         if package_regex is None:
             bb.warn("latest_versionstring: package %s don't match pattern" % (package))
-            return ""
+            return ('', '')
         bb.debug(3, "latest_versionstring, regex: %s" % (package_regex.pattern))
 
         uri = ""
@@ -530,12 +530,12 @@ class Wget(FetchMethod):
 
                 dirver_pn_regex = re.compile("%s\d?" % (re.escape(pn)))
                 if not dirver_pn_regex.search(dirver):
-                    return self._check_latest_version_by_dir(dirver,
-                        package, package_regex, current_version, ud, d)
+                    return (self._check_latest_version_by_dir(dirver,
+                        package, package_regex, current_version, ud, d), '')
 
             uri = bb.fetch.encodeurl([ud.type, ud.host, path, ud.user, ud.pswd, {}])
         else:
             uri = regex_uri
 
-        return self._check_latest_version(uri, package, package_regex,
-                current_version, ud, d)
+        return (self._check_latest_version(uri, package, package_regex,
+                current_version, ud, d), '')

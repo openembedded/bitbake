@@ -708,7 +708,8 @@ class FetchMethodTest(FetcherTest):
                 self.d.setVar("REGEX_URI", k[2])
                 self.d.setVar("REGEX", k[3])
                 ud = bb.fetch2.FetchData(k[1], self.d)
-                verstring = ud.method.latest_versionstring(ud, self.d)
+                pupver = ud.method.latest_versionstring(ud, self.d)
+                verstring = pupver[0]
                 r = bb.utils.vercmp_string(v, verstring)
                 self.assertTrue(r == -1 or r == 0, msg="Package %s, version: %s <= %s" % (k[0], v, verstring))
 
