@@ -271,8 +271,9 @@ def emit_func(func, o=sys.__stdout__, d = init()):
 
     keys = (key for key in d.keys() if not key.startswith("__") and not d.getVarFlag(key, "func"))
     for key in keys:
-        emit_var(key, o, d, False) and o.write('\n')
+        emit_var(key, o, d, False)
 
+    o.write('\n')
     emit_var(func, o, d, False) and o.write('\n')
     newdeps = bb.codeparser.ShellParser(func, logger).parse_shell(d.getVar(func, True))
     newdeps |= set((d.getVarFlag(func, "vardeps", True) or "").split())
