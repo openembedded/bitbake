@@ -374,7 +374,7 @@ class Git(FetchMethod):
         verstring = ""
         tagregex = re.compile(d.getVar('GITTAGREGEX', True) or "(?P<pver>([0-9][\.|_]?)+)")
         try:
-            output = self._lsremote(ud, d, "refs/tags/*^{}")
+            output = self._lsremote(ud, d, "refs/tags/*")
         except bb.fetch2.FetchError or bb.fetch2.NetworkAccess:
             return ""
 
