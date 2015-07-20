@@ -889,9 +889,8 @@ class LayerIndexLayerSource(LayerSource):
                 dependlist[lv] = []
             try:
                 dependlist[lv].append(Layer_Version.objects.get(layer_source = self, layer__up_id = ldi['dependency'], up_branch = lv.up_branch))
-            except Layer_Version.DoesNotExist as e:
+            except Layer_Version.DoesNotExist:
                 print "Cannot find layer version ", self, ldi['dependency'], lv.up_branch
-                raise e
 
         for lv in dependlist:
             LayerVersionDependency.objects.filter(layer_version = lv).delete()
