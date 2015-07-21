@@ -780,7 +780,7 @@ class DataSmart(MutableMapping):
 
         data.overrides = None
         data.overridevars = copy.copy(self.overridevars)
-        data.overridedata = copy.copy(self.overridedata)
+        data.overridedata = copy.deepcopy(self.overridedata)
 
         return data
 
