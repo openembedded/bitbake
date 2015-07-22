@@ -47,9 +47,9 @@ C = "3"
         self.d = bb.data.init()
         bb.parse.siggen = bb.siggen.init(self.d)
 
-    def parsehelper(self, content):
+    def parsehelper(self, content, suffix = ".bb"):
 
-        f = tempfile.NamedTemporaryFile(suffix = ".bb")
+        f = tempfile.NamedTemporaryFile(suffix = suffix)
         f.write(content)
         f.flush()
         os.chdir(os.path.dirname(f.name))
@@ -112,4 +112,36 @@ PN = "bc"
         d.setVar("DESCRIPTION_bc-dev", "C D")
         d.setVar("OVERRIDES", "bc-dev")
         self.assertEqual(d.getVar("DESCRIPTION", True), "C D")
+
+
+    classextend = """
+VAR_var_override1 = "B"
+EXTRA = ":override1"
+OVERRIDES = "nothing${EXTRA}"
+
+BBCLASSEXTEND = "###CLASS###"
+"""
+    classextend_bbclass = """
+EXTRA = ""
+python () {
+    d.renameVar("VAR_var", "VAR_var2")
+}
+"""
+
+    #
+    # Test based upon a real world data corruption issue. One
+    # data store changing a variable poked through into a different data
+    # store. This test case replicates that issue where the value 'B' would 
+    # become unset/disappear.
+    #
+    def test_parse_classextend_contamination(self):
+        cls = self.parsehelper(self.classextend_bbclass, suffix=".bbclass")
+        #clsname = os.path.basename(cls.name).replace(".bbclass", "")
+        self.classextend = self.classextend.replace("###CLASS###", cls.name)
+        f = self.parsehelper(self.classextend)
+        alldata = bb.parse.handle(f.name, self.d)
+        d1 = alldata['']
+        d2 = alldata[cls.name]
+        self.assertEqual(d1.getVar("VAR_var", True), "B")
+        self.assertEqual(d2.getVar("VAR_var", True), None)
 
