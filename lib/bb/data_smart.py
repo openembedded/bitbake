@@ -310,6 +310,9 @@ class DataSmart(MutableMapping):
         self.expand_cache = {}
 
         # cookie monster tribute
+        # Need to be careful about writes to overridedata as
+        # its only a shallow copy, could influence other data store
+        # copies!
         self.overridedata = {}
         self.overrides = None
         self.overridevars = set(["OVERRIDES", "FILE"])
@@ -481,6 +484,8 @@ class DataSmart(MutableMapping):
             if shortvar not in self.overridedata:
                 self.overridedata[shortvar] = []
             if [var, override] not in self.overridedata[shortvar]:
+                # Force CoW by recreating the list first
+                self.overridedata[shortvar] = list(self.overridedata[shortvar])
                 self.overridedata[shortvar].append([var, override])
             for event in self.varhistory.variable(var):
                 if 'flag' in loginfo and not loginfo['flag'].startswith("_"):
@@ -561,6 +566,8 @@ class DataSmart(MutableMapping):
             while override:
                 try:
                     if shortvar in self.overridedata:
+                        # Force CoW by recreating the list first
+                        self.overridedata[shortvar] = list(self.overridedata[shortvar])
                         self.overridedata[shortvar].remove([var, override])
                 except ValueError as e:
                     pass
@@ -780,7 +787,9 @@ class DataSmart(MutableMapping):
 
         data.overrides = None
         data.overridevars = copy.copy(self.overridevars)
-        data.overridedata = copy.deepcopy(self.overridedata)
+        # Should really be a deepcopy but has heavy overhead.
+        # Instead, we're careful with writes.
+        data.overridedata = copy.copy(self.overridedata)
 
         return data
 
