@@ -26,14 +26,19 @@ except RuntimeError as exc:
     sys.exit(str(exc))
 
 def usage():
-    print('usage: %s [testname1 [testname2]...]' % os.path.basename(sys.argv[0]))
+    print('usage: [BB_SKIP_NETTESTS=yes] %s [-v] [testname1 [testname2]...]' % os.path.basename(sys.argv[0]))
 
-if len(sys.argv) > 1:
+verbosity = 1
+
+tests = sys.argv[1:]
+if '-v' in sys.argv:
+    tests.remove('-v')
+    verbosity = 2
+
+if tests:
     if '--help' in sys.argv[1:]:
         usage()
         sys.exit(0)
-
-    tests = sys.argv[1:]
 else:
     tests = ["bb.tests.codeparser",
              "bb.tests.cow",
@@ -46,5 +51,5 @@ for t in tests:
     t = '.'.join(t.split('.')[:3])
     __import__(t)
 
-unittest.main(argv=["bitbake-selftest"] + tests)
+unittest.main(argv=["bitbake-selftest"] + tests, verbosity=verbosity)
 
