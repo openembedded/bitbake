@@ -40,7 +40,7 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.http import HttpResponseBadRequest, HttpResponseNotFound
 from django.utils import timezone
 from django.utils.html import escape
-from datetime import timedelta, datetime, date
+from datetime import timedelta, datetime
 from django.utils import formats
 from toastergui.templatetags.projecttags import json as jsonfilter
 import json
@@ -442,8 +442,7 @@ def _modify_date_range_filter(filter_string):
 def _add_daterange_context(queryset_all, request, daterange_list):
     # calculate the exact begining of local today and yesterday
     today_begin = timezone.localtime(timezone.now())
-    today_begin = date(today_begin.year,today_begin.month,today_begin.day)
-    yesterday_begin = today_begin-timedelta(days=1)
+    yesterday_begin = today_begin - timedelta(days=1)
     # add daterange persistent
     context_date = {}
     context_date['last_date_from'] = request.GET.get('last_date_from',timezone.localtime(timezone.now()).strftime("%d/%m/%Y"))
