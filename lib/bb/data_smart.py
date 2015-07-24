@@ -252,8 +252,20 @@ class VariableHistory(object):
         else:
             return []
 
-    def emit(self, var, oval, val, o):
+    def emit(self, var, oval, val, o, d):
         history = self.variable(var)
+
+        # Append override history
+        if var in d.overridedata:
+            for (r, override) in d.overridedata[var]:
+                for event in self.variable(r):
+                    loginfo = event.copy()
+                    if 'flag' in loginfo and not loginfo['flag'].startswith("_"):
+                        continue
+                    loginfo['variable'] = var
+                    loginfo['op'] = 'override[%s]:%s' % (override, loginfo['op'])
+                    history.append(loginfo)
+
         commentVal = re.sub('\n', '\n#', str(oval))
         if history:
             if len(history) == 1:
@@ -496,15 +508,6 @@ class DataSmart(MutableMapping):
                 # Force CoW by recreating the list first
                 self.overridedata[shortvar] = list(self.overridedata[shortvar])
                 self.overridedata[shortvar].append([var, override])
-            for event in self.varhistory.variable(var):
-                if 'flag' in loginfo and not loginfo['flag'].startswith("_"):
-                    continue
-                loginfo = event.copy()
-                loginfo['variable'] = shortvar
-                loginfo['op'] = 'override[%s]:%s' % (override, loginfo['op'])
-                loginfo['nodups'] = True
-                self.varhistory.record(**loginfo)
-
             override = None
             if "_" in shortvar:
                 override = var[shortvar.rfind('_')+1:]

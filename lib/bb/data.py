@@ -202,7 +202,7 @@ def emit_var(var, o=sys.__stdout__, d = init(), all=False):
         return False
 
     if all:
-        d.varhistory.emit(var, oval, val, o)
+        d.varhistory.emit(var, oval, val, o, d)
 
     if (var.find("-") != -1 or var.find(".") != -1 or var.find('{') != -1 or var.find('}') != -1 or var.find('+') != -1) and not all:
         return False
