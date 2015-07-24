@@ -54,27 +54,36 @@ def infer_caller_details(loginfo, parent = False, varval = True):
         return
     # Infer caller's likely values for variable (var) and value (value), 
     # to reduce clutter in the rest of the code.
-    if varval and ('variable' not in loginfo or 'detail' not in loginfo):
+    above = None
+    def set_above():
         try:
             raise Exception
         except Exception:
             tb = sys.exc_info()[2]
             if parent:
-                above = tb.tb_frame.f_back.f_back
+                return tb.tb_frame.f_back.f_back.f_back
             else:
-                above = tb.tb_frame.f_back
-            lcls = above.f_locals.items()
+                return tb.tb_frame.f_back.f_back
+
+    if varval and ('variable' not in loginfo or 'detail' not in loginfo):
+        if not above:
+            above = set_above()
+        lcls = above.f_locals.items()
         for k, v in lcls:
             if k == 'value' and 'detail' not in loginfo:
                 loginfo['detail'] = v
             if k == 'var' and 'variable' not in loginfo:
                 loginfo['variable'] = v
     # Infer file/line/function from traceback
+    # Don't use traceback.extract_stack() since it fills the line contents which
+    # we don't need and that hits stat syscalls
     if 'file' not in loginfo:
-        depth = 3    
-        if parent:
-            depth = 4
-        file, line, func, text = traceback.extract_stack(limit = depth)[0]
+        if not above:
+            above = set_above()
+        f = above.f_back
+        line = f.f_lineno
+        file = f.f_code.co_filename
+        func = f.f_code.co_name
         loginfo['file'] = file
         loginfo['line'] = line
         if func not in loginfo:
