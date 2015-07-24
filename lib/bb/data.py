@@ -84,7 +84,7 @@ def setVar(var, value, d):
     d.setVar(var, value)
 
 
-def getVar(var, d, exp = 0):
+def getVar(var, d, exp = False):
     """Gets the value of a variable"""
     return d.getVar(var, exp)
 
@@ -161,9 +161,9 @@ def expandKeys(alterdata, readdata = None):
     # usefulness of the expand cache
     for key in sorted(todolist):
         ekey = todolist[key]
-        newval = alterdata.getVar(ekey, 0)
+        newval = alterdata.getVar(ekey, False)
         if newval is not None:
-            val = alterdata.getVar(key, 0)
+            val = alterdata.getVar(key, False)
             if val is not None:
                 bb.warn("Variable key %s (%s) replaces original key %s (%s)." % (key, val, ekey, newval))
         alterdata.renameVar(key, ekey)
@@ -174,7 +174,7 @@ def inheritFromOS(d, savedenv, permitted):
     for s in savedenv.keys():
         if s in permitted:
             try:
-                d.setVar(s, getVar(s, savedenv, True), op = 'from env')
+                d.setVar(s, savedenv.getVar(s, True), op = 'from env')
                 if s in exportlist:
                     d.setVarFlag(s, "export", True, op = 'auto env export')
             except TypeError:
@@ -182,39 +182,39 @@ def inheritFromOS(d, savedenv, permitted):
 
 def emit_var(var, o=sys.__stdout__, d = init(), all=False):
     """Emit a variable to be sourced by a shell."""
-    if getVarFlag(var, "python", d):
-        return 0
+    if d.getVarFlag(var, "python"):
+        return False
 
-    export = getVarFlag(var, "export", d)
-    unexport = getVarFlag(var, "unexport", d)
-    func = getVarFlag(var, "func", d)
+    export = d.getVarFlag(var, "export")
+    unexport = d.getVarFlag(var, "unexport")
+    func = d.getVarFlag(var, "func")
     if not all and not export and not unexport and not func:
-        return 0
+        return False
 
     try:
         if all:
-            oval = getVar(var, d, 0)
-        val = getVar(var, d, 1)
+            oval = d.getVar(var, False)
+        val = d.getVar(var, True)
     except (KeyboardInterrupt, bb.build.FuncFailed):
         raise
     except Exception as exc:
         o.write('# expansion of %s threw %s: %s\n' % (var, exc.__class__.__name__, str(exc)))
-        return 0
+        return False
 
     if all:
         d.varhistory.emit(var, oval, val, o)
 
     if (var.find("-") != -1 or var.find(".") != -1 or var.find('{') != -1 or var.find('}') != -1 or var.find('+') != -1) and not all:
-        return 0
+        return False
 
-    varExpanded = expand(var, d)
+    varExpanded = d.expand(var)
 
     if unexport:
         o.write('unset %s\n' % varExpanded)
-        return 0
+        return False
 
     if val is None:
-        return 0
+        return False
 
     val = str(val)
 
@@ -223,7 +223,7 @@ def emit_var(var, o=sys.__stdout__, d = init(), all=False):
         val = val[3:] # Strip off "() "
         o.write("%s() %s\n" % (varExpanded, val))
         o.write("export -f %s\n" % (varExpanded))
-        return 1
+        return True
 
     if func:
         # NOTE: should probably check for unbalanced {} within the var
@@ -239,7 +239,7 @@ def emit_var(var, o=sys.__stdout__, d = init(), all=False):
     alter = re.sub('\n', ' \\\n', alter)
     alter = re.sub('\\$', '\\\\$', alter)
     o.write('%s="%s"\n' % (varExpanded, alter))
-    return 0
+    return False
 
 def emit_env(o=sys.__stdout__, d = init(), all=False):
     """Emits all items in the data store in a format such that it can be sourced by a shell."""
@@ -438,7 +438,7 @@ def generate_dependencies(d):
     return tasklist, deps, values
 
 def inherits_class(klass, d):
-    val = getVar('__inherit_cache', d) or []
+    val = d.getVar('__inherit_cache', False) or []
     needle = os.path.join('classes', '%s.bbclass' % klass)
     for v in val:
         if v.endswith(needle):
