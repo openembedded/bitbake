@@ -54,7 +54,7 @@ class LocalhostBEController(BuildEnvironmentController):
         if cwd is None:
             cwd = self.be.sourcedir
 
-        #logger.debug("lbc_shellcmmd: (%s) %s" % (cwd, command))
+        logger.debug("lbc_shellcmmd: (%s) %s" % (cwd, command))
         p = subprocess.Popen(command, cwd = cwd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         (out,err) = p.communicate()
         p.wait()
@@ -63,10 +63,10 @@ class LocalhostBEController(BuildEnvironmentController):
                 err = "command: %s \n%s" % (command, out)
             else:
                 err = "command: %s \n%s" % (command, err)
-            #logger.warn("localhostbecontroller: shellcmd error %s" % err)
+            logger.warn("localhostbecontroller: shellcmd error %s" % err)
             raise ShellCmdException(err)
         else:
-            #logger.debug("localhostbecontroller: shellcmd success")
+            logger.debug("localhostbecontroller: shellcmd success")
             return out
 
     def _setupBE(self):
