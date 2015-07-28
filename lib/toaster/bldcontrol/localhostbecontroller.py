@@ -69,21 +69,16 @@ class LocalhostBEController(BuildEnvironmentController):
             #logger.debug("localhostbecontroller: shellcmd success")
             return out
 
-    def _createdirpath(self, path):
-        from os.path import dirname as DN
-        if path == "":
-            raise Exception("Invalid path creation specified.")
-        if not os.path.exists(DN(path)):
-            self._createdirpath(DN(path))
-        if not os.path.exists(path):
-            os.mkdir(path, 0755)
-
     def _setupBE(self):
         assert self.pokydirname and os.path.exists(self.pokydirname)
-        self._createdirpath(self.be.builddir)
-        self._shellcmd("bash -c \"source %s/oe-init-build-env %s\"" % (self.pokydirname, self.be.builddir))
+        path = self.be.builddir
+        if not path:
+            raise Exception("Invalid path creation specified.")
+        if not os.path.exists(path):
+            os.makedirs(path, 0755)
+        self._shellcmd("bash -c \"source %s/oe-init-build-env %s\"" % (self.pokydirname, path))
         # delete the templateconf.cfg; it may come from an unsupported layer configuration
-        os.remove(os.path.join(self.be.builddir, "conf/templateconf.cfg"))
+        os.remove(os.path.join(path, "conf/templateconf.cfg"))
 
 
     def writeConfFile(self, file_name, variable_list = None, raw = None):
