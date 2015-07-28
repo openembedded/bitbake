@@ -586,6 +586,7 @@ class Recipe(models.Model):
     bugtracker = models.URLField(blank=True)
     file_path = models.FilePathField(max_length=255)
     pathflags = models.CharField(max_length=200, blank=True)
+    is_image = models.BooleanField(default=False)
 
     def get_layersource_view_url(self):
         if self.layer_source is None:
@@ -938,6 +939,8 @@ class LayerIndexLayerSource(LayerSource):
                 ro.homepage = ri['homepage']
                 ro.bugtracker = ri['bugtracker']
                 ro.file_path = ri['filepath'] + "/" + ri['filename']
+                if 'inherits' in ri:
+                    ro.is_image = 'image' in ri['inherits'].split()
                 ro.save()
             except:
                 #print "Duplicate Recipe, ignoring: ", vars(ro)
