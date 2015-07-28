@@ -74,6 +74,7 @@ def main(server, eventHandler, params ):
     bb.msg.addDefaultlogFilter(console)
     console.setFormatter(format)
     logger.addHandler(console)
+    logger.setLevel(logging.INFO)
 
     includelogs, loglines, consolelogfile = _log_settings_from_server(server)
 

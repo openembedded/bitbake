@@ -139,7 +139,7 @@ class LocalhostBEController(BuildEnvironmentController):
             with open(filepath, "r") as f:
                 f.seek(filepos)
                 for line in f:
-                    if line.startswith("Bitbake server started on demand"):
+                    if line.startswith("NOTE: ToasterUI waiting for events"):
                         return True
             return False
 
