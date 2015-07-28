@@ -70,19 +70,19 @@ class BuildEnvironment(models.Model):
                 return "binary/octet-stream"
             except ImportError:
                 return "binary/octet-stream"
-        raise Exception("FIXME: artifact type not implemented for build environment type %s" % be.get_betype_display())
+        raise Exception("FIXME: artifact type not implemented for build environment type %s" % self.get_betype_display())
 
 
     def get_artifact(self, path):
         if self.betype == BuildEnvironment.TYPE_LOCAL:
             return open(path, "r")
-        raise Exception("FIXME: artifact download not implemented for build environment type %s" % be.get_betype_display())
+        raise Exception("FIXME: artifact download not implemented for build environment type %s" % self.get_betype_display())
 
     def has_artifact(self, path):
         import os
-        if self.betype == BuildRequest.TYPE_LOCAL:
+        if self.betype == BuildEnvironment.TYPE_LOCAL:
             return os.path.exists(path)
-        raise Exception("FIXME: has artifact not implemented for build environment type %s" % be.get_betype_display())
+        raise Exception("FIXME: has artifact not implemented for build environment type %s" % self.get_betype_display())
 
 # a BuildRequest is a request that the scheduler will build using a BuildEnvironment
 # the build request queue is the table itself, ordered by state
