@@ -252,8 +252,8 @@ class ToasterTable(TemplateView):
         for key, val in kwargs.iteritems():
             cache_name = cache_name + str(key) + str(val)
 
-        # No special chars allowed in the cache name
-        cache_name = re.sub(r'[^A-Za-z0-9]', "", cache_name)
+        # No special chars allowed in the cache name apart from dash
+        cache_name = re.sub(r'[^A-Za-z0-9-]', "", cache_name)
         data = cache.get(cache_name)
 
         if data:
