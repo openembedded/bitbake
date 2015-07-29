@@ -325,6 +325,25 @@
      SRC_URI = "ftp://you@oe.handhelds.org/home/you/secret.plan"
                 </literallayout>
             </para>
+            <note>
+               Because URL parameters are delimited by semi-colons, this can
+               introduce ambiguity when parsing URLs that also contain semi-colons,
+               for example:
+                <literallayout class='monospaced'>
+     SRC_URI = "http://abc123.org/git/?p=gcc/gcc.git;a=snapshot;h=a5dd47"
+                </literallayout>
+               Such URLs should should be modified by replacing semi-colons with '&amp;' characters:
+               <literallayout class='monospaced'>
+     SRC_URI = "http://abc123.org/git/?p=gcc/gcc.git&amp;a=snapshot&amp;h=a5dd47"
+                </literallayout>
+                In most cases this should work. Treating semi-colons and '&amp;' in queries
+                identically is recommended by the World Wide Web Consortium (W3C).
+                Note that due to the nature of the URL, you may have to specify the name
+                of the downloaded file as well:
+              <literallayout class='monospaced'>
+     SRC_URI = "http://abc123.org/git/?p=gcc/gcc.git&amp;a=snapshot&amp;h=a5dd47;downloadfilename=myfile.bz2"
+                </literallayout>
+            </note>
         </section>
 
         <section id='cvs-fetcher'>
