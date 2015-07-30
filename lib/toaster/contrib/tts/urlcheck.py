@@ -2,10 +2,11 @@ from __future__ import print_function
 import sys
 
 import httplib2
-
 import config
 import urllist
 
+
+config.logger.info("Testing %s with %s", config.TOASTER_BASEURL, config.W3C_VALIDATOR)
 
 def validate_html5(url):
     http_client = httplib2.Http(None)
@@ -23,6 +24,12 @@ def validate_html5(url):
             status = resp['x-w3c-validator-status']
             errors = int(resp['x-w3c-validator-errors'])
             warnings = int(resp['x-w3c-validator-warnings'])
+
+            if status == 'Invalid':
+                config.logger.warn("Failed %s is %s\terrors %s warnings %s (check at %s)", url, status, errors, warnings, urlrequest)
+            else:
+                config.logger.debug("OK! %s", url)
+
     except Exception as exc:
         config.logger.warn("Failed validation call: %s", exc)
     return (status, errors, warnings)
