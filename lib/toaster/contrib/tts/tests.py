@@ -76,7 +76,7 @@ class TestHTML5Compliance(unittest.TestCase):
             setup.expect(r"Enter your option: ")
             setup.sendline('0')
 
-        self.child = pexpect.spawn("%s/bitbake/bin/toaster webport=%d nobrowser" % (config.TESTDIR, config.TOASTER_PORT))
+        self.child = pexpect.spawn("bash", ["%s/bitbake/bin/toaster" % config.TESTDIR, "webport=%d" % config.TOASTER_PORT, "nobrowser"], cwd=self.crtdir)
         self.child.logfile = sys.stdout
         self.child.expect("Toaster is now running. You can stop it with Ctrl-C")
 
@@ -101,5 +101,6 @@ class TestHTML5Compliance(unittest.TestCase):
             self.child.kill(signal.SIGINT)
             time.sleep(1)
         os.chdir(self.origdir)
-#        if os.path.exists(os.path.join(self.crtdir, "toaster.sqlite")):
-#            os.remove(os.path.join(self.crtdir, "toaster.sqlite"))
+        toaster_sqlite_path = os.path.join(self.crtdir, "toaster.sqlite")
+        if os.path.exists(toaster_sqlite_path):
+            os.remove(toaster_sqlite_path)

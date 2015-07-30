@@ -122,6 +122,7 @@ def execute_tests(dir_under_test, testname):
     # we disable the broad-except because we want to actually catch all possible exceptions
     try:
         config.logger.debug("Discovered test clases: %s", pprint.pformat(tests))
+        unittest.installHandler()
         suite = unittest.TestSuite()
         loader = unittest.TestLoader()
         result = unittest.TestResult()
