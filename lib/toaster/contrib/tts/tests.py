@@ -62,11 +62,12 @@ class TestHTML5Compliance(unittest.TestCase):
         self.cleanup_database = False
         os.chdir(self.crtdir)
         if not os.path.exists(os.path.join(self.crtdir, "toaster.sqlite")):
-            self.cleanup_database = False
+            self.cleanup_database = True
             run_shell_cmd("%s/bitbake/lib/toaster/manage.py syncdb --noinput" % config.TESTDIR)
             run_shell_cmd("%s/bitbake/lib/toaster/manage.py migrate orm" % config.TESTDIR)
             run_shell_cmd("%s/bitbake/lib/toaster/manage.py migrate bldcontrol" % config.TESTDIR)
             run_shell_cmd("%s/bitbake/lib/toaster/manage.py loadconf %s/meta-yocto/conf/toasterconf.json" % (config.TESTDIR, config.TESTDIR))
+            run_shell_cmd("%s/bitbake/lib/toaster/manage.py lsupdates" % config.TESTDIR)
 
             setup = pexpect.spawn("%s/bitbake/lib/toaster/manage.py checksettings" % config.TESTDIR)
             setup.logfile = sys.stdout
