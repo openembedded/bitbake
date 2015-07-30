@@ -62,7 +62,10 @@ def set_up_test_branch(settings, branch_name):
     # creates the host dir
     if os.path.exists(testdir):
         raise Exception("Test dir '%s'is already there, aborting" % testdir)
-    os.mkdir(testdir)
+
+    # may raise OSError, is to be handled by the caller
+    os.makedirs(testdir)
+
 
     # copies over the .git from the localclone
     run_shell_cmd("cp -a '%s'/.git '%s'" % (settings['localclone'], testdir))
@@ -171,11 +174,19 @@ def read_settings():
 def clean_up(testdir):
     run_shell_cmd("rm -rf -- '%s'" % testdir)
 
+def dump_info(settings, options, args):
+    """ detailed information about current run configuration, for debugging purposes.
+    """
+    config.logger.debug("Settings:\n%s\nOptions:\n%s\nArguments:\n%s\n", settings, options, args)
+
 def main():
     (options, args) = validate_args()
 
     settings = read_settings()
     need_cleanup = False
+
+    # dump debug info
+    dump_info(settings, options, args)
 
     testdir = None
     no_failures = 1
