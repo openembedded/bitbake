@@ -59,8 +59,10 @@ class TestHTML5Compliance(unittest.TestCase):
     def setUp(self):
         self.origdir = os.getcwd()
         self.crtdir = os.path.dirname(config.TESTDIR)
+        self.cleanup_database = False
         os.chdir(self.crtdir)
         if not os.path.exists(os.path.join(self.crtdir, "toaster.sqlite")):
+            self.cleanup_database = False
             run_shell_cmd("%s/bitbake/lib/toaster/manage.py syncdb --noinput" % config.TESTDIR)
             run_shell_cmd("%s/bitbake/lib/toaster/manage.py migrate orm" % config.TESTDIR)
             run_shell_cmd("%s/bitbake/lib/toaster/manage.py migrate bldcontrol" % config.TESTDIR)
@@ -102,5 +104,5 @@ class TestHTML5Compliance(unittest.TestCase):
             time.sleep(1)
         os.chdir(self.origdir)
         toaster_sqlite_path = os.path.join(self.crtdir, "toaster.sqlite")
-        if os.path.exists(toaster_sqlite_path):
+        if self.cleanup_database and os.path.exists(toaster_sqlite_path):
             os.remove(toaster_sqlite_path)
