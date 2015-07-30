@@ -38,6 +38,12 @@ class Test00PyCompilable(unittest.TestCase):
         except ShellCmdException as exc:
             self.fail("Error compiling python files: %s" % (exc))
 
+    def test_pylint_file(self):
+        try:
+            run_shell_cmd(r"find . -iname \"*\.py\" -type f -print0 | PYTHONPATH=${PYTHONPATH}:. xargs -r -0 -n1 pylint --load-plugins pylint_django -E --reports=n 2>&1", cwd=config.TESTDIR + "/bitbake/lib/toaster")
+        except ShellCmdException as exc:
+            self.fail("Pylint fails: %s\n" % exc)
+
 class Test01PySystemStart(unittest.TestCase):
     ''' Attempts to start Toaster, verify that it is succesfull, and stop it '''
     def setUp(self):
