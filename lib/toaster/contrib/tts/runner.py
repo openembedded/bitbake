@@ -31,7 +31,7 @@ from __future__ import print_function
 import sys, os
 import unittest, importlib
 import logging, pprint, json
-
+import re
 from shellutils import ShellCmdException, mkdirhier, run_shell_cmd
 
 import config
@@ -121,13 +121,16 @@ def execute_tests(dir_under_test, testname):
     # pylint: disable=broad-except
     # we disable the broad-except because we want to actually catch all possible exceptions
     try:
+        # sorting the tests by the numeric order in the class name
+        tests = sorted(tests, key=lambda x: int(re.search(r"[0-9]+", x[1]).group(0)))
         config.logger.debug("Discovered test clases: %s", pprint.pformat(tests))
         unittest.installHandler()
         suite = unittest.TestSuite()
         loader = unittest.TestLoader()
         result = unittest.TestResult()
-        for module_file, name in tests:
-            suite.addTest(loader.loadTestsFromName("%s.%s" % (module_file, name)))
+        result.failfast = True
+        for module_file, test_name in tests:
+            suite.addTest(loader.loadTestsFromName("%s.%s" % (module_file, test_name)))
         config.logger.info("Running %d test(s)", suite.countTestCases())
         suite.run(result)
 
@@ -202,7 +205,7 @@ def main():
         config.TESTDIR = testdir    # we let tests know where to run
 
         # ensure that the test dir only contains no *.pyc leftovers
-        run_shell_cmd("find '%s' -type f -name *.pyc -exec rm {} \;" % testdir)
+        run_shell_cmd("find '%s' -type f -name *.pyc -exec rm {} \\;" % testdir)
 
         no_failures = execute_tests(testdir, options.singletest)
 

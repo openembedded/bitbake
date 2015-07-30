@@ -30,7 +30,7 @@ import config
 import pexpect
 import sys, os, signal, time
 
-class TestPyCompilable(unittest.TestCase):
+class Test00PyCompilable(unittest.TestCase):
     ''' Verifies that all Python files are syntactically correct '''
     def test_compile_file(self):
         try:
@@ -38,7 +38,7 @@ class TestPyCompilable(unittest.TestCase):
         except ShellCmdException as exc:
             self.fail("Error compiling python files: %s" % (exc))
 
-class TestPySystemStart(unittest.TestCase):
+class Test01PySystemStart(unittest.TestCase):
     ''' Attempts to start Toaster, verify that it is succesfull, and stop it '''
     def setUp(self):
         run_shell_cmd("bash -c 'rm -f build/*log'")
@@ -55,7 +55,7 @@ class TestPySystemStart(unittest.TestCase):
         except ShellCmdException as exc:
             self.fail("Failed starting managed mode: %s" % (exc))
 
-class TestHTML5Compliance(unittest.TestCase):
+class Test02HTML5Compliance(unittest.TestCase):
     def setUp(self):
         self.origdir = os.getcwd()
         self.crtdir = os.path.dirname(config.TESTDIR)
