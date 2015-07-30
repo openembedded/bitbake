@@ -25,7 +25,7 @@
 # |[full/path]/recv.py
 
 from __future__ import print_function
-import sys, os, config, shellutils
+import sys, config, shellutils
 
 from email.parser import Parser
 
@@ -46,7 +46,7 @@ def main():
     subject_parts = subject.split()
     if "[review-request]" in subject_parts:
         task_name = subject_parts[subject_parts.index("[review-request]") + 1]
-        with open(os.path.join(os.path.dirname(__file__), config.BACKLOGFILE), "a") as fout:
+        with open(config.BACKLOGFILE, "a") as fout:
             line = "%s|%s\n" % (task_name, config.TASKS.PENDING)
             fout.write(line)
 
