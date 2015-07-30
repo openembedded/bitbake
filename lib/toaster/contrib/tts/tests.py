@@ -24,7 +24,8 @@
 # as this file.
 
 import unittest
-from shellutils import *
+from shellutils import run_shell_cmd, ShellCmdException
+import config
 
 import pexpect
 import sys, os, signal, time
@@ -33,12 +34,9 @@ class TestPyCompilable(unittest.TestCase):
     ''' Verifies that all Python files are syntactically correct '''
     def test_compile_file(self):
         try:
-            out = run_shell_cmd("find . -name *py -type f -print0 | xargs -0 -n1 -P20 python -m py_compile", config.testdir)
-        except ShellCmdException as e:
-            self.fail("Error compiling python files: %s" % (e))
-        except Exception as e:
-            self.fail("Unknown error: %s" % e)
-
+            run_shell_cmd("find . -name *py -type f -print0 | xargs -0 -n1 -P20 python -m py_compile", config.TESTDIR)
+        except ShellCmdException as exc:
+            self.fail("Error compiling python files: %s" % (exc))
 
 class TestPySystemStart(unittest.TestCase):
     ''' Attempts to start Toaster, verify that it is succesfull, and stop it '''
@@ -47,29 +45,28 @@ class TestPySystemStart(unittest.TestCase):
 
     def test_start_interactive_mode(self):
         try:
-            run_shell_cmd("bash -c 'source %s/oe-init-build-env && source toaster start webport=%d && source toaster stop'" % (config.testdir, config.TOASTER_PORT), config.testdir)
-        except ShellCmdException as e:
-            self.fail("Failed starting interactive mode: %s" % (e))
+            run_shell_cmd("bash -c 'source %s/oe-init-build-env && source toaster start webport=%d && source toaster stop'" % (config.TESTDIR, config.TOASTER_PORT), config.TESTDIR)
+        except ShellCmdException as exc:
+            self.fail("Failed starting interactive mode: %s" % (exc))
 
     def test_start_managed_mode(self):
         try:
-            run_shell_cmd("%s/bitbake/bin/toaster webport=%d nobrowser & sleep 10 && curl http://localhost:%d/ && kill -2 %1" % (config.testdir, config.TOASTER_PORT, config.TOASTER_PORT), config.testdir)
-            pass
-        except ShellCmdException as e:
-            self.fail("Failed starting managed mode: %s" % (e))
+            run_shell_cmd("%s/bitbake/bin/toaster webport=%d nobrowser & sleep 10 && curl http://localhost:%d/ && kill -2 %%1" % (config.TESTDIR, config.TOASTER_PORT, config.TOASTER_PORT), config.TESTDIR)
+        except ShellCmdException as exc:
+            self.fail("Failed starting managed mode: %s" % (exc))
 
 class TestHTML5Compliance(unittest.TestCase):
     def setUp(self):
         self.origdir = os.getcwd()
-        self.crtdir = os.path.dirname(config.testdir)
+        self.crtdir = os.path.dirname(config.TESTDIR)
         os.chdir(self.crtdir)
         if not os.path.exists(os.path.join(self.crtdir, "toaster.sqlite")):
-            run_shell_cmd("%s/bitbake/lib/toaster/manage.py syncdb --noinput" % config.testdir)
-            run_shell_cmd("%s/bitbake/lib/toaster/manage.py migrate orm" % config.testdir)
-            run_shell_cmd("%s/bitbake/lib/toaster/manage.py migrate bldcontrol" % config.testdir)
-            run_shell_cmd("%s/bitbake/lib/toaster/manage.py loadconf %s/meta-yocto/conf/toasterconf.json" % (config.testdir, config.testdir))
+            run_shell_cmd("%s/bitbake/lib/toaster/manage.py syncdb --noinput" % config.TESTDIR)
+            run_shell_cmd("%s/bitbake/lib/toaster/manage.py migrate orm" % config.TESTDIR)
+            run_shell_cmd("%s/bitbake/lib/toaster/manage.py migrate bldcontrol" % config.TESTDIR)
+            run_shell_cmd("%s/bitbake/lib/toaster/manage.py loadconf %s/meta-yocto/conf/toasterconf.json" % (config.TESTDIR, config.TESTDIR))
 
-            setup = pexpect.spawn("%s/bitbake/lib/toaster/manage.py checksettings" % config.testdir)
+            setup = pexpect.spawn("%s/bitbake/lib/toaster/manage.py checksettings" % config.TESTDIR)
             setup.logfile = sys.stdout
             setup.expect(r".*or type the full path to a different directory: ")
             setup.sendline('')
@@ -79,8 +76,8 @@ class TestHTML5Compliance(unittest.TestCase):
             setup.expect(r"Enter your option: ")
             setup.sendline('0')
 
-        self.child = pexpect.spawn("%s/bitbake/bin/toaster webport=%d nobrowser" % (config.testdir, config.TOASTER_PORT))
-        self.child.logfile=sys.stdout
+        self.child = pexpect.spawn("%s/bitbake/bin/toaster webport=%d nobrowser" % (config.TESTDIR, config.TOASTER_PORT))
+        self.child.logfile = sys.stdout
         self.child.expect("Toaster is now running. You can stop it with Ctrl-C")
 
     def test_html5_compliance(self):
@@ -95,7 +92,7 @@ class TestHTML5Compliance(unittest.TestCase):
                 failed.append((url, results[url]))
 
 
-        self.assertTrue(len(failed)== 0, "Not all URLs validate: \n%s " % "\n".join(map(lambda x: "".join(str(x)),failed)))
+        self.assertTrue(len(failed) == 0, "Not all URLs validate: \n%s " % "\n".join(["".join(str(x)) for x in failed]))
 
         #(config.TOASTER_BASEURL + url, status, errors, warnings))
 

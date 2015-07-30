@@ -31,13 +31,11 @@ import smtplib
 # Import the email modules we'll need
 from email.mime.text import MIMEText
 
-DEBUG=True
-
 def _take_lockfile():
     return shellutils.lockfile(shellutils.mk_lock_filename())
 
 
-def read_next_task_by_state(task_state, task_name = None):
+def read_next_task_by_state(task_state, task_name=None):
     if not os.path.exists(os.path.join(os.path.dirname(__file__), config.BACKLOGFILE)):
         return None
     os.rename(config.BACKLOGFILE, config.BACKLOGFILE + ".tmp")
@@ -56,28 +54,28 @@ def read_next_task_by_state(task_state, task_name = None):
     os.remove(config.BACKLOGFILE + ".tmp")
     return task
 
-def send_report(task_name, plaintext, errtext = None):
+def send_report(task_name, plaintext, errtext=None):
     if errtext is None:
         msg = MIMEText(plaintext)
     else:
         if plaintext is None:
-            plaintext=""
+            plaintext = ""
         msg = MIMEText("--STDOUT dump--\n\n%s\n\n--STDERR dump--\n\n%s" % (plaintext, errtext))
 
     msg['Subject'] = "[review-request] %s - smoke test results" % task_name
     msg['From'] = config.OWN_EMAIL_ADDRESS
     msg['To'] = config.REPORT_EMAIL_ADDRESS
 
-    s = smtplib.SMTP("localhost")
-    s.sendmail(config.OWN_EMAIL_ADDRESS, [config.REPORT_EMAIL_ADDRESS], msg.as_string())
-    s.quit()
+    smtp_connection = smtplib.SMTP("localhost")
+    smtp_connection.sendmail(config.OWN_EMAIL_ADDRESS, [config.REPORT_EMAIL_ADDRESS], msg.as_string())
+    smtp_connection.quit()
 
-if __name__ == "__main__":
+def main():
     # we don't do anything if we have another instance of us running
-    lf = _take_lockfile()
+    lock_file = _take_lockfile()
 
-    if lf is None:
-        if DEBUG:
+    if lock_file is None:
+        if config.DEBUG:
             print("Concurrent script in progress, exiting")
         sys.exit(1)
 
@@ -88,13 +86,16 @@ if __name__ == "__main__":
         out = None
         try:
             out = shellutils.run_shell_cmd("%s %s" % (os.path.join(os.path.dirname(__file__), "runner.py"), next_task))
-            pass
-        except ShellCmdException as e:
-            print("Failed while running the test runner: %s", e)
-            errtext = e.__str__()
+        except ShellCmdException as exc:
+            print("Failed while running the test runner: %s", exc)
+            errtext = exc.__str__()
         send_report(next_task, out, errtext)
         read_next_task_by_state(config.TASKS.INPROGRESS, next_task)
     else:
         print("No task")
 
-    shellutils.unlockfile(lf)
+    shellutils.unlockfile(lock_file)
+
+
+if __name__ == "__main__":
+    main()

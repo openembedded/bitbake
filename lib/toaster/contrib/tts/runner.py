@@ -28,24 +28,22 @@
 
 
 from __future__ import print_function
-import optparse
 import sys, os
-import unittest, inspect, importlib
+import unittest, importlib
 import logging, pprint, json
 
-from shellutils import *
+from shellutils import ShellCmdException, mkdirhier, run_shell_cmd
 
 import config
 
 # we also log to a file, in addition to console, because our output is important
-__log_file_name =os.path.join(os.path.dirname(__file__),"log/tts_%d.log" % config.OWN_PID)
-mkdirhier(os.path.dirname(__log_file_name))
-__log_file = open(__log_file_name, "w")
-__file_handler = logging.StreamHandler(__log_file)
-__file_handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s: %(message)s"))
+__log_file_name__ = os.path.join(os.path.dirname(__file__), "log/tts_%d.log" % config.OWN_PID)
+mkdirhier(os.path.dirname(__log_file_name__))
+__log_file__ = open(__log_file_name__, "w")
+__file_handler__ = logging.StreamHandler(__log_file__)
+__file_handler__.setFormatter(logging.Formatter("%(asctime)s %(levelname)s: %(message)s"))
 
-config.logger.addHandler(__file_handler)
-
+config.logger.addHandler(__file_handler__)
 
 # set up log directory
 try:
@@ -54,12 +52,12 @@ try:
     else:
         if not os.path.isdir(config.LOGDIR):
             raise Exception("Expected log dir '%s' is not actually a directory." % config.LOGDIR)
-except OSError as e:
-    raise e
+except OSError as exc:
+    raise exc
 
 # creates the under-test-branch as a separate directory
 def set_up_test_branch(settings, branch_name):
-    testdir = "%s/%s.%d" % (settings['workdir'], config.TEST_DIR_NAME,  config.OWN_PID)
+    testdir = "%s/%s.%d" % (settings['workdir'], config.TEST_DIR_NAME, config.OWN_PID)
 
     # creates the host dir
     if os.path.exists(testdir):
@@ -70,11 +68,11 @@ def set_up_test_branch(settings, branch_name):
     run_shell_cmd("cp -a '%s'/.git '%s'" % (settings['localclone'], testdir))
 
     # add the remote if it doesn't exist
-    crt_remotes = run_shell_cmd("git remote -v", cwd = testdir)
+    crt_remotes = run_shell_cmd("git remote -v", cwd=testdir)
     remotes = [word for line in crt_remotes.split("\n") for word in line.split()]
     if not config.CONTRIB_REPO in remotes:
         remote_name = "tts_contrib"
-        run_shell_cmd("git remote add %s %s" % (remote_name, config.CONTRIB_REPO), cwd = testdir)
+        run_shell_cmd("git remote add %s %s" % (remote_name, config.CONTRIB_REPO), cwd=testdir)
     else:
         remote_name = remotes[remotes.index(config.CONTRIB_REPO) - 1]
 
@@ -82,7 +80,7 @@ def set_up_test_branch(settings, branch_name):
     run_shell_cmd("git fetch %s -p" % remote_name, cwd=testdir)
 
     # do the checkout
-    run_shell_cmd("git checkout origin/master && git branch -D %s; git checkout %s/%s -b %s && git reset --hard" % (branch_name,remote_name,branch_name,branch_name), cwd=testdir)
+    run_shell_cmd("git checkout origin/master && git branch -D %s; git checkout %s/%s -b %s && git reset --hard" % (branch_name, remote_name, branch_name, branch_name), cwd=testdir)
 
     return testdir
 
@@ -90,15 +88,15 @@ def set_up_test_branch(settings, branch_name):
 def __search_for_tests():
     # we find all classes that can run, and run them
     tests = []
-    for dir_name, dirs_list, files_list in os.walk(os.path.dirname(os.path.abspath(__file__))):
-        for f in [f[:-3] for f in files_list if f.endswith(".py") and not f.startswith("__init__")]:
-            config.logger.debug("Inspecting module %s", f)
-            current_module = importlib.import_module(f)
+    for _, _, files_list in os.walk(os.path.dirname(os.path.abspath(__file__))):
+        for module_file in [f[:-3] for f in files_list if f.endswith(".py") and not f.startswith("__init__")]:
+            config.logger.debug("Inspecting module %s", module_file)
+            current_module = importlib.import_module(module_file)
             crtclass_names = vars(current_module)
-            for v in crtclass_names:
-                t = crtclass_names[v]
-                if isinstance(t, type(unittest.TestCase)) and issubclass(t, unittest.TestCase):
-                    tests.append((f,v))
+            for name in crtclass_names:
+                tested_value = crtclass_names[name]
+                if isinstance(tested_value, type(unittest.TestCase)) and issubclass(tested_value, unittest.TestCase):
+                    tests.append((module_file, name))
         break
     return tests
 
@@ -117,27 +115,31 @@ def execute_tests(dir_under_test, testname):
     os.chdir(dir_under_test)
 
     # execute each module
+    # pylint: disable=broad-except
+    # we disable the broad-except because we want to actually catch all possible exceptions
     try:
-        config.logger.debug("Discovered test clases: %s" % pprint.pformat(tests))
+        config.logger.debug("Discovered test clases: %s", pprint.pformat(tests))
         suite = unittest.TestSuite()
         loader = unittest.TestLoader()
         result = unittest.TestResult()
-        for m,t in tests:
-            suite.addTest(loader.loadTestsFromName("%s.%s" % (m,t)))
+        for module_file, name in tests:
+            suite.addTest(loader.loadTestsFromName("%s.%s" % (module_file, name)))
         config.logger.info("Running %d test(s)", suite.countTestCases())
         suite.run(result)
 
-        if len(result.errors) > 0:
-            map(lambda x: config.logger.error("Exception on test: %s" % pprint.pformat(x)), result.errors)
+        for error in result.errors:
+            config.logger.error("Exception on test: %s\n%s", error[0],
+                                "\n".join(["-- %s" % x for x in error[1].split("\n")]))
 
-        if len(result.failures) > 0:
-            map(lambda x: config.logger.error("Failed test: %s:\n%s\n" % (pprint.pformat(x[0]), "\n".join(["--  %s" % x for x in eval(pprint.pformat(x[1])).split("\n")]))), result.failures)
+        for failure in result.failures:
+            config.logger.error("Failed test: %s:\n%s\n", failure[0],
+                                "\n".join(["--  %s" % x for x in failure[1].split("\n")]))
 
-        config.logger.info("Test results: %d ran, %d errors, %d failures"  % (result.testsRun, len(result.errors), len(result.failures)))
+        config.logger.info("Test results: %d ran, %d errors, %d failures", result.testsRun, len(result.errors), len(result.failures))
 
-    except Exception as e:
+    except Exception as exc:
         import traceback
-        config.logger.error("Exception while running test. Tracedump: \n%s", traceback.format_exc(e))
+        config.logger.error("Exception while running test. Tracedump: \n%s", traceback.format_exc(exc))
     finally:
         os.chdir(crt_dir)
     return len(result.failures)
@@ -161,17 +163,15 @@ def validate_args():
 # load the configuration options
 def read_settings():
     if not os.path.exists(config.SETTINGS_FILE) or not os.path.isfile(config.SETTINGS_FILE):
-        raise Exception("Config file '%s' cannot be openend" % config.SETTINGS_FILE);
+        raise Exception("Config file '%s' cannot be openend" % config.SETTINGS_FILE)
     return json.loads(open(config.SETTINGS_FILE, "r").read())
 
 
 # cleanup !
 def clean_up(testdir):
-    # TODO: delete the test dir
     run_shell_cmd("rm -rf -- '%s'" % testdir)
-    pass
 
-if __name__ == "__main__":
+def main():
     (options, args) = validate_args()
 
     settings = read_settings()
@@ -182,19 +182,22 @@ if __name__ == "__main__":
     try:
         if options.testdir is not None and os.path.exists(options.testdir):
             testdir = os.path.abspath(options.testdir)
-            config.logger.info("No checkout, using %s" % testdir)
+            config.logger.info("No checkout, using %s", testdir)
         else:
             need_cleanup = True
             testdir = set_up_test_branch(settings, args[0]) # we expect a branch name as first argument
 
-        config.testdir = testdir    # we let tests know where to run
+        config.TESTDIR = testdir    # we let tests know where to run
         no_failures = execute_tests(testdir, options.singletest)
 
-    except ShellCmdException as e :
+    except ShellCmdException as exc:
         import traceback
-        config.logger.error("Error while setting up testing. Traceback: \n%s" % traceback.format_exc(e))
+        config.logger.error("Error while setting up testing. Traceback: \n%s", traceback.format_exc(exc))
     finally:
         if need_cleanup and testdir is not None:
             clean_up(testdir)
 
     sys.exit(no_failures)
+
+if __name__ == "__main__":
+    main()

@@ -26,7 +26,6 @@
 
 from __future__ import print_function
 import sys, os, config, shellutils
-from shellutils import ShellCmdException
 
 from email.parser import Parser
 
@@ -34,9 +33,13 @@ def recv_mail(datastring):
     headers = Parser().parsestr(datastring)
     return headers['subject']
 
+def main():
+    lock_file = shellutils.lockfile(shellutils.mk_lock_filename(), retry=True)
 
-if __name__ == "__main__":
-    lf = shellutils.lockfile(shellutils.mk_lock_filename(), retry = True)
+    if lock_file is None:
+        if config.DEBUG:
+            print("Concurrent script in progress, exiting")
+        sys.exit(1)
 
     subject = recv_mail(sys.stdin.read())
 
@@ -47,5 +50,7 @@ if __name__ == "__main__":
             line = "%s|%s\n" % (task_name, config.TASKS.PENDING)
             fout.write(line)
 
-    shellutils.unlockfile(lf)
+    shellutils.unlockfile(lock_file)
 
+if __name__ == "__main__":
+    main()

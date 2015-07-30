@@ -28,42 +28,48 @@ LOGDIR = "log"
 SETTINGS_FILE = os.path.join(os.path.dirname(__file__), "settings.json")
 TEST_DIR_NAME = "tts_testdir"
 
+DEBUG = True
+
 OWN_PID = os.getpid()
 
 W3C_VALIDATOR = "http://icarus.local/w3c-validator/check?doctype=HTML5&uri="
 
-#TODO assign port dynamically
-TOASTER_PORT=56789
+TOASTER_PORT = 56789
+
+TESTDIR = None
 
 #we parse the w3c URL to know where to connect
 
 import urlparse
 
 def get_public_ip():
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    p = urlparse.urlparse("http://icarus.local/w3c-validator/check?doctype=HTML5&uri=")
-    s.connect(( p.netloc, 80 if p.port is None else p.port))
-    hn = s.getsockname()[0]
-    s.close()
-    return hn
+    temp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    parsed_url = urlparse.urlparse("http://icarus.local/w3c-validator/check?doctype=HTML5&uri=")
+    temp_socket.connect((parsed_url.netloc, 80 if parsed_url.port is None else parsed_url.port))
+    public_ip = temp_socket.getsockname()[0]
+    temp_socket.close()
+    return public_ip
 
-TOASTER_BASEURL="http://%s:%d/" % (get_public_ip(), TOASTER_PORT)
+TOASTER_BASEURL = "http://%s:%d/" % (get_public_ip(), TOASTER_PORT)
 
 
 OWN_EMAIL_ADDRESS = "Toaster Testing Framework <alexandru.damian@intel.com>"
 REPORT_EMAIL_ADDRESS = "alexandru.damian@intel.com"
 
 # make sure we have the basic logging infrastructure
+
+#pylint: disable=invalid-name
+# we disable the invalid name because the module-level "logger" is used througout bitbake
 logger = logging.getLogger("toastertest")
-__console = logging.StreamHandler(sys.stdout)
-__console.setFormatter(logging.Formatter("%(asctime)s %(levelname)s: %(message)s"))
-logger.addHandler(__console)
+__console__ = logging.StreamHandler(sys.stdout)
+__console__.setFormatter(logging.Formatter("%(asctime)s %(levelname)s: %(message)s"))
+logger.addHandler(__console__)
 logger.setLevel(logging.DEBUG)
 
 
 # singleton file names
-LOCKFILE="/tmp/ttf.lock"
-BACKLOGFILE=os.path.join(os.path.dirname(__file__), "backlog.txt")
+LOCKFILE = "/tmp/ttf.lock"
+BACKLOGFILE = os.path.join(os.path.dirname(__file__), "backlog.txt")
 
 # task states
 def enum(*sequential, **named):
@@ -73,7 +79,8 @@ def enum(*sequential, **named):
     return type('Enum', (), enums)
 
 
-class TASKS:
+class TASKS(object):
+    #pylint: disable=too-few-public-methods
     PENDING = "PENDING"
     INPROGRESS = "INPROGRESS"
     DONE = "DONE"
