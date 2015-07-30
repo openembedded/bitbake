@@ -200,6 +200,10 @@ def main():
             testdir = set_up_test_branch(settings, args[0]) # we expect a branch name as first argument
 
         config.TESTDIR = testdir    # we let tests know where to run
+
+        # ensure that the test dir only contains no *.pyc leftovers
+        run_shell_cmd("find '%s' -type f -name *.pyc -exec rm {} \;" % testdir)
+
         no_failures = execute_tests(testdir, options.singletest)
 
     except ShellCmdException as exc:
