@@ -38,6 +38,8 @@
         projectName : {{project.name|json}},
         projectTargetsUrl: {% url 'projectavailabletargets' project.id as paturl%}{{paturl|json}},
         projectBuildsUrl: {% url 'projectbuilds' project.id as pburl %}{{pburl|json}},
+        projectLayersUrl: {% url 'projectlayers' project.id as plurl %}{{plurl|json}},
+        projectMachinesUrl: {% url 'projectmachines' project.id as pmurl %}{{pmurl|json}},
         projectId : {{project.id}},
         {% else %}
         projectId : undefined,
@@ -67,6 +69,11 @@
 
   <div id="loading-notification" class="alert lead text-center" style="display:none">
     Loading <i class="fa-pulse icon-spinner"></i>
+  </div>
+
+  <div id="change-notification" class="alert lead alert-info" style="display:none">
+    <button type="button" class="close" id="hide-alert">&times;</button>
+    <span id="change-notification-msg"></span>
   </div>
 
     <div class="navbar navbar-fixed-top">

@@ -2132,7 +2132,7 @@ if True:
                 prj = Project.objects.create_project(name = request.POST['projectname'], release = release)
                 prj.user_id = request.user.pk
                 prj.save()
-                return redirect(reverse(project, args=(prj.pk,)) + "#/newproject")
+                return redirect(reverse(project, args=(prj.pk,)) + "?notify=new-project")
 
             except (IntegrityError, BadParameterException) as e:
                 # fill in page with previously submitted values
@@ -2238,7 +2238,8 @@ if True:
         }
 
         if prj.release is not None:
-            context["prj"]["release"] = { "id": prj.release.pk, "name": prj.release.name, "desc": prj.release.description}
+            context['release'] = { "id": prj.release.pk, "name": prj.release.name, "description": prj.release.description}
+
 
         try:
             context["machine"] = {"name": prj.projectvariable_set.get(name="MACHINE").value}

@@ -1,10 +1,11 @@
-{% extends "baseprojectpage.html" %}
+{% extends "base.html" %}
 {% load projecttags %}
 {% load humanize %}
 {% load static %}
+{% block pagecontent %}
 
+{% include "projecttopbar.html" %}
 
-{% block projectinfomain %}
 
         {% if project and project.release %}
                   <script src="{% static 'js/layerDepsModal.js' %}"></script>
@@ -24,12 +25,10 @@
                     });
                   </script>
 
-                <h2>Import layer</h2>
-
-                <form>
-                    <span class="help-block">The layer you are importing must be compatible with <strong>{{project.release.description}}</strong>, which is the release you are using in this project.</span>
+                <form class="span11">
                    <fieldset class="air">
                       <legend>Layer repository information</legend>
+                      <span class="help-block">The layer you are importing must be compatible with <strong>{{project.release.description}}</strong>, which is the release you are using in this project.</span>
                       <div class="alert alert-error" id="import-error" style="display:none">
                         <button type="button" class="close" data-dismiss="alert">&times;</button>
                         <h3>&nbsp;</h3>
@@ -136,5 +135,4 @@
                       </div>
 
           {% endif %}
-
 {% endblock %}
