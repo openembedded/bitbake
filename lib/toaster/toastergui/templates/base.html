@@ -123,8 +123,10 @@
                 <span id="project">
                   {% if project.id %}
                   <a class="lead" href="{% url 'project' project.id %}">{{project.name}}</a>
-                  <i class="icon-pencil"></i>
+                  {% else %}
+                  <a class="lead" href="#"></a>
                   {% endif %}
+                  <i class="icon-pencil"></i>
                 </span>
                 <form id="change-project-form" style="display:none;">
                   <div class="input-append">
