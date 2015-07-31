@@ -22,7 +22,7 @@
 .get-help-red { color: #B94A48; font-size: 16px; padding-left: 2px; }
 .get-help-red:hover { color: #943A38; cursor: pointer; }
 .build-form>i:first-of-type { margin-left: 5px; }
-.manual { margin: 11px 15px;}
+.manual { margin: 11px 15px 0 11px;}
 .heading-help { font-size: 14px; }
 
 /* Styles for the external link */
@@ -163,7 +163,7 @@ table { table-layout: fixed; word-wrap: break-word; }
 /* Configuration styles */
 .icon-trash { color: #B94A48; font-size: 16px; padding-left: 5px; }
 .icon-trash:hover { color: #943A38; text-decoration: none; cursor: pointer; }
-.icon-pencil, .icon-download-alt, .icon-refresh, .icon-star-empty, .icon-star, .icon-tasks { font-size: 16px; color: #0088CC; padding-left: 2px; }
+.icon-pencil, .icon-download-alt, .icon-refresh, .icon-star-empty, .icon-star  { font-size: 16px; color: #0088CC; padding-left: 2px; }
 .icon-pencil:hover, .icon-download-alt:hover, .icon-refresh:hover, .icon-star-empty:hover, .icon-star:hover, .icon-tasks:hover { color: #005580; text-decoration: none; cursor: pointer; }
 .icon-share { padding-left: 2px; }
 .alert-success .icon-refresh, .alert-success .icon-tasks { color: #468847; }
@@ -308,3 +308,7 @@ thead .add-del-layers { width: 124px; }
   }
 }
 /* End copied in from newer version of Font-Awesome 4.3.0 */
+
+.top-padded {
+  padding-top: 60px;
+}

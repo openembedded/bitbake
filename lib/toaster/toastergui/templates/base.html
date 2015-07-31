@@ -69,8 +69,9 @@
     Loading <i class="fa-pulse icon-spinner"></i>
   </div>
 
-<div class="navbar navbar-static-top">
-    <div class="navbar-inner">
+<div class="navbar navbar-fixed-top">
+ <div class="navbar-inner">
+   <div class="container-fluid">
             <a class="brand logo" href="#"><img src="{% static 'img/logo.png' %}" class="" alt="Yocto logo project"/></a>
             <span class="brand">
                 <a href="/">Toaster</a>
@@ -78,6 +79,24 @@
                     <i class="icon-info-sign" title="<strong>Toaster version information</strong>" data-content="<dl><dt>Branch</dt><dd>{{TOASTER_BRANCH}}</dd><dt>Revision</dt><dd>{{TOASTER_REVISION}}</dd></dl>"></i>
                 {% endif %}
             </span>
+<ul class="nav">
+
+  <li {% if "builds" in  request.path  %}
+       class="active"
+      {% endif %}>
+    <a href="{% url 'all-builds' %}">
+      <i class="icon-tasks"></i>
+      All builds
+    </a>
+  </li>
+  <li {% if "projects" in  request.path  %}
+       class="active"
+      {% endif %}>
+    <a href="{% url 'all-projects' %}">
+      <i class="icon-folder-open"></i>
+      All projects
+    </a>
+  </li>                                                                         </ul>
             <a class="pull-right manual" target="_blank" href="http://www.yoctoproject.org/docs/latest/toaster-manual/toaster-manual.html">
                 <i class="icon-book"></i>
                 Toaster manual
@@ -128,11 +147,14 @@
 
 
     </div>
+ </div>
 </div>
 
-<div class="container-fluid">
+<div class="container-fluid top-padded">
+<div class="row-fluid">
 {% block pagecontent %}
 {% endblock %}
+</div>
 </div>
 </body>
 </html>

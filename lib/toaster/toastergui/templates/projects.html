@@ -34,7 +34,7 @@
     </div>
 
   {% else %} {# We have builds to display #}
-  {% include "basetable_top_projectbuilds.html" %}
+  {% include "basetable_top.html" %}
   {% for o in objects %}
     <tr class="data">
       <td><a href="{% url 'project' o.id %}">{{o.name}}</a></td>
