@@ -173,9 +173,12 @@ def catch_parse_error(func):
     def wrapped(fn, *args):
         try:
             return func(fn, *args)
-        except (IOError, bb.parse.ParseError, bb.data_smart.ExpansionError) as exc:
+        except IOError as exc:
             import traceback
-            parselog.critical( traceback.format_exc())
+            parselog.critical(traceback.format_exc())
+            parselog.critical("Unable to parse %s: %s" % (fn, exc))
+            sys.exit(1)
+        except (bb.parse.ParseError, bb.data_smart.ExpansionError) as exc:
             parselog.critical("Unable to parse %s: %s" % (fn, exc))
             sys.exit(1)
     return wrapped
