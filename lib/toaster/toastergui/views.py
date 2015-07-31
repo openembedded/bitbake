@@ -2160,12 +2160,12 @@ if True:
         # execute POST requests
         if request.method == "POST":
             # add layers
-            if 'layerAdd' in request.POST:
+            if 'layerAdd' in request.POST and len(request.POST['layerAdd']) > 0:
                 for lc in Layer_Version.objects.filter(pk__in=[i for i in request.POST['layerAdd'].split(",") if len(i) > 0]):
                     ProjectLayer.objects.get_or_create(project = prj, layercommit = lc)
 
             # remove layers
-            if 'layerDel' in request.POST:
+            if 'layerDel' in request.POST and len(request.POST['layerDel']) > 0:
                 for t in request.POST['layerDel'].strip().split(" "):
                     pt = ProjectLayer.objects.filter(project = prj, layercommit_id = int(t)).delete()
 
@@ -2174,6 +2174,10 @@ if True:
                 prj.save();
 
             if 'projectVersion' in request.POST:
+                # If the release is the current project then return now
+                if prj.release.pk == int(request.POST.get('projectVersion',-1)):
+                    return {}
+
                 prj.release = Release.objects.get(pk = request.POST['projectVersion'])
                 # we need to change the bitbake version
                 prj.bitbake_version = prj.release.bitbake_version
@@ -2257,8 +2261,12 @@ if True:
 
             # returns layer versions that would be deleted on the new release__pk
             if request.GET.get('type', None) == "versionlayers":
+                # If we're already on this project do nothing
+                if prj.release.pk == int(request.GET.get('search', -1)):
+                    return HttpResponse(jsonfilter({"error": "ok", "rows": []}), content_type="application/json")
 
                 retval = []
+
                 for i in prj.projectlayer_set.all():
                     lv = prj.compatible_layerversions(release = Release.objects.get(pk=request.GET.get('search', None))).filter(layer__name = i.layercommit.layer.name)
                     # there is no layer_version with the new release id, and the same name
