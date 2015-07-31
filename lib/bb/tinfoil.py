@@ -84,6 +84,11 @@ class Tinfoil:
             else:
                 self.parseRecipes()
 
+    def shutdown(self):
+        self.cooker.shutdown(force=True)
+        self.cooker.post_serve()
+        self.cooker.unlockBitbake()
+
 class TinfoilConfigParameters(ConfigParameters):
 
     def __init__(self, **options):
