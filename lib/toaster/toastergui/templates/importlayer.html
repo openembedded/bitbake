@@ -3,9 +3,6 @@
 {% load humanize %}
 {% load static %}
 
-{% block localbreadcrumb %}
-<li>Import layer</li>
-{% endblock %}
 
 {% block projectinfomain %}
 
@@ -27,12 +24,10 @@
                     });
                   </script>
 
-                <div class="page-header">
-                    <h1>Import layer</h1>
-                </div>
+                <h2>Import layer</h2>
 
                 <form>
-                    <span class="help-block" style="padding-left:19px;">The layer you are importing must be compatible with <strong>{{project.release.description}}</strong>, which is the release you are using in this project.</span>
+                    <span class="help-block">The layer you are importing must be compatible with <strong>{{project.release.description}}</strong>, which is the release you are using in this project.</span>
                    <fieldset class="air">
                       <legend>Layer repository information</legend>
                       <div class="alert alert-error" id="import-error" style="display:none">
@@ -123,7 +118,7 @@
                         </div>
                         <span class="help-inline">You can only add layers Toaster knows about</span>
                     </fieldset>
-                    <div class="form-actions" id="form-actions">
+                    <div class="air" id="form-actions">
                       <button class="btn btn-primary btn-large" data-toggle="modal" id="import-and-add-btn" data-target="#dependencies-message" disabled>Import and add to project</button>
                         <span class="help-inline" id="import-and-add-hint" style="vertical-align: middle;">To import a layer you need to enter a layer name, a Git repository URL and a revision (branch, tag or commit)</span>
                     </div>

@@ -3,44 +3,40 @@
 {% load humanize %}
 {% block pagecontent %}
 
+{% include "projecttopbar.html" %}
+<script type="text/javascript">
+  $(document).ready(function(){
+     $("#config-nav .nav li a").each(function(){
+       if (window.location.pathname === $(this).attr('href'))
+         $(this).parent().addClass('active');
+       else
+         $(this).parent().removeClass('active');
+     });
 
- <div class="row-fluid">
-<!-- Breadcrumbs -->
-    <div class="section">
-        <ul class="breadcrumb" id="breadcrumb">
-            <li><a href="{% url 'all-builds' %}">All builds</a></li>
-            {% block parentbreadcrumb %}
-        {% if project %}
-          {% if project_html %}
-            <li>
-                {{project.name}}
-            </li>
-          {% else %}
-            <li>
-                <a href="{%url 'project' project.id %}"><span id="project_name">{{project.name}}</span>
-                </a>
-            </li>
-          {% endif %}
-        {% endif %}
-            {% endblock %}
-            {% block localbreadcrumb %}{% endblock %}
-        </ul>
-        <script>
-        $( function () {
-            $('#breadcrumb > li').append("<span class=\"divider\">→</span>");
-            $('#breadcrumb > li:last').addClass("active");
-            $('#breadcrumb > li:last > span').remove();
-        });
-        </script>
-    </div>
+     $("#topbar-configuration-tab").addClass("active")
+  });
+</script>
 
-    <!-- Begin main page container -->
-    <div style="padding: 0px, margin: 0px, display: inline">
-    {% block projectinfomain %}{% endblock %}
-    </div>
-    <!-- End main container -->
+<div class="row-fluid">
+  <!-- only on config pages -->
+  <div id="config-nav" class="span2">
+    <ul class="nav nav-list well">
+      <li class="nav-header">Configuration</li>
+      <li><a href="{% url 'project' project.id %}">Basic configuration</a></li>
+      <li><a href="{% url 'projectconf' project.id %}">BitBake variables</a></li>
+      <li class="nav-header">Compatible metadata</li>
+<!--  <li><a href="all-image-recipes.html">Image recipes</a></li> -->
+      <li><a href="{% url 'projecttargets' project.id %}">Recipes</a></li>
+      <li><a href="{% url 'projectmachines' project.id %}">Machines</a></li>
+      <li><a href="{% url 'projectlayers' project.id %}">Layers</a></li>
+      <li class="nav-header">Actions</li>
+      <li><a href="{% url 'importlayer' project.id %}">Import layer</a></li>
+    </ul>
   </div>
-
+  <div class="span10">
+    {% block projectinfomain %}{% endblock %}
+  </div>
+</div>
 
 {% endblock %}
 

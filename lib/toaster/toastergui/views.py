@@ -2627,6 +2627,7 @@ if True:
         except InvalidRequestException as e:
             raise RedirectException('projectbuilds', request.GET, e.response, pid = pid)
 
+        context['project'] = prj
         _set_parameters_values(pagesize, orderby, request)
 
         return context

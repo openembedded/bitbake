@@ -80,7 +80,6 @@
                 {% endif %}
             </span>
 <ul class="nav">
-
   <li {% if "builds" in  request.path  %}
        class="active"
       {% endif %}>
@@ -105,7 +104,7 @@
                   <a class="btn" id="new-project-button" href="{% url 'newproject' %}">New project</a>
             </div>
             <!-- New build popover -->
-            <div class="btn-group pull-right" id="new-build-button">
+            <div class="btn-group pull-right" id="new-build-button" style="display:none">
               <button class="btn dropdown-toggle" data-toggle="dropdown">
                 New build
                 <i class="icon-caret-down"></i>
@@ -136,7 +135,7 @@
                   <li id="targets-form">
                     <h6>Recipe(s):</h6>
                     <form>
-                      <input type="text" class="input-xlarge" id="build-target-input" placeholder="Type a recipe name" autocomplete="off" data-minLength="1" data-autocomplete="off" data-provide="typeahead" disabled/>
+                      <input type="text" class="input-xlarge build-target-input" placeholder="Type a recipe name" autocomplete="off" data-minLength="1" data-autocomplete="off" data-provide="typeahead" disabled/>
                       <div>
                         <button class="btn btn-primary" id="build-button" disabled>Build</button>
                       </div>

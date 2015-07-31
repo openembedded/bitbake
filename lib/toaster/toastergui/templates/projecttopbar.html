@@ -1,0 +1,38 @@
+<!-- project name -->
+<div class="row-fluid page-header">
+  <h1>{{project.name}}</h1>
+</div>
+
+<div class="row-fluid" id="project-topbar">
+  <ul class="nav nav-pills">
+    <li>
+      <a href="{% url 'projectbuilds' project.id %}">
+        Builds (<span class="total-builds"></span>)
+      </a>
+    </li>
+    <li id="topbar-configuration-tab">
+      <a href="{% url 'project' project.id %}">
+        Configuration
+      </a>
+    </li>
+    <!-- Coming soon
+    <li>
+      <a href="my-image-recipes.html">
+        My image recipes
+      </a>
+    </li>
+    -->
+    <li class="pull-right">
+      <form class="form-inline" style="margin-bottom: 0">
+
+        <i class="icon-question-sign get-help heading-help" data-placement="left" title="" data-original-title="Type the name of one or more recipes you want to build, separated by a space. You can also specify a task by appending a semicolon and a task name to the recipe name, like so: <code>busybox:clean</code>">
+        </i>
+        <div class="input-append">
+          <input type="text" class="input-xlarge build-target-input" placeholder="Type the recipe you want to build" autocomplete="off">
+            <button class="btn btn-primary build-button" data-project-id="{{project.id}}" disabled>Build
+            </button>
+          </div>
+        </form>
+      </li>
+    </ul>
+</div>

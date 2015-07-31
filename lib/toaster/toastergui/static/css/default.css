@@ -179,7 +179,6 @@ table { table-layout: fixed; word-wrap: break-word; }
 .well-alert > .lead { color: #C09853; padding-bottom: .75em; }
 .configuration-alert { margin-bottom: 0px; padding: 8px 14px; }
 .configuration-alert p { margin-bottom: 0px; }
-fieldset { padding-left: 19px; }
 .project-form { margin-top: 10px; }
 .add-layers .btn-block + .btn-block, .build .btn-block + .btn-block { margin-top: 0px; }
 input.huge { font-size: 17.5px; padding: 11px 19px; }

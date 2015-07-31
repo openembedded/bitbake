@@ -3,19 +3,13 @@
 {% load humanize %}
 {% load static %}
 
-{% block localbreadcrumb %}
-
-
-<li>{{title}}</li>{% endblock %}
-
 {% block projectinfomain %}
-<div class="page-header">
-  <h1>{{title}} (<span class="table-count-{{table_name}}"></span>)
-    {% if project.release %}
-    <i class="icon-question-sign get-help heading-help" title="This page lists {{title}} compatible with the release selected for this project, which is {{project.release.description}}"></i>
-    {% endif %}
-  </h1>
-</div>
+
+<h2>{{title}} (<span class="table-count-{{table_name}}"></span>)
+  {% if project.release %}
+  <i class="icon-question-sign get-help heading-help" title="This page lists {{title}} compatible with the release selected for this project, which is {{project.release.description}}"></i>
+  {% endif %}
+</h2>
 <div id="zone1alerts" style="display:none">
   <div class="alert alert-info lead">
     <button type="button" class="close" id="hide-alert">&times;</button>
@@ -24,4 +18,5 @@
 </div>
 {% url table_name project.id as xhr_table_url %}
 {% include "toastertable.html" %}
+
 {% endblock %}
