@@ -5,7 +5,16 @@
 
 <!-- project name -->
 <div class="row-fluid page-header">
-  <h1>{{project.name}}</h1>
+  <h1><span id="project-name">{{project.name}}</span>
+    <i class="icon-pencil" data-original-title="" id="project-change-form-toggle" title=""></i>
+  </h1>
+  <form id="project-name-change-form" style="margin-bottom: 0px; display: none;">
+    <div class="input-append">
+      <input class="huge input-xxlarge" type="text" id="project-name-change-input" autocomplete="off" value="{{project.name}}">
+        <button id="project-name-change-btn" class="btn btn-large" type="button">Save</button>
+        <a href="#" id="project-name-change-cancel" class="btn btn-large btn-link">Cancel</a>
+    </div>
+  </form>
 </div>
 
 <div class="row-fluid" id="project-topbar">
