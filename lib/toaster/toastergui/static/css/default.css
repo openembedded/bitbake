@@ -270,6 +270,17 @@ thead .add-del-layers { width: 124px; }
   box-shadow: 0 0 10px #c09853;
 }
 
+#change-notification {
+  position: fixed;
+  z-index: 101;
+  top: 3%;
+  left: 20%;
+  right: 20%;
+  -webkit-box-shadow: 0 0 10px #3a87ad;
+  -moz-box-shadow: 0 0 10px #3a87ad;
+  box-shadow: 0 0 10px #3a87ad;
+}
+
 /* Copied in from newer version of Font-Awesome 4.3.0 */
 .fa-spin {
   -webkit-animation: fa-spin 2s infinite linear;
@@ -309,4 +320,11 @@ thead .add-del-layers { width: 124px; }
 
 .top-padded {
   padding-top: 60px;
+}
+
+input.input-lg {
+  font-size: 18px;
+  height: 22px;
+  line-height: 1.33333;
+  padding: 10px 16px;
 }
