@@ -196,6 +196,11 @@ class LayersTable(ToasterTable):
                         field_name="layerdetailurl",
                         computation = lambda x: reverse('layerdetails', args=(project.id, x.id)))
 
+        self.add_column(title="name",
+                        displayable = False,
+                        field_name="name",
+                        computation = lambda x: x.layer.name)
+
 
 
 
