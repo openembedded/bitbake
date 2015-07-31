@@ -249,11 +249,6 @@ div.add-deps { margin-top: 15px; }
   opacity:1;
 }
 
-@keyframes machines-fade { 0% { background-color: #D9EDF7; } 25% { background-color: #D9EDF7; } 100% { background-color: white; } }
-@-webkit-keyframes machines-fade { 0% { background-color: #D9EDF7; } 25% { background-color: #D9EDF7; } 100% { background-color: white; } }
-
-.machines-highlight { -webkit-animation: machines-fade 7s 1; -moz-animation: machines-fade 7s 1; animation: machines-fade 7s 1; }
-
 .tab-pane table { margin-top: 10px; }
 
 thead .description, .get_description_or_summary { width: 364px; }
