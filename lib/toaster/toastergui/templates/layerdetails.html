@@ -55,7 +55,7 @@
       {% else %}
         inCurrentPrj : false,
       {% endif %}
-        url : "{% url 'layerdetails' project.id layerversion.id  %}",
+        layerdetailurl : "{% url 'layerdetails' project.id layerversion.id  %}",
         sourceId: {{layerversion.layer_source_id|json}},
       }
     };

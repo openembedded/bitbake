@@ -2434,7 +2434,8 @@ if True:
                             continue
 
                         if prj_layer_created:
-                            layers_added.append({'id': layer_dep_obj.id, 'name': Layer.objects.get(id=layer_dep_obj.layer_id).name})
+                            layerdepdetailurl = reverse('layerdetails', args=(prj.id, layer_dep_obj.pk))
+                            layers_added.append({'id': layer_dep_obj.id, 'name': Layer.objects.get(id=layer_dep_obj.layer_id).name, 'layerdetailurl': layerdepdetailurl })
 
 
                 # If an old layer version exists in our project then remove it
@@ -2453,8 +2454,17 @@ if True:
 
                 return HttpResponse(jsonfilter({"error": "Uncaught error: Could not create layer version"}), content_type = "application/json")
 
+        layerdetailurl = reverse('layerdetails', args=(prj.id, layer_version.pk))
 
-        return HttpResponse(jsonfilter({"error": "ok", "imported_layer" : { "name" : layer.name, "id": layer_version.id },  "deps_added": layers_added }), content_type = "application/json")
+        json_response = {"error": "ok",
+                         "imported_layer" : {
+                           "name" : layer.name,
+                           "id": layer_version.id,
+                           "layerdetailurl": layerdetailurl,
+                         },
+                         "deps_added": layers_added }
+
+        return HttpResponse(jsonfilter(json_response), content_type = "application/json")
 
     def xhr_updatelayer(request):
 

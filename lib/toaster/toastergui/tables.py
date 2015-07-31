@@ -193,7 +193,7 @@ class LayersTable(ToasterTable):
         project = Project.objects.get(pk=kwargs['pid'])
         self.add_column(title="LayerDetailsUrl",
                         displayable = False,
-                        field_name="layerDetailsUrl",
+                        field_name="layerdetailurl",
                         computation = lambda x: reverse('layerdetails', args=(project.id, x.id)))
 
 
@@ -208,7 +208,10 @@ class LayerDetails(ToasterTemplateView):
         context['layerversion'] = Layer_Version.objects.get(pk=kwargs['layerid'])
         context['layerdict'] = _lv_to_dict(context['project'], context['layerversion'])
         context['layerdeps'] = {"list": [
-            [{"id": y.id, "name": y.layer.name} for y in x.depends_on.get_equivalents_wpriority(context['project'])][0] for x in context['layerversion'].dependencies.all()]}
+            [ {"id": y.id,
+               "name": y.layer.name,
+               "layerdetailurl": reverse('layerdetails', args=(kwargs['pid'], y.id)),
+              } for y in x.depends_on.get_equivalents_wpriority(context['project'])][0] for x in context['layerversion'].dependencies.all()]}
         context['projectlayers'] = map(lambda prjlayer: prjlayer.layercommit.id, ProjectLayer.objects.filter(project=context['project']))
 
         self.context_entries = ['project', 'layerversion', 'projectlayers', 'layerdict', 'layerdeps']
