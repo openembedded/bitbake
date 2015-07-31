@@ -310,7 +310,6 @@ def main(server, eventHandler, params, tf = TerminalFilter):
     errors = 0
     warnings = 0
     taskfailures = []
-    locktries = 10
 
     termfilter = tf(main, helper, console, errconsole, format)
     atexit.register(termfilter.finish)
@@ -538,25 +537,6 @@ def main(server, eventHandler, params, tf = TerminalFilter):
                 _, error = server.runCommand(["stateForceShutdown"])
             main.shutdown = 2
     try:
-        topdir, error = server.runCommand(["getVariable", "TOPDIR"])
-        if error:
-            logger.warn("Unable to get the value of TOPDIR variable: %s" % error)
-        else:
-            lockfile = "%s/bitbake.lock" % topdir
-            _, error = server.runCommand(["unlockBitbake"])
-            if error:
-                logger.warn("Unable to unlock the file %s" % lockfile)
-            else:
-                while locktries:
-                    lf = bb.utils.lockfile(lockfile, False, False)
-                    if not lf:
-                        time.sleep(1)
-                        locktries -=1
-                    else:
-                        bb.utils.unlockfile(lf)
-                        break
-                if not locktries:
-                    logger.warn("Knotty could not lock the file ${TOPDIR}/bitbake.lock, probably locked by cooker and not unlocked yet. Immediate bitbake commands may failed")
         summary = ""
         if taskfailures:
             summary += pluralise("\nSummary: %s task failed:",
