@@ -24,8 +24,9 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-import re, os
-import logging
+import errno
+import re
+import os
 import bb.utils
 from bb.parse import ParseError, resolve_file, ast, logger, handle
 
@@ -92,11 +93,17 @@ def include(parentfn, fn, lineno, data, error_out):
         logger.warn("Duplicate inclusion for %s in %s" % (fn, data.getVar('FILE', True)))
 
     try:
-        ret = bb.parse.handle(fn, data, True)
-    except (IOError, OSError):
-        if error_out:
-            raise ParseError("Could not %(error_out)s file %(fn)s" % vars(), parentfn, lineno)
-        logger.debug(2, "CONF file '%s' not found", fn)
+        bb.parse.handle(fn, data, True)
+    except (IOError, OSError) as exc:
+        if exc.errno == errno.ENOENT:
+            if error_out:
+                raise ParseError("Could not %s file %s" % (error_out, fn), parentfn, lineno)
+            logger.debug(2, "CONF file '%s' not found", fn)
+        else:
+            if error_out:
+                raise ParseError("Could not %s file %s: %s" % (error_out, fn, exc.strerror), parentfn, lineno)
+            else:
+                raise ParseError("Error parsing %s: %s" % (fn, exc.strerror), parentfn, lineno)
 
 # We have an issue where a UI might want to enforce particular settings such as
 # an empty DISTRO variable. If configuration files do something like assigning
