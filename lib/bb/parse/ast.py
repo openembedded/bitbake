@@ -330,8 +330,7 @@ def finalize(fn, d, variant = None):
     bb.data.update_data(d)
 
     tasklist = d.getVar('__BBTASKS', False) or []
-    deltasklist = d.getVar('__BBDELTASKS', False) or []
-    bb.build.add_tasks(tasklist, deltasklist, d)
+    bb.build.add_tasks(tasklist, d)
 
     bb.parse.siggen.finalise(fn, d, variant)
 

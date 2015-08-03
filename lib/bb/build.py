@@ -686,7 +686,7 @@ def stampfile(taskname, d, file_name = None):
     """
     return stamp_internal(taskname, d, file_name)
 
-def add_tasks(tasklist, deltasklist, d):
+def add_tasks(tasklist, d):
     task_deps = d.getVar('_task_deps', False)
     if not task_deps:
         task_deps = {}
@@ -697,9 +697,6 @@ def add_tasks(tasklist, deltasklist, d):
 
     for task in tasklist:
         task = d.expand(task)
-
-        if task in deltasklist:
-            continue
 
         d.setVarFlag(task, 'task', 1)
 
@@ -738,7 +735,7 @@ def addtask(task, before, after, d):
 
     d.setVarFlag(task, "task", 1)
     bbtasks = d.getVar('__BBTASKS', False) or []
-    if not task in bbtasks:
+    if task not in bbtasks:
         bbtasks.append(task)
     d.setVar('__BBTASKS', bbtasks)
 
@@ -760,8 +757,14 @@ def deltask(task, d):
     if task[:3] != "do_":
         task = "do_" + task
 
-    bbtasks = d.getVar('__BBDELTASKS', False) or []
-    if not task in bbtasks:
-        bbtasks.append(task)
-    d.setVar('__BBDELTASKS', bbtasks)
+    bbtasks = d.getVar('__BBTASKS', False) or []
+    if task in bbtasks:
+        bbtasks.remove(task)
+        d.setVar('__BBTASKS', bbtasks)
 
+    d.delVarFlag(task, 'deps')
+    for bbtask in d.getVar('__BBTASKS', False) or []:
+        deps = d.getVarFlag(bbtask, 'deps') or []
+        if task in deps:
+            deps.remove(task)
+            d.setVarFlag(bbtask, 'deps', deps)
