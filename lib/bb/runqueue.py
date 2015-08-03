@@ -1630,7 +1630,8 @@ class RunQueueExecuteTasks(RunQueueExecute):
                 pn = self.rqdata.dataCache.pkg_fn[fn]
                 taskname = self.rqdata.runq_task[revdep]
                 deps = self.rqdata.runq_depends[revdep]
-                taskdepdata[revdep] = [pn, taskname, fn, deps]
+                provides = self.rqdata.dataCache.fn_provides[fn]
+                taskdepdata[revdep] = [pn, taskname, fn, deps, provides]
                 for revdep2 in deps:
                     if revdep2 not in taskdepdata:
                         additional.append(revdep2)
