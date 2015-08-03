@@ -349,6 +349,10 @@ class BBCooker:
         if CookerFeatures.BASEDATASTORE_TRACKING in self.featureset:
             self.disableDataTracking()
 
+        self.data.renameVar("__depends", "__base_depends")
+        self.add_filewatch(self.data.getVar("__base_depends", False), self.configwatcher)
+
+
     def enableDataTracking(self):
         self.configuration.tracking = True
         if hasattr(self, "data"):
@@ -1463,9 +1467,6 @@ class BBCooker:
 
             self.collection = CookerCollectFiles(self.recipecache.bbfile_config_priorities)
             (filelist, masked) = self.collection.collect_bbfiles(self.data, self.expanded_data)
-
-            self.data.renameVar("__depends", "__base_depends")
-            self.add_filewatch(self.data.getVar("__base_depends", False), self.configwatcher)
 
             self.parser = CookerParser(self, filelist, masked)
             self.parsecache_valid = True
