@@ -251,9 +251,8 @@ class MachinesTable(ToasterTable, ProjectFiltersMixin):
 
     def setup_queryset(self, *args, **kwargs):
         prj = Project.objects.get(pk = kwargs['pid'])
-        compatible_layers = prj.compatible_layerversions()
-
-        self.queryset = Machine.objects.filter(layer_version__in=compatible_layers).order_by(self.default_orderby)
+        self.queryset = prj.get_all_compatible_machines()
+        self.queryset = self.queryset.order_by(self.default_orderby)
 
     def setup_columns(self, *args, **kwargs):
 
@@ -363,11 +362,7 @@ class RecipesTable(ToasterTable, ProjectFiltersMixin):
     def setup_queryset(self, *args, **kwargs):
         prj = Project.objects.get(pk = kwargs['pid'])
 
-        self.queryset = Recipe.objects.filter(layer_version__in = prj.compatible_layerversions())
-
-        search_maxids = map(lambda i: i[0], list(self.queryset.values('name').distinct().annotate(max_id=Max('id')).values_list('max_id')))
-
-        self.queryset = self.queryset.filter(id__in=search_maxids).select_related('layer_version', 'layer_version__layer', 'layer_version__up_branch', 'layer_source')
+        self.queryset = prj.get_all_compatible_recipes()
         self.queryset = self.queryset.order_by(self.default_orderby)
 
 
