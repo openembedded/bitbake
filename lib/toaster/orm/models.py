@@ -23,6 +23,7 @@ from django.db import models
 from django.db.models import F, Q, Avg
 from django.utils import timezone
 
+from django.core.urlresolvers import reverse
 
 from django.core import validators
 from django.conf import settings
@@ -1108,6 +1109,9 @@ class Layer_Version(models.Model):
         if self.up_branch is not None:
             return self.up_branch.name
         return ("Cannot determine the vcs_reference for layer version %s" % vars(self))
+
+    def get_detailspage_url(self, project_id):
+        return reverse('layerdetails', args=(project_id, self.pk))
 
     def __unicode__(self):
         return "%d %s (VCS %s, Project %s)" % (self.pk, str(self.layer), self.get_vcs_reference(), self.build.project if self.build is not None else "No project")
