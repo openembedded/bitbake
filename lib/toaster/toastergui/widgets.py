@@ -354,3 +354,55 @@ class ToasterTemplateView(TemplateView):
                             content_type = "application/json; charset=utf-8")
 
         return super(ToasterTemplateView, self).get(*args, **kwargs)
+
+class ToasterTypeAhead(View):
+    """ A typeahead mechanism to support the front end typeahead widgets """
+    MAX_RESULTS = 6
+
+    class MissingFieldsException(Exception):
+        pass
+
+    def __init__(self, *args, **kwargs):
+        super(ToasterTypeAhead, self).__init__()
+
+    def get(self, request, *args, **kwargs):
+        def response(data):
+            return HttpResponse(json.dumps(data,
+                                           indent=2,
+                                           cls=DjangoJSONEncoder),
+                                content_type="application/json")
+
+        error = "ok"
+
+        search_term = request.GET.get("search", None)
+        if search_term == None:
+            # We got no search value so return empty reponse
+            return response({'error' : error , 'results': []})
+
+        try:
+            prj = Project.objects.get(pk=kwargs['pid'])
+        except KeyError:
+            prj = None
+
+        results = self.apply_search(search_term, prj, request)[:ToasterTypeAhead.MAX_RESULTS]
+
+        if len(results) > 0:
+            try:
+                self.validate_fields(results[0])
+            except MissingFieldsException as e:
+                error = e
+
+        data = { 'results' : results,
+                'error' : error,
+               }
+
+        return response(data)
+
+    def validate_fields(self, result):
+        if 'name' in result == False or 'detail' in result == False:
+            raise MissingFieldsException("name and detail are required fields")
+
+    def apply_search(self, search_term, prj):
+        """ Override this function to implement search. Return an array of
+        dictionaries with a minium of a name and detail field"""
+        pass
