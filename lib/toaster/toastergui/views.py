@@ -2257,51 +2257,37 @@ if True:
 
     from django.views.decorators.csrf import csrf_exempt
     @csrf_exempt
-    def xhr_datatypeahead(request, pid):
+    def xhr_testreleasechange(request, pid):
+        def response(data):
+            return HttpResponse(jsonfilter(data),
+                                content_type="application/json")
+
+        """ returns layer versions that would be deleted on the new
+        release__pk """
         try:
             prj = Project.objects.get(pk = pid)
+            new_release_id = request.GET['new_release_id']
 
+            # If we're already on this project do nothing
+            if prj.release.pk == int(new_release_id):
+                return reponse({"error": "ok", "rows": []})
 
-            # returns layer versions that would be deleted on the new release__pk
-            if request.GET.get('type', None) == "versionlayers":
-                # If we're already on this project do nothing
-                if prj.release.pk == int(request.GET.get('search', -1)):
-                    return HttpResponse(jsonfilter({"error": "ok", "rows": []}), content_type="application/json")
+            retval = []
 
-                retval = []
+            for i in prj.projectlayer_set.all():
+                lv = prj.compatible_layerversions(release = Release.objects.get(pk=new_release_id)).filter(layer__name = i.layercommit.layer.name)
+                # there is no layer_version with the new release id,
+                # and the same name
+                if lv.count() < 1:
+                    retval.append(i)
 
-                for i in prj.projectlayer_set.all():
-                    lv = prj.compatible_layerversions(release = Release.objects.get(pk=request.GET.get('search', None))).filter(layer__name = i.layercommit.layer.name)
-                    # there is no layer_version with the new release id, and the same name
-                    if lv.count() < 1:
-                        retval.append(i)
+            return response({"error":"ok",
+                             "rows" : map( _lv_to_dict(prj),
+                                          map(lambda x: x.layercommit, retval ))
+                            })
 
-                return HttpResponse(jsonfilter( {"error":"ok",
-                    "rows" : map( _lv_to_dict(prj),  map(lambda x: x.layercommit, retval ))
-                    }), content_type = "application/json")
-
-
-            # returns layer versions that provide the named targets
-            if request.GET.get('type', None) == "layers4target":
-                # we return data only if the recipe can't be provided by the current project layer set
-                if reduce(lambda x, y: x + y, [x.recipe_layer_version.filter(name=request.GET.get('search', None)).count() for x in prj.projectlayer_equivalent_set()], 0):
-                    final_list = []
-                else:
-                    queryset_all = prj.compatible_layerversions().filter(recipe_layer_version__name = request.GET.get('search', None))
-
-                    # exclude layers in the project
-                    queryset_all = queryset_all.exclude(pk__in = [x.id for x in prj.projectlayer_equivalent_set()])
-
-                    # and show only the selected layers for this project
-                    final_list = set([x.get_equivalents_wpriority(prj)[0] for x in queryset_all])
-
-                return HttpResponse(jsonfilter( { "error":"ok",  "rows" : map( _lv_to_dict(prj), final_list) }), content_type = "application/json")
-
-
-            raise Exception("Unknown request! " + request.GET.get('type', "No parameter supplied"))
         except Exception as e:
-            return HttpResponse(jsonfilter({"error":str(e) + "\n" + traceback.format_exc()}), content_type = "application/json")
-
+            return response({"error": str(e) })
 
     def xhr_configvaredit(request, pid):
         try:

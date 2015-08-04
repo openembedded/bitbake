@@ -126,8 +126,6 @@ urlpatterns = patterns('toastergui.views',
             name=tables.LayerMachinesTable.__name__.lower()),
 
 
-        url(r'^xhr_datatypeahead/(?P<pid>\d+)$', 'xhr_datatypeahead', name='xhr_datatypeahead'),
-        url(r'^xhr_configvaredit/(?P<pid>\d+)$', 'xhr_configvaredit', name='xhr_configvaredit'),
         # typeahead api end points
         url(r'^xhr_typeahead/(?P<pid>\d+)/layers$',
             typeaheads.LayersTypeAhead.as_view(), name='xhr_layerstypeahead'),
@@ -138,6 +136,12 @@ urlpatterns = patterns('toastergui.views',
         url(r'^xhr_typeahead/projects$',
             typeaheads.ProjectsTypeAhead.as_view(), name='xhr_projectstypeahead'),
 
+
+
+        url(r'^xhr_testreleasechange/(?P<pid>\d+)$', 'xhr_testreleasechange',
+            name='xhr_testreleasechange'),
+        url(r'^xhr_configvaredit/(?P<pid>\d+)$', 'xhr_configvaredit',
+            name='xhr_configvaredit'),
 
         url(r'^xhr_importlayer/$', 'xhr_importlayer', name='xhr_importlayer'),
         url(r'^xhr_updatelayer/$', 'xhr_updatelayer', name='xhr_updatelayer'),

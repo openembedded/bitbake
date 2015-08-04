@@ -11,8 +11,7 @@
 <script>
   $(document).ready(function (){
     var ctx = {
-      typeaheadUrl : "{% url 'xhr_datatypeahead' project.id %}",
-
+      testReleaseChangeUrl: "{% url 'xhr_testreleasechange' project.id %}",
     };
 
     try {
