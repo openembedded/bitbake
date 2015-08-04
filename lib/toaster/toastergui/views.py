@@ -2224,9 +2224,10 @@ if True:
                         "id": x.layercommit.pk,
                         "orderid": x.pk,
                         "name" : x.layercommit.layer.name,
-                        "giturl": x.layercommit.layer.vcs_url,
+                        "vcs_url": x.layercommit.layer.vcs_url,
+                        "vcs_reference" : x.layercommit.get_vcs_reference(),
                         "url": x.layercommit.layer.layer_index_url,
-                        "layerdetailurl": reverse("layerdetails", args=(prj.id, x.layercommit.pk,)),
+                        "layerdetailurl": x.layercommit.get_detailspage_url(prj.pk),
                 # This branch name is actually the release
                         "branch" : { "name" : x.layercommit.get_vcs_reference(), "layersource" : x.layercommit.up_branch.layer_source.name if x.layercommit.up_branch != None else None}},
                     prj.projectlayer_set.all().order_by("id")),
