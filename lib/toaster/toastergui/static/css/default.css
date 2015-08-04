@@ -35,7 +35,7 @@ dd code, .alert code { white-space: pre-wrap; word-break: break-all; word-wrap: 
 .alert-error code { background-color: transparent; border: none; color: #B94A48; margin-bottom:0px; }
 .alert-error pre { background-color: transparent; border: none; color: #B94A48; word-break: normal; margin-bottom: 0px; }
 .alert-warning pre { word-break: normal; }
-.alert-info a { font-weight: bold; }
+.alert-info a { font-weight: 300; }
 .alert-info code { color: #3A87AD; }
 .tooltip code { background-color: transparent; color: #FFFFFF; font-weight: normal; border: none; font-size: 1em; }
 
