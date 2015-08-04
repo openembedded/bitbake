@@ -9,10 +9,10 @@
   <ul class="breadcrumb">
     <li>
       <a href="{% url 'project' project.id %}">{{project.name}}</a>
-      <span class="divider">→</span>
+      <span class="divider">&rarr;</span>
     </li>
     <li><a href="{% url 'projectlayers' project.id %}">Compatible layers</a>
-      <span class="divider">→</span>
+      <span class="divider">&rarr;</span>
     </li>
     <li>
       {{layerversion.layer.name}} ({{layerversion.get_vcs_reference|truncatechars:13}})
