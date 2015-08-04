@@ -2235,6 +2235,8 @@ if True:
             "freqtargets": freqtargets[:5],
             "releases": map(lambda x: {"id": x.pk, "name": x.name, "description":x.description}, Release.objects.all()),
             "project_html": 1,
+            "recipesTypeAheadUrl": reverse('xhr_recipestypeahead', args=(prj.pk,)),
+            "projectBuildsUrl": reverse('projectbuilds', args=(prj.pk,)),
         }
 
         if prj.release is not None:
@@ -2784,9 +2786,9 @@ if True:
         for p in project_info.object_list:
             p.id = p.pk
             p.projectPageUrl = reverse('project', args=(p.id,))
-            p.projectLayersUrl = reverse('projectlayers', args=(p.id,))
+            p.layersTypeAheadUrl = reverse('xhr_layerstypeahead', args=(p.id,))
+            p.recipesTypeAheadUrl = reverse('xhr_recipestypeahead', args=(p.id,))
             p.projectBuildsUrl = reverse('projectbuilds', args=(p.id,))
-            p.projectTargetsUrl = reverse('projectavailabletargets', args=(p.id,))
 
         # build view-specific information; this is rendered specifically in the builds page, at the top of the page (i.e. Recent builds)
         build_mru = _get_latest_builds()
