@@ -115,9 +115,9 @@ parser.add_option("-t", "--task",
 options, args = parser.parse_args(sys.argv)
 
 if options.taskargs:
-    tinfoil = bb.tinfoil.Tinfoil()
-    tinfoil.prepare(config_only = True)
-    find_compare_task(tinfoil, options.taskargs[0], options.taskargs[1])
+    with bb.tinfoil.Tinfoil() as tinfoil:
+        tinfoil.prepare(config_only=True)
+        find_compare_task(tinfoil, options.taskargs[0], options.taskargs[1])
 else:
     if len(args) == 1:
         parser.print_help()
