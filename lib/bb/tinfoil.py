@@ -59,6 +59,12 @@ class Tinfoil:
     def register_idle_function(self, function, data):
         pass
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, value, traceback):
+        self.shutdown()
+
     def parseRecipes(self):
         sys.stderr.write("Parsing recipes..")
         self.logger.setLevel(logging.WARNING)
