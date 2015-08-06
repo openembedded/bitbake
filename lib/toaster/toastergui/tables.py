@@ -289,7 +289,7 @@ class LayerMachinesTable(MachinesTable):
         MachinesTable.setup_queryset(self, *args, **kwargs)
 
         self.queryset = self.queryset.filter(layer_version__pk=int(kwargs['layerid']))
-        self.static_context_extra['in_prj'] = ProjectLayer.objects.filter(Q(project=kwargs['pid']) and Q(layercommit=kwargs['layerid'])).count()
+        self.static_context_extra['in_prj'] = ProjectLayer.objects.filter(Q(project=kwargs['pid']) & Q(layercommit=kwargs['layerid'])).count()
 
     def setup_columns(self, *args, **kwargs):
         self.add_column(title="Machine",
@@ -425,7 +425,7 @@ class LayerRecipesTable(RecipesTable):
         RecipesTable.setup_queryset(self, *args, **kwargs)
         self.queryset = self.queryset.filter(layer_version__pk=int(kwargs['layerid']))
 
-        self.static_context_extra['in_prj'] = ProjectLayer.objects.filter(Q(project=kwargs['pid']) and Q(layercommit=kwargs['layerid'])).count()
+        self.static_context_extra['in_prj'] = ProjectLayer.objects.filter(Q(project=kwargs['pid']) & Q(layercommit=kwargs['layerid'])).count()
 
     def setup_columns(self, *args, **kwargs):
         self.add_column(title="Recipe",
