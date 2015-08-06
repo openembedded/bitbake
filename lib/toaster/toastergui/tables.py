@@ -300,7 +300,7 @@ class LayerMachinesTable(MachinesTable):
         self.add_column(title="Description",
                         field_name="description")
 
-        select_btn_template = '<a href="{% url "project" extra.pid %}#/machineselect={{data.name}}" class="btn btn-block select-machine-btn" {% if extra.in_prj == 0%}disabled="disabled"{%endif%}>Select machine</a>'
+        select_btn_template = '<a href="{% url "project" extra.pid %}?setMachine={{data.name}}" class="btn btn-block select-machine-btn" {% if extra.in_prj == 0%}disabled="disabled"{%endif%}>Select machine</a>'
 
         self.add_column(title="Select machine",
                         static_data_name="add-del-layers",
