@@ -438,7 +438,7 @@ class LayerRecipesTable(RecipesTable):
                         field_name="get_description_or_summary")
 
 
-        build_recipe_template ='<button class="btn btn-block build-target-btn" data-target-name="{{data.name}}" {%if extra.in_prj == 0 %}disabled="disabled"{%endif%}>Build recipe</button>'
+        build_recipe_template ='<button class="btn btn-block build-recipe-btn" data-recipe-name="{{data.name}}" {%if extra.in_prj == 0 %}disabled="disabled"{%endif%}>Build recipe</button>'
 
         self.add_column(title="Build recipe",
                         static_data_name="add-del-layers",
