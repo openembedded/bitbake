@@ -19,7 +19,7 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-from toastergui.widgets import ToasterTable, ToasterTemplateView
+from toastergui.widgets import ToasterTable
 from orm.models import Recipe, ProjectLayer, Layer_Version, Machine, Project
 from django.db.models import Q, Max
 from django.conf.urls import url
@@ -200,28 +200,6 @@ class LayersTable(ToasterTable):
                         displayable = False,
                         field_name="name",
                         computation = lambda x: x.layer.name)
-
-
-
-
-class LayerDetails(ToasterTemplateView):
-    def get_context_data(self, **kwargs):
-        context = super(LayerDetails, self).get_context_data(**kwargs)
-        from toastergui.views import _lv_to_dict
-
-        context['project'] = Project.objects.get(pk=kwargs['pid'])
-        context['layerversion'] = Layer_Version.objects.get(pk=kwargs['layerid'])
-        context['layerdict'] = _lv_to_dict(context['project'], context['layerversion'])
-        context['layerdeps'] = {"list": [
-            [ {"id": y.id,
-               "name": y.layer.name,
-               "layerdetailurl": reverse('layerdetails', args=(kwargs['pid'], y.id)),
-              } for y in x.depends_on.get_equivalents_wpriority(context['project'])][0] for x in context['layerversion'].dependencies.all()]}
-        context['projectlayers'] = map(lambda prjlayer: prjlayer.layercommit.id, ProjectLayer.objects.filter(project=context['project']))
-
-        self.context_entries = ['project', 'layerversion', 'projectlayers', 'layerdict', 'layerdeps']
-
-        return context
 
 
 class MachinesTable(ToasterTable, ProjectFiltersMixin):

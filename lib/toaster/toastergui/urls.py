@@ -110,8 +110,7 @@ urlpatterns = patterns('toastergui.views',
             name="projectlayers"),
 
         url(r'^project/(?P<pid>\d+)/layer/(?P<layerid>\d+)$',
-            tables.LayerDetails.as_view(template_name='layerdetails.html'),
-            name='layerdetails'),
+            'layerdetails', name='layerdetails'),
 
         url(r'^project/(?P<pid>\d+)/layer/(?P<layerid>\d+)/recipes/$',
             tables.LayerRecipesTable.as_view(template_name="generic-toastertable-page.html"),

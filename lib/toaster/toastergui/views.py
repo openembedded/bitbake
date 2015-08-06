@@ -2517,6 +2517,21 @@ if True:
         }
         return render(request, template, context)
 
+    @_template_renderer('layerdetails.html')
+    def layerdetails(request, pid, layerid):
+        project = Project.objects.get(pk=pid)
+        layer_version = Layer_Version.objects.get(pk=layerid)
+
+        context = { 'project' : project,
+                   'layerversion' : layer_version,
+                   'layerdeps' : { "list": [
+                     [{"id": y.id, "name": y.layer.name} for y in x.depends_on.get_equivalents_wpriority(project)][0] for x in layer_version.dependencies.all()]},
+                   'projectlayers': map(lambda prjlayer: prjlayer.layercommit.id, ProjectLayer.objects.filter(project=project))
+                  }
+
+        return context
+
+
     def get_project_configvars_context():
         # Vars managed outside of this view
         vars_managed = {
