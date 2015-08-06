@@ -49,6 +49,12 @@ DATABASES = {
     }
 }
 
+# Needed when Using sqlite especially to add a longer timeout for waiting
+# for the database lock to be  released
+# https://docs.djangoproject.com/en/1.6/ref/databases/#database-is-locked-errors
+if 'sqlite' in DATABASES['default']['ENGINE']:
+    DATABASES['default']['OPTIONS'] = { 'timeout': 20 }
+
 # Reinterpret database settings if we have DATABASE_URL environment variable defined
 
 if 'DATABASE_URL' in os.environ:
