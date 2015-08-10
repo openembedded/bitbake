@@ -1,6 +1,6 @@
 from django.test import TestCase
 from django.core.urlresolvers import reverse
-from orm.models import Project, Release, BitbakeVersion, Build
+from orm.models import Project, Release, BitbakeVersion
 from orm.models import ReleaseLayerSourcePriority, LayerSource, Layer
 from orm.models import Layer_Version, Recipe, Machine, ProjectLayer
 import json
