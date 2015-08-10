@@ -7,7 +7,10 @@ import json
 
 PROJECT_NAME = "test project"
 
-class AllProjectsViewTestCase(TestCase):
+class ViewTests(TestCase):
+    """Tests to verify view APIs."""
+    LAYER_NAME = "base-layer"
+    RECIPE_NAME = "base-recipe"
 
     def setUp(self):
         self.bbv = BitbakeVersion.objects.create(\
@@ -17,6 +20,31 @@ class AllProjectsViewTestCase(TestCase):
                            name="test release", bitbake_version=self.bbv)
         self.project = Project.objects.create_project(name=PROJECT_NAME,
                                                       release=self.release)
+        self.layersrc = LayerSource.objects.create(\
+                               sourcetype=LayerSource.TYPE_IMPORTED)
+        self.priority = ReleaseLayerSourcePriority.objects.create(\
+                               release=self.release,
+                               layer_source=self.layersrc)
+        self.layer = Layer.objects.create(\
+                         name=self.LAYER_NAME,
+                         layer_source=self.layersrc, vcs_url="/tmp/")
+        self.lver = Layer_Version.objects.create(\
+                        layer=self.layer, project=self.project,
+                        layer_source=self.layersrc, commit="master")
+
+        self.recipe = Recipe.objects.create(\
+                          layer_source=self.layersrc, name=self.RECIPE_NAME,
+                          version="1.2", summary="one recipe",
+                          description="recipe", layer_version=self.lver)
+
+        self.machine = Machine.objects.create(\
+                          layer_version=self.lver, name="wisk",
+                          description="wisking machine")
+
+        ProjectLayer.objects.create(project=self.project,
+                                    layercommit=self.lver)
+
+        self.assertTrue(self.lver in self.project.compatible_layerversions())
 
     def test_get_base_call_returns_html(self):
         response = self.client.get(reverse('all-projects'), follow=True)
@@ -45,39 +73,6 @@ class AllProjectsViewTestCase(TestCase):
         self.assertTrue("projectLayersUrl" in data["rows"][0])
         self.assertTrue("projectPageUrl" in data["rows"][0])
         self.assertTrue("projectBuildsUrl" in data["rows"][0])
-
-class ProvisionedLayersProjectTestCase(ProvisionedProjectTestCase):
-    LAYER_NAME = "base-layer"
-    RECIPE_NAME = "base-recipe"
-
-
-    def setUp(self):
-        super(ProvisionedLayersProjectTestCase, self).setUp()
-        self.layersrc = LayerSource.objects.create(\
-                               sourcetype=LayerSource.TYPE_IMPORTED)
-        self.priority = ReleaseLayerSourcePriority.objects.create(\
-                               release=self.release,
-                               layer_source=self.layersrc)
-        self.layer = Layer.objects.create(\
-                         name=XHRDataTypeAheadTestCase.LAYER_NAME,
-                         layer_source=self.layersrc, vcs_url="/tmp/")
-        self.lver = Layer_Version.objects.create(\
-                        layer=self.layer, project=self.project,
-                        layer_source=self.layersrc, commit="master")
-
-        self.recipe, created = Recipe.objects.get_or_create(layer_source=self.layersource, name=ProvisionedLayersProjectTestCase.RECIPE_NAME, version="1.2", summary="one recipe", description="recipe", layer_version=self.lv)
-
-        self.machine, created = Machine.objects.get_or_create(layer_version=self.lv, name="wisk", description="wisking machine")
-
-        ProjectLayer.objects.get_or_create(project = self.project,
-                                           layercommit = self.lv)
-
-
-class XHRDataTypeAheadTestCase(ProvisionedLayersProjectTestCase):
-
-    def setUp(self):
-        super(XHRDataTypeAheadTestCase, self).setUp()
-        self.assertTrue(self.lver in self.project.compatible_layerversions())
 
     def test_typeaheads(self):
         layers_url = reverse('xhr_layerstypeahead', args=(self.project.id,))
