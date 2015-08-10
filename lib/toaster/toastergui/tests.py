@@ -1,3 +1,26 @@
+#! /usr/bin/env python
+# ex:ts=4:sw=4:sts=4:et
+# -*- tab-width: 4; c-basic-offset: 4; indent-tabs-mode: nil -*-
+#
+# BitBake Toaster Implementation
+#
+# Copyright (C) 2013-2015 Intel Corporation
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License version 2 as
+# published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
+"""Test cases for Toaster GUI and ReST."""
+
 from django.test import TestCase
 from django.core.urlresolvers import reverse
 from orm.models import Project, Release, BitbakeVersion
@@ -45,6 +68,7 @@ class ViewTests(TestCase):
         self.assertTrue(self.lver in self.project.compatible_layerversions())
 
     def test_get_base_call_returns_html(self):
+        """Basic test for all-projects view"""
         response = self.client.get(reverse('all-projects'), follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response['Content-Type'].startswith('text/html'))
@@ -52,6 +76,7 @@ class ViewTests(TestCase):
         self.assertTrue(PROJECT_NAME in response.content)
 
     def test_get_json_call_returns_json(self):
+        """Test for all projects output in json format"""
         url = reverse('all-projects')
         response = self.client.get(url, {"format": "json"}, follow=True)
         self.assertEqual(response.status_code, 200)
@@ -73,6 +98,7 @@ class ViewTests(TestCase):
         self.assertTrue("projectBuildsUrl" in data["rows"][0])
 
     def test_typeaheads(self):
+        """Test typeahead ReST API"""
         layers_url = reverse('xhr_layerstypeahead', args=(self.project.id,))
         prj_url = reverse('xhr_projectstypeahead')
 
@@ -82,7 +108,8 @@ class ViewTests(TestCase):
                  reverse('xhr_machinestypeahead', args=(self.project.id,)),
                ]
 
-        def basic_reponse_check(reponse, url):
+        def basic_reponse_check(response, url):
+            """Check data structure of http response."""
             self.assertEqual(response.status_code, 200)
             self.assertTrue(response['Content-Type'].startswith('application/json'))
 
