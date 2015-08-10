@@ -166,20 +166,3 @@ class ProjectLVSelectionTestCase(TestCase):
         self.assertTrue(len(compatible_layerversions) == 1)
         self.assertTrue(compatible_layerversions[0] == self.lver)
 
-
-    def test_dual_layersource(self):
-         # if we have two layers with the same name, from different layer sources, we expect both layers in, in increasing priority of the layer source
-        ls2 = LayerSource.objects.create(name = "dummy-layersource2", sourcetype = LayerSource.TYPE_LOCAL, apiurl="testing")
-
-        # assign a lower priority for the second layer source
-        Release.objects.get(name="default-release").releaselayersourcepriority_set.create(layer_source = ls2, priority = 2)
-
-        # create a new layer_version for a layer with the same name coming from the second layer source
-        self.layer2 = Layer.objects.create(name="meta-testlayer", layer_source = ls2)
-        self.layerversion2 = Layer_Version.objects.create(layer = self.layer2, layer_source = ls2, up_branch = self.branch)
-
-         # expect two layer versions, in the priority order
-        equivalent_list = self.project.compatible_layerversions()
-        self.assertTrue(len(equivalent_list) == 2)
-        self.assertTrue(equivalent_list[0] == self.layerversion2)
-        self.assertTrue(equivalent_list[1] == self.lver)
