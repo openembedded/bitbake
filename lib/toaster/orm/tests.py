@@ -18,9 +18,6 @@ class LayerSourceVerifyInheritanceSaveLoad(TestCase):
         lils = LayerSource.objects.create(name = "a2", sourcetype = LayerSource.TYPE_LAYERINDEX, apiurl = "")
         imls = LayerSource.objects.create(name = "a3", sourcetype = LayerSource.TYPE_IMPORTED, apiurl = "")
 
-        import pprint
-        pprint.pprint([(x.__class__,vars(x)) for x in LayerSource.objects.all()])
-
         self.assertTrue(True in map(lambda x: isinstance(x, LocalLayerSource), LayerSource.objects.all()))
         self.assertTrue(True in map(lambda x: isinstance(x, LayerIndexLayerSource), LayerSource.objects.all()))
         self.assertTrue(True in map(lambda x: isinstance(x, ImportedLayerSource), LayerSource.objects.all()))
@@ -42,7 +39,6 @@ class LILSUpdateTestCase(TransactionTestCase):
     def test_update(self):
         layer_index_url = os.getenv("TTS_LAYER_INDEX")
         if layer_index_url == None:
-            print "Using layers.openembedded.org for layer index. override with TTS_LAYER_INDEX enviroment variable"
             layer_index_url = "http://layers.openembedded.org/"
 
         lils = LayerSource.objects.create(name = "b1", sourcetype = LayerSource.TYPE_LAYERINDEX, apiurl = layer_index_url + "layerindex/api/")
