@@ -1,16 +1,22 @@
 from django.test import TestCase
 from django.core.urlresolvers import reverse
 from orm.models import Project, Release, BitbakeVersion, Build
-from orm.models import ReleaseLayerSourcePriority, LayerSource, Layer, Layer_Version, Recipe, Machine, ProjectLayer
+from orm.models import ReleaseLayerSourcePriority, LayerSource, Layer
+from orm.models import Layer_Version, Recipe, Machine, ProjectLayer
 import json
 
+PROJECT_NAME = "test project"
+
 class ProvisionedProjectTestCase(TestCase):
-    TEST_PROJECT_NAME = "test project"
 
     def setUp(self):
-        self.bbv, created = BitbakeVersion.objects.get_or_create(name="test bbv", giturl="/tmp/", branch="master", dirpath="")
-        self.release, created = Release.objects.get_or_create(name="test release", bitbake_version = self.bbv)
-        self.project = Project.objects.create_project(name=AllProjectsViewTestCase.TEST_PROJECT_NAME, release=self.release)
+        self.bbv = BitbakeVersion.objects.create(\
+                       name="test bbv", giturl="/tmp/",
+                       branch="master", dirpath="")
+        self.release = Release.objects.create(\
+                           name="test release", bitbake_version=self.bbv)
+        self.project = Project.objects.create_project(name=PROJECT_NAME,
+                                                      release=self.release)
 
 
 class AllProjectsViewTestCase(ProvisionedProjectTestCase):
@@ -20,10 +26,11 @@ class AllProjectsViewTestCase(ProvisionedProjectTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response['Content-Type'].startswith('text/html'))
         self.assertTemplateUsed(response, "projects.html")
-        self.assertTrue(AllProjectsViewTestCase.TEST_PROJECT_NAME in response.content)
+        self.assertTrue(PROJECT_NAME in response.content)
 
     def test_get_json_call_returns_json(self):
-        response = self.client.get(reverse('all-projects'), {"format": "json"}, follow=True)
+        url = reverse('all-projects')
+        response = self.client.get(url, {"format": "json"}, follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response['Content-Type'].startswith('application/json'))
 
@@ -36,7 +43,7 @@ class AllProjectsViewTestCase(ProvisionedProjectTestCase):
         self.assertEqual(data["error"], "ok")
         self.assertTrue("rows" in data)
 
-        self.assertTrue(AllProjectsViewTestCase.TEST_PROJECT_NAME in map(lambda x: x["name"], data["rows"]))
+        self.assertTrue(PROJECT_NAME in [x["name"] for x in data["rows"]])
         self.assertTrue("id" in data["rows"][0])
         self.assertTrue("projectLayersUrl" in data["rows"][0])
         self.assertTrue("projectPageUrl" in data["rows"][0])
@@ -49,10 +56,17 @@ class ProvisionedLayersProjectTestCase(ProvisionedProjectTestCase):
 
     def setUp(self):
         super(ProvisionedLayersProjectTestCase, self).setUp()
-        self.layersource, created = LayerSource.objects.get_or_create(sourcetype = LayerSource.TYPE_IMPORTED)
-        self.releaselayersourcepriority, created = ReleaseLayerSourcePriority.objects.get_or_create(release = self.release, layer_source = self.layersource)
-        self.layer, created = Layer.objects.get_or_create(name=XHRDataTypeAheadTestCase.LAYER_NAME, layer_source=self.layersource, vcs_url="/tmp/")
-        self.lv, created = Layer_Version.objects.get_or_create(layer = self.layer, project = self.project, layer_source=self.layersource, commit="master")
+        self.layersrc = LayerSource.objects.create(\
+                               sourcetype=LayerSource.TYPE_IMPORTED)
+        self.priority = ReleaseLayerSourcePriority.objects.create(\
+                               release=self.release,
+                               layer_source=self.layersrc)
+        self.layer = Layer.objects.create(\
+                         name=XHRDataTypeAheadTestCase.LAYER_NAME,
+                         layer_source=self.layersrc, vcs_url="/tmp/")
+        self.lver = Layer_Version.objects.create(\
+                        layer=self.layer, project=self.project,
+                        layer_source=self.layersrc, commit="master")
 
         self.recipe, created = Recipe.objects.get_or_create(layer_source=self.layersource, name=ProvisionedLayersProjectTestCase.RECIPE_NAME, version="1.2", summary="one recipe", description="recipe", layer_version=self.lv)
 
@@ -66,7 +80,7 @@ class XHRDataTypeAheadTestCase(ProvisionedLayersProjectTestCase):
 
     def setUp(self):
         super(XHRDataTypeAheadTestCase, self).setUp()
-        self.assertTrue(self.lv in self.project.compatible_layerversions())
+        self.assertTrue(self.lver in self.project.compatible_layerversions())
 
     def test_typeaheads(self):
         layers_url = reverse('xhr_layerstypeahead', args=(self.project.id,))
