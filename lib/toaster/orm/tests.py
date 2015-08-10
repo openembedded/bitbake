@@ -117,7 +117,7 @@ class LayerVersionEquivalenceTestCase(TestCase):
         # getting the build layerversion equivalent list must return the same list as the original layer
         build_equivalent_list = self.layerversion_build.get_equivalents_wpriority(self.project)
 
-        self.assertTrue(equivalent_list == build_equivalent_list, "%s is not %s" % (equivalent_list, build_equivalent_list))
+        self.assertEqual(list(equivalent_list), list(build_equivalent_list))
 
 class ProjectLVSelectionTestCase(TestCase):
     def setUp(self):
