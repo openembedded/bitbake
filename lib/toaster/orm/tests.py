@@ -6,28 +6,34 @@ from orm.models import Project, Build, Layer, Layer_Version, Branch, ProjectLaye
 from orm.models import Release, ReleaseLayerSourcePriority, BitbakeVersion
 
 from django.utils import timezone
+from django.db import IntegrityError
 
 import os
 
 # set TTS_LAYER_INDEX to the base url to use a different instance of the layer index
 
-# tests to verify inheritance for the LayerSource proxy-inheritance classes
 class LayerSourceVerifyInheritanceSaveLoad(TestCase):
+    """
+    Tests to verify inheritance for the LayerSource proxy-inheritance classes.
+    """
     def test_object_creation(self):
-        lls = LayerSource.objects.create(name = "a1", sourcetype = LayerSource.TYPE_LOCAL, apiurl = "")
-        lils = LayerSource.objects.create(name = "a2", sourcetype = LayerSource.TYPE_LAYERINDEX, apiurl = "")
-        imls = LayerSource.objects.create(name = "a3", sourcetype = LayerSource.TYPE_IMPORTED, apiurl = "")
+        """Test LayerSource object creation."""
+        for name, sourcetype in [("a1", LayerSource.TYPE_LOCAL),
+                                 ("a2", LayerSource.TYPE_LAYERINDEX),
+                                 ("a3", LayerSource.TYPE_IMPORTED)]:
+            LayerSource.objects.create(name=name, sourcetype=sourcetype)
 
-        self.assertTrue(True in map(lambda x: isinstance(x, LocalLayerSource), LayerSource.objects.all()))
-        self.assertTrue(True in map(lambda x: isinstance(x, LayerIndexLayerSource), LayerSource.objects.all()))
-        self.assertTrue(True in map(lambda x: isinstance(x, ImportedLayerSource), LayerSource.objects.all()))
+        objects = LayerSource.objects.all()
+        self.assertTrue(isinstance(objects[0], LocalLayerSource))
+        self.assertTrue(isinstance(objects[1], LayerIndexLayerSource))
+        self.assertTrue(isinstance(objects[2], ImportedLayerSource))
 
     def test_duplicate_error(self):
-        def duplicate():
-            LayerSource.objects.create(name = "a1", sourcetype = LayerSource.TYPE_LOCAL, apiurl = "")
-            LayerSource.objects.create(name = "a1", sourcetype = LayerSource.TYPE_LOCAL, apiurl = "")
-
-        self.assertRaises(Exception, duplicate)
+        """Test creation of duplicate LayerSource objects."""
+        stype = LayerSource.TYPE_LOCAL
+        LayerSource.objects.create(name="a1", sourcetype=stype)
+        with self.assertRaises(IntegrityError):
+            LayerSource.objects.create(name="a1", sourcetype=stype)
 
 
 class LILSUpdateTestCase(TransactionTestCase):
