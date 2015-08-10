@@ -37,22 +37,26 @@ class LayerSourceVerifyInheritanceSaveLoad(TestCase):
 
 
 class LILSUpdateTestCase(TransactionTestCase):
+    """Test Layer Source update."""
+
     def setUp(self):
-        # create release
-        bbv = BitbakeVersion.objects.create(name="master", giturl="git://git.openembedded.org/bitbake")
-        release = Release.objects.create(name="default-release", bitbake_version = bbv, branch_name = "master")
+        """Create release."""
+        bbv = BitbakeVersion.objects.create(\
+                  name="master", giturl="git://git.openembedded.org/bitbake")
+        Release.objects.create(name="default-release", bitbake_version=bbv,
+                               branch_name="master")
 
     def test_update(self):
-        layer_index_url = os.getenv("TTS_LAYER_INDEX")
-        if layer_index_url == None:
-            layer_index_url = "http://layers.openembedded.org/"
+        """Check if LayerSource.update can fetch branches."""
+        url = os.getenv("TTS_LAYER_INDEX",
+                        default="http://layers.openembedded.org/")
 
-        lils = LayerSource.objects.create(name = "b1", sourcetype = LayerSource.TYPE_LAYERINDEX, apiurl = layer_index_url + "layerindex/api/")
-        lils.update()
-
-        # run asserts
-        self.assertTrue(lils.branch_set.all().count() > 0, "update() needs to fetch some branches")
-
+        lsobj = LayerSource.objects.create(\
+                    name="b1", sourcetype=LayerSource.TYPE_LAYERINDEX,
+                    apiurl=url + "layerindex/api/")
+        lsobj.update()
+        self.assertTrue(lsobj.branch_set.all().count() > 0,
+                        "no branches fetched")
 
 
 # tests to verify layer_version priority selection
