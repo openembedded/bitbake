@@ -59,41 +59,44 @@ class LILSUpdateTestCase(TransactionTestCase):
                         "no branches fetched")
 
 
+def setup_lv_tests(self):
+    """Create required objects."""
+    # create layer source
+    self.lsrc = LayerSource.objects.create(name="dummy-layersource",
+                                           sourcetype=LayerSource.TYPE_LOCAL)
+    # create release
+    bbv = BitbakeVersion.objects.create(\
+              name="master", giturl="git://git.openembedded.org/bitbake")
+    self.release = Release.objects.create(name="default-release",
+                                          bitbake_version=bbv,
+                                          branch_name="master")
+    # attach layer source to release
+    ReleaseLayerSourcePriority.objects.create(\
+        release=self.release, layer_source=self.lsrc, priority=1)
+
+    # create a layer version for the layer on the specified branch
+    self.layer = Layer.objects.create(name="meta-testlayer",
+                                      layer_source=self.lsrc)
+    self.branch = Branch.objects.create(name="master", layer_source=self.lsrc)
+    self.lver = Layer_Version.objects.create(\
+        layer=self.layer, layer_source=self.lsrc, up_branch=self.branch)
+
+    # create project and project layer
+    self.project = Project.objects.create_project(name="test-project",
+                                                  release=self.release)
+    ProjectLayer.objects.create(project=self.project,
+                                layercommit=self.lver)
+
 class LayerVersionEquivalenceTestCase(TestCase):
     """Verify Layer_Version priority selection."""
 
     def setUp(self):
-        """Create required objects."""
-        # create layer source
-        lsrc = LayerSource.objects.create(name="dummy-layersource",
-                                          sourcetype=LayerSource.TYPE_LOCAL)
-        # create release
-        bbv = BitbakeVersion.objects.create(\
-                  name="master", giturl="git://git.openembedded.org/bitbake")
-        self.release = Release.objects.create(name="default-release",
-                                              bitbake_version=bbv,
-                                              branch_name="master")
-        # attach layer source to release
-        ReleaseLayerSourcePriority.objects.create(\
-            release=self.release, layer_source=lsrc, priority=1)
-
-        # create a layer version for the layer on the specified branch
-        self.layer = Layer.objects.create(name="meta-testlayer",
-                                          layer_source=lsrc)
-        self.branch = Branch.objects.create(name="master", layer_source=lsrc)
-        self.lver = Layer_Version.objects.create(\
-            layer=self.layer, layer_source=lsrc, up_branch=self.branch)
-
+        setup_lv_tests(self)
         # create spoof layer that should not appear in the search results
-        layer = Layer.objects.create(name="meta-notvalid", layer_source=lsrc)
-        Layer_Version.objects.create(layer=layer, layer_source=lsrc,
+        layer = Layer.objects.create(name="meta-notvalid",
+                                     layer_source=self.lsrc)
+        Layer_Version.objects.create(layer=layer, layer_source=self.lsrc,
                                      up_branch=self.branch)
-
-        # create project and project layer
-        self.project = Project.objects.create_project(name="test-project",
-                                                      release=self.release)
-        ProjectLayer.objects.create(project=self.project,
-                                    layercommit=self.lver)
 
     def test_single_layersource(self):
         """
@@ -154,35 +157,14 @@ class LayerVersionEquivalenceTestCase(TestCase):
         self.assertEqual(list(equivqs), list(bequivqs))
 
 class ProjectLVSelectionTestCase(TestCase):
+
     def setUp(self):
-        # create layer sources
-        ls = LayerSource.objects.create(name = "dummy-layersource", sourcetype = LayerSource.TYPE_LOCAL)
-
-        # create bitbake version
-        bbv = BitbakeVersion.objects.create(name="master", giturl="git://git.openembedded.org/bitbake")
-        # create release
-        release = Release.objects.create(name="default-release", bitbake_version = bbv, branch_name="master")
-        # attach layer source to release
-        ReleaseLayerSourcePriority.objects.create(release = release, layer_source = ls, priority = 1)
-
-        # create layer attach
-        self.layer = Layer.objects.create(name="meta-testlayer", layer_source = ls)
-        # create branch
-        self.branch = Branch.objects.create(name="master", layer_source = ls)
-
-        # set a layer version for the layer on the specified branch
-        self.layerversion = Layer_Version.objects.create(layer = self.layer, layer_source = ls, up_branch = self.branch)
-
-
-        # create a project ...
-        self.project = Project.objects.create_project(name="test-project", release = release)
-        # ... and set it up with a single layer version
-        ProjectLayer.objects.create(project=  self.project, layercommit = self.layerversion)
+        setup_lv_tests(self)
 
     def test_single_layersource(self):
         compatible_layerversions = self.project.compatible_layerversions()
         self.assertTrue(len(compatible_layerversions) == 1)
-        self.assertTrue(compatible_layerversions[0] == self.layerversion)
+        self.assertTrue(compatible_layerversions[0] == self.lver)
 
 
     def test_dual_layersource(self):
@@ -200,4 +182,4 @@ class ProjectLVSelectionTestCase(TestCase):
         equivalent_list = self.project.compatible_layerversions()
         self.assertTrue(len(equivalent_list) == 2)
         self.assertTrue(equivalent_list[0] == self.layerversion2)
-        self.assertTrue(equivalent_list[1] == self.layerversion)
+        self.assertTrue(equivalent_list[1] == self.lver)
