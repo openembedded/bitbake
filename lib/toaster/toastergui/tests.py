@@ -34,13 +34,13 @@ class AllProjectsViewTestCase(ProvisionedProjectTestCase):
 
         self.assertTrue("error" in data)
         self.assertEqual(data["error"], "ok")
-        self.assertTrue("list" in data)
+        self.assertTrue("rows" in data)
 
-        self.assertTrue(AllProjectsViewTestCase.TEST_PROJECT_NAME in map(lambda x: x["name"], data["list"]))
-        self.assertTrue("id" in data["list"][0])
-        self.assertTrue("projectLayersUrl" in data["list"][0])
-        self.assertTrue("projectPageUrl" in data["list"][0])
-        self.assertTrue("projectBuildsUrl" in data["list"][0])
+        self.assertTrue(AllProjectsViewTestCase.TEST_PROJECT_NAME in map(lambda x: x["name"], data["rows"]))
+        self.assertTrue("id" in data["rows"][0])
+        self.assertTrue("projectLayersUrl" in data["rows"][0])
+        self.assertTrue("projectPageUrl" in data["rows"][0])
+        self.assertTrue("projectBuildsUrl" in data["rows"][0])
 
 class ProvisionedLayersProjectTestCase(ProvisionedProjectTestCase):
     LAYER_NAME = "base-layer"
