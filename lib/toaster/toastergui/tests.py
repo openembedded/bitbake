@@ -7,7 +7,7 @@ import json
 
 PROJECT_NAME = "test project"
 
-class ProvisionedProjectTestCase(TestCase):
+class AllProjectsViewTestCase(TestCase):
 
     def setUp(self):
         self.bbv = BitbakeVersion.objects.create(\
@@ -17,9 +17,6 @@ class ProvisionedProjectTestCase(TestCase):
                            name="test release", bitbake_version=self.bbv)
         self.project = Project.objects.create_project(name=PROJECT_NAME,
                                                       release=self.release)
-
-
-class AllProjectsViewTestCase(ProvisionedProjectTestCase):
 
     def test_get_base_call_returns_html(self):
         response = self.client.get(reverse('all-projects'), follow=True)
