@@ -34,38 +34,31 @@ class ViewTests(TestCase):
     """Tests to verify view APIs."""
 
     def setUp(self):
-        self.bbv = BitbakeVersion.objects.create(\
-                       name="test bbv", giturl="/tmp/",
-                       branch="master", dirpath="")
-        self.release = Release.objects.create(\
-                           name="test release", bitbake_version=self.bbv)
+        bbv = BitbakeVersion.objects.create(name="test bbv", giturl="/tmp/",
+                                            branch="master", dirpath="")
+        release = Release.objects.create(name="test release",
+                                         bitbake_version=bbv)
         self.project = Project.objects.create_project(name=PROJECT_NAME,
-                                                      release=self.release)
-        self.layersrc = LayerSource.objects.create(\
-                               sourcetype=LayerSource.TYPE_IMPORTED)
-        self.priority = ReleaseLayerSourcePriority.objects.create(\
-                               release=self.release,
-                               layer_source=self.layersrc)
-        self.layer = Layer.objects.create(\
-                         name="base-layer",
-                         layer_source=self.layersrc, vcs_url="/tmp/")
-        self.lver = Layer_Version.objects.create(\
-                        layer=self.layer, project=self.project,
-                        layer_source=self.layersrc, commit="master")
+                                                      release=release)
+        layersrc = LayerSource.objects.create(sourcetype=LayerSource.TYPE_IMPORTED)
+        self.priority = ReleaseLayerSourcePriority.objects.create(release=release,
+                                                                  layer_source=layersrc)
+        layer = Layer.objects.create(name="base-layer", layer_source=layersrc,
+                                     vcs_url="/tmp/")
 
-        self.recipe = Recipe.objects.create(\
-                          layer_source=self.layersrc, name="base-recipe",
-                          version="1.2", summary="one recipe",
-                          description="recipe", layer_version=self.lver)
+        lver = Layer_Version.objects.create(layer=layer, project=self.project,
+                                            layer_source=layersrc, commit="master")
 
-        self.machine = Machine.objects.create(\
-                          layer_version=self.lver, name="wisk",
-                          description="wisking machine")
+        Recipe.objects.create(layer_source=layersrc, name="base-recipe",
+                              version="1.2", summary="one recipe",
+                              description="recipe", layer_version=lver)
 
-        ProjectLayer.objects.create(project=self.project,
-                                    layercommit=self.lver)
+        Machine.objects.create(layer_version=lver, name="wisk",
+                               description="wisking machine")
 
-        self.assertTrue(self.lver in self.project.compatible_layerversions())
+        ProjectLayer.objects.create(project=self.project, layercommit=lver)
+
+        self.assertTrue(lver in self.project.compatible_layerversions())
 
     def test_get_base_call_returns_html(self):
         """Basic test for all-projects view"""
