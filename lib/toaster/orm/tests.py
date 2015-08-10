@@ -162,7 +162,6 @@ class ProjectLVSelectionTestCase(TestCase):
         setup_lv_tests(self)
 
     def test_single_layersource(self):
-        compatible_layerversions = self.project.compatible_layerversions()
-        self.assertTrue(len(compatible_layerversions) == 1)
-        self.assertTrue(compatible_layerversions[0] == self.lver)
+        compat_lv = self.project.compatible_layerversions()
+        self.assertEqual(list(compat_lv), [self.lver])
 
