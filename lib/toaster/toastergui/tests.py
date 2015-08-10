@@ -90,9 +90,13 @@ class ViewTests(TestCase):
 
         self.assertTrue(PROJECT_NAME in [x["name"] for x in data["rows"]])
         self.assertTrue("id" in data["rows"][0])
-        self.assertTrue("projectLayersUrl" in data["rows"][0])
-        self.assertTrue("projectPageUrl" in data["rows"][0])
-        self.assertTrue("projectBuildsUrl" in data["rows"][0])
+
+        self.assertEqual(sorted(data["rows"][0]),
+                         ['bitbake_version_id', 'created', 'id',
+                          'layersTypeAheadUrl', 'name', 'projectBuildsUrl',
+                          'projectPageUrl', 'recipesTypeAheadUrl',
+                          'release_id', 'short_description', 'updated',
+                          'user_id'])
 
     def test_typeaheads(self):
         """Test typeahead ReST API"""
