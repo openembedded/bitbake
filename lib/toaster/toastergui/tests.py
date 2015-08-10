@@ -103,10 +103,10 @@ class ViewTests(TestCase):
         layers_url = reverse('xhr_layerstypeahead', args=(self.project.id,))
         prj_url = reverse('xhr_projectstypeahead')
 
-        urls = [ layers_url,
-                 prj_url,
-                 reverse('xhr_recipestypeahead', args=(self.project.id,)),
-                 reverse('xhr_machinestypeahead', args=(self.project.id,)),
+        urls = [layers_url,
+                prj_url,
+                reverse('xhr_recipestypeahead', args=(self.project.id,)),
+                reverse('xhr_machinestypeahead', args=(self.project.id,)),
                ]
 
         def basic_reponse_check(response, url):
@@ -147,7 +147,7 @@ class ViewTests(TestCase):
             results = False
 
             for typeing in list(string.ascii_letters):
-                response = self.client.get(url, { 'search' : typeing })
+                response = self.client.get(url, {'search': typeing})
                 results = basic_reponse_check(response, url)
                 if results:
                     break
