@@ -82,10 +82,7 @@ class ViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response['Content-Type'].startswith('application/json'))
 
-        try:
-            data = json.loads(response.content)
-        except:
-            self.fail("Response %s is not json-loadable" % response.content)
+        data = json.loads(response.content)
 
         self.assertTrue("error" in data)
         self.assertEqual(data["error"], "ok")
@@ -113,10 +110,8 @@ class ViewTests(TestCase):
             self.assertEqual(response.status_code, 200)
             self.assertTrue(response['Content-Type'].startswith('application/json'))
 
-            try:
-                data = json.loads(response.content)
-            except:
-                self.fail("Response %s is not json-loadable" % response.content)
+            data = json.loads(response.content)
+
             self.assertTrue("error" in data)
             self.assertEqual(data["error"], "ok")
             self.assertTrue("results" in data)
