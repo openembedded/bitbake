@@ -118,8 +118,9 @@ class LayerVersionEquivalenceTestCase(TestCase):
         # create spoof layer that should not appear in the search results
         layer = Layer.objects.create(name="meta-notvalid",
                                      layer_source=self.lsrc)
-        Layer_Version.objects.create(layer=layer, layer_source=self.lsrc,
-                                     up_branch=self.branch)
+        self.lver2 = Layer_Version.objects.create(layer=layer,
+                                                  layer_source=self.lsrc,
+                                                  up_branch=self.branch)
 
     def test_single_layersource(self):
         """
@@ -179,12 +180,11 @@ class LayerVersionEquivalenceTestCase(TestCase):
 
         self.assertEqual(list(equivqs), list(bequivqs))
 
-class ProjectLVSelectionTestCase(TestCase):
-
-    def setUp(self):
-        setup_lv_tests(self)
-
-    def test_single_layersource(self):
+    def test_compatible_layerversions(self):
+        """
+        When we have a 2 layer versions, compatible_layerversions()
+        should return a queryset with both.
+        """
         compat_lv = self.project.compatible_layerversions()
-        self.assertEqual(list(compat_lv), [self.lver])
+        self.assertEqual(list(compat_lv), [self.lver, self.lver2])
 
