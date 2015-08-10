@@ -9,8 +9,6 @@ PROJECT_NAME = "test project"
 
 class ViewTests(TestCase):
     """Tests to verify view APIs."""
-    LAYER_NAME = "base-layer"
-    RECIPE_NAME = "base-recipe"
 
     def setUp(self):
         self.bbv = BitbakeVersion.objects.create(\
@@ -26,14 +24,14 @@ class ViewTests(TestCase):
                                release=self.release,
                                layer_source=self.layersrc)
         self.layer = Layer.objects.create(\
-                         name=self.LAYER_NAME,
+                         name="base-layer",
                          layer_source=self.layersrc, vcs_url="/tmp/")
         self.lver = Layer_Version.objects.create(\
                         layer=self.layer, project=self.project,
                         layer_source=self.layersrc, commit="master")
 
         self.recipe = Recipe.objects.create(\
-                          layer_source=self.layersrc, name=self.RECIPE_NAME,
+                          layer_source=self.layersrc, name="base-recipe",
                           version="1.2", summary="one recipe",
                           description="recipe", layer_version=self.lver)
 
