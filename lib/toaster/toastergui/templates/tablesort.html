@@ -5,7 +5,7 @@
     <thead>
         <tr>
             {% for tc in tablecols %}
-            <th class="{{tc.dclass}} {{tc.clclass}}">
+            <th class="{%if tc.dclass%}{{tc.dclass}}{%endif%} {%if tc.clclass%}{{tc.clclass}}{%endif%}">
                 {%if tc.qhelp%}<i class="icon-question-sign get-help" title="{{tc.qhelp}}"></i>{%endif%}
                 {{tc.name}}
             </th>
@@ -18,7 +18,7 @@
         <!-- Table header row; generated from "tablecols" entry in the context dict -->
         <tr>
             {% for tc in tablecols %}
-            <th class="{{tc.dclass}} {{tc.clclass}}">
+            <th class="{%if tc.dclass%}{{tc.dclass}}{%endif%} {%if tc.clclass%}{{tc.clclass}}{%endif%}">
                 {%if tc.qhelp%}<i class="icon-question-sign get-help" title="{{tc.qhelp}}"></i>{%endif%}
                 {%if tc.orderfield%}
                     <a {%if tc.ordericon%} class="sorted" {%endif%}

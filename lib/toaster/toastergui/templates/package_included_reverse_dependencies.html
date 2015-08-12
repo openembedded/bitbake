@@ -23,7 +23,7 @@
             {% include "tablesort.html" %}
                 <tbody>
 					{% for reverse_dep in objects %}
-                        <tr {{reverse_dep.size|format_vpackage_rowclass}} >
+                        <tr {% if reverse_dep.size %}{{reverse_dep.size|format_vpackage_rowclass}}{%endif%} >
                         {% if reverse_dep.size != -1 %}
                             <td>
                                 <a href="{% url 'package_included_detail' build.id target.id reverse_dep.package_id %}">
