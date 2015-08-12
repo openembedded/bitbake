@@ -148,3 +148,33 @@ class ViewTests(TestCase):
             # After "typeing" the alpabet we should have result true
             # from each of the urls
             self.assertTrue(results)
+
+    def test_xhr_import_layer(self):
+        """Test xhr_importlayer API"""
+        #Test for importing an already existing layer
+        args = {'vcs_url' : "git://git.example.com/test",
+                'name' : "base-layer",
+                'git_ref': "c12b9596afd236116b25ce26dbe0d793de9dc7ce",
+                'project_id': 1, 'dir_path' : "/path/in/repository"}
+        response = self.client.post(reverse('xhr_importlayer'), args)
+        data = json.loads(response.content)
+        self.assertEqual(response.status_code, 200)
+        self.assertNotEqual(data["error"], "ok")
+
+        #Test to verify import of a layer successful
+        args['name'] = "meta-oe"
+        response = self.client.post(reverse('xhr_importlayer'), args)
+        data = json.loads(response.content)
+        self.assertTrue(data["error"], "ok")
+
+        #Test for html tag in the data
+        args['<'] = "testing html tag"
+        response = self.client.post(reverse('xhr_importlayer'), args)
+        data = json.loads(response.content)
+        self.assertNotEqual(data["error"], "ok")
+
+        #Empty data passed
+        args = {}
+        response = self.client.post(reverse('xhr_importlayer'), args)
+        data = json.loads(response.content)
+        self.assertNotEqual(data["error"], "ok")
