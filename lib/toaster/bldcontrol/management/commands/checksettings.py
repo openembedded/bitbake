@@ -133,7 +133,7 @@ class Command(NoArgsCommand):
                 def _update_builddir():
                     suggesteddir = self._get_suggested_builddir(be)
                     if len(suggesteddir) > 0:
-                        be.builddir = raw_input("Toaster needs to know where it your build directory is located.\n The build directory is where all the artifacts created by your builds will be stored. Toaster suggests \"%s\".\n Press Enter to select \"%s\" or type the full path to a different directory: " % (suggesteddir, suggesteddir))
+                        be.builddir = raw_input("Toaster needs to know where your build directory is located.\n The build directory is where all the artifacts created by your builds will be stored. Toaster suggests \"%s\".\n Press Enter to select \"%s\" or type the full path to a different directory: " % (suggesteddir, suggesteddir))
                     else:
                         be.builddir = raw_input("Toaster needs to know where is your build directory.\n The build directory is where all the artifacts created by your builds will be stored. Type the full path to the directory (for example: \" %s/build\")" % os.environ.get('HOME','/tmp/'))
                     if len(be.builddir) == 0 and len(suggesteddir) > 0:
