@@ -1445,6 +1445,21 @@ class BBCooker:
         if timestamp:
             return timestr
 
+    def updateCacheSync(self):
+        if self.state == state.running:
+            return
+
+        # reload files for which we got notifications
+        for p in self.inotify_modified_files:
+            bb.parse.update_cache(p)
+        self.inotify_modified_files = []
+
+        if not self.baseconfig_valid:
+            logger.debug(1, "Reloading base configuration data")
+            self.initConfigurationData()
+            self.baseconfig_valid = True
+            self.parsecache_valid = False
+
     # This is called for all async commands when self.state != running
     def updateCache(self):
         if self.state == state.running:
@@ -1456,17 +1471,7 @@ class BBCooker:
             raise bb.BBHandledException()
 
         if self.state != state.parsing:
-
-            # reload files for which we got notifications
-            for p in self.inotify_modified_files:
-                bb.parse.update_cache(p)
-            self.inotify_modified_files = []
-
-            if not self.baseconfig_valid:
-                logger.debug(1, "Reloading base configuration data")
-                self.initConfigurationData()
-                self.baseconfig_valid = True
-                self.parsecache_valid = False
+            self.updateCacheSync()
 
         if self.state != state.parsing and not self.parsecache_valid:
             self.parseConfiguration ()

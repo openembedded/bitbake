@@ -68,6 +68,8 @@ class Command:
                 if not hasattr(command_method, 'readonly') or False == getattr(command_method, 'readonly'):
                     return None, "Not able to execute not readonly commands in readonly mode"
             try:
+                if getattr(command_method, 'needconfig', False):
+                    self.cooker.updateCacheSync()
                 result = command_method(self, commandline)
             except CommandError as exc:
                 return None, exc.args[0]
@@ -204,6 +206,7 @@ class CommandsSync:
         postfiles = params[1].split()
         command.cooker.configuration.prefile = prefiles
         command.cooker.configuration.postfile = postfiles
+    setPrePostConfFiles.needconfig = False
 
     def getCpuCount(self, command, params):
         """
@@ -211,10 +214,12 @@ class CommandsSync:
         """
         return bb.utils.cpu_count()
     getCpuCount.readonly = True
+    getCpuCount.needconfig = False
 
     def matchFile(self, command, params):
         fMatch = params[0]
         return command.cooker.matchFile(fMatch)
+    matchFile.needconfig = False
 
     def generateNewImage(self, command, params):
         image = params[0]
@@ -228,6 +233,7 @@ class CommandsSync:
     def ensureDir(self, command, params):
         directory = params[0]
         bb.utils.mkdirhier(directory)
+    ensureDir.needconfig = False
 
     def setVarFile(self, command, params):
         """
@@ -238,6 +244,7 @@ class CommandsSync:
         default_file = params[2]
         op = params[3]
         command.cooker.modifyConfigurationVar(var, val, default_file, op)
+    setVarFile.needconfig = False
 
     def removeVarFile(self, command, params):
         """
@@ -245,6 +252,7 @@ class CommandsSync:
         """
         var = params[0]
         command.cooker.removeConfigurationVar(var)
+    removeVarFile.needconfig = False
 
     def createConfigFile(self, command, params):
         """
@@ -252,6 +260,7 @@ class CommandsSync:
         """
         name = params[0]
         command.cooker.createConfigFile(name)
+    createConfigFile.needconfig = False
 
     def setEventMask(self, command, params):
         handlerNum = params[0]
@@ -259,6 +268,7 @@ class CommandsSync:
         debug_domains = params[2]
         mask = params[3]
         return bb.event.set_UIHmask(handlerNum, llevel, debug_domains, mask)
+    setEventMask.needconfig = False
 
     def setFeatures(self, command, params):
         """
@@ -266,7 +276,7 @@ class CommandsSync:
         """
         features = params[0]
         command.cooker.setFeatures(features)
-
+    setFeatures.needconfig = False
     # although we change the internal state of the cooker, this is transparent since
     # we always take and leave the cooker in state.initial
     setFeatures.readonly = True
@@ -275,6 +285,7 @@ class CommandsSync:
         options = params[0]
         environment = params[1]
         command.cooker.updateConfigOpts(options, environment)
+    updateConfig.needconfig = False
 
 class CommandsAsync:
     """
