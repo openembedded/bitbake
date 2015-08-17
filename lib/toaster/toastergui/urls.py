@@ -145,6 +145,9 @@ urlpatterns = patterns('toastergui.views',
         url(r'^xhr_importlayer/$', 'xhr_importlayer', name='xhr_importlayer'),
         url(r'^xhr_updatelayer/$', 'xhr_updatelayer', name='xhr_updatelayer'),
 
+        # JS Unit tests
+        url(r'^js-unit-tests/$', 'jsunittests', name='js-unit-tests'),
+
         # default redirection
         url(r'^$', RedirectView.as_view( url= 'landing')),
 )

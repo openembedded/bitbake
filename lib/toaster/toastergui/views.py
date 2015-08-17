@@ -31,6 +31,7 @@ from django.shortcuts import render, redirect
 from orm.models import Build, Target, Task, Layer, Layer_Version, Recipe, LogMessage, Variable
 from orm.models import Task_Dependency, Recipe_Dependency, Package, Package_File, Package_Dependency
 from orm.models import Target_Installed_Package, Target_File, Target_Image_File, BuildArtifact
+from orm.models import BitbakeVersion
 from bldcontrol import bbcontroller
 from django.views.decorators.cache import cache_control
 from django.core.urlresolvers import reverse, resolve
@@ -2260,6 +2261,21 @@ if True:
 
         return context
 
+    def jsunittests(request):
+      """ Provides a page for the js unit tests """
+      bbv = BitbakeVersion.objects.filter(branch="master").first()
+      release = Release.objects.filter(bitbake_version=bbv).first()
+
+      name = "_js_unit_test_prj_"
+
+      # If there is an existing project by this name delete it. We don't want
+      # Lots of duplicates cluttering up the projects.
+      Project.objects.filter(name=name).delete()
+
+      new_project = Project.objects.create_project(name=name, release=release)
+
+      context = { 'project' : new_project }
+      return render(request, "js-unit-tests.html", context)
 
     from django.views.decorators.csrf import csrf_exempt
     @csrf_exempt
