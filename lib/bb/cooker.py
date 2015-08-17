@@ -1654,7 +1654,6 @@ class CookerExit(bb.event.Event):
 
 class CookerCollectFiles(object):
     def __init__(self, priorities):
-        self.appendlist = {}
         self.bbappends = []
         self.bbfile_config_priorities = priorities
 
@@ -1750,10 +1749,6 @@ class CookerCollectFiles(object):
         for f in bbappend:
             base = os.path.basename(f).replace('.bbappend', '.bb')
             self.bbappends.append((base, f))
-            if not base in self.appendlist:
-               self.appendlist[base] = []
-            if f not in self.appendlist[base]:
-                self.appendlist[base].append(f)
 
         # Find overlayed recipes
         # bbfiles will be in priority order which makes this easy
