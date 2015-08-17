@@ -719,18 +719,21 @@ build results (as the layer priority order has effectively changed).
 Lists recipes with the bbappends that apply to them as subitems.
 """
         self.init_bbhandler()
-        if not self.bbhandler.cooker.collection.bbappends:
-            logger.plain('No append files found')
-            return 0
 
         logger.plain('=== Appended recipes ===')
 
         pnlist = list(self.bbhandler.cooker_data.pkg_pn.keys())
         pnlist.sort()
+        appends = False
         for pn in pnlist:
-            self.show_appends_for_pn(pn)
+            if self.show_appends_for_pn(pn):
+                appends = True
 
-        self.show_appends_for_skipped()
+        if self.show_appends_for_skipped():
+            appends = True
+
+        if not appends:
+            logger.plain('No append files found')
 
     def show_appends_for_pn(self, pn):
         filenames = self.bbhandler.cooker_data.pkg_pn[pn]
@@ -741,12 +744,12 @@ Lists recipes with the bbappends that apply to them as subitems.
                                              self.bbhandler.cooker_data.pkg_pn)
         best_filename = os.path.basename(best[3])
 
-        self.show_appends_output(filenames, best_filename)
+        return self.show_appends_output(filenames, best_filename)
 
     def show_appends_for_skipped(self):
         filenames = [os.path.basename(f)
                     for f in self.bbhandler.cooker.skiplist.iterkeys()]
-        self.show_appends_output(filenames, None, " (skipped)")
+        return self.show_appends_output(filenames, None, " (skipped)")
 
     def show_appends_output(self, filenames, best_filename, name_suffix = ''):
         appended, missing = self.get_appends_for_files(filenames)
@@ -760,7 +763,9 @@ Lists recipes with the bbappends that apply to them as subitems.
                 if best_filename in missing:
                     logger.warn('%s: missing append for preferred version',
                                 best_filename)
-
+            return True
+        else:
+            return False
 
     def get_appends_for_files(self, filenames):
         appended, notappended = [], []
