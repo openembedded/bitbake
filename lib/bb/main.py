@@ -358,8 +358,6 @@ def bitbake_main(configParams, configuration):
         try:
             server_connection = server.establishConnection(featureset)
         except Exception as e:
-            if configParams.kill_server:
-                return 0
             bb.fatal("Could not connect to server %s: %s" % (configParams.remote_server, str(e)))
 
         # Restore the environment in case the UI needs it
