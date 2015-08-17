@@ -126,12 +126,14 @@ class BBCooker:
 
         self.configwatcher = pyinotify.WatchManager()
         self.configwatcher.bbseen = []
+        self.configwatcher.bbwatchedfiles = []
         self.confignotifier = pyinotify.Notifier(self.configwatcher, self.config_notifications)
         self.watchmask = pyinotify.IN_CLOSE_WRITE | pyinotify.IN_CREATE | pyinotify.IN_DELETE | \
                          pyinotify.IN_DELETE_SELF | pyinotify.IN_MODIFY | pyinotify.IN_MOVE_SELF | \
                          pyinotify.IN_MOVED_FROM | pyinotify.IN_MOVED_TO 
         self.watcher = pyinotify.WatchManager()
         self.watcher.bbseen = []
+        self.watcher.bbwatchedfiles = []
         self.notifier = pyinotify.Notifier(self.watcher, self.notifications)
 
 
@@ -185,6 +187,8 @@ class BBCooker:
         signal.signal(signal.SIGHUP, self.sigterm_exception)
 
     def config_notifications(self, event):
+        if not event.pathname in self.configwatcher.bbwatchedfiles:
+            return
         if not event.path in self.inotify_modified_files:
             self.inotify_modified_files.append(event.path)
         self.baseconfig_valid = False
@@ -198,20 +202,27 @@ class BBCooker:
         if not watcher:
             watcher = self.watcher
         for i in deps:
+            watcher.bbwatchedfiles.append(i[0])
             f = os.path.dirname(i[0])
             if f in watcher.bbseen:
                 continue
             watcher.bbseen.append(f)
+            watchtarget = None
             while True:
                 # We try and add watches for files that don't exist but if they did, would influence
                 # the parser. The parent directory of these files may not exist, in which case we need 
                 # to watch any parent that does exist for changes.
                 try:
                     watcher.add_watch(f, self.watchmask, quiet=False)
+                    if watchtarget:
+                        watcher.bbwatchedfiles.append(watchtarget)
                     break
                 except pyinotify.WatchManagerError as e:
                     if 'ENOENT' in str(e):
+                        watchtarget = f
                         f = os.path.dirname(f)
+                        if f in watcher.bbseen:
+                            break
                         watcher.bbseen.append(f)
                         continue
                     if 'ENOSPC' in str(e):
