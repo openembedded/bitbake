@@ -705,13 +705,11 @@ build results (as the layer priority order has effectively changed).
         return os.path.basename(layerdir.rstrip(os.sep))
 
     def apply_append(self, appendname, recipename):
-        appendfile = open(appendname, 'r')
-        recipefile = open(recipename, 'a')
-        recipefile.write('\n')
-        recipefile.write('##### bbappended from %s #####\n' % self.get_file_layer(appendname))
-        recipefile.writelines(appendfile.readlines())
-        recipefile.close()
-        appendfile.close()
+        with open(appendname, 'r') as appendfile:
+            with open(recipename, 'a') as recipefile:
+                recipefile.write('\n')
+                recipefile.write('##### bbappended from %s #####\n' % self.get_file_layer(appendname))
+                recipefile.writelines(appendfile.readlines())
 
     def do_show_appends(self, args):
         """list bbappend files and recipe files they apply to
@@ -879,20 +877,19 @@ NOTE: .bbappend files can impact the dependencies.
 
             # The 'require/include xxx' in the bb file
             pv_re = re.compile(r"\${PV}")
-            fnfile = open(f, 'r')
-            line = fnfile.readline()
-            while line:
-                m, keyword = self.match_require_include(line)
-                # Found the 'require/include xxxx'
-                if m:
-                    needed_file = m.group(1)
-                    # Replace the ${PV} with the real PV
-                    if pv_re.search(needed_file) and f in self.bbhandler.cooker_data.pkg_pepvpr:
-                        pv = self.bbhandler.cooker_data.pkg_pepvpr[f][1]
-                        needed_file = re.sub(r"\${PV}", pv, needed_file)
-                    self.print_cross_files(bbpath, keyword, layername, f, needed_file, args.filenames, ignore_layers)
+            with open(f, 'r') as fnfile:
                 line = fnfile.readline()
-            fnfile.close()
+                while line:
+                    m, keyword = self.match_require_include(line)
+                    # Found the 'require/include xxxx'
+                    if m:
+                        needed_file = m.group(1)
+                        # Replace the ${PV} with the real PV
+                        if pv_re.search(needed_file) and f in self.bbhandler.cooker_data.pkg_pepvpr:
+                            pv = self.bbhandler.cooker_data.pkg_pepvpr[f][1]
+                            needed_file = re.sub(r"\${PV}", pv, needed_file)
+                        self.print_cross_files(bbpath, keyword, layername, f, needed_file, args.filenames, ignore_layers)
+                    line = fnfile.readline()
 
         # The "require/include xxx" in conf/machine/*.conf, .inc and .bbclass
         conf_re = re.compile(".*/conf/machine/[^\/]*\.conf$")
@@ -906,20 +903,19 @@ NOTE: .bbappend files can impact the dependencies.
                     f = os.path.join(dirpath, name)
                     s = conf_re.match(f) or inc_re.match(f) or bbclass_re.match(f)
                     if s:
-                        ffile = open(f, 'r')
-                        line = ffile.readline()
-                        while line:
-                            m, keyword = self.match_require_include(line)
-                            # Only bbclass has the "inherit xxx" here.
-                            bbclass=""
-                            if not m and f.endswith(".bbclass"):
-                                m, keyword = self.match_inherit(line)
-                                bbclass=".bbclass"
-                            # Find a 'require/include xxxx'
-                            if m:
-                                self.print_cross_files(bbpath, keyword, layername, f, m.group(1) + bbclass, args.filenames, ignore_layers)
+                        with open(f, 'r') as ffile:
                             line = ffile.readline()
-                        ffile.close()
+                            while line:
+                                m, keyword = self.match_require_include(line)
+                                # Only bbclass has the "inherit xxx" here.
+                                bbclass=""
+                                if not m and f.endswith(".bbclass"):
+                                    m, keyword = self.match_inherit(line)
+                                    bbclass=".bbclass"
+                                # Find a 'require/include xxxx'
+                                if m:
+                                    self.print_cross_files(bbpath, keyword, layername, f, m.group(1) + bbclass, args.filenames, ignore_layers)
+                                line = ffile.readline()
 
     def print_cross_files(self, bbpath, keyword, layername, f, needed_filename, show_filenames, ignore_layers):
         """Print the depends that crosses a layer boundary"""
