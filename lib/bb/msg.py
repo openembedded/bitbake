@@ -150,7 +150,7 @@ loggerDefaultVerbose = False
 loggerVerboseLogs = False
 loggerDefaultDomains = []
 
-def init_msgconfig(verbose, debug, debug_domains = []):
+def init_msgconfig(verbose, debug, debug_domains=None):
     """
     Set default verbosity and debug levels config the logger
     """
@@ -158,7 +158,10 @@ def init_msgconfig(verbose, debug, debug_domains = []):
     bb.msg.loggerDefaultVerbose = verbose
     if verbose:
         bb.msg.loggerVerboseLogs = True
-    bb.msg.loggerDefaultDomains = debug_domains
+    if debug_domains:
+        bb.msg.loggerDefaultDomains = debug_domains
+    else:
+        bb.msg.loggerDefaultDomains = []
 
 def constructLogOptions():
     debug = loggerDefaultDebugLevel

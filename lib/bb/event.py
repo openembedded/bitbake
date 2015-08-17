@@ -176,7 +176,7 @@ def fire_from_worker(event, d):
     fire_ui_handlers(event, d)
 
 noop = lambda _: None
-def register(name, handler, mask=[]):
+def register(name, handler, mask=None):
     """Register an Event handler"""
 
     # already registered
@@ -389,7 +389,7 @@ class DiskFull(Event):
 class NoProvider(Event):
     """No Provider for an Event"""
 
-    def __init__(self, item, runtime=False, dependees=None, reasons=[], close_matches=[]):
+    def __init__(self, item, runtime=False, dependees=None, reasons=None, close_matches=None):
         Event.__init__(self)
         self._item = item
         self._runtime = runtime

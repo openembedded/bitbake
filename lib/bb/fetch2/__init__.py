@@ -777,7 +777,7 @@ def localpath(url, d):
     fetcher = bb.fetch2.Fetch([url], d)
     return fetcher.localpath(url)
 
-def runfetchcmd(cmd, d, quiet = False, cleanup = []):
+def runfetchcmd(cmd, d, quiet=False, cleanup=None):
     """
     Run cmd returning the command output
     Raise an error if interrupted or cmd fails
@@ -801,6 +801,9 @@ def runfetchcmd(cmd, d, quiet = False, cleanup = []):
                   'GIT_SMART_HTTP',
                   'SSH_AUTH_SOCK', 'SSH_AGENT_PID',
                   'SOCKS5_USER', 'SOCKS5_PASSWD']
+
+    if not cleanup:
+        cleanup = []
 
     for var in exportvars:
         val = d.getVar(var, True)
@@ -1267,7 +1270,7 @@ class FetchData(object):
 class FetchMethod(object):
     """Base class for 'fetch'ing data"""
 
-    def __init__(self, urls = []):
+    def __init__(self, urls=None):
         self.urls = []
 
     def supports(self, urldata, d):
@@ -1552,11 +1555,11 @@ class Fetch(object):
 
         return local
 
-    def download(self, urls = []):
+    def download(self, urls=None):
         """
         Fetch all urls
         """
-        if len(urls) == 0:
+        if not urls:
             urls = self.urls
 
         network = self.d.getVar("BB_NO_NETWORK", True)
@@ -1634,12 +1637,12 @@ class Fetch(object):
             finally:
                 bb.utils.unlockfile(lf)
 
-    def checkstatus(self, urls = []):
+    def checkstatus(self, urls=None):
         """
         Check all urls exist upstream
         """
 
-        if len(urls) == 0:
+        if not urls:
             urls = self.urls
 
         for u in urls:
@@ -1662,12 +1665,12 @@ class Fetch(object):
             if not ret:
                 raise FetchError("URL %s doesn't work" % u, u)
 
-    def unpack(self, root, urls = []):
+    def unpack(self, root, urls=None):
         """
         Check all urls exist upstream
         """
 
-        if len(urls) == 0:
+        if not urls:
             urls = self.urls
 
         for u in urls:
@@ -1685,12 +1688,12 @@ class Fetch(object):
             if ud.lockfile:
                 bb.utils.unlockfile(lf)
 
-    def clean(self, urls = []):
+    def clean(self, urls=None):
         """
         Clean files that the fetcher gets or places
         """
 
-        if len(urls) == 0:
+        if not urls:
             urls = self.urls
 
         for url in urls:

@@ -440,11 +440,17 @@ class HobHandler(gobject.GObject):
         self.commands_async.append(self.SUB_BUILD_RECIPES)
         self.run_next_command(self.GENERATE_PACKAGES)
 
-    def generate_image(self, image, base_image, image_packages=[], toolchain_packages=[], default_task="build"):
+    def generate_image(self, image, base_image, image_packages=None, toolchain_packages=None, default_task="build"):
         self.image = image
         self.base_image = base_image
-        self.package_queue = image_packages
-        self.toolchain_packages = toolchain_packages
+        if image_packages:
+            self.package_queue = image_packages
+        else:
+            self.package_queue = []
+        if toolchain_packages:
+            self.toolchain_packages = toolchain_packages
+        else:
+            self.toolchain_packages = []
         self.default_task = default_task
         self.runCommand(["setPrePostConfFiles", "conf/.hob.conf", ""])
         self.commands_async.append(self.SUB_PARSE_CONFIG)

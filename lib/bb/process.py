@@ -128,9 +128,12 @@ def _logged_communicate(pipe, log, input, extrafiles):
         pipe.stderr.close()
     return ''.join(outdata), ''.join(errdata)
 
-def run(cmd, input=None, log=None, extrafiles=[], **options):
+def run(cmd, input=None, log=None, extrafiles=None, **options):
     """Convenience function to run a command and return its output, raising an
     exception when the command fails"""
+
+    if not extrafiles:
+        extrafiles = []
 
     if isinstance(cmd, basestring) and not "shell" in options:
         options["shell"] = True

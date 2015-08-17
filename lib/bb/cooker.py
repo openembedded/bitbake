@@ -114,12 +114,13 @@ class BBCooker:
     Manages one bitbake build run
     """
 
-    def __init__(self, configuration, featureSet = []):
+    def __init__(self, configuration, featureSet=None):
         self.recipecache = None
         self.skiplist = {}
         self.featureset = CookerFeatures()
-        for f in featureSet:
-            self.featureset.setFeature(f)
+        if featureSet:
+            for f in featureSet:
+                self.featureset.setFeature(f)
 
         self.configuration = configuration
 
@@ -567,12 +568,14 @@ class BBCooker:
 
             logger.plain("%-35s %25s %25s", p, lateststr, prefstr)
 
-    def showEnvironment(self, buildfile = None, pkgs_to_build = []):
+    def showEnvironment(self, buildfile=None, pkgs_to_build=None):
         """
         Show the outer or per-recipe environment
         """
         fn = None
         envdata = None
+        if not pkgs_to_build:
+            pkgs_to_build = []
 
         if buildfile:
             # Parse the configuration here. We need to do it explicitly here since
@@ -1037,13 +1040,13 @@ class BBCooker:
 
         return pkg_list
 
-    def generateTargetsTree(self, klass=None, pkgs=[]):
+    def generateTargetsTree(self, klass=None, pkgs=None):
         """
         Generate a dependency tree of buildable targets
         Generate an event with the result
         """
         # if the caller hasn't specified a pkgs list default to universe
-        if not len(pkgs):
+        if not pkgs:
             pkgs = ['universe']
         # if inherited_class passed ensure all recipes which inherit the
         # specified class are included in pkgs

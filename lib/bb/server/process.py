@@ -124,8 +124,10 @@ class ProcessServer(Process, BaseImplServer):
         self.command_channel.close()
         self.cooker.shutdown(True)
 
-    def idle_commands(self, delay, fds = []):
+    def idle_commands(self, delay, fds=None):
         nextsleep = delay
+        if not fds:
+            fds = []
 
         for function, data in self._idlefuns.items():
             try:

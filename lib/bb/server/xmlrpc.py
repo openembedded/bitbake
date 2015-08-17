@@ -281,12 +281,15 @@ class XMLRPCServer(SimpleXMLRPCServer, BaseImplServer):
         self.connection_token = token
 
 class BitBakeXMLRPCServerConnection(BitBakeBaseServerConnection):
-    def __init__(self, serverImpl, clientinfo=("localhost", 0), observer_only = False, featureset = []):
+    def __init__(self, serverImpl, clientinfo=("localhost", 0), observer_only = False, featureset = None):
         self.connection, self.transport = _create_server(serverImpl.host, serverImpl.port)
         self.clientinfo = clientinfo
         self.serverImpl = serverImpl
         self.observer_only = observer_only
-        self.featureset = featureset
+        if featureset:
+            self.featureset = featureset
+        else:
+            self.featureset = []
 
     def connect(self, token = None):
         if token is None:

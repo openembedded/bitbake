@@ -522,7 +522,9 @@ def builddashboard( request, build_id ):
 
 
 
-def generateCoveredList2( revlist = [] ):
+def generateCoveredList2( revlist = None ):
+    if not revlist:
+        revlist = []
     covered_list =  [ x for x in revlist if x.outcome == Task.OUTCOME_COVERED ]
     while len(covered_list):
         revlist =  [ x for x in revlist if x.outcome != Task.OUTCOME_COVERED ]

@@ -514,7 +514,7 @@ class TaskData:
             self.add_runtime_target(fn, item)
             self.add_tasks(fn, dataCache)
 
-    def fail_fnid(self, fnid, missing_list = []):
+    def fail_fnid(self, fnid, missing_list=None):
         """
         Mark a file as failed (unbuildable)
         Remove any references from build and runtime provider lists
@@ -523,6 +523,8 @@ class TaskData:
         """
         if fnid in self.failed_fnids:
             return
+        if not missing_list:
+            missing_list = []
         logger.debug(1, "File '%s' is unbuildable, removing...", self.fn_index[fnid])
         self.failed_fnids.append(fnid)
         for target in self.build_targets:
@@ -536,7 +538,7 @@ class TaskData:
                 if len(self.run_targets[target]) == 0:
                     self.remove_runtarget(target, missing_list)
 
-    def remove_buildtarget(self, targetid, missing_list = []):
+    def remove_buildtarget(self, targetid, missing_list=None):
         """
         Mark a build target as failed (unbuildable)
         Trigger removal of any files that have this as a dependency
@@ -561,7 +563,7 @@ class TaskData:
             logger.error("Required build target '%s' has no buildable providers.\nMissing or unbuildable dependency chain was: %s", target, missing_list)
             raise bb.providers.NoProvider(target)
 
-    def remove_runtarget(self, targetid, missing_list = []):
+    def remove_runtarget(self, targetid, missing_list=None):
         """
         Mark a run target as failed (unbuildable)
         Trigger removal of any files that have this as a dependency
