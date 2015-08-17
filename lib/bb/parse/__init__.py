@@ -71,7 +71,12 @@ def cached_mtime_noerror(f):
     return __mtime_cache[f]
 
 def update_mtime(f):
-    __mtime_cache[f] = os.stat(f)[stat.ST_MTIME]
+    try:
+        __mtime_cache[f] = os.stat(f)[stat.ST_MTIME]
+    except OSError:
+        if f in __mtime_cache:
+            del __mtime_cache[f]
+        return 0
     return __mtime_cache[f]
 
 def update_cache(f):
