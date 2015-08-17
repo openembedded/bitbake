@@ -71,7 +71,7 @@ class Command:
                 result = command_method(self, commandline)
             except CommandError as exc:
                 return None, exc.args[0]
-            except Exception:
+            except (Exception, SystemExit):
                 import traceback
                 return None, traceback.format_exc()
             else:
