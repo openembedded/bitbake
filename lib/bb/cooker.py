@@ -919,15 +919,25 @@ class BBCooker:
         print("}", file=tdepends_file)
         logger.info("Task dependencies saved to 'task-depends.dot'")
 
-    def show_appends_with_no_recipes( self ):
-        appends_without_recipes = [self.collection.appendlist[recipe]
-                                   for recipe in self.collection.appendlist
-                                   if recipe not in self.collection.appliedappendlist]
+    def show_appends_with_no_recipes(self):
+        # Determine which bbappends haven't been applied
+
+        # First get list of recipes, including skipped
+        recipefns = self.recipecache.pkg_fn.keys()
+        recipefns.extend(self.skiplist.keys())
+
+        # Work out list of bbappends that have been applied
+        applied_appends = []
+        for fn in recipefns:
+            applied_appends.extend(self.collection.get_file_appends(fn))
+
+        appends_without_recipes = []
+        for _, appendfn in self.collection.bbappends:
+            if not appendfn in applied_appends:
+                appends_without_recipes.append(appendfn)
+
         if appends_without_recipes:
-            appendlines = ('  %s' % append
-                           for appends in appends_without_recipes
-                           for append in appends)
-            msg = 'No recipes available for:\n%s' % '\n'.join(appendlines)
+            msg = 'No recipes available for:\n  %s' % '\n  '.join(appends_without_recipes)
             warn_only = self.data.getVar("BB_DANGLINGAPPENDS_WARNONLY", \
                  False) or "no"
             if warn_only.lower() in ("1", "yes", "true"):
@@ -1646,7 +1656,6 @@ class CookerCollectFiles(object):
     def __init__(self, priorities):
         self.appendlist = {}
         self.bbappends = []
-        self.appliedappendlist = []
         self.bbfile_config_priorities = priorities
 
     def calc_bbfile_priority( self, filename, matched = None ):
@@ -1769,7 +1778,6 @@ class CookerCollectFiles(object):
         for b in self.bbappends:
             (bbappend, filename) = b
             if (bbappend == f) or ('%' in bbappend and bbappend.startswith(f[:bbappend.index('%')])):
-                self.appliedappendlist.append(bbappend)
                 filelist.append(filename)
         return filelist
 
