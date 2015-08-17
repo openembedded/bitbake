@@ -73,7 +73,8 @@ class ConfigParameters(object):
         options = {}
         for o in ["abort", "tryaltconfigs", "force", "invalidate_stamp", 
                   "verbose", "debug", "dry_run", "dump_signatures", 
-                  "debug_domains", "extra_assume_provided", "profile"]:
+                  "debug_domains", "extra_assume_provided", "profile",
+                  "prefile", "postfile"]:
             options[o] = getattr(self.options, o)
 
         ret, error = server.runCommand(["updateConfig", options, environment])

@@ -527,9 +527,11 @@ class BBCooker:
         self.handleCollections( self.data.getVar("BBFILE_COLLECTIONS", True) )
 
     def updateConfigOpts(self, options, environment):
-        for o in options:
-            setattr(self.configuration, o, options[o])
         clean = True
+        for o in options:
+            if o in ['prefile', 'postfile']:
+                clean = False
+            setattr(self.configuration, o, options[o])
         for k in bb.utils.approved_variables():
             if k in environment and k not in self.configuration.env:
                 logger.debug(1, "Updating environment variable %s to %s" % (k, environment[k]))
