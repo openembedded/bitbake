@@ -33,7 +33,7 @@ from orm.models import Task_Dependency, Recipe_Dependency, Package, Package_File
 from orm.models import Target_Installed_Package, Target_File, Target_Image_File, BuildArtifact
 from bldcontrol import bbcontroller
 from django.views.decorators.cache import cache_control
-from django.core.urlresolvers import reverse
+from django.core.urlresolvers import reverse, resolve
 from django.core.exceptions import MultipleObjectsReturned
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.http import HttpResponseBadRequest, HttpResponseNotFound
@@ -372,7 +372,6 @@ def _get_queryset(model, queryset, filter_string, search_term, ordering_string, 
 # if the value is given explicitly as a GET parameter it will be the first selected,
 # otherwise the cookie value will be used.
 def _get_parameters_values(request, default_count, default_order):
-    from django.core.urlresolvers import resolve
     current_url = resolve(request.path_info).url_name
     pagesize = request.GET.get('count', request.session.get('%s_count' % current_url, default_count))
     orderby = request.GET.get('orderby', request.session.get('%s_orderby' % current_url, default_order))
@@ -1894,7 +1893,14 @@ if True:
 
         queryset = Build.objects.exclude(outcome = Build.IN_PROGRESS)
 
-        context, pagesize, orderby = _build_list_helper(request, queryset)
+        try:
+            context, pagesize, orderby = _build_list_helper(request, queryset)
+            # all builds page as a Project column
+            context['tablecols'].append({'name': 'Project', 'clcalss': 'project_column', })
+        except RedirectException as re:
+            # rewrite the RedirectException
+            re.view = resolve(request.path_info).url_name
+            raise re
 
         _set_parameters_values(pagesize, orderby, request)
         return context
@@ -1908,7 +1914,7 @@ if True:
         mandatory_parameters = { 'count': pagesize,  'page' : 1, 'orderby' : orderby }
         retval = _verify_parameters( request.GET, mandatory_parameters )
         if retval:
-            raise RedirectException( 'all-builds', request.GET, mandatory_parameters)
+            raise RedirectException( None, request.GET, mandatory_parameters)
 
         # boilerplate code that takes a request for an object type and returns a queryset
         # for that object type. copypasta for all needed table searches
@@ -2083,8 +2089,6 @@ if True:
                     {'name': 'Image files', 'clclass': 'output',
                      'qhelp': "The root file system types produced by the build. You can find them in your <code>/build/tmp/deploy/images/</code> directory",
                         # TODO: compute image fstypes from Target_Image_File
-                    },
-                    {'name': 'Project', 'clcalss': 'project_column',
                     }
                     ]
                 }
@@ -2655,7 +2659,13 @@ if True:
 
         queryset = Build.objects.filter(outcome__lte = Build.IN_PROGRESS)
 
-        context, pagesize, orderby = _build_list_helper(request, queryset)
+        try:
+            context, pagesize, orderby = _build_list_helper(request, queryset)
+        except RedirectException as re:
+            # rewrite the RedirectException with our current url information
+            re.view = resolve(request.path_info).url_name
+            re.okwargs = {"pid" : pid}
+            raise re
 
         context['project'] = prj
         _set_parameters_values(pagesize, orderby, request)
