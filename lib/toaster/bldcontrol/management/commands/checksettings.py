@@ -17,6 +17,9 @@ class Command(NoArgsCommand):
     args = ""
     help = "Verifies that the configured settings are valid and usable, or prompts the user to fix the settings."
 
+    def __init__(self, *args, **kwargs):
+        super(Command, self).__init__(*args, **kwargs)
+        self.guesspath = DN(DN(DN(DN(DN(DN(DN(__file__)))))))
 
     def _find_first_path_for_file(self, startdirectory, filename, level = 0):
         if level < 0:
@@ -83,7 +86,6 @@ class Command(NoArgsCommand):
 
 
     def _verify_build_environment(self):
-        self.guesspath = DN(DN(DN(DN(DN(DN(DN(__file__)))))))
         # refuse to start if we have no build environments
         while BuildEnvironment.objects.count() == 0:
             print(" !! No build environments found. Toaster needs at least one build environment in order to be able to run builds.\n" +
