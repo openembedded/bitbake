@@ -19,7 +19,7 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-from django.db import models
+from django.db import models, IntegrityError
 from django.db.models import F, Q, Avg, Max
 from django.utils import timezone
 
@@ -938,7 +938,7 @@ class LayerIndexLayerSource(LayerSource):
             try:
                 dependlist[lv].append(Layer_Version.objects.get(layer_source = self, layer__up_id = ldi['dependency'], up_branch = lv.up_branch))
             except Layer_Version.DoesNotExist:
-                logger.warning("Cannot find layer version %s dep:%s up_brach:%s" % (self, ldi['dependency'], lv.up_branch))
+                logger.warning("Cannot find layer version (ls:%s), up_id:%s lv:%s" % (self, ldi['dependency'], lv))
 
         for lv in dependlist:
             LayerVersionDependency.objects.filter(layer_version = lv).delete()
@@ -989,8 +989,8 @@ class LayerIndexLayerSource(LayerSource):
                 if 'inherits' in ri:
                     ro.is_image = 'image' in ri['inherits'].split()
                 ro.save()
-            except Exception:
-                logger.warning("Duplicate Recipe, ignoring: %s " % vars(ro))
+            except IntegrityError as e:
+                logger.debug("Failed saving recipe, ignoring: %s (%s:%s)" % (e, ro.layer_version, ri['filepath']+"/"+ri['filename']))
         if not connection.features.autocommits_when_autocommit_is_off:
             transaction.set_autocommit(True)
 
