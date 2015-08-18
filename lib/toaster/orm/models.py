@@ -472,20 +472,27 @@ class Task(models.Model):
 
     search_allowed_fields = [ "recipe__name", "recipe__version", "task_name", "logfile" ]
 
+    def __init__(self, *args, **kwargs):
+        super(Task, self).__init__(*args, **kwargs)
+        try:
+            self._helptext = HelpText.objects.get(key=self.task_name, area=HelpText.VARIABLE, build=self.build).text
+        except HelpText.DoesNotExist:
+            self._helptext = None
+
     def get_related_setscene(self):
         return Task.objects.filter(task_executed=True, build = self.build, recipe = self.recipe, task_name=self.task_name+"_setscene")
 
     def get_outcome_text(self):
-        return Task.TASK_OUTCOME[self.outcome + 1][1]
+        return Task.TASK_OUTCOME[int(self.outcome) + 1][1]
 
     def get_outcome_help(self):
-        return Task.TASK_OUTCOME_HELP[self.outcome][1]
+        return Task.TASK_OUTCOME_HELP[int(self.outcome)][1]
 
     def get_sstate_text(self):
         if self.sstate_result==Task.SSTATE_NA:
             return ''
         else:
-            return Task.SSTATE_RESULT[self.sstate_result][1]
+            return Task.SSTATE_RESULT[int(self.sstate_result)][1]
 
     def get_executed_display(self):
         if self.task_executed:
@@ -493,13 +500,6 @@ class Task(models.Model):
         return "Not Executed"
 
     def get_description(self):
-        if '_helptext' in vars(self) and self._helptext != None:
-            return self._helptext
-        try:
-            self._helptext = HelpText.objects.get(key=self.task_name, area=HelpText.VARIABLE, build=self.build).text
-        except HelpText.DoesNotExist:
-            self._helptext = None
-
         return self._helptext
 
     build = models.ForeignKey(Build, related_name='task_build')
@@ -721,13 +721,8 @@ class LayerSource(models.Model):
     sourcetype = models.IntegerField(choices=SOURCE_TYPE)
     apiurl = models.CharField(max_length=255, null=True, default=None)
 
-    def update(self):
-        """
-            Updates the local database information from the upstream layer source
-        """
-        raise Exception("Abstract, update() must be implemented by all LayerSource-derived classes (object is %s)" % str(vars(self)))
-
-    def save(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
+        super(LayerSource, self).__init__(*args, **kwargs)
         if self.sourcetype == LayerSource.TYPE_LOCAL:
             self.__class__ = LocalLayerSource
         elif self.sourcetype == LayerSource.TYPE_LAYERINDEX:
@@ -736,6 +731,15 @@ class LayerSource(models.Model):
             self.__class__ = ImportedLayerSource
         elif self.sourcetype == None:
             raise Exception("Unknown LayerSource-derived class. If you added a new layer source type, fill out all code stubs.")
+
+
+    def update(self):
+        """
+            Updates the local database information from the upstream layer source
+        """
+        raise Exception("Abstract, update() must be implemented by all LayerSource-derived classes (object is %s)" % str(vars(self)))
+
+    def save(self, *args, **kwargs):
         return super(LayerSource, self).save(*args, **kwargs)
 
     def get_object(self):
