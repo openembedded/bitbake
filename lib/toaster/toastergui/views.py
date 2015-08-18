@@ -102,8 +102,7 @@ def _project_recent_build_list(prj):
 
 def objtojson(obj):
     from django.db.models.query import QuerySet
-    from django.db.models import Model, IntegerField
-    from django.db.models.fields.related import ForeignKey
+    from django.db.models import Model
 
     if isinstance(obj, datetime):
         return obj.isoformat()
@@ -266,8 +265,8 @@ def _get_filtering_query(filter_string):
 
     return reduce(operator.and_, [k for k in and_query])
 
-def _get_toggle_order(request, orderkey, reverse = False):
-    if reverse:
+def _get_toggle_order(request, orderkey, toggle_reverse = False):
+    if toggle_reverse:
         return "%s:+" % orderkey if request.GET.get('orderby', "") == "%s:-" % orderkey else "%s:-" % orderkey
     else:
         return "%s:-" % orderkey if request.GET.get('orderby', "") == "%s:+" % orderkey else "%s:+" % orderkey
@@ -912,9 +911,7 @@ def _get_dir_entries(build_id, target_id, start):
 
         except Exception as e:
             print "Exception ", e
-            import traceback
             traceback.print_exc(e)
-            pass
 
     # sort by directories first, then by name
     rsorted = sorted(response, key=lambda entry :  entry['name'])
@@ -938,7 +935,7 @@ def dirinfo(request, build_id, target_id, file_path=None):
         dir_list = []
         head = file_path
         while head != sep:
-            (head,tail) = os.path.split(head)
+            (head, tail) = os.path.split(head)
             if head != sep:
                 dir_list.insert(0, head)
 
@@ -1839,7 +1836,6 @@ def image_information_dir(request, build_id, target_id, packagefile_id):
 
 
 def managedcontextprocessor(request):
-    import subprocess
     ret = {
         "projects": Project.objects.all(),
         "DEBUG" : toastermain.settings.DEBUG,
@@ -1867,13 +1863,9 @@ if True:
 
     import traceback
 
-    class BadParameterException(Exception): pass        # error thrown on invalid POST requests
-
-
-    class InvalidRequestException(Exception):
-        def __init__(self, response):
-            self.response = response
-
+    class BadParameterException(Exception):
+        ''' The exception raised on invalid POST requests '''
+        pass
 
     # shows the "all builds" page for managed mode; it displays build requests (at least started!) instead of actual builds
     @_template_renderer("builds.html")
@@ -2476,7 +2468,7 @@ if True:
         try:
             layer_version_id = request.POST["layer_version_id"]
             layer_version = Layer_Version.objects.get(id=layer_version_id)
-        except:
+        except Layer_Version.DoesNotExist:
             return error_response("Cannot find layer to update")
 
 
@@ -2505,8 +2497,8 @@ if True:
         try:
             layer_version.layer.save()
             layer_version.save()
-        except:
-            return error_response("Could not update layer version entry")
+        except Exception as e:
+            return error_response("Could not update layer version entry: %s" % e)
 
         return HttpResponse(jsonfilter({"error": "ok",}), content_type = "application/json")
 

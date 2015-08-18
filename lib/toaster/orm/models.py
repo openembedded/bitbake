@@ -807,7 +807,6 @@ class LayerIndexLayerSource(LayerSource):
             Fetches layer, recipe and machine information from remote repository
         """
         assert self.apiurl is not None
-        from django.db import IntegrityError
         from django.db import transaction, connection
 
         import httplib, urlparse, json

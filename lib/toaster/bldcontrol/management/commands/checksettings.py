@@ -4,6 +4,7 @@ from bldcontrol.bbcontroller import getBuildEnvironmentController, ShellCmdExcep
 from bldcontrol.models import BuildRequest, BuildEnvironment, BRError
 from orm.models import ToasterSetting, Build
 import os
+import sys, traceback
 
 def DN(path):
     if path is None:
@@ -228,7 +229,7 @@ class Command(NoArgsCommand):
 
 
 
-    def handle(self, **options):
+    def handle_noargs(self, **options):
         retval = 0
         retval += self._verify_artifact_storage_dir()
         retval += self._verify_build_environment()
