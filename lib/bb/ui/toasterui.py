@@ -31,16 +31,12 @@ from bb.ui import uihelper
 from bb.ui.buildinfohelper import BuildInfoHelper
 
 import bb.msg
-import copy
-import fcntl
 import logging
 import os
-import progressbar
-import signal
-import struct
-import sys
-import time
-import xmlrpclib
+
+# pylint: disable=invalid-name
+# module properties for UI modules are read by bitbake and the contract should not be broken
+
 
 featureSet = [bb.cooker.CookerFeatures.HOB_EXTRA_CACHES, bb.cooker.CookerFeatures.SEND_DEPENDS_TREE, bb.cooker.CookerFeatures.BASEDATASTORE_TRACKING, bb.cooker.CookerFeatures.SEND_SANITYEVENTS]
 
@@ -53,15 +49,15 @@ def _log_settings_from_server(server):
     # Get values of variables which control our output
     includelogs, error = server.runCommand(["getVariable", "BBINCLUDELOGS"])
     if error:
-        logger.error("Unable to get the value of BBINCLUDELOGS variable: %s" % error)
+        logger.error("Unable to get the value of BBINCLUDELOGS variable: %s", error)
         raise BaseException(error)
     loglines, error = server.runCommand(["getVariable", "BBINCLUDELOGS_LINES"])
     if error:
-        logger.error("Unable to get the value of BBINCLUDELOGS_LINES variable: %s" % error)
+        logger.error("Unable to get the value of BBINCLUDELOGS_LINES variable: %s", error)
         raise BaseException(error)
     consolelogfile, error = server.runCommand(["getVariable", "BB_CONSOLELOG"])
     if error:
-        logger.error("Unable to get the value of BB_CONSOLELOG variable: %s" % error)
+        logger.error("Unable to get the value of BB_CONSOLELOG variable: %s", error)
         raise BaseException(error)
     return includelogs, loglines, consolelogfile
 
@@ -71,17 +67,17 @@ def main(server, eventHandler, params ):
 
     console = logging.StreamHandler(sys.stdout)
     format_str = "%(levelname)s: %(message)s"
-    format = bb.msg.BBLogFormatter(format_str)
+    formatter = bb.msg.BBLogFormatter(format_str)
     bb.msg.addDefaultlogFilter(console)
-    console.setFormatter(format)
+    console.setFormatter(formatter)
     logger.addHandler(console)
     logger.setLevel(logging.INFO)
 
-    includelogs, loglines, consolelogfile = _log_settings_from_server(server)
+    _, _, consolelogfile = _log_settings_from_server(server)
 
     # verify and warn
     build_history_enabled = True
-    inheritlist, error = server.runCommand(["getVariable", "INHERIT"])
+    inheritlist, _ = server.runCommand(["getVariable", "INHERIT"])
 
     if not "buildhistory" in inheritlist.split(" "):
         logger.warn("buildhistory is not enabled. Please enable INHERIT += \"buildhistory\" to see image details.")
@@ -126,12 +122,15 @@ def main(server, eventHandler, params ):
 
             helper.eventHandler(event)
 
+            # pylint: disable=protected-access
+            # the code will look into the protected variables of the event; no easy way around this
+
             if isinstance(event, bb.event.BuildStarted):
                 buildinfohelper.store_started_build(event)
 
             if isinstance(event, (bb.build.TaskStarted, bb.build.TaskSucceeded, bb.build.TaskFailedSilent)):
                 buildinfohelper.update_and_store_task(event)
-                logger.warn("Logfile for task %s" % event.logfile)
+                logger.warn("Logfile for task %s", event.logfile)
                 continue
 
             if isinstance(event, bb.build.TaskBase):
@@ -143,17 +142,17 @@ def main(server, eventHandler, params ):
 
             if isinstance(event, logging.LogRecord):
                 if event.levelno == -1:
-                    event.levelno = format.ERROR
+                    event.levelno = formatter.ERROR
 
                 buildinfohelper.store_log_event(event)
-                if event.levelno >= format.ERROR:
+                if event.levelno >= formatter.ERROR:
                     errors = errors + 1
-                elif event.levelno == format.WARNING:
+                elif event.levelno == formatter.WARNING:
                     warnings = warnings + 1
                 # For "normal" logging conditions, don't show note logs from tasks
                 # but do show them if the user has changed the default log level to
                 # include verbose/debug messages
-                if event.taskpid != 0 and event.levelno <= format.NOTE:
+                if event.taskpid != 0 and event.levelno <= formatter.NOTE:
                     continue
 
                 logger.handle(event)
@@ -241,8 +240,8 @@ def main(server, eventHandler, params ):
 
             if isinstance(event, (bb.event.BuildCompleted, bb.command.CommandFailed)):
 
-		errorcode = 0
-                if (isinstance(event, bb.command.CommandFailed)):
+                errorcode = 0
+                if isinstance(event, bb.command.CommandFailed):
                     errors += 1
                     errorcode = 1
                     logger.error("Command execution failed: %s", event.error)
@@ -251,7 +250,7 @@ def main(server, eventHandler, params ):
                 buildinfohelper.update_build_information(event, errors, warnings, taskfailures)
                 buildinfohelper.close(errorcode)
                 # mark the log output; controllers may kill the toasterUI after seeing this log
-                logger.info("ToasterUI build done 1, brbe: %s" % buildinfohelper.brbe )
+                logger.info("ToasterUI build done 1, brbe: %s", buildinfohelper.brbe )
 
                 # we start a new build info
                 if buildinfohelper.brbe is not None:
@@ -293,7 +292,7 @@ def main(server, eventHandler, params ):
                 elif event.type == "LicenseManifestPath":
                     buildinfohelper.store_license_manifest_path(event)
                 else:
-                    logger.error("Unprocessed MetadataEvent %s " % str(event))
+                    logger.error("Unprocessed MetadataEvent %s ", str(event))
                 continue
 
             if isinstance(event, bb.cooker.CookerExit):
@@ -325,30 +324,28 @@ def main(server, eventHandler, params ):
                 pass
         except KeyboardInterrupt:
             main.shutdown = 1
-            pass
         except Exception as e:
             # print errors to log
             import traceback
             from pprint import pformat
             exception_data = traceback.format_exc()
-            logger.error("%s\n%s" % (e, exception_data))
+            logger.error("%s\n%s" , e, exception_data)
 
-            exc_type, exc_value, tb = sys.exc_info()
+            _, _, tb = sys.exc_info()
             if tb is not None:
                 curr = tb
                 while curr is not None:
-                    logger.warn("Error data dump %s\n%s\n" % (traceback.format_tb(curr,1), pformat(curr.tb_frame.f_locals)))
+                    logger.warn("Error data dump %s\n%s\n" , traceback.format_tb(curr,1), pformat(curr.tb_frame.f_locals))
                     curr = curr.tb_next
 
             # save them to database, if possible; if it fails, we already logged to console.
             try:
                 buildinfohelper.store_log_exception("%s\n%s" % (str(e), exception_data))
             except Exception as ce:
-                logger.error("CRITICAL - Failed to to save toaster exception to the database: %s" % str(ce))
+                logger.error("CRITICAL - Failed to to save toaster exception to the database: %s", str(ce))
 
             # make sure we return with an error
             return_value += 1
-            pass
 
     if interrupted:
         if return_value == 0:
