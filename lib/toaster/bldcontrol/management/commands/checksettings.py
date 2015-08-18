@@ -166,7 +166,12 @@ class Command(NoArgsCommand):
                     for dirname in self._recursive_list_directories(be.sourcedir,2):
                         if os.path.exists(os.path.join(dirname, ".templateconf")):
                             import subprocess
-                            conffilepath, error = subprocess.Popen('bash -c ". '+os.path.join(dirname, ".templateconf")+'; echo \"\$TEMPLATECONF\""', shell=True, stdout=subprocess.PIPE).communicate()
+                            proc = subprocess.Popen('bash -c ". '+os.path.join(dirname, ".templateconf")+'; echo \"\$TEMPLATECONF\""', shell=True, stdout=subprocess.PIPE)
+                            conffilepath, stderroroutput = proc.communicate()
+                            proc.wait()
+                            if proc.returncode != 0:
+                                raise Exception("Failed to source TEMPLATECONF: %s" % stderroroutput)
+
                             conffilepath = os.path.join(conffilepath.strip(), "toasterconf.json")
                             candidatefilepath = os.path.join(dirname, conffilepath)
                             if "toaster_cloned" in candidatefilepath:
@@ -195,6 +200,7 @@ class Command(NoArgsCommand):
                                     return is_changed
                         except Exception as e:
                             print "Failure while trying to import the toaster config file: %s" % e
+                            traceback.print_exc(e)
                     else:
                         print "\n Toaster could not find a configuration file. You need to configure Toaster manually using the web interface, or create a configuration file and use\n  bitbake/lib/toaster/managepy.py loadconf [filename]\n command to load it. You can use https://wiki.yoctoproject.org/wiki/File:Toasterconf.json.txt.patch as a starting point."
 
