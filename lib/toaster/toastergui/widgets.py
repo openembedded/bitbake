@@ -334,6 +334,9 @@ class ToasterTemplateView(TemplateView):
     # renders a instance in a template, or returns the context as json
     # the class-equivalent of the _template_renderer decorator for views
 
+    def __init__(self, *args, **kwargs):
+        super(ToasterTemplateView, self).__init__(*args, **kwargs)
+        self.context_entries = []
 
     def get(self, *args, **kwargs):
         if self.request.GET.get('format', None) == 'json':

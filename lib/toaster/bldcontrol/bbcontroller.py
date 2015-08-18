@@ -177,7 +177,7 @@ class BuildEnvironmentController(object):
 
         return BitbakeController(self.connection)
 
-    def getArtifact(path):
+    def getArtifact(self, path):
         """ This call returns an artifact identified by the 'path'. How 'path' is interpreted as
             up to the implementing BEC. The return MUST be a REST URL where a GET will actually return
             the content of the artifact, e.g. for use as a "download link" in a web UI.

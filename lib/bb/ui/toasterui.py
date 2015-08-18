@@ -21,6 +21,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 from __future__ import division
+import sys
 try:
     import bb
 except RuntimeError as exc:
@@ -255,10 +256,10 @@ def main(server, eventHandler, params ):
                 # we start a new build info
                 if buildinfohelper.brbe is not None:
 
-                    logger.debug(1, "ToasterUI under BuildEnvironment management - exiting after the build")
+                    logger.debug("ToasterUI under BuildEnvironment management - exiting after the build")
                     server.terminateServer()
                 else:
-                    logger.debug(1, "ToasterUI prepared for new build")
+                    logger.debug("ToasterUI prepared for new build")
                     errors = 0
                     warnings = 0
                     taskfailures = []

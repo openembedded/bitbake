@@ -19,6 +19,10 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+# pylint: disable=method-hidden
+# Gives E:848, 4: An attribute defined in json.encoder line 162 hides this method (method-hidden)
+# which is an invalid warning
+
 import operator,re
 
 from django.db.models import F, Q, Sum, Count, Max

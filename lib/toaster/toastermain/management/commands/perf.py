@@ -2,7 +2,12 @@ from django.core.management.base import BaseCommand
 from django.test.client import Client
 import os, sys, re
 import requests
-import toastermain.settings as settings
+from django.conf import settings
+
+# pylint: disable=E1103
+# Instance of 'WSGIRequest' has no 'status_code' member
+# (but some types could not be inferred) (maybe-no-member)
+
 
 class Command(BaseCommand):
     help    = "Test the response time for all toaster urls"
