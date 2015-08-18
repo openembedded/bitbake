@@ -1,9 +1,13 @@
 from django.core.management.base import BaseCommand, CommandError
 from orm.models import LayerSource, ToasterSetting, Branch, Layer, Layer_Version
 from orm.models import BitbakeVersion, Release, ReleaseDefaultLayer, ReleaseLayerSourcePriority
+from django.db import IntegrityError
 import os
 
 from checksettings import DN
+
+import logging
+logger = logging.getLogger("toaster")
 
 def _reduce_canon_path(path):
     components = []
@@ -34,7 +38,7 @@ class Command(BaseCommand):
         if not os.path.exists(filepath) or not os.path.isfile(filepath):
             raise Exception("Failed to find toaster config file %s ." % filepath)
 
-        import json, pprint
+        import json
         data = json.loads(open(filepath, "r").read())
 
         # verify config file validity before updating settings
@@ -49,7 +53,7 @@ class Command(BaseCommand):
             cmd = subprocess.Popen("git remote -v", shell=True, cwd = os.path.dirname(filepath), stdout=subprocess.PIPE, stderr = subprocess.PIPE)
             (out,err) = cmd.communicate()
             if cmd.returncode != 0:
-                raise Exception("Error while importing layer vcs_url: git error: %s" % err)
+                logging.warning("Error while importing layer vcs_url: git error: %s" % err)
             for line in out.split("\n"):
                 try:
                     (name, path) = line.split("\t", 1)
@@ -59,16 +63,20 @@ class Command(BaseCommand):
                 except ValueError:
                     pass
             if url == None:
-                raise Exception("Error while looking for remote \"%s\" in \"%s\"" % (remote_name, out))
+                logging.warning("Error while looking for remote \"%s\" in \"%s\"" % (remote_name, out))
             return url
 
 
         # import bitbake data
         for bvi in data['bitbake']:
             bvo, created = BitbakeVersion.objects.get_or_create(name=bvi['name'])
-            bvo.giturl = bvi['giturl']
             if bvi['giturl'].startswith("remote:"):
                 bvo.giturl = _read_git_url_from_local_repository(bvi['giturl'])
+                if bvo.giturl is None:
+                    logger.error("The toaster config file references the local git repo, but Toaster cannot detect it.\nYour local configuration for bitbake version %s is invalid. Make sure that the toasterconf.json file is correct." % bvi['name'])
+
+            if bvo.giturl is None:
+                bvo.giturl = bvi['giturl']
             bvo.branch = bvi['branch']
             bvo.dirpath = bvi['dirpath']
             bvo.save()
@@ -89,13 +97,12 @@ class Command(BaseCommand):
             assert ((_get_id_for_sourcetype(lsi['sourcetype']) == LayerSource.TYPE_LAYERINDEX) or apiurl.startswith("/")), (lsi['sourcetype'],apiurl)
 
             try:
-                ls = LayerSource.objects.get(sourcetype = _get_id_for_sourcetype(lsi['sourcetype']), apiurl = apiurl)
-            except LayerSource.DoesNotExist:
-                ls = LayerSource.objects.create(
-                    name = lsi['name'],
-                    sourcetype = _get_id_for_sourcetype(lsi['sourcetype']),
-                    apiurl = apiurl
-                )
+                ls, created = LayerSource.objects.get_or_create(sourcetype = _get_id_for_sourcetype(lsi['sourcetype']), apiurl = apiurl)
+                ls.name = lsi['name']
+                ls.save()
+            except IntegrityError as e:
+                logger.warning("IntegrityError %s \nWhile setting name %s for layer source %s " % (e, lsi['name'], ls))
+
 
             layerbranches = []
             for branchname in lsi['branches']:
@@ -111,12 +118,14 @@ class Command(BaseCommand):
                         lo.local_path = _reduce_canon_path(os.path.join(ls.apiurl, layerinfo['local_path']))
 
                     if not os.path.exists(lo.local_path):
-                        raise Exception("Local layer path %s must exists." % lo.local_path)
+                        logger.error("Local layer path %s must exists. Are you trying to import a layer that does not exist ? Check your local toasterconf.json" % lo.local_path)
 
-                    lo.vcs_url = layerinfo['vcs_url']
                     if layerinfo['vcs_url'].startswith("remote:"):
                         lo.vcs_url = _read_git_url_from_local_repository(layerinfo['vcs_url'])
-                    else:
+                        if lo.vcs_url is None:
+                            logger.error("The toaster config file references the local git repo, but Toaster cannot detect it.\nYour local configuration for layer %s is invalid. Make sure that the toasterconf.json file is correct." % layerinfo['name'])
+
+                    if lo.vcs_url is None:
                         lo.vcs_url = layerinfo['vcs_url']
 
                     if 'layer_index_url' in layerinfo:
