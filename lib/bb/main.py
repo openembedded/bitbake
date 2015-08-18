@@ -41,22 +41,44 @@ logger = logging.getLogger("BitBake")
 class BBMainException(Exception):
     pass
 
-def get_ui(config):
-    if not config.ui:
-        # modify 'ui' attribute because it is also read by cooker
-        config.ui = os.environ.get('BITBAKE_UI', 'knotty')
+def list_extension_modules(pkg, checkattr):
+    """
+    Lists extension modules in a specific Python package
+    (e.g. UIs, servers)
+    Parameters:
+        pkg: previously imported Python package to list
+        checkattr: attribute to look for in module to determine if it's valid
+            as the type of extension you are looking for
+    """
+    import pkgutil
+    pkgdir = os.path.dirname(pkg.__file__)
 
-    interface = config.ui
+    modules = []
+    for _, modulename, _ in pkgutil.iter_modules([pkgdir]):
+        if os.path.isdir(os.path.join(pkgdir, modulename)):
+            # ignore directories
+            continue
+        try:
+            module = __import__(pkg.__name__, fromlist=[modulename])
+        except (ImportError, SystemExit):
+            # If we can't import it, it's not valid
+            continue
+        module_if = getattr(module, modulename)
+        if getattr(module_if, 'hidden_extension', False):
+            continue
+        if not checkattr or hasattr(module_if, checkattr):
+            modules.append(modulename)
+    return modules
 
+def import_extension_module(pkg, modulename):
     try:
         # Dynamically load the UI based on the ui name. Although we
         # suggest a fixed set this allows you to have flexibility in which
         # ones are available.
-        module = __import__("bb.ui", fromlist = [interface])
-        return getattr(module, interface)
+        module = __import__(pkg.__name__, fromlist = [modulename])
+        return getattr(module, modulename)
     except AttributeError:
-        raise BBMainException("FATAL: Invalid user interface '%s' specified.\n"
-                 "Valid interfaces: depexp, goggle, ncurses, hob, knotty [default]." % interface)
+        raise BBMainException("FATAL: Unable to import extension module %s from %s" % (modulename, pkg.__name__))
 
 
 # Display bitbake/OE warnings via the BitBake.Warnings logger, ignoring others"""
@@ -146,11 +168,25 @@ class BitBakeConfigParameters(cookerdata.ConfigParameters):
         parser.add_option("-P", "--profile", help = "Profile the command and save reports.",
                    action = "store_true", dest = "profile", default = False)
 
-        parser.add_option("-u", "--ui", help = "The user interface to use (e.g. knotty, hob, depexp).",
-                   action = "store", dest = "ui")
+        def present_options(optionlist):
+            if len(optionlist) > 1:
+                return ' or '.join([', '.join(optionlist[:-1]), optionlist[-1]])
+            else:
+                return optionlist[0]
 
-        parser.add_option("-t", "--servertype", help = "Choose which server to use, process or xmlrpc.",
-                   action = "store", dest = "servertype")
+        env_ui = os.environ.get('BITBAKE_UI', None)
+        valid_uis = list_extension_modules(bb.ui, 'main')
+        default_ui = env_ui or 'knotty'
+        if env_ui and not env_ui in valid_uis:
+            raise BBMainException('Invalid UI "%s" specified in BITBAKE_UI environment variable - valid choices: %s' % (env_ui, present_options(valid_uis)))
+        elif not default_ui in valid_uis:
+            raise BBMainException('Default UI "%s" could not be found')
+        parser.add_option("-u", "--ui", help = "The user interface to use (%s - default %%default)." % present_options(valid_uis),
+                   action="store", dest="ui", type="choice", choices=valid_uis, default=default_ui)
+
+        valid_server_types = list_extension_modules(bb.server, 'BitBakeServer')
+        parser.add_option("-t", "--servertype", help = "Choose which server type to use (%s - default %%default)." % present_options(valid_server_types),
+                   action = "store", dest = "servertype", default = "process")
 
         parser.add_option("", "--token", help = "Specify the connection token to be used when connecting to a remote server.",
                    action = "store", dest = "xmlrpctoken")
@@ -279,21 +315,8 @@ def bitbake_main(configParams, configuration):
 
     configuration.setConfigParameters(configParams)
 
-    ui_module = get_ui(configParams)
-
-    # Server type can be xmlrpc or process currently, if nothing is specified,
-    # the default server is process
-    if configParams.servertype:
-        server_type = configParams.servertype
-    else:
-        server_type = 'process'
-
-    try:
-        module = __import__("bb.server", fromlist = [server_type])
-        servermodule = getattr(module, server_type)
-    except AttributeError:
-        raise BBMainException("FATAL: Invalid server type '%s' specified.\n"
-                              "Valid interfaces: xmlrpc, process [default]." % server_type)
+    ui_module = import_extension_module(bb.ui, configParams.ui)
+    servermodule = import_extension_module(bb.server, configParams.servertype)
 
     if configParams.server_only:
         if configParams.servertype != "xmlrpc":
