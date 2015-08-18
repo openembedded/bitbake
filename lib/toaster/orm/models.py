@@ -29,6 +29,11 @@ from django.core import validators
 from django.conf import settings
 import django.db.models.signals
 
+
+import logging
+logger = logging.getLogger("toaster")
+
+
 class GitURLValidator(validators.URLValidator):
     import re
     regex = re.compile(
@@ -855,8 +860,8 @@ class LayerIndexLayerSource(LayerSource):
         except Exception as e:
             import traceback
             if proxy_settings is not None:
-                print "EE: Using proxy ", proxy_settings
-            print "EE: could not connect to %s, skipping update: %s\n%s" % (self.apiurl, e, traceback.format_exc(e))
+                logger.info("EE: Using proxy %s" % proxy_settings)
+            logger.warning("EE: could not connect to %s, skipping update: %s\n%s" % (self.apiurl, e, traceback.format_exc(e)))
             return
 
         # update branches; only those that we already have names listed in the
@@ -865,7 +870,7 @@ class LayerIndexLayerSource(LayerSource):
         if len(whitelist_branch_names) == 0:
             raise Exception("Failed to make list of branches to fetch")
 
-        print "Fetching branches"
+        logger.debug("Fetching branches")
         branches_info = _get_json_response(apilinks['branches']
             + "?filter=name:%s" % "OR".join(whitelist_branch_names))
         for bi in branches_info:
@@ -895,7 +900,7 @@ class LayerIndexLayerSource(LayerSource):
             transaction.set_autocommit(True)
 
         # update layerbranches/layer_versions
-        print "Fetching layer information"
+        logger.debug("Fetching layer information")
         layerbranches_info = _get_json_response(apilinks['layerBranches']
                 + "?filter=branch:%s" % "OR".join(map(lambda x: str(x.up_id), [i for i in Branch.objects.filter(layer_source = self) if i.up_id is not None] ))
             )
@@ -933,7 +938,7 @@ class LayerIndexLayerSource(LayerSource):
             try:
                 dependlist[lv].append(Layer_Version.objects.get(layer_source = self, layer__up_id = ldi['dependency'], up_branch = lv.up_branch))
             except Layer_Version.DoesNotExist:
-                print "Cannot find layer version ", self, ldi['dependency'], lv.up_branch
+                logger.warning("Cannot find layer version %s dep:%s up_brach:%s" % (self, ldi['dependency'], lv.up_branch))
 
         for lv in dependlist:
             LayerVersionDependency.objects.filter(layer_version = lv).delete()
@@ -944,7 +949,7 @@ class LayerIndexLayerSource(LayerSource):
 
 
         # update machines
-        print "Fetching machine information"
+        logger.debug("Fetching machine information")
         machines_info = _get_json_response(apilinks['machines']
                 + "?filter=layerbranch:%s" % "OR".join(map(lambda x: str(x.up_id), Layer_Version.objects.filter(layer_source = self)))
             )
@@ -962,7 +967,7 @@ class LayerIndexLayerSource(LayerSource):
             transaction.set_autocommit(True)
 
         # update recipes; paginate by layer version / layer branch
-        print "Fetching target information"
+        logger.debug("Fetching target information")
         recipes_info = _get_json_response(apilinks['recipes']
                 + "?filter=layerbranch:%s" % "OR".join(map(lambda x: str(x.up_id), Layer_Version.objects.filter(layer_source = self)))
             )
@@ -1236,8 +1241,7 @@ def invalidate_cache(**kwargs):
     try:
       cache.clear()
     except Exception as e:
-      print "Problem with cache backend: Failed to clear cache"
-      pass
+      logger.warning("Problem with cache backend: Failed to clear cache: %s" % e)
 
 django.db.models.signals.post_save.connect(invalidate_cache)
 django.db.models.signals.post_delete.connect(invalidate_cache)

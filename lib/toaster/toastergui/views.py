@@ -42,6 +42,10 @@ import json
 from os.path import dirname
 import itertools
 
+import logging
+
+logger = logging.getLogger("toaster")
+
 # all new sessions should come through the landing page;
 # determine in which mode we are running in, and redirect appropriately
 def landing(request):
