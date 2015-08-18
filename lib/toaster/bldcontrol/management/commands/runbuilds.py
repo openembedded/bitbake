@@ -130,7 +130,7 @@ class Command(NoArgsCommand):
         # update all BuildRequests without a build created
         for br in BuildRequest.objects.filter(build = None):
             br.build = Build.objects.create(project = br.project, completed_on = br.updated, started_on = br.created)
-            br.build.outcome = BuildRequest.REQ_FAILED
+            br.build.outcome = Build.FAILED
             try:
                 br.build.machine = br.brvariable_set.get(name='MACHINE').value
             except BRVariable.DoesNotExist:
