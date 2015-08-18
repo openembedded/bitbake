@@ -1892,7 +1892,7 @@ if True:
         # be able to display something.  'count' and 'page' are mandatory for all views
         # that use paginators.
 
-        queryset = Build.objects.filter(outcome__lte = Build.IN_PROGRESS)
+        queryset = Build.objects.exclude(outcome = Build.IN_PROGRESS)
 
         context, pagesize, orderby = _build_list_helper(request, queryset)
 
