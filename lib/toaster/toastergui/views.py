@@ -1876,10 +1876,7 @@ if True:
 
         queryset = Build.objects.filter(outcome__lte = Build.IN_PROGRESS)
 
-        try:
-            context, pagesize, orderby = _build_list_helper(request, queryset)
-        except InvalidRequestException as e:
-            raise RedirectException( builds, request.GET, e.response)
+        context, pagesize, orderby = _build_list_helper(request, queryset)
 
         _set_parameters_values(pagesize, orderby, request)
         return context
@@ -2422,7 +2419,8 @@ if True:
                         # dependency already (like modified on another page)
                         try:
                             prj_layer, prj_layer_created = ProjectLayer.objects.get_or_create(layercommit=layer_dep_obj, project=prj)
-                        except:
+                        except IntegrityError as e:
+                            logger.warning("Integrity error while saving Project Layers: %s (original %s)" % (e, e.__cause__))
                             continue
 
                         if prj_layer_created:
@@ -2639,10 +2637,7 @@ if True:
 
         queryset = Build.objects.filter(outcome__lte = Build.IN_PROGRESS)
 
-        try:
-            context, pagesize, orderby = _build_list_helper(request, queryset)
-        except InvalidRequestException as e:
-            raise RedirectException('projectbuilds', request.GET, e.response, pid = pid)
+        context, pagesize, orderby = _build_list_helper(request, queryset)
 
         context['project'] = prj
         _set_parameters_values(pagesize, orderby, request)

@@ -269,11 +269,10 @@ class Project(models.Model):
             except ProjectVariable.DoesNotExist:
                 pass
             br.save()
-        except Exception as e:
+        except Exception:
+            # revert the build request creation since we're not done cleanly
             br.delete()
-            import sys
-            et, ei, tb = sys.exc_info()
-            raise type(e), e, tb
+            raise
         return br
 
 class Build(models.Model):
@@ -364,7 +363,7 @@ class BuildArtifact(models.Model):
 
 
     def is_available(self):
-        return build.buildrequest.environment.has_artifact(file_path)
+        return self.build.buildrequest.environment.has_artifact(self.file_name)
 
 class ProjectTarget(models.Model):
     project = models.ForeignKey(Project)
@@ -981,12 +980,10 @@ class LayerIndexLayerSource(LayerSource):
                 if 'inherits' in ri:
                     ro.is_image = 'image' in ri['inherits'].split()
                 ro.save()
-            except:
-                #print "Duplicate Recipe, ignoring: ", vars(ro)
-                pass
+            except Exception:
+                logger.warning("Duplicate Recipe, ignoring: %s " % vars(ro))
         if not connection.features.autocommits_when_autocommit_is_off:
             transaction.set_autocommit(True)
-        pass
 
 class BitbakeVersion(models.Model):
 
