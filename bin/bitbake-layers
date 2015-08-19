@@ -120,6 +120,8 @@ Removes the specified layer from bblayers.conf
 
         if args.layerdir.startswith('*'):
             layerdir = args.layerdir
+        elif not '/' in args.layerdir:
+            layerdir = '*/%s' % args.layerdir
         else:
             layerdir = os.path.abspath(args.layerdir)
         (_, notremoved) = bb.utils.edit_bblayers_conf(bblayers_conf, None, layerdir)
