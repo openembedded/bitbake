@@ -29,6 +29,7 @@ import multiprocessing
 import fcntl
 import subprocess
 import glob
+import fnmatch
 import traceback
 import errno
 import signal
@@ -1262,11 +1263,26 @@ def get_file_layer(filename, d):
     for collection in collections:
         collection_res[collection] = d.getVar('BBFILE_PATTERN_%s' % collection, True) or ''
 
-    # Use longest path so we handle nested layers
-    matchlen = 0
-    match = None
-    for collection, regex in collection_res.iteritems():
-        if len(regex) > matchlen and re.match(regex, filename):
-            matchlen = len(regex)
-            match = collection
-    return match
+    def path_to_layer(path):
+        # Use longest path so we handle nested layers
+        matchlen = 0
+        match = None
+        for collection, regex in collection_res.iteritems():
+            if len(regex) > matchlen and re.match(regex, path):
+                matchlen = len(regex)
+                match = collection
+        return match
+
+    result = None
+    bbfiles = (d.getVar('BBFILES', True) or '').split()
+    bbfilesmatch = False
+    for bbfilesentry in bbfiles:
+        if fnmatch.fnmatch(filename, bbfilesentry):
+            bbfilesmatch = True
+            result = path_to_layer(bbfilesentry)
+
+    if not bbfilesmatch:
+        # Probably a bbclass
+        result = path_to_layer(filename)
+
+    return result

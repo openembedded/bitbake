@@ -312,6 +312,31 @@ class VariableHistory(object):
                 lines.append(line)
         return lines
 
+    def get_variable_items_files(self, var, d):
+        """
+        Use variable history to map items added to a list variable and
+        the files in which they were added.
+        """
+        history = self.variable(var)
+        finalitems = (d.getVar(var, True) or '').split()
+        filemap = {}
+        isset = False
+        for event in history:
+            if 'flag' in event:
+                continue
+            if event['op'] == '_remove':
+                continue
+            if isset and event['op'] == 'set?':
+                continue
+            isset = True
+            items = d.expand(event['detail']).split()
+            for item in items:
+                # This is a little crude but is belt-and-braces to avoid us
+                # having to handle every possible operation type specifically
+                if item in finalitems and not item in filemap:
+                    filemap[item] = event['file']
+        return filemap
+
     def del_var_history(self, var, f=None, line=None):
         """If file f and line are not given, the entire history of var is deleted"""
         if var in self.variables:
