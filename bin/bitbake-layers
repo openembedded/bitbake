@@ -265,6 +265,7 @@ Removes the specified layer from bblayers.conf
         apiurl = self.bbhandler.config_data.getVar('BBLAYERS_LAYERINDEX_URL', True)
         if not apiurl:
             logger.error("Cannot get BBLAYERS_LAYERINDEX_URL")
+            return 1
         else:
             if apiurl[-1] != '/':
                 apiurl += '/'
