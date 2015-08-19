@@ -54,6 +54,8 @@ def logger_create(name, output=sys.stderr):
 
 logger = logger_create('bitbake-layers', sys.stdout)
 
+class UserError(Exception):
+    pass
 
 class Commands():
     def __init__(self):
@@ -388,7 +390,7 @@ are overlayed will also be listed, with a " (skipped)" suffix.
 """
         self.init_bbhandler()
 
-        items_listed = self.list_recipes('Overlayed recipes', None, True, args.same_version, args.filenames, True)
+        items_listed = self.list_recipes('Overlayed recipes', None, True, args.same_version, args.filenames, True, None)
 
         # Check for overlayed .bbclass files
         classes = defaultdict(list)
@@ -451,11 +453,22 @@ skipped recipes will also be listed, with a " (skipped)" suffix.
 """
         self.init_bbhandler()
 
-        title = 'Available recipes:'
-        self.list_recipes(title, args.pnspec, False, False, args.filenames, args.multiple)
+        inheritlist = args.inherits.split(',') if args.inherits else []
+        if inheritlist or args.pnspec or args.multiple:
+            title = 'Matching recipes:'
+        else:
+            title = 'Available recipes:'
+        self.list_recipes(title, args.pnspec, False, False, args.filenames, args.multiple, inheritlist)
 
 
-    def list_recipes(self, title, pnspec, show_overlayed_only, show_same_ver_only, show_filenames, show_multi_provider_only):
+    def list_recipes(self, title, pnspec, show_overlayed_only, show_same_ver_only, show_filenames, show_multi_provider_only, inherits):
+        if inherits:
+            bbpath = str(self.bbhandler.config_data.getVar('BBPATH', True))
+            for classname in inherits:
+                classfile = 'classes/%s.bbclass' % classname
+                if not bb.utils.which(bbpath, classfile, history=False):
+                    raise UserError('No class named %s found in BBPATH' % classfile)
+
         pkg_pn = self.bbhandler.cooker.recipecache.pkg_pn
         (latest_versions, preferred_versions) = bb.providers.findProviders(self.bbhandler.config_data, self.bbhandler.cooker.recipecache, pkg_pn)
         allproviders = bb.providers.allProviders(self.bbhandler.cooker.recipecache)
@@ -493,6 +506,9 @@ skipped recipes will also be listed, with a " (skipped)" suffix.
                     logger.plain("%s:", pn)
                 logger.plain("  %s %s%s", layer.ljust(20), ver, skipped)
 
+        global_inherit = (self.bbhandler.config_data.getVar('INHERIT', True) or "").split()
+        cls_re = re.compile('classes/')
+
         preffiles = []
         items_listed = False
         for p in sorted(pkg_pn):
@@ -504,11 +520,28 @@ skipped recipes will also be listed, with a " (skipped)" suffix.
                 pref = preferred_versions[p]
                 realfn = bb.cache.Cache.virtualfn2realfn(pref[1])
                 preffile = realfn[0]
+
                 # We only display once per recipe, we should prefer non extended versions of the
                 # recipe if present (so e.g. in OpenEmbedded, openssl rather than nativesdk-openssl
                 # which would otherwise sort first).
                 if realfn[1] and realfn[0] in self.bbhandler.cooker.recipecache.pkg_fn:
                     continue
+
+                if inherits:
+                    matchcount = 0
+                    recipe_inherits = self.bbhandler.cooker_data.inherits.get(preffile, [])
+                    for cls in recipe_inherits:
+                        if cls_re.match(cls):
+                            continue
+                        classname = os.path.splitext(os.path.basename(cls))[0]
+                        if classname in global_inherit:
+                            continue
+                        elif classname in inherits:
+                            matchcount += 1
+                    if matchcount != len(inherits):
+                        # No match - skip this recipe
+                        continue
+
                 if preffile not in preffiles:
                     preflayer = self.get_file_layer(preffile)
                     multilayer = False
@@ -990,6 +1023,7 @@ def main():
     parser_show_recipes = add_command('show-recipes', cmds.do_show_recipes)
     parser_show_recipes.add_argument('-f', '--filenames', help='instead of the default formatting, list filenames of higher priority recipes with the ones they overlay indented underneath', action='store_true')
     parser_show_recipes.add_argument('-m', '--multiple', help='only list where multiple recipes (in the same layer or different layers) exist for the same recipe name', action='store_true')
+    parser_show_recipes.add_argument('-i', '--inherits', help='only list recipes that inherit the named class', metavar='CLASS', default='')
     parser_show_recipes.add_argument('pnspec', nargs='?', help='optional recipe name specification (wildcards allowed, enclose in quotes to avoid shell expansion)')
 
     parser_show_appends = add_command('show-appends', cmds.do_show_appends)
@@ -1019,7 +1053,11 @@ def main():
     elif args.quiet:
         logger.setLevel(logging.ERROR)
 
-    ret = args.func(args)
+    try:
+        ret = args.func(args)
+    except UserError as err:
+        logger.error(str(err))
+        ret = 1
 
     return ret
 
