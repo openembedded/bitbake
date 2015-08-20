@@ -60,7 +60,7 @@ def list_extension_modules(pkg, checkattr):
             continue
         try:
             module = __import__(pkg.__name__, fromlist=[modulename])
-        except (ImportError, SystemExit):
+        except (ImportError, SystemExit, RuntimeError):
             # If we can't import it, it's not valid
             continue
         module_if = getattr(module, modulename)
