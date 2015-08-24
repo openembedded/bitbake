@@ -180,7 +180,16 @@ def catch_parse_error(func):
             parselog.critical("Unable to parse %s: %s" % (fn, exc))
             sys.exit(1)
         except (bb.parse.ParseError, bb.data_smart.ExpansionError) as exc:
-            parselog.critical("Unable to parse %s: %s" % (fn, exc))
+            import traceback
+
+            bbdir = os.path.dirname(__file__) + os.sep
+            exc_class, exc, tb = sys.exc_info()
+            for tb in iter(lambda: tb.tb_next, None):
+                # Skip frames in bitbake itself, we only want the metadata
+                fn, _, _, _ = traceback.extract_tb(tb, 1)[0]
+                if not fn.startswith(bbdir):
+                    break
+            parselog.critical("Unable to parse %s", fn, exc_info=(exc_class, exc, tb))
             sys.exit(1)
     return wrapped
 
