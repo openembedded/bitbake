@@ -1319,12 +1319,15 @@ class BBCooker:
         def buildFileIdle(server, rq, abort):
 
             msg = None
+            interrupted = 0
             if abort or self.state == state.forceshutdown:
                 rq.finish_runqueue(True)
                 msg = "Forced shutdown"
+                interrupted = 2
             elif self.state == state.shutdown:
                 rq.finish_runqueue(False)
                 msg = "Stopped build"
+                interrupted = 1
             failures = 0
             try:
                 retval = rq.execute_runqueue()
@@ -1336,7 +1339,7 @@ class BBCooker:
                 return False
 
             if not retval:
-                bb.event.fire(bb.event.BuildCompleted(len(rq.rqdata.runq_fnid), buildname, item, failures), self.expanded_data)
+                bb.event.fire(bb.event.BuildCompleted(len(rq.rqdata.runq_fnid), buildname, item, failures, interrupted), self.expanded_data)
                 self.command.finishAsyncCommand(msg)
                 return False
             if retval is True:
@@ -1352,12 +1355,15 @@ class BBCooker:
 
         def buildTargetsIdle(server, rq, abort):
             msg = None
+            interrupted = 0
             if abort or self.state == state.forceshutdown:
                 rq.finish_runqueue(True)
                 msg = "Forced shutdown"
+                interrupted = 2
             elif self.state == state.shutdown:
                 rq.finish_runqueue(False)
                 msg = "Stopped build"
+                interrupted = 1
             failures = 0
             try:
                 retval = rq.execute_runqueue()
@@ -1369,7 +1375,7 @@ class BBCooker:
                 return False
 
             if not retval:
-                bb.event.fire(bb.event.BuildCompleted(len(rq.rqdata.runq_fnid), buildname, targets, failures), self.data)
+                bb.event.fire(bb.event.BuildCompleted(len(rq.rqdata.runq_fnid), buildname, targets, failures, interrupted), self.data)
                 self.command.finishAsyncCommand(msg)
                 return False
             if retval is True:

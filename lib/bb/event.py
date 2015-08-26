@@ -370,11 +370,12 @@ class BuildStarted(BuildBase, OperationStarted):
 
 class BuildCompleted(BuildBase, OperationCompleted):
     """bbmake build run completed"""
-    def __init__(self, total, n, p, failures = 0):
+    def __init__(self, total, n, p, failures=0, interrupted=0):
         if not failures:
             OperationCompleted.__init__(self, total, "Building Succeeded")
         else:
             OperationCompleted.__init__(self, total, "Building Failed")
+        self._interrupted = interrupted
         BuildBase.__init__(self, n, p, failures)
 
 class DiskFull(Event):
