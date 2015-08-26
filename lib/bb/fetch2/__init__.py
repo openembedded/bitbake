@@ -628,7 +628,7 @@ def verify_checksum(ud, d, precomputed={}):
     }
 
 
-def verify_donestamp(ud, d):
+def verify_donestamp(ud, d, origud=None):
     """
     Check whether the done stamp file has the right checksums (if the fetch
     method supports them). If it doesn't, delete the done stamp and force
@@ -640,7 +640,8 @@ def verify_donestamp(ud, d):
     if not os.path.exists(ud.donestamp):
         return False
 
-    if not ud.method.supports_checksum(ud):
+    if (not ud.method.supports_checksum(ud) or
+        (origud and not origud.method.supports_checksum(origud))):
         # done stamp exists, checksums not supported; assume the local file is
         # current
         return True
@@ -922,7 +923,7 @@ def try_mirror_url(fetch, origud, ud, ld, check = False):
 
         os.chdir(ld.getVar("DL_DIR", True))
 
-        if not verify_donestamp(ud, ld) or ud.method.need_update(ud, ld):
+        if not verify_donestamp(ud, ld, origud) or ud.method.need_update(ud, ld):
             ud.method.download(ud, ld)
             if hasattr(ud.method,"build_mirror_data"):
                 ud.method.build_mirror_data(ud, ld)
