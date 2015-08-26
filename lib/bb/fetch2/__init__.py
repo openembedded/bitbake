@@ -1590,7 +1590,8 @@ class Fetch(object):
                 os.chdir(self.d.getVar("DL_DIR", True))
 
                 firsterr = None
-                if not localpath and ((not verify_donestamp(ud, self.d)) or m.need_update(ud, self.d)):
+                verified_stamp = verify_donestamp(ud, self.d)
+                if not localpath and (not verified_stamp or m.need_update(ud, self.d)):
                     try:
                         if not trusted_network(self.d, ud.url):
                             raise UntrustedUrl(ud.url)
@@ -1618,7 +1619,8 @@ class Fetch(object):
                             logger.debug(1, str(e))
                         firsterr = e
                         # Remove any incomplete fetch
-                        m.clean(ud, self.d)
+                        if not verified_stamp:
+                            m.clean(ud, self.d)
                         logger.debug(1, "Trying MIRRORS")
                         mirrors = mirror_from_string(self.d.getVar('MIRRORS', True))
                         localpath = try_mirrors(self, self.d, ud, mirrors)
