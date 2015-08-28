@@ -89,8 +89,9 @@
             <i class="icon-info-sign" title="<strong>Toaster version information</strong>" data-content="<dl><dt>Branch</dt><dd>{{TOASTER_BRANCH}}</dd><dt>Revision</dt><dd>{{TOASTER_REVISION}}</dd></dl>"></i>
             {% endif %}
           </span>
+          {% if request.resolver_match.url_name != 'landing' and request.resolver_match.url_name != 'newproject' %}
           <ul class="nav">
-            <li {% if "builds" in  request.path  %}
+            <li  {% if request.resolver_match.url_name == 'all-builds' %}
                 class="active"
                 {% endif %}>
               <a href="{% url 'all-builds' %}">
@@ -98,7 +99,7 @@
                 All builds
               </a>
             </li>
-            <li {% if "projects" in  request.path  %}
+            <li {% if request.resolver_match.url_name == 'all-projects'  %}
                 class="active"
                 {% endif %}>
               <a href="{% url 'all-projects' %}">
@@ -107,6 +108,7 @@
               </a>
             </li>
           </ul>
+          {% endif %}
           <ul class="nav pull-right">
             <li>
               <a target="_blank" href="http://www.yoctoproject.org/docs/latest/toaster-manual/toaster-manual.html">
