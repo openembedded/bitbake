@@ -817,42 +817,20 @@ class LayerIndexLayerSource(LayerSource):
         assert self.apiurl is not None
         from django.db import transaction, connection
 
-        import httplib, urlparse, json
+        import urllib2, urlparse, json
         import os
         proxy_settings = os.environ.get("http_proxy", None)
 
         def _get_json_response(apiurl = self.apiurl):
-            conn = None
             _parsedurl = urlparse.urlparse(apiurl)
             path = _parsedurl.path
-            query = _parsedurl.query
-            def parse_url(url):
-                parsedurl = urlparse.urlparse(url)
-                try:
-                    (host, port) = parsedurl.netloc.split(":")
-                except ValueError:
-                    host = parsedurl.netloc
-                    port = None
 
-                if port is None:
-                    port = 80
-                else:
-                    port = int(port)
-                return (host, port)
+            try:
+                res = urllib2.urlopen(apiurl)
+            except urllib2.URLError as e:
+                raise Exception("Failed to read %s: %s" % (path, e.reason))
 
-            if proxy_settings is None:
-                host, port = parse_url(apiurl)
-                conn = httplib.HTTPConnection(host, port)
-                conn.request("GET", path + "?" + query)
-            else:
-                host, port = parse_url(proxy_settings)
-                conn = httplib.HTTPConnection(host, port)
-                conn.request("GET", apiurl)
-
-            r = conn.getresponse()
-            if r.status != 200:
-                raise Exception("Failed to read " + path + ": %d %s" % (r.status, r.reason))
-            return json.loads(r.read())
+            return json.loads(res.read())
 
         # verify we can get the basic api
         try:
