@@ -21,8 +21,7 @@
     });
 </script>
 
-    <div class="page-header">
-      <h1>
+      <h2>
         {% if request.GET.filter and objects.paginator.count > 0 or request.GET.search and objects.paginator.count > 0 %}
             {{objects.paginator.count}} build{{objects.paginator.count|pluralize}} found
         {%elif request.GET.filter and objects.paginator.count == 0 or request.GET.search and objects.paginator.count == 0 %}
@@ -31,8 +30,7 @@
             Project builds
         {%endif%}
         <i class="icon-question-sign get-help heading-help" title="This page lists all the builds for the current project"></i>
-      </h1>
-    </div>
+      </h2>
 
 
  {% if objects.paginator.count == 0 %}
