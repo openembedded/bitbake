@@ -793,7 +793,9 @@ class RunQueueData:
         if self.cooker.configuration.invalidate_stamp:
             for (fn, target) in self.target_pairs:
                 for st in self.cooker.configuration.invalidate_stamp.split(','):
-                    invalidate_task(fn, "do_%s" % st, True)
+                    if not st.startswith("do_"):
+                        st = "do_%s" % st
+                    invalidate_task(fn, st, True)
 
         # Iterate over the task list and call into the siggen code
         dealtwith = set()

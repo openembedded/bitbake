@@ -663,7 +663,9 @@ class BBCooker:
                 ktask = k2[1]
             taskdata.add_provider(localdata, self.recipecache, k)
             current += 1
-            runlist.append([k, "do_%s" % ktask])
+            if not ktask.startswith("do_"):
+                ktask = "do_%s" % ktask
+            runlist.append([k, ktask])
             bb.event.fire(bb.event.TreeDataPreparationProgress(current, len(fulltargetlist)), self.data)
         taskdata.add_unresolved(localdata, self.recipecache)
         bb.event.fire(bb.event.TreeDataPreparationCompleted(len(fulltargetlist)), self.data)
@@ -1302,7 +1304,9 @@ class BBCooker:
         # Invalidate task for target if force mode active
         if self.configuration.force:
             logger.verbose("Invalidate task %s, %s", task, fn)
-            bb.parse.siggen.invalidate_task('do_%s' % task, self.recipecache, fn)
+            if not task.startswith("do_"):
+                task = "do_%s" % task
+            bb.parse.siggen.invalidate_task(task, self.recipecache, fn)
 
         # Setup taskdata structure
         taskdata = bb.taskdata.TaskData(self.configuration.abort)
@@ -1312,7 +1316,9 @@ class BBCooker:
         bb.event.fire(bb.event.BuildStarted(buildname, [item]), self.expanded_data)
 
         # Execute the runqueue
-        runlist = [[item, "do_%s" % task]]
+        if not task.startswith("do_"):
+            task = "do_%s" % task
+        runlist = [[item, task]]
 
         rq = bb.runqueue.RunQueue(self, self.data, self.recipecache, taskdata, runlist)
 
