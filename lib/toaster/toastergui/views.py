@@ -54,7 +54,11 @@ logger = logging.getLogger("toaster")
 # all new sessions should come through the landing page;
 # determine in which mode we are running in, and redirect appropriately
 def landing(request):
-    if Build.objects.count() == 0 and Project.objects.count() > 0:
+    # we only redirect to projects page if there is a user-generated project
+    user_projects = Project.objects.filter(is_default = False)
+    has_user_project = user_projects.count() > 0
+
+    if Build.objects.count() == 0 and has_user_project:
         return redirect(reverse('all-projects'), permanent = False)
 
     if Build.objects.all().count() > 0:
