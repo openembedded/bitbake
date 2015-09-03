@@ -148,9 +148,11 @@
                   <p><a id="view-all-projects" href="{% url 'all-projects' %}">View all projects</a></p>
                 </form>
               </li>
-              <li style="display: none">
-                This project's configuration is incomplete,<br/>so you cannot run builds.<br/>
-                <p><a href="{% if project.id %}{% url 'project' project.id %}{% endif %}">View project configuration</a></p>
+              <li>
+                <div class="alert" style="display:none;">
+                  <p>This project configuration is incomplete, so you cannot run builds.</p>
+                  <p><a href="{% if project.id %}{% url 'project' project.id %}{% endif %}">View project configuration</a></p>
+                </div>
               </li>
               <li id="targets-form">
                 <h6>Recipe(s):</h6>

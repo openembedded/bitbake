@@ -216,6 +216,7 @@ dl textarea { resize: vertical; }
 .tooltip-inner { max-width: 250px; }
 .new-build { padding: 20px; }
 .new-build li { line-height: 30px; }
+.new-build li .alert { line-height: 20px; width: 200px; white-space: normal; }
 .new-build h6 { margin: 10px 0 0 0; color: #5a5a5a; }
 .new-build h3 { margin: 0; color: #5a5a5a; }
 .new-build form { margin: 5px 0 0; }
