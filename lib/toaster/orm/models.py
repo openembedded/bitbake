@@ -94,11 +94,15 @@ class ProjectManager(models.Manager):
     def create(self, *args, **kwargs):
         raise Exception("Invalid call to Project.objects.create. Use Project.objects.create_project() to create a project")
 
-    def get_or_create(self, **kwargs):
-        # allow project creation for default data
-        if 'pk' in kwargs and kwargs['pk'] == 0:
-            return super(ProjectManager, self).get_or_create(**kwargs)
-        raise Exception("Invalid call to Project.objects.get_or_create. Use Project.objects.create_project() to create a project")
+    # return single object with is_default = True
+    def get_default_project(self):
+        projects = super(ProjectManager, self).filter(is_default = True)
+        if len(projects) > 1:
+            raise Exception("Inconsistent project data: multiple " +
+                            "default projects (i.e. with is_default=True)")
+        elif len(projects) < 1:
+            raise Exception("Inconsistent project data: no default project found")
+        return projects[0]
 
 class Project(models.Model):
     search_allowed_fields = ['name', 'short_description', 'release__name', 'release__branch_name']
@@ -114,6 +118,10 @@ class Project(models.Model):
     # hard links to possibly missing models
     user_id     = models.IntegerField(null = True)
     objects     = ProjectManager()
+
+    # set to True for the project which is the default container
+    # for builds initiated by the command line etc.
+    is_default  = models.BooleanField(default = False)
 
     def __unicode__(self):
         return "%s (Release %s, BBV %s)" % (self.name, self.release, self.bitbake_version)

@@ -145,13 +145,14 @@ class ORMWrapper(object):
             prj = Project.objects.get(pk = project_id)
 
         else:                           # this build was triggered by a legacy system, or command line interactive mode
-            prj, _ = Project.objects.get_or_create(pk=0, name="Default Project")
+            prj = Project.objects.get_default_project()
             logger.debug(1, "buildinfohelper: project is not specified, defaulting to %s" % prj)
 
 
         if buildrequest is not None:
             build = buildrequest.build
             logger.info("Updating existing build, with %s", build_info)
+            build.project = prj
             build.machine=build_info['machine']
             build.distro=build_info['distro']
             build.distro_version=build_info['distro_version']
