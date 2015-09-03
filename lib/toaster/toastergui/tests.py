@@ -23,7 +23,8 @@
 
 from django.test import TestCase
 from django.core.urlresolvers import reverse
-from orm.models import Project, Release, BitbakeVersion
+from django.utils import timezone
+from orm.models import Project, Release, BitbakeVersion, Build
 from orm.models import ReleaseLayerSourcePriority, LayerSource, Layer
 from orm.models import Layer_Version, Recipe, Machine, ProjectLayer
 import json
@@ -179,3 +180,115 @@ class ViewTests(TestCase):
         response = self.client.post(reverse('xhr_importlayer'), args)
         data = json.loads(response.content)
         self.assertNotEqual(data["error"], "ok")
+
+class LandingPageTests(TestCase):
+    """ Tests for redirects on the landing page """
+    # disable bogus pylint message error:
+    # "Instance of 'WSGIRequest' has no 'url' member (no-member)"
+    # (see https://github.com/landscapeio/pylint-django/issues/42)
+    # pylint: disable=E1103
+
+    LANDING_PAGE_TITLE = 'This is Toaster'
+
+    def setUp(self):
+        """ Add default project manually """
+        self.project = Project.objects.create_project('foo', None)
+        self.project.is_default = True
+        self.project.save()
+
+    def test_only_default_project(self):
+        """
+        No projects except default
+        => get the landing page
+        """
+        response = self.client.get(reverse('landing'))
+        self.assertTrue(self.LANDING_PAGE_TITLE in response.content)
+
+    def test_default_project_has_build(self):
+        """
+        Default project has a build, no other projects
+        => get the builds page
+        """
+        now = timezone.now()
+        build = Build.objects.create(project=self.project,
+                                     started_on=now,
+                                     completed_on=now)
+        build.save()
+
+        response = self.client.get(reverse('landing'))
+        self.assertEqual(response.status_code, 302,
+                         'response should be a redirect')
+        self.assertTrue('/builds' in response.url,
+                        'should redirect to builds')
+
+    def test_user_project_exists(self):
+        """
+        User has added a project (without builds)
+        => get the projects page
+        """
+        user_project = Project.objects.create_project('foo', None)
+        user_project.save()
+
+        response = self.client.get(reverse('landing'))
+        self.assertEqual(response.status_code, 302,
+                         'response should be a redirect')
+        self.assertTrue('/projects' in response.url,
+                        'should redirect to projects')
+
+    def test_user_project_has_build(self):
+        """
+        User has added a project (with builds)
+        => get the builds page
+        """
+        user_project = Project.objects.create_project('foo', None)
+        user_project.save()
+
+        now = timezone.now()
+        build = Build.objects.create(project=user_project,
+                                     started_on=now,
+                                     completed_on=now)
+        build.save()
+
+        response = self.client.get(reverse('landing'))
+        self.assertEqual(response.status_code, 302,
+                         'response should be a redirect')
+        self.assertTrue('/builds' in response.url,
+                        'should redirect to builds')
+
+class ProjectsPageTests(TestCase):
+    """ Tests for projects page """
+
+    PROJECT_NAME = 'cli builds'
+
+    def setUp(self):
+        """ Add default project manually """
+        project = Project.objects.create_project(self.PROJECT_NAME, None)
+        self.default_project = project
+        self.default_project.is_default = True
+        self.default_project.save()
+
+    def test_default_project_hidden(self):
+        """ The default project should be hidden if it has no builds """
+        params = {"count": 10, "orderby": "updated:-", "page": 1}
+        response = self.client.get(reverse('all-projects'), params)
+
+        self.assertTrue(not('tr class="data"' in response.content),
+                        'should be no project rows in the page')
+        self.assertTrue(not(self.PROJECT_NAME in response.content),
+                        'default project "cli builds" should not be in page')
+
+    def test_default_project_has_build(self):
+        """ The default project should be shown if it has builds """
+        now = timezone.now()
+        build = Build.objects.create(project=self.default_project,
+                                     started_on=now,
+                                     completed_on=now)
+        build.save()
+
+        params = {"count": 10, "orderby": "updated:-", "page": 1}
+        response = self.client.get(reverse('all-projects'), params)
+
+        self.assertTrue('tr class="data"' in response.content,
+                        'should be a project row in the page')
+        self.assertTrue(self.PROJECT_NAME in response.content,
+                        'default project "cli builds" should be in page')
