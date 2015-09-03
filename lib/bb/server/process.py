@@ -97,7 +97,7 @@ class ProcessServer(Process, BaseImplServer):
     def run(self):
         for event in bb.event.ui_queue:
             self.event_queue.put(event)
-        self.event_handle.value = bb.event.register_UIHhandler(self)
+        self.event_handle.value = bb.event.register_UIHhandler(self, True)
 
         bb.cooker.server_main(self.cooker, self.main)
 

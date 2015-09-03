@@ -99,7 +99,7 @@ class BitBakeServerCommands():
         if (self.cooker.state in [bb.cooker.state.parsing, bb.cooker.state.running]):
             return None
 
-        self.event_handle = bb.event.register_UIHhandler(s)
+        self.event_handle = bb.event.register_UIHhandler(s, True)
         return self.event_handle
 
     def unregisterEventHandler(self, handlerNum):

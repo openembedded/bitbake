@@ -69,6 +69,7 @@ _ui_handler_seq = 0
 _event_handler_map = {}
 _catchall_handlers = {}
 _eventfilter = None
+_uiready = False
 
 def execute_handler(name, handler, event, d):
     event.data = d
@@ -113,7 +114,7 @@ def print_ui_queue():
     """If we're exiting before a UI has been spawned, display any queued
     LogRecords to the console."""
     logger = logging.getLogger("BitBake")
-    if not _ui_handlers:
+    if not _uiready:
         from bb.msg import BBLogFormatter
         console = logging.StreamHandler(sys.stdout)
         console.setFormatter(BBLogFormatter("%(levelname)s: %(message)s"))
@@ -135,7 +136,7 @@ def print_ui_queue():
                 logger.handle(event)
 
 def fire_ui_handlers(event, d):
-    if not _ui_handlers:
+    if not _uiready:
         # No UI handlers registered yet, queue up the messages
         ui_queue.append(event)
         return
@@ -219,7 +220,10 @@ def set_eventfilter(func):
     global _eventfilter
     _eventfilter = func
 
-def register_UIHhandler(handler):
+def register_UIHhandler(handler, mainui=False):
+    if mainui:
+        global _uiready
+        _uiready = True
     bb.event._ui_handler_seq = bb.event._ui_handler_seq + 1
     _ui_handlers[_ui_handler_seq] = handler
     level, debug_domains = bb.msg.constructLogOptions()
