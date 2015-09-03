@@ -40,6 +40,7 @@ class ViewTests(TestCase):
                                          bitbake_version=bbv)
         self.project = Project.objects.create_project(name=PROJECT_NAME,
                                                       release=release)
+
         layersrc = LayerSource.objects.create(sourcetype=LayerSource.TYPE_IMPORTED)
         self.priority = ReleaseLayerSourcePriority.objects.create(release=release,
                                                                   layer_source=layersrc)
@@ -86,10 +87,10 @@ class ViewTests(TestCase):
 
         self.assertEqual(sorted(data["rows"][0]),
                          ['bitbake_version_id', 'created', 'id',
-                          'layersTypeAheadUrl', 'name', 'projectBuildsUrl',
-                          'projectPageUrl', 'recipesTypeAheadUrl',
-                          'release_id', 'short_description', 'updated',
-                          'user_id'])
+                          'is_default', 'layersTypeAheadUrl', 'name',
+                          'num_builds', 'projectBuildsUrl', 'projectPageUrl',
+                          'recipesTypeAheadUrl', 'release_id',
+                          'short_description', 'updated', 'user_id'])
 
     def test_typeaheads(self):
         """Test typeahead ReST API"""
