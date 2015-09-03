@@ -2804,6 +2804,14 @@ if True:
 
         queryset_all = Project.objects.all()
 
+        # annotate each project with its number of builds
+        queryset_all = queryset_all.annotate(num_builds=Count('build'))
+
+        # exclude the command line builds project if it has no builds
+        q_default_with_builds = Q(is_default=True) & Q(num_builds__gt=0)
+        queryset_all = queryset_all.filter(Q(is_default=False) |
+                                           q_default_with_builds)
+
         # boilerplate code that takes a request for an object type and returns a queryset
         # for that object type. copypasta for all needed table searches
         (filter_string, search_term, ordering_string) = _search_tuple(request, Project)
