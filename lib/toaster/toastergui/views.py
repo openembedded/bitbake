@@ -1903,7 +1903,7 @@ if True:
         # be able to display something.  'count' and 'page' are mandatory for all views
         # that use paginators.
 
-        queryset = Build.objects.exclude(outcome = Build.IN_PROGRESS)
+        queryset = Build.objects.all()
 
         try:
             context, pagesize, orderby = _build_list_helper(request, queryset)
@@ -1920,7 +1920,6 @@ if True:
 
     # helper function, to be used on "all builds" and "project builds" pages
     def _build_list_helper(request, queryset_all):
-
         default_orderby = 'completed_on:-'
         (pagesize, orderby) = _get_parameters_values(request, 10, default_orderby)
         mandatory_parameters = { 'count': pagesize,  'page' : 1, 'orderby' : orderby }
@@ -1931,11 +1930,42 @@ if True:
         # boilerplate code that takes a request for an object type and returns a queryset
         # for that object type. copypasta for all needed table searches
         (filter_string, search_term, ordering_string) = _search_tuple(request, Build)
+
         # post-process any date range filters
-        filter_string,daterange_selected = _modify_date_range_filter(filter_string)
-        queryset_all = queryset_all.select_related("project").annotate(errors_no = Count('logmessage', only=Q(logmessage__level=LogMessage.ERROR)|Q(logmessage__level=LogMessage.EXCEPTION))).annotate(warnings_no = Count('logmessage', only=Q(logmessage__level=LogMessage.WARNING))).extra(select={'timespent':'completed_on - started_on'})
-        queryset_with_search = _get_queryset(Build, queryset_all, None, search_term, ordering_string, '-completed_on')
-        queryset = _get_queryset(Build, queryset_all, filter_string, search_term, ordering_string, '-completed_on')
+        filter_string, daterange_selected = _modify_date_range_filter(filter_string)
+
+        # don't show "in progress" builds in "all builds" or "project builds"
+        queryset_all = queryset_all.exclude(outcome = Build.IN_PROGRESS)
+
+        # append project info
+        queryset_all = queryset_all.select_related("project")
+
+        # annotate with number of ERROR and EXCEPTION log messages
+        queryset_all = queryset_all.annotate(
+            errors_no = Count(
+                'logmessage',
+                only=Q(logmessage__level=LogMessage.ERROR) |
+                     Q(logmessage__level=LogMessage.EXCEPTION)
+            )
+        )
+
+        # annotate with number of warnings
+        q_warnings = Q(logmessage__level=LogMessage.WARNING)
+        queryset_all = queryset_all.annotate(
+            warnings_no = Count('logmessage', only=q_warnings)
+        )
+
+        # add timespent field
+        timespent = 'completed_on - started_on'
+        queryset_all = queryset_all.extra(select={'timespent': timespent})
+
+        queryset_with_search = _get_queryset(Build, queryset_all,
+                                             None, search_term,
+                                             ordering_string, '-completed_on')
+
+        queryset = _get_queryset(Build, queryset_all,
+                                 filter_string, search_term,
+                                 ordering_string, '-completed_on')
 
         # retrieve the objects that will be displayed in the table; builds a paginator and gets a page range to display
         build_info = _build_page_range(Paginator(queryset, pagesize), request.GET.get('page', 1))
@@ -2658,7 +2688,7 @@ if True:
             if 'buildDelete' in request.POST:
                 for i in request.POST['buildDelete'].strip().split(" "):
                     try:
-                        br = BuildRequest.objects.select_for_update().get(project = prj, pk = i, state__lte = BuildRequest.REQ_DELETED).delete()
+                        BuildRequest.objects.select_for_update().get(project = prj, pk = i, state__lte = BuildRequest.REQ_DELETED).delete()
                     except BuildRequest.DoesNotExist:
                         pass
 
@@ -2671,12 +2701,12 @@ if True:
                     else:
                         target = t
                         task = ""
-                    ProjectTarget.objects.create(project = prj, target = target, task = task)
+                    ProjectTarget.objects.create(project = prj,
+                                                 target = target,
+                                                 task = task)
+                prj.schedule_build()
 
-                br = prj.schedule_build()
-
-
-        queryset = Build.objects.filter(outcome__lte = Build.IN_PROGRESS)
+        queryset = Build.objects.filter(project_id = pid)
 
         try:
             context, pagesize, orderby = _build_list_helper(request, queryset)
