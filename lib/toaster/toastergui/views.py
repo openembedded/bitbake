@@ -1897,6 +1897,10 @@ if True:
         pass
 
     # shows the "all builds" page for managed mode; it displays build requests (at least started!) instead of actual builds
+    # WARNING _build_list_helper() may raise a RedirectException, which
+    # will set the GET parameters and redirect back to the
+    # all-builds or projectbuilds page as appropriate;
+    # TODO don't use exceptions to control program flow
     @_template_renderer("builds.html")
     def builds(request):
         # define here what parameters the view needs in the GET portion in order to
@@ -1905,27 +1909,35 @@ if True:
 
         queryset = Build.objects.all()
 
-        try:
-            context, pagesize, orderby = _build_list_helper(request, queryset)
-            # all builds page as a Project column
-            context['tablecols'].append({'name': 'Project', 'clcalss': 'project_column', })
-        except RedirectException as re:
-            # rewrite the RedirectException
-            re.view = resolve(request.path_info).url_name
-            raise re
+        redirect_page = resolve(request.path_info).url_name
+
+        context, pagesize, orderby = _build_list_helper(request,
+                                                        queryset,
+                                                        redirect_page)
+        # all builds page as a Project column
+        context['tablecols'].append({
+            'name': 'Project',
+            'clclass': 'project_column'
+        })
 
         _set_parameters_values(pagesize, orderby, request)
         return context
 
 
     # helper function, to be used on "all builds" and "project builds" pages
-    def _build_list_helper(request, queryset_all):
+    def _build_list_helper(request, queryset_all, redirect_page, pid=None):
         default_orderby = 'completed_on:-'
         (pagesize, orderby) = _get_parameters_values(request, 10, default_orderby)
         mandatory_parameters = { 'count': pagesize,  'page' : 1, 'orderby' : orderby }
         retval = _verify_parameters( request.GET, mandatory_parameters )
         if retval:
-            raise RedirectException( None, request.GET, mandatory_parameters)
+            params = {}
+            if pid:
+                params = {'pid': pid}
+            raise RedirectException(redirect_page,
+                                    request.GET,
+                                    mandatory_parameters,
+                                    **params)
 
         # boilerplate code that takes a request for an object type and returns a queryset
         # for that object type. copypasta for all needed table searches
@@ -2669,6 +2681,10 @@ if True:
 
         return context
 
+    # WARNING _build_list_helper() may raise a RedirectException, which
+    # will set the GET parameters and redirect back to the
+    # all-builds or projectbuilds page as appropriate;
+    # TODO don't use exceptions to control program flow
     @_template_renderer('projectbuilds.html')
     def projectbuilds(request, pid):
         prj = Project.objects.get(id = pid)
@@ -2708,13 +2724,12 @@ if True:
 
         queryset = Build.objects.filter(project_id = pid)
 
-        try:
-            context, pagesize, orderby = _build_list_helper(request, queryset)
-        except RedirectException as re:
-            # rewrite the RedirectException with our current url information
-            re.view = resolve(request.path_info).url_name
-            re.okwargs = {"pid" : pid}
-            raise re
+        redirect_page = resolve(request.path_info).url_name
+
+        context, pagesize, orderby = _build_list_helper(request,
+                                                        queryset,
+                                                        redirect_page,
+                                                        pid)
 
         context['project'] = prj
         _set_parameters_values(pagesize, orderby, request)
