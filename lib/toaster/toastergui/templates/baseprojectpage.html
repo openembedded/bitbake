@@ -21,14 +21,14 @@
   <!-- only on config pages -->
   <div id="config-nav" class="span2">
     <ul class="nav nav-list well">
-      <li class="nav-header">Configuration</li>
-      <li><a href="{% url 'project' project.id %}">Basic configuration</a></li>
-      <li><a href="{% url 'projectconf' project.id %}">BitBake variables</a></li>
+      <li><a class="nav-parent" href="{% url 'project' project.id %}">Configuration</a></li>
       <li class="nav-header">Compatible metadata</li>
 <!--  <li><a href="all-image-recipes.html">Image recipes</a></li> -->
       <li><a href="{% url 'projecttargets' project.id %}">Recipes</a></li>
       <li><a href="{% url 'projectmachines' project.id %}">Machines</a></li>
       <li><a href="{% url 'projectlayers' project.id %}">Layers</a></li>
+      <li class="nav-header">Extra configuration</li>
+      <li><a href="{% url 'projectconf' project.id %}">BitBake variables</a></li>
     </ul>
   </div>
   <div class="span10">
