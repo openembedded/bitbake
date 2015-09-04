@@ -2263,7 +2263,7 @@ if True:
         context = {
             "project" : prj,
             "lvs_nos" : Layer_Version.objects.all().count(),
-            "completedbuilds": Build.objects.filter(project_id = pid).filter(outcome__lte = Build.IN_PROGRESS),
+            "completedbuilds": Build.objects.exclude(outcome = Build.IN_PROGRESS).filter(project_id = pid),
             "prj" : {"name": prj.name, },
             "buildrequests" : prj.build_set.filter(outcome=Build.IN_PROGRESS),
             "builds" : _project_recent_build_list(prj),
