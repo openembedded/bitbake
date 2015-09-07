@@ -114,6 +114,10 @@ class ProcessServer(Process, BaseImplServer):
                 if self.quitout.poll():
                     self.quitout.recv()
                     self.quit = True
+                    try:
+                        self.runCommand(["stateForceShutdown"])
+                    except:
+                        pass
 
                 self.idle_commands(.1, [self.command_channel, self.quitout])
             except Exception:
@@ -123,6 +127,7 @@ class ProcessServer(Process, BaseImplServer):
         bb.event.unregister_UIHhandler(self.event_handle.value)
         self.command_channel.close()
         self.cooker.shutdown(True)
+        self.quitout.close()
 
     def idle_commands(self, delay, fds=None):
         nextsleep = delay
@@ -172,12 +177,16 @@ class BitBakeProcessServerConnection(BitBakeBaseServerConnection):
         self.event_queue = event_queue
         self.connection = ServerCommunicator(self.ui_channel, self.procserver.event_handle, self.procserver)
         self.events = self.event_queue
+        self.terminated = False
 
     def sigterm_terminate(self):
         bb.error("UI received SIGTERM")
         self.terminate()
 
     def terminate(self):
+        if self.terminated:
+            return
+        self.terminated = True
         def flushevents():
             while True:
                 try:
