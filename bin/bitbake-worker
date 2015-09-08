@@ -295,13 +295,12 @@ class BitbakeWorker(object):
     def serve(self):        
         while True:
             (ready, _, _) = select.select([self.input] + [i.input for i in self.build_pipes.values()], [] , [], 1)
-            if self.input in ready or len(self.queue):
-                start = len(self.queue)
+            if self.input in ready:
                 try:
                     self.queue = self.queue + self.input.read()
                 except (OSError, IOError):
                     pass
-                end = len(self.queue)
+            if len(self.queue):
                 self.handle_item("cookerconfig", self.handle_cookercfg)
                 self.handle_item("workerdata", self.handle_workerdata)
                 self.handle_item("runtask", self.handle_runtask)
