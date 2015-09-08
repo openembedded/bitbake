@@ -35,6 +35,8 @@ import errno
 import signal
 from commands import getstatusoutput
 from contextlib import contextmanager
+from ctypes import cdll
+
 
 logger = logging.getLogger("BitBake.Util")
 
@@ -1291,3 +1293,20 @@ def get_file_layer(filename, d):
         result = path_to_layer(filename)
 
     return result
+
+
+# Constant taken from http://linux.die.net/include/linux/prctl.h
+PR_SET_PDEATHSIG = 1
+
+class PrCtlError(Exception):
+    pass
+
+def signal_on_parent_exit(signame):
+    """
+    Trigger signame to be sent when the parent process dies
+    """
+    signum = getattr(signal, signame)
+    # http://linux.die.net/man/2/prctl
+    result = cdll['libc.so.6'].prctl(PR_SET_PDEATHSIG, signum)
+    if result != 0:
+        raise PrCtlError('prctl failed with error code %s' % result)
