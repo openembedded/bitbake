@@ -97,6 +97,13 @@ class PRServer(SimpleXMLRPCServer):
                 self.table.sync()
             self.table.sync_if_dirty()
 
+    def sigint_handler(self, signum, stack):
+        self.table.sync()
+
+    def sigterm_handler(self, signum, stack):
+        self.table.sync()
+        raise SystemExit
+
     def process_request(self, request, client_address):
         self.requestqueue.put((request, client_address))
 
@@ -147,7 +154,11 @@ class PRServer(SimpleXMLRPCServer):
         return
 
     def start(self):
-        pid = self.daemonize()
+        if self.daemon:
+            pid = self.daemonize()
+        else:
+            pid = self.fork()
+
         # Ensure both the parent sees this and the child from the work_forever log entry above
         logger.info("Started PRServer with DBfile: %s, IP: %s, PORT: %s, PID: %s" %
                      (self.dbfile, self.host, self.port, str(pid)))
@@ -180,6 +191,24 @@ class PRServer(SimpleXMLRPCServer):
         except OSError as e:
             raise Exception("%s [%d]" % (e.strerror, e.errno))
 
+        self.cleanup_handles()
+        os._exit(0)
+
+    def fork(self):
+        try:
+            pid = os.fork()
+            if pid > 0:
+                return pid
+        except OSError as e:
+            raise Exception("%s [%d]" % (e.strerror, e.errno))
+
+        bb.utils.signal_on_parent_exit("SIGTERM")
+        self.cleanup_handles()
+        os._exit(0)
+
+    def cleanup_handles(self):
+        signal.signal(signal.SIGINT, self.sigint_handler)
+        signal.signal(signal.SIGTERM, self.sigterm_handler)
         os.umask(0)
         os.chdir("/")
 
@@ -212,7 +241,6 @@ class PRServer(SimpleXMLRPCServer):
 
         self.work_forever()
         self.delpid()
-        os._exit(0)
 
 class PRServSingleton(object):
     def __init__(self, dbfile, logfile, interface):
@@ -223,7 +251,7 @@ class PRServSingleton(object):
         self.port = None
 
     def start(self):
-        self.prserv = PRServer(self.dbfile, self.logfile, self.interface)
+        self.prserv = PRServer(self.dbfile, self.logfile, self.interface, daemon=False)
         self.prserv.start()
         self.host, self.port = self.prserv.getinfo()
 
