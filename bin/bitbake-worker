@@ -80,7 +80,7 @@ def worker_flush():
         written = os.write(worker_pipe, worker_queue)
         worker_queue = worker_queue[written:]
     except (IOError, OSError) as e:
-        if e.errno != errno.EAGAIN:
+        if e.errno != errno.EAGAIN and e.errno != errno.EPIPE:
             raise
 
 def worker_child_fire(event, d):
@@ -158,6 +158,7 @@ def fork_off_task(cfg, data, workerdata, fn, task, taskname, appends, taskdepdat
             signal.signal(signal.SIGTERM, sigterm_handler)
             # Let SIGHUP exit as SIGTERM
             signal.signal(signal.SIGHUP, sigterm_handler)
+            bb.utils.signal_on_parent_exit("SIGTERM")
 
             # Save out the PID so that the event can include it the
             # events
@@ -297,7 +298,11 @@ class BitbakeWorker(object):
             (ready, _, _) = select.select([self.input] + [i.input for i in self.build_pipes.values()], [] , [], 1)
             if self.input in ready:
                 try:
-                    self.queue = self.queue + self.input.read()
+                    r = self.input.read()
+                    if len(r) == 0:
+                        # EOF on pipe, server must have terminated
+                        self.sigterm_exception(signal.SIGTERM, None)
+                    self.queue = self.queue + r
                 except (OSError, IOError):
                     pass
             if len(self.queue):
