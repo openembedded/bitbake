@@ -140,7 +140,7 @@ class LocalhostBEController(BuildEnvironmentController):
 
         retries = 0
         started = False
-        while not started and retries < 10:
+        while not started and retries < 50:
             started = _toaster_ui_started(toaster_ui_log_filepath, toaster_ui_log_filelength)
             import time
             logger.debug("localhostbecontroller: Waiting bitbake server to start")
@@ -150,7 +150,7 @@ class LocalhostBEController(BuildEnvironmentController):
         if not started:
             toaster_ui_log = open(os.path.join(self.be.builddir, "toaster_ui.log"), "r").read()
             toaster_server_log = open(os.path.join(self.be.builddir, "toaster_server.log"), "r").read()
-            raise BuildSetupException("localhostbecontroller: Bitbake server did not start in 5 seconds, aborting (Error: '%s' '%s')" % (toaster_ui_log, toaster_server_log))
+            raise BuildSetupException("localhostbecontroller: Bitbake server did not start in 25 seconds, aborting (Error: '%s' '%s')" % (toaster_ui_log, toaster_server_log))
 
         logger.debug("localhostbecontroller: Started bitbake server")
 
