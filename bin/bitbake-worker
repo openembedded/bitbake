@@ -87,7 +87,11 @@ def worker_child_fire(event, d):
     global worker_pipe
 
     data = "<event>" + pickle.dumps(event) + "</event>"
-    worker_pipe.write(data)
+    try:
+        worker_pipe.write(data)
+    except IOError:
+        sigterm_handler(None, None)
+        raise
 
 bb.event.worker_fire = worker_fire
 
