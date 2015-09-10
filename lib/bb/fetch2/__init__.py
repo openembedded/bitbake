@@ -862,7 +862,7 @@ def build_mirroruris(origud, mirrors, ld):
     replacements["BASENAME"] = origud.path.split("/")[-1]
     replacements["MIRRORNAME"] = origud.host.replace(':','.') + origud.path.replace('/', '.').replace('*', '.')
 
-    def adduri(ud, uris, uds):
+    def adduri(ud, uris, uds, mirrors):
         for line in mirrors:
             try:
                 (find, replace) = line
@@ -876,6 +876,12 @@ def build_mirroruris(origud, mirrors, ld):
                 logger.debug(1, "Mirror %s not in the list of trusted networks, skipping" %  (newuri))
                 continue
 
+            # Create a local copy of the mirrors minus the current line
+            # this will prevent us from recursively processing the same line
+            # as well as indirect recursion A -> B -> C -> A
+            localmirrors = list(mirrors)
+            localmirrors.remove(line)
+
             try:
                 newud = FetchData(newuri, ld)
                 newud.setup_localpath(ld)
@@ -885,16 +891,16 @@ def build_mirroruris(origud, mirrors, ld):
                 try:
                     # setup_localpath of file:// urls may fail, we should still see 
                     # if mirrors of the url exist
-                    adduri(newud, uris, uds)
+                    adduri(newud, uris, uds, localmirrors)
                 except UnboundLocalError:
                     pass
                 continue   
             uris.append(newuri)
             uds.append(newud)
 
-            adduri(newud, uris, uds)
+            adduri(newud, uris, uds, localmirrors)
 
-    adduri(origud, uris, uds)
+    adduri(origud, uris, uds, mirrors)
 
     return uris, uds
 
