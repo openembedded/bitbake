@@ -306,9 +306,16 @@ def start_daemon(dbfile, host, port, logfile):
     server = PRServer(os.path.abspath(dbfile), os.path.abspath(logfile), (ip,port))
     server.start()
 
+    # Sometimes, the port (i.e. localhost:0) indicated by the user does not match with
+    # the one the server actually is listening, so at least warn the user about it
+    _,rport = server.getinfo()
+    if port != rport:
+        sys.stdout.write("Server is listening at port %s instead of %s\n"
+                         % (rport,port))
     return 0
 
 def stop_daemon(host, port):
+    import glob
     ip = socket.gethostbyname(host)
     pidfile = PIDPREFIX % (ip, port)
     try:
@@ -319,8 +326,20 @@ def stop_daemon(host, port):
         pid = None
 
     if not pid:
-        sys.stderr.write("pidfile %s does not exist. Daemon not running?\n"
-                        % pidfile)
+        # when server starts at port=0 (i.e. localhost:0), server actually takes another port,
+        # so at least advise the user which ports the corresponding server is listening
+        ports = []
+        portstr = ""
+        for pf in glob.glob(PIDPREFIX % (ip,'*')):
+            bn = os.path.basename(pf)
+            root, _ = os.path.splitext(bn)
+            ports.append(root.split('_')[-1])
+        if len(ports):
+            portstr = "Wrong port? Other ports listening at %s: %s" % (host, ' '.join(ports))
+
+        sys.stderr.write("pidfile %s does not exist. Daemon not running? %s\n"
+                         % (pidfile,portstr))
+        return 1
 
     try:
         PRServerConnection(ip, port).terminate()
