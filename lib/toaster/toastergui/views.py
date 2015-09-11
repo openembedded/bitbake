@@ -47,9 +47,18 @@ import json
 from os.path import dirname
 import itertools
 
+import magic
 import logging
 
 logger = logging.getLogger("toaster")
+
+class MimeTypeFinder(object):
+    _magic = magic.Magic(flags = magic.MAGIC_MIME_TYPE)
+
+    # returns the mimetype for a file path
+    @classmethod
+    def get_mimetype(self, path):
+        return self._magic.id_filename(path)
 
 # all new sessions should come through the landing page;
 # determine in which mode we are running in, and redirect appropriately
@@ -67,8 +76,6 @@ def landing(request):
     context = {'lvs_nos' : Layer_Version.objects.all().count()}
 
     return render(request, 'landing.html', context)
-
-
 
 # returns a list for most recent builds;
 def _get_latest_builds(prj=None):
@@ -2710,40 +2717,11 @@ if True:
 
     def build_artifact(request, build_id, artifact_type, artifact_id):
         if artifact_type in ["cookerlog"]:
-            def _mimetype_for_artifact(path):
-                try:
-                    import magic
-
-                    # fair warning: this is a mess; there are multiple competing and incompatible
-                    # magic modules floating around, so we try some of the most common combinations
-
-                    try:    # we try ubuntu's python-magic 5.4
-                        m = magic.open(magic.MAGIC_MIME_TYPE)
-                        m.load()
-                        return m.file(path)
-                    except AttributeError:
-                        pass
-
-                    try:    # we try python-magic 0.4.6
-                        m = magic.Magic(magic.MAGIC_MIME)
-                        return m.from_file(path)
-                    except AttributeError:
-                        pass
-
-                    try:    # we try pip filemagic 1.6
-                        m = magic.Magic(flags=magic.MAGIC_MIME_TYPE)
-                        return m.id_filename(path)
-                    except AttributeError:
-                        pass
-
-                    return "binary/octet-stream"
-                except ImportError:
-                    return "binary/octet-stream"
             try:
                 build = Build.objects.get(pk = build_id)
                 file_name = build.cooker_log_path
                 fsock = open(file_name, "r")
-                content_type = _mimetype_for_artifact(file_name)
+                content_type = MimeTypeFinder.get_mimetype(file_name)
 
                 response = HttpResponse(fsock, content_type = content_type)
 
