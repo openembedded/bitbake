@@ -2710,7 +2710,6 @@ if True:
 
     def build_artifact(request, build_id, artifact_type, artifact_id):
         if artifact_type in ["cookerlog"]:
-            # these artifacts are saved after building, so they are on the server itself
             def _mimetype_for_artifact(path):
                 try:
                     import magic
@@ -2741,16 +2740,16 @@ if True:
                 except ImportError:
                     return "binary/octet-stream"
             try:
-                # match code with runbuilds.Command.archive()
-                build_artifact_storage_dir = os.path.join(ToasterSetting.objects.get(name="ARTIFACTS_STORAGE_DIR").value, "%d" % int(build_id))
-                file_name = os.path.join(build_artifact_storage_dir, "cooker_log.txt")
-
+                build = Build.objects.get(pk = build_id)
+                file_name = build.cooker_log_path
                 fsock = open(file_name, "r")
-                content_type=_mimetype_for_artifact(file_name)
+                content_type = _mimetype_for_artifact(file_name)
 
                 response = HttpResponse(fsock, content_type = content_type)
 
-                response['Content-Disposition'] = 'attachment; filename=' + os.path.basename(file_name)
+                disposition = 'attachment; filename=cooker.log'
+                response['Content-Disposition'] = disposition
+
                 return response
             except IOError:
                 context = {
