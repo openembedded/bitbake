@@ -3,6 +3,7 @@ import signal, time
 from SimpleXMLRPCServer import SimpleXMLRPCServer, SimpleXMLRPCRequestHandler
 import threading
 import Queue
+import socket
 
 try:
     import sqlite3
@@ -37,7 +38,6 @@ singleton = None
 class PRServer(SimpleXMLRPCServer):
     def __init__(self, dbfile, logfile, interface, daemon=True):
         ''' constructor '''
-        import socket
         try:
             SimpleXMLRPCServer.__init__(self, interface,
                                         logRequests=False, allow_none=True)
@@ -289,7 +289,8 @@ class PRServerConnection(object):
         return self.host, self.port
 
 def start_daemon(dbfile, host, port, logfile):
-    pidfile = PIDPREFIX % (host, port)
+    ip = socket.gethostbyname(host)
+    pidfile = PIDPREFIX % (ip, port)
     try:
         pf = file(pidfile,'r')
         pid = int(pf.readline().strip())
@@ -302,12 +303,14 @@ def start_daemon(dbfile, host, port, logfile):
                             % pidfile)
         return 1
 
-    server = PRServer(os.path.abspath(dbfile), os.path.abspath(logfile), (host,port))
+    server = PRServer(os.path.abspath(dbfile), os.path.abspath(logfile), (ip,port))
     server.start()
+
     return 0
 
 def stop_daemon(host, port):
-    pidfile = PIDPREFIX % (host, port)
+    ip = socket.gethostbyname(host)
+    pidfile = PIDPREFIX % (ip, port)
     try:
         pf = file(pidfile,'r')
         pid = int(pf.readline().strip())
@@ -320,7 +323,7 @@ def stop_daemon(host, port):
                         % pidfile)
 
     try:
-        PRServerConnection(host, port).terminate()
+        PRServerConnection(ip, port).terminate()
     except:
         logger.critical("Stop PRService %s:%d failed" % (host,port))
 
