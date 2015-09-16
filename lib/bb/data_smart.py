@@ -413,9 +413,11 @@ class DataSmart(MutableMapping):
         self.overrides = None
 
     def need_overrides(self):
-        if self.overrides is None:
-            if self.inoverride:
-                return
+        if self.overrides is not None:
+            return
+        if self.inoverride:
+            return
+        for count in range(5):
             self.inoverride = True
             # Can end up here recursively so setup dummy values
             self.overrides = []
@@ -424,6 +426,13 @@ class DataSmart(MutableMapping):
             self.overridesset = set(self.overrides)
             self.inoverride = False
             self.expand_cache = {}
+            newoverrides = (self.getVar("OVERRIDES", True) or "").split(":") or []
+            if newoverrides == self.overrides:
+                break
+            self.overrides = newoverrides
+            self.overridesset = set(self.overrides)
+        else:
+            bb.fatal("Overrides could not be expanded into a stable state after 5 iterations, overrides must be being referenced by other overridden variables in some recursive fashion. Please provide your configuration to bitbake-devel so we can laugh, er, I mean try and understand how to make it work.")
 
     def initVar(self, var):
         self.expand_cache = {}
