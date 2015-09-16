@@ -484,10 +484,8 @@ class DataSmart(MutableMapping):
             if '_' in var:
                 self._setvar_update_overrides(base, **loginfo)
 
-
             if base in self.overridevars:
-                self.overridevars.update(self.expandWithRefs(value, var).references)
-                self.internal_finalize(True)
+                self._setvar_update_overridevars(var, value)
             return
 
         if not var in self.dict:
@@ -520,8 +518,11 @@ class DataSmart(MutableMapping):
         self.varhistory.record(**loginfo)
 
         if var in self.overridevars:
-            self.overridevars.update(self.expandWithRefs(value, var).references)
-            self.internal_finalize(True)
+            self._setvar_update_overridevars(var, value)
+
+    def _setvar_update_overridevars(self, var, value):
+        self.overridevars.update(self.expandWithRefs(value, var).references)
+        self.internal_finalize(True)
 
     def _setvar_update_overrides(self, var, **loginfo):
         # aka pay the cookie monster
