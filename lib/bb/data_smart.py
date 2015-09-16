@@ -530,7 +530,13 @@ class DataSmart(MutableMapping):
             self._setvar_update_overridevars(var, value)
 
     def _setvar_update_overridevars(self, var, value):
-        self.overridevars.update(self.expandWithRefs(value, var).references)
+        new = self.expandWithRefs(value, var).references
+        while not new.issubset(self.overridevars):
+            nextnew = set()
+            self.overridevars.update(new)
+            for i in new:
+                nextnew.update(self.expandWithRefs(self.getVar(i, True), i).references)
+            new = nextnew
         self.internal_finalize(True)
 
     def _setvar_update_overrides(self, var, **loginfo):
