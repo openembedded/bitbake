@@ -644,6 +644,8 @@ class DataSmart(MutableMapping):
 
         if flag == "_defaultval" and '_' in var:
             self._setvar_update_overrides(var, **loginfo)
+        if flag == "_defaultval" and var in self.overridevars:
+            self._setvar_update_overridevars(var, value)
 
         if flag == "unexport" or flag == "export":
             if not "__exportlist" in self.dict:
