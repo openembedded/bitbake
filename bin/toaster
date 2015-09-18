@@ -197,7 +197,7 @@ if [ `basename \"$0\"` = `basename \"${SRCFILE}\"` ]; then
     fi
 
     if [ -n "$BUILDDIR" ]; then
-        printf "Error: It looks like you sourced oe-init-build-env. Toaster cannot start in build mode from an oe-core build environment.\n You should be starting Toaster from a new terminal window." 1>&2
+        printf "Error: It looks like you sourced oe-init-build-env. Toaster cannot start in build mode from an oe-core build environment.\n You should be starting Toaster from a new terminal window.\n" 1>&2
         exit 1
     fi
 
