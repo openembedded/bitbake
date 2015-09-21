@@ -51,6 +51,7 @@
                 </a>
     {% endif %}
             </div>
+    {% if build.outcome == build.SUCCEEDED or build.outcome == build.FAILED %}
             <div class="span2 lead">
                 {% if build.completed_on|format_build_date  %}
                     {{ build.completed_on|date:'d/m/y H:i' }}
@@ -58,6 +59,7 @@
                     {{ build.completed_on|date:'H:i' }}
                 {% endif %}
             </div>
+    {% endif %}
     {%if build.outcome == build.SUCCEEDED or build.outcome == build.FAILED %}
             <div class="span2 lead">
       {% if  build.errors.count %}
@@ -92,7 +94,7 @@
             </div>
     {%endif%}
     {%if build.outcome == build.IN_PROGRESS %}
-            <div class="span4">
+            <div class="span4 offset1">
                 <div class="progress" style="margin-top:5px;" data-toggle="tooltip" title="{{build.completeper}}% of tasks complete">
                     <div style="width: {{build.completeper}}%;" class="bar"></div>
                 </div>
