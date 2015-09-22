@@ -26,12 +26,25 @@
     {% endif %}
             {% if build.target_set.all.count > 0 %}
                 <span data-toggle="tooltip"
-                  {%if build.target_set.all.count > 1%}
-                    title="Targets: {%for target in build.target_set.all%}{{target.target}} {%endfor%}"
-                  {%endif%}
+                  {% if build.target_set.all.count > 1 %}
+                    title="Targets:
+                    {% for target in build.target_set.all %}
+                        {% if target.task %}
+                            {{target.target}}:{{target.task}}
+                        {% else %}
+                            {{target.target}}
+                        {% endif %}
+                    {% endfor %}"
+                  {% endif %}
                 >
-
-                  {{build.target_set.all.0.target}} {%if build.target_set.all.count > 1%}(+ {{build.target_set.all.count|add:"-1"}}){%endif%}
+                {% if build.target_set.all.0.task %}
+                    {{build.target_set.all.0.target}}:{{build.target_set.all.0.task}}
+                {% else %}
+                    {{build.target_set.all.0.target}}
+                {% endif %}
+                {% if build.target_set.all.count > 1 %}
+                    (+ {{build.target_set.all.count|add:"-1"}})
+                {% endif %}
                 </span>
              {% endif %}
     {%if build.outcome == build.SUCCEEDED or build.outcome == build.FAILED %}
