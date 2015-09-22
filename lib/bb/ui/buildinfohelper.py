@@ -338,26 +338,29 @@ class ORMWrapper(object):
         files = filedata['files']
         syms = filedata['syms']
 
-        # we insert directories, ordered by name depth
+        # always create the root directory as a special case;
+        # note that this is never displayed, so the owner, group,
+        # size, permission are irrelevant
+        tf_obj = Target_File.objects.create(target = target_obj,
+                                            path = '/',
+                                            size = 0,
+                                            owner = '',
+                                            group = '',
+                                            permission = '',
+                                            inodetype = Target_File.ITYPE_DIRECTORY)
+        tf_obj.save()
+
+        # insert directories, ordered by name depth
         for d in sorted(dirs, key=lambda x:len(x[-1].split("/"))):
             (user, group, size) = d[1:4]
             permission = d[0][1:]
             path = d[4].lstrip(".")
+
+            # we already created the root directory, so ignore any
+            # entry for it
             if len(path) == 0:
-                # we create the root directory as a special case
-                path = "/"
-                tf_obj = Target_File.objects.create(
-                        target = target_obj,
-                        path = path,
-                        size = size,
-                        inodetype = Target_File.ITYPE_DIRECTORY,
-                        permission = permission,
-                        owner = user,
-                        group = group,
-                        )
-                tf_obj.directory = tf_obj
-                tf_obj.save()
                 continue
+
             parent_path = "/".join(path.split("/")[:len(path.split("/")) - 1])
             if len(parent_path) == 0:
                 parent_path = "/"
