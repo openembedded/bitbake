@@ -118,7 +118,7 @@ class Command(NoArgsCommand):
             br.save()
             # transpose target information
             for brtarget in br.brtarget_set.all():
-                Target.objects.create(build = br.build, target= brtarget.target)
+                Target.objects.create(build=br.build, target=brtarget.target, task=brtarget.task)
             # transpose the launch errors in ToasterExceptions
             for brerror in br.brerror_set.all():
                 LogMessage.objects.create(build = br.build, level = LogMessage.EXCEPTION, message = brerror.errmsg)

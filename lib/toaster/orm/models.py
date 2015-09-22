@@ -270,7 +270,7 @@ class Project(models.Model):
                                 )
             for t in self.projecttarget_set.all():
                 BRTarget.objects.create(req = br, target = t.target, task = t.task)
-                Target.objects.create(build = br.build, target = t.target)
+                Target.objects.create(build = br.build, target = t.target, task = t.task)
 
             for v in self.projectvariable_set.all():
                 BRVariable.objects.create(req = br, name = v.name, value = v.value)
