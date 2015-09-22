@@ -21,12 +21,14 @@
 
 """Test cases for Toaster GUI and ReST."""
 
+import re
+
 from django.test import TestCase
 from django.core.urlresolvers import reverse
 from django.utils import timezone
 from orm.models import Project, Release, BitbakeVersion, ProjectTarget
 from orm.models import ReleaseLayerSourcePriority, LayerSource, Layer, Build
-from orm.models import Layer_Version, Recipe, Machine, ProjectLayer
+from orm.models import Layer_Version, Recipe, Machine, ProjectLayer, Target
 import json
 from bs4 import BeautifulSoup
 
@@ -377,3 +379,21 @@ class ProjectBuildsDisplayTest(TestCase):
 
         build_rows = self._get_rows_for_project(self.project1.id)
         self.assertEqual(len(build_rows), 2)
+
+    def test_show_tasks_in_projectbuilds(self):
+        build = Build.objects.create(**self.project1_build_success)
+        target = Target.objects.create(build=build, target='bash',
+                                       task='clean')
+        url = reverse("projectbuilds", args=(self.project1.id,))
+        response = self.client.get(url, follow=True)
+        result = re.findall('^ +bash:clean$', response.content, re.MULTILINE)
+        self.assertEqual(len(result), 1)
+
+    def test_show_tasks_in_allbuilds(self):
+        build = Build.objects.create(**self.project1_build_success)
+        target = Target.objects.create(build=build, target='bash',
+                                       task='clean')
+        url = reverse("all-builds")
+        response = self.client.get(url, follow=True)
+        result = re.findall('bash:clean', response.content, re.MULTILINE)
+        self.assertEqual(len(result), 3)
