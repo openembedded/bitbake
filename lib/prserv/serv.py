@@ -148,7 +148,7 @@ class PRServer(SimpleXMLRPCServer):
         while not self.quit:
             self.handle_request()
         self.handlerthread.join()
-        self.table.sync()
+        self.db.disconnect()
         logger.info("PRServer: stopping...")
         self.server_close()
         return
