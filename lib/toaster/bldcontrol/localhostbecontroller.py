@@ -262,8 +262,8 @@ class LocalhostBEController(BuildEnvironmentController):
                     self._shellcmd("git remote remove origin", localdirname)
                     self._shellcmd("git remote add origin \"%s\"" % giturl, localdirname)
                 else:
-                    logger.debug("localhostbecontroller: cloning %s:%s in %s" % (giturl, commit, localdirname))
-                    self._shellcmd("git clone \"%s\" --single-branch --branch \"%s\" \"%s\"" % (giturl, commit, localdirname))
+                    logger.debug("localhostbecontroller: cloning %s in %s" % (giturl, localdirname))
+                    self._shellcmd('git clone "%s" "%s"' % (giturl, localdirname))
 
             # branch magic name "HEAD" will inhibit checkout
             if commit != "HEAD":
