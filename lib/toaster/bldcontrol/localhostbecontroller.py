@@ -268,7 +268,8 @@ class LocalhostBEController(BuildEnvironmentController):
             # branch magic name "HEAD" will inhibit checkout
             if commit != "HEAD":
                 logger.debug("localhostbecontroller: checking out commit %s to %s " % (commit, localdirname))
-                self._shellcmd('git fetch --all && git reset --hard "origin/%s"' % commit, localdirname)
+                ref = commit if re.match('^[a-fA-F0-9]+$', commit) else 'origin/%s' % commit
+                self._shellcmd('git fetch --all && git reset --hard "%s"' % ref, localdirname)
 
             # take the localdirname as poky dir if we can find the oe-init-build-env
             if self.pokydirname is None and os.path.exists(os.path.join(localdirname, "oe-init-build-env")):
