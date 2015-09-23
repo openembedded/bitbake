@@ -183,7 +183,6 @@ class LocalhostBEController(BuildEnvironmentController):
     def getGitCloneDirectory(self, url, branch):
         """ Utility that returns the last component of a git path as directory
         """
-        import re
         components = re.split(r'[:\.\/]', url)
         base = components[-2] if components[-1] == "git" else components[-1]
 
