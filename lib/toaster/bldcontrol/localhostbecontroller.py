@@ -181,14 +181,9 @@ class LocalhostBEController(BuildEnvironmentController):
         logger.debug("localhostbecontroller: Stopped bitbake server")
 
     def getGitCloneDirectory(self, url, branch):
-        """ Utility that returns the last component of a git path as directory
-        """
-        components = re.split(r'[:\.\/]', url)
-        base = components[-2] if components[-1] == "git" else components[-1]
-
+        """Construct unique clone directory name out of url and branch."""
         if branch != "HEAD":
-            return "_%s_%s.toaster_cloned" % (base, branch)
-
+            return "_%s_%s.toaster_cloned" % (re.sub('[:/]', '_', url), branch)
 
         # word of attention; this is a localhost-specific issue; only on the localhost we expect to have "HEAD" releases
         # which _ALWAYS_ means the current poky checkout
