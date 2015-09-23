@@ -321,7 +321,10 @@ class toaster_cases_base(unittest.TestCase):
             log_path = log_dir + os.sep +  self.browser + '-' +\
                     item + '-' + add_name + '-' + str(self.screenshot_sequence) + '.png'
             if item == 'native':
-                os.system("scrot " + log_path)
+                if self.host_os == "linux":
+                    os.system("scrot " + log_path)
+                elif self.host_os=="darwin":
+                    os.system("screencapture -x " + log_path)
             elif item == 'selenium':
                 self.driver.get_screenshot_as_file(log_path)
             self.screenshot_sequence += 1
