@@ -1249,6 +1249,7 @@ def edit_bblayers_conf(bblayers_conf, add, remove):
                     bblayers.append(addlayer)
                 else:
                     notadded.append(addlayer)
+            del addlayers[:]
 
         if updated:
             return (bblayers, None, 2, False)
