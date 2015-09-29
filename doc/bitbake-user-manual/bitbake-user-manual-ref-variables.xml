@@ -1173,6 +1173,15 @@
             </glossdef>
         </glossentry>
 
+        <glossentry id='var-BBTARGETS'><glossterm>BBTARGETS</glossterm>
+            <glossdef>
+                <para>
+                    Allows you to use a configuration file to add to the list
+                    of command-line target recipes you want to build.
+                </para>
+            </glossdef>
+        </glossentry>
+
         <glossentry id='var-BBVERSIONS'><glossterm>BBVERSIONS</glossterm>
             <glossdef>
                 <para>
