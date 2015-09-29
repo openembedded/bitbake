@@ -162,6 +162,8 @@ class ORMWrapper(object):
             build.bitbake_version=build_info['bitbake_version']
             build.save()
 
+            Target.objects.filter(build = build).delete()
+
         else:
             build = Build.objects.create(
                                     project = prj,
@@ -181,6 +183,19 @@ class ORMWrapper(object):
             buildrequest.save()
 
         return build
+
+    def create_target_objects(self, target_info):
+        assert 'build' in target_info
+        assert 'targets' in target_info
+
+        targets = []
+        for tgt_name in target_info['targets']:
+            tgt_object = Target.objects.create( build = target_info['build'],
+                                    target = tgt_name,
+                                    is_image = False,
+                                    )
+            targets.append(tgt_object)
+        return targets
 
     def update_build_object(self, build, errors, warnings, taskfailures):
         assert isinstance(build,Build)
@@ -911,7 +926,7 @@ class BuildInfoHelper(object):
         target_information['targets'] = event._pkgs
         target_information['build'] = build_obj
 
-        self.internal_state['targets'] = Target.objects.filter(build=target_information['build'])
+        self.internal_state['targets'] = self.orm_wrapper.create_target_objects(target_information)
 
         # Save build configuration
         data = self.server.runCommand(["getAllKeysWithFlags", ["doc", "func"]])[0]
