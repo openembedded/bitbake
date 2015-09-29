@@ -229,7 +229,8 @@ class ToasterTable(TemplateView):
         """Creates a query based on the model's search_allowed_fields"""
 
         if not hasattr(self.queryset.model, 'search_allowed_fields'):
-            raise Exception("Err Search fields aren't defined in the model")
+            raise Exception("Search fields aren't defined in the model %s"
+                           % self.queryset.model)
 
         search_queries = []
         for st in search_term.split(" "):
