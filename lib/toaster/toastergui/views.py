@@ -45,6 +45,7 @@ from django.utils import formats
 from toastergui.templatetags.projecttags import json as jsonfilter
 import json
 from os.path import dirname
+from functools import wraps
 import itertools
 
 import magic
@@ -2313,6 +2314,18 @@ if True:
             context["distro"] = "-- not set yet"
 
         return context
+
+    def xhr_response(fun):
+        """
+        Decorator for REST methods.
+        calls jsonfilter on the returned dictionary and returns result
+        as HttpResponse object of content_type application/json
+        """
+        @wraps(fun)
+        def wrapper(*args, **kwds):
+            return HttpResponse(jsonfilter(fun(*args, **kwds)),
+                                content_type="application/json")
+        return wrapper
 
     def jsunittests(request):
       """ Provides a page for the js unit tests """
