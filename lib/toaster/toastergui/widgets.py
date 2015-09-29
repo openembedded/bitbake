@@ -38,6 +38,9 @@ import collections
 import operator
 import re
 
+import logging
+logger = logging.getLogger("toaster")
+
 from toastergui.views import objtojson
 
 class ToasterTable(TemplateView):
@@ -264,6 +267,7 @@ class ToasterTable(TemplateView):
         data = cache.get(cache_name)
 
         if data:
+            logger.debug("Got cache data for table '%s'" % self.title)
             return data
 
         self.setup_columns(**kwargs)
