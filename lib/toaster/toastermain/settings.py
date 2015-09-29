@@ -23,6 +23,11 @@
 
 import os, re
 
+# Temporary toggle for Image customisation
+CUSTOM_IMAGE = False
+if os.environ.get("CUSTOM_IMAGE", None) is not None:
+    CUSTOM_IMAGE = True
+
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 

@@ -1867,6 +1867,7 @@ def managedcontextprocessor(request):
     ret = {
         "projects": Project.objects.all(),
         "DEBUG" : toastermain.settings.DEBUG,
+        "CUSTOM_IMAGE" : toastermain.settings.CUSTOM_IMAGE,
         "TOASTER_BRANCH": toastermain.settings.TOASTER_BRANCH,
         "TOASTER_REVISION" : toastermain.settings.TOASTER_REVISION,
     }
