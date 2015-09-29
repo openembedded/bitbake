@@ -26,12 +26,12 @@
 import operator,re
 
 from django.db.models import F, Q, Sum, Count, Max
-from django.db import IntegrityError
+from django.db import IntegrityError, Error
 from django.shortcuts import render, redirect
 from orm.models import Build, Target, Task, Layer, Layer_Version, Recipe, LogMessage, Variable
 from orm.models import Task_Dependency, Recipe_Dependency, Package, Package_File, Package_Dependency
 from orm.models import Target_Installed_Package, Target_File, Target_Image_File, BuildArtifact
-from orm.models import BitbakeVersion
+from orm.models import BitbakeVersion, CustomImageRecipe
 from bldcontrol import bbcontroller
 from django.views.decorators.cache import cache_control
 from django.core.urlresolvers import reverse, resolve
@@ -2596,7 +2596,155 @@ if True:
 
         return HttpResponse(jsonfilter({"error": "ok",}), content_type = "application/json")
 
+    @xhr_response
+    def xhr_customrecipe(request):
+        """
+        Custom image recipe REST API
 
+        Entry point: /xhr_customrecipe/
+        Method: POST
+
+        Args:
+            name: name of custom recipe to create
+            project: target project id of orm.models.Project
+            base: base recipe id of orm.models.Recipe
+
+        Returns:
+            {"error": "ok",
+             "url": <url of the created recipe>}
+            or
+            {"error": <error message>}
+        """
+        # check if request has all required parameters
+        for param in ('name', 'project', 'base'):
+            if param not in request.POST:
+                return {"error": "Missing parameter '%s'" % param}
+
+        # get project and baserecipe objects
+        params = {}
+        for name, model in [("project", Project),
+                            ("base", Recipe)]:
+            value = request.POST[name]
+            try:
+                params[name] = model.objects.get(id=value)
+            except model.DoesNotExist:
+                return {"error": "Invalid %s id %s" % (name, value)}
+
+        # create custom recipe
+        try:
+            recipe = CustomImageRecipe.objects.create(
+                         name=request.POST["name"],
+                         base_recipe=params["base"],
+                         project=params["project"])
+        except Error as err:
+            return {"error": "Can't create custom recipe: %s" % err}
+
+        # Find the package list from the last build of this recipe/target
+        build = Build.objects.filter(target__target=params['base'].name,
+                    project=params['project']).last()
+
+        if build:
+            # Copy in every package
+            # We don't want these packages to be linked to anything because
+            # that underlying data may change e.g. delete a build
+            for package in build.package_set.all():
+                # Create the duplicate
+                package.pk = None
+                package.save()
+                # Disassociate the package from the build
+                package.build = None
+                package.save()
+                recipe.packages.add(package)
+        else:
+            logger.warn("No packages found for this base recipe")
+
+        return {"error": "ok",
+                "url": reverse('customrecipe', args=(params['project'].pk,
+                                                     recipe.id))}
+
+    @xhr_response
+    def xhr_customrecipe_id(request, recipe_id):
+        """
+        Set of ReST API processors working with recipe id.
+
+        Entry point: /xhr_customrecipe/<recipe_id>
+
+        Methods:
+            GET - Get details of custom image recipe
+            DELETE - Delete custom image recipe
+
+        Returns:
+            GET:
+            {"error": "ok",
+             "info": dictionary of field name -> value pairs
+                     of the CustomImageRecipe model}
+            DELETE:
+            {"error": "ok"}
+            or
+            {"error": <error message>}
+        """
+        objects = CustomImageRecipe.objects.filter(id=recipe_id)
+        if not objects:
+            return {"error": "Custom recipe with id=%s "
+                             "not found" % recipe_id}
+        if request.method == 'GET':
+            values = CustomImageRecipe.objects.filter(id=recipe_id).values()
+            if values:
+                return {"error": "ok", "info": values[0]}
+            else:
+                return {"error": "Custom recipe with id=%s "
+                                 "not found" % recipe_id}
+            return {"error": "ok", "info": objects.values()[0]}
+        elif request.method == 'DELETE':
+            objects.delete()
+            return {"error": "ok"}
+        else:
+            return {"error": "Method %s is not supported" % request.method}
+
+    @xhr_response
+    def xhr_customrecipe_packages(request, recipe_id, package_id):
+        """
+        ReST API to add/remove packages to/from custom recipe.
+
+        Entry point: /xhr_customrecipe/<recipe_id>/packages/
+
+        Methods:
+            PUT - Add package to the recipe
+            DELETE - Delete package from the recipe
+
+        Returns:
+            {"error": "ok"}
+            or
+            {"error": <error message>}
+        """
+        try:
+            recipe = CustomImageRecipe.objects.get(id=recipe_id)
+        except CustomImageRecipe.DoesNotExist:
+            return {"error": "Custom recipe with id=%s "
+                             "not found" % recipe_id}
+
+        if request.method == 'GET' and not package_id:
+            return {"error": "ok",
+                    "packages": list(recipe.packages.values_list('id'))}
+
+        try:
+            package = Package.objects.get(id=package_id)
+        except Package.DoesNotExist:
+            return {"error": "Package with id=%s "
+                             "not found" % package_id}
+
+        if request.method == 'PUT':
+            recipe.packages.add(package)
+            return {"error": "ok"}
+        elif request.method == 'DELETE':
+            if package in recipe.packages.all():
+                recipe.packages.remove(package)
+                return {"error": "ok"}
+            else:
+                return {"error": "Package '%s' is not in the recipe '%s'" % \
+                                 (package.name, recipe.name)}
+        else:
+            return {"error": "Method %s is not supported" % request.method}
 
     def importlayer(request, pid):
         template = "importlayer.html"
