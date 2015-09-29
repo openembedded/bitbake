@@ -551,7 +551,7 @@ class Task_Dependency(models.Model):
 
 class Package(models.Model):
     search_allowed_fields = ['name', 'version', 'revision', 'recipe__name', 'recipe__version', 'recipe__license', 'recipe__layer_version__layer__name', 'recipe__layer_version__branch', 'recipe__layer_version__commit', 'recipe__layer_version__local_path', 'installed_name']
-    build = models.ForeignKey('Build')
+    build = models.ForeignKey('Build', null=True)
     recipe = models.ForeignKey('Recipe', null=True)
     name = models.CharField(max_length=100)
     installed_name = models.CharField(max_length=100, default='')
@@ -1171,6 +1171,15 @@ class ProjectLayer(models.Model):
 
     class Meta:
         unique_together = (("project", "layercommit"),)
+
+class CustomImageRecipe(models.Model):
+    name = models.CharField(max_length=100)
+    base_recipe = models.ForeignKey(Recipe)
+    packages = models.ManyToManyField(Package)
+    project = models.ForeignKey(Project)
+
+    class Meta:
+        unique_together = ("name", "project")
 
 class ProjectVariable(models.Model):
     project = models.ForeignKey(Project)
