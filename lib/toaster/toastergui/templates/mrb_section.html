@@ -3,13 +3,19 @@
 {% load humanize %}
 
 
-{%if mru.count > 0%}
+{%if mru and mru.count > 0%}
 
-  <div class="page-header">
+  {%if mrb_type == 'project' %}
+      <h2>
+      Latest project builds
+      </h2>
+  {% else %}
+    <div class="page-header">
       <h1>
-          Latest builds
-       </h1>
-  </div>
+      Latest builds
+      </h1>
+    </div>
+  {% endif %}
   <div id="latest-builds">
   {% for build in mru %}
     <div class="alert {%if build.outcome == build.SUCCEEDED%}alert-success{%elif build.outcome == build.FAILED%}alert-error{%else%}alert-info{%endif%} project-name ">

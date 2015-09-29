@@ -21,13 +21,17 @@
     });
 </script>
 
+ {% with mrb_type='project' %}
+     {% include "mrb_section.html" %}
+ {% endwith %}
+
       <h2>
         {% if request.GET.filter and objects.paginator.count > 0 or request.GET.search and objects.paginator.count > 0 %}
-            {{objects.paginator.count}} build{{objects.paginator.count|pluralize}} found
+            {{objects.paginator.count}} project build{{objects.paginator.count|pluralize}} found
         {%elif request.GET.filter and objects.paginator.count == 0 or request.GET.search and objects.paginator.count == 0 %}
-            No builds found
+            No project builds found
         {%else%}
-            Project builds
+            All project builds
         {%endif%}
         <i class="icon-question-sign get-help heading-help" title="This page lists all the builds for the current project"></i>
       </h2>

@@ -2904,6 +2904,9 @@ if True:
         context['project'] = prj
         _set_parameters_values(pagesize, orderby, request)
 
+        # add the most recent builds for this project
+        context['mru'] = _get_latest_builds(prj)
+
         return context
 
 
