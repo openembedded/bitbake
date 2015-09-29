@@ -974,6 +974,8 @@ class LayerIndexLayerSource(LayerSource):
                 ro.file_path = ri['filepath'] + "/" + ri['filename']
                 if 'inherits' in ri:
                     ro.is_image = 'image' in ri['inherits'].split()
+                else: # workaround for old style layer index
+                    ro.is_image = "-image-" in ri['pn']
                 ro.save()
             except IntegrityError as e:
                 logger.debug("Failed saving recipe, ignoring: %s (%s:%s)" % (e, ro.layer_version, ri['filepath']+"/"+ri['filename']))
