@@ -403,8 +403,8 @@ class LayerRecipesTable(RecipesTable):
 
 
     def setup_queryset(self, *args, **kwargs):
-        RecipesTable.setup_queryset(self, *args, **kwargs)
-        self.queryset = self.queryset.filter(layer_version__pk=int(kwargs['layerid']))
+        self.queryset = \
+                Recipe.objects.filter(layer_version__pk=int(kwargs['layerid']))
 
         self.static_context_extra['in_prj'] = ProjectLayer.objects.filter(Q(project=kwargs['pid']) & Q(layercommit=kwargs['layerid'])).count()
 
@@ -418,6 +418,8 @@ class LayerRecipesTable(RecipesTable):
         self.add_column(title="Description",
                         field_name="get_description_or_summary")
 
+        self.add_column(title="Version",
+                        field_name="version")
 
         build_recipe_template ='<button class="btn btn-block build-recipe-btn" data-recipe-name="{{data.name}}" {%if extra.in_prj == 0 %}disabled="disabled"{%endif%}>Build recipe</button>'
 
