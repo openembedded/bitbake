@@ -23,9 +23,11 @@
 import os
 import sys
 import re
+import shutil
 from django.db import transaction
 from django.db.models import Q
 from bldcontrol.models import BuildEnvironment, BRLayer, BRVariable, BRTarget, BRBitbake
+from orm.models import CustomImageRecipe, Layer, Layer_Version, ProjectLayer
 import subprocess
 
 from toastermain import settings
@@ -197,7 +199,7 @@ class LocalhostBEController(BuildEnvironmentController):
         return local_checkout_path
 
 
-    def setLayers(self, bitbakes, layers):
+    def setLayers(self, bitbakes, layers, targets):
         """ a word of attention: by convention, the first layer for any build will be poky! """
 
         assert self.be.sourcedir is not None
@@ -299,6 +301,51 @@ class LocalhostBEController(BuildEnvironmentController):
         if not os.path.exists(bblayerconf):
             raise BuildSetupException("BE is not consistent: bblayers.conf file missing at %s" % bblayerconf)
 
+        # 6. create custom layer and add custom recipes to it
+        layerpath = os.path.join(self.be.sourcedir, "_meta-toaster-custom")
+        if os.path.isdir(layerpath):
+            shutil.rmtree(layerpath) # remove leftovers from previous builds
+        for target in targets:
+            try:
+                customrecipe = CustomImageRecipe.objects.get(name=target.target,
+                                                             project=bitbakes[0].req.project)
+            except CustomImageRecipe.DoesNotExist:
+                continue # not a custom recipe, skip
+
+            # create directory structure
+            for name in ("conf", "recipes"):
+                path = os.path.join(layerpath, name)
+                if not os.path.isdir(path):
+                    os.makedirs(path)
+
+            # create layer.oonf
+            config = os.path.join(layerpath, "conf", "layer.conf")
+            if not os.path.isfile(config):
+                with open(config, "w") as conf:
+                    conf.write('BBPATH .= ":${LAYERDIR}"\nBBFILES += "${LAYERDIR}/recipes/*.bb"\n')
+
+            # create recipe
+            recipe = os.path.join(layerpath, "recipes", "%s.bb" % target.target)
+            with open(recipe, "w") as recipef:
+                recipef.write("require %s\n" % customrecipe.base_recipe.recipe.file_path)
+                packages = [pkg.name for pkg in customrecipe.packages.all()]
+                if packages:
+                    recipef.write('IMAGE_INSTALL = "%s"\n' % ' '.join(packages))
+
+            # create *Layer* objects needed for build machinery to work
+            layer = Layer.objects.get_or_create(name="Toaster Custom layer",
+                                                summary="Layer for custom recipes",
+                                                vcs_url="file://%s" % layerpath)[0]
+            breq = target.req
+            lver = Layer_Version.objects.get_or_create(project=breq.project, layer=layer,
+                                                       dirpath=layerpath, build=breq.build)[0]
+            ProjectLayer.objects.get_or_create(project=breq.project, layercommit=lver,
+                                               optional=False)
+            BRLayer.objects.get_or_create(req=breq, name=layer.name, dirpath=layerpath,
+                                          giturl="file://%s" % layerpath)
+        if os.path.isdir(layerpath):
+            layerlist.append(layerpath)
+
         BuildEnvironmentController._updateBBLayers(bblayerconf, layerlist)
 
         self.islayerset = True
@@ -316,7 +363,7 @@ class LocalhostBEController(BuildEnvironmentController):
 
     def triggerBuild(self, bitbake, layers, variables, targets):
         # set up the buid environment with the needed layers
-        self.setLayers(bitbake, layers)
+        self.setLayers(bitbake, layers, targets)
         self.writeConfFile("conf/toaster-pre.conf", variables)
         self.writeConfFile("conf/toaster.conf", raw = "INHERIT+=\"toaster buildhistory\"")
 
