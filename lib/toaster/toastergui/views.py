@@ -2328,20 +2328,20 @@ if True:
         return wrapper
 
     def jsunittests(request):
-      """ Provides a page for the js unit tests """
-      bbv = BitbakeVersion.objects.filter(branch="master").first()
-      release = Release.objects.filter(bitbake_version=bbv).first()
+        """ Provides a page for the js unit tests """
+        bbv = BitbakeVersion.objects.filter(branch="master").first()
+        release = Release.objects.filter(bitbake_version=bbv).first()
 
-      name = "_js_unit_test_prj_"
+        name = "_js_unit_test_prj_"
 
-      # If there is an existing project by this name delete it. We don't want
-      # Lots of duplicates cluttering up the projects.
-      Project.objects.filter(name=name).delete()
+        # If there is an existing project by this name delete it. We don't want
+        # Lots of duplicates cluttering up the projects.
+        Project.objects.filter(name=name).delete()
 
-      new_project = Project.objects.create_project(name=name, release=release)
+        new_project = Project.objects.create_project(name=name, release=release)
 
-      context = { 'project' : new_project }
-      return render(request, "js-unit-tests.html", context)
+        context = { 'project' : new_project }
+        return render(request, "js-unit-tests.html", context)
 
     from django.views.decorators.csrf import csrf_exempt
     @csrf_exempt
