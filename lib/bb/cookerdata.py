@@ -63,9 +63,9 @@ class ConfigParameters(object):
             raise Exception("Unable to set configuration option 'cmd' on the server: %s" % error)
 
         if not self.options.pkgs_to_build:
-            bbpkgs, error = server.runCommand(["getVariable", "BBPKGS"])
+            bbpkgs, error = server.runCommand(["getVariable", "BBTARGETS"])
             if error:
-                raise Exception("Unable to get the value of BBPKGS from the server: %s" % error)
+                raise Exception("Unable to get the value of BBTARGETS from the server: %s" % error)
             if bbpkgs:
                 self.options.pkgs_to_build.extend(bbpkgs.split())
 
