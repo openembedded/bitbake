@@ -828,6 +828,7 @@ class LayerIndexLayerSource(LayerSource):
         import urllib2, urlparse, json
         import os
         proxy_settings = os.environ.get("http_proxy", None)
+        oe_core_layer = 'openembedded-core'
 
         def _get_json_response(apiurl = self.apiurl):
             _parsedurl = urlparse.urlparse(apiurl)
@@ -872,6 +873,25 @@ class LayerIndexLayerSource(LayerSource):
         if not connection.features.autocommits_when_autocommit_is_off:
             transaction.set_autocommit(False)
         for li in layers_info:
+            # Special case for the openembedded-core layer
+            if li['name'] == oe_core_layer:
+                try:
+                    # If we have an existing openembedded-core for example
+                    # from the toasterconf.json augment the info using the
+                    # layerindex rather than duplicate it
+                    oe_core_l =  Layer.objects.get(name=oe_core_layer)
+                    # Take ownership of the layer as now coming from the
+                    # layerindex
+                    oe_core_l.layer_source = self
+                    oe_core_l.up_id = li['id']
+                    oe_core_l.summary = li['summary']
+                    oe_core_l.description = li['description']
+                    oe_core_l.save()
+                    continue
+
+                except DoesNotExist:
+                    pass
+
             l, created = Layer.objects.get_or_create(layer_source = self, name = li['name'])
             l.up_id = li['id']
             l.up_date = li['updated']
@@ -882,6 +902,7 @@ class LayerIndexLayerSource(LayerSource):
             l.summary = li['summary']
             l.description = li['description']
             l.save()
+
         if not connection.features.autocommits_when_autocommit_is_off:
             transaction.set_autocommit(True)
 
