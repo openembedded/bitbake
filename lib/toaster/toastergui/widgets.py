@@ -253,11 +253,14 @@ class ToasterTable(TemplateView):
         search = request.GET.get("search", None)
         filters = request.GET.get("filter", None)
         orderby = request.GET.get("orderby", None)
+        nocache = request.GET.get("nocache", None)
 
         # Make a unique cache name
         cache_name = self.__class__.__name__
 
         for key, val in request.GET.iteritems():
+            if key == 'nocache':
+                continue
             cache_name = cache_name + str(key) + str(val)
 
         for key, val in kwargs.iteritems():
@@ -265,6 +268,10 @@ class ToasterTable(TemplateView):
 
         # No special chars allowed in the cache name apart from dash
         cache_name = re.sub(r'[^A-Za-z0-9-]', "", cache_name)
+
+        if nocache:
+            cache.delete(cache_name)
+
         data = cache.get(cache_name)
 
         if data:
