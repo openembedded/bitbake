@@ -1155,12 +1155,12 @@ class Layer_Version(models.Model):
         return project.compatible_layerversions(layer_name = self.layer.name)
 
     def get_vcs_reference(self):
-        if self.commit is not None and len(self.commit) > 0:
-            return self.commit
         if self.branch is not None and len(self.branch) > 0:
             return self.branch
         if self.up_branch is not None:
             return self.up_branch.name
+        if self.commit is not None and len(self.commit) > 0:
+            return self.commit
         return ("Cannot determine the vcs_reference for layer version %s" % vars(self))
 
     def get_detailspage_url(self, project_id):
