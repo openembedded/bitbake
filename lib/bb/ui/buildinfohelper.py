@@ -66,6 +66,7 @@ class ORMWrapper(object):
 
     def __init__(self):
         self.layer_version_objects = []
+        self.layer_version_built = []
         self.task_objects = {}
         self.recipe_objects = {}
 
@@ -254,32 +255,59 @@ class ORMWrapper(object):
 
         assert not recipe_information['file_path'].startswith("/")      # we should have layer-relative paths at all times
 
-        recipe_object, created = self._cached_get_or_create(Recipe, layer_version=recipe_information['layer_version'],
+
+        def update_recipe_obj(recipe_object):
+            object_changed = False
+            for v in vars(recipe_object):
+                if v in recipe_information.keys():
+                    object_changed = True
+                    vars(recipe_object)[v] = recipe_information[v]
+
+            if object_changed:
+                recipe_object.save()
+
+        recipe, created = self._cached_get_or_create(Recipe, layer_version=recipe_information['layer_version'],
                                      file_path=recipe_information['file_path'], pathflags = recipe_information['pathflags'])
+
+        update_recipe_obj(recipe)
+
+        # Create a copy of the recipe for historical puposes and update it
+        for built_layer in self.layer_version_built:
+            if built_layer.layer == recipe_information['layer_version'].layer:
+                built_recipe, c = self._cached_get_or_create(Recipe,
+                        layer_version=built_layer,
+                        file_path=recipe_information['file_path'],
+                        pathflags = recipe_information['pathflags'])
+                update_recipe_obj(built_recipe)
+                break
+
+
+
         if created and must_exist:
             raise NotExisting("Recipe object created when expected to exist", recipe_information)
 
-        object_changed = False
-        for v in vars(recipe_object):
-            if v in recipe_information.keys():
-                object_changed = True
-                vars(recipe_object)[v] = recipe_information[v]
-
-        if object_changed:
-            recipe_object.save()
-
-        return recipe_object
+        return recipe
 
     def get_update_layer_version_object(self, build_obj, layer_obj, layer_version_information):
         if isinstance(layer_obj, Layer_Version):
             # We already found our layer version for this build so just
             # update it with the new build information
             logger.debug("We found our layer from toaster")
-            layer_obj.build = build_obj
             layer_obj.local_path = layer_version_information['local_path']
-            layer_obj.commit = layer_version_information['commit']
             layer_obj.save()
             self.layer_version_objects.append(layer_obj)
+
+            # create a new copy of this layer version as a snapshot for
+            # historical purposes
+            layer_copy, c = Layer_Version.objects.get_or_create(build=build_obj,
+                            layer=layer_obj.layer,
+                            commit=layer_version_information['commit'],
+                            local_path = layer_version_information['local_path'],
+                            )
+            logger.warning("created new historical layer version %d", layer_copy.pk)
+
+            self.layer_version_built.append(layer_copy)
+
             return layer_obj
 
         assert isinstance(build_obj, Build)
