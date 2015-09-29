@@ -94,8 +94,8 @@ class ORMWrapper(object):
 
         created = False
         if not key in vars(self)[dictname].keys():
-            vars(self)[dictname][key] = clazz.objects.create(**kwargs)
-            created = True
+            vars(self)[dictname][key], created = \
+                clazz.objects.get_or_create(**kwargs)
 
         return (vars(self)[dictname][key], created)
 
@@ -271,6 +271,17 @@ class ORMWrapper(object):
         return recipe_object
 
     def get_update_layer_version_object(self, build_obj, layer_obj, layer_version_information):
+        if isinstance(layer_obj, Layer_Version):
+            # We already found our layer version for this build so just
+            # update it with the new build information
+            logger.debug("We found our layer from toaster")
+            layer_obj.build = build_obj
+            layer_obj.local_path = layer_version_information['local_path']
+            layer_obj.commit = layer_version_information['commit']
+            layer_obj.save()
+            self.layer_version_objects.append(layer_obj)
+            return layer_obj
+
         assert isinstance(build_obj, Build)
         assert isinstance(layer_obj, Layer)
         assert 'branch' in layer_version_information
@@ -320,8 +331,15 @@ class ORMWrapper(object):
                     localdirname = os.path.join(bc.be.sourcedir, localdirname)
                 #logger.debug(1, "Localdirname %s lcal_path %s" % (localdirname, layer_information['local_path']))
                 if localdirname.startswith(layer_information['local_path']):
+                  # If the build request came from toaster this field
+                  # should contain the information from the layer_version
+                  # That created this build request.
+                    if brl.layer_version:
+                        return brl.layer_version
+
                     # we matched the BRLayer, but we need the layer_version that generated this BR; reverse of the Project.schedule_build()
                     #logger.debug(1, "Matched %s to BRlayer %s" % (pformat(layer_information["local_path"]), localdirname))
+
                     for pl in buildrequest.project.projectlayer_set.filter(layercommit__layer__name = brl.name):
                         if pl.layercommit.layer.vcs_url == brl.giturl :
                             layer = pl.layercommit.layer
@@ -674,6 +692,7 @@ class BuildInfoHelper(object):
     def __init__(self, server, has_build_history = False):
         self.internal_state = {}
         self.internal_state['taskdata'] = {}
+        self.internal_state['targets'] = []
         self.task_order = 0
         self.autocommit_step = 1
         self.server = server
@@ -752,8 +771,15 @@ class BuildInfoHelper(object):
                 if not localdirname.startswith("/"):
                     localdirname = os.path.join(bc.be.sourcedir, localdirname)
                 if path.startswith(localdirname):
+                    # If the build request came from toaster this field
+                    # should contain the information from the layer_version
+                    # That created this build request.
+                    if brl.layer_version:
+                        return brl.layer_version
+
                     #logger.warn("-- managed: matched path %s with layer %s " % (path, localdirname))
                     # we matched the BRLayer, but we need the layer_version that generated this br
+
                     for lvo in self.orm_wrapper.layer_version_objects:
                         if brl.name == lvo.layer.name:
                             return lvo

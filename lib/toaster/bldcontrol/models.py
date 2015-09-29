@@ -1,6 +1,6 @@
 from django.db import models
 from django.core.validators import MaxValueValidator, MinValueValidator
-from orm.models import Project, ProjectLayer, ProjectVariable, ProjectTarget, Build
+from orm.models import Project, ProjectLayer, ProjectVariable, ProjectTarget, Build, Layer_Version
 
 # a BuildEnvironment is the equivalent of the "build/" directory on the localhost
 class BuildEnvironment(models.Model):
@@ -137,6 +137,7 @@ class BRLayer(models.Model):
     giturl      = models.CharField(max_length = 254)
     commit      = models.CharField(max_length = 254)
     dirpath     = models.CharField(max_length = 254)
+    layer_version = models.ForeignKey(Layer_Version, null=True)
 
 class BRBitbake(models.Model):
     req         = models.ForeignKey(BuildRequest, unique = True)    # only one bitbake for a request
