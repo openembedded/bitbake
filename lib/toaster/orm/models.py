@@ -191,6 +191,7 @@ class Project(models.Model):
 
     # returns a queryset of compatible layers for a project
     def compatible_layerversions(self, release = None, layer_name = None):
+        logger.warning("This function is deprecated")
         if release == None:
             release = self.release
         # layers on the same branch or layers specifically set for this project
@@ -205,45 +206,55 @@ class Project(models.Model):
 
         return queryset
 
-    def projectlayer_equivalent_set(self):
-        return self.compatible_layerversions().filter(layer__name__in = [x.layercommit.layer.name for x in self.projectlayer_set.all()]).select_related("up_branch")
+    def get_all_compatible_layer_versions(self):
+        """ Returns Queryset of all Layer_Versions which are compatible with
+        this project"""
+        queryset = Layer_Version.objects.filter(
+            (Q(up_branch__name=self.release.branch_name) & Q(build=None))
+            | Q(project=self))
+
+        return queryset
+
+    def get_project_layer_versions(self, pk=False):
+        """ Returns the Layer_Versions currently added to this project """
+        layer_versions = self.projectlayer_set.all().values('layercommit')
+
+        if pk is False:
+            return layer_versions
+        else:
+            return layer_versions.values_list('pk', flat=True)
+
 
     def get_available_machines(self):
         """ Returns QuerySet of all Machines which are provided by the
         Layers currently added to the Project """
-        queryset = Machine.objects.filter(layer_version__in=self.projectlayer_equivalent_set)
+        queryset = Machine.objects.filter(
+            layer_version__in=self.get_project_layer_versions(self))
+
         return queryset
 
     def get_all_compatible_machines(self):
         """ Returns QuerySet of all the compatible machines available to the
         project including ones from Layers not currently added """
-        compatible_layers = self.compatible_layerversions()
+        queryset = Machine.objects.filter(
+            layer_version__in=self.get_all_compatible_layer_versions())
 
-        queryset = Machine.objects.filter(layer_version__in=compatible_layers)
         return queryset
 
     def get_available_recipes(self):
-        """ Returns QuerySet of all Recipes which are provided by the Layers
-        currently added to the Project """
-        project_layers = self.projectlayer_equivalent_set()
-        queryset = Recipe.objects.filter(layer_version__in = project_layers)
-
-        # Copied from get_all_compatible_recipes
-        search_maxids = map(lambda i: i[0], list(queryset.values('name').distinct().annotate(max_id=Max('id')).values_list('max_id')))
-        queryset = queryset.filter(id__in=search_maxids).select_related('layer_version', 'layer_version__layer', 'layer_version__up_branch', 'layer_source')
-        # End copy
+        """ Returns QuerySet of all the recipes that are provided by layers
+        added to this project """
+        queryset = Recipe.objects.filter(
+            layer_version__in=self.get_project_layer_versions())
 
         return queryset
 
     def get_all_compatible_recipes(self):
         """ Returns QuerySet of all the compatible Recipes available to the
         project including ones from Layers not currently added """
-        compatible_layerversions = self.compatible_layerversions()
-        queryset = Recipe.objects.filter(layer_version__in = compatible_layerversions)
+        queryset = Recipe.objects.filter(
+            layer_version__in=self.get_all_compatible_layer_versions())
 
-        search_maxids = map(lambda i: i[0], list(queryset.values('name').distinct().annotate(max_id=Max('id')).values_list('max_id')))
-
-        queryset = queryset.filter(id__in=search_maxids).select_related('layer_version', 'layer_version__layer', 'layer_version__up_branch', 'layer_source')
         return queryset
 
 

@@ -221,7 +221,7 @@ class MachinesTable(ToasterTable, ProjectFiltersMixin):
 
     def setup_filters(self, *args, **kwargs):
         project = Project.objects.get(pk=kwargs['pid'])
-        self.project_layers = project.projectlayer_equivalent_set()
+        self.project_layers = project.get_project_layer_versions()
 
         self.add_filter(title="Filter by project machines",
                         name="in_current_project",
