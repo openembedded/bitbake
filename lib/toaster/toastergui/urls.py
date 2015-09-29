@@ -87,15 +87,21 @@ urlpatterns = patterns('toastergui.views',
         # the table pages that have been converted to ToasterTable widget
         url(r'^project/(?P<pid>\d+)/machines/$',
             tables.MachinesTable.as_view(template_name="generic-toastertable-page.html"),
-            { 'table_name': tables.MachinesTable.__name__.lower(),
-              'title' : 'Compatible machines' },
             name="projectmachines"),
 
-        url(r'^project/(?P<pid>\d+)/recipes/$',
-            tables.RecipesTable.as_view(template_name="generic-toastertable-page.html"),
-            { 'table_name': tables.RecipesTable.__name__.lower(),
-              'title' : 'Compatible recipes' },
-            name="projecttargets"),
+        url(r'^project/(?P<pid>\d+)/softwarerecipes/$',
+            tables.SoftwareRecipesTable.as_view(template_name="generic-toastertable-page.html"),
+            name="projectsoftwarerecipes"),
+
+        url(r'^project/(?P<pid>\d+)/images/$',
+            tables.ImageRecipesTable.as_view(template_name="generic-toastertable-page.html"), name="projectimagerecipes"),
+
+        url(r'^project/(?P<pid>\d+)/customimages/$',
+            tables.CustomImagesTable.as_view(template_name="generic-toastertable-page.html"), name="projectcustomimages"),
+
+        url(r'^project/(?P<pid>\d+)/newcustomimage/$',
+            tables.NewCustomImagesTable.as_view(template_name="newcustomimage.html"),
+            name="newcustomimage"),
 
         url(r'^project/(?P<pid>\d+)/availablerecipes/$',
             tables.ProjectLayersRecipesTable.as_view(template_name="generic-toastertable-page.html"),
@@ -105,8 +111,6 @@ urlpatterns = patterns('toastergui.views',
 
         url(r'^project/(?P<pid>\d+)/layers/$',
             tables.LayersTable.as_view(template_name="generic-toastertable-page.html"),
-            { 'table_name': tables.LayersTable.__name__.lower(),
-              'title' : 'Compatible layers' },
             name="projectlayers"),
 
         url(r'^project/(?P<pid>\d+)/layer/(?P<layerid>\d+)$',

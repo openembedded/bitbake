@@ -45,7 +45,7 @@ class ToasterTable(TemplateView):
         super(ToasterTable, self).__init__()
         if 'template_name' in kwargs:
             self.template_name = kwargs['template_name']
-        self.title = None
+        self.title = "Table"
         self.queryset = None
         self.columns = []
         self.filters = {}
@@ -60,6 +60,13 @@ class ToasterTable(TemplateView):
                         displayable=False,
                         orderable=True,
                         field_name="id")
+
+    def get_context_data(self, **kwargs):
+        context = super(ToasterTable, self).get_context_data(**kwargs)
+        context['title'] = self.title
+        context['table_name'] =  type(self).__name__.lower()
+
+        return context
 
 
     def get(self, request, *args, **kwargs):

@@ -50,6 +50,7 @@ class LayersTable(ToasterTable):
     def __init__(self, *args, **kwargs):
         super(LayersTable, self).__init__(*args, **kwargs)
         self.default_orderby = "layer__name"
+        self.title = "Compatible layers"
 
     def get_context_data(self, **kwargs):
         context = super(LayersTable, self).get_context_data(**kwargs)
@@ -208,6 +209,7 @@ class MachinesTable(ToasterTable, ProjectFiltersMixin):
     def __init__(self, *args, **kwargs):
         super(MachinesTable, self).__init__(*args, **kwargs)
         self.empty_state = "No machines maybe you need to do a build?"
+        self.title = "Compatible machines"
         self.default_orderby = "name"
 
     def get_context_data(self, **kwargs):
