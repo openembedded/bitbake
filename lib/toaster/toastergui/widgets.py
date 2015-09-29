@@ -349,33 +349,6 @@ class ToasterTable(TemplateView):
         return data
 
 
-class ToasterTemplateView(TemplateView):
-    # renders a instance in a template, or returns the context as json
-    # the class-equivalent of the _template_renderer decorator for views
-
-    def __init__(self, *args, **kwargs):
-        super(ToasterTemplateView, self).__init__(*args, **kwargs)
-        self.context_entries = []
-
-    def get(self, *args, **kwargs):
-        if self.request.GET.get('format', None) == 'json':
-            from django.core.urlresolvers import reverse
-            from django.shortcuts import HttpResponse
-            from views import objtojson
-            from toastergui.templatetags.projecttags import json as jsonfilter
-
-            context = self.get_context_data(**kwargs)
-
-            for x in context.keys():
-                if x not in self.context_entries:
-                    del context[x]
-
-            context["error"] = "ok"
-
-            return HttpResponse(jsonfilter(context,  default=objtojson ),
-                            content_type = "application/json; charset=utf-8")
-
-        return super(ToasterTemplateView, self).get(*args, **kwargs)
 
 class ToasterTypeAhead(View):
     """ A typeahead mechanism to support the front end typeahead widgets """
