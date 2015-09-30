@@ -38,6 +38,7 @@ import json
 import re
 
 PROJECT_NAME = "test project"
+CLI_BUILDS_PROJECT_NAME = 'Command line builds'
 
 class ViewTests(TestCase):
     """Tests to verify view APIs."""
@@ -658,12 +659,25 @@ class AllBuildsPageTests(TestCase):
                                          bitbake_version=bbv)
         self.project1 = Project.objects.create_project(name=PROJECT_NAME,
                                                        release=release)
+        self.default_project = Project.objects.create_project(
+            name=CLI_BUILDS_PROJECT_NAME,
+            release=release
+        )
+        self.default_project.is_default = True
+        self.default_project.save()
 
         # parameters for builds to associate with the projects
         now = timezone.now()
 
         self.project1_build_success = {
             "project": self.project1,
+            "started_on": now,
+            "completed_on": now,
+            "outcome": Build.SUCCEEDED
+        }
+
+        self.default_project_build_success = {
+            "project": self.default_project,
             "started_on": now,
             "completed_on": now,
             "outcome": Build.SUCCEEDED
@@ -677,6 +691,23 @@ class AllBuildsPageTests(TestCase):
         response = self.client.get(url, follow=True)
         result = re.findall('bash:clean', response.content, re.MULTILINE)
         self.assertEqual(len(result), 3)
+
+    def test_no_run_again_for_cli_build(self):
+        """ "Run again" button should not be shown for command-line builds """
+        build = Build.objects.create(**self.default_project_build_success)
+        url = reverse("all-builds")
+        response = self.client.get(url, follow=True)
+        soup = BeautifulSoup(response.content)
+
+        element_id = 'build-result-%d' % build.id
+
+        # shouldn't see a run again button for command-line builds
+        run_again_button = soup.select('#%s button' % element_id)
+        self.assertEqual(len(run_again_button), 0)
+
+        # should see a help icon for command-line builds
+        help_icon = soup.select('#%s i.get-help-green' % element_id)
+        self.assertEqual(len(help_icon), 1)
 
 class ProjectPageTests(TestCase):
     """ Test project data at /project/X/ is displayed correctly """
@@ -707,3 +738,5 @@ class ProjectPageTests(TestCase):
         response = self.client.get(url, follow=True)
 
         self.assertEqual(response.status_code, 200)
+
+
