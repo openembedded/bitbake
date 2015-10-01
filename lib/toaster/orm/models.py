@@ -253,7 +253,7 @@ class Project(models.Model):
         """ Returns QuerySet of all the compatible Recipes available to the
         project including ones from Layers not currently added """
         queryset = Recipe.objects.filter(
-            layer_version__in=self.get_all_compatible_layer_versions())
+            layer_version__in=self.get_all_compatible_layer_versions()).exclude(name__exact='')
 
         return queryset
 
