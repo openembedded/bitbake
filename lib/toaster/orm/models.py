@@ -1011,6 +1011,7 @@ class LayerIndexLayerSource(LayerSource):
                 ro.save()
             except IntegrityError as e:
                 logger.debug("Failed saving recipe, ignoring: %s (%s:%s)" % (e, ro.layer_version, ri['filepath']+"/"+ri['filename']))
+                ro.delete()
         if not connection.features.autocommits_when_autocommit_is_off:
             transaction.set_autocommit(True)
 
