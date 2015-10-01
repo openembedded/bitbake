@@ -564,7 +564,7 @@ class ProjectBuildsDisplayTest(TestCase):
         url = reverse("projectbuilds", args=(self.project1.id,))
         response = self.client.get(url, follow=True)
         result = re.findall('^ +bash:clean$', response.content, re.MULTILINE)
-        self.assertEqual(len(result), 1)
+        self.assertEqual(len(result), 2)
 
     def test_show_tasks_in_allbuilds(self):
         build = Build.objects.create(**self.project1_build_success)
