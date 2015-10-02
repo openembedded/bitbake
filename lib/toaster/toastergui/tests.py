@@ -433,6 +433,18 @@ class AllProjectsPageTests(TestCase):
 
     MACHINE_NAME = 'delorean'
 
+    def setUp(self):
+        """ Add default project manually """
+        project = Project.objects.create_project(CLI_BUILDS_PROJECT_NAME, None)
+        self.default_project = project
+        self.default_project.is_default = True
+        self.default_project.save()
+
+        # this project is only set for some of the tests
+        self.project = None
+
+        self.release = None
+
     def _add_build_to_default_project(self):
         """ Add a build to the default project (not used in all tests) """
         now = timezone.now()
@@ -457,16 +469,6 @@ class AllProjectsPageTests(TestCase):
                                                      name='MACHINE',
                                                      value=self.MACHINE_NAME)
         project_var.save()
-
-    def setUp(self):
-        """ Add default project manually """
-        project = Project.objects.create_project(CLI_BUILDS_PROJECT_NAME, None)
-        self.default_project = project
-        self.default_project.is_default = True
-        self.default_project.save()
-
-        # this project is only set for some of the tests
-        self.project = None
 
     def test_default_project_hidden(self):
         """ The default project should be hidden if it has no builds """
@@ -573,17 +575,15 @@ class AllProjectsPageTests(TestCase):
         # link for default project
         row = soup.find('tr', attrs={'data-project': self.default_project.id})
         cell = row.find('td', attrs={'data-project-field': 'name'})
-        url = cell.find('a')['href']
         expected_url = reverse('projectbuilds', args=(self.default_project.id,))
-        self.assertEqual(url, expected_url,
+        self.assertEqual(cell.find('a')['href'], expected_url,
                          'link on default project name should point to builds')
 
         # link for other project
         row = soup.find('tr', attrs={'data-project': self.project.id})
         cell = row.find('td', attrs={'data-project-field': 'name'})
-        url = cell.find('a')['href']
         expected_url = reverse('project', args=(self.project.id,))
-        self.assertEqual(url, expected_url,
+        self.assertEqual(cell.find('a')['href'], expected_url,
                          'link on project name should point to configuration')
 
 class ProjectBuildsPageTests(TestCase):
@@ -638,13 +638,6 @@ class ProjectBuildsPageTests(TestCase):
             "started_on": now,
             "completed_on": now,
             "outcome": Build.IN_PROGRESS
-        }
-
-        self.default_project_build_success = {
-            "project": self.default_project,
-            "started_on": now,
-            "completed_on": now,
-            "outcome": Build.SUCCEEDED
         }
 
     def _get_rows_for_project(self, project_id):
