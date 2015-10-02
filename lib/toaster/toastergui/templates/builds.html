@@ -29,8 +29,6 @@
 
   {% include "mrb_section.html" %}
 
-
-  {% if 1 %}
   <div class="page-header top-air">
      <h1>
       {% if request.GET.filter and objects.paginator.count > 0 or request.GET.search and objects.paginator.count > 0 %}
@@ -57,8 +55,6 @@
         </form>
       </div>
     </div>
-
-
   {% else %}
   {% include "basetable_top.html" %}
         <!-- Table data rows; the order needs to match the order of "tablecols" definitions; and the <td class value needs to match the tablecols clclass value for show/hide buttons to work -->
@@ -117,7 +113,6 @@
 
   {% include "basetable_bottom.html" %}
   {% endif %} {# objects.paginator.count #}
-{% endif %} {# empty #}
 </div><!-- end row-fluid-->
 
 {% endblock %}
