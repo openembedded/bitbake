@@ -760,7 +760,7 @@ class AllBuildsPageTests(TestCase):
         """ Task should be shown as suffix on build name """
         build = Build.objects.create(**self.project1_build_success)
         Target.objects.create(build=build, target='bash', task='clean')
-        url = reverse("all-builds")
+        url = reverse('all-builds')
         response = self.client.get(url, follow=True)
         result = re.findall('bash:clean', response.content, re.MULTILINE)
         self.assertEqual(len(result), 3)
@@ -768,19 +768,47 @@ class AllBuildsPageTests(TestCase):
     def test_no_run_again_for_cli_build(self):
         """ "Run again" button should not be shown for command-line builds """
         build = Build.objects.create(**self.default_project_build_success)
-        url = reverse("all-builds")
+        url = reverse('all-builds')
         response = self.client.get(url, follow=True)
         soup = BeautifulSoup(response.content)
 
-        element_id = 'build-result-%d' % build.id
+        attrs = {'data-latest-build-result': build.id}
+        result = soup.find('div', attrs=attrs)
 
         # shouldn't see a run again button for command-line builds
-        run_again_button = soup.select('#%s button' % element_id)
+        run_again_button = result.select('button')
         self.assertEqual(len(run_again_button), 0)
 
         # should see a help icon for command-line builds
-        help_icon = soup.select('#%s i.get-help-green' % element_id)
+        help_icon = result.select('i.get-help-green')
         self.assertEqual(len(help_icon), 1)
+
+    def test_tooltips_on_project_name(self):
+        """
+        A tooltip should be present next to the command line
+        builds project name in the all builds page, but not for
+        other projects
+        """
+        build1 = Build.objects.create(**self.project1_build_success)
+        default_build = Build.objects.create(**self.default_project_build_success)
+
+        url = reverse('all-builds')
+        response = self.client.get(url, follow=True)
+        soup = BeautifulSoup(response.content)
+
+        # no help icon on non-default project name
+        result = soup.find('tr', attrs={'data-table-build-result': build1.id})
+        name = result.select('td.project-name')[0]
+        icons = name.select('i.get-help')
+        self.assertEqual(len(icons), 0,
+                         'should not be a help icon for non-cli builds name')
+
+        # help icon on default project name
+        result = soup.find('tr', attrs={'data-table-build-result': default_build.id})
+        name = result.select('td.project-name')[0]
+        icons = name.select('i.get-help')
+        self.assertEqual(len(icons), 1,
+                         'should be a help icon for cli builds name')
 
 class ProjectPageTests(TestCase):
     """ Test project data at /project/X/ is displayed correctly """
@@ -811,5 +839,3 @@ class ProjectPageTests(TestCase):
         response = self.client.get(url, follow=True)
 
         self.assertEqual(response.status_code, 200)
-
-
