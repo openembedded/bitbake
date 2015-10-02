@@ -8,6 +8,10 @@
   {%if mrb_type == 'project' %}
       <h2>
       Latest project builds
+
+      {% if project.is_default %}
+          <i class="icon-question-sign get-help heading-help" title="" data-original-title="Builds in this project cannot be started from Toaster: they are started from the command line"></i>
+      {% endif %}
       </h2>
   {% else %}
     <div class="page-header">

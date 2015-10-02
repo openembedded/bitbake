@@ -596,8 +596,18 @@ class ProjectBuildsPageTests(TestCase):
                                          bitbake_version=bbv)
         self.project1 = Project.objects.create_project(name=PROJECT_NAME,
                                                        release=release)
+        self.project1.save()
+
         self.project2 = Project.objects.create_project(name=PROJECT_NAME,
                                                        release=release)
+        self.project2.save()
+
+        self.default_project = Project.objects.create_project(
+            name=CLI_BUILDS_PROJECT_NAME,
+            release=release
+        )
+        self.default_project.is_default = True
+        self.default_project.save()
 
         # parameters for builds to associate with the projects
         now = timezone.now()
@@ -628,6 +638,13 @@ class ProjectBuildsPageTests(TestCase):
             "started_on": now,
             "completed_on": now,
             "outcome": Build.IN_PROGRESS
+        }
+
+        self.default_project_build_success = {
+            "project": self.default_project,
+            "started_on": now,
+            "completed_on": now,
+            "outcome": Build.SUCCEEDED
         }
 
     def _get_rows_for_project(self, project_id):
@@ -680,6 +697,30 @@ class ProjectBuildsPageTests(TestCase):
         response = self.client.get(url, follow=True)
         result = re.findall('^ +bash:clean$', response.content, re.MULTILINE)
         self.assertEqual(len(result), 2)
+
+    def test_cli_builds_hides_tabs(self):
+        """
+        Display for command line builds should hide tabs;
+        note that the latest builds section is already tested in
+        AllBuildsPageTests, as the template is the same
+        """
+        url = reverse("projectbuilds", args=(self.default_project.id,))
+        response = self.client.get(url, follow=True)
+        soup = BeautifulSoup(response.content)
+        tabs = soup.select('#project-topbar')
+        self.assertEqual(len(tabs), 0,
+                         'should be no top bar shown for command line builds')
+
+    def test_non_cli_builds_has_tabs(self):
+        """
+        Non-command-line builds projects should show the tabs
+        """
+        url = reverse("projectbuilds", args=(self.project1.id,))
+        response = self.client.get(url, follow=True)
+        soup = BeautifulSoup(response.content)
+        tabs = soup.select('#project-topbar')
+        self.assertEqual(len(tabs), 1,
+                         'should be a top bar shown for non-command-line builds')
 
 class AllBuildsPageTests(TestCase):
     """ Tests for all builds page /builds/ """
