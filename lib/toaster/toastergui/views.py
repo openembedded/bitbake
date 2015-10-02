@@ -2770,8 +2770,8 @@ if True:
 
         context = { 'project' : project,
                    'layerversion' : layer_version,
-                   'layerdeps' : { "list": [
-                     [{"id": y.id, "name": y.layer.name} for y in x.depends_on.get_equivalents_wpriority(project)][0] for x in layer_version.dependencies.all()]},
+                   'layerdeps' : {"list": [{"id": dep.id, "name": dep.layer.name} \
+                                              for dep in layer_version.get_alldeps(project.id)]},
                    'projectlayers': map(lambda prjlayer: prjlayer.layercommit.id, ProjectLayer.objects.filter(project=project))
                   }
 
