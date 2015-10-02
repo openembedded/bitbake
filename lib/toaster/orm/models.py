@@ -900,7 +900,7 @@ class LayerIndexLayerSource(LayerSource):
                     oe_core_l.save()
                     continue
 
-                except DoesNotExist:
+                except Layer.DoesNotExist:
                     pass
 
             l, created = Layer.objects.get_or_create(layer_source = self, name = li['name'])
