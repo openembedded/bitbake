@@ -1,7 +1,7 @@
 {% load static %}
 {% load projecttags %}
+{% load project_url_tag %}
 {% load humanize %}
-
 
 {%if mru and mru.count > 0%}
 
@@ -22,7 +22,7 @@
     {% if mrb_type != 'project' %}
     project-name">
        <span class="label {%if build.outcome == build.SUCCEEDED%}label-success{%elif build.outcome == build.FAILED%}label-important{%else%}label-info{%endif%}">
-         <a href={% url 'project' build.project.pk %}>
+         <a href={% project_url build.project %}>
            {{build.project.name}}
          </a>
        </span>
@@ -106,7 +106,7 @@
                       pull-right"
                       onclick='scheduleBuild({% url 'projectbuilds' build.project.id as bpi %}{{bpi|json}},
                         {{build.project.name|json}},
-                        {% url 'project' build.project.id as bpurl %}{{bpurl|json}},
+                        {% url 'project' build.project.id as purl %}{{purl|json}},
                         {{build.target_set.all|get_tasks|json}})'>
 
                         Run again

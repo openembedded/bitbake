@@ -428,8 +428,8 @@ class LandingPageTests(TestCase):
         self.assertTrue('/builds' in response.url,
                         'should redirect to builds')
 
-class ProjectsPageTests(TestCase):
-    """ Tests for projects page """
+class AllProjectsPageTests(TestCase):
+    """ Tests for projects page /projects/ """
 
     MACHINE_NAME = 'delorean'
 
@@ -554,6 +554,38 @@ class ProjectsPageTests(TestCase):
         self.assertEqual(text, self.MACHINE_NAME,
                          'machine name should be shown for non-default project')
 
+    def test_project_page_links(self):
+        """
+        Test that links for the default project point to the builds
+        page /projects/X/builds for that project, and that links for
+        other projects point to their configuration pages /projects/X/
+        """
+
+        # need a build, otherwise project doesn't display at all
+        self._add_build_to_default_project()
+
+        # another project to test, which should show machine
+        self._add_non_default_project()
+
+        response = self.client.get(reverse('all-projects'), follow=True)
+        soup = BeautifulSoup(response.content)
+
+        # link for default project
+        row = soup.find('tr', attrs={'data-project': self.default_project.id})
+        cell = row.find('td', attrs={'data-project-field': 'name'})
+        url = cell.find('a')['href']
+        expected_url = reverse('projectbuilds', args=(self.default_project.id,))
+        self.assertEqual(url, expected_url,
+                         'link on default project name should point to builds')
+
+        # link for other project
+        row = soup.find('tr', attrs={'data-project': self.project.id})
+        cell = row.find('td', attrs={'data-project-field': 'name'})
+        url = cell.find('a')['href']
+        expected_url = reverse('project', args=(self.project.id,))
+        self.assertEqual(url, expected_url,
+                         'link on project name should point to configuration')
+
 class ProjectBuildsPageTests(TestCase):
     """ Test data at /project/X/builds is displayed correctly """
 
@@ -650,7 +682,7 @@ class ProjectBuildsPageTests(TestCase):
         self.assertEqual(len(result), 2)
 
 class AllBuildsPageTests(TestCase):
-    """ Tests for all builds page """
+    """ Tests for all builds page /builds/ """
 
     def setUp(self):
         bbv = BitbakeVersion.objects.create(name="bbv1", giturl="/tmp/",

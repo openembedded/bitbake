@@ -2,6 +2,7 @@
 
 {% load static %}
 {% load projecttags %}
+{% load project_url_tag %}
 {% load humanize %}
 
 {% block pagecontent %}
@@ -37,8 +38,10 @@
   {% include "basetable_top.html" %}
   {% for o in objects %}
     <tr class="data" data-project="{{ o.id }}">
-      <td><a href="{% url 'project' o.id %}">{{o.name}}</a></td>
-      <td class="updated"><a href="{% url 'project' o.id %}">{{o.updated|date:"d/m/y H:i"}}</a></td>
+      <td data-project-field="name">
+          <a href="{% project_url o %}">{{o.name}}</a>
+      </td>
+      <td class="updated"><a href="{% project_url o %}">{{o.updated|date:"d/m/y H:i"}}</a></td>
       <td data-project-field="release">
         {% if o.release %}
             <a href="{% url 'project' o.id %}#project-details">{{o.release.name}}</a>
