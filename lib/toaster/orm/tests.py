@@ -23,7 +23,7 @@
 
 from django.test import TestCase, TransactionTestCase
 from orm.models import LocalLayerSource, LayerIndexLayerSource, ImportedLayerSource, LayerSource
-from orm.models import Branch
+from orm.models import Branch, LayerVersionDependency
 
 from orm.models import Project, Layer, Layer_Version, Branch, ProjectLayer
 from orm.models import Release, ReleaseLayerSourcePriority, BitbakeVersion
@@ -160,3 +160,21 @@ class LayerVersionEquivalenceTestCase(TestCase):
         compat_lv = self.project.get_all_compatible_layer_versions()
         self.assertEqual(list(compat_lv), [self.lver, self.lver2])
 
+    def test_layerversion_get_alldeps(self):
+        """Test Layer_Version.get_alldeps API."""
+        lvers = {}
+        for i in range(10):
+            name = "layer%d" % i
+            lvers[name] = Layer_Version.objects.create(layer=Layer.objects.create(name=name),
+                                                       project=self.project)
+            if i:
+                LayerVersionDependency.objects.create(layer_version=lvers["layer%d" % (i - 1)],
+                                                      depends_on=lvers[name])
+                # Check dinamically added deps
+                self.assertEqual(lvers['layer0'].get_alldeps(self.project.id),
+                                 [lvers['layer%d' % n] for n in range(1, i+1)])
+
+        # Check chain of deps created in previous loop
+        for i in range(10):
+            self.assertEqual(lvers['layer%d' % i].get_alldeps(self.project.id),
+                             [lvers['layer%d' % n] for n in range(i+1, 10)])
