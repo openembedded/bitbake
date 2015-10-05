@@ -38,6 +38,7 @@
         projectId : {{project.id}},
         projectPageUrl : {% url 'project' project.id as purl %}{{purl|json}},
         projectName : {{project.name|json}},
+        projectIsDefault: {% if project.is_default %}true{% else %}false{% endif %},
         recipesTypeAheadUrl: {% url 'xhr_recipestypeahead' project.id as paturl%}{{paturl|json}},
         layersTypeAheadUrl: {% url 'xhr_layerstypeahead' project.id as paturl%}{{paturl|json}},
         machinesTypeAheadUrl: {% url 'xhr_machinestypeahead' project.id as paturl%}{{paturl|json}},
@@ -48,7 +49,7 @@
         projectId : undefined,
         projectPageUrl : undefined,
         projectName : undefined,
-        projectId : undefined,
+        projectIsDefault: false,
         {% endif %}
       };
     </script>
@@ -122,52 +123,54 @@
           <div class="btn-group pull-right">
             <a class="btn" id="new-project-button" href="{% url 'newproject' %}">New project</a>
           </div>
-          <!-- New build popover -->
-          <div class="btn-group pull-right" id="new-build-button" style="display:none">
-            <button class="btn dropdown-toggle" data-toggle="dropdown">
-              New build
-              <i class="icon-caret-down"></i>
-            </button>
-            <ul class="dropdown-menu new-build multi-select">
-              <li>
-                <h3>New build</h3>
-                <h6>Project:</h6>
-                <span id="project">
-                  {% if project.id %}
-                  <a class="lead" href="{% project_url project %}">{{project.name}}</a>
-                  {% else %}
-                  <a class="lead" href="#"></a>
-                  {% endif %}
-                  <i class="icon-pencil"></i>
-                </span>
-                <form id="change-project-form" style="display:none;">
-                  <div class="input-append">
-                    <input type="text" class="input-medium" id="project-name-input" placeholder="Type a project name" autocomplete="off" data-minLength="1" data-autocomplete="off" data-provide="typeahead"/>
-                    <button id="save-project-button" class="btn" type="button">Save</button>
-                    <a href="#" id="cancel-change-project" class="btn btn-link" style="display: none">Cancel</a>
+          <!-- New build popover; only shown if there is at least one user-created project -->
+          {% if non_cli_projects.count > 0 %}
+            <div class="btn-group pull-right" id="new-build-button" style="display:none">
+              <button class="btn dropdown-toggle" data-toggle="dropdown">
+                New build
+                <i class="icon-caret-down"></i>
+              </button>
+              <ul class="dropdown-menu new-build multi-select">
+                <li>
+                  <h3>New build</h3>
+                  <h6>
+                    Project:
+                    <span id="project">
+                      {% if project.id and not project.is_default %}
+                        <a class="lead" href="{% project_url project %}">{{project.name}}</a>
+                      {% else %}
+                        <a class="lead" href="#"></a>
+                      {% endif %}
+                      <i class="icon-pencil"></i>
+                    </span>
+                  </h6>
+                  <form id="change-project-form" style="display:none;">
+                    <div class="input-append">
+                      <input type="text" class="input-medium" id="project-name-input" placeholder="Type a project name" autocomplete="off" data-minLength="1" data-autocomplete="off" data-provide="typeahead"/>
+                      <button id="save-project-button" class="btn" type="button">Save</button>
+                      <a href="#" id="cancel-change-project" class="btn btn-link" style="display: none">Cancel</a>
+                    </div>
+                    <p><a id="view-all-projects" href="{% url 'all-projects' %}">View all projects</a></p>
+                  </form>
+                </li>
+                <li>
+                  <div class="alert" style="display:none;">
+                    <p>This project configuration is incomplete, so you cannot run builds.</p>
+                    <p><a href="{% if project.id %}{% url 'project' project.id %}{% endif %}">View project configuration</a></p>
                   </div>
-                  <p><a id="view-all-projects" href="{% url 'all-projects' %}">View all projects</a></p>
-                </form>
-              </li>
-              <li>
-                <div class="alert" style="display:none;">
-                  <p>This project configuration is incomplete, so you cannot run builds.</p>
-                  <p><a href="{% if project.id %}{% url 'project' project.id %}{% endif %}">View project configuration</a></p>
-                </div>
-              </li>
-              <li id="targets-form">
-                <h6>Recipe(s):</h6>
-                <form>
-                  <input type="text" class="input-xlarge build-target-input" placeholder="Type a recipe name" autocomplete="off" data-minLength="1" data-autocomplete="off" data-provide="typeahead" disabled/>
-                  <div class="row-fluid">
-                    <button class="btn btn-primary build-button" disabled>Build</button>
-                  </div>
-                </form>
-              </li>
-            </ul>
-          </div>
-
-
+                </li>
+                <li id="targets-form">
+                  <h6>Recipe(s):</h6>
+                  <form>
+                    <input type="text" class="input-xlarge build-target-input" placeholder="Type a recipe name" autocomplete="off" data-minLength="1" data-autocomplete="off" data-provide="typeahead" disabled/>
+                    <div class="row-fluid">
+                      <button class="btn btn-primary build-button" disabled>Build</button>
+                    </div>
+                  </form>
+                </li>
+              </ul>
+            </div>
+          {% endif %}
     </div>
  </div>
 </div>

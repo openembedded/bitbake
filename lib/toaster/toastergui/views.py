@@ -1870,10 +1870,15 @@ def image_information_dir(request, build_id, target_id, packagefile_id):
     return redirect(builds)
     # the context processor that supplies data used across all the pages
 
-
+# a context processor which runs on every request; this provides the
+# projects and non_cli_projects (i.e. projects created by the user)
+# variables referred to in templates, which used to determine the
+# visibility of UI elements like the "New build" button
 def managedcontextprocessor(request):
+    projects = Project.objects.all()
     ret = {
-        "projects": Project.objects.all(),
+        "projects": projects,
+        "non_cli_projects": projects.exclude(is_default=True),
         "DEBUG" : toastermain.settings.DEBUG,
         "CUSTOM_IMAGE" : toastermain.settings.CUSTOM_IMAGE,
         "TOASTER_BRANCH": toastermain.settings.TOASTER_BRANCH,
