@@ -130,14 +130,14 @@ def main(server, eventHandler, params ):
 
             if isinstance(event, (bb.build.TaskStarted, bb.build.TaskSucceeded, bb.build.TaskFailedSilent)):
                 buildinfohelper.update_and_store_task(event)
-                logger.warn("Logfile for task %s", event.logfile)
+                logger.info("Logfile for task %s", event.logfile)
                 continue
 
             if isinstance(event, bb.build.TaskBase):
                 logger.info(event._message)
 
             if isinstance(event, bb.event.LogExecTTY):
-                logger.warn(event.msg)
+                logger.info(event.msg)
                 continue
 
             if isinstance(event, logging.LogRecord):
@@ -316,7 +316,7 @@ def main(server, eventHandler, params ):
                 buildinfohelper.store_dependency_information(event)
                 continue
 
-            logger.error("Unknown event: %s", event)
+            logger.warn("Unknown event: %s", event)
             return_value += 1
 
         except EnvironmentError as ioerror:
@@ -336,7 +336,7 @@ def main(server, eventHandler, params ):
             if tb is not None:
                 curr = tb
                 while curr is not None:
-                    logger.warn("Error data dump %s\n%s\n" , traceback.format_tb(curr,1), pformat(curr.tb_frame.f_locals))
+                    logger.error("Error data dump %s\n%s\n" , traceback.format_tb(curr,1), pformat(curr.tb_frame.f_locals))
                     curr = curr.tb_next
 
             # save them to database, if possible; if it fails, we already logged to console.
