@@ -20,6 +20,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 from django.views.generic import View, TemplateView
+from django.views.decorators.cache import cache_control
 from django.shortcuts import HttpResponse
 from django.http import HttpResponseBadRequest
 from django.core import serializers
@@ -63,6 +64,11 @@ class ToasterTable(TemplateView):
                         displayable=False,
                         orderable=True,
                         field_name="id")
+
+        # prevent HTTP caching of table data
+    @cache_control(must_revalidate=True, max_age=0, no_store=True, no_cache=True)
+    def dispatch(self, *args, **kwargs):
+        return super(ToasterTable, self).dispatch(*args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super(ToasterTable, self).get_context_data(**kwargs)
