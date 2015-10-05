@@ -308,7 +308,8 @@ def main(server, eventHandler, params ):
                                   bb.event.OperationProgress,
                                   bb.command.CommandFailed,
                                   bb.command.CommandExit,
-                                  bb.command.CommandCompleted)):
+                                  bb.command.CommandCompleted,
+                                  bb.event.ReachableStamps)):
                 continue
 
             if isinstance(event, bb.event.DepTreeGenerated):
