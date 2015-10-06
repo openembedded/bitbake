@@ -2103,35 +2103,38 @@ if True:
                     },
                     {'name': 'Errors', 'clclass': 'errors_no',
                      'qhelp': "How many errors were encountered during the build (if any)",
-                     'orderfield': _get_toggle_order(request, "errors_no", True),
-                     'ordericon':_get_toggle_order_icon(request, "errors_no"),
-                     'orderkey' : 'errors_no',
-                     'filter' : {'class' : 'errors_no',
-                                 'label': 'Show:',
-                                 'options' : [
-                                             ('Builds with errors', 'errors_no__gte:1', queryset_with_search.filter(errors_no__gte=1).count()),
-                                             ('Builds without errors', 'errors_no:0', queryset_with_search.filter(errors_no=0).count()),
-                                             ]
-                                }
+                     # Comment out sorting and filter until YOCTO #8131 is fixed
+                     #'orderfield': _get_toggle_order(request, "errors_no", True),
+                     #'ordericon':_get_toggle_order_icon(request, "errors_no"),
+                     #'orderkey' : 'errors_no',
+                     #'filter' : {'class' : 'errors_no',
+                     #            'label': 'Show:',
+                     #            'options' : [
+                     #                        ('Builds with errors', 'errors_no__gte:1', queryset_with_search.filter(errors_no__gte=1).count()),
+                     #                        ('Builds without errors', 'errors_no:0', queryset_with_search.filter(errors_no=0).count()),
+                     #                        ]
+                     #           }
                     },
                     {'name': 'Warnings', 'clclass': 'warnings_no',
                      'qhelp': "How many warnings were encountered during the build (if any)",
-                     'orderfield': _get_toggle_order(request, "warnings_no", True),
-                     'ordericon':_get_toggle_order_icon(request, "warnings_no"),
-                     'orderkey' : 'warnings_no',
-                     'filter' : {'class' : 'warnings_no',
-                                 'label': 'Show:',
-                                 'options' : [
-                                             ('Builds with warnings','warnings_no__gte:1', queryset_with_search.filter(warnings_no__gte=1).count()),
-                                             ('Builds without warnings','warnings_no:0', queryset_with_search.filter(warnings_no=0).count()),
-                                             ]
-                                }
+                     # Comment out sorting and filter until YOCTO #8131 is fixed
+                     #'orderfield': _get_toggle_order(request, "warnings_no", True),
+                     #'ordericon':_get_toggle_order_icon(request, "warnings_no"),
+                     #'orderkey' : 'warnings_no',
+                     #'filter' : {'class' : 'warnings_no',
+                     #            'label': 'Show:',
+                     #            'options' : [
+                     #                        ('Builds with warnings','warnings_no__gte:1', queryset_with_search.filter(warnings_no__gte=1).count()),
+                     #                        ('Builds without warnings','warnings_no:0', queryset_with_search.filter(warnings_no=0).count()),
+                     #                        ]
+                     #           }
                     },
                     {'name': 'Time', 'clclass': 'time', 'hidden' : 1,
                      'qhelp': "How long it took the build to finish",
-                     'orderfield': _get_toggle_order(request, "timespent", True),
-                     'ordericon':_get_toggle_order_icon(request, "timespent"),
-                     'orderkey' : 'timespent',
+                     # Comment out sorting until YOCTO #8131 is fixed
+                     #'orderfield': _get_toggle_order(request, "timespent", True),
+                     #'ordericon':_get_toggle_order_icon(request, "timespent"),
+                     #'orderkey' : 'timespent',
                     },
                     {'name': 'Image files', 'clclass': 'output',
                      'qhelp': "The root file system types produced by the build. You can find them in your <code>/build/tmp/deploy/images/</code> directory",
