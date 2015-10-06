@@ -345,8 +345,8 @@ class RecipesTable(ToasterTable, ProjectFiltersMixin):
 
     def setup_columns(self, *args, **kwargs):
 
-        self.add_column(title="Recipe Version",
-                        hidden=True,
+        self.add_column(title="Version",
+                        hidden=False,
                         field_name="version")
 
         self.add_column(title="Description",
@@ -367,6 +367,7 @@ class RecipesTable(ToasterTable, ProjectFiltersMixin):
 
         self.add_column(title="Section",
                         help_text="The section in which recipes should be categorized",
+                        hidden=True,
                         orderable=True,
                         field_name="section")
 
@@ -383,10 +384,12 @@ class RecipesTable(ToasterTable, ProjectFiltersMixin):
 
         self.add_column(title="License",
                         help_text="The list of source licenses for the recipe. Multiple license names separated by the pipe character indicates a choice between licenses. Multiple license names separated by the ampersand character indicates multiple licenses exist that cover different parts of the source",
+                        hidden=True,
                         orderable=True,
                         field_name="license")
 
         self.add_column(title="Revision",
+                        hidden=True,
                         field_name="layer_version__get_vcs_reference")
 
 
