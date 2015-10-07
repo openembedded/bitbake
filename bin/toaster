@@ -162,7 +162,7 @@ RUNNING=0
 NOTOASTERUI=0
 WEBSERVER=1
 TOASTER_BRBE=""
-if [ "$WEB_PORT" == "" ]; then
+if [ "$WEB_PORT" = "" ]; then
     WEB_PORT="8000"
 fi
 # this is the configuraton file we are using for toaster
@@ -172,13 +172,13 @@ fi
 # note: for future there are a number of relative path assumptions
 # in the local layers that currently prevent using an arbitrary
 # toasterconf.json
-if [ "$TOASTER_CONF" == "" ]; then
-    BIN_DIR=$(dirname "${BASH_SOURCE[0]}")
+if [ "$TOASTER_CONF" = "" ]; then
+    BIN_DIR=$(dirname -- "$0")
     export TOASTER_CONF="$BIN_DIR/../../meta-yocto/conf/toasterconf.json"
 fi
 if [ ! -f $TOASTER_CONF ]; then
     echo "$TOASTER_CONF configuration file not found, exiting..."
-    exit -1
+    exit 1;
 fi
 # this defines the dir toaster will use for
 # 1) clones of layers (in _toaster_clones )
@@ -375,4 +375,3 @@ case $CMD in
         echo "Successful ${CMD}."
     ;;
 esac
-
