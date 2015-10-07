@@ -47,19 +47,26 @@ import json
 from os.path import dirname
 from functools import wraps
 import itertools
+import mimetypes
 
-import magic
 import logging
 
 logger = logging.getLogger("toaster")
 
 class MimeTypeFinder(object):
-    _magic = magic.Magic(flags = magic.MAGIC_MIME_TYPE)
+    # setting this to False enables additional non-standard mimetypes
+    # to be included in the guess
+    _strict = False
 
-    # returns the mimetype for a file path
+    # returns the mimetype for a file path as a string,
+    # or 'application/octet-stream' if the type couldn't be guessed
     @classmethod
     def get_mimetype(self, path):
-        return self._magic.id_filename(path)
+        guess = mimetypes.guess_type(path, self._strict)
+        guessed_type = guess[0]
+        if guessed_type == None:
+            guessed_type = 'application/octet-stream'
+        return guessed_type
 
 # all new sessions should come through the landing page;
 # determine in which mode we are running in, and redirect appropriately
