@@ -229,7 +229,7 @@ class Project(models.Model):
         """ Returns QuerySet of all Machines which are provided by the
         Layers currently added to the Project """
         queryset = Machine.objects.filter(
-            layer_version__in=self.get_project_layer_versions(self))
+            layer_version__in=self.get_project_layer_versions())
 
         return queryset
 
