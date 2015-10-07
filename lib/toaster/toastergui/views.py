@@ -2981,7 +2981,7 @@ if True:
             if file_name is None:
                 raise Exception("Could not handle artifact %s id %s" % (artifact_type, artifact_id))
             else:
-                content_type = b.buildrequest.environment.get_artifact_type(file_name)
+                content_type = MimeTypeFinder.get_mimetype(file_name)
                 fsock = b.buildrequest.environment.get_artifact(file_name)
                 file_name = os.path.basename(file_name) # we assume that the build environment system has the same path conventions as host
 
