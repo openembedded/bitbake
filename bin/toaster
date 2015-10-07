@@ -54,11 +54,10 @@ webserverStartAll()
     fi
 
     retval=0
-    if [ "$TOASTER_MANAGED" '=' '1' ]; then
-        python $BBBASEDIR/lib/toaster/manage.py syncdb || retval=1
-    else
-        python $BBBASEDIR/lib/toaster/manage.py syncdb --noinput || retval=1
-    fi
+    # you can always add a superuser later via
+    # python bitbake/lib/toaster/manage.py python manage.py createsuperuser --username=<ME>
+    python $BBBASEDIR/lib/toaster/manage.py syncdb --noinput || retval=1
+
     python $BBBASEDIR/lib/toaster/manage.py migrate orm || retval=2
     if [ $retval -eq 1 ]; then
         echo "Failed db sync, stopping system start" 1>&2
