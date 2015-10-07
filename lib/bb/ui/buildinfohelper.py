@@ -286,6 +286,7 @@ class ORMWrapper(object):
 
         update_recipe_obj(recipe)
 
+        built_recipe = None
         # Create a copy of the recipe for historical puposes and update it
         for built_layer in self.layer_version_built:
             if built_layer.layer == recipe_information['layer_version'].layer:
@@ -301,7 +302,7 @@ class ORMWrapper(object):
         if created and must_exist:
             raise NotExisting("Recipe object created when expected to exist", recipe_information)
 
-        return recipe
+        return built_recipe
 
     def get_update_layer_version_object(self, build_obj, layer_obj, layer_version_information):
         if isinstance(layer_obj, Layer_Version):
