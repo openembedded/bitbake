@@ -222,7 +222,7 @@ class Project(models.Model):
         if pk is False:
             return layer_versions
         else:
-            return layer_versions.values_list('pk', flat=True)
+            return layer_versions.values_list('layercommit__pk', flat=True)
 
 
     def get_available_machines(self):
