@@ -335,9 +335,22 @@ class RecipesTable(ToasterTable, ProjectFiltersMixin):
 
         return context
 
+    def setup_filters(self, *args, **kwargs):
+        self.add_filter(title="Filter by project recipes",
+                        name="in_current_project",
+                        filter_actions=[
+                            self.make_filter_action("in_project", "Recipes provided by layers added to this project", self.filter_in_project),
+                            self.make_filter_action("not_in_project", "Recipes provided by layers not added to this project", self.filter_not_in_project)
+                        ])
 
     def setup_queryset(self, *args, **kwargs):
         prj = Project.objects.get(pk = kwargs['pid'])
+
+        # Project layers used by the filters
+        self.project_layers = prj.get_project_layer_versions(pk=True)
+
+        # Project layers used to switch the button states
+        self.static_context_extra['current_layers'] = self.project_layers
 
         self.queryset = prj.get_all_compatible_recipes()
         self.queryset = self.queryset.order_by(self.default_orderby)
