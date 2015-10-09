@@ -57,9 +57,7 @@ class LayersTable(ToasterTable):
         context = super(LayersTable, self).get_context_data(**kwargs)
 
         project = Project.objects.get(pk=kwargs['pid'])
-
         context['project'] = project
-        context['projectlayers'] = map(lambda prjlayer: prjlayer.layercommit.id, ProjectLayer.objects.filter(project=project))
 
         return context
 
@@ -93,7 +91,10 @@ class LayersTable(ToasterTable):
 
     def setup_queryset(self, *args, **kwargs):
         prj = Project.objects.get(pk = kwargs['pid'])
-        compatible_layers = prj.compatible_layerversions()
+        compatible_layers = prj.get_all_compatible_layer_versions()
+
+        self.static_context_extra['current_layers'] = \
+                prj.get_project_layer_versions(pk=True)
 
         self.queryset = compatible_layers.order_by(self.default_orderby)
 
