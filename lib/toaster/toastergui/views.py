@@ -2768,12 +2768,16 @@ if True:
         project = Project.objects.get(pk=pid)
         layer_version = Layer_Version.objects.get(pk=layerid)
 
-        context = { 'project' : project,
-                   'layerversion' : layer_version,
-                   'layerdeps' : {"list": [{"id": dep.id, "name": dep.layer.name} \
-                                              for dep in layer_version.get_alldeps(project.id)]},
-                   'projectlayers': map(lambda prjlayer: prjlayer.layercommit.id, ProjectLayer.objects.filter(project=project))
-                  }
+        context = {'project' : project,
+            'layerversion' : layer_version,
+            'layerdeps' : {"list": [{"id": dep.id,
+                "name": dep.layer.name,
+                "layerdetailurl": reverse('layerdetails', args=(pid, dep.pk)),
+                "vcs_url": dep.layer.vcs_url,
+                "vcs_reference": dep.get_vcs_reference()} \
+                for dep in layer_version.get_alldeps(project.id)]},
+            'projectlayers': map(lambda prjlayer: prjlayer.layercommit.id, ProjectLayer.objects.filter(project=project))
+        }
 
         return context
 
