@@ -29,7 +29,7 @@ from django.utils import timezone
 from orm.models import Project, Release, BitbakeVersion, Package
 from orm.models import ReleaseLayerSourcePriority, LayerSource, Layer, Build
 from orm.models import Layer_Version, Recipe, Machine, ProjectLayer, Target
-from orm.models import CustomImageRecipe
+from orm.models import CustomImageRecipe, ProjectVariable
 from orm.models import Branch
 
 from toastergui.tables import SoftwareRecipesTable
@@ -430,14 +430,42 @@ class LandingPageTests(TestCase):
 class ProjectsPageTests(TestCase):
     """ Tests for projects page """
 
-    PROJECT_NAME = 'cli builds'
+    MACHINE_NAME = 'delorean'
+
+    def _add_build_to_default_project(self):
+        """ Add a build to the default project (not used in all tests) """
+        now = timezone.now()
+        build = Build.objects.create(project=self.default_project,
+                                     started_on=now,
+                                     completed_on=now)
+        build.save()
+
+    def _add_non_default_project(self):
+        """ Add another project """
+        bbv = BitbakeVersion.objects.create(name="test bbv", giturl="/tmp/",
+                                            branch="master", dirpath="")
+        self.release = Release.objects.create(name="test release",
+                                              branch_name="master",
+                                              bitbake_version=bbv)
+        self.project = Project.objects.create_project(PROJECT_NAME, self.release)
+        self.project.is_default = False
+        self.project.save()
+
+        # fake the MACHINE variable
+        project_var = ProjectVariable.objects.create(project=self.project,
+                                                     name='MACHINE',
+                                                     value=self.MACHINE_NAME)
+        project_var.save()
 
     def setUp(self):
         """ Add default project manually """
-        project = Project.objects.create_project(self.PROJECT_NAME, None)
+        project = Project.objects.create_project(CLI_BUILDS_PROJECT_NAME, None)
         self.default_project = project
         self.default_project.is_default = True
         self.default_project.save()
+
+        # this project is only set for some of the tests
+        self.project = None
 
     def test_default_project_hidden(self):
         """ The default project should be hidden if it has no builds """
@@ -446,24 +474,84 @@ class ProjectsPageTests(TestCase):
 
         self.assertTrue(not('tr class="data"' in response.content),
                         'should be no project rows in the page')
-        self.assertTrue(not(self.PROJECT_NAME in response.content),
+        self.assertTrue(not(CLI_BUILDS_PROJECT_NAME in response.content),
                         'default project "cli builds" should not be in page')
 
     def test_default_project_has_build(self):
         """ The default project should be shown if it has builds """
-        now = timezone.now()
-        build = Build.objects.create(project=self.default_project,
-                                     started_on=now,
-                                     completed_on=now)
-        build.save()
+        self._add_build_to_default_project()
 
         params = {"count": 10, "orderby": "updated:-", "page": 1}
         response = self.client.get(reverse('all-projects'), params)
 
         self.assertTrue('tr class="data"' in response.content,
                         'should be a project row in the page')
-        self.assertTrue(self.PROJECT_NAME in response.content,
+        self.assertTrue(CLI_BUILDS_PROJECT_NAME in response.content,
                         'default project "cli builds" should be in page')
+
+    def test_default_project_release(self):
+        """
+        The release for the default project should display as
+        'Not applicable'
+        """
+        # need a build, otherwise project doesn't display at all
+        self._add_build_to_default_project()
+
+        # another project to test, which should show release
+        self._add_non_default_project()
+
+        response = self.client.get(reverse('all-projects'), follow=True)
+        soup = BeautifulSoup(response.content)
+
+        # check the release cell for the default project
+        attrs = {'data-project': str(self.default_project.id)}
+        rows = soup.find_all('tr', attrs=attrs)
+        self.assertEqual(len(rows), 1, 'should be one row for default project')
+        cells = rows[0].find_all('td', attrs={'data-project-field': 'release'})
+        self.assertEqual(len(cells), 1, 'should be one release cell')
+        text = cells[0].select('span.muted')[0].text
+        self.assertEqual(text, 'Not applicable',
+                         'release should be not applicable for default project')
+
+        # check the link in the release cell for the other project
+        attrs = {'data-project': str(self.project.id)}
+        rows = soup.find_all('tr', attrs=attrs)
+        cells = rows[0].find_all('td', attrs={'data-project-field': 'release'})
+        text = cells[0].select('a')[0].text
+        self.assertEqual(text, self.release.name,
+                         'release name should be shown for non-default project')
+
+    def test_default_project_machine(self):
+        """
+        The machine for the default project should display as
+        'Not applicable'
+        """
+        # need a build, otherwise project doesn't display at all
+        self._add_build_to_default_project()
+
+        # another project to test, which should show machine
+        self._add_non_default_project()
+
+        response = self.client.get(reverse('all-projects'), follow=True)
+        soup = BeautifulSoup(response.content)
+
+        # check the machine cell for the default project
+        attrs = {'data-project': str(self.default_project.id)}
+        rows = soup.find_all('tr', attrs=attrs)
+        self.assertEqual(len(rows), 1, 'should be one row for default project')
+        cells = rows[0].find_all('td', attrs={'data-project-field': 'machine'})
+        self.assertEqual(len(cells), 1, 'should be one machine cell')
+        text = cells[0].select('span.muted')[0].text
+        self.assertEqual(text, 'Not applicable',
+                         'machine should be not applicable for default project')
+
+        # check the link in the machine cell for the other project
+        attrs = {'data-project': str(self.project.id)}
+        rows = soup.find_all('tr', attrs=attrs)
+        cells = rows[0].find_all('td', attrs={'data-project-field': 'machine'})
+        text = cells[0].select('a')[0].text
+        self.assertEqual(text, self.MACHINE_NAME,
+                         'machine name should be shown for non-default project')
 
 class ProjectBuildsPageTests(TestCase):
     """ Test data at /project/X/builds is displayed correctly """
