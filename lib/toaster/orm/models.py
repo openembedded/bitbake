@@ -344,6 +344,9 @@ class Build(models.Model):
         tgts = Target.objects.filter(build_id = self.id).order_by( 'target' );
         return( tgts );
 
+    def get_outcome_text(self):
+        return Build.BUILD_OUTCOME[int(self.outcome)][1]
+
     @property
     def toaster_exceptions(self):
         return self.logmessage_set.filter(level=LogMessage.EXCEPTION)
@@ -361,10 +364,23 @@ class Build(models.Model):
         return (self.completed_on - self.started_on).total_seconds()
 
     def get_current_status(self):
+        """
+        get the status string from the build request if the build
+        has one, or the text for the build outcome if it doesn't
+        """
+
         from bldcontrol.models import BuildRequest
-        if self.outcome == Build.IN_PROGRESS and self.buildrequest.state != BuildRequest.REQ_INPROGRESS:
+
+        build_request = None
+        if hasattr(self, 'buildrequest'):
+            build_request = self.buildrequest
+
+        if (build_request
+                and build_request.state != BuildRequest.REQ_INPROGRESS
+                and self.outcome == Build.IN_PROGRESS):
             return self.buildrequest.get_state_display()
-        return self.get_outcome_display()
+        else:
+            return self.get_outcome_text()
 
     def __str__(self):
         return "%d %s %s" % (self.id, self.project, ",".join([t.target for t in self.target_set.all()]))
