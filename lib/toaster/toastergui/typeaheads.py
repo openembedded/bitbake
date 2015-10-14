@@ -121,12 +121,12 @@ class RecipesTypeAhead(ToasterTypeAhead):
         return results
 
 class ProjectsTypeAhead(ToasterTypeAhead):
-    """ Typeahead for all the projects """
+    """ Typeahead for all the projects, except for command line builds """
     def __init__(self):
         super(ProjectsTypeAhead, self).__init__()
 
     def apply_search(self, search_term, prj, request):
-        projects = Project.objects.all().order_by("name")
+        projects = Project.objects.exclude(is_default=True).order_by("name")
 
         primary_results = projects.filter(name__istartswith=search_term)
         secondary_results = projects.filter(name__icontains=search_term).exclude(pk__in=primary_results)
