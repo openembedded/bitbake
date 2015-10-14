@@ -574,3 +574,33 @@ class ProjectBuildsDisplayTest(TestCase):
         response = self.client.get(url, follow=True)
         result = re.findall('bash:clean', response.content, re.MULTILINE)
         self.assertEqual(len(result), 3)
+
+class ProjectPageTests(TestCase):
+    """ Test project data at /project/X/ is displayed correctly """
+    CLI_BUILDS_PROJECT_NAME = 'Command line builds'
+
+    def test_command_line_builds_in_progress(self):
+        """
+        In progress builds should not cause an error to be thrown
+        when navigating to "command line builds" project page;
+        see https://bugzilla.yoctoproject.org/show_bug.cgi?id=8277
+        """
+
+        # add the "command line builds" default project; this mirrors what
+        # we do in migration 0026_set_default_project.py
+        default_project = Project.objects.create_project(self.CLI_BUILDS_PROJECT_NAME, None)
+        default_project.is_default = True
+        default_project.save()
+
+        # add an "in progress" build for the default project
+        now = timezone.now()
+        build = Build.objects.create(project=default_project,
+                                     started_on=now,
+                                     completed_on=now,
+                                     outcome=Build.IN_PROGRESS)
+
+        # navigate to the project page for the default project
+        url = reverse("project", args=(default_project.id,))
+        response = self.client.get(url, follow=True)
+
+        self.assertEqual(response.status_code, 200)
