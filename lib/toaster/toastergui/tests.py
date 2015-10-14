@@ -21,23 +21,20 @@
 
 """Test cases for Toaster GUI and ReST."""
 
-import re
-
 from django.test import TestCase
 from django.test.client import RequestFactory
 from django.core.urlresolvers import reverse
 from django.utils import timezone
 
-from orm.models import Project, Release, BitbakeVersion, Build, Package
+from orm.models import Project, Release, BitbakeVersion, Package
 from orm.models import ReleaseLayerSourcePriority, LayerSource, Layer, Build
 from orm.models import Layer_Version, Recipe, Machine, ProjectLayer, Target
 from orm.models import CustomImageRecipe
 from orm.models import Branch
 
 from toastergui.tables import SoftwareRecipesTable
-from django.utils import timezone
-import json
 from bs4 import BeautifulSoup
+import json
 import re
 
 PROJECT_NAME = "test project"
@@ -72,11 +69,11 @@ class ViewTests(TestCase):
                                             up_branch=branch)
 
         self.recipe1 = Recipe.objects.create(layer_source=layersrc,
-                                       name="base-recipe",
-                                       version="1.2",
-                                       summary="one recipe",
-                                       description="recipe",
-                                       layer_version=lver)
+                                             name="base-recipe",
+                                             version="1.2",
+                                             summary="one recipe",
+                                             description="recipe",
+                                             layer_version=lver)
 
         Machine.objects.create(layer_version=lver, name="wisk",
                                description="wisking machine")
@@ -337,11 +334,7 @@ class ViewTests(TestCase):
 
         rows = data['rows']
         row1 = next(x for x in rows if x['name'] == self.recipe1.name)
-        row1_btns = row1['static:add-del-layers']
-        row1_btns_data = row1['add-del-layers']
         row2 = next(x for x in rows if x['name'] == self.recipe2.name)
-        row2_btns = row2['static:add-del-layers']
-        row2_btns_data = row2['add-del-layers']
 
         self.assertEqual(response.status_code, 200, 'should be 200 OK status')
         self.assertEqual(len(rows), 2, 'should be 2 recipes')
@@ -472,7 +465,7 @@ class ProjectsPageTests(TestCase):
         self.assertTrue(self.PROJECT_NAME in response.content,
                         'default project "cli builds" should be in page')
 
-class ProjectBuildsDisplayTest(TestCase):
+class ProjectBuildsPageTests(TestCase):
     """ Test data at /project/X/builds is displayed correctly """
 
     def setUp(self):
@@ -517,6 +510,7 @@ class ProjectBuildsDisplayTest(TestCase):
         }
 
     def _get_rows_for_project(self, project_id):
+        """ Helper to retrieve HTML rows for a project """
         url = reverse("projectbuilds", args=(project_id,))
         response = self.client.get(url, follow=True)
         soup = BeautifulSoup(response.content)
@@ -524,52 +518,73 @@ class ProjectBuildsDisplayTest(TestCase):
 
     def test_show_builds_for_project(self):
         """ Builds for a project should be displayed """
-        build1a = Build.objects.create(**self.project1_build_success)
-        build1b = Build.objects.create(**self.project1_build_success)
+        Build.objects.create(**self.project1_build_success)
+        Build.objects.create(**self.project1_build_success)
         build_rows = self._get_rows_for_project(self.project1.id)
         self.assertEqual(len(build_rows), 2)
 
-    def test_show_builds_for_project_only(self):
+    def test_show_builds_project_only(self):
         """ Builds for other projects should be excluded """
-        build1a = Build.objects.create(**self.project1_build_success)
-        build1b = Build.objects.create(**self.project1_build_success)
-        build1c = Build.objects.create(**self.project1_build_success)
+        Build.objects.create(**self.project1_build_success)
+        Build.objects.create(**self.project1_build_success)
+        Build.objects.create(**self.project1_build_success)
 
         # shouldn't see these two
-        build2a = Build.objects.create(**self.project2_build_success)
-        build2b = Build.objects.create(**self.project2_build_in_progress)
+        Build.objects.create(**self.project2_build_success)
+        Build.objects.create(**self.project2_build_in_progress)
 
         build_rows = self._get_rows_for_project(self.project1.id)
         self.assertEqual(len(build_rows), 3)
 
-    def test_show_builds_exclude_in_progress(self):
+    def test_builds_exclude_in_progress(self):
         """ "in progress" builds should not be shown """
-        build1a = Build.objects.create(**self.project1_build_success)
-        build1b = Build.objects.create(**self.project1_build_success)
+        Build.objects.create(**self.project1_build_success)
+        Build.objects.create(**self.project1_build_success)
 
         # shouldn't see this one
-        build1c = Build.objects.create(**self.project1_build_in_progress)
+        Build.objects.create(**self.project1_build_in_progress)
 
         # shouldn't see these two either, as they belong to a different project
-        build2a = Build.objects.create(**self.project2_build_success)
-        build2b = Build.objects.create(**self.project2_build_in_progress)
+        Build.objects.create(**self.project2_build_success)
+        Build.objects.create(**self.project2_build_in_progress)
 
         build_rows = self._get_rows_for_project(self.project1.id)
         self.assertEqual(len(build_rows), 2)
 
-    def test_show_tasks_in_projectbuilds(self):
+    def test_tasks_in_projectbuilds(self):
+        """ Task should be shown as suffix on build name """
         build = Build.objects.create(**self.project1_build_success)
-        target = Target.objects.create(build=build, target='bash',
-                                       task='clean')
+        Target.objects.create(build=build, target='bash', task='clean')
         url = reverse("projectbuilds", args=(self.project1.id,))
         response = self.client.get(url, follow=True)
         result = re.findall('^ +bash:clean$', response.content, re.MULTILINE)
         self.assertEqual(len(result), 2)
 
+class AllBuildsPageTests(TestCase):
+    """ Tests for all builds page """
+
+    def setUp(self):
+        bbv = BitbakeVersion.objects.create(name="bbv1", giturl="/tmp/",
+                                            branch="master", dirpath="")
+        release = Release.objects.create(name="release1",
+                                         bitbake_version=bbv)
+        self.project1 = Project.objects.create_project(name=PROJECT_NAME,
+                                                       release=release)
+
+        # parameters for builds to associate with the projects
+        now = timezone.now()
+
+        self.project1_build_success = {
+            "project": self.project1,
+            "started_on": now,
+            "completed_on": now,
+            "outcome": Build.SUCCEEDED
+        }
+
     def test_show_tasks_in_allbuilds(self):
+        """ Task should be shown as suffix on build name """
         build = Build.objects.create(**self.project1_build_success)
-        target = Target.objects.create(build=build, target='bash',
-                                       task='clean')
+        Target.objects.create(build=build, target='bash', task='clean')
         url = reverse("all-builds")
         response = self.client.get(url, follow=True)
         result = re.findall('bash:clean', response.content, re.MULTILINE)
