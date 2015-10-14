@@ -432,11 +432,11 @@ class LayerRecipesTable(RecipesTable):
                         orderable=True,
                         field_name="name")
 
-        self.add_column(title="Description",
-                        field_name="get_description_or_summary")
-
         self.add_column(title="Version",
                         field_name="version")
+
+        self.add_column(title="Description",
+                        field_name="get_description_or_summary")
 
         build_recipe_template ='<button class="btn btn-block build-recipe-btn" data-recipe-name="{{data.name}}" {%if extra.in_prj == 0 %}disabled="disabled"{%endif%}>Build recipe</button>'
 
