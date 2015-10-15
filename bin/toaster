@@ -232,9 +232,7 @@ for param in $*; do
     esac
 done
 
-[ -n "${BASH_SOURCE}" ] && SRCFILE=${BASH_SOURCE} || SRCFILE=$_
-
-if [ `basename \"$0\"` = `basename \"${SRCFILE}\"` ]; then
+if [ `basename \"$0\"` = `basename \"${TOASTER}\"` ]; then
     # We are called as standalone. We refuse to run in a build environment - we need the interactive mode for that.
     # Start just the web server, point the web browser to the interface, and start any Django services.
 
