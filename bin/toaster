@@ -176,6 +176,8 @@ else
     TOASTER=$0
 fi
 
+[ `basename \"$0\"` = `basename \"${TOASTER}\"` ] && TOASTER_MANAGED=1
+
 BBBASEDIR=`dirname $TOASTER`/..
 
 RUNNING=0
@@ -232,7 +234,7 @@ for param in $*; do
     esac
 done
 
-if [ `basename \"$0\"` = `basename \"${TOASTER}\"` ]; then
+if [ "$TOASTER_MANAGED" = '1' ]; then
     # We are called as standalone. We refuse to run in a build environment - we need the interactive mode for that.
     # Start just the web server, point the web browser to the interface, and start any Django services.
 
@@ -279,7 +281,6 @@ if [ `basename \"$0\"` = `basename \"${TOASTER}\"` ]; then
             do_cleanup
         fi
     }
-    TOASTER_MANAGED=1
     export TOASTER_MANAGED=1
     if [ $WEBSERVER -gt 0 ] && ! webserverStartAll; then
         echo "Failed to start the web server, stopping" 1>&2
