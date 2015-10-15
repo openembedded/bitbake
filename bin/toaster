@@ -194,11 +194,11 @@ fi
 # in the local layers that currently prevent using an arbitrary
 # toasterconf.json
 if [ "$TOASTER_CONF" = "" ]; then
-    BIN_DIR=$(dirname -- "$0")
-    export TOASTER_CONF="$BIN_DIR/../../meta-yocto/conf/toasterconf.json"
+    TOASTER_CONF="$(dirname $TOASTER)/../../meta-yocto/conf/toasterconf.json"
+    export TOASTER_CONF=$(python -c "import os; print os.path.realpath('$TOASTER_CONF')")
 fi
 if [ ! -f $TOASTER_CONF ]; then
-    echo "$TOASTER_CONF configuration file not found, exiting..."
+    echo "$TOASTER_CONF configuration file not found. set TOASTER_CONF to specify a path"
     exit 1;
 fi
 # this defines the dir toaster will use for
