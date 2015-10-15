@@ -1391,10 +1391,28 @@ class BBCooker:
         build.reset_cache()
         self.buildSetVars()
 
+        # If we are told to do the None task then query the default task
+        if (task == None):
+            task = self.configuration.cmd
+
+        if not task.startswith("do_"):
+            task = "do_%s" % task
+
         taskdata, runlist, fulltargetlist = self.buildTaskData(targets, task, self.configuration.abort)
 
         buildname = self.data.getVar("BUILDNAME", False)
-        bb.event.fire(bb.event.BuildStarted(buildname, fulltargetlist), self.data)
+
+        # make targets to always look as <target>:do_<task>
+        ntargets = []
+        for target in fulltargetlist:
+            if ":" in target:
+                if ":do_" not in target:
+                    target = "%s:do_%s" % tuple(target.split(":", 1))
+            else:
+                target = "%s:%s" % (target, task)
+            ntargets.append(target)
+
+        bb.event.fire(bb.event.BuildStarted(buildname, ntargets), self.data)
 
         rq = bb.runqueue.RunQueue(self, self.data, self.recipecache, taskdata, runlist)
         if 'universe' in targets:
