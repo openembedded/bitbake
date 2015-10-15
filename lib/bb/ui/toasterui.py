@@ -145,10 +145,12 @@ def main(server, eventHandler, params ):
                     event.levelno = formatter.ERROR
 
                 buildinfohelper.store_log_event(event)
+
                 if event.levelno >= formatter.ERROR:
                     errors = errors + 1
                 elif event.levelno == formatter.WARNING:
                     warnings = warnings + 1
+
                 # For "normal" logging conditions, don't show note logs from tasks
                 # but do show them if the user has changed the default log level to
                 # include verbose/debug messages

@@ -69,11 +69,12 @@
     <div class="accordion-body collapse in" id="collapse-errors">
       <div class="accordion-inner">
         <div class="span10">
-          {% for error in logmessages %}{% if error.level == 2 %}
-            <div class="alert alert-error">
-              <pre>{{error.message}}</pre>
-            </div>
-          {% endif %}
+          {% for error in logmessages %}
+            {% if error.level == 2 or error.level == 3 %}
+              <div class="alert alert-error">
+                <pre>{{error.message}}</pre>
+              </div>
+            {% endif %}
           {% endfor %}
         </div>
       </div>

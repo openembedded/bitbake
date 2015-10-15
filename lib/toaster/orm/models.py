@@ -353,7 +353,9 @@ class Build(models.Model):
 
     @property
     def errors(self):
-        return (self.logmessage_set.filter(level=LogMessage.ERROR)|self.logmessage_set.filter(level=LogMessage.EXCEPTION))
+        return (self.logmessage_set.filter(level=LogMessage.ERROR) |
+                self.logmessage_set.filter(level=LogMessage.EXCEPTION) |
+                self.logmessage_set.filter(level=LogMessage.CRITICAL))
 
     @property
     def warnings(self):
@@ -1285,16 +1287,20 @@ class LogMessage(models.Model):
     INFO = 0
     WARNING = 1
     ERROR = 2
+    CRITICAL = 3
 
-    LOG_LEVEL = ( (INFO, "info"),
-            (WARNING, "warn"),
-            (ERROR, "error"),
-            (EXCEPTION, "toaster exception"))
+    LOG_LEVEL = (
+        (INFO, "info"),
+        (WARNING, "warn"),
+        (ERROR, "error"),
+        (CRITICAL, "critical"),
+        (EXCEPTION, "toaster exception")
+    )
 
     build = models.ForeignKey(Build)
     task  = models.ForeignKey(Task, blank = True, null=True)
     level = models.IntegerField(choices=LOG_LEVEL, default=INFO)
-    message=models.CharField(max_length=240)
+    message = models.CharField(max_length=240)
     pathname = models.FilePathField(max_length=255, blank=True)
     lineno = models.IntegerField(null=True)
 

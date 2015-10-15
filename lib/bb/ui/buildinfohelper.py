@@ -1394,7 +1394,9 @@ class BuildInfoHelper(object):
 
         log_information = {}
         log_information['build'] = self.internal_state['build']
-        if event.levelno == formatter.ERROR:
+        if event.levelno == formatter.CRITICAL:
+            log_information['level'] = LogMessage.CRITICAL
+        elif event.levelno == formatter.ERROR:
             log_information['level'] = LogMessage.ERROR
         elif event.levelno == formatter.WARNING:
             log_information['level'] = LogMessage.WARNING
@@ -1407,6 +1409,7 @@ class BuildInfoHelper(object):
         log_information['pathname'] = event.pathname
         log_information['lineno'] = event.lineno
         logger.info("Logging error 2: %s", log_information)
+
         self.orm_wrapper.create_logmessage(log_information)
 
     def close(self, errorcode):
