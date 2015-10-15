@@ -348,10 +348,6 @@ class Build(models.Model):
         return Build.BUILD_OUTCOME[int(self.outcome)][1]
 
     @property
-    def toaster_exceptions(self):
-        return self.logmessage_set.filter(level=LogMessage.EXCEPTION)
-
-    @property
     def errors(self):
         return (self.logmessage_set.filter(level=LogMessage.ERROR) |
                 self.logmessage_set.filter(level=LogMessage.EXCEPTION) |
