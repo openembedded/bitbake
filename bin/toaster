@@ -201,7 +201,7 @@ if [ "$TOASTER_CONF" = "" ]; then
 fi
 if [ ! -f $TOASTER_CONF ]; then
     echo "$TOASTER_CONF configuration file not found. set TOASTER_CONF to specify a path"
-    exit 1;
+    [ "$TOASTER_MANAGED" = '1' ] && exit 1 || return 1
 fi
 # this defines the dir toaster will use for
 # 1) clones of layers (in _toaster_clones )
