@@ -129,6 +129,8 @@ class CookerConfiguration(object):
         self.extra_assume_provided = []
         self.prefile = []
         self.postfile = []
+        self.prefile_server = []
+        self.postfile_server = []
         self.debug = 0
         self.cmd = None
         self.abort = True

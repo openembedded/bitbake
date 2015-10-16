@@ -531,6 +531,11 @@ class BBCooker:
         for o in options:
             if o in ['prefile', 'postfile']:
                 clean = False
+                server_val = getattr(self.configuration, "%s_server" % o)
+                if not options[o] and server_val:
+                    # restore value provided on server start
+                    setattr(self.configuration, o, server_val)
+                    continue
             setattr(self.configuration, o, options[o])
         for k in bb.utils.approved_variables():
             if k in environment and k not in self.configuration.env:
