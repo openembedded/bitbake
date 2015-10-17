@@ -71,14 +71,24 @@ class MimeTypeFinder(object):
 # all new sessions should come through the landing page;
 # determine in which mode we are running in, and redirect appropriately
 def landing(request):
+    # in build mode, we redirect to the command-line builds page
+    # if there are any builds for the default (cli builds) project
+    default_project = Project.objects.get_default_project()
+    default_project_builds = Build.objects.filter(project = default_project)
+
+    if (not toastermain.settings.BUILD_MODE) and default_project_builds.count() > 0:
+        args = (default_project.id,)
+        return redirect(reverse('projectbuilds', args = args), permanent = False)
+
     # we only redirect to projects page if there is a user-generated project
+    num_builds = Build.objects.all().count()
     user_projects = Project.objects.filter(is_default = False)
     has_user_project = user_projects.count() > 0
 
-    if Build.objects.count() == 0 and has_user_project:
+    if num_builds == 0 and has_user_project:
         return redirect(reverse('all-projects'), permanent = False)
 
-    if Build.objects.all().count() > 0:
+    if num_builds > 0:
         return redirect(reverse('all-builds'), permanent = False)
 
     context = {'lvs_nos' : Layer_Version.objects.all().count()}

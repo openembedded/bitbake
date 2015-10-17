@@ -91,9 +91,9 @@
             <i class="icon-info-sign" title="<strong>Toaster version information</strong>" data-content="<dl><dt>Branch</dt><dd>{{TOASTER_BRANCH}}</dd><dt>Revision</dt><dd>{{TOASTER_REVISION}}</dd></dl>"></i>
             {% endif %}
           </span>
-          {% if request.resolver_match.url_name != 'landing' and request.resolver_match.url_name != 'newproject' %}
+          {% if BUILD_MODE and request.resolver_match.url_name != 'landing' and request.resolver_match.url_name != 'newproject' %}
           <ul class="nav">
-            <li  {% if request.resolver_match.url_name == 'all-builds' %}
+            <li {% if request.resolver_match.url_name == 'all-builds' %}
                 class="active"
                 {% endif %}>
               <a href="{% url 'all-builds' %}">
