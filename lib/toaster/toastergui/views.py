@@ -92,9 +92,12 @@ def _get_latest_builds(prj=None):
     if prj is not None:
         queryset = queryset.filter(project = prj)
 
+    if not toastermain.settings.BUILD_MODE:
+        queryset = queryset.exclude(project__is_default=False)
+
     return list(itertools.chain(
-        queryset.filter(outcome=Build.IN_PROGRESS).order_by("-pk"),
-        queryset.filter(outcome__lt=Build.IN_PROGRESS).order_by("-pk")[:3] ))
+        queryset.filter(outcome=Build.IN_PROGRESS).order_by("-started_on"),
+        queryset.filter(outcome__lt=Build.IN_PROGRESS).order_by("-started_on")[:3] ))
 
 
 # a JSON-able dict of recent builds; for use in the Project page, xhr_ updates,  and other places, as needed
@@ -1926,6 +1929,11 @@ if True:
 
         queryset = Build.objects.all()
 
+        # if in analysis mode, exclude builds for all projects except
+        # command line builds
+        if not toastermain.settings.BUILD_MODE:
+            queryset = queryset.exclude(project__is_default=False)
+
         redirect_page = resolve(request.path_info).url_name
 
         context, pagesize, orderby = _build_list_helper(request,
@@ -2000,7 +2008,7 @@ if True:
         build_info = _build_page_range(Paginator(queryset, pagesize), request.GET.get('page', 1))
 
         # build view-specific information; this is rendered specifically in the builds page, at the top of the page (i.e. Recent builds)
-        build_mru = Build.objects.order_by("-started_on")[:3]
+        build_mru = _get_latest_builds()[:3]
 
         # calculate the exact begining of local today and yesterday, append context
         context_date,today_begin,yesterday_begin = _add_daterange_context(queryset_all, request, {'started_on','completed_on'})
@@ -3029,6 +3037,10 @@ if True:
         q_default_with_builds = Q(is_default=True) & Q(num_builds__gt=0)
         queryset_all = queryset_all.filter(Q(is_default=False) |
                                            q_default_with_builds)
+
+        # if in BUILD_MODE, exclude everything but the command line builds project
+        if not toastermain.settings.BUILD_MODE:
+            queryset_all = queryset_all.exclude(is_default=False)
 
         # boilerplate code that takes a request for an object type and returns a queryset
         # for that object type. copypasta for all needed table searches
