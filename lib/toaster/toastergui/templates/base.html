@@ -120,11 +120,19 @@
             </li>
           </ul>
           <span class="pull-right divider-vertical"></span>
-          <div class="btn-group pull-right">
-            <a class="btn" id="new-project-button" href="{% url 'newproject' %}">New project</a>
-          </div>
-          <!-- New build popover; only shown if there is at least one user-created project -->
-          {% if non_cli_projects.count > 0 %}
+
+          <!-- new project button; only show in build mode -->
+          {% if BUILD_MODE %}
+            <div class="btn-group pull-right">
+              <a class="btn" id="new-project-button" href="{% url 'newproject' %}">New project</a>
+            </div>
+          {% endif %}
+
+          <!--
+          New build popover; only shown if there is at least one user-created project
+          and we're in build mode
+          -->
+          {% if BUILD_MODE and non_cli_projects.count > 0 %}
             <div class="btn-group pull-right" id="new-build-button" style="display:none">
               <button class="btn dropdown-toggle" data-toggle="dropdown">
                 New build
