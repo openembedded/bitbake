@@ -32,6 +32,8 @@ from orm.models import Layer_Version, Recipe, Machine, ProjectLayer, Target
 from orm.models import CustomImageRecipe, ProjectVariable
 from orm.models import Branch
 
+import toastermain
+
 from toastergui.tables import SoftwareRecipesTable
 import json
 from bs4 import BeautifulSoup
@@ -39,6 +41,10 @@ import re
 
 PROJECT_NAME = "test project"
 CLI_BUILDS_PROJECT_NAME = 'Command line builds'
+
+# by default, tests are run in build mode; to run in analysis mode,
+# set this to False in individual test cases
+toastermain.settings.BUILD_MODE = True
 
 class ViewTests(TestCase):
     """Tests to verify view APIs."""
