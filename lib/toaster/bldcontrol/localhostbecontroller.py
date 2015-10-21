@@ -242,7 +242,7 @@ class LocalhostBEController(BuildEnvironmentController):
             # create recipe
             recipe = os.path.join(layerpath, "recipes", "%s.bb" % target.target)
             with open(recipe, "w") as recipef:
-                recipef.write("require %s\n" % customrecipe.base_recipe.recipe.file_path)
+                recipef.write("require %s\n" % customrecipe.base_recipe.file_path)
                 packages = [pkg.name for pkg in customrecipe.packages.all()]
                 if packages:
                     recipef.write('IMAGE_INSTALL = "%s"\n' % ' '.join(packages))
