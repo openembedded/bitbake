@@ -1296,7 +1296,7 @@ class LogMessage(models.Model):
     build = models.ForeignKey(Build)
     task  = models.ForeignKey(Task, blank = True, null=True)
     level = models.IntegerField(choices=LOG_LEVEL, default=INFO)
-    message = models.CharField(max_length=240)
+    message = models.TextField(blank=True, null=True)
     pathname = models.FilePathField(max_length=255, blank=True)
     lineno = models.IntegerField(null=True)
 
