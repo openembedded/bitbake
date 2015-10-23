@@ -1326,7 +1326,7 @@ class Layer_Version(models.Model):
             return self.up_branch.name
         if self.commit is not None and len(self.commit) > 0:
             return self.commit
-        return ("Cannot determine the vcs_reference for layer version %s" % vars(self))
+        return 'N/A'
 
     def get_detailspage_url(self, project_id):
         return reverse('layerdetails', args=(project_id, self.pk))
