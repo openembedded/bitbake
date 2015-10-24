@@ -1311,3 +1311,27 @@ def signal_on_parent_exit(signame):
     result = cdll['libc.so.6'].prctl(PR_SET_PDEATHSIG, signum)
     if result != 0:
         raise PrCtlError('prctl failed with error code %s' % result)
+
+#
+# Manually call the ioprio syscall. We could depend on other libs like psutil
+# however this gets us enough of what we need to bitbake for now without the
+# dependency
+#
+_unamearch = os.uname()[4]
+IOPRIO_WHO_PROCESS = 1
+IOPRIO_CLASS_SHIFT = 13
+
+def ioprio_set(who, cls, value):
+    NR_ioprio_set = None
+    if _unamearch == "x86_64":
+      NR_ioprio_set = 251
+    elif _unamearch[0] == "i" and _unamearch[2:3] == "86":
+      NR_ioprio_set = 289
+
+    if NR_ioprio_set:
+        ioprio = value | (cls << IOPRIO_CLASS_SHIFT)
+        rc = cdll['libc.so.6'].syscall(NR_ioprio_set, IOPRIO_WHO_PROCESS, who, ioprio)
+        if rc != 0:
+            raise ValueError("Unable to set ioprio, syscall returned %s" % rc)
+    else:
+        bb.warn("Unable to set IO Prio for arch %s" % _unamearch)
