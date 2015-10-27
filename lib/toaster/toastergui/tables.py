@@ -658,7 +658,37 @@ class SelectPackagesTable(ToasterTable):
                         help_text="Use the add and remove buttons to modify "
                         "the package content of you custom image",
                         static_data_name="add_rm_pkg_btn",
-                        static_data_template='{% include "pkg_add_rm_btn.html" %}')
+                        static_data_template='{% include "pkg_add_rm_btn.html" %}',
+                        static_data_template='{% include "pkg_add_rm_btn.html" %}'
+                        )
+
+    def setup_filters(self, *args, **kwargs):
+        project = Project.objects.get(pk=kwargs['pid'])
+        self.project_layers = ProjectLayer.objects.filter(project=project)
+
+
+        self.add_filter(title="Filter by added packages",
+                        name="in_current_image",
+                        filter_actions=[
+                            self.make_filter_action(
+                                "in_image",
+                                "Packages in %s" % self.cust_recipe.name,
+                                self.filter_in_image),
+                            self.make_filter_action(
+                                "not_in_image",
+                                "Packages not added to %s" %
+                                self.cust_recipe.name,
+                                self.filter_not_in_image)
+                        ])
+
+    def filter_in_image(self, count_only=False):
+        return self.queryset.filter(
+            pk__in=self.static_context_extra['current_packages'])
+
+
+    def filter_not_in_image(self, count_only=False):
+        return self.queryset.exclude(
+            pk__in=self.static_context_extra['current_packages'])
 
 class ProjectsTable(ToasterTable):
     """Table of projects in Toaster"""
