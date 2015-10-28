@@ -4,7 +4,9 @@
 {% load project_url_tag %}
 <html lang="en">
     <head>
-        <title>{% if objectname %} {{objectname|title}} - {% endif %}Toaster</title>
+        <title>
+          {% block title %} Toaster {% endblock %}
+        </title>
 <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}" type="text/css"/>
 <link rel="stylesheet" href="{% static 'css/bootstrap-responsive.min.css' %}" type='text/css'/>
 <link rel="stylesheet" href="{% static 'css/font-awesome.min.css' %}" type='text/css'/>

@@ -1,4 +1,5 @@
 {% extends "basebuildpage.html" %}
+{% block title %} Directory structure - {{ target.target }} {{ build.machine }} - {{ build.project.name }} - Toaster {% endblock %}
 {% block extraheadcontent %}
 {% load static %}
 <link rel="stylesheet" href="{% static 'css/jquery.treetable.css' %}" type="text/css">

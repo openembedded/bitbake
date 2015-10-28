@@ -1236,7 +1236,7 @@ def tasks_common(request, build_id, variant, task_anchor):
     context = { 'objectname': variant,
                 'object_search_display': object_search_display,
                 'filter_search_display': filter_search_display,
-                'title': title_variant,
+                'mainheading': title_variant,
                 'build': build,
                 'objects': task_objects,
                 'default_orderby' : orderby,

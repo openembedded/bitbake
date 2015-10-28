@@ -1,6 +1,9 @@
 {% extends "base.html" %}
 {% load projecttags %}
 {% load humanize %}
+
+{% block title %} {{title}} - {{project.name}} - Toaster {% endblock %}
+
 {% block pagecontent %}
 
 {% include "projecttopbar.html" %}
