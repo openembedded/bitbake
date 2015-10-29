@@ -21,6 +21,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 from __future__ import division
+import time
 import sys
 try:
     import bb
@@ -43,8 +44,6 @@ featureSet = [bb.cooker.CookerFeatures.HOB_EXTRA_CACHES, bb.cooker.CookerFeature
 logger = logging.getLogger("ToasterLogger")
 interactive = sys.stdout.isatty()
 
-
-
 def _log_settings_from_server(server):
     # Get values of variables which control our output
     includelogs, error = server.runCommand(["getVariable", "BBINCLUDELOGS"])
@@ -55,16 +54,60 @@ def _log_settings_from_server(server):
     if error:
         logger.error("Unable to get the value of BBINCLUDELOGS_LINES variable: %s", error)
         raise BaseException(error)
-    consolelogfile, error = server.runCommand(["getSetVariable", "BB_CONSOLELOG"])
+    consolelogfile, error = server.runCommand(["getVariable", "BB_CONSOLELOG"])
     if error:
         logger.error("Unable to get the value of BB_CONSOLELOG variable: %s", error)
         raise BaseException(error)
-    return includelogs, loglines, consolelogfile
+    return consolelogfile
 
+# create a log file for a single build and direct the logger at it;
+# log file name is timestamped to the millisecond (depending
+# on system clock accuracy) to ensure it doesn't overlap with
+# other log file names
+#
+# returns (log file, path to log file) for a build
+def _open_build_log(log_dir):
+    format_str = "%(levelname)s: %(message)s"
 
-def main(server, eventHandler, params ):
+    now = time.time()
+    now_ms = int((now - int(now)) * 1000)
+    time_str = time.strftime('build_%Y%m%d_%H%M%S', time.localtime(now))
+    log_file_name = time_str + ('.%d.log' % now_ms)
+    build_log_file_path = os.path.join(log_dir, log_file_name)
+
+    build_log = logging.FileHandler(build_log_file_path)
+
+    logformat = bb.msg.BBLogFormatter(format_str)
+    build_log.setFormatter(logformat)
+
+    bb.msg.addDefaultlogFilter(build_log)
+    logger.addHandler(build_log)
+
+    return (build_log, build_log_file_path)
+
+# stop logging to the build log if it exists
+def _close_build_log(build_log):
+    if build_log:
+        build_log.flush()
+        build_log.close()
+        logger.removeHandler(build_log)
+
+def main(server, eventHandler, params):
+    # set to a logging.FileHandler instance when a build starts;
+    # see _open_build_log()
+    build_log = None
+
+    # set to the log path when a build starts
+    build_log_file_path = None
+
     helper = uihelper.BBUIHelper()
 
+    # TODO don't use log output to determine when bitbake has started
+    #
+    # WARNING: this log handler cannot be removed, as localhostbecontroller
+    # relies on output in the toaster_ui.log file to determine whether
+    # the bitbake server has started, which only happens if
+    # this logger is setup here (see the TODO in the loop below)
     console = logging.StreamHandler(sys.stdout)
     format_str = "%(levelname)s: %(message)s"
     formatter = bb.msg.BBLogFormatter(format_str)
@@ -72,8 +115,6 @@ def main(server, eventHandler, params ):
     console.setFormatter(formatter)
     logger.addHandler(console)
     logger.setLevel(logging.INFO)
-
-    _, _, consolelogfile = _log_settings_from_server(server)
 
     # verify and warn
     build_history_enabled = True
@@ -87,8 +128,9 @@ def main(server, eventHandler, params ):
         logger.error("ToasterUI can only work in observer mode")
         return 1
 
-
+    # set to 1 when toasterui needs to shut down
     main.shutdown = 0
+
     interrupted = False
     return_value = 0
     errors = 0
@@ -98,25 +140,31 @@ def main(server, eventHandler, params ):
 
     buildinfohelper = BuildInfoHelper(server, build_history_enabled)
 
-    if buildinfohelper.brbe is not None and consolelogfile:
-        # if we are under managed mode we have no other UI and we need to write our own file
-        bb.utils.mkdirhier(os.path.dirname(consolelogfile))
-        conlogformat = bb.msg.BBLogFormatter(format_str)
-        consolelog = logging.FileHandler(consolelogfile)
-        bb.msg.addDefaultlogFilter(consolelog)
-        consolelog.setFormatter(conlogformat)
-        logger.addHandler(consolelog)
-
+    # write our own log files into bitbake's log directory;
+    # we're only interested in the path to the parent directory of
+    # this file, as we're writing our own logs into the same directory
+    consolelogfile = _log_settings_from_server(server)
+    log_dir = os.path.dirname(consolelogfile)
+    bb.utils.mkdirhier(log_dir)
 
     while True:
         try:
             event = eventHandler.waitEvent(0.25)
             if first:
                 first = False
+
+                # TODO don't use log output to determine when bitbake has started
+                #
+                # this is the line localhostbecontroller needs to
+                # see in toaster_ui.log which it uses to decide whether
+                # the bitbake server has started...
                 logger.info("ToasterUI waiting for events")
 
             if event is None:
                 if main.shutdown > 0:
+                    # if shutting down, close any open build log first
+                    _close_build_log(build_log)
+
                     break
                 continue
 
@@ -125,8 +173,21 @@ def main(server, eventHandler, params ):
             # pylint: disable=protected-access
             # the code will look into the protected variables of the event; no easy way around this
 
+            # we treat ParseStarted as the first event of toaster-triggered
+            # builds; that way we get the Build Configuration included in the log
+            # and any errors that occur before BuildStarted is fired
+            if isinstance(event, bb.event.ParseStarted):
+                if not (build_log and build_log_file_path):
+                    build_log, build_log_file_path = _open_build_log(log_dir)
+                continue
+
             if isinstance(event, bb.event.BuildStarted):
-                buildinfohelper.store_started_build(event, consolelogfile)
+                # command-line builds don't fire a ParseStarted event,
+                # so we have to start the log file for those on BuildStarted instead
+                if not (build_log and build_log_file_path):
+                    build_log, build_log_file_path = _open_build_log(log_dir)
+
+                buildinfohelper.store_started_build(event, build_log_file_path)
 
             if isinstance(event, (bb.build.TaskStarted, bb.build.TaskSucceeded, bb.build.TaskFailedSilent)):
                 buildinfohelper.update_and_store_task(event)
@@ -170,8 +231,6 @@ def main(server, eventHandler, params ):
             # these events are unprocessed now, but may be used in the future to log
             # timing and error informations from the parsing phase in Toaster
             if isinstance(event, (bb.event.SanityCheckPassed, bb.event.SanityCheck)):
-                continue
-            if isinstance(event, bb.event.ParseStarted):
                 continue
             if isinstance(event, bb.event.ParseProgress):
                 continue
@@ -248,6 +307,12 @@ def main(server, eventHandler, params ):
                     errorcode = 1
                     logger.error("Command execution failed: %s", event.error)
 
+                # turn off logging to the current build log
+                _close_build_log(build_log)
+
+                # reset ready for next BuildStarted
+                build_log = None
+
                 # update the build info helper on BuildCompleted, not on CommandXXX
                 buildinfohelper.update_build_information(event, errors, warnings, taskfailures)
                 buildinfohelper.close(errorcode)
@@ -256,7 +321,6 @@ def main(server, eventHandler, params ):
 
                 # we start a new build info
                 if buildinfohelper.brbe is not None:
-
                     logger.debug("ToasterUI under BuildEnvironment management - exiting after the build")
                     server.terminateServer()
                 else:
@@ -298,8 +362,9 @@ def main(server, eventHandler, params ):
                 continue
 
             if isinstance(event, bb.cooker.CookerExit):
-                # exit when the server exits
-                break
+                # shutdown when bitbake server shuts down
+                main.shutdown = 1
+                continue
 
             # ignore
             if isinstance(event, (bb.event.BuildBase,
@@ -350,9 +415,8 @@ def main(server, eventHandler, params ):
             # make sure we return with an error
             return_value += 1
 
-    if interrupted:
-        if return_value == 0:
-            return_value += 1
+    if interrupted and return_value == 0:
+        return_value += 1
 
     logger.warn("Return value is %d", return_value)
     return return_value
