@@ -27,7 +27,7 @@ import operator,re
 
 from django.db.models import F, Q, Sum, Count, Max
 from django.db import IntegrityError, Error
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from orm.models import Build, Target, Task, Layer, Layer_Version, Recipe, LogMessage, Variable
 from orm.models import Task_Dependency, Recipe_Dependency, Package, Package_File, Package_Dependency
 from orm.models import Target_Installed_Package, Target_File, Target_Image_File, BuildArtifact
@@ -2461,6 +2461,19 @@ if True:
             return {"error": "ok"}
         else:
             return {"error": "Method %s is not supported" % request.method}
+
+    def customrecipe_download(request, pid, recipe_id):
+        recipe = get_object_or_404(CustomImageRecipe, pk=recipe_id)
+
+        file_data = recipe.generate_recipe_file_contents()
+
+        response = HttpResponse(file_data, content_type='text/plain')
+        response['Content-Disposition'] = \
+                'attachment; filename="%s_%s.bb"' % (recipe.name,
+                                                     recipe.version)
+
+        return response
+
 
     @xhr_response
     def xhr_customrecipe_packages(request, recipe_id, package_id):
