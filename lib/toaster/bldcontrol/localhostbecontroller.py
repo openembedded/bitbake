@@ -240,23 +240,22 @@ class LocalhostBEController(BuildEnvironmentController):
                     conf.write('BBPATH .= ":${LAYERDIR}"\nBBFILES += "${LAYERDIR}/recipes/*.bb"\n')
 
             # create recipe
-            recipe = os.path.join(layerpath, "recipes", "%s.bb" % target.target)
-            with open(recipe, "w") as recipef:
-                recipef.write("require %s\n" % customrecipe.base_recipe.file_path)
-                packages = [pkg.name for pkg in customrecipe.packages.all()]
-                if packages:
-                    recipef.write('IMAGE_INSTALL = "%s"\n' % ' '.join(packages))
+            recipe_path = \
+                    os.path.join(layerpath, "recipes", "%s.bb" % target.target)
+            with open(recipe_path, "w") as recipef:
+                recipef.write(customrecipe.generate_recipe_file_contents())
+
+            # Update the layer and recipe objects
+            customrecipe.layer_version.dirpath = layerpath
+            customrecipe.layer_version.save()
+
+            customrecipe.file_path = recipe_path
+            customrecipe.save()
 
             # create *Layer* objects needed for build machinery to work
-            layer = Layer.objects.get_or_create(name="Toaster Custom layer",
-                                                summary="Layer for custom recipes",
-                                                vcs_url="file://%s" % layerpath)[0]
-            breq = target.req
-            lver = Layer_Version.objects.get_or_create(project=breq.project, layer=layer,
-                                                       dirpath=layerpath, build=breq.build)[0]
-            ProjectLayer.objects.get_or_create(project=breq.project, layercommit=lver,
-                                               optional=False)
-            BRLayer.objects.get_or_create(req=breq, name=layer.name, dirpath=layerpath,
+            BRLayer.objects.get_or_create(req=target.req,
+                                          name=layer.name,
+                                          dirpath=layerpath,
                                           giturl="file://%s" % layerpath)
         if os.path.isdir(layerpath):
             layerlist.append(layerpath)

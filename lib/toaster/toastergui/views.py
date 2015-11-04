@@ -2362,10 +2362,37 @@ if True:
 
         # create custom recipe
         try:
+            # create layer 'Custom layer' and verion if needed
+            layer = Layer.objects.get_or_create(name="toaster-custom-images",
+                                         summary="Layer for custom recipes",
+                                         vcs_url="file:///toaster_created_layer"
+                                         )[0]
+
+            lver = Layer_Version.objects.get_or_create(
+                project=params['project'],
+                layer=layer,
+                dirpath='toaster_created_layer',
+                build=None)[0]
+
+            # Add a dependency on our layer to the base recipe's layer
+            LayerVersionDependency.objects.get_or_create(layer_version=lver,
+                                       depends_on=params["base"].layer_version)
+
+            # Add it to our current project if needed
+            ProjectLayer.objects.get_or_create(project=params['project'],
+                                               layercommit=lver,
+                                               optional=False)
+
+            # Create the actual recipe
             recipe = CustomImageRecipe.objects.create(
                          name=request.POST["name"],
                          base_recipe=params["base"],
-                         project=params["project"])
+                         project=params["project"],
+                         file_path=request.POST["name"],
+                         license="MIT",
+                         version="0.1",
+                         layer_version=lver)
+
         except Error as err:
             return {"error": "Can't create custom recipe: %s" % err}
 
@@ -2378,19 +2405,23 @@ if True:
             # We don't want these packages to be linked to anything because
             # that underlying data may change e.g. delete a build
             for package in build.package_set.all():
-                # Create the duplicate
-                package.pk = None
-                package.save()
-                # Disassociate the package from the build
-                package.build = None
-                package.save()
-                recipe.packages.add(package)
+                 _copy_packge_to_recipe(recipe, package)
         else:
-            logger.warn("No packages found for this base recipe")
+            logger.debug("No packages found for this base recipe")
 
         return {"error": "ok",
                 "url": reverse('customrecipe', args=(params['project'].pk,
                                                      recipe.id))}
+
+    def _copy_packge_to_recipe(recipe, package):
+        """ copy a package from another recipe """
+        package.pk = None
+        package.save()
+        # Disassociate the package from the build
+        package.build = None
+        package.recipe = recipe
+        package.save()
+        return package
 
     @xhr_response
     def xhr_customrecipe_id(request, recipe_id):
@@ -2454,8 +2485,12 @@ if True:
                              "not found" % recipe_id}
 
         if request.method == 'GET' and not package_id:
+            packages = recipe.package_set.values("id", "name", "version")
+
             return {"error": "ok",
-                    "packages": list(recipe.packages.values_list('id'))}
+                    "packages" : list(packages),
+                    "total" : len(packages)
+                   }
 
         try:
             package = Package.objects.get(id=package_id)
@@ -2464,11 +2499,38 @@ if True:
                              "not found" % package_id}
 
         if request.method == 'PUT':
-            recipe.packages.add(package)
-            return {"error": "ok"}
+            # As these requests are asynchronous we need to make sure we don't
+            # already have the package in the image recipe
+            if recipe.package_set.filter(Q(name=package.name) &
+                                      Q(version=package.version)).count() > 0:
+                return {"error" : "Package %s already in recipe" %
+                        package.name }
+
+            # Make a copy of this package
+            dependencies = _get_package_dependencies(package.pk)
+
+            package = _copy_packge_to_recipe(recipe, package)
+            recipe.package_set.add(package)
+
+            # Filter out dependencies already in the custom image
+            all_in_image = recipe.package_set.all().values_list('name',
+                                                                flat=True)
+            def in_image(pkg):
+                return pkg['name'] not in all_in_image
+
+            dependencies = filter(in_image, dependencies['runtime_deps'])
+            return {"error": "ok",
+                    "new_package" : {"id": package.pk,
+                                     "url": reverse('xhr_customrecipe_packages',
+                                                 args=(recipe.pk, package.pk))
+                                    },
+                    "dependencies_needed" : dependencies,
+                   }
+
         elif request.method == 'DELETE':
-            if package in recipe.packages.all():
-                recipe.packages.remove(package)
+            if package in recipe.package_set.all():
+                # note that we are infact deleting the copy of the package
+                package.delete()
                 return {"error": "ok"}
             else:
                 return {"error": "Package '%s' is not in the recipe '%s'" % \
