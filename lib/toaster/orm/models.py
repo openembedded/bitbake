@@ -20,7 +20,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 from django.db import models, IntegrityError
-from django.db.models import F, Q, Avg, Max
+from django.db.models import F, Q, Avg, Max, Sum
 from django.utils import timezone
 
 from django.core.urlresolvers import reverse
@@ -726,6 +726,12 @@ class Package_DependencyManager(models.Manager):
 
     def get_queryset(self):
         return super(Package_DependencyManager, self).get_queryset().exclude(package_id = F('depends_on__id'))
+
+    def get_total_source_deps_size(self):
+        """ Returns the total file size of all the packages that depend on
+        thispackage.
+        """
+        return self.all().aggregate(Sum('depends_on__size'))
 
 class Package_Dependency(models.Model):
     TYPE_RDEPENDS = 0
