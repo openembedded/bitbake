@@ -1383,15 +1383,10 @@ class ProjectLayer(models.Model):
     class Meta:
         unique_together = (("project", "layercommit"),)
 
-class CustomImageRecipe(models.Model):
+class CustomImageRecipe(Recipe):
     search_allowed_fields = ['name']
-    name = models.CharField(max_length=100)
-    base_recipe = models.ForeignKey(Recipe)
-    packages = models.ManyToManyField(Package)
+    base_recipe = models.ForeignKey(Recipe, related_name='based_on_recipe')
     project = models.ForeignKey(Project)
-
-    class Meta:
-        unique_together = ("name", "project")
 
 class ProjectVariable(models.Model):
     project = models.ForeignKey(Project)
