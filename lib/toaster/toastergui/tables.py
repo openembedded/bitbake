@@ -21,7 +21,7 @@
 
 from toastergui.widgets import ToasterTable
 from orm.models import Recipe, ProjectLayer, Layer_Version, Machine, Project
-from orm.models import CustomImageRecipe, Package, Build, LogMessage, Task
+from orm.models import CustomImageRecipe, Package, Target, Build, LogMessage, Task
 from orm.models import ProjectTarget
 from django.db.models import Q, Max, Count, When, Case, Value, IntegerField
 from django.conf.urls import url
@@ -483,8 +483,8 @@ class CustomImagesTable(ToasterTable):
     def get_context_data(self, **kwargs):
         context = super(CustomImagesTable, self).get_context_data(**kwargs)
         project = Project.objects.get(pk=kwargs['pid'])
+        # TODO put project into the ToasterTable base class
         context['project'] = project
-        context['projectlayers'] = map(lambda prjlayer: prjlayer.layercommit.id, ProjectLayer.objects.filter(project=context['project']))
         return context
 
     def setup_queryset(self, *args, **kwargs):
@@ -502,22 +502,31 @@ class CustomImagesTable(ToasterTable):
 
         self.add_column(title="Custom image",
                         hideable=False,
+                        orderable=True,
+                        field_name="name",
                         static_data_name="name",
                         static_data_template=name_link_template)
 
         self.add_column(title="Recipe file",
                         static_data_name='recipe_file',
-                        static_data_template='')
+                        static_data_template='',
+                        field_name='local_path')
 
-        approx_packages_template = '<a href="#imagedetails">{{data.packages.all|length}}</a>'
+        approx_packages_template = '''
+        <a href="{% url 'customrecipe' extra.pid data.id %}">
+          {{data.package_set.all|length}}
+        </a>'''
+
         self.add_column(title="Approx packages",
                         static_data_name='approx_packages',
                         static_data_template=approx_packages_template)
 
 
-        build_btn_template = '''<button data-recipe-name="{{data.name}}"
+        build_btn_template = '''
+        <button data-recipe-name="{{data.name}}"
         class="btn btn-block build-recipe-btn" style="margin-top: 5px;" >
-        Build</button>'''
+        Build
+        </button>'''
 
         self.add_column(title="Build",
                         hideable=False,
@@ -540,12 +549,19 @@ class ImageRecipesTable(RecipesTable):
 
 
     def setup_columns(self, *args, **kwargs):
+
+        name_link_template = '''
+        <a href="{% url 'recipedetails' extra.pid data.pk %}">{{data.name}}</a>
+        '''
+
         self.add_column(title="Image recipe",
                         help_text="When you build an image recipe, you get an "
                                   "image: a root file system you can"
                                   "deploy to a machine",
                         hideable=False,
                         orderable=True,
+                        static_data_name="name",
+                        static_data_template=name_link_template,
                         field_name="name")
 
         super(ImageRecipesTable, self).setup_columns(*args, **kwargs)
@@ -609,8 +625,96 @@ class SoftwareRecipesTable(RecipesTable):
 
         self.add_column(**RecipesTable.build_col)
 
+class PackagesTable(ToasterTable):
+    """ Table to display the packages in a recipe from it's last successful
+    build"""
 
-class SelectPackagesTable(ToasterTable):
+    def __init__(self, *args, **kwargs):
+        super(PackagesTable, self).__init__(*args, **kwargs)
+        self.title = "Packages included"
+        self.packages = None
+        self.default_orderby = "name"
+
+    def create_package_list(self, recipe, project_id):
+        """Creates a list of packages for the specified recipe by looking for
+        the last SUCCEEDED build of ther recipe"""
+
+        target = Target.objects.filter(Q(target=recipe.name) &
+                                       Q(build__project_id=project_id) &
+                                       Q(build__outcome=Build.SUCCEEDED)
+                                      ).last()
+
+        if target:
+            return target.build.package_set.all()
+
+        # Target/recipe never successfully built so empty queryset
+        return Package.objects.none()
+
+    def get_context_data(self, **kwargs):
+        """Context for rendering the sidebar and other items on the recipe
+        details page """
+        context = super(PackagesTable, self).get_context_data(**kwargs)
+
+        recipe = Recipe.objects.get(pk=kwargs['recipe_id'])
+        project = Project.objects.get(pk=kwargs['pid'])
+
+        in_project = (recipe.layer_version.pk in
+                      project.get_project_layer_versions(pk=True))
+
+        packages = self.create_package_list(recipe, project.pk)
+
+        context.update({'project': project,
+                        'recipe' : recipe,
+                        'packages': packages,
+                        'approx_pkg_size' : packages.aggregate(Sum('size')),
+                        'in_project' : in_project,
+                       })
+
+        return context
+
+    def setup_queryset(self, *args, **kwargs):
+        recipe = Recipe.objects.get(pk=kwargs['recipe_id'])
+
+        self.queryset = self.create_package_list(recipe, kwargs['pid'])
+        self.queryset = self.queryset.order_by('name')
+
+    def setup_columns(self, *args, **kwargs):
+        self.add_column(title="Package",
+                        hideable=False,
+                        orderable=True,
+                        field_name="name")
+
+        self.add_column(title="Package Version",
+                        field_name="version",
+                        hideable=False)
+
+        self.add_column(title="Approx Size",
+                        orderable=True,
+                        static_data_name="size",
+                        static_data_template="{% load projecttags %} \
+                        {{data.size|filtered_filesizeformat}}")
+
+        self.add_column(title="License",
+                        field_name="license",
+                        orderable=True)
+
+
+        self.add_column(title="Dependencies",
+                        static_data_name="dependencies",
+                        static_data_template='\
+                        {% include "snippets/pkg_dependencies_popover.html" %}')
+
+        self.add_column(title="Recipe",
+                        field_name="recipe__name",
+                        orderable=True,
+                        hidden=True)
+
+        self.add_column(title="Recipe version",
+                        field_name="recipe__version",
+                        hidden=True)
+
+
+class SelectPackagesTable(PackagesTable):
     """ Table to display the packages to add and remove from an image """
 
     def __init__(self, *args, **kwargs):
@@ -637,29 +741,25 @@ class SelectPackagesTable(ToasterTable):
         self.static_context_extra['current_packages'] = \
                 cust_recipe.packages.values_list('pk', flat=True)
 
+    def get_context_data(self, **kwargs):
+        context = super(SelectPackagesTable, self).get_context_data(**kwargs)
+        custom_recipe = CustomImageRecipe.objects.get(pk=kwargs['recipe_id'])
+
+        context['recipe'] = custom_recipe
+        context['approx_pkg_size'] =  custom_recipe.package_set.aggregate(Sum('size'))
+        return context
+
+
     def setup_columns(self, *args, **kwargs):
-        self.add_column(title="Package",
-                        hideable=False,
-                        orderable=True,
-                        field_name="name")
-
-        self.add_column(title="Package Version",
-                        field_name="version")
-
-        self.add_column(title="Approx Size",
-                        orderable=True,
-                        static_data_name="size",
-                        static_data_template="{% load projecttags %} \
-                        {{data.size|filtered_filesizeformat}}")
-        self.add_column(title="summary",
-                        field_name="summary")
+        super(SelectPackagesTable, self).setup_columns(*args, **kwargs)
 
         self.add_column(title="Add | Remove",
+                        hideable=False,
                         help_text="Use the add and remove buttons to modify "
                         "the package content of you custom image",
                         static_data_name="add_rm_pkg_btn",
                         static_data_template='{% include "pkg_add_rm_btn.html" %}',
-                        static_data_template='{% include "pkg_add_rm_btn.html" %}'
+                        filter_name="in_current_image"
                         )
 
     def setup_filters(self, *args, **kwargs):
@@ -681,12 +781,11 @@ class SelectPackagesTable(ToasterTable):
                                 self.filter_not_in_image)
                         ])
 
-    def filter_in_image(self, count_only=False):
+    def filter_in_image(self):
         return self.queryset.filter(
             pk__in=self.static_context_extra['current_packages'])
 
-
-    def filter_not_in_image(self, count_only=False):
+    def filter_not_in_image(self):
         return self.queryset.exclude(
             pk__in=self.static_context_extra['current_packages'])
 

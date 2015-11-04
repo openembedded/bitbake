@@ -2594,15 +2594,6 @@ if True:
 
         return(vars_managed,sorted(vars_fstypes),vars_blacklist)
 
-    def customrecipe(request, pid, recipe_id):
-        project = Project.objects.get(pk=pid)
-        context = {'project' : project,
-                   'projectlayers': [],
-                   'recipe' : CustomImageRecipe.objects.get(pk=recipe_id)
-                  }
-
-        return render(request, "customrecipe.html", context)
-
     @_template_renderer("projectconf.html")
     def projectconf(request, pid):
 

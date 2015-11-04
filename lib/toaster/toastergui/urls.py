@@ -109,12 +109,9 @@ urlpatterns = patterns('toastergui.views',
             tables.NewCustomImagesTable.as_view(template_name="newcustomimage.html"),
             name="newcustomimage"),
 
-
         url(r'^project/(?P<pid>\d+)/layers/$',
             tables.LayersTable.as_view(template_name="generic-toastertable-page.html"),
             name="projectlayers"),
-
-
 
         url(r'^project/(?P<pid>\d+)/layer/(?P<layerid>\d+)$',
             'layerdetails', name='layerdetails'),
@@ -133,17 +130,20 @@ urlpatterns = patterns('toastergui.views',
 
 
         url(r'^project/(?P<pid>\d+)/customrecipe/(?P<recipeid>\d+)/selectpackages/$',
-            tables.SelectPackagesTable.as_view(template_name="generic-toastertable-page.html"), name="recipeselectpackages"),
+            tables.SelectPackagesTable.as_view(), name="recipeselectpackages"),
 
 
         url(r'^project/(?P<pid>\d+)/customrecipe/(?P<recipe_id>\d+)$',
-            'customrecipe',
+            tables.SelectPackagesTable.as_view(template_name="customrecipe.html"),
             name="customrecipe"),
 
         url(r'^project/(?P<pid>\d+)/customrecipe/(?P<recipe_id>\d+)/download$',
             'customrecipe_download',
             name="customrecipedownload"),
 
+        url(r'^project/(?P<pid>\d+)/recipe/(?P<recipe_id>\d+)$',
+            tables.PackagesTable.as_view(template_name="recipedetails.html"),
+            name="recipedetails"),
 
         # typeahead api end points
         url(r'^xhr_typeahead/(?P<pid>\d+)/layers$',
