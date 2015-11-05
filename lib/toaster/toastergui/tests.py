@@ -150,10 +150,16 @@ class ViewTests(TestCase):
 
         ProjectLayer.objects.create(project=self.project, layercommit=self.lver)
 
+        lver_custom = Layer_Version.objects.create(layer=layer,
+                                                   project=self.project,
+                                                   layer_source=layersrc,
+                                                   commit="mymaster",
+                                                   up_branch=branch)
 
         self.customr = CustomImageRecipe.objects.create(\
                            name="custom recipe", project=self.project,
-                           base_recipe=self.recipe1)
+                           base_recipe=self.recipe1,
+                           layer_version=lver_custom)
 
         CustomImageRecipe.objects.create(name="z custom recipe",
                                          project=self.project,
@@ -376,7 +382,9 @@ class ViewTests(TestCase):
         name = "to be deleted"
         recipe = CustomImageRecipe.objects.create(\
                      name=name, project=self.project,
-                     base_recipe=self.recipe1)
+                     base_recipe=self.recipe1,
+                     file_path="/tmp/testing",
+                     layer_version=self.customr.layer_version)
         url = reverse('xhr_customrecipe_id', args=(recipe.id,))
         response = self.client.delete(url)
         self.assertEqual(response.status_code, 200)
@@ -389,20 +397,28 @@ class ViewTests(TestCase):
 
     def test_xhr_custom_packages(self):
         """Test adding and deleting package to a custom recipe"""
-        url = reverse('xhr_customrecipe_packages',
-                      args=(self.customr.id, self.package.id))
-        # add self.package1 to recipe
-        response = self.client.put(url)
+        # add self.package to recipe
+        response = self.client.put(reverse('xhr_customrecipe_packages',
+                                           args=(self.customr.id,
+                                                 self.package.id)))
+
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(json.loads(response.content), {"error": "ok"})
-        self.assertEqual(self.customr.packages.all()[0].id, self.package.id)
+        self.assertEqual(json.loads(response.content),
+                         {"error": "ok",
+                          "dependencies_needed": []})
+        self.assertEqual(self.customr.package_set.first().name,
+                         self.package.name)
         # delete it
-        response = self.client.delete(url)
+        del_url = reverse('xhr_customrecipe_packages',
+                          args=(self.customr.id,
+                                self.customr.package_set.first().id))
+
+        response = self.client.delete(del_url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(json.loads(response.content), {"error": "ok"})
-        self.assertFalse(self.customr.packages.all())
+        self.assertFalse(self.customr.package_set.all())
         # delete it again to test error condition
-        response = self.client.delete(url)
+        response = self.client.delete(del_url)
         self.assertEqual(response.status_code, 200)
         self.assertNotEqual(json.loads(response.content)["error"], "ok")
 
@@ -430,7 +446,8 @@ class ViewTests(TestCase):
         row2 = next(x for x in rows if x['name'] == self.recipe2.name)
 
         self.assertEqual(response.status_code, 200, 'should be 200 OK status')
-        self.assertTrue(row2, 'should be 2 recipes')
+        # self.recipe1 + self.recipe2 + self.customr = 3
+        self.assertEqual(len(rows), 3, 'should be 3 recipes')
 
         # check other columns have been populated correctly
         self.assertEqual(row1['name'], self.recipe1.name)
