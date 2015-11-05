@@ -2444,20 +2444,23 @@ if True:
             or
             {"error": <error message>}
         """
-        objects = CustomImageRecipe.objects.filter(id=recipe_id)
-        if not objects:
+        try:
+          custom_recipe = CustomImageRecipe.objects.get(id=recipe_id)
+        except CustomImageRecipe.DoesNotExist:
             return {"error": "Custom recipe with id=%s "
                              "not found" % recipe_id}
+
         if request.method == 'GET':
-            values = CustomImageRecipe.objects.filter(id=recipe_id).values()
-            if values:
-                return {"error": "ok", "info": values[0]}
-            else:
-                return {"error": "Custom recipe with id=%s "
-                                 "not found" % recipe_id}
-            return {"error": "ok", "info": objects.values()[0]}
+            info = {"id" : custom_recipe.id,
+                    "name" : custom_recipe.name,
+                    "base_recipe_id": custom_recipe.base_recipe.id,
+                    "project_id": custom_recipe.project.id,
+                   }
+
+            return {"error": "ok", "info": info}
+
         elif request.method == 'DELETE':
-            objects.delete()
+            custom_recipe.delete()
             return {"error": "ok"}
         else:
             return {"error": "Method %s is not supported" % request.method}
@@ -2533,10 +2536,6 @@ if True:
 
             dependencies = filter(in_image, dependencies['runtime_deps'])
             return {"error": "ok",
-                    "new_package" : {"id": package.pk,
-                                     "url": reverse('xhr_customrecipe_packages',
-                                                 args=(recipe.pk, package.pk))
-                                    },
                     "dependencies_needed" : dependencies,
                    }
 
