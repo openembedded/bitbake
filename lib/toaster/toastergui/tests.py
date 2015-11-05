@@ -114,6 +114,7 @@ class ViewTests(TestCase):
                                                  project=self.project,
                                                  layer_source=layersrc,
                                                  commit="master",
+                                                 dirpath="/tmp/",
                                                  up_branch=branch)
 
         lver_two = Layer_Version.objects.create(layer=layer_two,
@@ -130,6 +131,8 @@ class ViewTests(TestCase):
                               section="h section",
                               layer_version=lver_two)
 
+        # Create a dummy recipe file for the custom image generation to read
+        open("/tmp/my_recipe.bb", 'wa').close()
         self.recipe1 = Recipe.objects.create(layer_source=layersrc,
                                              name="base-recipe",
                                              version="1.2",
@@ -137,7 +140,8 @@ class ViewTests(TestCase):
                                              description="recipe",
                                              section="A section",
                                              license="Apache",
-                                             layer_version=self.lver)
+                                             layer_version=self.lver,
+                                             file_path="my_recipe.bb")
 
         Machine.objects.create(layer_version=self.lver, name="wisk",
                                description="wisking machine")
@@ -433,6 +437,14 @@ class ViewTests(TestCase):
                 self.assertEqual(response.status_code, 200)
                 self.assertNotEqual(json.loads(response.content),
                                     {"error": "ok"})
+
+    def test_download_custom_recipe(self):
+        response = self.client.get(reverse('customrecipedownload',
+                                           args=(self.project.id,
+                                                 self.customr.id)))
+
+        self.assertEqual(response.status_code, 200)
+
 
     def test_software_recipes_table(self):
         """Test structure returned for Software RecipesTable"""
