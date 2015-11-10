@@ -18,7 +18,7 @@
 
 <div class="alert alert-success lead" id="project-created-notification" style="margin-top:15px; display:none">
   <button type="button" class="close" data-dismiss="alert">×</button>
-  Your project <strong>{{project.name}}</strong> has been created. You can now <a href="{% url 'projectmachines' project.id %}">select your target machine</a> and <a href="{% url 'projectsoftwarerecipes' project.id %}">choose image recipes</a> to build.
+  Your project <strong>{{project.name}}</strong> has been created. You can now <a href="{% url 'projectmachines' project.id %}">select your target machine</a> and <a href="{% url 'projectimagerecipes' project.id %}">choose image recipes</a> to build.
 </div>
 
 <!-- project name -->
