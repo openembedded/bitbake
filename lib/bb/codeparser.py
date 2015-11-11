@@ -144,6 +144,10 @@ class CodeParserCache(MultiProcessCache):
         return cacheline
 
     def init_cache(self, d):
+        # Check if we already have the caches
+        if self.pythoncache:
+            return
+
         MultiProcessCache.init_cache(self, d)
 
         # cachedata gets re-assigned in the parent
