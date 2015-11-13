@@ -48,7 +48,6 @@ class LocalhostBEController(BuildEnvironmentController):
 
     def __init__(self, be):
         super(LocalhostBEController, self).__init__(be)
-        self.dburl = settings.getDATABASE_URL()
         self.pokydirname = None
         self.islayerset = False
 
@@ -126,9 +125,17 @@ class LocalhostBEController(BuildEnvironmentController):
                     port = i.split(" ")[-1]
                     logger.debug("localhostbecontroller: Found bitbake server port %s" % port)
 
-        cmd = "bash -c \"source %s/oe-init-build-env-memres -1 %s && DATABASE_URL=%s %s --observe-only -u toasterui --remote-server=0.0.0.0:-1 -t xmlrpc\"" % (self.pokydirname, self.be.builddir, self.dburl, own_bitbake)
+        cmd = "bash -c \"source %s/oe-init-build-env-memres -1 %s && %s --observe-only -u toasterui --remote-server=0.0.0.0:-1 -t xmlrpc\"" % \
+                (self.pokydirname, self.be.builddir, own_bitbake)
+
+        # Use a copy of the current environment and add the DATABASE_URL
+        # for the bitbake observer process.
+        env = os.environ.copy()
+        env['DATABASE_URL'] = settings.getDATABASE_URL()
+
         with open(toaster_ui_log_filepath, "a+") as f:
-            p = subprocess.Popen(cmd, cwd = self.be.builddir, shell=True, stdout=f, stderr=f)
+            p = subprocess.Popen(cmd, cwd = self.be.builddir, shell=True,
+                                 stdout=f, stderr=f, env=env)
 
         def _toaster_ui_started(filepath, filepos = 0):
             if not os.path.exists(filepath):

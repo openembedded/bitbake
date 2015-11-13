@@ -1,3 +1,21 @@
+{% load static %}
+<script src="{% static 'js/projecttopbar.js' %}"></script>
+<script>
+  $(document).ready(function () {
+    var ctx = {
+      numProjectLayers : {{project.get_project_layer_versions.count}},
+      machine : "{{project.get_current_machine_name|default_if_none:""}}",
+    }
+
+    try {
+      projectTopBarInit(ctx);
+    } catch (e) {
+      document.write("Sorry, An error has occurred loading this page");
+      console.warn(e);
+    }
+  });
+</script>
+
 <div class="alert alert-success lead" id="project-created-notification" style="margin-top:15px; display:none">
   <button type="button" class="close" data-dismiss="alert">×</button>
   Your project <strong>{{project.name}}</strong> has been created. You can now <a href="{% url 'projectmachines' project.id %}">select your target machine</a> and <a href="{% url 'projectsoftwarerecipes' project.id %}">choose image recipes</a> to build.
