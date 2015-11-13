@@ -130,13 +130,12 @@ class Project(models.Model):
         try:
             return self.projectvariable_set.get(name="MACHINE").value
         except (ProjectVariable.DoesNotExist,IndexError):
-            return( "None" );
+            return None;
 
     def get_number_of_builds(self):
-        try:
-            return len(Build.objects.filter( project = self.id ))
-        except (Build.DoesNotExist,IndexError):
-            return( 0 )
+        """Return the number of builds which have ended"""
+
+        return self.build_set.filter(~Q(outcome=Build.IN_PROGRESS)).count()
 
     def get_last_build_id(self):
         try:
