@@ -28,7 +28,7 @@
     <ul class="nav nav-pills">
       <li>
         <a href="{% url 'projectbuilds' project.id %}">
-          Builds (<span class="total-builds">0</span>)
+          Builds ({{project.get_number_of_builds}})
         </a>
       </li>
       <li id="topbar-configuration-tab">
