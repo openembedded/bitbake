@@ -92,6 +92,15 @@ def _close_build_log(build_log):
         build_log.close()
         logger.removeHandler(build_log)
 
+_evt_list = [ "bb.runqueue.runQueueExitWait", "bb.event.LogExecTTY", "logging.LogRecord",
+              "bb.build.TaskFailed", "bb.build.TaskBase", "bb.event.ParseStarted",
+              "bb.event.ParseProgress", "bb.event.ParseCompleted", "bb.event.CacheLoadStarted",
+              "bb.event.CacheLoadProgress", "bb.event.CacheLoadCompleted", "bb.command.CommandFailed",
+              "bb.command.CommandExit", "bb.command.CommandCompleted",  "bb.cooker.CookerExit",
+              "bb.event.MultipleProviders", "bb.event.NoProvider", "bb.runqueue.sceneQueueTaskStarted",
+              "bb.runqueue.runQueueTaskStarted", "bb.runqueue.runQueueTaskFailed", "bb.runqueue.sceneQueueTaskFailed",
+              "bb.event.BuildBase", "bb.build.TaskStarted", "bb.build.TaskSucceeded", "bb.build.TaskFailedSilent"]
+
 def main(server, eventHandler, params):
     # set to a logging.FileHandler instance when a build starts;
     # see _open_build_log()
@@ -115,6 +124,9 @@ def main(server, eventHandler, params):
     console.setFormatter(formatter)
     logger.addHandler(console)
     logger.setLevel(logging.INFO)
+    llevel, debug_domains = bb.msg.constructLogOptions()
+    server.runCommand(["setEventMask", server.getEventHandle(), llevel, debug_domains, _evt_list])
+
 
     # verify and warn
     build_history_enabled = True
@@ -182,8 +194,6 @@ def main(server, eventHandler, params):
                 continue
 
             if isinstance(event, bb.event.BuildStarted):
-                # command-line builds don't fire a ParseStarted event,
-                # so we have to start the log file for those on BuildStarted instead
                 if not (build_log and build_log_file_path):
                     build_log, build_log_file_path = _open_build_log(log_dir)
 
