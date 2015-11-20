@@ -1177,7 +1177,7 @@ def edit_metadata(meta_lines, variables, varfunc, match_overrides=False):
             if not skip:
                 if checkspc:
                     checkspc = False
-                    if newlines[-1] == '\n' and line == '\n':
+                    if newlines and newlines[-1] == '\n' and line == '\n':
                         # Squash blank line if there are two consecutive blanks after a removal
                         continue
                 newlines.append(line)
