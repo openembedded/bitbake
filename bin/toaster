@@ -175,6 +175,7 @@ else
 fi
 
 BBBASEDIR=`dirname $TOASTER`/..
+OEROOT=`dirname $TOASTER`/../..
 
 RUNNING=0
 
@@ -185,18 +186,33 @@ if [ "$WEB_PORT" = "" ]; then
     WEB_PORT="8000"
 fi
 # this is the configuraton file we are using for toaster
-# note default is assuming yocto. Override this if you are
-# running in a pure OE environment and use the toasterconf.json
-# in meta/conf/toasterconf.json
-# note: for future there are a number of relative path assumptions
-# in the local layers that currently prevent using an arbitrary
-# toasterconf.json
+# we are using the same logic that oe-setup-builddir uses
+# (based on TEMPLATECONF and .templateconf) to determine
+# which toasterconf.json to use.
+# note: There are a number of relative path assumptions
+# in the local layers that currently make using an arbitrary
+# toasterconf.json difficult.
+
+. $OEROOT/.templateconf
+if [ -n "$TEMPLATECONF" ]; then
+    if [ ! -d "$TEMPLATECONF" ]; then
+        # Allow TEMPLATECONF=meta-xyz/conf as a shortcut
+        if [ -d "$OEROOT/$TEMPLATECONF" ]; then
+            TEMPLATECONF="$OEROOT/$TEMPLATECONF"
+        fi
+        if [ ! -d "$TEMPLATECONF" ]; then
+            echo >&2 "Error: '$TEMPLATECONF' must be a directory containing toasterconf.json"
+	    [ "$TOASTER_MANAGED" = '1' ] && exit 1 || return 1
+        fi
+    fi
+fi
+
 if [ "$TOASTER_CONF" = "" ]; then
-    TOASTER_CONF="$(dirname $TOASTER)/../../meta-yocto/conf/toasterconf.json"
+    TOASTER_CONF="$TEMPLATECONF/toasterconf.json"
     export TOASTER_CONF=$(python -c "import os; print os.path.realpath('$TOASTER_CONF')")
 fi
 if [ ! -f $TOASTER_CONF ]; then
-    echo "$TOASTER_CONF configuration file not found. set TOASTER_CONF to specify a path"
+    echo "$TOASTER_CONF configuration file not found. Set TOASTER_CONF to specify file or fix .templateconf"
     [ "$TOASTER_MANAGED" = '1' ] && exit 1 || return 1
 fi
 # this defines the dir toaster will use for
@@ -324,4 +340,3 @@ case $CMD in
         echo "Successful ${CMD}."
     ;;
 esac
-
