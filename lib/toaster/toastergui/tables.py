@@ -545,7 +545,7 @@ class NewCustomImagesTable(ImageRecipesTable):
                                   "deploy to a machine",
                         hideable=False,
                         orderable=True,
-                        field_name="recipe__name")
+                        field_name="name")
 
         super(ImageRecipesTable, self).setup_columns(*args, **kwargs)
 
