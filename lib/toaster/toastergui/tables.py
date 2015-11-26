@@ -217,12 +217,10 @@ class MachinesTable(ToasterTable, ProjectFiltersMixin):
     def get_context_data(self, **kwargs):
         context = super(MachinesTable, self).get_context_data(**kwargs)
         context['project'] = Project.objects.get(pk=kwargs['pid'])
-        context['projectlayers'] = map(lambda prjlayer: prjlayer.layercommit.id, ProjectLayer.objects.filter(project=context['project']))
         return context
 
     def setup_filters(self, *args, **kwargs):
         project = Project.objects.get(pk=kwargs['pid'])
-        self.project_layers = project.get_project_layer_versions()
 
         self.add_filter(title="Filter by project machines",
                         name="in_current_project",
@@ -235,6 +233,10 @@ class MachinesTable(ToasterTable, ProjectFiltersMixin):
         prj = Project.objects.get(pk = kwargs['pid'])
         self.queryset = prj.get_all_compatible_machines()
         self.queryset = self.queryset.order_by(self.default_orderby)
+
+        self.static_context_extra['current_layers'] = \
+                self.project_layers = \
+                prj.get_project_layer_versions(pk=True)
 
     def setup_columns(self, *args, **kwargs):
 
