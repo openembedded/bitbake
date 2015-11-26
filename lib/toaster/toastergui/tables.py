@@ -295,6 +295,7 @@ class LayerMachinesTable(MachinesTable):
         MachinesTable.setup_queryset(self, *args, **kwargs)
 
         self.queryset = self.queryset.filter(layer_version__pk=int(kwargs['layerid']))
+        self.queryset = self.queryset.order_by(self.default_orderby)
         self.static_context_extra['in_prj'] = ProjectLayer.objects.filter(Q(project=kwargs['pid']) & Q(layercommit=kwargs['layerid'])).count()
 
     def setup_columns(self, *args, **kwargs):
@@ -319,7 +320,6 @@ class RecipesTable(ToasterTable, ProjectFiltersMixin):
     def __init__(self, *args, **kwargs):
         super(RecipesTable, self).__init__(*args, **kwargs)
         self.empty_state = "Toaster has no recipe information. To generate recipe information you can configure a layer source then run a build."
-        self.default_orderby = "name"
 
     build_col = { 'title' : "Build",
             'help_text' : "Add or delete recipes to and from your project",
@@ -356,7 +356,6 @@ class RecipesTable(ToasterTable, ProjectFiltersMixin):
         self.static_context_extra['current_layers'] = self.project_layers
 
         self.queryset = prj.get_all_compatible_recipes()
-        self.queryset = self.queryset.order_by(self.default_orderby)
 
 
     def setup_columns(self, *args, **kwargs):
@@ -414,6 +413,7 @@ class LayerRecipesTable(RecipesTable):
 
     def __init__(self, *args, **kwargs):
         super(LayerRecipesTable, self).__init__(*args, **kwargs)
+        self.default_orderby = "name"
 
     def get_context_data(self, **kwargs):
         context = super(LayerRecipesTable, self).get_context_data(**kwargs)
@@ -425,6 +425,7 @@ class LayerRecipesTable(RecipesTable):
         self.queryset = \
                 Recipe.objects.filter(layer_version__pk=int(kwargs['layerid']))
 
+        self.queryset = self.queryset.order_by(self.default_orderby)
         self.static_context_extra['in_prj'] = ProjectLayer.objects.filter(Q(project=kwargs['pid']) & Q(layercommit=kwargs['layerid'])).count()
 
     def setup_columns(self, *args, **kwargs):
@@ -451,6 +452,7 @@ class CustomImagesTable(ToasterTable):
     def __init__(self, *args, **kwargs):
         super(CustomImagesTable, self).__init__(*args, **kwargs)
         self.title = "Custom images"
+        self.default_orderby = "name"
 
     def get_context_data(self, **kwargs):
         context = super(CustomImagesTable, self).get_context_data(**kwargs)
@@ -462,7 +464,7 @@ class CustomImagesTable(ToasterTable):
     def setup_queryset(self, *args, **kwargs):
         prj = Project.objects.get(pk = kwargs['pid'])
         self.queryset = CustomImageRecipe.objects.filter(project=prj)
-        self.queryset = self.queryset.order_by('name')
+        self.queryset = self.queryset.order_by(self.default_orderby)
 
     def setup_columns(self, *args, **kwargs):
 
@@ -502,11 +504,13 @@ class ImageRecipesTable(RecipesTable):
     def __init__(self, *args, **kwargs):
         super(ImageRecipesTable, self).__init__(*args, **kwargs)
         self.title = "Compatible image recipes"
+        self.default_orderby = "name"
 
     def setup_queryset(self, *args, **kwargs):
         super(ImageRecipesTable, self).setup_queryset(*args, **kwargs)
 
         self.queryset = self.queryset.filter(is_image=True)
+        self.queryset = self.queryset.order_by(self.default_orderby)
 
 
     def setup_columns(self, *args, **kwargs):
