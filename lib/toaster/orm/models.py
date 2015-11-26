@@ -1238,6 +1238,7 @@ class ProjectLayer(models.Model):
         unique_together = (("project", "layercommit"),)
 
 class CustomImageRecipe(models.Model):
+    search_allowed_fields = ['name']
     name = models.CharField(max_length=100)
     base_recipe = models.ForeignKey(Recipe)
     packages = models.ManyToManyField(Package)
