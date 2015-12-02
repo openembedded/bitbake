@@ -70,17 +70,6 @@ class LocalhostBEController(BuildEnvironmentController):
             logger.debug("localhostbecontroller: shellcmd success")
             return out
 
-    def _setupBE(self):
-        assert self.pokydirname and os.path.exists(self.pokydirname)
-        path = self.be.builddir
-        if not path:
-            raise Exception("Invalid path creation specified.")
-        if not os.path.exists(path):
-            os.makedirs(path, 0755)
-        self._shellcmd("bash -c \"source %s/oe-init-build-env %s\"" % (self.pokydirname, path))
-        # delete the templateconf.cfg; it may come from an unsupported layer configuration
-        os.remove(os.path.join(path, "conf/templateconf.cfg"))
-
 
     def writeConfFile(self, file_name, variable_list = None, raw = None):
         filepath = os.path.join(self.be.builddir, file_name)
@@ -297,16 +286,12 @@ class LocalhostBEController(BuildEnvironmentController):
 
         logger.debug("localhostbecontroller: current layer list %s " % pformat(layerlist))
 
-        # 4. configure the build environment, so we have a conf/bblayers.conf
-        assert self.pokydirname is not None
-        self._setupBE()
-
-        # 5. update the bblayers.conf
+        # 4. update the bblayers.conf
         bblayerconf = os.path.join(self.be.builddir, "conf/bblayers.conf")
         if not os.path.exists(bblayerconf):
             raise BuildSetupException("BE is not consistent: bblayers.conf file missing at %s" % bblayerconf)
 
-        # 6. create custom layer and add custom recipes to it
+        # 5. create custom layer and add custom recipes to it
         layerpath = os.path.join(self.be.sourcedir, "_meta-toaster-custom")
         if os.path.isdir(layerpath):
             shutil.rmtree(layerpath) # remove leftovers from previous builds
