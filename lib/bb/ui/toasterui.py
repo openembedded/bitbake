@@ -320,15 +320,11 @@ def main(server, eventHandler, params):
                 logger.info("ToasterUI build done 1, brbe: %s", buildinfohelper.brbe )
 
                 # we start a new build info
-                if buildinfohelper.brbe is not None:
-                    logger.debug("ToasterUI under BuildEnvironment management - exiting after the build")
-                    server.terminateServer()
-                else:
-                    logger.debug("ToasterUI prepared for new build")
-                    errors = 0
-                    warnings = 0
-                    taskfailures = []
-                    buildinfohelper = BuildInfoHelper(server, build_history_enabled)
+                logger.debug("ToasterUI prepared for new build")
+                errors = 0
+                warnings = 0
+                taskfailures = []
+                buildinfohelper = BuildInfoHelper(server, build_history_enabled)
 
                 logger.info("ToasterUI build done 2")
                 continue
