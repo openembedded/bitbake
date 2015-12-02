@@ -2456,10 +2456,6 @@ if True:
                 return_data['package_classes'] = ProjectVariable.objects.get(project = prj, name = "PACKAGE_CLASSES").value,
             except ProjectVariable.DoesNotExist:
                 pass
-            try:
-                return_data['sdk_machine'] = ProjectVariable.objects.get(project = prj, name = "SDKMACHINE").value,
-            except ProjectVariable.DoesNotExist:
-                pass
 
             return HttpResponse(json.dumps( return_data ), content_type = "application/json")
 
@@ -2866,11 +2862,6 @@ if True:
         try:
             context['package_classes'] =  ProjectVariable.objects.get(project = prj, name = "PACKAGE_CLASSES").value
             context['package_classes_defined'] = "1"
-        except ProjectVariable.DoesNotExist:
-            pass
-        try:
-            context['sdk_machine'] =  ProjectVariable.objects.get(project = prj, name = "SDKMACHINE").value
-            context['sdk_machine_defined'] = "1"
         except ProjectVariable.DoesNotExist:
             pass
 

@@ -107,32 +107,6 @@
                 </form>
             </dd>
             {% endif %}
-
-            {% if sdk_machine_defined %}
-            <dt>
-                <span class="js-config-var-name js-config-var-managed-name">SDKMACHINE</span>
-                <i class="icon-question-sign get-help" title="Specifies the architecture (i.e. i686 or x86_64) for which to build SDK and ADT items <br /><a href='http://www.yoctoproject.org/docs/1.6.1/ref-manual/ref-manual.html#var-SDKMACHINE' target='_blank'>Read more in the manual</a>"></i>
-            </dt>
-            <dd class="lead">
-                <span id="sdkmachine">{{sdk_machine}}</span>
-                <i id="change-sdkmachine-icon" class="icon-pencil"></i>
-                <form id="change-sdkmachine-form" style="display:none;">
-                    <label class="radio">
-                        <input type="radio" name="sdkmachine" value="i686">
-                        i686
-                    </label>
-                    <label class="radio">
-                        <input type="radio" name="sdkmachine" value="x86_64">
-                        x86_64
-                    </label>
-                    <div style="padding-top:10px;">
-                        <button id="apply-change-sdkmachine" type="button" class="btn">Save</button>
-                        <button id="cancel-change-sdkmachine" type="button" class="btn btn-link">Cancel</button>
-                    </div>
-                </form>
-            </dd>
-            {% endif %}
-
         </dl>
 
         <!-- <ul class="unstyled configuration-list" id="configvar-list"> -->
@@ -774,48 +748,6 @@
             });
             {% endif %}
 
-
-            {% if sdk_machine_defined %}
-            // change SDKMACHINE variable
-            $('#change-sdkmachine-icon').click(function() {
-                var current_value = document.getElementById("sdkmachine").innerHTML;
-                var radios = document.getElementsByName('sdkmachine');
-                for (var i = 0, length = radios.length; i < length; i++) {
-                    radios[i].checked = false;
-                    if (radios[i].value == current_value) {
-                        radios[i].checked = true;
-                    }
-                }
-                $('#change-sdkmachine-icon, #sdkmachine').hide();
-                $("#change-sdkmachine-form").slideDown();
-            });
-
-            $('#cancel-change-sdkmachine').click(function(){
-                $("#change-sdkmachine-form").slideUp(function() {
-                    $('#sdkmachine, #change-sdkmachine-icon').show();
-                });
-            });
-
-            $('#apply-change-sdkmachine').click(function(){
-                var value="";
-                var radios = document.getElementsByName('sdkmachine');
-                for (var i = 0, length = radios.length; i < length; i++) {
-                    if (radios[i].checked) {
-                        // do whatever you want with the checked radio
-                        value=radios[i].value;
-                        break;
-                    }
-                }
-                postEditAjaxRequest({"configvarChange" : 'SDKMACHINE:'+value});
-                $('#sdkmachine').text(value);
-                $("#change-sdkmachine-form").slideUp(function() {
-                    $('#sdkmachine, #change-sdkmachine-icon').show();
-                });
-
-            });
-            {% endif %}
-
-
             // add new variable
             $("button#add-configvar-button").click( function (evt) {
                 var variable = $("input#variable").val();
@@ -830,7 +762,7 @@
                 $(".save").attr("disabled","disabled");
 
                 // Reload page if admin-removed core managed value is manually added back in
-                if (0 <= " DISTRO IMAGE_FSTYPES IMAGE_INSTALL_append PACKAGE_CLASSES SDKMACHINE ".indexOf( " "+variable+" " )) {
+                if (0 <= " DISTRO IMAGE_FSTYPES IMAGE_INSTALL_append PACKAGE_CLASSES ".indexOf( " "+variable+" " )) {
                     // delayed reload to avoid race condition with postEditAjaxRequest
                     do_reload=true;
                 }
