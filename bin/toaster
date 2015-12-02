@@ -300,6 +300,7 @@ case $CMD in
             echo "Bitbake server start failed"
         else
             export BBSERVER=0.0.0.0:-1
+            export DATABASE_URL=`$BBBASEDIR/lib/toaster/manage.py get-dburl`
             if [ $NOTOASTERUI -eq 0 ]; then        # we start the TOASTERUI only if not inhibited
                 bitbake --observe-only -u toasterui >>${BUILDDIR}/toaster_ui.log 2>&1 & echo $! >${BUILDDIR}/.toasterui.pid
             fi
