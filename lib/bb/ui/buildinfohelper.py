@@ -304,12 +304,11 @@ class ORMWrapper(object):
                 break
 
 
-        # If we're in analysis mode then we are wholly responsible for the data
+        # If we're in analysis mode or if this is a custom recipe
+        # then we are wholly responsible for the data
         # and therefore we return the 'real' recipe rather than the build
         # history copy of the recipe.
-        if  recipe_information['layer_version'].build is not None and \
-            recipe_information['layer_version'].build.project == \
-                Project.objects.get_default_project():
+        if built_recipe is None:
             return recipe
 
         return built_recipe
