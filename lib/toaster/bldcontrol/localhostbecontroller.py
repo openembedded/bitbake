@@ -291,11 +291,18 @@ class LocalhostBEController(BuildEnvironmentController):
     def triggerBuild(self, bitbake, layers, variables, targets):
         # set up the buid environment with the needed layers
         self.setLayers(bitbake, layers, targets)
-        self.writeConfFile("conf/toaster-pre.conf", variables)
-        self.writeConfFile("conf/toaster.conf", raw = "INHERIT+=\"toaster buildhistory\"")
 
         # get the bb server running with the build req id and build env id
         bbctrl = self.getBBController()
+
+        # set variables
+        for var in variables:
+            bbctrl.setVariable(var.name, var.value)
+
+        # Add 'toaster' and 'buildhistory' to INHERIT variable
+        inherit = {item.strip() for item in bbctrl.getVariable('INHERIT').split()}
+        inherit = inherit.union(["toaster", "buildhistory"])
+        bbctrl.setVariable('INHERIT', ' '.join(inherit))
 
         # trigger the build command
         task = reduce(lambda x, y: x if len(y)== 0 else y, map(lambda y: y.task, targets))
