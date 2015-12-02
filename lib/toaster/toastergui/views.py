@@ -76,10 +76,6 @@ def landing(request):
     default_project = Project.objects.get_default_project()
     default_project_builds = Build.objects.filter(project = default_project)
 
-    if (not toastermain.settings.BUILD_MODE) and default_project_builds.count() > 0:
-        args = (default_project.id,)
-        return redirect(reverse('projectbuilds', args = args), permanent = False)
-
     # we only redirect to projects page if there is a user-generated project
     num_builds = Build.objects.all().count()
     user_projects = Project.objects.filter(is_default = False)
@@ -101,9 +97,6 @@ def _get_latest_builds(prj=None):
 
     if prj is not None:
         queryset = queryset.filter(project = prj)
-
-    if not toastermain.settings.BUILD_MODE:
-        queryset = queryset.exclude(project__is_default=False)
 
     return list(itertools.chain(
         queryset.filter(outcome=Build.IN_PROGRESS).order_by("-started_on"),
@@ -1893,10 +1886,6 @@ def managedcontextprocessor(request):
         "projects": projects,
         "non_cli_projects": projects.exclude(is_default=True),
         "DEBUG" : toastermain.settings.DEBUG,
-
-        # True if Toaster is in build mode, False otherwise
-        "BUILD_MODE": toastermain.settings.BUILD_MODE,
-
         "CUSTOM_IMAGE" : toastermain.settings.CUSTOM_IMAGE,
         "TOASTER_BRANCH": toastermain.settings.TOASTER_BRANCH,
         "TOASTER_REVISION" : toastermain.settings.TOASTER_REVISION,
@@ -1938,11 +1927,6 @@ if True:
         # that use paginators.
 
         queryset = Build.objects.all()
-
-        # if in analysis mode, exclude builds for all projects except
-        # command line builds
-        if not toastermain.settings.BUILD_MODE:
-            queryset = queryset.exclude(project__is_default=False)
 
         redirect_page = resolve(request.path_info).url_name
 
@@ -3047,10 +3031,6 @@ if True:
         q_default_with_builds = Q(is_default=True) & Q(num_builds__gt=0)
         queryset_all = queryset_all.filter(Q(is_default=False) |
                                            q_default_with_builds)
-
-        # if in BUILD_MODE, exclude everything but the command line builds project
-        if not toastermain.settings.BUILD_MODE:
-            queryset_all = queryset_all.exclude(is_default=False)
 
         # boilerplate code that takes a request for an object type and returns a queryset
         # for that object type. copypasta for all needed table searches

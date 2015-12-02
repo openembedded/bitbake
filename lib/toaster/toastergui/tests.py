@@ -45,10 +45,6 @@ import string
 PROJECT_NAME = "test project"
 CLI_BUILDS_PROJECT_NAME = 'Command line builds'
 
-# by default, tests are run in build mode; to run in analysis mode,
-# set this to False in individual test cases
-toastermain.settings.BUILD_MODE = True
-
 class ViewTests(TestCase):
     """Tests to verify view APIs."""
 

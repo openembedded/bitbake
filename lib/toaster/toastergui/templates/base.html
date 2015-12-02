@@ -79,7 +79,7 @@
             <i class="icon-info-sign" title="<strong>Toaster version information</strong>" data-content="<dl><dt>Branch</dt><dd>{{TOASTER_BRANCH}}</dd><dt>Revision</dt><dd>{{TOASTER_REVISION}}</dd></dl>"></i>
             {% endif %}
           </span>
-          {% if BUILD_MODE and request.resolver_match.url_name != 'landing' and request.resolver_match.url_name != 'newproject' %}
+          {% if request.resolver_match.url_name != 'landing' and request.resolver_match.url_name != 'newproject' %}
           <ul class="nav">
             <li {% if request.resolver_match.url_name == 'all-builds' %}
                 class="active"
@@ -108,13 +108,6 @@
             </li>
           </ul>
           <span class="pull-right divider-vertical"></span>
-
-          <!-- new project button; only show in build mode -->
-          {% if BUILD_MODE %}
-          <div class="btn-group pull-right">
-            <a class="btn" id="new-project-button" href="{% url 'newproject' %}">New project</a>
-          </div>
-          {% endif %}
         </div>
       </div>
     </div>
