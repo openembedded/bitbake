@@ -796,6 +796,8 @@ class BuildInfoHelper(object):
         build_info['cooker_log_path'] = build_log_path
         build_info['build_name'] = self.server.runCommand(["getVariable", "BUILDNAME"])[0]
         build_info['bitbake_version'] = self.server.runCommand(["getVariable", "BB_VERSION"])[0]
+        build_info['brbe'] = self.server.runCommand(["getVariable", "TOASTER_BRBE"])[0]
+        build_info['project'] = self.project = self.server.runCommand(["getVariable", "TOASTER_PROJECT"])[0]
 
         return build_info
 
@@ -937,6 +939,10 @@ class BuildInfoHelper(object):
     def store_started_build(self, event, build_log_path):
         assert '_pkgs' in vars(event)
         build_information = self._get_build_information(build_log_path)
+
+        # Update brbe and project as they can be changed for every build
+        self.brbe = build_information['brbe']
+        self.project = build_information['project']
 
         build_obj = self.orm_wrapper.create_build_object(build_information, self.brbe, self.project)
 
