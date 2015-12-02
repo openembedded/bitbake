@@ -70,17 +70,6 @@ class LocalhostBEController(BuildEnvironmentController):
             logger.debug("localhostbecontroller: shellcmd success")
             return out
 
-
-    def writeConfFile(self, file_name, variable_list = None, raw = None):
-        filepath = os.path.join(self.be.builddir, file_name)
-        with open(filepath, "w") as conffile:
-            if variable_list is not None:
-                for i in variable_list:
-                    conffile.write("%s=\"%s\"\n" % (i.name, i.value))
-            if raw is not None:
-                conffile.write(raw)
-
-
     def startBBServer(self):
         assert self.pokydirname and os.path.exists(self.pokydirname)
         assert self.islayerset
