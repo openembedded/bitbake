@@ -52,6 +52,9 @@ class BitbakeController(object):
     def setVariable(self, name, value):
         return self._runCommand(["setVariable", name, value])
 
+    def getVariable(self, name):
+        return self._runCommand(["getVariable", name])
+
     def build(self, targets, task = None):
         if task is None:
             task = "build"
