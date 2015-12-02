@@ -31,7 +31,7 @@
 webserverKillAll()
 {
     local pidfile
-    for pidfile in ${BUILDDIR}/.toastermain.pid; do
+    for pidfile in ${BUILDDIR}/.toastermain.pid ${BUILDDIR}/.runbuilds.pid; do
         if [ -f ${pidfile} ]; then
             pid=`cat ${pidfile}`
             while kill -0 $pid 2>/dev/null; do
@@ -339,6 +339,7 @@ case $CMD in
                 bitbake --observe-only -u toasterui --remote-server=$BBSERVER -t xmlrpc >>${BUILDDIR}/toaster_ui.log 2>&1 \
                     & echo $! >${BUILDDIR}/.toasterui.pid
             fi
+            python $BBBASEDIR/lib/toaster/manage.py runbuilds & echo $! >${BUILDDIR}/.runbuilds.pid
         fi
         if [ $start_success -eq 1 ]; then
             # set fail safe stop system on terminal exit
