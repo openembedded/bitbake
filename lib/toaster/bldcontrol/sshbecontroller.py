@@ -98,16 +98,6 @@ class SSHBEController(BuildEnvironmentController):
         self.be.bbstate = BuildEnvironment.SERVER_STARTED
         self.be.save()
 
-    def stopBBServer(self):
-        assert self.pokydirname and self._pathexists(self.pokydirname)
-        assert self.islayerset
-        print self._shellcmd("bash -c \"source %s/oe-init-build-env %s && %s source toaster stop\"" %
-            (self.pokydirname, self.be.builddir, (lambda: "" if self.be.bbtoken is None else "BBTOKEN=%s" % self.be.bbtoken)()))
-        self.be.bbstate = BuildEnvironment.SERVER_STOPPED
-        self.be.save()
-        print "Stopped server"
-
-
     def _copyFile(self, filepath1, filepath2):
         p = subprocess.Popen("scp '%s' '%s'" % (filepath1, filepath2), stdout=subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
         (out, err) = p.communicate()

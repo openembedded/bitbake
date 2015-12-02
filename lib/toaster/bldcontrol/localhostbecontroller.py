@@ -113,15 +113,6 @@ class LocalhostBEController(BuildEnvironmentController):
         self.be.bbstate = BuildEnvironment.SERVER_STARTED
         self.be.save()
 
-    def stopBBServer(self):
-        assert self.pokydirname and os.path.exists(self.pokydirname)
-        assert self.islayerset
-        self._shellcmd("bash -c \"source %s/oe-init-build-env %s && %s source toaster stop\"" %
-            (self.pokydirname, self.be.builddir, (lambda: "" if self.be.bbtoken is None else "BBTOKEN=%s" % self.be.bbtoken)()))
-        self.be.bbstate = BuildEnvironment.SERVER_STOPPED
-        self.be.save()
-        logger.debug("localhostbecontroller: Stopped bitbake server")
-
     def getGitCloneDirectory(self, url, branch):
         """Construct unique clone directory name out of url and branch."""
         if branch != "HEAD":

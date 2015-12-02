@@ -71,9 +71,6 @@ class BEControllerTests(object):
 
         self.assertFalse(socket.socket(socket.AF_INET, socket.SOCK_STREAM).connect_ex((hostname, int(bc.be.bbport))), "Server not answering")
 
-        bc.stopBBServer()
-        self.assertTrue(socket.socket(socket.AF_INET, socket.SOCK_STREAM).connect_ex((hostname, int(bc.be.bbport))), "Server not stopped")
-
         self._serverForceStop(bc)
 
     def test_getBBController(self):
@@ -96,7 +93,6 @@ class BEControllerTests(object):
 
         bbc = bc.getBBController()
         self.assertTrue(isinstance(bbc, BitbakeController))
-        bc.stopBBServer()
 
         self._serverForceStop(bc)
 

@@ -140,12 +140,6 @@ class BuildEnvironmentController(object):
         """
         raise Exception("FIXME: Must override in order to actually start the BB server")
 
-    def stopBBServer(self):
-        """ Stops the currently running BB server.
-            The bbstate MUST be updated to "stopped".
-            self.connection must be none.
-        """
-        raise Exception("FIXME: Must override stoBBServer")
 
     def setLayers(self, bbs, ls):
         """ Checks-out bitbake executor and layers from git repositories.
