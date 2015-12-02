@@ -815,44 +815,15 @@ class BuildInfoHelper(object):
         assert path.startswith("/")
         assert 'build' in self.internal_state
 
-        if self.brbe is None:
-            def _slkey_interactive(layer_version):
-                assert isinstance(layer_version, Layer_Version)
-                return len(layer_version.local_path)
+        def _slkey_interactive(layer_version):
+            assert isinstance(layer_version, Layer_Version)
+            return len(layer_version.local_path)
 
-            # Heuristics: we always match recipe to the deepest layer path in the discovered layers
-            for lvo in sorted(self.orm_wrapper.layer_version_objects, reverse=True, key=_slkey_interactive):
-                # we can match to the recipe file path
-                if path.startswith(lvo.local_path):
-                    return lvo
-
-        else:
-            br_id, be_id = self.brbe.split(":")
-            from bldcontrol.bbcontroller import getBuildEnvironmentController
-            bc = getBuildEnvironmentController(pk = be_id)
-
-            def _slkey_managed(layer_version):
-                return len(bc.getGitCloneDirectory(layer_version.giturl, layer_version.commit) + layer_version.dirpath)
-
-            # Heuristics: we match the path to where the layers have been checked out
-            for brl in sorted(BuildRequest.objects.get(pk = br_id).brlayer_set.all(), reverse = True, key = _slkey_managed):
-                localdirname = os.path.join(bc.getGitCloneDirectory(brl.giturl, brl.commit), brl.dirpath)
-                # we get a relative path, unless running in HEAD mode where the path is absolute
-                if not localdirname.startswith("/"):
-                    localdirname = os.path.join(bc.be.sourcedir, localdirname)
-                if path.startswith(localdirname):
-                    # If the build request came from toaster this field
-                    # should contain the information from the layer_version
-                    # That created this build request.
-                    if brl.layer_version:
-                        return brl.layer_version
-
-                    #logger.warn("-- managed: matched path %s with layer %s " % (path, localdirname))
-                    # we matched the BRLayer, but we need the layer_version that generated this br
-
-                    for lvo in self.orm_wrapper.layer_version_objects:
-                        if brl.name == lvo.layer.name:
-                            return lvo
+        # Heuristics: we always match recipe to the deepest layer path in the discovered layers
+        for lvo in sorted(self.orm_wrapper.layer_version_objects, reverse=True, key=_slkey_interactive):
+            # we can match to the recipe file path
+            if path.startswith(lvo.local_path):
+                return lvo
 
         #if we get here, we didn't read layers correctly; dump whatever information we have on the error log
         logger.warn("Could not match layer version for recipe path %s : %s", path, self.orm_wrapper.layer_version_objects)
