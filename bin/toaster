@@ -126,14 +126,18 @@ stop_system()
         kill `cat ${BUILDDIR}/.toasterui.pid` 2>/dev/null
         rm ${BUILDDIR}/.toasterui.pid
     fi
-    BBSERVER=0.0.0.0:-1 bitbake -m
-    unset BBSERVER
+    stop_bitbake
     webserverKillAll
-    # force stop any misbehaving bitbake server
-    lsof bitbake.lock | awk '{print $2}' | grep "[0-9]\+" | xargs -n1 -r kill
     trap - SIGHUP
     #trap - SIGCHLD
     INSTOPSYSTEM=0
+}
+
+stop_bitbake() {
+    BBSERVER=0.0.0.0:-1 bitbake -m
+    unset BBSERVER
+    # force stop any misbehaving bitbake server
+    lsof bitbake.lock | awk '{print $2}' | grep "[0-9]\+" | xargs -n1 -r kill
 }
 
 check_pidbyfile() {
