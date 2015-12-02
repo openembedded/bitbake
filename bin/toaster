@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/echo ERROR: This script needs to be sourced. Please run as .
 # (c) 2013 Intel Corp.
 
 # This program is free software; you can redistribute it and/or modify
@@ -81,9 +81,7 @@ webserverStartAll()
         return $retval
     fi
 
-    if [ "$TOASTER_MANAGED" = '1' ]; then
-        python $BBBASEDIR/lib/toaster/manage.py checksettings --traceback || retval=1
-    fi
+    python $BBBASEDIR/lib/toaster/manage.py checksettings --traceback || retval=1
 
     if [ $retval -eq 1 ]; then
         printf "\nError while checking settings; aborting\n"
@@ -176,8 +174,6 @@ else
     TOASTER=$0
 fi
 
-[ `basename \"$0\"` = `basename \"${TOASTER}\"` ] && TOASTER_MANAGED=1
-
 BBBASEDIR=`dirname $TOASTER`/..
 
 RUNNING=0
@@ -234,87 +230,21 @@ for param in $*; do
     esac
 done
 
-if [ "$TOASTER_MANAGED" = '1' ]; then
-    # We are called as standalone. We refuse to run in a build environment - we need the interactive mode for that.
-    # Start just the web server, point the web browser to the interface, and start any Django services.
-
-    if ! verify_prereq; then
-        echo "Error: Could not verify that the needed dependencies are installed. Please use virtualenv and pip to install dependencies listed in toaster-requirements.txt" 1>&2
-        exit 1
-    fi
-
-    if [ -n "$BUILDDIR" ]; then
-        printf "Error: It looks like you sourced oe-init-build-env. Toaster cannot start in build mode from an oe-core build environment.\n You should be starting Toaster from a new terminal window.\n" 1>&2
-        exit 1
-    fi
-
-    # Define a fake builddir where only the pid files are actually created. No real builds will take place here.
-    BUILDDIR=/tmp/toaster_$$
-    if [ -d "$BUILDDIR" ]; then
-        echo "Previous toaster run directory $BUILDDIR found, cowardly refusing to start. Please remove the directory when that toaster instance is over" 2>&1
-        exit 1
-    fi
-
-    mkdir -p "$BUILDDIR"
-
-    RUNNING=1
-    trap_ctrlc() {
-        echo "** Stopping system"
-        webserverKillAll
-        RUNNING=0
-    }
-
-    do_cleanup() {
-        find "$BUILDDIR" -type f | xargs rm
-        rmdir "$BUILDDIR"
-    }
-    cleanup() {
-        if grep -ir error "$BUILDDIR" >/dev/null; then
-            if grep -irn "That port is already in use" "$BUILDDIR"; then
-                echo "You can use the \"webport=PORTNUMBER\" parameter to start Toaster on a different port (port $WEB_PORT is already in use)"
-                do_cleanup
-            else
-                printf "\nErrors found in the Toaster log files present in '$BUILDDIR'. Directory will not be cleaned.\n Please review the errors and notify toaster@yoctoproject.org or submit a bug https://bugzilla.yoctoproject.org/enter_bug.cgi?product=Toaster"
-            fi
-        else
-            echo "No errors found, removing the run directory '$BUILDDIR'"
-            do_cleanup
-        fi
-    }
-    export TOASTER_MANAGED=1
-    if [ $WEBSERVER -gt 0 ] && ! webserverStartAll; then
-        echo "Failed to start the web server, stopping" 1>&2
-        cleanup
-        exit 1
-    fi
-    if [ $WEBSERVER -gt 0 ] && [ $NOBROWSER -eq 0 ]  ; then
-        echo "Starting browser..."
-        xdg-open http://127.0.0.1:$WEB_PORT/ >/dev/null 2>&1 &
-    fi
-    trap trap_ctrlc 2
-    echo "Toaster is now running. You can stop it with Ctrl-C"
-    while [ $RUNNING -gt 0 ]; do
-        python $BBBASEDIR/lib/toaster/manage.py runbuilds 2>&1 | tee -a "$BUILDDIR/toaster.log"
-        sleep 1
-    done
-    cleanup
-    echo "**** Exit"
-    exit 0
+if [ `basename \"$0\"` = `basename \"${TOASTER}\"` ]; then
+    echo "Error: This script needs to be sourced. Please run as . $TOASTER"
+    exit 1
 fi
-
 
 if ! verify_prereq; then
     echo "Error: Could not verify that the needed dependencies are installed. Please use virtualenv and pip to install dependencies listed in toaster-requirements.txt" 1>&2
     return 1
 fi
 
-
 # We make sure we're running in the current shell and in a good environment
 if [ -z "$BUILDDIR" ] ||  ! which bitbake >/dev/null 2>&1 ; then
     echo "Error: Build environment is not setup or bitbake is not in path." 1>&2
     return 2
 fi
-
 
 # Determine the action. If specified by arguments, fine, if not, toggle it
 if [ "$1" = 'start' ] || [ "$1" = 'stop' ]; then
