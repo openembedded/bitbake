@@ -700,7 +700,6 @@ class ORMWrapper(object):
     def save_build_variables(self, build_obj, vardump):
         assert isinstance(build_obj, Build)
 
-        helptext_objects = []
         for k in vardump:
             desc = vardump[k]['doc']
             if desc is None:
@@ -711,10 +710,9 @@ class ORMWrapper(object):
             if desc is None:
                 desc = ''
             if len(desc):
-                helptext_objects.append(HelpText(build=build_obj,
-                    area=HelpText.VARIABLE,
-                    key=k,
-                    text=desc))
+                HelpText.objects.get_or_create(build=build_obj,
+                                               area=HelpText.VARIABLE,
+                                               key=k, text=desc)
             if not bool(vardump[k]['func']):
                 value = vardump[k]['v']
                 if value is None:
@@ -733,8 +731,6 @@ class ORMWrapper(object):
                                 operation = vh['op']))
                 if len(varhist_objects):
                     VariableHistory.objects.bulk_create(varhist_objects)
-
-        HelpText.objects.bulk_create(helptext_objects)
 
 
 class MockEvent(object):
