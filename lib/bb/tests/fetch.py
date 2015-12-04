@@ -663,7 +663,7 @@ class FetchLatestVersionTest(FetcherTest):
         # version pattern "yyyymmdd"
         ("mobile-broadband-provider-info", "git://git.gnome.org/mobile-broadband-provider-info", "4ed19e11c2975105b71b956440acdb25d46a347d", "")
             : "20120614",
-        # packages with a valid GITTAGREGEX
+        # packages with a valid UPSTREAM_CHECK_GITTAGREGEX
         ("xf86-video-omap", "git://anongit.freedesktop.org/xorg/driver/xf86-video-omap", "ae0394e687f1a77e966cf72f895da91840dffb8f", "(?P<pver>(\d+\.(\d\.?)*))")
             : "0.4.3",
         ("build-appliance-image", "git://git.yoctoproject.org/poky", "b37dd451a52622d5b570183a81583cc34c2ff555", "(?P<pver>(([0-9][\.|_]?)+[0-9]))")
@@ -692,7 +692,7 @@ class FetchLatestVersionTest(FetcherTest):
             : "5.0",
         ("xserver-xorg", "http://xorg.freedesktop.org/releases/individual/xserver/xorg-server-1.15.1.tar.bz2", "", "")
             : "1.15.1",
-        # packages with valid REGEX_URI and REGEX
+        # packages with valid UPSTREAM_CHECK_URI and UPSTREAM_CHECK_REGEX
         ("cups", "http://www.cups.org/software/1.7.2/cups-1.7.2-source.tar.bz2", "http://www.cups.org/software.php", "(?P<name>cups\-)(?P<pver>((\d+[\.\-_]*)+))\-source\.tar\.gz")
             : "2.0.0",
         ("db", "http://download.oracle.com/berkeley-db/db-5.3.21.tar.gz", "http://www.oracle.com/technetwork/products/berkeleydb/downloads/index-082944.html", "http://download.oracle.com/otn/berkeley-db/(?P<name>db-)(?P<pver>((\d+[\.\-_]*)+))\.tar\.gz")
@@ -705,7 +705,7 @@ class FetchLatestVersionTest(FetcherTest):
             for k, v in self.test_git_uris.items():
                 self.d.setVar("PN", k[0])
                 self.d.setVar("SRCREV", k[2])
-                self.d.setVar("GITTAGREGEX", k[3])
+                self.d.setVar("UPSTREAM_CHECK_GITTAGREGEX", k[3])
                 ud = bb.fetch2.FetchData(k[1], self.d)
                 pupver= ud.method.latest_versionstring(ud, self.d)
                 verstring = pupver[0]
@@ -715,8 +715,8 @@ class FetchLatestVersionTest(FetcherTest):
         def test_wget_latest_versionstring(self):
             for k, v in self.test_wget_uris.items():
                 self.d.setVar("PN", k[0])
-                self.d.setVar("REGEX_URI", k[2])
-                self.d.setVar("REGEX", k[3])
+                self.d.setVar("UPSTREAM_CHECK_URI", k[2])
+                self.d.setVar("UPSTREAM_CHECK_REGEX", k[3])
                 ud = bb.fetch2.FetchData(k[1], self.d)
                 pupver = ud.method.latest_versionstring(ud, self.d)
                 verstring = pupver[0]

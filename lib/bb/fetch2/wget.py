@@ -481,7 +481,7 @@ class Wget(FetchMethod):
         self.suffix_regex_comp = re.compile(psuffix_regex)
 
         # compile regex, can be specific by package or generic regex
-        pn_regex = d.getVar('REGEX', True)
+        pn_regex = d.getVar('UPSTREAM_CHECK_REGEX', True)
         if pn_regex:
             package_custom_regex_comp = re.compile(pn_regex)
         else:
@@ -517,7 +517,7 @@ class Wget(FetchMethod):
         bb.debug(3, "latest_versionstring, regex: %s" % (package_regex.pattern))
 
         uri = ""
-        regex_uri = d.getVar("REGEX_URI", True)
+        regex_uri = d.getVar("UPSTREAM_CHECK_URI", True)
         if not regex_uri:
             path = ud.path.split(package)[0]
 
