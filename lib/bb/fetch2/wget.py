@@ -38,6 +38,7 @@ from   bb.fetch2 import FetchError
 from   bb.fetch2 import logger
 from   bb.fetch2 import runfetchcmd
 from   bs4 import BeautifulSoup
+from   bs4 import SoupStrainer
 
 class Wget(FetchMethod):
     """Class to fetch urls via 'wget'"""
@@ -367,7 +368,7 @@ class Wget(FetchMethod):
         version = ['', '', '']
 
         bb.debug(3, "VersionURL: %s" % (url))
-        soup = BeautifulSoup(self._fetch_index(url, ud, d))
+        soup = BeautifulSoup(self._fetch_index(url, ud, d), "html.parser", parse_only=SoupStrainer("a"))
         if not soup:
             bb.debug(3, "*** %s NO SOUP" % (url))
             return ""
@@ -417,7 +418,7 @@ class Wget(FetchMethod):
                 ud.path.split(dirver)[0], ud.user, ud.pswd, {}])
         bb.debug(3, "DirURL: %s, %s" % (dirs_uri, package))
 
-        soup = BeautifulSoup(self._fetch_index(dirs_uri, ud, d))
+        soup = BeautifulSoup(self._fetch_index(dirs_uri, ud, d), "html.parser", parse_only=SoupStrainer("a"))
         if not soup:
             return version[1]
 
