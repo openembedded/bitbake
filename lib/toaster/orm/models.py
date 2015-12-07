@@ -721,6 +721,18 @@ class Package(models.Model):
     section = models.CharField(max_length=80, blank=True)
     license = models.CharField(max_length=80, blank=True)
 
+class CustomImagePackage(Package):
+    # CustomImageRecipe fields to track pacakges appended,
+    # included and excluded from a CustomImageRecipe
+    recipe_includes = models.ManyToManyField('CustomImageRecipe',
+                                             related_name='includes_set')
+    recipe_excludes = models.ManyToManyField('CustomImageRecipe',
+                                             related_name='excludes_set')
+    recipe_appends = models.ManyToManyField('CustomImageRecipe',
+                                            related_name='appends_set')
+
+
+
 class Package_DependencyManager(models.Manager):
     use_for_related_fields = True
 
