@@ -507,14 +507,20 @@ class CustomImagesTable(ToasterTable):
                         static_data_name="name",
                         static_data_template=name_link_template)
 
+        recipe_file_template = '''
+        <code>{{data.name}}_{{data.version}}.bb</code>
+        <a href="{% url 'customrecipedownload' extra.pid data.pk %}">
+        <i class="icon-download-alt" data-original-title="Download recipe
+        file"></i>
+        </a>'''
+
         self.add_column(title="Recipe file",
-                        static_data_name='recipe_file',
-                        static_data_template='',
-                        field_name='local_path')
+                        static_data_name='recipe_file_download',
+                        static_data_template=recipe_file_template)
 
         approx_packages_template = '''
         <a href="{% url 'customrecipe' extra.pid data.id %}">
-          {{data.package_set.all|length}}
+          {{data.get_all_packages.count}}
         </a>'''
 
         self.add_column(title="Approx packages",
