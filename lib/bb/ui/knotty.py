@@ -104,10 +104,11 @@ class InteractConsoleLogFilter(logging.Filter):
         return True
 
 class TerminalFilter(object):
+    rows = 25
     columns = 80
 
     def sigwinch_handle(self, signum, frame):
-        self.columns = self.getTerminalColumns()
+        self.rows, self.columns = self.getTerminalColumns()
         if self._sigwinch_default:
             self._sigwinch_default(signum, frame)
 
@@ -131,7 +132,7 @@ class TerminalFilter(object):
                 cr = (env['LINES'], env['COLUMNS'])
             except:
                 cr = (25, 80)
-        return cr[1]
+        return cr
 
     def __init__(self, main, helper, console, errconsole, format):
         self.main = main
@@ -207,7 +208,7 @@ class TerminalFilter(object):
             content = "Currently %s running tasks (%s of %s):" % (len(activetasks), self.helper.tasknumber_current, self.helper.tasknumber_total)
         print(content)
         lines = 1 + int(len(content) / (self.columns + 1))
-        for tasknum, task in enumerate(tasks):
+        for tasknum, task in enumerate(tasks[:(self.rows - 2)]):
             content = "%s: %s" % (tasknum, task)
             print(content)
             lines = lines + 1 + int(len(content) / (self.columns + 1))
