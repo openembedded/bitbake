@@ -1401,6 +1401,12 @@ class CustomImageRecipe(Recipe):
     base_recipe = models.ForeignKey(Recipe, related_name='based_on_recipe')
     project = models.ForeignKey(Project)
 
+    def get_all_packages(self):
+        """Get the included packages and any appended packages"""
+        return CustomImagePackage.objects.filter((Q(recipe_appends=self) |
+                                              Q(recipe_includes=self)) &
+                                             ~Q(recipe_excludes=self))
+
     def generate_recipe_file_contents(self):
         """Generate the contents for the recipe file."""
         # If we have no excluded packages we only need to _append
