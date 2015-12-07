@@ -42,8 +42,8 @@ from orm.models import Variable, VariableHistory
 from orm.models import Package, Package_File, Target_Installed_Package, Target_File
 from orm.models import Task_Dependency, Package_Dependency
 from orm.models import Recipe_Dependency, Provides
+from orm.models import Project, CustomImagePackage
 
-from orm.models import Project
 from bldcontrol.models import BuildEnvironment, BuildRequest
 
 from bb.msg import BBLogFormatter as formatter
@@ -323,6 +323,11 @@ class ORMWrapper(object):
 
     def get_update_layer_version_object(self, build_obj, layer_obj, layer_version_information):
         if isinstance(layer_obj, Layer_Version):
+            # Special case the toaster-custom-images layer which is created
+            # on the fly so don't update the values which may cause the layer
+            # to be duplicated on a future get_or_create
+            if layer_obj.layer.name == "toaster-custom-images":
+                return layer_obj
             # We already found our layer version for this build so just
             # update it with the new build information
             logger.debug("We found our layer from toaster")
@@ -527,12 +532,14 @@ class ORMWrapper(object):
                         sym_target = filetarget_obj)
 
 
-    def save_target_package_information(self, build_obj, target_obj, packagedict, pkgpnmap, recipes):
+    def save_target_package_information(self, build_obj, target_obj, packagedict, pkgpnmap, recipes, built_package=False):
         assert isinstance(build_obj, Build)
         assert isinstance(target_obj, Target)
 
         errormsg = ""
         for p in packagedict:
+            # Search name swtiches round the installed name vs package name
+            # by default installed name == package name
             searchname = p
             if p not in pkgpnmap:
                 logger.warning("Image packages list contains %p, but is"
@@ -543,11 +550,30 @@ class ORMWrapper(object):
             if 'OPKGN' in pkgpnmap[p].keys():
                 searchname = pkgpnmap[p]['OPKGN']
 
-            packagedict[p]['object'], created = Package.objects.get_or_create( build = build_obj, name = searchname )
+            built_recipe = recipes[pkgpnmap[p]['PN']]
+
+            if built_package:
+                packagedict[p]['object'], created = Package.objects.get_or_create( build = build_obj, name = searchname )
+                recipe = built_recipe
+            else:
+                packagedict[p]['object'], created = \
+                        CustomImagePackage.objects.get_or_create(name=searchname)
+                try:
+                    recipe = self._cached_get(Recipe,
+                                              name=built_recipe.name,
+                                              layer_version__build=None,
+                                              file_path=built_recipe.file_path,
+                                              version=built_recipe.version)
+                except (Recipe.DoesNotExist,
+                        Recipe.MultipleObjectsReturned) as e:
+                    logger.info("We did not find one recipe for the"
+                                "configuration data package %s %s" % (p, e))
+                    continue
+
             if created or packagedict[p]['object'].size == -1:    # save the data anyway we can, not just if it was not created here; bug [YOCTO #6887]
                 # fill in everything we can from the runtime-reverse package data
                 try:
-                    packagedict[p]['object'].recipe = recipes[pkgpnmap[p]['PN']]
+                    packagedict[p]['object'].recipe = recipe
                     packagedict[p]['object'].version = pkgpnmap[p]['PV']
                     packagedict[p]['object'].installed_name = p
                     packagedict[p]['object'].revision = pkgpnmap[p]['PR']
@@ -573,7 +599,8 @@ class ORMWrapper(object):
             packagedict[p]['object'].installed_size = packagedict[p]['size']
             packagedict[p]['object'].save()
 
-            Target_Installed_Package.objects.create(target = target_obj, package = packagedict[p]['object'])
+            if built_package:
+                Target_Installed_Package.objects.create(target = target_obj, package = packagedict[p]['object'])
 
         packagedeps_objs = []
         for p in packagedict:
@@ -584,6 +611,21 @@ class ORMWrapper(object):
                     tdeptype = Package_Dependency.TYPE_TRECOMMENDS
 
                 try:
+                 # If this is a built package we are always going to have
+                 # new package objects as it's part of the build history
+                 # which also means new package dependency for each object.
+                 # However if they are project packages we don't want to
+                 # duplicate these so check if they exist or not first
+                    if built_package == False:
+                        try:
+                            Package_Dependency.objects.get(
+                                package=packagedict[p]['object'],
+                                depends_on=packagedict[px]['object'],
+                                dep_type=tdeptype)
+                            continue
+                        except Package_Dependency.DoesNotExist:
+                            pass
+
                     packagedeps_objs.append(Package_Dependency(
                         package = packagedict[p]['object'],
                         depends_on = packagedict[px]['object'],
@@ -634,19 +676,37 @@ class ORMWrapper(object):
         return log_object.save()
 
 
-    def save_build_package_information(self, build_obj, package_info, recipes):
-        assert isinstance(build_obj, Build)
+    def save_build_package_information(self, build_obj, package_info, recipes,
+                                       built_package):
+       # assert isinstance(build_obj, Build)
 
         # create and save the object
         pname = package_info['PKG']
+        built_recipe = recipes[package_info['PN']]
         if 'OPKGN' in package_info.keys():
             pname = package_info['OPKGN']
 
-        bp_object, _ = Package.objects.get_or_create( build = build_obj,
-                                       name = pname )
+        if built_package:
+            bp_object, _ = Package.objects.get_or_create( build = build_obj,
+                                                         name = pname )
+            recipe = built_recipe
+        else:
+            bp_object, created = \
+                    CustomImagePackage.objects.get_or_create(name=pname)
+            try:
+                recipe = self._cached_get(Recipe,
+                                          name=built_recipe.name,
+                                          layer_version__build=None,
+                                          file_path=built_recipe.file_path,
+                                          version=built_recipe.version)
+
+            except (Recipe.DoesNotExist, Recipe.MultipleObjectsReturned):
+                logger.debug("We did not find one recipe for the configuration"
+                             "data package %s" % pname)
+                return
 
         bp_object.installed_name = package_info['PKG']
-        bp_object.recipe = recipes[package_info['PN']]
+        bp_object.recipe = recipe
         bp_object.version = package_info['PKGV']
         bp_object.revision = package_info['PKGR']
         bp_object.summary = package_info['SUMMARY']
@@ -666,7 +726,12 @@ class ORMWrapper(object):
             Package_File.objects.bulk_create(packagefile_objects)
 
         def _po_byname(p):
-            pkg, created = Package.objects.get_or_create(build = build_obj, name = p)
+            if built_package:
+                pkg, created = Package.objects.get_or_create(build=build_obj,
+                                                             name=p)
+            else:
+                pkg, created = CustomImagePackage.objects.get_or_create(name=p)
+
             if created:
                 pkg.size = -1
                 pkg.save()
@@ -1167,7 +1232,8 @@ class BuildInfoHelper(object):
                 filedata = BuildInfoHelper._get_data_from_event(event)['filedata'][target.target]
 
                 try:
-                    self.orm_wrapper.save_target_package_information(self.internal_state['build'], target, imgdata, pkgdata, self.internal_state['recipes'])
+                    self.orm_wrapper.save_target_package_information(self.internal_state['build'], target, imgdata, pkgdata, self.internal_state['recipes'], built_package=True)
+                    self.orm_wrapper.save_target_package_information(self.internal_state['build'], target, imgdata.copy(), pkgdata, self.internal_state['recipes'], built_package=False)
                 except KeyError as e:
                     logger.warn("KeyError in save_target_package_information"
                                 "%s ", e)
@@ -1324,10 +1390,17 @@ class BuildInfoHelper(object):
 
     def store_build_package_information(self, event):
         package_info = BuildInfoHelper._get_data_from_event(event)
-        self.orm_wrapper.save_build_package_information(self.internal_state['build'],
-                            package_info,
-                            self.internal_state['recipes'],
-                            )
+        self.orm_wrapper.save_build_package_information(
+            self.internal_state['build'],
+            package_info,
+            self.internal_state['recipes'],
+            built_package=True)
+
+        self.orm_wrapper.save_build_package_information(
+            self.internal_state['build'],
+            package_info,
+            self.internal_state['recipes'],
+            built_package=False)
 
     def _store_build_done(self, errorcode):
         logger.info("Build exited with errorcode %d", errorcode)
