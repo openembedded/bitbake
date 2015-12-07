@@ -45,6 +45,7 @@
         machinesTypeAheadUrl: {% url 'xhr_machinestypeahead' project.id as paturl%}{{paturl|json}},
 
         projectBuildsUrl: {% url 'projectbuilds' project.id as pburl %}{{pburl|json}},
+        xhrCustomRecipeUrl : "{% url 'xhr_customrecipe' %}",
         projectId : {{project.id}},
         {% else %}
         projectId : undefined,
