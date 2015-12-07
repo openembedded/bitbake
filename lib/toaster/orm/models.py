@@ -265,12 +265,13 @@ class Project(models.Model):
 
     def get_project_layer_versions(self, pk=False):
         """ Returns the Layer_Versions currently added to this project """
-        layer_versions = self.projectlayer_set.all().values('layercommit')
+        layer_versions = self.projectlayer_set.all().values_list('layercommit',
+                                                                 flat=True)
 
         if pk is False:
-            return layer_versions
+            return Layer_Version.objects.filter(pk__in=layer_versions)
         else:
-            return layer_versions.values_list('layercommit__pk', flat=True)
+            return layer_versions
 
 
     def get_available_machines(self):
