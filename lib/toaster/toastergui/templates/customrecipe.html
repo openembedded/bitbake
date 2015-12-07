@@ -26,6 +26,8 @@
       recipe : {
         id: {{recipe.pk}},
         name: "{{recipe.name}}",
+        includedPackagesCount: {{recipe.includes_set.count}},
+        baseRecipeId: {{recipe.base_recipe.pk}},
       }
     };
 
@@ -37,6 +39,44 @@
     }
   });
 </script>
+<!-- package dependencies modal -->
+<div style="display:none" id="package-deps-modal" class="modal hide fade in" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="false">
+  <div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">x</button>
+    <h3><span class="package-to-add-name"></span> dependencies</h3>
+  </div>
+  <div class="modal-body">
+    <p>Based on information from a previous build it is likely that adding <strong class="package-to-add-name"></strong> will also add the following packages to your custom image:</p>
+    <ul id="package-add-dep-list">
+    </ul>
+  </div>
+  <div class="modal-footer">
+    <p class="help-block text-left">Total package size: <strong id="package-deps-total-size"></strong></p>
+    <button id="add-package-deps-modal-btn" type="submit" class="btn btn-primary" data-dismiss="modal">Add package</button>
+    <button class="btn" data-dismiss="modal">Cancel</button>
+  </div>
+</div>
+<!-- end package dependencies modal -->
+
+<!-- package reverse dependencies modal -->
+<div style="display:none" id="package-reverse-deps-modal" class="modal hide fade in" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="false">
+  <div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">x</button>
+    <h3><span class="package-to-rm-name"></span> reverse dependencies</h3>
+  </div>
+  <div class="modal-body">
+    <p>Based on information from a previous build it is likely that <strong class="package-to-rm-name"></strong> may be added again as the following packages directly depend on it for your custom image:</p>
+    <ul id="package-reverse-dep-list">
+    </ul>
+  </div>
+  <div class="modal-footer">
+    <p class="help-block text-left">Total package size: <strong id="package-reverse-deps-total-size"></strong></p>
+    <button id="rm-package-reverse-deps-modal-btn" type="submit" class="btn btn-primary" data-dismiss="modal">Remove package</button>
+    <button class="btn" data-dismiss="modal">Cancel</button>
+  </div>
+</div>
+<!-- end package dependencies modal -->
+
 
 <div class="row-fluid span11">
   <div class="alert alert-success lead" id="image-created-notification" style="margin-top: 15px; display: none">
@@ -81,11 +121,11 @@
         </div>
       </div>
       <div id="packages-table">
-        {% if recipe.package_set.count == 0 and last_build == None %}
+        {% if recipe.get_all_packages.count == 0 and last_build == None %}
         <h2> Add | Remove packages </h2>
         <div class="alert alert-info air">
           <p class="lead">Toaster has no package information for {{recipe.name}}. To generate package information, build {{recipe.name}}</p>
-          <button class="btn btn-info btn-large build-custom-recipe" style="margin:20px 0 10px 0;">Build {{recipe.name}}</button>
+          <button class="btn btn-info btn-large build-custom-image" style="margin:20px 0 10px 0;">Build {{recipe.name}}</button>
         </div>
         {% else %}
         {# ToasterTable for Adding remove packages #}
@@ -103,7 +143,7 @@
           Approx. packages included
           <i class="icon-question-sign get-help" title="" data-original-title="The number of packages included is based on information from previous builds and from parsing layers, so we can never be sure it is 100% accurate"></i>
         </dt>
-        <dd class="no-packages">{{recipe.package_set.all.count}}</dd>
+        <dd class="no-packages">{{recipe.get_all_packages.count}}</dd>
         <dt>
           Approx. package size
           <i class="icon-question-sign get-help" title="" data-original-title="Package size is based on information from previous builds, so we can never be sure it is 100% accurate"></i>
