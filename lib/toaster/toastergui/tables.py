@@ -22,8 +22,8 @@
 from toastergui.widgets import ToasterTable
 from orm.models import Recipe, ProjectLayer, Layer_Version, Machine, Project
 from orm.models import CustomImageRecipe, Package, Target, Build, LogMessage, Task
-from orm.models import ProjectTarget
-from django.db.models import Q, Max, Count, When, Case, Value, IntegerField
+from orm.models import CustomImagePackage, ProjectTarget
+from django.db.models import Q, Max, Sum, Count, When, Case, Value, IntegerField
 from django.conf.urls import url
 from django.core.urlresolvers import reverse, resolve
 from django.http import HttpResponse
@@ -731,15 +731,19 @@ class SelectPackagesTable(PackagesTable):
         cust_recipe = CustomImageRecipe.objects.get(pk=kwargs['recipeid'])
         prj = Project.objects.get(pk = kwargs['pid'])
 
-        current_packages = cust_recipe.packages.all()
+        current_packages = self.cust_recipe.get_all_packages()
 
-        # Get all the packages that are in the custom image
-        # Get all the packages built by builds in the current project
-        # but not those ones that are already in the custom image
-        self.queryset = Package.objects.filter(
-                            Q(pk__in=current_packages) |
-                            (Q(build__project=prj) &
-                            ~Q(name__in=current_packages.values_list('name'))))
+        current_recipes = prj.get_available_recipes()
+
+        # Exclude ghost packages and ones which have locale in the name
+        # This is a work around locale packages being dynamically created
+        # and therefore not recognised as packages by bitbake.
+        # We also only show packages which recipes->layers are in the project
+        self.queryset = CustomImagePackage.objects.filter(
+                ~Q(recipe=None) &
+                Q(recipe__in=current_recipes) &
+                ~Q(name__icontains="locale") &
+                ~Q(name__icontains="packagegroup"))
 
         self.queryset = self.queryset.order_by('name')
 
@@ -752,7 +756,8 @@ class SelectPackagesTable(PackagesTable):
         custom_recipe = CustomImageRecipe.objects.get(pk=kwargs['recipe_id'])
 
         context['recipe'] = custom_recipe
-        context['approx_pkg_size'] =  custom_recipe.package_set.aggregate(Sum('size'))
+        context['approx_pkg_size'] = \
+                        custom_recipe.get_all_packages().aggregate(Sum('size'))
         return context
 
 
