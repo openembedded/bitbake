@@ -2501,11 +2501,12 @@ if True:
         """
         ReST API to add/remove packages to/from custom recipe.
 
-        Entry point: /xhr_customrecipe/<recipe_id>/packages/
+        Entry point: /xhr_customrecipe/<recipe_id>/packages/<package_id>
 
         Methods:
             PUT - Add package to the recipe
             DELETE - Delete package from the recipe
+            GET - Get package information
 
         Returns:
             {"error": "ok"}
@@ -2518,53 +2519,108 @@ if True:
             return {"error": "Custom recipe with id=%s "
                              "not found" % recipe_id}
 
-        if request.method == 'GET' and not package_id:
-            packages = recipe.package_set.values("id", "name", "version")
+        if package_id:
+            try:
+                package = CustomImagePackage.objects.get(id=package_id)
+            except Package.DoesNotExist:
+                return {"error": "Package with id=%s "
+                        "not found" % package_id}
 
-            return {"error": "ok",
-                    "packages" : list(packages),
-                    "total" : len(packages)
-                   }
+        if request.method == 'GET':
+            if not package_id:
+                packages = recipe.get_all_packages().values("id",
+                                                            "name",
+                                                            "version")
 
-        try:
-            package = Package.objects.get(id=package_id)
-        except Package.DoesNotExist:
-            return {"error": "Package with id=%s "
-                             "not found" % package_id}
+                return {"error": "ok",
+                        "packages" : list(packages),
+                        "total" : len(packages)
+                       }
+            else:
+                all_current_packages = recipe.get_all_packages()
+
+                # TODO currently we ignore packgegroups as we don't have a
+                # way to deal with them yet.
+
+                # Dependencies for package which aren't satisfied by the
+                # current packages in the custom image recipe
+                deps = package.package_dependencies_source.annotate(
+                    name=F('depends_on__name'),
+                    pk=F('depends_on__pk'),
+                    size=F('depends_on__size'),
+                ).values("name", "pk", "size").filter(
+                    ~Q(pk__in=all_current_packages) &
+                    Q(dep_type=Package_Dependency.TYPE_TRDEPENDS)
+                )
+
+                # Reverse dependencies which are needed by packages that are
+                # in the image
+                reverse_deps = package.package_dependencies_target.annotate(
+                    name=F('package__name'),
+                    pk=F('package__pk'),
+                    size=F('package__size'),
+                ).values("name", "pk", "size").exclude(
+                    ~Q(pk__in=all_current_packages)
+                )
+
+                total_size_deps = 0
+                total_size_reverse_deps = 0
+
+                for dep in deps:
+                    dep['size_formatted'] = \
+                            filtered_filesizeformat(dep['size'])
+                    total_size_deps += dep['size']
+
+                for dep in reverse_deps:
+                    dep['size_formatted'] = \
+                            filtered_filesizeformat(dep['size'])
+                    total_size_reverse_deps += dep['size']
+
+
+                return {"error": "ok",
+                        "id": package.pk,
+                        "name": package.name,
+                        "version": package.version,
+                        "unsatisfied_dependencies": list(deps),
+                        "unsatisfied_dependencies_size": total_size_deps,
+                        "unsatisfied_dependencies_size_formatted":
+                        filtered_filesizeformat(total_size_deps),
+                        "reverse_dependencies": list(reverse_deps),
+                        "reverse_dependencies_size": total_size_reverse_deps,
+                        "reverse_dependencies_size_formatted":
+                        filtered_filesizeformat(total_size_reverse_deps)}
+
+        included_packages = recipe.includes_set.values_list('pk', flat=True)
 
         if request.method == 'PUT':
-            # As these requests are asynchronous we need to make sure we don't
-            # already have the package in the image recipe
-            if recipe.package_set.filter(Q(name=package.name) &
-                                      Q(version=package.version)).count() > 0:
-                return {"error" : "Package %s already in recipe" %
-                        package.name }
+            # If we're adding back a package which used to be included in this
+            # image all we need to do is remove it from the excludes
+            if package.pk in included_packages:
+                try:
+                   recipe.excludes_set.remove(package)
+                   return {"error": "ok"}
+                except Package.DoesNotExist:
+                   return {"error":
+                           "Package %s not found in excludes but was in "
+                           "included list" % package.name}
 
-            # Make a copy of this package
-            dependencies = _get_package_dependencies(package.pk)
+            else:
+                recipe.appends_set.add(package)
 
-            package = _copy_packge_to_recipe(recipe, package)
-            recipe.package_set.add(package)
-
-            # Filter out dependencies already in the custom image
-            all_in_image = recipe.package_set.all().values_list('name',
-                                                                flat=True)
-            def in_image(pkg):
-                return pkg['name'] not in all_in_image
-
-            dependencies = filter(in_image, dependencies['runtime_deps'])
-            return {"error": "ok",
-                    "dependencies_needed" : dependencies,
-                   }
+            return {"error": "ok"}
 
         elif request.method == 'DELETE':
-            if package in recipe.package_set.all():
-                # note that we are infact deleting the copy of the package
-                package.delete()
+            try:
+                # If we're deleting a package which is included we need to
+                # Add it to the excludes list.
+                if package.pk in included_packages:
+                    recipe.excludes_set.add(package)
+                else:
+                    recipe.appends_set.remove(package)
                 return {"error": "ok"}
-            else:
-                return {"error": "Package '%s' is not in the recipe '%s'" % \
-                                 (package.name, recipe.name)}
+            except CustomImageRecipe.DoesNotExist:
+                return {"error": "Tried to remove package that wasn't present"}
+
         else:
             return {"error": "Method %s is not supported" % request.method}
 
