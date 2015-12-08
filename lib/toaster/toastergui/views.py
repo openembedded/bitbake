@@ -2363,20 +2363,27 @@ if True:
         # create custom recipe
         try:
             # create layer 'Custom layer' and verion if needed
-            layer = Layer.objects.get_or_create(name="toaster-custom-images",
-                                         summary="Layer for custom recipes",
-                                         vcs_url="file:///toaster_created_layer"
-                                         )[0]
+            layer = Layer.objects.get_or_create(
+                name="toaster-custom-images",
+                summary="Layer for custom recipes",
+                vcs_url="file:///toaster_created_layer")[0]
 
-            lver = Layer_Version.objects.get_or_create(
-                project=params['project'],
-                layer=layer,
-                dirpath='toaster_created_layer',
-                build=None)[0]
+            # Check if we have a layer version already
+            # We don't use get_or_create here because the dirpath will change
+            # and is a required field
+            lver = Layer_Version.objects.filter(Q(project=params['project']) &
+                                                Q(layer=layer) &
+                                                Q(build=None)).last()
+            if lver == None:
+                lver, created = Layer_Version.objects.get_or_create(
+                    project=params['project'],
+                    layer=layer,
+                    dirpath="toaster_created_layer")
 
             # Add a dependency on our layer to the base recipe's layer
-            LayerVersionDependency.objects.get_or_create(layer_version=lver,
-                                       depends_on=params["base"].layer_version)
+            LayerVersionDependency.objects.get_or_create(
+                layer_version=lver,
+                depends_on=params["base"].layer_version)
 
             # Add it to our current project if needed
             ProjectLayer.objects.get_or_create(project=params['project'],
@@ -2384,14 +2391,21 @@ if True:
                                                optional=False)
 
             # Create the actual recipe
-            recipe = CustomImageRecipe.objects.create(
-                         name=request.POST["name"],
-                         base_recipe=params["base"],
-                         project=params["project"],
-                         file_path=request.POST["name"],
-                         license="MIT",
-                         version="0.1",
-                         layer_version=lver)
+            recipe, created = CustomImageRecipe.objects.get_or_create(
+                name=request.POST["name"],
+                base_recipe=params["base"],
+                project=params["project"],
+                layer_version=lver,
+                is_image=True)
+
+            # If we created the object then setup these fields. They may get
+            # overwritten later on and cause the get_or_create to create a
+            # duplicate if they've changed.
+            if created:
+                recipe.file_path = request.POST["name"]
+                recipe.license = "MIT"
+                recipe.version = "0.1"
+                recipe.save()
 
         except Error as err:
             return {"error": "Can't create custom recipe: %s" % err}
@@ -2445,7 +2459,7 @@ if True:
             {"error": <error message>}
         """
         try:
-          custom_recipe = CustomImageRecipe.objects.get(id=recipe_id)
+            custom_recipe = CustomImageRecipe.objects.get(id=recipe_id)
         except CustomImageRecipe.DoesNotExist:
             return {"error": "Custom recipe with id=%s "
                              "not found" % recipe_id}
