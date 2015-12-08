@@ -129,11 +129,11 @@ urlpatterns = patterns('toastergui.views',
             name=tables.LayerMachinesTable.__name__.lower()),
 
 
-        url(r'^project/(?P<pid>\d+)/customrecipe/(?P<recipeid>\d+)/selectpackages/$',
+        url(r'^project/(?P<pid>\d+)/customrecipe/(?P<custrecipeid>\d+)/selectpackages/$',
             tables.SelectPackagesTable.as_view(), name="recipeselectpackages"),
 
 
-        url(r'^project/(?P<pid>\d+)/customrecipe/(?P<recipe_id>\d+)$',
+        url(r'^project/(?P<pid>\d+)/customrecipe/(?P<custrecipeid>\d+)$',
             tables.SelectPackagesTable.as_view(template_name="customrecipe.html"),
             name="customrecipe"),
 

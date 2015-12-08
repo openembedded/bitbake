@@ -728,7 +728,8 @@ class SelectPackagesTable(PackagesTable):
         self.title = "Add | Remove packages"
 
     def setup_queryset(self, *args, **kwargs):
-        cust_recipe = CustomImageRecipe.objects.get(pk=kwargs['recipeid'])
+        self.cust_recipe =\
+            CustomImageRecipe.objects.get(pk=kwargs['custrecipeid'])
         prj = Project.objects.get(pk = kwargs['pid'])
 
         current_packages = self.cust_recipe.get_all_packages()
@@ -747,13 +748,16 @@ class SelectPackagesTable(PackagesTable):
 
         self.queryset = self.queryset.order_by('name')
 
-        self.static_context_extra['recipe_id'] = kwargs['recipeid']
+        self.static_context_extra['recipe_id'] = kwargs['custrecipeid']
         self.static_context_extra['current_packages'] = \
-                cust_recipe.packages.values_list('pk', flat=True)
+                current_packages.values_list('pk', flat=True)
 
     def get_context_data(self, **kwargs):
+        # to reuse the Super class map the custrecipeid to the recipe_id
+        kwargs['recipe_id'] = kwargs['custrecipeid']
         context = super(SelectPackagesTable, self).get_context_data(**kwargs)
-        custom_recipe = CustomImageRecipe.objects.get(pk=kwargs['recipe_id'])
+        custom_recipe = \
+            CustomImageRecipe.objects.get(pk=kwargs['custrecipeid'])
 
         context['recipe'] = custom_recipe
         context['approx_pkg_size'] = \
