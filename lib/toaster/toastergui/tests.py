@@ -72,7 +72,8 @@ class ViewTests(TestCase):
 
         build = Build.objects.create(project=self.project,
                                      started_on=now,
-                                     completed_on=now)
+                                     completed_on=now,
+                                     outcome=Build.SUCCEEDED)
 
         # for testing BuildsTable
         build1 = Build.objects.create(project=self.project,
@@ -163,22 +164,33 @@ class ViewTests(TestCase):
         self.customr = CustomImageRecipe.objects.create(\
                            name="custom recipe", project=self.project,
                            base_recipe=self.recipe1,
+                           file_path="custr",
                            layer_version=lver_custom)
-
-        CustomImageRecipe.objects.create(name="z custom recipe",
-                                         project=self.project,
-                                         base_recipe=self.recipe1)
 
         self.package = Package.objects.create(name='pkg1',
                                               size=999,
                                               recipe=self.recipe1,
+                                              license="HHH",
                                               build=build)
 
-        Package.objects.create(name='zpkg1', recipe=self.recipe1, build=build)
+        Package.objects.create(name='A pkg1',
+                               size=777,
+                               recipe=self.recipe1,
+                               build=build)
+
+        Package.objects.create(name='zpkg1',
+                               recipe=self.recipe1,
+                               build=build,
+                               size=4,
+                               license="ZZ")
 
         self.cust_package = CustomImagePackage.objects.create(
-            name="ppkg1",
-            recipe=self.recipe1)
+            name="A pkg",
+            recipe=self.recipe1,
+            size=10,
+            license="AAA")
+
+        self.customr.appends_set.add(self.cust_package)
 
         # recipe with project for testing AvailableRecipe table
         self.recipe2 = Recipe.objects.create(layer_source=layersrc,
@@ -191,6 +203,19 @@ class ViewTests(TestCase):
                                              section="Z section",
                                              file_path='/home/foo')
 
+        # additional package for the sorting for the SelectPackagesTable
+        cust_package_two = CustomImagePackage.objects.create(name="ZZ pkg",
+                                                        size=5,
+                                                        recipe=self.recipe2)
+
+        self.customr.appends_set.add(cust_package_two)
+
+        Package.objects.create(name='one1',
+                               recipe=self.recipe2,
+                               build=build,
+                               size=2,
+                               license="L")
+
         Recipe.objects.create(layer_source=layersrc,
                               is_image=True,
                               name="Test image one",
@@ -202,17 +227,27 @@ class ViewTests(TestCase):
                               file_path="/one/",
                               layer_version=self.lver)
 
-        Recipe.objects.create(layer_source=layersrc,
-                              is_image=True,
-                              name="Z Test image two",
-                              version="1.3",
-                              summary="two image recipe",
-                              description="recipe two",
-                              section="B",
-                              license="Z",
-                              file_path="/two/",
-                              layer_version=lver_two)
+        zrecipe = Recipe.objects.create(layer_source=layersrc,
+                                        is_image=True,
+                                        name="Z Test image two",
+                                        version="1.3",
+                                        summary="two image recipe",
+                                        description="recipe two",
+                                        section="B",
+                                        license="Z",
+                                        file_path="/two/",
+                                        layer_version=lver_two)
 
+        CustomImageRecipe.objects.create(name="z custom recipe",
+                                         project=self.project,
+                                         base_recipe=zrecipe,
+                                         file_path="zzzz",
+                                         layer_version=lver_custom)
+
+        # Packages in PackagesTable requre that the recipe has been built so
+        # we need to create a target and build pair
+        target = Target.objects.create(target=self.recipe1.name,
+                                       build=build)
 
 
 
@@ -416,14 +451,17 @@ class ViewTests(TestCase):
         self.assertEqual(self.customr.appends_set.first().name,
                          self.cust_package.name)
         # delete it
+        to_delete = self.customr.appends_set.first().pk
         del_url = reverse('xhr_customrecipe_packages',
-                          args=(self.customr.id,
-                                self.customr.appends_set.first().id))
+                          args=(self.customr.id, to_delete))
 
         response = self.client.delete(del_url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(json.loads(response.content), {"error": "ok"})
-        self.assertFalse(self.customr.includes_set.all())
+        all_packages = self.customr.get_all_packages().values_list('pk',
+                                                                   flat=True)
+
+        self.assertFalse(to_delete in all_packages)
         # delete invalid package to test error condition
         del_url = reverse('xhr_customrecipe_packages',
                           args=(self.customr.id,
@@ -465,8 +503,8 @@ class ViewTests(TestCase):
         row2 = next(x for x in rows if x['name'] == self.recipe2.name)
 
         self.assertEqual(response.status_code, 200, 'should be 200 OK status')
-        # self.recipe1 + self.recipe2 + self.customr = 3
-        self.assertEqual(len(rows), 3, 'should be 3 recipes')
+        # All recipes in the setUp
+        self.assertEqual(len(rows), 5, 'should be 5 recipes')
 
         # check other columns have been populated correctly
         self.assertEqual(row1['name'], self.recipe1.name)
@@ -484,6 +522,7 @@ class ViewTests(TestCase):
 
     def test_toaster_tables(self):
         """Test all ToasterTables instances"""
+        current_recipes = self.project.get_available_recipes()
 
         def get_data(table, options={}):
             """Send a request and parse the json response"""
@@ -494,7 +533,9 @@ class ViewTests(TestCase):
             response = table.get(request,
                                  pid=self.project.id,
                                  layerid=self.lver.pk,
-                                 recipeid=self.recipe1.pk)
+                                 recipeid=self.recipe1.pk,
+                                 recipe_id=self.recipe1.pk,
+                                 custrecipeid=self.customr.pk)
             return json.loads(response.content)
 
         # Get a list of classes in tables module
@@ -513,7 +554,7 @@ class ViewTests(TestCase):
             all_data = get_data(table)
 
             self.assertTrue(len(all_data['rows']) > 1,
-                            "Cannot test on the table %s with < 1 row" % name)
+                            "Cannot test on a %s table with < 1 row" % name)
 
             if table.default_orderby:
                 row_one = all_data['rows'][0][table.default_orderby.strip("-")]
