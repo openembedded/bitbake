@@ -30,7 +30,7 @@ from django.db import IntegrityError, Error
 from django.shortcuts import render, redirect, get_object_or_404
 from orm.models import Build, Target, Task, Layer, Layer_Version, Recipe, LogMessage, Variable
 from orm.models import Task_Dependency, Recipe_Dependency, Package, Package_File, Package_Dependency
-from orm.models import Target_Installed_Package, Target_File, Target_Image_File, BuildArtifact
+from orm.models import Target_Installed_Package, Target_File, Target_Image_File, BuildArtifact, CustomImagePackage
 from orm.models import BitbakeVersion, CustomImageRecipe
 from bldcontrol import bbcontroller
 from django.views.decorators.cache import cache_control
@@ -2411,31 +2411,35 @@ if True:
             return {"error": "Can't create custom recipe: %s" % err}
 
         # Find the package list from the last build of this recipe/target
-        build = Build.objects.filter(target__target=params['base'].name,
-                    project=params['project']).last()
-
-        if build:
+        target = Target.objects.filter(Q(build__outcome=Build.SUCCEEDED) &
+                                       Q(build__project=params['project']) &
+                                       (Q(target=params['base'].name) |
+                                        Q(target=recipe.name))).last()
+        if target:
             # Copy in every package
             # We don't want these packages to be linked to anything because
             # that underlying data may change e.g. delete a build
-            for package in build.package_set.all():
-                 _copy_packge_to_recipe(recipe, package)
-        else:
-            logger.debug("No packages found for this base recipe")
+            for tpackage in target.target_installed_package_set.all():
+                try:
+                    built_package = tpackage.package
+                    # The package had no recipe information so is a ghost
+                    # package skip it
+                    if built_package.recipe == None:
+                        continue;
+
+                    config_package = CustomImagePackage.objects.get(
+                        name=built_package.name)
+
+                    recipe.includes_set.add(config_package)
+                except Exception as e:
+                    logger.warning("Error adding package %s %s" %
+                                   (tpackage.package.name, e))
+                    pass
 
         return {"error": "ok",
+                "packages" : recipe.get_all_packages().count(),
                 "url": reverse('customrecipe', args=(params['project'].pk,
                                                      recipe.id))}
-
-    def _copy_packge_to_recipe(recipe, package):
-        """ copy a package from another recipe """
-        package.pk = None
-        package.save()
-        # Disassociate the package from the build
-        package.build = None
-        package.recipe = recipe
-        package.save()
-        return package
 
     @xhr_response
     def xhr_customrecipe_id(request, recipe_id):
