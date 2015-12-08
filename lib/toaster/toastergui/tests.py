@@ -30,7 +30,7 @@ from orm.models import Project, Release, BitbakeVersion, Package, LogMessage
 from orm.models import ReleaseLayerSourcePriority, LayerSource, Layer, Build
 from orm.models import Layer_Version, Recipe, Machine, ProjectLayer, Target
 from orm.models import CustomImageRecipe, ProjectVariable
-from orm.models import Branch
+from orm.models import Branch, CustomImagePackage
 
 import toastermain
 import inspect
@@ -175,6 +175,10 @@ class ViewTests(TestCase):
                                               build=build)
 
         Package.objects.create(name='zpkg1', recipe=self.recipe1, build=build)
+
+        self.cust_package = CustomImagePackage.objects.create(
+            name="ppkg1",
+            recipe=self.recipe1)
 
         # recipe with project for testing AvailableRecipe table
         self.recipe2 = Recipe.objects.create(layer_source=layersrc,
@@ -404,24 +408,27 @@ class ViewTests(TestCase):
         # add self.package to recipe
         response = self.client.put(reverse('xhr_customrecipe_packages',
                                            args=(self.customr.id,
-                                                 self.package.id)))
+                                                 self.cust_package.id)))
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(json.loads(response.content),
-                         {"error": "ok",
-                          "dependencies_needed": []})
-        self.assertEqual(self.customr.package_set.first().name,
-                         self.package.name)
+                         {"error": "ok"})
+        self.assertEqual(self.customr.appends_set.first().name,
+                         self.cust_package.name)
         # delete it
         del_url = reverse('xhr_customrecipe_packages',
                           args=(self.customr.id,
-                                self.customr.package_set.first().id))
+                                self.customr.appends_set.first().id))
 
         response = self.client.delete(del_url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(json.loads(response.content), {"error": "ok"})
-        self.assertFalse(self.customr.package_set.all())
-        # delete it again to test error condition
+        self.assertFalse(self.customr.includes_set.all())
+        # delete invalid package to test error condition
+        del_url = reverse('xhr_customrecipe_packages',
+                          args=(self.customr.id,
+                                99999))
+
         response = self.client.delete(del_url)
         self.assertEqual(response.status_code, 200)
         self.assertNotEqual(json.loads(response.content)["error"], "ok")
