@@ -363,6 +363,8 @@ def main(server, eventHandler, params):
                     buildinfohelper.update_artifact_image_file(event)
                 elif event.type == "LicenseManifestPath":
                     buildinfohelper.store_license_manifest_path(event)
+                elif event.type == "SetBRBE":
+                    buildinfohelper.brbe = buildinfohelper._get_data_from_event(event)
                 else:
                     logger.error("Unprocessed MetadataEvent %s ", str(event))
                 continue
