@@ -287,6 +287,9 @@ class LocalhostBEController(BuildEnvironmentController):
         # set variables
         for var in variables:
             bbctrl.setVariable(var.name, var.value)
+            if var.name == 'TOASTER_BRBE':
+                bbctrl.triggerEvent('bb.event.MetadataEvent("SetBRBE", "%s")' \
+                                     % var.value)
 
         # Add 'toaster' and 'buildhistory' to INHERIT variable
         inherit = {item.strip() for item in bbctrl.getVariable('INHERIT').split()}
