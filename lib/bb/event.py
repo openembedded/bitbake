@@ -595,6 +595,8 @@ class LogHandler(logging.Handler):
             etype, value, tb = record.exc_info
             if hasattr(tb, 'tb_next'):
                 tb = list(bb.exceptions.extract_traceback(tb, context=3))
+            # Need to turn the value into something the logging system can pickle
+            value = str(value)
             record.bb_exc_info = (etype, value, tb)
             record.exc_info = None
         fire(record, None)
