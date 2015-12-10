@@ -45,7 +45,7 @@ urlpatterns = patterns('',
     url(r'^orm/eventfile$', 'bldcollector.views.eventfile'),
 
     # if no application is selected, we have the magic toastergui app here
-    url(r'^$', never_cache(RedirectView.as_view(url='/toastergui/'))),
+    url(r'^$', never_cache(RedirectView.as_view(url='/toastergui/', permanent=True))),
 )
 
 import toastermain.settings

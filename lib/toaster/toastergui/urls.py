@@ -168,5 +168,5 @@ urlpatterns = patterns('toastergui.views',
             name='xhr_customrecipe'),
 
           # default redirection
-        url(r'^$', RedirectView.as_view( url= 'landing')),
+        url(r'^$', RedirectView.as_view(url='landing', permanent=True)),
 )
