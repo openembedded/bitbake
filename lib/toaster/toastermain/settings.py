@@ -276,7 +276,6 @@ INSTALLED_APPS = (
     'django.contrib.humanize',
     'bldcollector',
     'toastermain',
-    'south',
 )
 
 

@@ -176,15 +176,11 @@ notify_chldexit() {
 verify_prereq() {
     # Verify prerequisites
 
-    if ! echo "import django; print (1,) == django.VERSION[0:1] and django.VERSION[1:2][0] in (6,)" | python 2>/dev/null | grep True >/dev/null; then
-        printf "This program needs Django 1.6. Please install with\n\npip install django==1.6\n"
+    if ! echo "import django; print (1,) == django.VERSION[0:1] and django.VERSION[1:2][0] in (8,)" | python 2>/dev/null | grep True >/dev/null; then
+        printf "This program needs Django 1.8. Please install with\n\npip install django<=1.8.7\n"
         return 2
     fi
 
-    if ! echo "import south; print reduce(lambda x, y: 2 if x==2 else 0 if x == 0 else y, map(lambda x: 1+cmp(x[1]-x[0],0), zip([0,8,4], map(int,south.__version__.split(\".\"))))) > 0" | python 2>/dev/null | grep True >/dev/null; then
-        printf "This program needs South 0.8.4. Please install with\n\npip install south==0.8.4\n"
-        return 2
-    fi
     return 0
 }
 
