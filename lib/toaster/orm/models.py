@@ -598,8 +598,8 @@ class Package(models.Model):
 class Package_DependencyManager(models.Manager):
     use_for_related_fields = True
 
-    def get_query_set(self):
-        return super(Package_DependencyManager, self).get_query_set().exclude(package_id = F('depends_on__id'))
+    def get_queryset(self):
+        return super(Package_DependencyManager, self).get_queryset().exclude(package_id = F('depends_on__id'))
 
 class Package_Dependency(models.Model):
     TYPE_RDEPENDS = 0
@@ -699,8 +699,8 @@ class Recipe(models.Model):
 class Recipe_DependencyManager(models.Manager):
     use_for_related_fields = True
 
-    def get_query_set(self):
-        return super(Recipe_DependencyManager, self).get_query_set().exclude(recipe_id = F('depends_on__id'))
+    def get_queryset(self):
+        return super(Recipe_DependencyManager, self).get_queryset().exclude(recipe_id = F('depends_on__id'))
 
 class Recipe_Dependency(models.Model):
     TYPE_DEPENDS = 0
