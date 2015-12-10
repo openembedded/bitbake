@@ -29,10 +29,28 @@ from django.core import validators
 from django.conf import settings
 import django.db.models.signals
 
-
 import logging
 logger = logging.getLogger("toaster")
 
+if 'sqlite' in settings.DATABASES['default']['ENGINE']:
+    from django.db import transaction, OperationalError
+    from time import sleep
+
+    _base_save = models.Model.save
+    def save(self, *args, **kwargs):
+        while True:
+            try:
+                with transaction.atomic():
+                    return _base_save(self, *args, **kwargs)
+            except OperationalError as err:
+                if 'database is locked' in str(err):
+                    logger.warning("%s, model: %s, args: %s, kwargs: %s",
+                                   err, self.__class__, args, kwargs)
+                    sleep(0.5)
+                    continue
+                raise
+
+    models.Model.save = save
 
 class GitURLValidator(validators.URLValidator):
     import re
