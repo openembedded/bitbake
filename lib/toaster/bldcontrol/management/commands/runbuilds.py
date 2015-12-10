@@ -14,14 +14,14 @@ class Command(NoArgsCommand):
     help    = "Schedules and executes build requests as possible. Does not return (interrupt with Ctrl-C)"
 
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def _selectBuildEnvironment(self):
         bec = getBuildEnvironmentController(lock = BuildEnvironment.LOCK_FREE)
         bec.be.lock = BuildEnvironment.LOCK_LOCK
         bec.be.save()
         return bec
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def _selectBuildRequest(self):
         br = BuildRequest.objects.filter(state = BuildRequest.REQ_QUEUED).order_by('pk')[0]
         br.state = BuildRequest.REQ_INPROGRESS
