@@ -2264,16 +2264,17 @@ if True:
                 prj.bitbake_version = prj.release.bitbake_version
                 prj.save()
                 # we need to change the layers
-                for i in prj.projectlayer_set.all():
+                for project in prj.projectlayer_set.all():
                     # find and add a similarly-named layer on the new branch
                     try:
-                        lv = prj.compatible_layerversions(layer_name = i.layercommit.layer.name)[0]
-                        ProjectLayer.objects.get_or_create(project = prj, layercommit = lv)
+                        layer_versions = prj.get_all_compatible_layer_versions()
+                        layer_versions = layer_versions.filter(layer__name = project.layercommit.layer.name)
+                        ProjectLayer.objects.get_or_create(project = prj, layercommit = layer_versions.first())
                     except IndexError:
                         pass
                     finally:
                         # get rid of the old entry
-                        i.delete()
+                        project.delete()
 
             if 'machineName' in request.POST:
                 machinevar = prj.projectvariable_set.get(name="MACHINE")
@@ -2383,12 +2384,17 @@ if True:
 
             retval = []
 
-            for i in prj.projectlayer_set.all():
-                lv = prj.compatible_layerversions(release = Release.objects.get(pk=new_release_id)).filter(layer__name = i.layercommit.layer.name)
+            for project in prj.projectlayer_set.all():
+                release = Release.objects.get(pk = new_release_id)
+
+                layer_versions = prj.get_all_compatible_layer_versions()
+                layer_versions = layer_versions.filter(release = release)
+                layer_versions = layer_versions.filter(layer__name = project.layercommit.layer.name)
+
                 # there is no layer_version with the new release id,
                 # and the same name
-                if lv.count() < 1:
-                    retval.append(i)
+                if layer_versions.count() < 1:
+                    retval.append(project)
 
             return response({"error":"ok",
                              "rows" : map( _lv_to_dict(prj),

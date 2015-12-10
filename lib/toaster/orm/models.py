@@ -195,23 +195,6 @@ class Project(models.Model):
         except (Variable.DoesNotExist,IndexError):
             return( "not_found" )
 
-    # returns a queryset of compatible layers for a project
-    def compatible_layerversions(self, release = None, layer_name = None):
-        logger.warning("This function is deprecated")
-        if release == None:
-            release = self.release
-        # layers on the same branch or layers specifically set for this project
-        queryset = Layer_Version.objects.filter(((Q(up_branch__name = release.branch_name) & Q(project = None)) | Q(project = self)) & Q(build__isnull=True))
-
-        if layer_name is not None:
-            # we select only a layer name
-            queryset = queryset.filter(layer__name = layer_name)
-
-        # order by layer version priority
-        queryset = queryset.filter(Q(layer_source=None) | Q(layer_source__releaselayersourcepriority__release = release)).select_related('layer_source', 'layer', 'up_branch', "layer_source__releaselayersourcepriority__priority").order_by("-layer_source__releaselayersourcepriority__priority")
-
-        return queryset
-
     def get_all_compatible_layer_versions(self):
         """ Returns Queryset of all Layer_Versions which are compatible with
         this project"""
@@ -1184,7 +1167,9 @@ class Layer_Version(models.Model):
         return self._handle_url_path(self.layer.vcs_web_tree_base_url, '')
 
     def get_equivalents_wpriority(self, project):
-        return project.compatible_layerversions(layer_name = self.layer.name)
+        layer_versions = project.get_all_compatible_layer_versions()
+        filtered = layer_versions.filter(layer__name = self.layer.name)
+        return filtered.order_by("-layer_source__releaselayersourcepriority__priority")
 
     def get_vcs_reference(self):
         if self.branch is not None and len(self.branch) > 0:
