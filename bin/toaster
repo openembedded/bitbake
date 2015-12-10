@@ -58,26 +58,8 @@ webserverStartAll()
     # python bitbake/lib/toaster/manage.py python manage.py createsuperuser --username=<ME>
     python $BBBASEDIR/lib/toaster/manage.py migrate --noinput || retval=1
 
-    python $BBBASEDIR/lib/toaster/manage.py migrate orm || retval=2
-
     if [ $retval -eq 1 ]; then
-        echo "Failed db sync, aborting system start" 1>&2
-        return $retval
-    fi
-
-    python $BBBASEDIR/lib/toaster/manage.py migrate orm || retval=1
-
-    if [ $retval -eq 1 ]; then
-        printf "\nError on orm migration, rolling back...\n"
-        python $BBBASEDIR/lib/toaster/manage.py migrate orm 0001_initial --fake
-        return $retval
-    fi
-
-    python $BBBASEDIR/lib/toaster/manage.py migrate bldcontrol || retval=1
-
-    if [ $retval -eq 1 ]; then
-        printf "\nError on bldcontrol migration, rolling back...\n"
-        python $BBBASEDIR/lib/toaster/manage.py migrate bldcontrol 0001_initial --fake
+        echo "Failed migrations, aborting system start" 1>&2
         return $retval
     fi
 
