@@ -73,7 +73,7 @@ class MimeTypeFinder(object):
 def landing(request):
     # in build mode, we redirect to the command-line builds page
     # if there are any builds for the default (cli builds) project
-    default_project = Project.objects.get_default_project()
+    default_project = Project.objects.get_or_create_default_project()
     default_project_builds = Build.objects.filter(project = default_project)
 
     # we only redirect to projects page if there is a user-generated project

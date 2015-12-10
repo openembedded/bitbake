@@ -146,7 +146,7 @@ class ORMWrapper(object):
             prj = Project.objects.get(pk = project_id)
 
         else:                           # this build was triggered by a legacy system, or command line interactive mode
-            prj = Project.objects.get_default_project()
+            prj = Project.objects.get_or_create_default_project()
             logger.debug(1, "buildinfohelper: project is not specified, defaulting to %s" % prj)
 
 
@@ -308,6 +308,11 @@ class ORMWrapper(object):
         # then we are wholly responsible for the data
         # and therefore we return the 'real' recipe rather than the build
         # history copy of the recipe.
+        if  recipe_information['layer_version'].build is not None and \
+            recipe_information['layer_version'].build.project == \
+                Project.objects.get_or_create_default_project():
+            return recipe
+
         if built_recipe is None:
             return recipe
 
@@ -345,7 +350,7 @@ class ORMWrapper(object):
         # If we're doing a command line build then associate this new layer with the
         # project to avoid it 'contaminating' toaster data
         project = None
-        if build_obj.project == Project.objects.get_default_project():
+        if build_obj.project == Project.objects.get_or_create_default_project():
             project = build_obj.project
 
         layer_version_object, _ = Layer_Version.objects.get_or_create(
