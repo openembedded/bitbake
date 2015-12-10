@@ -370,7 +370,7 @@ class Build(models.Model):
             return self.get_outcome_text()
 
     def __str__(self):
-        return "%d %s %s" % (self.id, self.project, ",".join([t.target for t in self.target_set.all()]))
+        return "%s %s %s" % (self.id, self.project, ",".join([t.target for t in self.target_set.all()]))
 
 
 # an Artifact is anything that results from a Build, and may be of interest to the user, and is not stored elsewhere
@@ -552,7 +552,7 @@ class Task(models.Model):
     sstate_text  = property(get_sstate_text)
 
     def __unicode__(self):
-        return "%d(%d) %s:%s" % (self.pk, self.build.pk, self.recipe.name, self.task_name)
+        return "%s(%s) %s:%s" % (self.pk, self.build.pk, self.recipe.name, self.task_name)
 
     class Meta:
         ordering = ('order', 'recipe' ,)
@@ -1203,7 +1203,7 @@ class Layer_Version(models.Model):
         return sorted(result, key=lambda x: x.layer.name)
 
     def __unicode__(self):
-        return "%d %s (VCS %s, Project %s)" % (self.pk, str(self.layer), self.get_vcs_reference(), self.build.project if self.build is not None else "No project")
+        return "%s %s (VCS %s, Project %s)" % (self.pk, str(self.layer), self.get_vcs_reference(), self.build.project if self.build is not None else "No project")
 
     class Meta:
         unique_together = ("layer_source", "up_id")
