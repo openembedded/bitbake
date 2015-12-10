@@ -583,6 +583,9 @@ class NewCustomImagesTable(ImageRecipesTable):
 
     def setup_queryset(self, *args, **kwargs):
         super(ImageRecipesTable, self).setup_queryset(*args, **kwargs)
+        prj = Project.objects.get(pk = kwargs['pid'])
+        self.static_context_extra['current_layers'] = \
+                prj.get_project_layer_versions(pk=True)
 
         self.queryset = self.queryset.filter(is_image=True)
 
