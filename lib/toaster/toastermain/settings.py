@@ -64,6 +64,7 @@ if 'sqlite' in DATABASES['default']['ENGINE']:
 
 if 'DATABASE_URL' in os.environ:
     dburl = os.environ['DATABASE_URL']
+
     if dburl.startswith('sqlite3://'):
         result = re.match('sqlite3://(.*)', dburl)
         if result is None:
@@ -78,7 +79,7 @@ if 'DATABASE_URL' in os.environ:
         }
     elif dburl.startswith('mysql://'):
         # URL must be in this form: mysql://user:pass@host:port/name
-        result = re.match(r"mysql://([^:]*):([^@]*)@([^:]*):(\d+)/([^/]*)", dburl)
+        result = re.match(r"mysql://([^:]*):([^@]*)@([^:]*):(\d*)/([^/]*)", dburl)
         if result is None:
             raise Exception("ERROR: Could not read mysql database url: %s" % dburl)
         DATABASES['default'] = {
