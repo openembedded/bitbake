@@ -156,16 +156,15 @@ notify_chldexit() {
 
 
 verify_prereq() {
-    # Verify prerequisites
-    regex="([0-9])\.([0-9])"
-    for line in `cat $BBBASEDIR/toaster-requirements.txt | grep Django` ; do
-        [[ `echo $line` =~ $regex ]]
-        required_major_version="${BASH_REMATCH[1]}"
-        required_minor_version="${BASH_REMATCH[2]}"
-    done
-
-    if ! echo "import django; print ($required_major_version,) == django.VERSION[0:1] and django.VERSION[1:2][0] in ($required_minor_version,)" | python 2>/dev/null | grep True >/dev/null; then
-        printf "This program needs Django $required_major_version.$required_minor_version. Please install with\n\npip install -r $BBBASEDIR/toaster-requirements.txt\n"
+    # Verify Django version
+    reqfile=$(python -c "import os; print os.path.realpath('$BBBASEDIR/toaster-requirements.txt')")
+    exp='s/Django\([><=]\+\)\([^,]\+\),\([><=]\+\)\(.\+\)/'
+    exp=$exp'import sys,django;version=django.get_version().split(".");'
+    exp=$exp'sys.exit(not (version \1 "\2".split(".") and version \3 "\4".split(".")))/p'
+    if ! sed -n "$exp" $reqfile | python - ; then
+        req=`grep ^Django $reqfile`
+        echo "This program needs $req"
+        echo "Please install with pip install -r $reqfile"
         return 2
     fi
 
@@ -265,10 +264,7 @@ if [ "$1" = 'restart-bitbake' ] ; then
     return $rc
 fi
 
-if ! verify_prereq; then
-    echo "Error: Could not verify that the needed dependencies are installed. Please use virtualenv and pip to install dependencies listed in toaster-requirements.txt" 1>&2
-    return 1
-fi
+verify_prereq || return 1
 
 # We make sure we're running in the current shell and in a good environment
 if [ -z "$BUILDDIR" ] ||  ! which bitbake >/dev/null 2>&1 ; then
