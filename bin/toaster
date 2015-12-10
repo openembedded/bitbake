@@ -56,7 +56,7 @@ webserverStartAll()
     retval=0
     # you can always add a superuser later via
     # python bitbake/lib/toaster/manage.py python manage.py createsuperuser --username=<ME>
-    python $BBBASEDIR/lib/toaster/manage.py syncdb --noinput || retval=1
+    python $BBBASEDIR/lib/toaster/manage.py migrate --noinput || retval=1
 
     python $BBBASEDIR/lib/toaster/manage.py migrate orm || retval=2
 
