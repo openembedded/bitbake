@@ -141,10 +141,10 @@ class BuildEnvironmentController(object):
         raise Exception("FIXME: Must override in order to actually start the BB server")
 
 
-    def setLayers(self, bbs, ls):
+    def setLayers(self, bitbake, ls):
         """ Checks-out bitbake executor and layers from git repositories.
             Sets the layer variables in the config file, after validating local layer paths.
-            The bitbakes must be a 1-length list of BRBitbake
+            bitbake must be a single BRBitbake instance
             The layer paths must be in a list of BRLayer object
 
             a word of attention: by convention, the first layer for any build will be poky!

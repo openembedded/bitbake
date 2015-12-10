@@ -57,7 +57,7 @@ class Command(NoArgsCommand):
             br.save()
 
             # this triggers an async build
-            bec.triggerBuild(br.brbitbake_set.all(), br.brlayer_set.all(), br.brvariable_set.all(), br.brtarget_set.all())
+            bec.triggerBuild(br.brbitbake, br.brlayer_set.all(), br.brvariable_set.all(), br.brtarget_set.all())
 
         except Exception as e:
             logger.error("runbuilds: Error launching build %s" % e)

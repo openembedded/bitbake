@@ -18,7 +18,7 @@ import subprocess
 import os
 
 # standard poky data hardcoded for testing
-BITBAKE_LAYERS = [type('bitbake_info', (object,), { "giturl": "git://git.yoctoproject.org/poky.git", "dirpath": "", "commit": "HEAD"})]
+BITBAKE_LAYER = type('bitbake_info', (object,), { "giturl": "git://git.yoctoproject.org/poky.git", "dirpath": "", "commit": "HEAD"})
 POKY_LAYERS = [
     type('poky_info', (object,), { "name": "meta", "giturl": "git://git.yoctoproject.org/poky.git", "dirpath": "meta", "commit": "HEAD"}),
     type('poky_info', (object,), { "name": "meta-yocto", "giturl": "git://git.yoctoproject.org/poky.git", "dirpath": "meta-yocto", "commit": "HEAD"}),
@@ -53,7 +53,7 @@ class BEControllerTests(object):
         bc = self._getBEController(obe)
         try:
             # setting layers, skip any layer info
-            bc.setLayers(BITBAKE_LAYERS, POKY_LAYERS)
+            bc.setLayers(BITBAKE_LAYER, POKY_LAYERS)
         except NotImplementedException,  e:
             print "Test skipped due to command not implemented yet"
             return True
@@ -80,7 +80,7 @@ class BEControllerTests(object):
         layerSet = False
         try:
             # setting layers, skip any layer info
-            layerSet = bc.setLayers(BITBAKE_LAYERS, POKY_LAYERS)
+            layerSet = bc.setLayers(BITBAKE_LAYER, POKY_LAYERS)
         except NotImplementedException:
             print "Test skipped due to command not implemented yet"
             return True

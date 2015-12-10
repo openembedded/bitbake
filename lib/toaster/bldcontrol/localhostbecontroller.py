@@ -115,18 +115,17 @@ class LocalhostBEController(BuildEnvironmentController):
         return local_checkout_path
 
 
-    def setLayers(self, bitbakes, layers, targets):
+    def setLayers(self, bitbake, layers, targets):
         """ a word of attention: by convention, the first layer for any build will be poky! """
 
         assert self.be.sourcedir is not None
-        assert len(bitbakes) == 1
         # set layers in the layersource
 
         # 1. get a list of repos with branches, and map dirpaths for each layer
         gitrepos = {}
 
-        gitrepos[(bitbakes[0].giturl, bitbakes[0].commit)] = []
-        gitrepos[(bitbakes[0].giturl, bitbakes[0].commit)].append( ("bitbake", bitbakes[0].dirpath) )
+        gitrepos[(bitbake.giturl, bitbake.commit)] = []
+        gitrepos[(bitbake.giturl, bitbake.commit)].append( ("bitbake", bitbake.dirpath) )
 
         for layer in layers:
             # we don't process local URLs
@@ -198,7 +197,7 @@ class LocalhostBEController(BuildEnvironmentController):
                 # make sure we have a working bitbake
                 if not os.path.exists(os.path.join(self.pokydirname, 'bitbake')):
                     logger.debug("localhostbecontroller: checking bitbake into the poky dirname %s " % self.pokydirname)
-                    self._shellcmd("git clone -b \"%s\" \"%s\" \"%s\" " % (bitbakes[0].commit, bitbakes[0].giturl, os.path.join(self.pokydirname, 'bitbake')))
+                    self._shellcmd("git clone -b \"%s\" \"%s\" \"%s\" " % (bitbake.commit, bitbake.giturl, os.path.join(self.pokydirname, 'bitbake')))
 
             # verify our repositories
             for name, dirpath in gitrepos[(giturl, commit)]:
@@ -224,7 +223,7 @@ class LocalhostBEController(BuildEnvironmentController):
         for target in targets:
             try:
                 customrecipe = CustomImageRecipe.objects.get(name=target.target,
-                                                             project=bitbakes[0].req.project)
+                                                             project=bitbake.req.project)
             except CustomImageRecipe.DoesNotExist:
                 continue # not a custom recipe, skip
 
@@ -278,7 +277,7 @@ class LocalhostBEController(BuildEnvironmentController):
 
 
     def triggerBuild(self, bitbake, layers, variables, targets):
-        # set up the buid environment with the needed layers
+        # set up the build environment with the needed layers
         self.setLayers(bitbake, layers, targets)
 
         # get the bb server running with the build req id and build env id

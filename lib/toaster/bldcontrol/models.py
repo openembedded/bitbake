@@ -106,7 +106,7 @@ class BRLayer(models.Model):
     layer_version = models.ForeignKey(Layer_Version, null=True)
 
 class BRBitbake(models.Model):
-    req         = models.ForeignKey(BuildRequest, unique = True)    # only one bitbake for a request
+    req         = models.OneToOneField(BuildRequest)    # only one bitbake for a request
     giturl      = models.CharField(max_length =254)
     commit      = models.CharField(max_length = 254)
     dirpath     = models.CharField(max_length = 254)
