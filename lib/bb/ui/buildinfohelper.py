@@ -33,14 +33,14 @@ def _configure_toaster():
     sys.path.append(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'toaster'))
 _configure_toaster()
 
-from toaster.orm.models import Build, Task, Recipe, Layer_Version, Layer, Target, LogMessage, HelpText
-from toaster.orm.models import Target_Image_File, BuildArtifact
-from toaster.orm.models import Variable, VariableHistory
-from toaster.orm.models import Package, Package_File, Target_Installed_Package, Target_File
-from toaster.orm.models import Task_Dependency, Package_Dependency
-from toaster.orm.models import Recipe_Dependency
+from orm.models import Build, Task, Recipe, Layer_Version, Layer, Target, LogMessage, HelpText
+from orm.models import Target_Image_File, BuildArtifact
+from orm.models import Variable, VariableHistory
+from orm.models import Package, Package_File, Target_Installed_Package, Target_File
+from orm.models import Task_Dependency, Package_Dependency
+from orm.models import Recipe_Dependency
 
-from toaster.orm.models import Project
+from orm.models import Project
 from bldcontrol.models import BuildEnvironment, BuildRequest
 
 from bb.msg import BBLogFormatter as formatter
