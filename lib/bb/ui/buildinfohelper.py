@@ -24,6 +24,7 @@ import os
 os.environ["DJANGO_SETTINGS_MODULE"] = "toaster.toastermain.settings"
 
 
+import django
 from django.utils import timezone
 
 
@@ -32,6 +33,8 @@ def _configure_toaster():
     """
     sys.path.append(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'toaster'))
 _configure_toaster()
+
+django.setup()
 
 from orm.models import Build, Task, Recipe, Layer_Version, Layer, Target, LogMessage, HelpText
 from orm.models import Target_Image_File, BuildArtifact
