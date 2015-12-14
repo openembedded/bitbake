@@ -239,6 +239,25 @@ class LocalhostBEController(BuildEnvironmentController):
                 with open(config, "w") as conf:
                     conf.write('BBPATH .= ":${LAYERDIR}"\nBBFILES += "${LAYERDIR}/recipes/*.bb"\n')
 
+            # Update the Layer_Version dirpath that has our base_recipe in
+            # to be able to read the base recipe to then  generate the
+            # custom recipe.
+            br_layer_base_recipe = layers.get(
+                layer_version=customrecipe.base_recipe.layer_version)
+
+            br_layer_base_dirpath = \
+                    os.path.join(self.be.sourcedir,
+                                 self.getGitCloneDirectory(
+                                     br_layer_base_recipe.giturl,
+                                     br_layer_base_recipe.commit),
+                                 customrecipe.base_recipe.layer_version.dirpath
+                                )
+
+            customrecipe.base_recipe.layer_version.dirpath = \
+                         br_layer_base_dirpath
+
+            customrecipe.base_recipe.layer_version.save()
+
             # create recipe
             recipe_path = \
                     os.path.join(layerpath, "recipes", "%s.bb" % target.target)
