@@ -561,6 +561,7 @@ class SoftwareRecipesTable(RecipesTable):
     def __init__(self, *args, **kwargs):
         super(SoftwareRecipesTable, self).__init__(*args, **kwargs)
         self.title = "Compatible software recipes"
+        self.default_orderby = "name"
 
     def setup_queryset(self, *args, **kwargs):
         super(SoftwareRecipesTable, self).setup_queryset(*args, **kwargs)
