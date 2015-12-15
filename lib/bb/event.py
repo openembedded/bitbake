@@ -177,7 +177,7 @@ def fire_from_worker(event, d):
     fire_ui_handlers(event, d)
 
 noop = lambda _: None
-def register(name, handler, mask=None):
+def register(name, handler, mask=None, filename=None, lineno=None):
     """Register an Event handler"""
 
     # already registered
@@ -189,7 +189,13 @@ def register(name, handler, mask=None):
         if isinstance(handler, basestring):
             tmp = "def %s(e):\n%s" % (name, handler)
             try:
-                code = compile(tmp, "%s(e)" % name, "exec")
+                import ast
+                if filename is None:
+                    filename = "%s(e)" % name
+                code = compile(tmp, filename, "exec", ast.PyCF_ONLY_AST)
+                if lineno is not None:
+                    ast.increment_lineno(code, lineno-1)
+                code = compile(code, filename, "exec")
             except SyntaxError:
                 logger.error("Unable to register event handler '%s':\n%s", name,
                              ''.join(traceback.format_exc(limit=0)))

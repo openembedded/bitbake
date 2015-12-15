@@ -148,17 +148,19 @@ class MethodNode(AstNode):
 
     def eval(self, data):
         text = '\n'.join(self.body)
+        funcname = self.func_name
         if self.func_name == "__anonymous":
             funcname = ("__anon_%s_%s" % (self.lineno, self.filename.translate(MethodNode.tr_tbl)))
             text = "def %s(d):\n" % (funcname) + text
-            bb.methodpool.insert_method(funcname, text, self.filename)
+            bb.methodpool.insert_method(funcname, text, self.filename, self.lineno - len(self.body))
             anonfuncs = data.getVar('__BBANONFUNCS', False) or []
             anonfuncs.append(funcname)
             data.setVar('__BBANONFUNCS', anonfuncs)
-            data.setVar(funcname, text, parsing=True)
         else:
             data.setVarFlag(self.func_name, "func", 1)
-            data.setVar(self.func_name, text, parsing=True)
+        data.setVar(funcname, text, parsing=True)
+        data.setVarFlag(funcname, 'filename', self.filename)
+        data.setVarFlag(funcname, 'lineno', str(self.lineno - len(self.body)))
 
 class PythonMethodNode(AstNode):
     def __init__(self, filename, lineno, function, modulename, body):
@@ -172,10 +174,12 @@ class PythonMethodNode(AstNode):
         # 'this' file. This means we will not parse methods from
         # bb classes twice
         text = '\n'.join(self.body)
-        bb.methodpool.insert_method(self.modulename, text, self.filename)
+        bb.methodpool.insert_method(self.modulename, text, self.filename, self.lineno - len(self.body) - 1)
         data.setVarFlag(self.function, "func", 1)
         data.setVarFlag(self.function, "python", 1)
         data.setVar(self.function, text, parsing=True)
+        data.setVarFlag(self.function, 'filename', self.filename)
+        data.setVarFlag(self.function, 'lineno', str(self.lineno - len(self.body) - 1))
 
 class MethodFlagsNode(AstNode):
     def __init__(self, filename, lineno, key, m):
@@ -317,7 +321,9 @@ def finalize(fn, d, variant = None):
     all_handlers = {}
     for var in d.getVar('__BBHANDLERS', False) or []:
         # try to add the handler
-        bb.event.register(var, d.getVar(var, False), (d.getVarFlag(var, "eventmask", True) or "").split())
+        handlerfn = d.getVarFlag(var, "filename", False)
+        handlerln = int(d.getVarFlag(var, "lineno", False))
+        bb.event.register(var, d.getVar(var, False), (d.getVarFlag(var, "eventmask", True) or "").split(), handlerfn, handlerln)
 
     bb.event.fire(bb.event.RecipePreFinalise(fn), d)
 

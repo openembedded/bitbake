@@ -33,6 +33,7 @@ import fnmatch
 import traceback
 import errno
 import signal
+import ast
 from commands import getstatusoutput
 from contextlib import contextmanager
 from ctypes import cdll
@@ -291,19 +292,22 @@ def _print_trace(body, line):
             error.append('     %.4d:%s' % (i, body[i-1].rstrip()))
     return error
 
-def better_compile(text, file, realfile, mode = "exec"):
+def better_compile(text, file, realfile, mode = "exec", lineno = None):
     """
     A better compile method. This method
     will print the offending lines.
     """
     try:
-        return compile(text, file, mode)
+        code = compile(text, realfile, mode, ast.PyCF_ONLY_AST)
+        if lineno is not None:
+            ast.increment_lineno(code, lineno)
+        return compile(code, realfile, mode)
     except Exception as e:
         error = []
         # split the text into lines again
         body = text.split('\n')
-        error.append("Error in compiling python function in %s:\n" % realfile)
-        if e.lineno:
+        error.append("Error in compiling python function in %s, line %s:\n" % (realfile, lineno))
+        if hasattr(e, "lineno"):
             error.append("The code lines resulting in this error were:")
             error.extend(_print_trace(body, e.lineno))
         else:
