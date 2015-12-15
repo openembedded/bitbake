@@ -327,8 +327,10 @@ def _print_exception(t, value, tb, realfile, text, context):
         exception = traceback.format_exception_only(t, value)
         error.append('Error executing a python function in %s:\n' % realfile)
 
-        # Strip 'us' from the stack (better_exec call)
-        tb = tb.tb_next
+        # Strip 'us' from the stack (better_exec call) unless that was where the 
+        # error came from
+        if tb.tb_next is not None:
+            tb = tb.tb_next
 
         textarray = text.split('\n')
 
