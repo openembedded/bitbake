@@ -309,6 +309,11 @@ fi
 
 echo "The system will $CMD."
 
+# check if addr:port is not in use
+if [ "$CMD" == 'start' ]; then
+    python $BBBASEDIR/lib/toaster/manage.py checksocket "0.0.0.0:$WEB_PORT" || return 1
+fi
+
 # Make sure it's safe to run by checking bitbake lock
 
 lock=1
