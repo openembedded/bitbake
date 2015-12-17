@@ -83,16 +83,6 @@ webserverStartAll()
     return $retval
 }
 
-# Helper functions to add a special configuration file
-
-addtoConfiguration()
-{
-    file=$1
-    shift
-    echo "#Created by toaster start script" > ${BUILDDIR}/conf/$file
-    for var in "$@"; do echo $var >> ${BUILDDIR}/conf/$file; done
-}
-
 INSTOPSYSTEM=0
 
 # define the stop command
@@ -339,7 +329,12 @@ fi
 
 case $CMD in
     start )
-        addtoConfiguration toaster.conf "INHERIT+=\"toaster buildhistory\"" $TOASTER_BRBE
+        # Create configuration file
+        conf=${BUILDDIR}/conf/toaster.conf
+        echo "# Created by toaster start script" > $conf
+        echo "INHERIT+=\"toaster buildhistory\"" >> $conf
+        [ -n "$TOASTER_BRBE" ] && echo $TOASTER_BRBE >> $conf
+
         if [ $WEBSERVER -gt 0 ] && ! webserverStartAll; then
             echo "Failed ${CMD}."
             return 4
