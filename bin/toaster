@@ -131,17 +131,6 @@ stop_bitbake() {
     lsof bitbake.lock | awk '{print $2}' | grep "[0-9]\+" | xargs -n1 -r kill
 }
 
-check_pidbyfile() {
-    [ -e $1 ] && kill -0 `cat $1` 2>/dev/null
-}
-
-notify_chldexit() {
-    if [ $NOTOASTERUI -eq 0 ]; then
-        check_pidbyfile ${BUILDDIR}/.toasterui.pid && return
-        stop_system
-    fi
-}
-
 verify_prereq() {
     # Verify Django version
     reqfile=$(python -c "import os; print os.path.realpath('$BBBASEDIR/toaster-requirements.txt')")
@@ -355,7 +344,6 @@ case $CMD in
         # stop system on terminal exit
         set -o monitor
         trap stop_system SIGHUP
-        #trap notify_chldexit SIGCHLD
     ;;
     stop )
         stop_system
