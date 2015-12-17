@@ -37,7 +37,8 @@ webserverKillAll()
             while kill -0 $pid 2>/dev/null; do
                 kill -SIGTERM -$pid 2>/dev/null
                 sleep 1
-                # Kill processes if they are still running - may happen in interactive shells
+                # Kill processes if they are still running - may happen
+                # in interactive shells
                 ps fux | grep "python.*manage.py runserver" | awk '{print $2}' | xargs kill
             done
             rm  ${pidfile}
@@ -55,7 +56,7 @@ webserverStartAll()
 
     retval=0
     # you can always add a superuser later via
-    # python bitbake/lib/toaster/manage.py python manage.py createsuperuser --username=<ME>
+    # ../bitbake/lib/toaster/manage.py createsuperuser --username=<ME>
     python $BBBASEDIR/lib/toaster/manage.py migrate --noinput || retval=1
 
     if [ $retval -eq 1 ]; then
@@ -72,7 +73,9 @@ webserverStartAll()
 
     echo "Starting webserver..."
 
-    python $BBBASEDIR/lib/toaster/manage.py runserver "0.0.0.0:$WEB_PORT" </dev/null >>${BUILDDIR}/toaster_web.log 2>&1 & echo $! >${BUILDDIR}/.toastermain.pid
+    python $BBBASEDIR/lib/toaster/manage.py runserver "0.0.0.0:$WEB_PORT" \
+           </dev/null >>${BUILDDIR}/toaster_web.log 2>&1 \
+           & echo $! >${BUILDDIR}/.toastermain.pid
 
     sleep 1
 
@@ -128,8 +131,10 @@ start_bitbake() {
     fi
     export BBSERVER=0.0.0.0:-1
     export DATABASE_URL=`$BBBASEDIR/lib/toaster/manage.py get-dburl`
-    if [ $NOTOASTERUI -eq 0 ]; then        # we start the TOASTERUI only if not inhibited
-        bitbake --observe-only -u toasterui --remote-server=$BBSERVER -t xmlrpc >>${BUILDDIR}/toaster_ui.log 2>&1 \
+    # we start the TOASTERUI only if not inhibited
+    if [ $NOTOASTERUI -eq 0 ]; then
+        bitbake --observe-only -u toasterui --remote-server=$BBSERVER -t xmlrpc \
+            >>${BUILDDIR}/toaster_ui.log 2>&1 \
             & echo $! >${BUILDDIR}/.toasterui.pid
     fi
     return 0
@@ -146,14 +151,12 @@ check_pidbyfile() {
     [ -e $1 ] && kill -0 `cat $1` 2>/dev/null
 }
 
-
 notify_chldexit() {
     if [ $NOTOASTERUI -eq 0 ]; then
         check_pidbyfile ${BUILDDIR}/.toasterui.pid && return
         stop_system
     fi
 }
-
 
 verify_prereq() {
     # Verify Django version
@@ -170,7 +173,6 @@ verify_prereq() {
 
     return 0
 }
-
 
 # read command line parameters
 if [ -n "$BASH_SOURCE" ] ; then
@@ -207,7 +209,7 @@ if [ -n "$TEMPLATECONF" ]; then
         fi
         if [ ! -d "$TEMPLATECONF" ]; then
             echo >&2 "Error: '$TEMPLATECONF' must be a directory containing toasterconf.json"
-	    [ "$TOASTER_MANAGED" = '1' ] && exit 1 || return 1
+            [ "$TOASTER_MANAGED" = '1' ] && exit 1 || return 1
         fi
     fi
 fi
@@ -216,10 +218,12 @@ if [ "$TOASTER_CONF" = "" ]; then
     TOASTER_CONF="$TEMPLATECONF/toasterconf.json"
     export TOASTER_CONF=$(python -c "import os; print os.path.realpath('$TOASTER_CONF')")
 fi
+
 if [ ! -f $TOASTER_CONF ]; then
     echo "$TOASTER_CONF configuration file not found. Set TOASTER_CONF to specify file or fix .templateconf"
     [ "$TOASTER_MANAGED" = '1' ] && exit 1 || return 1
 fi
+
 # this defines the dir toaster will use for
 # 1) clones of layers (in _toaster_clones )
 # 2) the build dir (in build)
@@ -284,7 +288,8 @@ if [ "$TOASTER_CONF" = "" ]; then
     export TOASTER_CONF=$(python -c "import os; print os.path.realpath('$TOASTER_CONF')")
 fi
 if [ ! -f $TOASTER_CONF ]; then
-    echo "$TOASTER_CONF configuration file not found. set TOASTER_CONF to specify a path"
+    echo "$TOASTER_CONF configuration file not found."
+    echo " set TOASTER_CONF to specify a path"
     return 1
 fi
 # this defines the dir toaster will use for
@@ -293,7 +298,8 @@ fi
 # 3) the sqlite db if that is being used.
 # 4) pid's we need to clean up on exit/shutdown
 # note: for future. in order to make this an arbitrary directory, we need to
-# make sure that the toaster.sqlite file doesn't default to `pwd` like it currently does.
+# make sure that the toaster.sqlite file doesn't default to `pwd`
+# like it currently does.
 export TOASTER_DIR=`dirname $BUILDDIR`
 
 # Determine the action. If specified by arguments, fine, if not, toggle it
@@ -328,7 +334,8 @@ if [ ${CMD} = 'start' ] && [ $lock -eq 0 ]; then
 fi
 
 if [ ${CMD} = 'start' ] && [ -e $BUILDDIR/.toastermain.pid ] && kill -0 `cat $BUILDDIR/.toastermain.pid`; then
-    echo "Warning: bitbake appears to be dead, but the Toaster web server is running. Something fishy is going on." 1>&2
+    echo "Warning: bitbake appears to be dead, but the Toaster web server is running." 1>&2
+    echo " Something fishy is going on." 1>&2
     echo "Cleaning up the web server to start from a clean slate."
     webserverKillAll
 fi
