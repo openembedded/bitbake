@@ -288,36 +288,33 @@ fi
 
 echo "The system will $CMD."
 
-# check if addr:port is not in use
-if [ "$CMD" == 'start' ]; then
-    $MANAGE checksocket "0.0.0.0:$WEB_PORT" || return 1
-fi
-
-# Make sure it's safe to run by checking bitbake lock
-
-lock=1
-if [ -e $BUILDDIR/bitbake.lock ]; then
-    python -c "import fcntl; fcntl.flock(open(\"$BUILDDIR/bitbake.lock\"), fcntl.LOCK_EX|fcntl.LOCK_NB)" 2>/dev/null || lock=0
-fi
-
-if [ ${CMD} = 'start' ] && [ $lock -eq 0 ]; then
-    echo "Error: bitbake lock state error. File locks show that the system is on." 1>&2
-    echo "Please wait for the current build to finish, stop and then start the system again." 1>&2
-    return 3
-fi
-
-if [ ${CMD} = 'start' ] && [ -e $BUILDDIR/.toastermain.pid ] && kill -0 `cat $BUILDDIR/.toastermain.pid`; then
-    echo "Warning: bitbake appears to be dead, but the Toaster web server is running." 1>&2
-    echo " Something fishy is going on." 1>&2
-    echo "Cleaning up the web server to start from a clean slate."
-    webserverKillAll
-fi
-
-
 # Execute the commands
 
 case $CMD in
     start )
+        # check if addr:port is not in use
+        if [ "$CMD" == 'start' ]; then
+             $MANAGE checksocket "0.0.0.0:$WEB_PORT" || return 1
+        fi
+
+        # Make sure it's safe to start by checking bitbake lock
+        if [ -e $BUILDDIR/bitbake.lock ]; then
+            python -c "import fcntl; fcntl.flock(open(\"$BUILDDIR/bitbake.lock\"), fcntl.LOCK_EX|fcntl.LOCK_NB)" 2>/dev/null
+            if [ $? -ne 0 ] ; then
+                echo "Error: bitbake lock state error. File locks show that the system is on." 1>&2
+                echo "Please wait for the current build to finish, stop and then start the system again." 1>&2
+                return 3
+            fi
+        fi
+
+        # kill Toaster web server if it's alive
+        if [ -e $BUILDDIR/.toastermain.pid ] && kill -0 `cat $BUILDDIR/.toastermain.pid`; then
+            echo "Warning: bitbake appears to be dead, but the Toaster web server is running." 1>&2
+            echo " Something fishy is going on." 1>&2
+            echo "Cleaning up the web server to start from a clean slate."
+            webserverKillAll
+        fi
+
         # Create configuration file
         conf=${BUILDDIR}/conf/toaster.conf
         echo "# Created by toaster start script" > $conf
