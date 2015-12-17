@@ -57,14 +57,14 @@ webserverStartAll()
     retval=0
     # you can always add a superuser later via
     # ../bitbake/lib/toaster/manage.py createsuperuser --username=<ME>
-    python $BBBASEDIR/lib/toaster/manage.py migrate --noinput || retval=1
+    $MANAGE migrate --noinput || retval=1
 
     if [ $retval -eq 1 ]; then
         echo "Failed migrations, aborting system start" 1>&2
         return $retval
     fi
 
-    python $BBBASEDIR/lib/toaster/manage.py checksettings --traceback || retval=1
+    $MANAGE checksettings --traceback || retval=1
 
     if [ $retval -eq 1 ]; then
         printf "\nError while checking settings; aborting\n"
@@ -73,7 +73,7 @@ webserverStartAll()
 
     echo "Starting webserver..."
 
-    python $BBBASEDIR/lib/toaster/manage.py runserver "0.0.0.0:$WEB_PORT" \
+    $MANAGE runserver "0.0.0.0:$WEB_PORT" \
            </dev/null >>${BUILDDIR}/toaster_web.log 2>&1 \
            & echo $! >${BUILDDIR}/.toastermain.pid
 
@@ -130,7 +130,7 @@ start_bitbake() {
         return 1
     fi
     export BBSERVER=0.0.0.0:-1
-    export DATABASE_URL=`$BBBASEDIR/lib/toaster/manage.py get-dburl`
+    export DATABASE_URL=`$MANAGE get-dburl`
     # we start the TOASTERUI only if not inhibited
     if [ $NOTOASTERUI -eq 0 ]; then
         bitbake --observe-only -u toasterui --remote-server=$BBSERVER -t xmlrpc \
@@ -184,6 +184,7 @@ else
 fi
 
 BBBASEDIR=`dirname $TOASTER`/..
+MANAGE=$BBBASEDIR/lib/toaster/manage.py
 OEROOT=`dirname $TOASTER`/../..
 NOTOASTERUI=0
 WEBSERVER=1
@@ -316,7 +317,7 @@ echo "The system will $CMD."
 
 # check if addr:port is not in use
 if [ "$CMD" == 'start' ]; then
-    python $BBBASEDIR/lib/toaster/manage.py checksocket "0.0.0.0:$WEB_PORT" || return 1
+    $MANAGE checksocket "0.0.0.0:$WEB_PORT" || return 1
 fi
 
 # Make sure it's safe to run by checking bitbake lock
@@ -351,7 +352,7 @@ case $CMD in
         fi
         start_bitbake
         if [ $? -eq 0 ]; then
-            python $BBBASEDIR/lib/toaster/manage.py runbuilds & echo $! >${BUILDDIR}/.runbuilds.pid
+            $MANAGE runbuilds & echo $! >${BUILDDIR}/.runbuilds.pid
             # set fail safe stop system on terminal exit
             trap stop_system SIGHUP
             echo "Successful ${CMD}."
