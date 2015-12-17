@@ -17,8 +17,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see http://www.gnu.org/licenses/.
 
-# Usage: source toaster [start|stop|restart-bitbake] [webport=<port>]
-#                       [noui] [noweb] [nobrowser] [brbe=<BRBE>]
+# Usage: source toaster [start|stop|restart-bitbake]
+#                       [webport=<port>] [noui] [noweb]
 
 # Helper function to kill a background toaster development server
 
@@ -203,8 +203,6 @@ export TOASTER_DIR=`pwd`
 
 NOTOASTERUI=0
 WEBSERVER=1
-NOBROWSER=0
-TOASTER_BRBE=""
 WEB_PORT="8000"
 
 for param in $*; do
@@ -214,12 +212,6 @@ for param in $*; do
     ;;
     noweb )
             WEBSERVER=0
-    ;;
-    nobrowser )
-            NOBROWSER=1
-    ;;
-    brbe=* )
-            TOASTER_BRBE=$'\n'"TOASTER_BRBE=\""${param#*=}"\""
     ;;
     webport=*)
             WEB_PORT="${param#*=}"
@@ -318,7 +310,6 @@ case $CMD in
         conf=${BUILDDIR}/conf/toaster.conf
         echo "# Created by toaster start script" > $conf
         echo "INHERIT+=\"toaster buildhistory\"" >> $conf
-        [ -n "$TOASTER_BRBE" ] && echo $TOASTER_BRBE >> $conf
 
         if [ $WEBSERVER -gt 0 ] && ! webserverStartAll; then
             echo "Failed ${CMD}."
