@@ -1,5 +1,8 @@
 #!/bin/echo ERROR: This script needs to be sourced. Please run as .
-# (c) 2013 Intel Corp.
+
+# toaster - shell script to start Toaster
+
+# Copyright (C) 2013-2015 Intel Corp.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -12,19 +15,10 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+# along with this program. If not, see http://www.gnu.org/licenses/.
 
-
-# This script can be run in two modes.
-
-# When used with "source", from a build directory,
-# it enables toaster event logging and starts the bitbake resident server.
-# use as:  source toaster [start|stop] [noweb] [noui]
-
-# When it is called as a stand-alone script, it starts just the
-# web server, and the building shall be done through the web interface.
-# As script, it will not return to the command prompt. Stop with Ctrl-C.
+# Usage: source toaster [start|stop|restart-bitbake] [webport=<port>]
+#                       [noui] [noweb] [nobrowser] [brbe=<BRBE>]
 
 # Helper function to kill a background toaster development server
 
