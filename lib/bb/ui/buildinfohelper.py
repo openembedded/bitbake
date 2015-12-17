@@ -866,12 +866,10 @@ class BuildInfoHelper(object):
 
     def _get_path_information(self, task_object):
         assert isinstance(task_object, Task)
-        build_stats_format = "{tmpdir}/buildstats/{target}-{machine}/{buildname}/{package}/"
+        build_stats_format = "{tmpdir}/buildstats/{buildname}/{package}/"
         build_stats_path = []
 
         for t in self.internal_state['targets']:
-            target = t.target
-            machine = self.internal_state['build'].machine
             buildname = self.internal_state['build'].build_name
             pe, pv = task_object.recipe.version.split(":",1)
             if len(pe) > 0:
@@ -879,8 +877,8 @@ class BuildInfoHelper(object):
             else:
                 package = task_object.recipe.name + "-" + pv
 
-            build_stats_path.append(build_stats_format.format(tmpdir=self.tmp_dir, target=target,
-                                                     machine=machine, buildname=buildname,
+            build_stats_path.append(build_stats_format.format(tmpdir=self.tmp_dir,
+                                                     buildname=buildname,
                                                      package=package))
 
         return build_stats_path
