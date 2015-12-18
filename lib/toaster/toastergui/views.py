@@ -39,6 +39,22 @@ from datetime import timedelta, datetime, date
 from django.utils import formats
 from toastergui.templatetags.projecttags import json as jsonfilter
 import json
+import mimetypes
+
+class MimeTypeFinder(object):
+    # setting this to False enables additional non-standard mimetypes
+    # to be included in the guess
+    _strict = False
+
+    # returns the mimetype for a file path as a string,
+    # or 'application/octet-stream' if the type couldn't be guessed
+    @classmethod
+    def get_mimetype(self, path):
+        guess = mimetypes.guess_type(path, self._strict)
+        guessed_type = guess[0]
+        if guessed_type == None:
+            guessed_type = 'application/octet-stream'
+        return guessed_type
 
 # all new sessions should come through the landing page;
 # determine in which mode we are running in, and redirect appropriately
@@ -3209,7 +3225,7 @@ if toastermain.settings.MANAGED:
             if file_name is None:
                 raise Exception("Could not handle artifact %s id %s" % (artifact_type, artifact_id))
             else:
-                content_type = b.buildrequest.environment.get_artifact_type(file_name)
+                content_type = MimeTypeFinder.get_mimetype(file_name)
                 fsock = b.buildrequest.environment.get_artifact(file_name)
                 file_name = os.path.basename(file_name) # we assume that the build environment system has the same path conventions as host
 
