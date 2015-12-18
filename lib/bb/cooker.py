@@ -1027,22 +1027,21 @@ class BBCooker:
 
     def findFilesMatchingInDir(self, filepattern, directory):
         """
-        Searches for files matching the regex 'pattern' which are children of
+        Searches for files containing the substring 'filepattern' which are children of
         'directory' in each BBPATH. i.e. to find all rootfs package classes available
         to BitBake one could call findFilesMatchingInDir(self, 'rootfs_', 'classes')
         or to find all machine configuration files one could call:
-        findFilesMatchingInDir(self, 'conf/machines', 'conf')
+        findFilesMatchingInDir(self, '.conf', 'conf/machine')
         """
 
         matches = []
-        p = re.compile(re.escape(filepattern))
         bbpaths = self.data.getVar('BBPATH', True).split(':')
         for path in bbpaths:
             dirpath = os.path.join(path, directory)
             if os.path.exists(dirpath):
                 for root, dirs, files in os.walk(dirpath):
                     for f in files:
-                        if p.search(f):
+                        if filepattern in f:
                             matches.append(f)
 
         if matches:
