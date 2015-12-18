@@ -171,7 +171,7 @@ class TerminalFilter(object):
                 signal.signal(signal.SIGWINCH, self.sigwinch_handle)
             except:
                 pass
-            self.columns = self.getTerminalColumns()
+            self.rows, self.columns = self.getTerminalColumns()
         except:
             self.cuu = None
         console.addFilter(InteractConsoleLogFilter(self, format))
