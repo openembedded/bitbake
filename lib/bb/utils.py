@@ -298,10 +298,15 @@ def better_compile(text, file, realfile, mode = "exec", lineno = None):
     will print the offending lines.
     """
     try:
+        cache = bb.methodpool.compile_cache(text)
+        if cache:
+            return cache
         code = compile(text, realfile, mode, ast.PyCF_ONLY_AST)
         if lineno is not None:
             ast.increment_lineno(code, lineno)
-        return compile(code, realfile, mode)
+        code = compile(code, realfile, mode)
+        bb.methodpool.compile_cache_add(text, code)
+        return code
     except Exception as e:
         error = []
         # split the text into lines again

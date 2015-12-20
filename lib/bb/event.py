@@ -31,6 +31,7 @@ except ImportError:
 import logging
 import atexit
 import traceback
+import ast
 import bb.utils
 import bb.compat
 import bb.exceptions
@@ -189,13 +190,15 @@ def register(name, handler, mask=None, filename=None, lineno=None):
         if isinstance(handler, basestring):
             tmp = "def %s(e):\n%s" % (name, handler)
             try:
-                import ast
-                if filename is None:
-                    filename = "%s(e)" % name
-                code = compile(tmp, filename, "exec", ast.PyCF_ONLY_AST)
-                if lineno is not None:
-                    ast.increment_lineno(code, lineno-1)
-                code = compile(code, filename, "exec")
+                code = bb.methodpool.compile_cache(tmp)
+                if not code:
+                    if filename is None:
+                        filename = "%s(e)" % name
+                    code = compile(tmp, filename, "exec", ast.PyCF_ONLY_AST)
+                    if lineno is not None:
+                        ast.increment_lineno(code, lineno-1)
+                    code = compile(code, filename, "exec")
+                    bb.methodpool.compile_cache_add(tmp, code)
             except SyntaxError:
                 logger.error("Unable to register event handler '%s':\n%s", name,
                              ''.join(traceback.format_exc(limit=0)))

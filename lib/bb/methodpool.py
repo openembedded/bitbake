@@ -27,3 +27,14 @@ def insert_method(modulename, code, fn, lineno):
     comp = better_compile(code, modulename, fn, lineno=lineno)
     better_exec(comp, None, code, fn)
 
+compilecache = {}
+
+def compile_cache(code):
+    h = hash(code)
+    if h in compilecache:
+        return compilecache[h]
+    return None
+
+def compile_cache_add(code, compileobj):
+    h = hash(code)
+    compilecache[h] = compileobj
