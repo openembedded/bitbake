@@ -97,10 +97,10 @@ class BitBakeServerCommands():
 
         # we don't allow connections if the cooker is running
         if (self.cooker.state in [bb.cooker.state.parsing, bb.cooker.state.running]):
-            return None
+            return None, "Cooker is busy: %s" % bb.cooker.state.get_name(self.cooker.state)
 
         self.event_handle = bb.event.register_UIHhandler(s, True)
-        return self.event_handle
+        return self.event_handle, 'OK'
 
     def unregisterEventHandler(self, handlerNum):
         """

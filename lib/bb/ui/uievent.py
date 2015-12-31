@@ -52,19 +52,21 @@ class BBUIEventQueue:
         # giving up
 
         while self.EventHandler == None and count_tries < 5:
-            self.EventHandle = self.BBServer.registerEventHandler(self.host, self.port)
+            self.EventHandle, error = self.BBServer.registerEventHandler(self.host, self.port)
 
             if (self.EventHandle != None):
                 break
 
-            bb.warn("Could not register UI event handler %s:%d, retry" % (self.host, self.port))
+            errmsg = "Could not register UI event handler. Error: %s, " \
+                     "host %s, port %d" % (error, self.host, self.port)
+            bb.warn("%s, retry" % errmsg)
             count_tries += 1
             import time
             time.sleep(1)
 
 
         if self.EventHandle == None:
-            raise Exception("Could not register UI event handler")
+            raise Exception(errmsg)
 
         self.server = server
 
