@@ -44,14 +44,14 @@ class BBUIEventQueue:
         server.register_function( self.send_event, "event.sendpickle" )
         server.socket.settimeout(1)
 
-        self.EventHandler = None
+        self.EventHandle = None
         count_tries = 0
 
         # the event handler registration may fail here due to cooker being in invalid state
         # this is a transient situation, and we should retry a couple of times before
         # giving up
 
-        while self.EventHandler == None and count_tries < 5:
+        while self.EventHandle == None and count_tries < 5:
             self.EventHandle, error = self.BBServer.registerEventHandler(self.host, self.port)
 
             if (self.EventHandle != None):
