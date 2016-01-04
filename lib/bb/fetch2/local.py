@@ -126,3 +126,8 @@ class Local(FetchMethod):
     def clean(self, urldata, d):
         return
 
+    def try_premirror(self, urldata, d):
+        """
+        Should premirrors be used?
+        """
+        return False
