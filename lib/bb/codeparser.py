@@ -28,6 +28,10 @@ def check_indent(codestr):
         return codestr
 
     if codestr[i-1] == "\t" or codestr[i-1] == " ":
+        if codestr[0] == "\n":
+            # Since we're adding a line, we need to remove one line of any empty padding
+            # to ensure line numbers are correct
+            codestr = codestr[1:]
         return "if 1:\n" + codestr
 
     return codestr
@@ -248,7 +252,7 @@ class PythonParser():
         self.unhandled_message = "in call of %s, argument '%s' is not a string literal"
         self.unhandled_message = "while parsing %s, %s" % (name, self.unhandled_message)
 
-    def parse_python(self, node):
+    def parse_python(self, node, lineno=0, filename="<string>"):
         if not node or not node.strip():
             return
 
@@ -270,7 +274,9 @@ class PythonParser():
                 self.contains[i] = set(codeparsercache.pythoncacheextras[h].contains[i])
             return
 
-        code = compile(check_indent(str(node)), "<string>", "exec",
+        # We can't add to the linenumbers for compile, we can pad to the correct number of blank lines though
+        node = "\n" * int(lineno) + node
+        code = compile(check_indent(str(node)), filename, "exec",
                        ast.PyCF_ONLY_AST)
 
         for n in ast.walk(code):
