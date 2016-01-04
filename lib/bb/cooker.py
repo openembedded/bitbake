@@ -2125,11 +2125,6 @@ class CookerParser(object):
             logger.error('ExpansionError during parsing %s: %s', value.recipe, str(exc))
             self.shutdown(clean=False)
             return False
-        except SyntaxError as exc:
-            self.error += 1
-            logger.error('Unable to parse %s', exc.recipe)
-            self.shutdown(clean=False)
-            return False
         except Exception as exc:
             self.error += 1
             etype, value, tb = sys.exc_info()
