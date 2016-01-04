@@ -338,7 +338,7 @@ def build_dependencies(key, keys, shelldeps, varflagsexcl, d):
             deps |= parser.references
             deps = deps | (keys & parser.execs)
             return deps, value
-        varflags = d.getVarFlags(key, ["vardeps", "vardepvalue", "vardepsexclude", "vardepvalueexclude", "postfuncs", "prefuncs"]) or {}
+        varflags = d.getVarFlags(key, ["vardeps", "vardepvalue", "vardepsexclude", "vardepvalueexclude", "postfuncs", "prefuncs", "lineno", "filename"]) or {}
         vardeps = varflags.get("vardeps")
         value = d.getVar(key, False)
 
@@ -365,7 +365,7 @@ def build_dependencies(key, keys, shelldeps, varflagsexcl, d):
                 parser = bb.codeparser.PythonParser(key, logger)
                 if parsedvar.value and "\t" in parsedvar.value:
                     logger.warn("Variable %s contains tabs, please remove these (%s)" % (key, d.getVar("FILE", True)))
-                parser.parse_python(parsedvar.value)
+                parser.parse_python(parsedvar.value, filename=varflags.get("filename"), lineno=varflags.get("lineno"))
                 deps = deps | parser.references
                 value = handle_contains(value, parser.contains, d)
             else:
