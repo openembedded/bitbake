@@ -292,7 +292,7 @@ def _print_trace(body, line):
             error.append('     %.4d:%s' % (i, body[i-1].rstrip()))
     return error
 
-def better_compile(text, file, realfile, mode = "exec", lineno = None):
+def better_compile(text, file, realfile, mode = "exec", lineno = 0):
     """
     A better compile method. This method
     will print the offending lines.
@@ -301,10 +301,9 @@ def better_compile(text, file, realfile, mode = "exec", lineno = None):
         cache = bb.methodpool.compile_cache(text)
         if cache:
             return cache
-        code = compile(text, realfile, mode, ast.PyCF_ONLY_AST)
-        if lineno is not None:
-            ast.increment_lineno(code, lineno)
-        code = compile(code, realfile, mode)
+        # We can't add to the linenumbers for compile, we can pad to the correct number of blank lines though
+        text2 = "\n" * int(lineno) + text
+        code = compile(text2, realfile, mode)
         bb.methodpool.compile_cache_add(text, code)
         return code
     except Exception as e:
