@@ -406,7 +406,8 @@ def build_dependencies(key, keys, shelldeps, varflagsexcl, d):
         deps |= set((vardeps or "").split())
         deps -= set(varflags.get("vardepsexclude", "").split())
     except Exception as e:
-        raise bb.data_smart.ExpansionError(key, None, e)
+        bb.warn("Exception during build_dependencies for %s" % key)
+        raise
     return deps, value
     #bb.note("Variable %s references %s and calls %s" % (key, str(deps), str(execs)))
     #d.setVarFlag(key, "vardeps", deps)
