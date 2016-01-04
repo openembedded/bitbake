@@ -146,7 +146,7 @@ class SignatureGeneratorBasic(SignatureGenerator):
         try:
             taskdeps = self._build_data(fn, d)
         except:
-            bb.note("Error during finalise of %s" % fn)
+            bb.warn("Error during finalise of %s" % fn)
             raise
 
         #Slow but can be useful for debugging mismatched basehashes
