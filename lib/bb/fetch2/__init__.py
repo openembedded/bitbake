@@ -1407,6 +1407,10 @@ class FetchMethod(object):
                     cmd = 'rpm2cpio.sh %s | cpio -id' % (file)
             elif file.endswith('.deb') or file.endswith('.ipk'):
                 cmd = 'ar -p %s data.tar.gz | zcat | tar --no-same-owner -xpf -' % file
+            elif file.endswith('.tar.7z'):
+                cmd = '7z x -so %s | tar xf - ' % file
+            elif file.endswith('.7z'):
+                cmd = '7za x -y %s 1>/dev/null' % file
 
         if not unpack or not cmd:
             # If file == dest, then avoid any copies, as we already put the file into dest!
