@@ -302,7 +302,9 @@ class BitBakeXMLRPCServerConnection(BitBakeBaseServerConnection):
             return None
 
         self.transport.set_connection_token(token)
+        return self
 
+    def setupEventQueue(self):
         self.events = uievent.BBUIEventQueue(self.connection, self.clientinfo)
         for event in bb.event.ui_queue:
             self.events.queue_event(event)
@@ -313,8 +315,6 @@ class BitBakeXMLRPCServerConnection(BitBakeBaseServerConnection):
             self.connection.removeClient()
             # no need to log it here, the error shall be sent to the client
             raise BaseException(error)
-
-        return self
 
     def removeClient(self):
         if not self.observer_only:

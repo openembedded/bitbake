@@ -403,6 +403,7 @@ def bitbake_main(configParams, configuration):
     if not configParams.server_only:
         try:
             server_connection = server.establishConnection(featureset)
+            server_connection.setupEventQueue()
         except Exception as e:
             bb.fatal("Could not connect to server %s: %s" % (configParams.remote_server, str(e)))
 
