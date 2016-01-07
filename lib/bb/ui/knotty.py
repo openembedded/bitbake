@@ -174,6 +174,10 @@ class TerminalFilter(object):
             self.rows, self.columns = self.getTerminalColumns()
         except:
             self.cuu = None
+        if not self.cuu:
+            self.interactive = False
+            bb.note("Unable to use interactive mode for this terminal, using fallback")
+            return
         console.addFilter(InteractConsoleLogFilter(self, format))
         errconsole.addFilter(InteractConsoleLogFilter(self, format))
 
