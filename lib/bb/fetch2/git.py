@@ -330,6 +330,10 @@ class Git(FetchMethod):
             username = ud.user + '@'
         else:
             username = ""
+        if ud.proto == "ssh":
+            # Some servers, e.g. bitbucket.org can't cope with ssh://
+            # and removing that means we need a : before path.
+            return "%s%s:%s" % (username, ud.host, ud.path)
         return "%s://%s%s%s" % (ud.proto, username, ud.host, ud.path)
 
     def _revision_key(self, ud, d, name):
