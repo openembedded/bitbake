@@ -1186,6 +1186,7 @@ class BuildInfoHelper(object):
         assert 'layer-priorities' in event._depgraph
         assert 'pn' in event._depgraph
         assert 'tdepends' in event._depgraph
+        assert 'providermap' in event._depgraph
 
         errormsg = ""
 
@@ -1263,15 +1264,22 @@ class BuildInfoHelper(object):
         # buildtime
         recipedeps_objects = []
         for recipe in event._depgraph['depends']:
-            try:
-                target = self.internal_state['recipes'][recipe]
-                for dep in event._depgraph['depends'][recipe]:
+           target = self.internal_state['recipes'][recipe]
+           for dep in event._depgraph['depends'][recipe]:
+                if dep in assume_provided:
+                    continue
+                if dep in event._depgraph['providermap']:
+                    dep = event._depgraph['providermap'][dep][0]
+                if dep in self.internal_state['recipes']:
                     dependency = self.internal_state['recipes'][dep]
-                    recipedeps_objects.append(Recipe_Dependency( recipe = target,
-                            depends_on = dependency, dep_type = Recipe_Dependency.TYPE_DEPENDS))
-            except KeyError as e:
-                if e not in assume_provided and not str(e).startswith("virtual/"):
-                    errormsg += "  stpd: KeyError saving recipe dependency for %s, %s \n" % (recipe, e)
+                else:
+                    errormsg += "  stpd: KeyError saving recipe dependency for %s, %s \n" % (recipe, dep)
+                    continue
+                recipe_dep = Recipe_Dependency(recipe=target,
+                                               depends_on=dependency,
+                                               dep_type=Recipe_Dependency.TYPE_DEPENDS)
+                recipedeps_objects.append(recipe_dep)
+
         Recipe_Dependency.objects.bulk_create(recipedeps_objects)
 
         # save all task information
