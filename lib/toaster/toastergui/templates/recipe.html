@@ -211,7 +211,14 @@
 
                     {% for rr in object.r_dependencies_depends.all|dictsort:"recipe.name" %}
                     <tr>
-                        <td><a href="{% url "recipe" build.pk rr.recipe.pk %}">{{rr.recipe.name}}</a></td>
+                        <td><a href="{% url "recipe" build.pk rr.recipe.pk %}">{{rr.recipe.name}}</a>
+                        {% if rr.via %}
+                            <span class="muted"> satisfied via {{rr.via.name}}</span>
+                            <i class="icon-question-sign get-help hover-help"
+                             title="This dependency is satisfied by the PROVIDES value
+                            {{rr.via.name}} in the {{rr.depends_on.name}} recipe"></i>
+                        {% endif %}
+                        </td>
                         <td><a href="{% url "recipe" build.pk rr.recipe.pk %}">{{rr.recipe.version}}</a></td>
                     </tr>
                     {% endfor %}
