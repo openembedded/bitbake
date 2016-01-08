@@ -725,7 +725,14 @@ class BBCooker:
         depend_tree["packages"] = {}
         depend_tree["rdepends-pkg"] = {}
         depend_tree["rrecs-pkg"] = {}
+        depend_tree['providermap'] = {}
         depend_tree["layer-priorities"] = self.recipecache.bbfile_config_priorities
+
+        for name, fn in taskdata.get_providermap().iteritems():
+            pn = self.recipecache.pkg_fn[fn]
+            if name != pn:
+                version = "%s:%s-%s" % self.recipecache.pkg_pepvpr[fn]
+                depend_tree['providermap'][name] = (pn, version)
 
         for task in xrange(len(rq.rqdata.runq_fnid)):
             taskname = rq.rqdata.runq_task[task]
