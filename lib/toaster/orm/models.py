@@ -733,6 +733,10 @@ class Recipe_DependencyManager(models.Manager):
     def get_queryset(self):
         return super(Recipe_DependencyManager, self).get_queryset().exclude(recipe_id = F('depends_on__id'))
 
+class Provides(models.Model):
+    name = models.CharField(max_length=100)
+    recipe = models.ForeignKey(Recipe)
+
 class Recipe_Dependency(models.Model):
     TYPE_DEPENDS = 0
     TYPE_RDEPENDS = 1
@@ -743,6 +747,7 @@ class Recipe_Dependency(models.Model):
     )
     recipe = models.ForeignKey(Recipe, related_name='r_dependencies_recipe')
     depends_on = models.ForeignKey(Recipe, related_name='r_dependencies_depends')
+    via = models.ForeignKey(Provides, null=True, default=None)
     dep_type = models.IntegerField(choices=DEPENDS_TYPE)
     objects = Recipe_DependencyManager()
 
