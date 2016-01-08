@@ -41,7 +41,7 @@ from orm.models import Target_Image_File, BuildArtifact
 from orm.models import Variable, VariableHistory
 from orm.models import Package, Package_File, Target_Installed_Package, Target_File
 from orm.models import Task_Dependency, Package_Dependency
-from orm.models import Recipe_Dependency
+from orm.models import Recipe_Dependency, Provides
 
 from orm.models import Project
 from bldcontrol.models import BuildEnvironment, BuildRequest
@@ -1268,15 +1268,20 @@ class BuildInfoHelper(object):
            for dep in event._depgraph['depends'][recipe]:
                 if dep in assume_provided:
                     continue
+                via = None
                 if dep in event._depgraph['providermap']:
-                    dep = event._depgraph['providermap'][dep][0]
-                if dep in self.internal_state['recipes']:
+                    deprecipe = event._depgraph['providermap'][dep][0]
+                    dependency = self.internal_state['recipes'][deprecipe]
+                    via = Provides.objects.get_or_create(name=dep,
+                                                         recipe=dependency)[0]
+                elif dep in self.internal_state['recipes']:
                     dependency = self.internal_state['recipes'][dep]
                 else:
                     errormsg += "  stpd: KeyError saving recipe dependency for %s, %s \n" % (recipe, dep)
                     continue
                 recipe_dep = Recipe_Dependency(recipe=target,
                                                depends_on=dependency,
+                                               via=via,
                                                dep_type=Recipe_Dependency.TYPE_DEPENDS)
                 recipedeps_objects.append(recipe_dep)
 
