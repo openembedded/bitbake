@@ -808,7 +808,7 @@ class RunQueueData:
                     invalidate_task(fn, st, True)
 
         # Create and print to the logs a virtual/xxxx -> PN (fn) table
-        virtmap = taskData.get_providermap()
+        virtmap = taskData.get_providermap(prefix="virtual/")
         virtpnmap = {}
         for v in virtmap:
             virtpnmap[v] = self.dataCache.pkg_fn[virtmap[v]]

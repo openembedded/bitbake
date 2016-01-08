@@ -612,17 +612,14 @@ class TaskData:
                 break
         # self.dump_data()
 
-    def get_providermap(self):
-        virts = []
-        virtmap = {}
-
+    def get_providermap(self, prefix=None):
+        provmap = {}
         for name in self.build_names_index:
-            if name.startswith("virtual/"):
-                virts.append(name)
-        for v in virts:
-            if self.have_build_target(v):
-                virtmap[v] = self.fn_index[self.get_provider(v)[0]]
-        return virtmap
+            if prefix and not name.startswith(prefix):
+                continue
+            if self.have_build_target(name):
+                provmap[name] = self.fn_index[self.get_provider(name)[0]]
+        return provmap
 
     def dump_data(self):
         """
