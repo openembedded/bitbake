@@ -1077,9 +1077,12 @@ class RunQueue:
             retval = self.rqexe.execute()
 
         if self.state is runQueueRunInit:
-            logger.info("Executing RunQueue Tasks")
-            self.rqexe = RunQueueExecuteTasks(self)
-            self.state = runQueueRunning
+            if self.cooker.configuration.setsceneonly:
+                self.state = runQueueComplete
+            else:
+                logger.info("Executing RunQueue Tasks")
+                self.rqexe = RunQueueExecuteTasks(self)
+                self.state = runQueueRunning
 
         if self.state is runQueueRunning:
             retval = self.rqexe.execute()

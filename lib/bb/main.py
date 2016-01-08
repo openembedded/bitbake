@@ -219,6 +219,9 @@ class BitBakeConfigParameters(cookerdata.ConfigParameters):
         parser.add_option("", "--no-setscene", help = "Do not run any setscene tasks. sstate will be ignored and everything needed, built.",
                    action = "store_true", dest = "nosetscene", default = False)
 
+        parser.add_option("", "--setscene-only", help = "Only run setscene tasks, don't run any real tasks.",
+                   action = "store_true", dest = "setsceneonly", default = False)
+
         parser.add_option("", "--remote-server", help = "Connect to the specified server.",
                    action = "store", dest = "remote_server", default = False)
 
