@@ -1721,6 +1721,7 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
                 sq_revdeps_new[point] = set()
                 if point in self.rqdata.runq_setscene:
                     sq_revdeps_new[point] = tasks
+                    tasks = set()
                 for dep in self.rqdata.runq_depends[point]:
                     if point in sq_revdeps[dep]:
                         sq_revdeps[dep].remove(point)
