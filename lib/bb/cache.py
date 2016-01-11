@@ -129,8 +129,6 @@ class CoreRecipeInfo(RecipeInfoCommon):
         self.not_world = self.getvar('EXCLUDE_FROM_WORLD', metadata)
         self.stamp = self.getvar('STAMP', metadata)
         self.stampclean = self.getvar('STAMPCLEAN', metadata)        
-        self.stamp_base = self.flaglist('stamp-base', self.tasks, metadata)
-        self.stamp_base_clean = self.flaglist('stamp-base-clean', self.tasks, metadata)
         self.stamp_extrainfo = self.flaglist('stamp-extra-info', self.tasks, metadata)
         self.file_checksums = self.flaglist('file-checksums', self.tasks, metadata, True)
         self.packages_dynamic = self.listvar('PACKAGES_DYNAMIC', metadata)
@@ -158,8 +156,6 @@ class CoreRecipeInfo(RecipeInfoCommon):
 
         cachedata.stamp = {}
         cachedata.stampclean = {}
-        cachedata.stamp_base = {}
-        cachedata.stamp_base_clean = {}
         cachedata.stamp_extrainfo = {}
         cachedata.file_checksums = {}
         cachedata.fn_provides = {}
@@ -192,8 +188,6 @@ class CoreRecipeInfo(RecipeInfoCommon):
         cachedata.pkg_dp[fn] = self.defaultpref
         cachedata.stamp[fn] = self.stamp
         cachedata.stampclean[fn] = self.stampclean
-        cachedata.stamp_base[fn] = self.stamp_base
-        cachedata.stamp_base_clean[fn] = self.stamp_base_clean
         cachedata.stamp_extrainfo[fn] = self.stamp_extrainfo
         cachedata.file_checksums[fn] = self.file_checksums
 

@@ -582,10 +582,10 @@ def stamp_internal(taskname, d, file_name, baseonly=False):
         taskflagname = taskname.replace("_setscene", "")
 
     if file_name:
-        stamp = d.stamp_base[file_name].get(taskflagname) or d.stamp[file_name]
+        stamp = d.stamp[file_name]
         extrainfo = d.stamp_extrainfo[file_name].get(taskflagname) or ""
     else:
-        stamp = d.getVarFlag(taskflagname, 'stamp-base', True) or d.getVar('STAMP', True)
+        stamp = d.getVar('STAMP', True)
         file_name = d.getVar('BB_FILENAME', True)
         extrainfo = d.getVarFlag(taskflagname, 'stamp-extra-info', True) or ""
 
@@ -616,10 +616,10 @@ def stamp_cleanmask_internal(taskname, d, file_name):
         taskflagname = taskname.replace("_setscene", "")
 
     if file_name:
-        stamp = d.stamp_base_clean[file_name].get(taskflagname) or d.stampclean[file_name]
+        stamp = d.stampclean[file_name]
         extrainfo = d.stamp_extrainfo[file_name].get(taskflagname) or ""
     else:
-        stamp = d.getVarFlag(taskflagname, 'stamp-base-clean', True) or d.getVar('STAMPCLEAN', True)
+        stamp = d.getVar('STAMPCLEAN', True)
         file_name = d.getVar('BB_FILENAME', True)
         extrainfo = d.getVarFlag(taskflagname, 'stamp-extra-info', True) or ""
 
