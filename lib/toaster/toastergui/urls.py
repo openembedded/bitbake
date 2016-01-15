@@ -28,7 +28,7 @@ urlpatterns = patterns('toastergui.views',
         url(r'^landing/$', 'landing', name='landing'),
 
         url(r'^builds/$',
-            tables.BuildsTable.as_view(template_name="builds-toastertable.html"),
+            tables.AllBuildsTable.as_view(template_name="builds-toastertable.html"),
             name='all-builds'),
 
         # build info navigation
@@ -83,7 +83,9 @@ urlpatterns = patterns('toastergui.views',
 
         url(r'^project/(?P<pid>\d+)/$', 'project', name='project'),
         url(r'^project/(?P<pid>\d+)/configuration$', 'projectconf', name='projectconf'),
-        url(r'^project/(?P<pid>\d+)/builds/$', 'projectbuilds', name='projectbuilds'),
+        url(r'^project/(?P<pid>\d+)/builds/$',
+            tables.ProjectBuildsTable.as_view(template_name="projectbuilds-toastertable.html"),
+            name='projectbuilds'),
 
         # the import layer is a project-specific functionality;
         url(r'^project/(?P<pid>\d+)/importlayer$', 'importlayer', name='importlayer'),

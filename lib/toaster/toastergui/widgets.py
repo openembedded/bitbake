@@ -61,7 +61,6 @@ class ToasterTable(TemplateView):
 
         self.total_count = 0
         self.static_context_extra = {}
-        self.filter_actions = {}
         self.empty_state = "Sorry - no data found"
         self.default_orderby = ""
 

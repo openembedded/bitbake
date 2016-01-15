@@ -91,6 +91,7 @@ def landing(request):
 
     return render(request, 'landing.html', context)
 
+"""
 # returns a list for most recent builds;
 def _get_latest_builds(prj=None):
     queryset = Build.objects.all()
@@ -101,8 +102,9 @@ def _get_latest_builds(prj=None):
     return list(itertools.chain(
         queryset.filter(outcome=Build.IN_PROGRESS).order_by("-started_on"),
         queryset.filter(outcome__lt=Build.IN_PROGRESS).order_by("-started_on")[:3] ))
+"""
 
-
+"""
 # a JSON-able dict of recent builds; for use in the Project page, xhr_ updates,  and other places, as needed
 def _project_recent_build_list(prj):
     data = []
@@ -131,8 +133,7 @@ def _project_recent_build_list(prj):
         data.append(d)
 
     return data
-
-
+"""
 
 def objtojson(obj):
     from django.db.models.query import QuerySet
@@ -1915,6 +1916,7 @@ if True:
         ''' The exception raised on invalid POST requests '''
         pass
 
+    """
     # helper function, to be used on "all builds" and "project builds" pages
     def _build_list_helper(request, queryset_all, redirect_page, pid=None):
         default_orderby = 'completed_on:-'
@@ -2119,6 +2121,7 @@ if True:
         # merge daterange values
         context.update(context_date)
         return context, pagesize, orderby
+    """
 
 
 
@@ -2256,7 +2259,7 @@ if True:
             "completedbuilds": Build.objects.exclude(outcome = Build.IN_PROGRESS).filter(project_id = pid),
             "prj" : {"name": prj.name, },
             "buildrequests" : prj.build_set.filter(outcome=Build.IN_PROGRESS),
-            "builds" : _project_recent_build_list(prj),
+            #"builds" : _project_recent_build_list(prj),
             "layers" :  map(lambda x: {
                         "id": x.layercommit.pk,
                         "orderid": x.pk,
@@ -2827,10 +2830,8 @@ if True:
     # will set the GET parameters and redirect back to the
     # all-builds or projectbuilds page as appropriate;
     # TODO don't use exceptions to control program flow
-    @_template_renderer('projectbuilds.html')
+    """
     def projectbuilds(request, pid):
-        prj = Project.objects.get(id = pid)
-
         if request.method == "POST":
             # process any build request
 
@@ -2880,6 +2881,7 @@ if True:
         context['mru'] = _get_latest_builds(prj)
 
         return context
+    """
 
 
     def _file_name_for_artifact(b, artifact_type, artifact_id):

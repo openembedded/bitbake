@@ -23,9 +23,11 @@ from toastergui.widgets import ToasterTable
 from toastergui.querysetfilter import QuerysetFilter
 from orm.models import Recipe, ProjectLayer, Layer_Version, Machine, Project
 from orm.models import CustomImageRecipe, Package, Build, LogMessage, Task
+from orm.models import ProjectTarget
 from django.db.models import Q, Max, Count
 from django.conf.urls import url
-from django.core.urlresolvers import reverse
+from django.core.urlresolvers import reverse, resolve
+from django.http import HttpResponse
 from django.views.generic import TemplateView
 import itertools
 
@@ -775,7 +777,7 @@ class ProjectsTable(ToasterTable):
         '''
 
         errors_template = '''
-        {% if data.get_number_of_builds > 0 %}
+        {% if data.get_number_of_builds > 0 and data.get_last_errors > 0 %}
           <a class="errors.count error"
              href="{% url "builddashboard" data.get_last_build_id %}#errors">
             {{data.get_last_errors}} error{{data.get_last_errors | pluralize}}
@@ -784,7 +786,7 @@ class ProjectsTable(ToasterTable):
         '''
 
         warnings_template = '''
-        {% if data.get_number_of_builds > 0 %}
+        {% if data.get_number_of_builds > 0 and data.get_last_warnings > 0 %}
           <a class="warnings.count warning"
              href="{% url "builddashboard" data.get_last_build_id %}#warnings">
             {{data.get_last_warnings}} warning{{data.get_last_warnings | pluralize}}
@@ -886,30 +888,45 @@ class BuildsTable(ToasterTable):
     def __init__(self, *args, **kwargs):
         super(BuildsTable, self).__init__(*args, **kwargs)
         self.default_orderby = '-completed_on'
-        self.title = 'All builds'
         self.static_context_extra['Build'] = Build
         self.static_context_extra['Task'] = Task
+
+        # attributes that are overridden in subclasses
+
+        # title for the page
+        self.title = ''
+
+        # 'project' or 'all'; determines how the mrb (most recent builds)
+        # section is displayed
+        self.mrb_type = ''
+
+    def get_builds(self):
+        """
+        overridden in ProjectBuildsTable to return builds for a
+        single project
+        """
+        return Build.objects.all()
 
     def get_context_data(self, **kwargs):
         context = super(BuildsTable, self).get_context_data(**kwargs)
 
         # for the latest builds section
-        queryset = Build.objects.all()
+        builds = self.get_builds()
 
         finished_criteria = Q(outcome=Build.SUCCEEDED) | Q(outcome=Build.FAILED)
 
         latest_builds = itertools.chain(
-            queryset.filter(outcome=Build.IN_PROGRESS).order_by("-started_on"),
-            queryset.filter(finished_criteria).order_by("-completed_on")[:3]
+            builds.filter(outcome=Build.IN_PROGRESS).order_by("-started_on"),
+            builds.filter(finished_criteria).order_by("-completed_on")[:3]
         )
 
         context['mru'] = list(latest_builds)
-        context['mrb_type'] = 'all'
+        context['mrb_type'] = self.mrb_type
 
         return context
 
     def setup_queryset(self, *args, **kwargs):
-        queryset = Build.objects.all()
+        queryset = self.get_builds()
 
         # don't include in progress builds
         queryset = queryset.exclude(outcome=Build.IN_PROGRESS)
@@ -949,7 +966,8 @@ class BuildsTable(ToasterTable):
         {% if data.cooker_log_path %}
             &nbsp;
             <a href="{% url "build_artifact" data.id "cookerlog" data.id %}">
-               <i class="icon-download-alt" title="Download build log"></i>
+               <i class="icon-download-alt get-help"
+               data-original-title="Download build log"></i>
             </a>
         {% endif %}
         '''
@@ -1031,19 +1049,6 @@ class BuildsTable(ToasterTable):
         {% endif %}
         '''
 
-        project_template = '''
-        {% load project_url_tag %}
-        <a href="{% project_url data.project %}">
-            {{data.project.name}}
-        </a>
-        {% if data.project.is_default %}
-            <i class="icon-question-sign get-help hover-help" title=""
-               data-original-title="This project shows information about
-               the builds you start from the command line while Toaster is
-               running" style="visibility: hidden;"></i>
-        {% endif %}
-        '''
-
         self.add_column(title='Outcome',
                         help_text='Final state of the build (successful \
                                    or failed)',
@@ -1098,16 +1103,16 @@ class BuildsTable(ToasterTable):
                         help_text='The number of errors encountered during \
                                    the build (if any)',
                         hideable=True,
-                        orderable=False,
-                        static_data_name='errors',
+                        orderable=True,
+                        static_data_name='errors_no',
                         static_data_template=errors_template)
 
         self.add_column(title='Warnings',
                         help_text='The number of warnings encountered during \
                                    the build (if any)',
                         hideable=True,
-                        orderable=False,
-                        static_data_name='warnings',
+                        orderable=True,
+                        static_data_name='warnings_no',
                         static_data_template=warnings_template)
 
         self.add_column(title='Time',
@@ -1124,12 +1129,6 @@ class BuildsTable(ToasterTable):
                         orderable=False,
                         static_data_name='image_files',
                         static_data_template=image_files_template)
-
-        self.add_column(title='Project',
-                        hideable=True,
-                        orderable=False,
-                        static_data_name='project-name',
-                        static_data_template=project_template)
 
     def setup_filters(self, *args, **kwargs):
         # outcomes
@@ -1239,3 +1238,122 @@ class BuildsTable(ToasterTable):
         failed_tasks_filter.add_action(with_failed_tasks_action)
         failed_tasks_filter.add_action(without_failed_tasks_action)
         self.add_filter(failed_tasks_filter)
+
+    def post(self, request, *args, **kwargs):
+        """ Process HTTP POSTs which make build requests """
+
+        project = Project.objects.get(pk=kwargs['pid'])
+
+        if 'buildCancel' in request.POST:
+            for i in request.POST['buildCancel'].strip().split(" "):
+                try:
+                    br = BuildRequest.objects.select_for_update().get(project = project, pk = i, state__lte = BuildRequest.REQ_QUEUED)
+                    br.state = BuildRequest.REQ_DELETED
+                    br.save()
+                except BuildRequest.DoesNotExist:
+                    pass
+
+        if 'buildDelete' in request.POST:
+            for i in request.POST['buildDelete'].strip().split(" "):
+                try:
+                    BuildRequest.objects.select_for_update().get(project = project, pk = i, state__lte = BuildRequest.REQ_DELETED).delete()
+                except BuildRequest.DoesNotExist:
+                    pass
+
+        if 'targets' in request.POST:
+            ProjectTarget.objects.filter(project = project).delete()
+            s = str(request.POST['targets'])
+            for t in s.translate(None, ";%|\"").split(" "):
+                if ":" in t:
+                    target, task = t.split(":")
+                else:
+                    target = t
+                    task = ""
+                ProjectTarget.objects.create(project = project,
+                                             target = target,
+                                             task = task)
+            project.schedule_build()
+
+        # redirect back to builds page so any new builds in progress etc.
+        # are visible
+        response = HttpResponse()
+        response.status_code = 302
+        response['Location'] = request.build_absolute_uri()
+        return response
+
+class AllBuildsTable(BuildsTable):
+    """ Builds page for all builds """
+
+    def __init__(self, *args, **kwargs):
+        super(AllBuildsTable, self).__init__(*args, **kwargs)
+        self.title = 'All builds'
+        self.mrb_type = 'all'
+
+    def setup_columns(self, *args, **kwargs):
+        """
+        All builds page shows a column for the project
+        """
+
+        super(AllBuildsTable, self).setup_columns(*args, **kwargs)
+
+        project_template = '''
+        {% load project_url_tag %}
+        <a href="{% project_url data.project %}">
+            {{data.project.name}}
+        </a>
+        {% if data.project.is_default %}
+            <i class="icon-question-sign get-help hover-help" title=""
+               data-original-title="This project shows information about
+               the builds you start from the command line while Toaster is
+               running" style="visibility: hidden;"></i>
+        {% endif %}
+        '''
+
+        self.add_column(title='Project',
+                        hideable=True,
+                        orderable=True,
+                        static_data_name='project',
+                        static_data_template=project_template)
+
+class ProjectBuildsTable(BuildsTable):
+    """
+    Builds page for a single project; a BuildsTable, with the queryset
+    filtered by project
+    """
+
+    def __init__(self, *args, **kwargs):
+        super(ProjectBuildsTable, self).__init__(*args, **kwargs)
+        self.title = 'All project builds'
+        self.mrb_type = 'project'
+
+        # set from the querystring
+        self.project_id = None
+
+    def setup_queryset(self, *args, **kwargs):
+        """
+        NOTE: self.project_id must be set before calling super(),
+        as it's used in setup_queryset()
+        """
+        self.project_id = kwargs['pid']
+        super(ProjectBuildsTable, self).setup_queryset(*args, **kwargs)
+
+        project = Project.objects.get(pk=self.project_id)
+        self.queryset = self.queryset.filter(project=project)
+
+    def get_context_data(self, **kwargs):
+        """
+        NOTE: self.project_id must be set before calling super(),
+        as it's used in get_context_data()
+        """
+        self.project_id = kwargs['pid']
+
+        context = super(ProjectBuildsTable, self).get_context_data(**kwargs)
+        context['project'] = Project.objects.get(pk=self.project_id)
+
+        return context
+
+    def get_builds(self):
+        """ override: only return builds for the relevant project """
+
+        project = Project.objects.get(pk=self.project_id)
+        return Build.objects.filter(project=project)
