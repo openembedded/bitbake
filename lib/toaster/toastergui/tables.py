@@ -29,7 +29,9 @@ from django.core.urlresolvers import reverse
 from django.views.generic import TemplateView
 import itertools
 
-from toastergui.tablefilter import TableFilter, TableFilterActionToggle
+from toastergui.tablefilter import TableFilter
+from toastergui.tablefilter import TableFilterActionToggle
+from toastergui.tablefilter import TableFilterActionDateRange
 
 class ProjectFilters(object):
     def __init__(self, project_layers):
@@ -1070,6 +1072,7 @@ class BuildsTable(ToasterTable):
                         help_text='The date and time when the build started',
                         hideable=True,
                         orderable=True,
+                        filter_name='started_on_filter',
                         static_data_name='started_on',
                         static_data_template=started_on_template)
 
@@ -1077,6 +1080,7 @@ class BuildsTable(ToasterTable):
                         help_text='The date and time when the build finished',
                         hideable=False,
                         orderable=True,
+                        filter_name='completed_on_filter',
                         static_data_name='completed_on',
                         static_data_template=completed_on_template)
 
@@ -1148,6 +1152,38 @@ class BuildsTable(ToasterTable):
         outcome_filter.add_action(successful_builds_filter_action)
         outcome_filter.add_action(failed_builds_filter_action)
         self.add_filter(outcome_filter)
+
+        # started on
+        started_on_filter = TableFilter(
+            'started_on_filter',
+            'Filter by date when build was started'
+        )
+
+        by_started_date_range_filter_action = TableFilterActionDateRange(
+            'date_range',
+            'Build date range',
+            'started_on',
+            QuerysetFilter()
+        )
+
+        started_on_filter.add_action(by_started_date_range_filter_action)
+        self.add_filter(started_on_filter)
+
+        # completed on
+        completed_on_filter = TableFilter(
+            'completed_on_filter',
+            'Filter by date when build was completed'
+        )
+
+        by_completed_date_range_filter_action = TableFilterActionDateRange(
+            'date_range',
+            'Build date range',
+            'completed_on',
+            QuerysetFilter()
+        )
+
+        completed_on_filter.add_action(by_completed_date_range_filter_action)
+        self.add_filter(completed_on_filter)
 
         # failed tasks
         failed_tasks_filter = TableFilter(

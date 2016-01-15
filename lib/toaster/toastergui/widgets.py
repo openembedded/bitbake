@@ -183,13 +183,13 @@ class ToasterTable(TemplateView):
 
         return template.render(context)
 
-    def apply_filter(self, filters, **kwargs):
+    def apply_filter(self, filters, filter_value, **kwargs):
         """
         Apply a filter submitted in the querystring to the ToasterTable
 
         filters: (str) in the format:
-          '<filter name>:<action name>!<action params>'
-        where <action params> is optional
+          '<filter name>:<action name>'
+        filter_value: (str) parameters to pass to the named filter
 
         <filter name> and <action name> are used to look up the correct filter
         in the ToasterTable's filter map; the <action params> are set on
@@ -199,15 +199,8 @@ class ToasterTable(TemplateView):
         self.setup_filters(**kwargs)
 
         try:
-            filter_name, action_name_and_params = filters.split(':')
-
-            action_name = None
-            action_params = None
-            if re.search('!', action_name_and_params):
-                action_name, action_params = action_name_and_params.split('!')
-                action_params = urllib.unquote_plus(action_params)
-            else:
-                action_name = action_name_and_params
+            filter_name, action_name = filters.split(':')
+            action_params = urllib.unquote_plus(filter_value)
         except ValueError:
             return
 
@@ -217,7 +210,7 @@ class ToasterTable(TemplateView):
         try:
             table_filter = self.filter_map.get_filter(filter_name)
             action = table_filter.get_action(action_name)
-            action.set_params(action_params)
+            action.set_filter_params(action_params)
             self.queryset = action.filter(self.queryset)
         except KeyError:
             # pass it to the user - programming error here
@@ -247,13 +240,20 @@ class ToasterTable(TemplateView):
 
 
     def get_data(self, request, **kwargs):
-        """Returns the data for the page requested with the specified
-        parameters applied"""
+        """
+        Returns the data for the page requested with the specified
+        parameters applied
+
+        filters: filter and action name, e.g. "outcome:build_succeeded"
+        filter_value: value to pass to the named filter+action, e.g. "on"
+        (for a toggle filter) or "2015-12-11,2015-12-12" (for a date range filter)
+        """
 
         page_num = request.GET.get("page", 1)
         limit = request.GET.get("limit", 10)
         search = request.GET.get("search", None)
         filters = request.GET.get("filter", None)
+        filter_value = request.GET.get("filter_value", "on")
         orderby = request.GET.get("orderby", None)
         nocache = request.GET.get("nocache", None)
 
@@ -285,7 +285,7 @@ class ToasterTable(TemplateView):
         if search:
             self.apply_search(search)
         if filters:
-            self.apply_filter(filters, **kwargs)
+            self.apply_filter(filters, filter_value, **kwargs)
         if orderby:
             self.apply_orderby(orderby)
 

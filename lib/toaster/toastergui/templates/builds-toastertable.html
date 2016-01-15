@@ -1,4 +1,13 @@
 {% extends 'base.html' %}
+{% load static %}
+
+{% block extraheadcontent %}
+  <link rel="stylesheet" href="{% static 'css/jquery-ui.min.css' %}" type='text/css'>
+  <link rel="stylesheet" href="{% static 'css/jquery-ui.structure.min.css' %}" type='text/css'>
+  <link rel="stylesheet" href="{% static 'css/jquery-ui.theme.min.css' %}" type='text/css'>
+  <script src="{% static 'js/jquery-ui.min.js' %}">
+  </script>
+{% endblock %}
 
 {% block title %} All builds - Toaster {% endblock %}
 
@@ -34,29 +43,6 @@
 
         titleElt.text(title);
       });
-
-      /* {% if last_date_from and last_date_to %}
-      // TODO initialize the date range controls;
-      // this will need to be added via ToasterTable
-      date_init(
-        "started_on",
-        "{{last_date_from}}",
-        "{{last_date_to}}",
-        "{{dateMin_started_on}}",
-        "{{dateMax_started_on}}",
-        "{{daterange_selected}}"
-      );
-
-      date_init(
-        "completed_on",
-        "{{last_date_from}}",
-        "{{last_date_to}}",
-        "{{dateMin_completed_on}}",
-        "{{dateMax_completed_on}}",
-        "{{daterange_selected}}"
-      );
-      {% endif %}
-      */
     });
   </script>
 {% endblock %}

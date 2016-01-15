@@ -2,10 +2,11 @@ class QuerysetFilter(object):
     """ Filter for a queryset """
 
     def __init__(self, criteria=None):
+        self.criteria = None
         if criteria:
             self.set_criteria(criteria)
 
-    def set_criteria(self, criteria = None):
+    def set_criteria(self, criteria):
         """
         criteria is an instance of django.db.models.Q;
         see https://docs.djangoproject.com/en/1.9/ref/models/querysets/#q-objects

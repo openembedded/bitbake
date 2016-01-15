@@ -18,12 +18,15 @@
 # You should have received a copy of the GNU General Public License along
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+from django.db.models import Q, Max, Min
+from django.utils import dateparse, timezone
 
 class TableFilter(object):
     """
     Stores a filter for a named field, and can retrieve the action
-    requested for that filter
+    requested from the set of actions for that filter
     """
+
     def __init__(self, name, title):
         self.name = name
         self.title = title
@@ -64,42 +67,128 @@ class TableFilter(object):
             'filter_actions': filter_actions
         }
 
-class TableFilterActionToggle(object):
+class TableFilterAction(object):
     """
-    Stores a single filter action which will populate one radio button of
-    a ToasterTable filter popup; this filter can either be on or off and
-    has no other parameters
+    A filter action which displays in the filter popup for a ToasterTable
+    and uses an associated QuerysetFilter to filter the queryset for that
+    ToasterTable
     """
 
     def __init__(self, name, title, queryset_filter):
         self.name = name
         self.title = title
-        self.__queryset_filter = queryset_filter
-        self.type = 'toggle'
+        self.queryset_filter = queryset_filter
 
-    def set_params(self, params):
+        # set in subclasses
+        self.type = None
+
+    def set_filter_params(self, params):
         """
         params: (str) a string of extra parameters for the action;
         the structure of this string depends on the type of action;
         it's ignored for a toggle filter action, which is just on or off
         """
-        pass
+        if not params:
+            return
 
     def filter(self, queryset):
-        return self.__queryset_filter.filter(queryset)
+        return self.queryset_filter.filter(queryset)
 
     def to_json(self, queryset):
         """ Dump as a JSON object """
         return {
             'title': self.title,
             'type': self.type,
-            'count': self.__queryset_filter.count(queryset)
+            'count': self.queryset_filter.count(queryset)
         }
+
+class TableFilterActionToggle(TableFilterAction):
+    """
+    A single filter action which will populate one radio button of
+    a ToasterTable filter popup; this filter can either be on or off and
+    has no other parameters
+    """
+
+    def __init__(self, *args):
+        super(TableFilterActionToggle, self).__init__(*args)
+        self.type = 'toggle'
+
+class TableFilterActionDateRange(TableFilterAction):
+    """
+    A filter action which will filter the queryset by a date range.
+    The date range can be set via set_params()
+    """
+
+    def __init__(self, name, title, field, queryset_filter):
+        """
+        field: the field to find the max/min range from in the queryset
+        """
+        super(TableFilterActionDateRange, self).__init__(
+            name,
+            title,
+            queryset_filter
+        )
+
+        self.type = 'daterange'
+        self.field = field
+
+    def set_filter_params(self, params):
+        """
+        params: (str) a string of extra parameters for the filtering
+        in the format "2015-12-09,2015-12-11" (from,to); this is passed in the
+        querystring and used to set the criteria on the QuerysetFilter
+        associated with this action
+        """
+
+        # if params are invalid, return immediately, resetting criteria
+        # on the QuerysetFilter
+        try:
+            from_date_str, to_date_str = params.split(',')
+        except ValueError:
+            self.queryset_filter.set_criteria(None)
+            return
+
+        # one of the values required for the filter is missing, so set
+        # it to the one which was supplied
+        if from_date_str == '':
+            from_date_str = to_date_str
+        elif to_date_str == '':
+            to_date_str = from_date_str
+
+        date_from_naive = dateparse.parse_datetime(from_date_str + ' 00:00:00')
+        date_to_naive = dateparse.parse_datetime(to_date_str + ' 23:59:59')
+
+        tz = timezone.get_default_timezone()
+        date_from = timezone.make_aware(date_from_naive, tz)
+        date_to = timezone.make_aware(date_to_naive, tz)
+
+        args = {}
+        args[self.field + '__gte'] = date_from
+        args[self.field + '__lte'] = date_to
+
+        criteria = Q(**args)
+        self.queryset_filter.set_criteria(criteria)
+
+    def to_json(self, queryset):
+        """ Dump as a JSON object """
+        data = super(TableFilterActionDateRange, self).to_json(queryset)
+
+        # additional data about the date range covered by the queryset's
+        # records, retrieved from its <field> column
+        data['min'] = queryset.aggregate(Min(self.field))[self.field + '__min']
+        data['max'] = queryset.aggregate(Max(self.field))[self.field + '__max']
+
+        # a range filter has a count of None, as the number of records it
+        # will select depends on the date range entered
+        data['count'] = None
+
+        return data
 
 class TableFilterMap(object):
     """
-    Map from field names to Filter objects for those fields
+    Map from field names to TableFilter objects for those fields
     """
+
     def __init__(self):
         self.__filters = {}
 
