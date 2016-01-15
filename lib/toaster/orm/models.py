@@ -461,6 +461,15 @@ class Target(models.Model):
         return self.target
 
 class Target_Image_File(models.Model):
+    # valid suffixes for image files produced by a build
+    SUFFIXES = {
+        'btrfs', 'cpio', 'cpio.gz', 'cpio.lz4', 'cpio.lzma', 'cpio.xz',
+        'cramfs', 'elf', 'ext2', 'ext2.bz2', 'ext2.gz', 'ext2.lzma', 'ext4',
+        'ext4.gz', 'ext3', 'ext3.gz', 'hddimg', 'iso', 'jffs2', 'jffs2.sum',
+        'squashfs', 'squashfs-lzo', 'squashfs-xz', 'tar.bz2', 'tar.lz4',
+        'tar.xz', 'tartar.gz', 'ubi', 'ubifs', 'vmdk'
+    }
+
     target = models.ForeignKey(Target)
     file_name = models.FilePathField(max_length=254)
     file_size = models.IntegerField()
