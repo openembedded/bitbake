@@ -23,7 +23,7 @@ from toastergui.widgets import ToasterTable
 from orm.models import Recipe, ProjectLayer, Layer_Version, Machine, Project
 from orm.models import CustomImageRecipe, Package, Build, LogMessage, Task
 from orm.models import ProjectTarget
-from django.db.models import Q, Max, Count
+from django.db.models import Q, Max, Count, When, Case, Value, IntegerField
 from django.conf.urls import url
 from django.core.urlresolvers import reverse, resolve
 from django.http import HttpResponse
@@ -927,6 +927,13 @@ class BuildsTable(ToasterTable):
         return context
 
     def setup_queryset(self, *args, **kwargs):
+        """
+        The queryset is annotated so that it can be sorted by number of
+        errors and number of warnings; but note that the criteria for
+        finding the log messages to populate these fields should match those
+        used in the Build model (orm/models.py) to populate the errors and
+        warnings properties
+        """
         queryset = self.get_builds()
 
         # don't include in progress builds
@@ -935,20 +942,27 @@ class BuildsTable(ToasterTable):
         # sort
         queryset = queryset.order_by(self.default_orderby)
 
-        # annotate with number of ERROR and EXCEPTION log messages
+        # annotate with number of ERROR, EXCEPTION and CRITICAL log messages
+        criteria = (Q(logmessage__level=LogMessage.ERROR) |
+                    Q(logmessage__level=LogMessage.EXCEPTION) |
+                    Q(logmessage__level=LogMessage.CRITICAL))
+
         queryset = queryset.annotate(
-            errors_no = Count(
-                'logmessage',
-                only = Q(logmessage__level=LogMessage.ERROR) |
-                       Q(logmessage__level=LogMessage.EXCEPTION)
+            errors_no=Count(
+                Case(
+                    When(criteria, then=Value(1)),
+                    output_field=IntegerField()
+                )
             )
         )
 
         # annotate with number of WARNING log messages
         queryset = queryset.annotate(
-            warnings_no = Count(
-                'logmessage',
-                only = Q(logmessage__level=LogMessage.WARNING)
+            warnings_no=Count(
+                Case(
+                    When(logmessage__level=LogMessage.WARNING, then=Value(1)),
+                    output_field=IntegerField()
+                )
             )
         )
 
@@ -1020,17 +1034,17 @@ class BuildsTable(ToasterTable):
         '''
 
         errors_template = '''
-        {% if data.errors.count %}
+        {% if data.errors_no %}
             <a class="errors.count error" href="{% url "builddashboard" data.id %}#errors">
-                {{data.errors.count}} error{{data.errors.count|pluralize}}
+                {{data.errors_no}} error{{data.errors_no|pluralize}}
             </a>
         {% endif %}
         '''
 
         warnings_template = '''
-        {% if data.warnings.count %}
+        {% if data.warnings_no %}
             <a class="warnings.count warning" href="{% url "builddashboard" data.id %}#warnings">
-                {{data.warnings.count}} warning{{data.warnings.count|pluralize}}
+                {{data.warnings_no}} warning{{data.warnings_no|pluralize}}
             </a>
         {% endif %}
         '''
