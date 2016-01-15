@@ -43,6 +43,7 @@ from django.utils.html import escape
 from datetime import timedelta, datetime
 from django.utils import formats
 from toastergui.templatetags.projecttags import json as jsonfilter
+from decimal import Decimal
 import json
 from os.path import dirname
 from functools import wraps
@@ -145,6 +146,8 @@ def objtojson(obj):
         return obj.total_seconds()
     elif isinstance(obj, QuerySet) or isinstance(obj, set):
         return list(obj)
+    elif isinstance(obj, Decimal):
+        return str(obj)
     elif type(obj).__name__ == "RelatedManager":
         return [x.pk for x in obj.all()]
     elif hasattr( obj, '__dict__') and isinstance(obj, Model):
