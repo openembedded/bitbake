@@ -20,29 +20,18 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 from toastergui.widgets import ToasterTable
+from toastergui.querysetfilter import QuerysetFilter
 from orm.models import Recipe, ProjectLayer, Layer_Version, Machine, Project
-from orm.models import CustomImageRecipe, Package, Build
+from orm.models import CustomImageRecipe, Package, Build, LogMessage, Task
 from django.db.models import Q, Max, Count
 from django.conf.urls import url
 from django.core.urlresolvers import reverse
 from django.views.generic import TemplateView
 
-class ProjectFiltersMixin(object):
-    """Common mixin for recipe, machine in project filters"""
-
-    def filter_in_project(self, count_only=False):
-        query = self.queryset.filter(layer_version__in=self.project_layers)
-        if count_only:
-            return query.count()
-
-        self.queryset = query
-
-    def filter_not_in_project(self, count_only=False):
-        query = self.queryset.exclude(layer_version__in=self.project_layers)
-        if count_only:
-            return query.count()
-
-        self.queryset = query
+class ProjectFilters(object):
+    def __init__(self, project_layers):
+        self.in_project = QuerysetFilter(Q(layer_version__in=project_layers))
+        self.not_in_project = QuerysetFilter(~Q(layer_version__in=project_layers))
 
 class LayersTable(ToasterTable):
     """Table of layers in Toaster"""
@@ -60,33 +49,20 @@ class LayersTable(ToasterTable):
 
         return context
 
-
     def setup_filters(self, *args, **kwargs):
         project = Project.objects.get(pk=kwargs['pid'])
         self.project_layers = ProjectLayer.objects.filter(project=project)
 
+        criteria = Q(projectlayer__in=self.project_layers)
+        in_project_filter = QuerysetFilter(criteria)
+        not_in_project_filter = QuerysetFilter(~criteria)
 
         self.add_filter(title="Filter by project layers",
                         name="in_current_project",
                         filter_actions=[
-                            self.make_filter_action("in_project", "Layers added to this project", self.filter_in_project),
-                            self.make_filter_action("not_in_project", "Layers not added to this project", self.filter_not_in_project)
+                            self.make_filter_action("in_project", "Layers added to this project", in_project_filter),
+                            self.make_filter_action("not_in_project", "Layers not added to this project", not_in_project_filter)
                         ])
-
-    def filter_in_project(self, count_only=False):
-        query = self.queryset.filter(projectlayer__in=self.project_layers)
-        if count_only:
-            return query.count()
-
-        self.queryset = query
-
-    def filter_not_in_project(self, count_only=False):
-        query = self.queryset.exclude(projectlayer__in=self.project_layers)
-        if count_only:
-            return query.count()
-
-        self.queryset = query
-
 
     def setup_queryset(self, *args, **kwargs):
         prj = Project.objects.get(pk = kwargs['pid'])
@@ -204,7 +180,7 @@ class LayersTable(ToasterTable):
                         computation = lambda x: x.layer.name)
 
 
-class MachinesTable(ToasterTable, ProjectFiltersMixin):
+class MachinesTable(ToasterTable):
     """Table of Machines in Toaster"""
 
     def __init__(self, *args, **kwargs):
@@ -221,11 +197,13 @@ class MachinesTable(ToasterTable, ProjectFiltersMixin):
     def setup_filters(self, *args, **kwargs):
         project = Project.objects.get(pk=kwargs['pid'])
 
+        project_filters = ProjectFilters(self.project_layers)
+
         self.add_filter(title="Filter by project machines",
                         name="in_current_project",
                         filter_actions=[
-                            self.make_filter_action("in_project", "Machines provided by layers added to this project", self.filter_in_project),
-                            self.make_filter_action("not_in_project", "Machines provided by layers not added to this project", self.filter_not_in_project)
+                            self.make_filter_action("in_project", "Machines provided by layers added to this project", project_filters.in_project),
+                            self.make_filter_action("not_in_project", "Machines provided by layers not added to this project", project_filters.not_in_project)
                         ])
 
     def setup_queryset(self, *args, **kwargs):
@@ -313,7 +291,7 @@ class LayerMachinesTable(MachinesTable):
                         static_data_template=select_btn_template)
 
 
-class RecipesTable(ToasterTable, ProjectFiltersMixin):
+class RecipesTable(ToasterTable):
     """Table of All Recipes in Toaster"""
 
     def __init__(self, *args, **kwargs):
@@ -338,11 +316,13 @@ class RecipesTable(ToasterTable, ProjectFiltersMixin):
         return context
 
     def setup_filters(self, *args, **kwargs):
+        project_filters = ProjectFilters(self.project_layers)
+
         self.add_filter(title="Filter by project recipes",
                         name="in_current_project",
                         filter_actions=[
-                            self.make_filter_action("in_project", "Recipes provided by layers added to this project", self.filter_in_project),
-                            self.make_filter_action("not_in_project", "Recipes provided by layers not added to this project", self.filter_not_in_project)
+                            self.make_filter_action("in_project", "Recipes provided by layers added to this project", project_filters.in_project),
+                            self.make_filter_action("not_in_project", "Recipes provided by layers not added to this project", project_filters.not_in_project)
                         ])
 
     def setup_queryset(self, *args, **kwargs):
@@ -853,3 +833,284 @@ class ProjectsTable(ToasterTable):
                         orderable=False,
                         static_data_name='image_files',
                         static_data_template=image_files_template)
+
+class BuildsTable(ToasterTable):
+    """Table of builds in Toaster"""
+
+    def __init__(self, *args, **kwargs):
+        super(BuildsTable, self).__init__(*args, **kwargs)
+        self.default_orderby = '-completed_on'
+        self.title = 'All builds'
+        self.static_context_extra['Build'] = Build
+        self.static_context_extra['Task'] = Task
+
+    def get_context_data(self, **kwargs):
+        return super(BuildsTable, self).get_context_data(**kwargs)
+
+    def setup_queryset(self, *args, **kwargs):
+        queryset = Build.objects.all()
+
+        # don't include in progress builds
+        queryset = queryset.exclude(outcome=Build.IN_PROGRESS)
+
+        # sort
+        queryset = queryset.order_by(self.default_orderby)
+
+        # annotate with number of ERROR and EXCEPTION log messages
+        queryset = queryset.annotate(
+            errors_no = Count(
+                'logmessage',
+                only = Q(logmessage__level=LogMessage.ERROR) |
+                       Q(logmessage__level=LogMessage.EXCEPTION)
+            )
+        )
+
+        # annotate with number of WARNING log messages
+        queryset = queryset.annotate(
+            warnings_no = Count(
+                'logmessage',
+                only = Q(logmessage__level=LogMessage.WARNING)
+            )
+        )
+
+        self.queryset = queryset
+
+    def setup_columns(self, *args, **kwargs):
+        outcome_template = '''
+        <a href="{% url "builddashboard" data.id %}">
+            {% if data.outcome == data.SUCCEEDED %}
+                <i class="icon-ok-sign success"></i>
+            {% elif data.outcome == data.FAILED %}
+                <i class="icon-minus-sign error"></i>
+            {% endif %}
+        </a>
+
+        {% if data.cooker_log_path %}
+            &nbsp;
+            <a href="{% url "build_artifact" data.id "cookerlog" data.id %}">
+               <i class="icon-download-alt" title="Download build log"></i>
+            </a>
+        {% endif %}
+        '''
+
+        recipe_template = '''
+        {% for target_label in data.target_labels %}
+            <a href="{% url "builddashboard" data.id %}">
+                {{target_label}}
+            </a>
+            <br />
+        {% endfor %}
+        '''
+
+        machine_template = '''
+        <a href="{% url "builddashboard" data.id %}">
+            {{data.machine}}
+        </a>
+        '''
+
+        started_on_template = '''
+        <a href="{% url "builddashboard" data.id %}">
+            {{data.started_on | date:"d/m/y H:i"}}
+        </a>
+        '''
+
+        completed_on_template = '''
+        <a href="{% url "builddashboard" data.id %}">
+            {{data.completed_on | date:"d/m/y H:i"}}
+        </a>
+        '''
+
+        failed_tasks_template = '''
+        {% if data.failed_tasks.count == 1 %}
+            <a href="{% url "task" data.id data.failed_tasks.0.id %}">
+                <span class="error">
+                    {{data.failed_tasks.0.recipe.name}}.{{data.failed_tasks.0.task_name}}
+                </span>
+            </a>
+            <a href="{% url "build_artifact" data.id "tasklogfile" data.failed_tasks.0.id %}">
+                <i class="icon-download-alt"
+                   data-original-title="Download task log file">
+                </i>
+            </a>
+        {% elif data.failed_tasks.count > 1 %}
+            <a href="{% url "tasks" data.id %}?filter=outcome%3A{{extra.Task.OUTCOME_FAILED}}">
+                <span class="error">{{data.failed_tasks.count}} tasks</span>
+            </a>
+        {% endif %}
+        '''
+
+        errors_template = '''
+        {% if data.errors.count %}
+            <a class="errors.count error" href="{% url "builddashboard" data.id %}#errors">
+                {{data.errors.count}} error{{data.errors.count|pluralize}}
+            </a>
+        {% endif %}
+        '''
+
+        warnings_template = '''
+        {% if data.warnings.count %}
+            <a class="warnings.count warning" href="{% url "builddashboard" data.id %}#warnings">
+                {{data.warnings.count}} warning{{data.warnings.count|pluralize}}
+            </a>
+        {% endif %}
+        '''
+
+        time_template = '''
+        {% load projecttags %}
+        <a href="{% url "buildtime" data.id %}">
+            {{data.timespent_seconds | sectohms}}
+        </a>
+        '''
+
+        image_files_template = '''
+        {% if data.outcome == extra.Build.SUCCEEDED %}
+          <a href="{% url "builddashboard" data.id %}#images">
+            {{data.get_image_file_extensions}}
+          </a>
+        {% endif %}
+        '''
+
+        project_template = '''
+        {% load project_url_tag %}
+        <a href="{% project_url data.project %}">
+            {{data.project.name}}
+        </a>
+        {% if data.project.is_default %}
+            <i class="icon-question-sign get-help hover-help" title=""
+               data-original-title="This project shows information about
+               the builds you start from the command line while Toaster is
+               running" style="visibility: hidden;"></i>
+        {% endif %}
+        '''
+
+        self.add_column(title='Outcome',
+                        help_text='Final state of the build (successful \
+                                   or failed)',
+                        hideable=False,
+                        orderable=True,
+                        filter_name='outcome_filter',
+                        static_data_name='outcome',
+                        static_data_template=outcome_template)
+
+        self.add_column(title='Recipe',
+                        help_text='What was built (i.e. one or more recipes \
+                                   or image recipes)',
+                        hideable=False,
+                        orderable=False,
+                        static_data_name='target',
+                        static_data_template=recipe_template)
+
+        self.add_column(title='Machine',
+                        help_text='Hardware for which you are building a \
+                                   recipe or image recipe',
+                        hideable=False,
+                        orderable=True,
+                        static_data_name='machine',
+                        static_data_template=machine_template)
+
+        self.add_column(title='Started on',
+                        help_text='The date and time when the build started',
+                        hideable=True,
+                        orderable=True,
+                        static_data_name='started_on',
+                        static_data_template=started_on_template)
+
+        self.add_column(title='Completed on',
+                        help_text='The date and time when the build finished',
+                        hideable=False,
+                        orderable=True,
+                        static_data_name='completed_on',
+                        static_data_template=completed_on_template)
+
+        self.add_column(title='Failed tasks',
+                        help_text='The number of tasks which failed during \
+                                   the build',
+                        hideable=True,
+                        orderable=False,
+                        filter_name='failed_tasks_filter',
+                        static_data_name='failed_tasks',
+                        static_data_template=failed_tasks_template)
+
+        self.add_column(title='Errors',
+                        help_text='The number of errors encountered during \
+                                   the build (if any)',
+                        hideable=True,
+                        orderable=False,
+                        static_data_name='errors',
+                        static_data_template=errors_template)
+
+        self.add_column(title='Warnings',
+                        help_text='The number of warnings encountered during \
+                                   the build (if any)',
+                        hideable=True,
+                        orderable=False,
+                        static_data_name='warnings',
+                        static_data_template=warnings_template)
+
+        self.add_column(title='Time',
+                        help_text='How long the build took to finish',
+                        hideable=False,
+                        orderable=False,
+                        static_data_name='time',
+                        static_data_template=time_template)
+
+        self.add_column(title='Image files',
+                        help_text='The root file system types produced by \
+                                   the build',
+                        hideable=True,
+                        orderable=False,
+                        static_data_name='image_files',
+                        static_data_template=image_files_template)
+
+        self.add_column(title='Project',
+                        hideable=True,
+                        orderable=False,
+                        static_data_name='project-name',
+                        static_data_template=project_template)
+
+    def setup_filters(self, *args, **kwargs):
+        # outcomes
+        filter_only_successful_builds = QuerysetFilter(Q(outcome=Build.SUCCEEDED))
+        successful_builds_filter = self.make_filter_action(
+            'successful_builds',
+            'Successful builds',
+            filter_only_successful_builds
+        )
+
+        filter_only_failed_builds = QuerysetFilter(Q(outcome=Build.FAILED))
+        failed_builds_filter = self.make_filter_action(
+            'failed_builds',
+            'Failed builds',
+            filter_only_failed_builds
+        )
+
+        self.add_filter(title='Filter builds by outcome',
+                        name='outcome_filter',
+                        filter_actions = [
+                            successful_builds_filter,
+                            failed_builds_filter
+                        ])
+
+        # failed tasks
+        criteria = Q(task_build__outcome=Task.OUTCOME_FAILED)
+        filter_only_builds_with_failed_tasks = QuerysetFilter(criteria)
+        with_failed_tasks_filter = self.make_filter_action(
+            'with_failed_tasks',
+            'Builds with failed tasks',
+            filter_only_builds_with_failed_tasks
+        )
+
+        criteria = ~Q(task_build__outcome=Task.OUTCOME_FAILED)
+        filter_only_builds_without_failed_tasks = QuerysetFilter(criteria)
+        without_failed_tasks_filter = self.make_filter_action(
+            'without_failed_tasks',
+            'Builds without failed tasks',
+            filter_only_builds_without_failed_tasks
+        )
+
+        self.add_filter(title='Filter builds by failed tasks',
+                        name='failed_tasks_filter',
+                        filter_actions = [
+                            with_failed_tasks_filter,
+                            without_failed_tasks_filter
+                        ])

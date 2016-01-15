@@ -1915,34 +1915,6 @@ if True:
         ''' The exception raised on invalid POST requests '''
         pass
 
-    # shows the "all builds" page for managed mode; it displays build requests (at least started!) instead of actual builds
-    # WARNING _build_list_helper() may raise a RedirectException, which
-    # will set the GET parameters and redirect back to the
-    # all-builds or projectbuilds page as appropriate;
-    # TODO don't use exceptions to control program flow
-    @_template_renderer("builds.html")
-    def builds(request):
-        # define here what parameters the view needs in the GET portion in order to
-        # be able to display something.  'count' and 'page' are mandatory for all views
-        # that use paginators.
-
-        queryset = Build.objects.all()
-
-        redirect_page = resolve(request.path_info).url_name
-
-        context, pagesize, orderby = _build_list_helper(request,
-                                                        queryset,
-                                                        redirect_page)
-        # all builds page as a Project column
-        context['tablecols'].append({
-            'name': 'Project',
-            'clclass': 'project_column'
-        })
-
-        _set_parameters_values(pagesize, orderby, request)
-        return context
-
-
     # helper function, to be used on "all builds" and "project builds" pages
     def _build_list_helper(request, queryset_all, redirect_page, pid=None):
         default_orderby = 'completed_on:-'
@@ -1985,10 +1957,6 @@ if True:
         queryset_all = queryset_all.annotate(
             warnings_no = Count('logmessage', only=q_warnings)
         )
-
-        # add timespent field
-        timespent = 'completed_on - started_on'
-        queryset_all = queryset_all.extra(select={'timespent': timespent})
 
         queryset_with_search = _get_queryset(Build, queryset_all,
                                              None, search_term,

@@ -27,7 +27,10 @@ urlpatterns = patterns('toastergui.views',
         # landing page
         url(r'^landing/$', 'landing', name='landing'),
 
-        url(r'^builds/$', 'builds', name='all-builds'),
+        url(r'^builds/$',
+            tables.BuildsTable.as_view(template_name="builds-toastertable.html"),
+            name='all-builds'),
+
         # build info navigation
         url(r'^build/(?P<build_id>\d+)$', 'builddashboard', name="builddashboard"),
 

@@ -32,6 +32,7 @@ from django.template import Context, Template
 from django.core.serializers.json import DjangoJSONEncoder
 from django.core.exceptions import FieldError
 from django.conf.urls import url, patterns
+from toastergui.querysetfilter import QuerysetFilter
 
 import types
 import json
@@ -113,7 +114,8 @@ class ToasterTable(TemplateView):
                               cls=DjangoJSONEncoder)
         else:
             for actions in self.filters[name]['filter_actions']:
-                actions['count'] = self.filter_actions[actions['name']](count_only=True)
+                queryset_filter = self.filter_actions[actions['name']]
+                actions['count'] = queryset_filter.count(self.queryset)
 
             # Add the "All" items filter action
             self.filters[name]['filter_actions'].insert(0, {
@@ -151,15 +153,18 @@ class ToasterTable(TemplateView):
           'filter_actions' : filter_actions,
         }
 
-    def make_filter_action(self, name, title, action_function):
-        """ Utility to make a filter_action """
+    def make_filter_action(self, name, title, queryset_filter):
+        """
+        Utility to make a filter_action; queryset_filter is an instance
+        of QuerysetFilter or a function
+        """
 
         action = {
           'title' : title,
           'name' : name,
         }
 
-        self.filter_actions[name] = action_function
+        self.filter_actions[name] = queryset_filter
 
         return action
 
@@ -222,7 +227,8 @@ class ToasterTable(TemplateView):
             return
 
         try:
-            self.filter_actions[filter_action]()
+            queryset_filter = self.filter_actions[filter_action]
+            self.queryset = queryset_filter.filter(self.queryset)
         except KeyError:
             # pass it to the user - programming error here
             raise

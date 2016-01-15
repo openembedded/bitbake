@@ -447,6 +447,12 @@ class Build(models.Model):
         return Build.BUILD_OUTCOME[int(self.outcome)][1]
 
     @property
+    def failed_tasks(self):
+        """ Get failed tasks for the build """
+        tasks = self.task_build.all()
+        return tasks.filter(order__gt=0, outcome=Task.OUTCOME_FAILED)
+
+    @property
     def errors(self):
         return (self.logmessage_set.filter(level=LogMessage.ERROR) |
                 self.logmessage_set.filter(level=LogMessage.EXCEPTION) |
@@ -457,8 +463,32 @@ class Build(models.Model):
         return self.logmessage_set.filter(level=LogMessage.WARNING)
 
     @property
+    def timespent(self):
+        return self.completed_on - self.started_on
+
+    @property
     def timespent_seconds(self):
-        return (self.completed_on - self.started_on).total_seconds()
+        return self.timespent.total_seconds()
+
+    @property
+    def target_labels(self):
+        """
+        Sorted (a-z) "target1:task, target2, target3" etc. string for all
+        targets in this build
+        """
+        targets = self.target_set.all()
+        target_labels = []
+        target_label = None
+
+        for target in targets:
+            target_label = target.target
+            if target.task:
+                target_label = target_label + ':' + target.task
+            target_labels.append(target_label)
+
+        target_labels.sort()
+
+        return target_labels
 
     def get_current_status(self):
         """
