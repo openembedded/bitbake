@@ -168,6 +168,24 @@ class ToasterTable(TemplateView):
                              'computation': computation,
                             })
 
+    def set_column_hidden(self, title, hidden):
+        """
+        Set the hidden state of the column to the value of hidden
+        """
+        for col in self.columns:
+            if col['title'] == title:
+                col['hidden'] = hidden
+                break
+
+    def set_column_hideable(self, title, hideable):
+        """
+        Set the hideable state of the column to the value of hideable
+        """
+        for col in self.columns:
+            if col['title'] == title:
+                col['hideable'] = hideable
+                break
+
     def render_static_data(self, template, row):
         """Utility function to render the static data template"""
 

@@ -812,7 +812,7 @@ class ProjectsTable(ToasterTable):
                                    last project build. If the project has no \
                                    builds, this shows the date the project was \
                                    created.',
-                        hideable=True,
+                        hideable=False,
                         orderable=True,
                         static_data_name='updated',
                         static_data_template=last_activity_on_template)
@@ -836,7 +836,7 @@ class ProjectsTable(ToasterTable):
         self.add_column(title='Number of builds',
                         help_text='The number of builds which have been run \
                                    for the project',
-                        hideable=True,
+                        hideable=False,
                         orderable=False,
                         static_data_name='number_of_builds',
                         static_data_template=number_of_builds_template)
@@ -869,6 +869,7 @@ class ProjectsTable(ToasterTable):
                         help_text='The number of warnings encountered during \
                                    the last project build (if any)',
                         hideable=True,
+                        hidden=True,
                         orderable=False,
                         static_data_name='warnings',
                         static_data_template=warnings_template)
@@ -877,6 +878,7 @@ class ProjectsTable(ToasterTable):
                         help_text='The root file system types produced by \
                                    the last project build',
                         hideable=True,
+                        hidden=True,
                         orderable=False,
                         static_data_name='image_files',
                         static_data_template=image_files_template)
@@ -1076,6 +1078,7 @@ class BuildsTable(ToasterTable):
         self.add_column(title='Started on',
                         help_text='The date and time when the build started',
                         hideable=True,
+                        hidden=True,
                         orderable=True,
                         filter_name='started_on_filter',
                         static_data_name='started_on',
@@ -1116,7 +1119,8 @@ class BuildsTable(ToasterTable):
 
         self.add_column(title='Time',
                         help_text='How long the build took to finish',
-                        hideable=False,
+                        hideable=True,
+                        hidden=True,
                         orderable=False,
                         static_data_name='time',
                         static_data_template=time_template)
@@ -1327,6 +1331,19 @@ class ProjectBuildsTable(BuildsTable):
 
         # set from the querystring
         self.project_id = None
+
+    def setup_columns(self, *args, **kwargs):
+        """
+        Project builds table doesn't show the machines column by default
+        """
+
+        super(ProjectBuildsTable, self).setup_columns(*args, **kwargs)
+
+        # hide the machine column
+        self.set_column_hidden('Machine', True)
+
+        # allow the machine column to be hidden by the user
+        self.set_column_hideable('Machine', True)
 
     def setup_queryset(self, *args, **kwargs):
         """
