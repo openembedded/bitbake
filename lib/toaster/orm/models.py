@@ -29,6 +29,9 @@ from django.core import validators
 from django.conf import settings
 import django.db.models.signals
 
+import os.path
+import re
+
 import logging
 logger = logging.getLogger("toaster")
 
@@ -234,6 +237,14 @@ class Project(models.Model):
         except (Build.DoesNotExist,IndexError):
             return( "not_found" )
 
+    def get_last_build_extensions(self):
+        """
+        Get list of file name extensions for images produced by the most
+        recent build
+        """
+        last_build = Build.objects.get(pk = self.get_last_build_id())
+        return last_build.get_image_file_extensions()
+
     def get_last_imgfiles(self):
         build_id = self.get_last_build_id
         if (-1 == build_id):
@@ -376,6 +387,57 @@ class Build(models.Model):
             eta += ((eta - self.started_on)*(100-completeper))/completeper
         return eta
 
+    def get_image_file_extensions(self):
+        """
+        Get list of file name extensions for images produced by this build
+        """
+        targets = Target.objects.filter(build_id = self.id)
+        extensions = []
+
+        # pattern to match against file path for building extension string
+        pattern = re.compile('\.([^\.]+?)$')
+
+        for target in targets:
+            if (not target.is_image):
+                continue
+
+            target_image_files = Target_Image_File.objects.filter(target_id = target.id)
+
+            for target_image_file in target_image_files:
+                file_name = os.path.basename(target_image_file.file_name)
+                suffix = ''
+
+                continue_matching = True
+
+                # incrementally extract the suffix from the file path,
+                # checking it against the list of valid suffixes at each
+                # step; if the path is stripped of all potential suffix
+                # parts without matching a valid suffix, this returns all
+                # characters after the first '.' in the file name
+                while continue_matching:
+                    matches = pattern.search(file_name)
+
+                    if None == matches:
+                        continue_matching = False
+                        suffix = re.sub('^\.', '', suffix)
+                        continue
+                    else:
+                        suffix = matches.group(1) + suffix
+
+                    if suffix in Target_Image_File.SUFFIXES:
+                        continue_matching = False
+                        continue
+                    else:
+                        # reduce the file name and try to find the next
+                        # segment from the path which might be part
+                        # of the suffix
+                        file_name = re.sub('.' + matches.group(1), '', file_name)
+                        suffix = '.' + suffix
+
+                if not suffix in extensions:
+                    extensions.append(suffix)
+
+        return ', '.join(extensions)
 
     def get_sorted_target_list(self):
         tgts = Target.objects.filter(build_id = self.id).order_by( 'target' );
@@ -418,7 +480,7 @@ class Build(models.Model):
             return self.get_outcome_text()
 
     def __str__(self):
-        return "%s %s %s" % (self.id, self.project, ",".join([t.target for t in self.target_set.all()]))
+        return "%d %s %s" % (self.id, self.project, ",".join([t.target for t in self.target_set.all()]))
 
 
 # an Artifact is anything that results from a Build, and may be of interest to the user, and is not stored elsewhere
@@ -609,7 +671,7 @@ class Task(models.Model):
     sstate_text  = property(get_sstate_text)
 
     def __unicode__(self):
-        return "%s(%s) %s:%s" % (self.pk, self.build.pk, self.recipe.name, self.task_name)
+        return "%d(%d) %s:%s" % (self.pk, self.build.pk, self.recipe.name, self.task_name)
 
     class Meta:
         ordering = ('order', 'recipe' ,)
@@ -1265,7 +1327,7 @@ class Layer_Version(models.Model):
         return sorted(result, key=lambda x: x.layer.name)
 
     def __unicode__(self):
-        return "%s %s (VCS %s, Project %s)" % (self.pk, str(self.layer), self.get_vcs_reference(), self.build.project if self.build is not None else "No project")
+        return "%d %s (VCS %s, Project %s)" % (self.pk, str(self.layer), self.get_vcs_reference(), self.build.project if self.build is not None else "No project")
 
     class Meta:
         unique_together = ("layer_source", "up_id")

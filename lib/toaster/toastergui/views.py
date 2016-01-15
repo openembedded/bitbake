@@ -2008,23 +2008,10 @@ if True:
         context_date,today_begin,yesterday_begin = _add_daterange_context(queryset_all, request, {'started_on','completed_on'})
 
         # set up list of fstypes for each build
-        fstypes_map = {};
+        fstypes_map = {}
+
         for build in build_info:
-            targets = Target.objects.filter( build_id = build.id )
-            comma = "";
-            extensions = "";
-            for t in targets:
-                if ( not t.is_image ):
-                    continue
-                tif = Target_Image_File.objects.filter( target_id = t.id )
-                for i in tif:
-                    s=re.sub('.*tar.bz2', 'tar.bz2', i.file_name)
-                    if s == i.file_name:
-                        s=re.sub('.*\.', '', i.file_name)
-                    if None == re.search(s,extensions):
-                        extensions += comma + s
-                        comma = ", "
-            fstypes_map[build.id]=extensions
+            fstypes_map[build.id] = build.get_image_file_extensions()
 
         # send the data to the template
         context = {
@@ -3047,24 +3034,7 @@ if True:
         # translate the project's build target strings
         fstypes_map = {};
         for project in project_info:
-            try:
-                targets = Target.objects.filter( build_id = project.get_last_build_id() )
-                comma = "";
-                extensions = "";
-                for t in targets:
-                    if ( not t.is_image ):
-                        continue
-                    tif = Target_Image_File.objects.filter( target_id = t.id )
-                    for i in tif:
-                        s=re.sub('.*tar.bz2', 'tar.bz2', i.file_name)
-                        if s == i.file_name:
-                            s=re.sub('.*\.', '', i.file_name)
-                        if None == re.search(s,extensions):
-                            extensions += comma + s
-                            comma = ", "
-                fstypes_map[project.id]=extensions
-            except (Target.DoesNotExist,IndexError):
-                fstypes_map[project.id]=project.get_last_imgfiles
+            fstypes_map[project.id] = project.get_last_build_extensions()
 
         context = {
                 'mru' : build_mru,

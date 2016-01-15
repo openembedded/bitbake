@@ -661,7 +661,7 @@ class ProjectsTable(ToasterTable):
 
         self.queryset = queryset
 
-    # columns: last activity on (updated) - DEFAULT, project (name), release, machine, number of builds, last build outcome, recipe (name), errors, warnings, image files
+    # columns: last activity on (updated) - DEFAULT, project (name), release, machine, number of builds, last build outcome, recipe (name),  errors, warnings, image files
     def setup_columns(self, *args, **kwargs):
         name_template = '''
         {% load project_url_tag %}
@@ -767,10 +767,9 @@ class ProjectsTable(ToasterTable):
         '''
 
         image_files_template = '''
-        {% load projecttags %}
         {% if data.get_number_of_builds > 0 and data.get_last_outcome == extra.Build.SUCCEEDED %}
           <a href="{% url "builddashboard" data.get_last_build_id %}#images">
-            {{fstypes | get_dict_value:data.id}}
+            {{data.get_last_build_extensions}}
           </a>
         {% endif %}
         '''
@@ -848,7 +847,8 @@ class ProjectsTable(ToasterTable):
                         static_data_template=warnings_template)
 
         self.add_column(title='Image files',
-                        help_text='',
+                        help_text='The root file system types produced by \
+                                   the last project build',
                         hideable=True,
                         orderable=False,
                         static_data_name='image_files',
