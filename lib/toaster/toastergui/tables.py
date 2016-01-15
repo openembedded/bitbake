@@ -638,7 +638,7 @@ class ProjectsTable(ToasterTable):
 
     def __init__(self, *args, **kwargs):
         super(ProjectsTable, self).__init__(*args, **kwargs)
-        self.default_orderby = 'updated'
+        self.default_orderby = '-updated'
         self.title = 'All projects'
         self.static_context_extra['Build'] = Build
 

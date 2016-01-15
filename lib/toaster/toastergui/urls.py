@@ -74,14 +74,9 @@ urlpatterns = patterns('toastergui.views',
         # project URLs
         url(r'^newproject/$', 'newproject', name='newproject'),
 
-
-        # TODO remove when new toaster table is ready
-        url(r'^projects/$', 'projects', name='all-projects'),
-
-        # TODO move to /projects/ when new toaster table is ready
-        url(r'^projects-new/$',
+        url(r'^projects/$',
             tables.ProjectsTable.as_view(template_name="projects-toastertable.html"),
-            name='all-projects-new'),
+            name='all-projects'),
 
         url(r'^project/(?P<pid>\d+)/$', 'project', name='project'),
         url(r'^project/(?P<pid>\d+)/configuration$', 'projectconf', name='projectconf'),

@@ -2990,9 +2990,7 @@ if True:
             }
             return render(request, "unavailable_artifact.html", context)
 
-
-
-
+    """
     @_template_renderer("projects.html")
     def projects(request):
         (pagesize, orderby) = _get_parameters_values(request, 10, 'updated:-')
@@ -3034,7 +3032,24 @@ if True:
         # translate the project's build target strings
         fstypes_map = {};
         for project in project_info:
-            fstypes_map[project.id] = project.get_last_build_extensions()
+            try:
+                targets = Target.objects.filter( build_id = project.get_last_build_id() )
+                comma = "";
+                extensions = "";
+                for t in targets:
+                    if ( not t.is_image ):
+                        continue
+                    tif = Target_Image_File.objects.filter( target_id = t.id )
+                    for i in tif:
+                        s=re.sub('.*tar.bz2', 'tar.bz2', i.file_name)
+                        if s == i.file_name:
+                            s=re.sub('.*\.', '', i.file_name)
+                        if None == re.search(s,extensions):
+                            extensions += comma + s
+                            comma = ", "
+                fstypes_map[project.id]=extensions
+            except (Target.DoesNotExist,IndexError):
+                fstypes_map[project.id]=project.get_last_imgfiles
 
         context = {
                 'mru' : build_mru,
@@ -3092,3 +3107,4 @@ if True:
 
         _set_parameters_values(pagesize, orderby, request)
         return context
+    """
