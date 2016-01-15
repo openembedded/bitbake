@@ -228,7 +228,7 @@ if [ "$1" = 'restart-bitbake' ] ; then
     sleep 1
     start_bitbake
     rc=$?
-    sleep 1
+    sleep 3
     return $rc
 fi
 
