@@ -477,15 +477,9 @@ class Build(models.Model):
         targets in this build
         """
         targets = self.target_set.all()
-        target_labels = []
-        target_label = None
-
-        for target in targets:
-            target_label = target.target
-            if target.task:
-                target_label = target_label + ':' + target.task
-            target_labels.append(target_label)
-
+        target_labels = [target.target +
+                         (':' + target.task if target.task else '')
+                         for target in targets]
         target_labels.sort()
 
         return target_labels

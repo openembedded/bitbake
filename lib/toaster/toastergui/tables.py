@@ -688,7 +688,9 @@ class ProjectsTable(ToasterTable):
 
         self.queryset = queryset
 
-    # columns: last activity on (updated) - DEFAULT, project (name), release, machine, number of builds, last build outcome, recipe (name),  errors, warnings, image files
+    # columns: last activity on (updated) - DEFAULT, project (name), release,
+    # machine, number of builds, last build outcome, recipe (name),  errors,
+    # warnings, image files
     def setup_columns(self, *args, **kwargs):
         name_template = '''
         {% load project_url_tag %}

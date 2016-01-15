@@ -462,7 +462,7 @@ def builddashboard( request, build_id ):
     for t in tgts:
         elem = { }
         elem[ 'target' ] = t
-        if ( t.is_image ):
+        if t.is_image:
             hasImages = True
         npkg = 0
         pkgsz = 0
@@ -481,8 +481,7 @@ def builddashboard( request, build_id ):
                 ndx = 0;
             f = i.file_name[ ndx + 1: ]
             imageFiles.append({ 'id': i.id, 'path': f, 'size' : i.file_size })
-        if ( t.is_image and
-             (( len( imageFiles ) <= 0 ) or ( len( t.license_manifest_path ) <= 0 ))):
+        if t.is_image and (len(imageFiles) <= 0 or len(t.license_manifest_path) <= 0):
             targetHasNoImages = True
         elem[ 'imageFiles' ] = imageFiles
         elem[ 'targetHasNoImages' ] = targetHasNoImages
