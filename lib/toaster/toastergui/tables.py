@@ -21,12 +21,11 @@
 
 from toastergui.widgets import ToasterTable
 from orm.models import Recipe, ProjectLayer, Layer_Version, Machine, Project
-from orm.models import CustomImageRecipe, Package
-from django.db.models import Q, Max
+from orm.models import CustomImageRecipe, Package, Build
+from django.db.models import Q, Max, Count
 from django.conf.urls import url
 from django.core.urlresolvers import reverse
 from django.views.generic import TemplateView
-
 
 class ProjectFiltersMixin(object):
     """Common mixin for recipe, machine in project filters"""
@@ -633,3 +632,224 @@ class SelectPackagesTable(ToasterTable):
                         "the package content of you custom image",
                         static_data_name="add_rm_pkg_btn",
                         static_data_template='{% include "pkg_add_rm_btn.html" %}')
+
+class ProjectsTable(ToasterTable):
+    """Table of projects in Toaster"""
+
+    def __init__(self, *args, **kwargs):
+        super(ProjectsTable, self).__init__(*args, **kwargs)
+        self.default_orderby = 'updated'
+        self.title = 'All projects'
+        self.static_context_extra['Build'] = Build
+
+    def get_context_data(self, **kwargs):
+        return super(ProjectsTable, self).get_context_data(**kwargs)
+
+    def setup_queryset(self, *args, **kwargs):
+        queryset = Project.objects.all()
+
+        # annotate each project with its number of builds
+        queryset = queryset.annotate(num_builds=Count('build'))
+
+        # exclude the command line builds project if it has no builds
+        q_default_with_builds = Q(is_default=True) & Q(num_builds__gt=0)
+        queryset = queryset.filter(Q(is_default=False) |
+                                   q_default_with_builds)
+
+        # order rows
+        queryset = queryset.order_by(self.default_orderby)
+
+        self.queryset = queryset
+
+    # columns: last activity on (updated) - DEFAULT, project (name), release, machine, number of builds, last build outcome, recipe (name), errors, warnings, image files
+    def setup_columns(self, *args, **kwargs):
+        name_template = '''
+        {% load project_url_tag %}
+        <span data-project-field="name">
+          <a href="{% project_url data %}">
+            {{data.name}}
+          </a>
+        </span>
+        '''
+
+        last_activity_on_template = '''
+        {% load project_url_tag %}
+        <span data-project-field="updated">
+          <a href="{% project_url data %}">
+            {{data.updated | date:"d/m/y H:i"}}
+          </a>
+        </span>
+        '''
+
+        release_template = '''
+        <span data-project-field="release">
+          {% if data.release %}
+            <a href="{% url 'project' data.id %}#project-details">
+                {{data.release.name}}
+            </a>
+          {% elif data.is_default %}
+            <span class="muted">Not applicable</span>
+            <i class="icon-question-sign get-help hover-help"
+               data-original-title="This project does not have a release set.
+               It simply collects information about the builds you start from
+               the command line while Toaster is running"
+               style="visibility: hidden;">
+            </i>
+          {% else %}
+            No release available
+          {% endif %}
+        </span>
+        '''
+
+        machine_template = '''
+        <span data-project-field="machine">
+          {% if data.is_default %}
+            <span class="muted">Not applicable</span>
+            <i class="icon-question-sign get-help hover-help"
+               data-original-title="This project does not have a machine
+               set. It simply collects information about the builds you
+               start from the command line while Toaster is running"
+               style="visibility: hidden;"></i>
+          {% else %}
+            <a href="{% url 'project' data.id %}#machine-distro">
+              {{data.get_current_machine_name}}
+            </a>
+          {% endif %}
+        </span>
+        '''
+
+        number_of_builds_template = '''
+        {% if data.get_number_of_builds > 0 %}
+          <a href="{% url 'projectbuilds' data.id %}">
+            {{data.get_number_of_builds}}
+          </a>
+        {% else %}
+          <span class="muted">0</span>
+        {% endif %}
+        '''
+
+        last_build_outcome_template = '''
+        {% if data.get_number_of_builds > 0 %}
+          <a href="{% url 'builddashboard' data.get_last_build_id %}">
+            {% if data.get_last_outcome == extra.Build.SUCCEEDED %}
+              <i class="icon-ok-sign success"></i>
+            {% elif data.get_last_outcome == extra.Build.FAILED %}
+              <i class="icon-minus-sign error"></i>
+            {% endif %}
+          </a>
+        {% endif %}
+        '''
+
+        recipe_template = '''
+        {% if data.get_number_of_builds > 0 %}
+          <a href="{% url "builddashboard" data.get_last_build_id %}">
+            {{data.get_last_target}}
+          </a>
+        {% endif %}
+        '''
+
+        errors_template = '''
+        {% if data.get_number_of_builds > 0 %}
+          <a class="errors.count error"
+             href="{% url "builddashboard" data.get_last_build_id %}#errors">
+            {{data.get_last_errors}} error{{data.get_last_errors | pluralize}}
+          </a>
+        {% endif %}
+        '''
+
+        warnings_template = '''
+        {% if data.get_number_of_builds > 0 %}
+          <a class="warnings.count warning"
+             href="{% url "builddashboard" data.get_last_build_id %}#warnings">
+            {{data.get_last_warnings}} warning{{data.get_last_warnings | pluralize}}
+          </a>
+        {% endif %}
+        '''
+
+        image_files_template = '''
+        {% load projecttags %}
+        {% if data.get_number_of_builds > 0 and data.get_last_outcome == extra.Build.SUCCEEDED %}
+          <a href="{% url "builddashboard" data.get_last_build_id %}#images">
+            {{fstypes | get_dict_value:data.id}}
+          </a>
+        {% endif %}
+        '''
+
+        self.add_column(title='Project',
+                        hideable=False,
+                        orderable=True,
+                        static_data_name='name',
+                        static_data_template=name_template)
+
+        self.add_column(title='Last activity on',
+                        help_text='Starting date and time of the \
+                                   last project build. If the project has no \
+                                   builds, this shows the date the project was \
+                                   created.',
+                        hideable=True,
+                        orderable=True,
+                        static_data_name='updated',
+                        static_data_template=last_activity_on_template)
+
+        self.add_column(title='Release',
+                        help_text='The version of the build system used by \
+                                   the project',
+                        hideable=False,
+                        orderable=True,
+                        static_data_name='release',
+                        static_data_template=release_template)
+
+        self.add_column(title='Machine',
+                        help_text='The hardware currently selected for the \
+                                   project',
+                        hideable=False,
+                        orderable=False,
+                        static_data_name='machine',
+                        static_data_template=machine_template)
+
+        self.add_column(title='Number of builds',
+                        help_text='The number of builds which have been run \
+                                   for the project',
+                        hideable=True,
+                        orderable=False,
+                        static_data_name='number_of_builds',
+                        static_data_template=number_of_builds_template)
+
+        self.add_column(title='Last build outcome',
+                        help_text='Indicates whether the last project build \
+                                   completed successfully or failed',
+                        hideable=True,
+                        orderable=False,
+                        static_data_name='last_build_outcome',
+                        static_data_template=last_build_outcome_template)
+
+        self.add_column(title='Recipe',
+                        help_text='The last recipe which was built in this \
+                                   project',
+                        hideable=True,
+                        orderable=False,
+                        static_data_name='recipe_name',
+                        static_data_template=recipe_template)
+
+        self.add_column(title='Errors',
+                        help_text='The number of errors encountered during \
+                                   the last project build (if any)',
+                        hideable=True,
+                        orderable=False,
+                        static_data_name='errors',
+                        static_data_template=errors_template)
+
+        self.add_column(title='Warnings',
+                        help_text='The number of warnings encountered during \
+                                   the last project build (if any)',
+                        hideable=True,
+                        orderable=False,
+                        static_data_name='warnings',
+                        static_data_template=warnings_template)
+
+        self.add_column(title='Image files',
+                        help_text='',
+                        hideable=True,
+                        orderable=False,
+                        static_data_name='image_files',
+                        static_data_template=image_files_template)
