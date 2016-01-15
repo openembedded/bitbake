@@ -22,7 +22,6 @@
 from django.db.models import Q, Max, Min
 from django.utils import dateparse, timezone
 from datetime import timedelta
-from querysetfilter import QuerysetFilter
 
 class TableFilter(object):
     """
@@ -118,10 +117,10 @@ class TableFilterAction(object):
     ToasterTable
     """
 
-    def __init__(self, name, title, queryset_filter):
+    def __init__(self, name, title, criteria):
         self.name = name
         self.title = title
-        self.queryset_filter = queryset_filter
+        self.criteria = criteria
 
         # set in subclasses
         self.type = None
@@ -132,11 +131,13 @@ class TableFilterAction(object):
         the structure of this string depends on the type of action;
         it's ignored for a toggle filter action, which is just on or off
         """
-        if not params:
-            return
+        pass
 
     def filter(self, queryset):
-        return self.queryset_filter.filter(queryset)
+        if self.criteria:
+            return queryset.filter(self.criteria)
+        else:
+            return queryset
 
     def to_json(self, queryset):
         """ Dump as a JSON object """
@@ -167,16 +168,12 @@ class TableFilterActionDay(TableFilterAction):
     YESTERDAY = 'yesterday'
 
     def __init__(self, name, title, field, day,
-    queryset_filter = QuerysetFilter(), query_helper = TableFilterQueryHelper()):
+    query_helper = TableFilterQueryHelper()):
         """
         field: (string) the datetime field to filter by
         day: (string) "today" or "yesterday"
         """
-        super(TableFilterActionDay, self).__init__(
-            name,
-            title,
-            queryset_filter
-        )
+        super(TableFilterActionDay, self).__init__(name, title, None)
         self.type = 'day'
         self.field = field
         self.day = day
@@ -189,8 +186,6 @@ class TableFilterActionDay(TableFilterAction):
         depending on when the filtering is applied
         """
 
-        criteria = None
-        date_str = None
         now = timezone.now()
 
         if self.day == self.YESTERDAY:
@@ -201,15 +196,13 @@ class TableFilterActionDay(TableFilterAction):
 
         wanted_date_str = wanted_date.strftime('%Y-%m-%d')
 
-        criteria = self.query_helper.dateStringsToQ(
+        self.criteria = self.query_helper.dateStringsToQ(
             self.field,
             wanted_date_str,
             wanted_date_str
         )
 
-        self.queryset_filter.set_criteria(criteria)
-
-        return self.queryset_filter.filter(queryset)
+        return queryset.filter(self.criteria)
 
 class TableFilterActionDateRange(TableFilterAction):
     """
@@ -218,14 +211,14 @@ class TableFilterActionDateRange(TableFilterAction):
     """
 
     def __init__(self, name, title, field,
-    queryset_filter = QuerysetFilter(), query_helper = TableFilterQueryHelper()):
+    query_helper = TableFilterQueryHelper()):
         """
         field: (string) the field to find the max/min range from in the queryset
         """
         super(TableFilterActionDateRange, self).__init__(
             name,
             title,
-            queryset_filter
+            None
         )
 
         self.type = 'daterange'
@@ -248,17 +241,16 @@ class TableFilterActionDateRange(TableFilterAction):
         try:
             date_from_str, date_to_str = params.split(',')
         except ValueError:
-            self.queryset_filter.set_criteria(None)
+            self.criteria = None
             return
 
         # one of the values required for the filter is missing, so set
         # it to the one which was supplied
-        criteria = self.query_helper.dateStringsToQ(
+        self.criteria = self.query_helper.dateStringsToQ(
             self.field,
             date_from_str,
             date_to_str
         )
-        self.queryset_filter.set_criteria(criteria)
 
     def to_json(self, queryset):
         """ Dump as a JSON object """

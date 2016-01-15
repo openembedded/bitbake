@@ -32,7 +32,6 @@ from django.template import Context, Template
 from django.core.serializers.json import DjangoJSONEncoder
 from django.core.exceptions import FieldError
 from django.conf.urls import url, patterns
-from toastergui.querysetfilter import QuerysetFilter
 
 import types
 import json

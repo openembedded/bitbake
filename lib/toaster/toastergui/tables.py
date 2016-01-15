@@ -20,7 +20,6 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 from toastergui.widgets import ToasterTable
-from toastergui.querysetfilter import QuerysetFilter
 from orm.models import Recipe, ProjectLayer, Layer_Version, Machine, Project
 from orm.models import CustomImageRecipe, Package, Build, LogMessage, Task
 from orm.models import ProjectTarget
@@ -37,9 +36,13 @@ from toastergui.tablefilter import TableFilterActionDateRange
 from toastergui.tablefilter import TableFilterActionDay
 
 class ProjectFilters(object):
-    def __init__(self, project_layers):
-        self.in_project = QuerysetFilter(Q(layer_version__in=project_layers))
-        self.not_in_project = QuerysetFilter(~Q(layer_version__in=project_layers))
+    @staticmethod
+    def in_project(project_layers):
+        return Q(layer_version__in=project_layers)
+
+    @staticmethod
+    def not_in_project(project_layers):
+        return ~(ProjectFilters.in_project(project_layers))
 
 class LayersTable(ToasterTable):
     """Table of layers in Toaster"""
@@ -71,13 +74,13 @@ class LayersTable(ToasterTable):
         in_project_action = TableFilterActionToggle(
             "in_project",
             "Layers added to this project",
-            QuerysetFilter(criteria)
+            criteria
         )
 
         not_in_project_action = TableFilterActionToggle(
             "not_in_project",
             "Layers not added to this project",
-            QuerysetFilter(~criteria)
+            ~criteria
         )
 
         in_current_project_filter.add_action(in_project_action)
@@ -217,8 +220,6 @@ class MachinesTable(ToasterTable):
     def setup_filters(self, *args, **kwargs):
         project = Project.objects.get(pk=kwargs['pid'])
 
-        project_filters = ProjectFilters(self.project_layers)
-
         in_current_project_filter = TableFilter(
             "in_current_project",
             "Filter by project machines"
@@ -227,13 +228,13 @@ class MachinesTable(ToasterTable):
         in_project_action = TableFilterActionToggle(
             "in_project",
             "Machines provided by layers added to this project",
-            project_filters.in_project
+            ProjectFilters.in_project(self.project_layers)
         )
 
         not_in_project_action = TableFilterActionToggle(
             "not_in_project",
             "Machines provided by layers not added to this project",
-            project_filters.not_in_project
+            ProjectFilters.not_in_project(self.project_layers)
         )
 
         in_current_project_filter.add_action(in_project_action)
@@ -350,8 +351,6 @@ class RecipesTable(ToasterTable):
         return context
 
     def setup_filters(self, *args, **kwargs):
-        project_filters = ProjectFilters(self.project_layers)
-
         table_filter = TableFilter(
             'in_current_project',
             'Filter by project recipes'
@@ -360,13 +359,13 @@ class RecipesTable(ToasterTable):
         in_project_action = TableFilterActionToggle(
             'in_project',
             'Recipes provided by layers added to this project',
-            project_filters.in_project
+            ProjectFilters.in_project(self.project_layers)
         )
 
         not_in_project_action = TableFilterActionToggle(
             'not_in_project',
             'Recipes provided by layers not added to this project',
-            project_filters.not_in_project
+            ProjectFilters.not_in_project(self.project_layers)
         )
 
         table_filter.add_action(in_project_action)
@@ -1140,13 +1139,13 @@ class BuildsTable(ToasterTable):
         successful_builds_action = TableFilterActionToggle(
             'successful_builds',
             'Successful builds',
-            QuerysetFilter(Q(outcome=Build.SUCCEEDED))
+            Q(outcome=Build.SUCCEEDED)
         )
 
         failed_builds_action = TableFilterActionToggle(
             'failed_builds',
             'Failed builds',
-            QuerysetFilter(Q(outcome=Build.FAILED))
+            Q(outcome=Build.FAILED)
         )
 
         outcome_filter.add_action(successful_builds_action)
@@ -1226,13 +1225,13 @@ class BuildsTable(ToasterTable):
         with_failed_tasks_action = TableFilterActionToggle(
             'with_failed_tasks',
             'Builds with failed tasks',
-            QuerysetFilter(criteria)
+            criteria
         )
 
         without_failed_tasks_action = TableFilterActionToggle(
             'without_failed_tasks',
             'Builds without failed tasks',
-            QuerysetFilter(~criteria)
+            ~criteria
         )
 
         failed_tasks_filter.add_action(with_failed_tasks_action)
