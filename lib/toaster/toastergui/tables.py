@@ -27,6 +27,7 @@ from django.db.models import Q, Max, Count
 from django.conf.urls import url
 from django.core.urlresolvers import reverse
 from django.views.generic import TemplateView
+import itertools
 
 from toastergui.tablefilter import TableFilter, TableFilterActionToggle
 
@@ -887,7 +888,22 @@ class BuildsTable(ToasterTable):
         self.static_context_extra['Task'] = Task
 
     def get_context_data(self, **kwargs):
-        return super(BuildsTable, self).get_context_data(**kwargs)
+        context = super(BuildsTable, self).get_context_data(**kwargs)
+
+        # for the latest builds section
+        queryset = Build.objects.all()
+
+        finished_criteria = Q(outcome=Build.SUCCEEDED) | Q(outcome=Build.FAILED)
+
+        latest_builds = itertools.chain(
+            queryset.filter(outcome=Build.IN_PROGRESS).order_by("-started_on"),
+            queryset.filter(finished_criteria).order_by("-completed_on")[:3]
+        )
+
+        context['mru'] = list(latest_builds)
+        context['mrb_type'] = 'all'
+
+        return context
 
     def setup_queryset(self, *args, **kwargs):
         queryset = Build.objects.all()

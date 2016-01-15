@@ -3,13 +3,13 @@
 {% block title %} All builds - Toaster {% endblock %}
 
 {% block pagecontent %}
-  <div class="page-header top-air">
-    <h1 data-role="page-title"></h1>
-  </div>
 
   <div class="row-fluid">
-    {# TODO need to pass this data to context #}
-    {#% include 'mrb_section.html' %#}
+    {% with mru=mru mrb_type=mrb_type %}
+      {% include 'mrb_section.html' %}
+    {% endwith %}
+
+    <h1  class="page-header top-air" data-role="page-title"></h1>
 
     {% url 'builds' as xhr_table_url %}
     {% include 'toastertable.html' %}
