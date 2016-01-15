@@ -39,11 +39,13 @@ import json
 import collections
 import operator
 import re
+import urllib
 
 import logging
 logger = logging.getLogger("toaster")
 
 from toastergui.views import objtojson
+from toastergui.tablefilter import TableFilterMap
 
 class ToasterTable(TemplateView):
     def __init__(self, *args, **kwargs):
@@ -53,7 +55,10 @@ class ToasterTable(TemplateView):
         self.title = "Table"
         self.queryset = None
         self.columns = []
-        self.filters = {}
+
+        # map from field names to Filter instances
+        self.filter_map = TableFilterMap()
+
         self.total_count = 0
         self.static_context_extra = {}
         self.filter_actions = {}
@@ -66,7 +71,7 @@ class ToasterTable(TemplateView):
                         orderable=True,
                         field_name="id")
 
-        # prevent HTTP caching of table data
+    # prevent HTTP caching of table data
     @cache_control(must_revalidate=True, max_age=0, no_store=True, no_cache=True)
     def dispatch(self, *args, **kwargs):
         return super(ToasterTable, self).dispatch(*args, **kwargs)
@@ -108,27 +113,10 @@ class ToasterTable(TemplateView):
             self.apply_search(search)
 
         name = request.GET.get("name", None)
-        if name is None:
-            data = json.dumps(self.filters,
-                              indent=2,
-                              cls=DjangoJSONEncoder)
-        else:
-            for actions in self.filters[name]['filter_actions']:
-                queryset_filter = self.filter_actions[actions['name']]
-                actions['count'] = queryset_filter.count(self.queryset)
-
-            # Add the "All" items filter action
-            self.filters[name]['filter_actions'].insert(0, {
-                'name' : 'all',
-                'title' : 'All',
-                'count' : self.queryset.count(),
-            })
-
-            data = json.dumps(self.filters[name],
-                              indent=2,
-                              cls=DjangoJSONEncoder)
-
-            return data
+        table_filter = self.filter_map.get_filter(name)
+        return json.dumps(table_filter.to_json(self.queryset),
+                          indent=2,
+                          cls=DjangoJSONEncoder)
 
     def setup_columns(self, *args, **kwargs):
         """ function to implement in the subclass which sets up the columns """
@@ -140,33 +128,13 @@ class ToasterTable(TemplateView):
         """ function to implement in the subclass which sets up the queryset"""
         pass
 
-    def add_filter(self, name, title, filter_actions):
+    def add_filter(self, table_filter):
         """Add a filter to the table.
 
         Args:
-            name (str): Unique identifier of the filter.
-            title (str): Title of the filter.
-            filter_actions: Actions for all the filters.
+            table_filter: Filter instance
         """
-        self.filters[name] = {
-          'title' : title,
-          'filter_actions' : filter_actions,
-        }
-
-    def make_filter_action(self, name, title, queryset_filter):
-        """
-        Utility to make a filter_action; queryset_filter is an instance
-        of QuerysetFilter or a function
-        """
-
-        action = {
-          'title' : title,
-          'name' : name,
-        }
-
-        self.filter_actions[name] = queryset_filter
-
-        return action
+        self.filter_map.add_filter(table_filter.name, table_filter)
 
     def add_column(self, title="", help_text="",
                    orderable=False, hideable=True, hidden=False,
@@ -216,19 +184,41 @@ class ToasterTable(TemplateView):
         return template.render(context)
 
     def apply_filter(self, filters, **kwargs):
+        """
+        Apply a filter submitted in the querystring to the ToasterTable
+
+        filters: (str) in the format:
+          '<filter name>:<action name>!<action params>'
+        where <action params> is optional
+
+        <filter name> and <action name> are used to look up the correct filter
+        in the ToasterTable's filter map; the <action params> are set on
+        TableFilterAction* before its filter is applied and may modify the
+        queryset returned by the filter
+        """
         self.setup_filters(**kwargs)
 
         try:
-            filter_name, filter_action = filters.split(':')
+            filter_name, action_name_and_params = filters.split(':')
+
+            action_name = None
+            action_params = None
+            if re.search('!', action_name_and_params):
+                action_name, action_params = action_name_and_params.split('!')
+                action_params = urllib.unquote_plus(action_params)
+            else:
+                action_name = action_name_and_params
         except ValueError:
             return
 
-        if "all" in filter_action:
+        if "all" in action_name:
             return
 
         try:
-            queryset_filter = self.filter_actions[filter_action]
-            self.queryset = queryset_filter.filter(self.queryset)
+            table_filter = self.filter_map.get_filter(filter_name)
+            action = table_filter.get_action(action_name)
+            action.set_params(action_params)
+            self.queryset = action.filter(self.queryset)
         except KeyError:
             # pass it to the user - programming error here
             raise
