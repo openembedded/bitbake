@@ -18,13 +18,18 @@
 # You should have received a copy of the GNU General Public License along
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
 from django.db.models import Q, Max, Min
 from django.utils import dateparse, timezone
+from datetime import timedelta
+from querysetfilter import QuerysetFilter
 
 class TableFilter(object):
     """
     Stores a filter for a named field, and can retrieve the action
-    requested from the set of actions for that filter
+    requested from the set of actions for that filter;
+    the order in which actions are added governs the order in which they
+    are returned in the JSON for the filter
     """
 
     def __init__(self, name, title):
@@ -32,7 +37,11 @@ class TableFilter(object):
         self.title = title
         self.__filter_action_map = {}
 
+        # retains the ordering of actions
+        self.__filter_action_keys = []
+
     def add_action(self, action):
+        self.__filter_action_keys.append(action.name)
         self.__filter_action_map[action.name] = action
 
     def get_action(self, action_name):
@@ -56,7 +65,8 @@ class TableFilter(object):
         })
 
         # add other filter actions
-        for action_name, filter_action in self.__filter_action_map.iteritems():
+        for action_name in self.__filter_action_keys:
+            filter_action = self.__filter_action_map[action_name]
             obj = filter_action.to_json(queryset)
             obj['action_name'] = action_name
             filter_actions.append(obj)
@@ -66,6 +76,40 @@ class TableFilter(object):
             'title': self.title,
             'filter_actions': filter_actions
         }
+
+class TableFilterQueryHelper(object):
+    def dateStringsToQ(self, field_name, date_from_str, date_to_str):
+        """
+        Convert the date strings from_date_str and to_date_str into a
+        set of args in the form
+
+          {'<field_name>__gte': <date from>, '<field_name>__lte': <date to>}
+
+        where date_from and date_to are Django-timezone-aware dates; then
+        convert that into a Django Q object
+
+        Returns the Q object based on those criteria
+        """
+
+        # one of the values required for the filter is missing, so set
+        # it to the one which was supplied
+        if date_from_str == '':
+            date_from_str = date_to_str
+        elif date_to_str == '':
+            date_to_str = date_from_str
+
+        date_from_naive = dateparse.parse_datetime(date_from_str + ' 00:00:00')
+        date_to_naive = dateparse.parse_datetime(date_to_str + ' 23:59:59')
+
+        tz = timezone.get_default_timezone()
+        date_from = timezone.make_aware(date_from_naive, tz)
+        date_to = timezone.make_aware(date_to_naive, tz)
+
+        args = {}
+        args[field_name + '__gte'] = date_from
+        args[field_name + '__lte'] = date_to
+
+        return Q(**args)
 
 class TableFilterAction(object):
     """
@@ -99,7 +143,7 @@ class TableFilterAction(object):
         return {
             'title': self.title,
             'type': self.type,
-            'count': self.queryset_filter.count(queryset)
+            'count': self.filter(queryset).count()
         }
 
 class TableFilterActionToggle(TableFilterAction):
@@ -113,15 +157,70 @@ class TableFilterActionToggle(TableFilterAction):
         super(TableFilterActionToggle, self).__init__(*args)
         self.type = 'toggle'
 
+class TableFilterActionDay(TableFilterAction):
+    """
+    A filter action which filters according to the named datetime field and a
+    string representing a day ("today" or "yesterday")
+    """
+
+    TODAY = 'today'
+    YESTERDAY = 'yesterday'
+
+    def __init__(self, name, title, field, day,
+    queryset_filter = QuerysetFilter(), query_helper = TableFilterQueryHelper()):
+        """
+        field: (string) the datetime field to filter by
+        day: (string) "today" or "yesterday"
+        """
+        super(TableFilterActionDay, self).__init__(
+            name,
+            title,
+            queryset_filter
+        )
+        self.type = 'day'
+        self.field = field
+        self.day = day
+        self.query_helper = query_helper
+
+    def filter(self, queryset):
+        """
+        Apply the day filtering before returning the queryset;
+        this is done here as the value of the filter criteria changes
+        depending on when the filtering is applied
+        """
+
+        criteria = None
+        date_str = None
+        now = timezone.now()
+
+        if self.day == self.YESTERDAY:
+            increment = timedelta(days=1)
+            wanted_date = now - increment
+        else:
+            wanted_date = now
+
+        wanted_date_str = wanted_date.strftime('%Y-%m-%d')
+
+        criteria = self.query_helper.dateStringsToQ(
+            self.field,
+            wanted_date_str,
+            wanted_date_str
+        )
+
+        self.queryset_filter.set_criteria(criteria)
+
+        return self.queryset_filter.filter(queryset)
+
 class TableFilterActionDateRange(TableFilterAction):
     """
     A filter action which will filter the queryset by a date range.
     The date range can be set via set_params()
     """
 
-    def __init__(self, name, title, field, queryset_filter):
+    def __init__(self, name, title, field,
+    queryset_filter = QuerysetFilter(), query_helper = TableFilterQueryHelper()):
         """
-        field: the field to find the max/min range from in the queryset
+        field: (string) the field to find the max/min range from in the queryset
         """
         super(TableFilterActionDateRange, self).__init__(
             name,
@@ -131,9 +230,13 @@ class TableFilterActionDateRange(TableFilterAction):
 
         self.type = 'daterange'
         self.field = field
+        self.query_helper = query_helper
 
     def set_filter_params(self, params):
         """
+        This filter depends on the user selecting some input, so it needs
+        to have its parameters set before its queryset is filtered
+
         params: (str) a string of extra parameters for the filtering
         in the format "2015-12-09,2015-12-11" (from,to); this is passed in the
         querystring and used to set the criteria on the QuerysetFilter
@@ -143,30 +246,18 @@ class TableFilterActionDateRange(TableFilterAction):
         # if params are invalid, return immediately, resetting criteria
         # on the QuerysetFilter
         try:
-            from_date_str, to_date_str = params.split(',')
+            date_from_str, date_to_str = params.split(',')
         except ValueError:
             self.queryset_filter.set_criteria(None)
             return
 
         # one of the values required for the filter is missing, so set
         # it to the one which was supplied
-        if from_date_str == '':
-            from_date_str = to_date_str
-        elif to_date_str == '':
-            to_date_str = from_date_str
-
-        date_from_naive = dateparse.parse_datetime(from_date_str + ' 00:00:00')
-        date_to_naive = dateparse.parse_datetime(to_date_str + ' 23:59:59')
-
-        tz = timezone.get_default_timezone()
-        date_from = timezone.make_aware(date_from_naive, tz)
-        date_to = timezone.make_aware(date_to_naive, tz)
-
-        args = {}
-        args[self.field + '__gte'] = date_from
-        args[self.field + '__lte'] = date_to
-
-        criteria = Q(**args)
+        criteria = self.query_helper.dateStringsToQ(
+            self.field,
+            date_from_str,
+            date_to_str
+        )
         self.queryset_filter.set_criteria(criteria)
 
     def to_json(self, queryset):
@@ -179,7 +270,8 @@ class TableFilterActionDateRange(TableFilterAction):
         data['max'] = queryset.aggregate(Max(self.field))[self.field + '__max']
 
         # a range filter has a count of None, as the number of records it
-        # will select depends on the date range entered
+        # will select depends on the date range entered and we don't know
+        # that ahead of time
         data['count'] = None
 
         return data

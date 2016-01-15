@@ -22,7 +22,3 @@ class QuerysetFilter(object):
             return queryset.filter(self.criteria)
         else:
             return queryset
-
-    def count(self, queryset):
-        """ Returns a count of the elements in the filtered queryset """
-        return self.filter(queryset).count()

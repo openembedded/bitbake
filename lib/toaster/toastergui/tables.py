@@ -32,6 +32,7 @@ import itertools
 from toastergui.tablefilter import TableFilter
 from toastergui.tablefilter import TableFilterActionToggle
 from toastergui.tablefilter import TableFilterActionDateRange
+from toastergui.tablefilter import TableFilterActionDay
 
 class ProjectFilters(object):
     def __init__(self, project_layers):
@@ -65,20 +66,20 @@ class LayersTable(ToasterTable):
 
         criteria = Q(projectlayer__in=self.project_layers)
 
-        in_project_filter_action = TableFilterActionToggle(
+        in_project_action = TableFilterActionToggle(
             "in_project",
             "Layers added to this project",
             QuerysetFilter(criteria)
         )
 
-        not_in_project_filter_action = TableFilterActionToggle(
+        not_in_project_action = TableFilterActionToggle(
             "not_in_project",
             "Layers not added to this project",
             QuerysetFilter(~criteria)
         )
 
-        in_current_project_filter.add_action(in_project_filter_action)
-        in_current_project_filter.add_action(not_in_project_filter_action)
+        in_current_project_filter.add_action(in_project_action)
+        in_current_project_filter.add_action(not_in_project_action)
         self.add_filter(in_current_project_filter)
 
     def setup_queryset(self, *args, **kwargs):
@@ -221,20 +222,20 @@ class MachinesTable(ToasterTable):
             "Filter by project machines"
         )
 
-        in_project_filter_action = TableFilterActionToggle(
+        in_project_action = TableFilterActionToggle(
             "in_project",
             "Machines provided by layers added to this project",
             project_filters.in_project
         )
 
-        not_in_project_filter_action = TableFilterActionToggle(
+        not_in_project_action = TableFilterActionToggle(
             "not_in_project",
             "Machines provided by layers not added to this project",
             project_filters.not_in_project
         )
 
-        in_current_project_filter.add_action(in_project_filter_action)
-        in_current_project_filter.add_action(not_in_project_filter_action)
+        in_current_project_filter.add_action(in_project_action)
+        in_current_project_filter.add_action(not_in_project_action)
         self.add_filter(in_current_project_filter)
 
     def setup_queryset(self, *args, **kwargs):
@@ -354,20 +355,20 @@ class RecipesTable(ToasterTable):
             'Filter by project recipes'
         )
 
-        in_project_filter_action = TableFilterActionToggle(
+        in_project_action = TableFilterActionToggle(
             'in_project',
             'Recipes provided by layers added to this project',
             project_filters.in_project
         )
 
-        not_in_project_filter_action = TableFilterActionToggle(
+        not_in_project_action = TableFilterActionToggle(
             'not_in_project',
             'Recipes provided by layers not added to this project',
             project_filters.not_in_project
         )
 
-        table_filter.add_action(in_project_filter_action)
-        table_filter.add_action(not_in_project_filter_action)
+        table_filter.add_action(in_project_action)
+        table_filter.add_action(not_in_project_action)
         self.add_filter(table_filter)
 
     def setup_queryset(self, *args, **kwargs):
@@ -1137,20 +1138,20 @@ class BuildsTable(ToasterTable):
             'Filter builds by outcome'
         )
 
-        successful_builds_filter_action = TableFilterActionToggle(
+        successful_builds_action = TableFilterActionToggle(
             'successful_builds',
             'Successful builds',
             QuerysetFilter(Q(outcome=Build.SUCCEEDED))
         )
 
-        failed_builds_filter_action = TableFilterActionToggle(
+        failed_builds_action = TableFilterActionToggle(
             'failed_builds',
             'Failed builds',
             QuerysetFilter(Q(outcome=Build.FAILED))
         )
 
-        outcome_filter.add_action(successful_builds_filter_action)
-        outcome_filter.add_action(failed_builds_filter_action)
+        outcome_filter.add_action(successful_builds_action)
+        outcome_filter.add_action(failed_builds_action)
         self.add_filter(outcome_filter)
 
         # started on
@@ -1159,14 +1160,29 @@ class BuildsTable(ToasterTable):
             'Filter by date when build was started'
         )
 
-        by_started_date_range_filter_action = TableFilterActionDateRange(
-            'date_range',
-            'Build date range',
+        started_today_action = TableFilterActionDay(
+            'today',
+            'Today\'s builds',
             'started_on',
-            QuerysetFilter()
+            'today'
         )
 
-        started_on_filter.add_action(by_started_date_range_filter_action)
+        started_yesterday_action = TableFilterActionDay(
+            'yesterday',
+            'Yesterday\'s builds',
+            'started_on',
+            'yesterday'
+        )
+
+        by_started_date_range_action = TableFilterActionDateRange(
+            'date_range',
+            'Build date range',
+            'started_on'
+        )
+
+        started_on_filter.add_action(started_today_action)
+        started_on_filter.add_action(started_yesterday_action)
+        started_on_filter.add_action(by_started_date_range_action)
         self.add_filter(started_on_filter)
 
         # completed on
@@ -1175,14 +1191,29 @@ class BuildsTable(ToasterTable):
             'Filter by date when build was completed'
         )
 
-        by_completed_date_range_filter_action = TableFilterActionDateRange(
-            'date_range',
-            'Build date range',
+        completed_today_action = TableFilterActionDay(
+            'today',
+            'Today\'s builds',
             'completed_on',
-            QuerysetFilter()
+            'today'
         )
 
-        completed_on_filter.add_action(by_completed_date_range_filter_action)
+        completed_yesterday_action = TableFilterActionDay(
+            'yesterday',
+            'Yesterday\'s builds',
+            'completed_on',
+            'yesterday'
+        )
+
+        by_completed_date_range_action = TableFilterActionDateRange(
+            'date_range',
+            'Build date range',
+            'completed_on'
+        )
+
+        completed_on_filter.add_action(completed_today_action)
+        completed_on_filter.add_action(completed_yesterday_action)
+        completed_on_filter.add_action(by_completed_date_range_action)
         self.add_filter(completed_on_filter)
 
         # failed tasks
@@ -1193,18 +1224,18 @@ class BuildsTable(ToasterTable):
 
         criteria = Q(task_build__outcome=Task.OUTCOME_FAILED)
 
-        with_failed_tasks_filter_action = TableFilterActionToggle(
+        with_failed_tasks_action = TableFilterActionToggle(
             'with_failed_tasks',
             'Builds with failed tasks',
             QuerysetFilter(criteria)
         )
 
-        without_failed_tasks_filter_action = TableFilterActionToggle(
+        without_failed_tasks_action = TableFilterActionToggle(
             'without_failed_tasks',
             'Builds without failed tasks',
             QuerysetFilter(~criteria)
         )
 
-        failed_tasks_filter.add_action(with_failed_tasks_filter_action)
-        failed_tasks_filter.add_action(without_failed_tasks_filter_action)
+        failed_tasks_filter.add_action(with_failed_tasks_action)
+        failed_tasks_filter.add_action(without_failed_tasks_action)
         self.add_filter(failed_tasks_filter)
