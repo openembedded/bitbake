@@ -35,7 +35,7 @@ from orm.models import BitbakeVersion, CustomImageRecipe
 from bldcontrol import bbcontroller
 from django.views.decorators.cache import cache_control
 from django.core.urlresolvers import reverse, resolve
-from django.core.exceptions import MultipleObjectsReturned
+from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.http import HttpResponseBadRequest, HttpResponseNotFound
 from django.utils import timezone
@@ -2575,78 +2575,63 @@ if True:
 
         return context
 
-    def _file_name_for_artifact(b, artifact_type, artifact_id):
+    def _file_names_for_artifact(build, artifact_type, artifact_id):
+        """
+        Return a tuple (file path, file name for the download response) for an
+        artifact of type artifact_type with ID artifact_id for build; if
+        artifact type is not supported, returns (None, None)
+        """
         file_name = None
-        # Target_Image_File file_name
-        if artifact_type == "imagefile":
-            file_name = Target_Image_File.objects.get(target__build = b, pk = artifact_id).file_name
+        response_file_name = None
+
+        if artifact_type == "cookerlog":
+            file_name = build.cooker_log_path
+            response_file_name = "cooker.log"
+
+        elif artifact_type == "imagefile":
+            file_name = Target_Image_File.objects.get(target__build = build, pk = artifact_id).file_name
 
         elif artifact_type == "buildartifact":
-            file_name = BuildArtifact.objects.get(build = b, pk = artifact_id).file_name
+            file_name = BuildArtifact.objects.get(build = build, pk = artifact_id).file_name
 
-        elif artifact_type ==  "licensemanifest":
-            file_name = Target.objects.get(build = b, pk = artifact_id).license_manifest_path
+        elif artifact_type == "licensemanifest":
+            file_name = Target.objects.get(build = build, pk = artifact_id).license_manifest_path
 
         elif artifact_type == "tasklogfile":
-            file_name = Task.objects.get(build = b, pk = artifact_id).logfile
+            file_name = Task.objects.get(build = build, pk = artifact_id).logfile
 
         elif artifact_type == "logmessagefile":
-            file_name = LogMessage.objects.get(build = b, pk = artifact_id).pathname
-        else:
-            raise Exception("FIXME: artifact type %s not implemented" % (artifact_type))
+            file_name = LogMessage.objects.get(build = build, pk = artifact_id).pathname
 
-        return file_name
+        if file_name and not response_file_name:
+            response_file_name = os.path.basename(file_name)
 
+        return (file_name, response_file_name)
 
     def build_artifact(request, build_id, artifact_type, artifact_id):
-        if artifact_type in ["cookerlog"]:
-            try:
-                build = Build.objects.get(pk = build_id)
-                file_name = build.cooker_log_path
+        """
+        View which returns a build artifact file as a response
+        """
+        file_name = None
+        response_file_name = None
+
+        try:
+            build = Build.objects.get(pk = build_id)
+            file_name, response_file_name = _file_names_for_artifact(
+                build, artifact_type, artifact_id
+            )
+
+            if file_name and response_file_name:
                 fsock = open(file_name, "r")
                 content_type = MimeTypeFinder.get_mimetype(file_name)
 
                 response = HttpResponse(fsock, content_type = content_type)
 
-                disposition = 'attachment; filename=cooker.log'
-                response['Content-Disposition'] = disposition
+                disposition = "attachment; filename=" + response_file_name
+                response["Content-Disposition"] = disposition
 
                 return response
-            except IOError:
-                context = {
-                    'build' : Build.objects.get(pk = build_id),
-                }
-                return render(request, "unavailable_artifact.html", context)
-
-        else:
-            # retrieve the artifact directly from the build environment
-            return _get_be_artifact(request, build_id, artifact_type, artifact_id)
-
-
-    def _get_be_artifact(request, build_id, artifact_type, artifact_id):
-        try:
-            b = Build.objects.get(pk=build_id)
-            if b.buildrequest is None or b.buildrequest.environment is None:
-                raise Exception("Artifact not available for download (missing build request or build environment)")
-
-            file_name = _file_name_for_artifact(b, artifact_type, artifact_id)
-            fsock = None
-            content_type='application/force-download'
-
-            if file_name is None:
-                raise Exception("Could not handle artifact %s id %s" % (artifact_type, artifact_id))
             else:
-                content_type = MimeTypeFinder.get_mimetype(file_name)
-                fsock = b.buildrequest.environment.get_artifact(file_name)
-                file_name = os.path.basename(file_name) # we assume that the build environment system has the same path conventions as host
-
-            response = HttpResponse(fsock, content_type = content_type)
-
-            # returns a file from the environment
-            response['Content-Disposition'] = 'attachment; filename=' + file_name
-            return response
-        except IOError:
-            context = {
-                'build' : Build.objects.get(pk = build_id),
-            }
-            return render(request, "unavailable_artifact.html", context)
+                return render(request, "unavailable_artifact.html")
+        except ObjectDoesNotExist, IOError:
+            return render(request, "unavailable_artifact.html")
