@@ -1401,7 +1401,7 @@ class RunQueueExecuteTasks(RunQueueExecute):
                 self.runq_buildable.append(1)
             else:
                 self.runq_buildable.append(0)
-            if len(self.rqdata.runq_revdeps[task]) > 0 and self.rqdata.runq_revdeps[task].issubset(self.rq.scenequeue_covered) and task not in self.rq.scenequeue_notcovered:
+            if len(self.rqdata.runq_revdeps[task]) > 0 and self.rqdata.runq_revdeps[task].issubset(self.rq.scenequeue_covered):
                 self.rq.scenequeue_covered.add(task)
 
         found = True
@@ -1412,7 +1412,7 @@ class RunQueueExecuteTasks(RunQueueExecute):
                     continue
                 logger.debug(1, 'Considering %s (%s): %s' % (task, self.rqdata.get_user_idstring(task), str(self.rqdata.runq_revdeps[task])))
 
-                if len(self.rqdata.runq_revdeps[task]) > 0 and self.rqdata.runq_revdeps[task].issubset(self.rq.scenequeue_covered) and task not in self.rq.scenequeue_notcovered:
+                if len(self.rqdata.runq_revdeps[task]) > 0 and self.rqdata.runq_revdeps[task].issubset(self.rq.scenequeue_covered):
                     found = True
                     self.rq.scenequeue_covered.add(task)
 
@@ -2028,9 +2028,6 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
         self.rq.scenequeue_covered = set()
         for task in oldcovered:
             self.rq.scenequeue_covered.add(self.rqdata.runq_setscene[task])
-        self.rq.scenequeue_notcovered = set()
-        for task in self.scenequeue_notcovered:
-            self.rq.scenequeue_notcovered.add(self.rqdata.runq_setscene[task])
 
         logger.debug(1, 'We can skip tasks %s', sorted(self.rq.scenequeue_covered))
 
