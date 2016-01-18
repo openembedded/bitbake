@@ -165,7 +165,6 @@ $(document).ready(function(){
     progressTimer = window.setInterval(function() {
       libtoaster.getProjectInfo(libtoaster.ctx.projectPageUrl,
         function(prjInfo){
-
           /* These two are needed because a build can be 100% and still
            * in progress due to the fact that the % done is updated at the
            * start of a task so it can be doing the last task at 100%
@@ -176,18 +175,18 @@ $(document).ready(function(){
           for (var i in prjInfo.builds){
             var build = prjInfo.builds[i];
 
-            if (build.status === "In Progress" ||
+            if (build.outcome === "In Progress" ||
                $(".progress .bar").length > 0){
               /* Update the build progress */
               var percentDone;
 
-              if (build.status !== "In Progress"){
+              if (build.outcome !== "In Progress"){
                 /* We have to ignore the value when it's Succeeded because it
                 *   goes back to 0
                 */
                 percentDone = 100;
               } else {
-                percentDone = build.build[0].completeper;
+                percentDone = build.percentDone;
                 inProgress++;
               }
 

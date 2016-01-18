@@ -31,6 +31,7 @@ import django.db.models.signals
 
 import os.path
 import re
+import itertools
 
 import logging
 logger = logging.getLogger("toaster")
@@ -372,11 +373,37 @@ class Build(models.Model):
     build_name = models.CharField(max_length=100)
     bitbake_version = models.CharField(max_length=50)
 
+    @staticmethod
+    def get_recent(project=None):
+        """
+        Return recent builds as a list; if project is set, only return
+        builds for that project
+        """
+
+        builds = Build.objects.all()
+
+        if project:
+            builds = builds.filter(project=project)
+
+        finished_criteria = Q(outcome=Build.SUCCEEDED) | Q(outcome=Build.FAILED)
+
+        recent_builds = list(itertools.chain(
+            builds.filter(outcome=Build.IN_PROGRESS).order_by("-started_on"),
+            builds.filter(finished_criteria).order_by("-completed_on")[:3]
+        ))
+
+        # add percentage done property to each build; this is used
+        # to show build progress in mrb_section.html
+        for build in recent_builds:
+            build.percentDone = build.completeper()
+
+        return recent_builds
+
     def completeper(self):
         tf = Task.objects.filter(build = self)
         tfc = tf.count()
         if tfc > 0:
-            completeper = tf.exclude(order__isnull=True).count()*100/tf.count()
+            completeper = tf.exclude(order__isnull=True).count()*100/tfc
         else:
             completeper = 0
         return completeper

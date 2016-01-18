@@ -28,7 +28,6 @@ from django.conf.urls import url
 from django.core.urlresolvers import reverse, resolve
 from django.http import HttpResponse
 from django.views.generic import TemplateView
-import itertools
 
 from toastergui.tablefilter import TableFilter
 from toastergui.tablefilter import TableFilterActionToggle
@@ -1060,17 +1059,9 @@ class BuildsTable(ToasterTable):
     def get_context_data(self, **kwargs):
         context = super(BuildsTable, self).get_context_data(**kwargs)
 
-        # for the latest builds section
-        builds = self.get_builds()
+        # should be set in subclasses
+        context['mru'] = []
 
-        finished_criteria = Q(outcome=Build.SUCCEEDED) | Q(outcome=Build.FAILED)
-
-        latest_builds = itertools.chain(
-            builds.filter(outcome=Build.IN_PROGRESS).order_by("-started_on"),
-            builds.filter(finished_criteria).order_by("-completed_on")[:3]
-        )
-
-        context['mru'] = list(latest_builds)
         context['mrb_type'] = self.mrb_type
 
         return context
@@ -1481,6 +1472,12 @@ class AllBuildsTable(BuildsTable):
                         static_data_name='project',
                         static_data_template=project_template)
 
+    def get_context_data(self, **kwargs):
+        """ Get all builds for the recent builds area """
+        context = super(AllBuildsTable, self).get_context_data(**kwargs)
+        context['mru'] = Build.get_recent()
+        return context
+
 class ProjectBuildsTable(BuildsTable):
     """
     Builds page for a single project; a BuildsTable, with the queryset
@@ -1521,18 +1518,16 @@ class ProjectBuildsTable(BuildsTable):
 
     def get_context_data(self, **kwargs):
         """
+        Get recent builds for this project, and the project itself
+
         NOTE: self.project_id must be set before calling super(),
         as it's used in get_context_data()
         """
         self.project_id = kwargs['pid']
-
         context = super(ProjectBuildsTable, self).get_context_data(**kwargs)
-        context['project'] = Project.objects.get(pk=self.project_id)
-
-        return context
-
-    def get_builds(self):
-        """ override: only return builds for the relevant project """
 
         project = Project.objects.get(pk=self.project_id)
-        return Build.objects.filter(project=project)
+        context['mru'] = Build.get_recent(project)
+        context['project'] = project
+
+        return context
