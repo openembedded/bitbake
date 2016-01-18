@@ -366,6 +366,8 @@ def main(server, eventHandler, params):
                     buildinfohelper.store_license_manifest_path(event)
                 elif event.type == "SetBRBE":
                     buildinfohelper.brbe = buildinfohelper._get_data_from_event(event)
+                elif event.type == "OSErrorException":
+                    logger.error(event)
                 else:
                     logger.error("Unprocessed MetadataEvent %s ", str(event))
                 continue
