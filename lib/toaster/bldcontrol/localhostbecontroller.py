@@ -280,6 +280,13 @@ class LocalhostBEController(BuildEnvironmentController):
         # set up the build environment with the needed layers
         self.setLayers(bitbake, layers, targets)
 
+        # write configuration file
+        filepath = os.path.join(self.be.builddir, "conf/toaster.conf")
+        with open(filepath, 'w') as conf:
+            for var in variables:
+                conf.write('%s="%s"\n' % (var.name, var.value))
+            conf.write('INHERIT+="toaster buildhistory"')
+
         # get the bb server running with the build req id and build env id
         bbctrl = self.getBBController()
 
