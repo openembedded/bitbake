@@ -1359,6 +1359,25 @@ class Builder(gtk.Window):
 
         return kernel_path
 
+    def show_load_run_script_dialog(self):
+        dialog = gtk.FileChooserDialog("Select Run Script", self,
+                                       gtk.FILE_CHOOSER_ACTION_OPEN)
+        button = dialog.add_button("Cancel", gtk.RESPONSE_NO)
+        HobAltButton.style_button(button)
+        button = dialog.add_button("Select", gtk.RESPONSE_YES)
+        HobButton.style_button(button)
+
+        dialog.set_current_folder(self.parameters.image_addr)
+
+        response = dialog.run()
+        run_script_path = ""
+        if response == gtk.RESPONSE_YES:
+            run_script_path = dialog.get_filename()
+
+        dialog.destroy()
+
+        return run_script_path
+
     def runqemu_image(self, image_name, kernel_name):
         if not image_name or not kernel_name:
             lbl = "<b>Please select %s to launch in QEMU.</b>" % ("a kernel" if image_name else "an image")
@@ -1388,6 +1407,46 @@ class Builder(gtk.Window):
             msg = msg + " please make sure the following paths exist:\n"
             msg = msg + "image path:" + image_path + "\n"
             msg = msg + "kernel path:" + kernel_path + "\n"
+            msg = msg + "source environment path:" + source_env_path + "\n"
+            msg = msg + "tmp path: " + tmp_path + "."
+            msg = msg + "You may be missing either xterm or vte for terminal services."
+            dialog = CrumbsMessageDialog(self, lbl, gtk.MESSAGE_ERROR, msg)
+            button = dialog.add_button("Close", gtk.RESPONSE_OK)
+            HobButton.style_button(button)
+            dialog.run()
+            dialog.destroy()
+
+    def run_custom_image(self, image_name, custom_sim_path):
+        if not image_name or not custom_sim_path:
+            if not image_name:
+                lbl = "<b>Please select an image to launch in the custom simulator.</b>"
+            else:
+                lbl = "<b>Please select a custom simulator for launching the selected image.</b>"
+            dialog = CrumbsMessageDialog(self, lbl, gtk.MESSAGE_INFO)
+            button = dialog.add_button("Close", gtk.RESPONSE_OK)
+            HobButton.style_button(button)
+            dialog.run()
+            dialog.destroy()
+            return
+
+        image_path = os.path.join(self.parameters.image_addr, image_name)
+
+        source_env_path = os.path.join(self.parameters.core_base, "oe-init-build-env")
+        tmp_path = self.parameters.tmpdir
+        cmdline = bb.ui.crumbs.utils.which_terminal()
+        if os.path.exists(image_path) and os.path.exists(custom_sim_path) \
+           and os.path.exists(source_env_path) and os.path.exists(tmp_path) \
+           and cmdline:
+            cmdline += "\' bash -c \"export OE_TMPDIR=" + tmp_path + "; "
+            cmdline += "source " + source_env_path + " " + os.getcwd() + "; "
+            cmdline += custom_sim_path + " " + image_path + "\"\'"
+            subprocess.Popen(shlex.split(cmdline))
+        else:
+            lbl = "<b>Path error</b>"
+            msg = "One of your paths is wrong,"
+            msg = msg + " please make sure the following paths exist:\n"
+            msg = msg + "image path:" + image_path + "\n"
+            msg = msg + "custom simulator path:" + custom_sim_path + "\n"
             msg = msg + "source environment path:" + source_env_path + "\n"
             msg = msg + "tmp path: " + tmp_path + "."
             msg = msg + "You may be missing either xterm or vte for terminal services."
