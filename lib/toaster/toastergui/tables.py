@@ -738,15 +738,10 @@ class SelectPackagesTable(PackagesTable):
 
         current_recipes = prj.get_available_recipes()
 
-        # Exclude ghost packages and ones which have locale in the name
-        # This is a work around locale packages being dynamically created
-        # and therefore not recognised as packages by bitbake.
-        # We also only show packages which recipes->layers are in the project
+        # only show packages where recipes->layers are in the project
         self.queryset = CustomImagePackage.objects.filter(
                 ~Q(recipe=None) &
-                Q(recipe__in=current_recipes) &
-                ~Q(name__icontains="locale") &
-                ~Q(name__icontains="packagegroup"))
+                Q(recipe__in=current_recipes))
 
         self.queryset = self.queryset.order_by('name')
 
