@@ -749,6 +749,20 @@ class Package(models.Model):
     section = models.CharField(max_length=80, blank=True)
     license = models.CharField(max_length=80, blank=True)
 
+    @property
+    def is_locale_package(self):
+        """ Returns True if this package is identifiable as a locale package """
+        if self.name.find('locale') != -1:
+            return True
+        return False
+
+    @property
+    def is_packagegroup(self):
+        """ Returns True is this package is identifiable as a packagegroup """
+        if self.name.find('packagegroup') != -1:
+            return True
+        return False
+
 class CustomImagePackage(Package):
     # CustomImageRecipe fields to track pacakges appended,
     # included and excluded from a CustomImageRecipe

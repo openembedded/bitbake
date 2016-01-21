@@ -7,7 +7,7 @@
       ">
     <i class="icon-trash no-tooltip"></i>
     Remove package
-  </a>
+  </button>
   <button class="btn btn-block add-rm-package-btn" data-directive="add" data-package="{{data.pk}}" data-package-url="{% url 'xhr_customrecipe_packages' extra.recipe_id data.pk %}" data-name="{{data.name}}" style="
       {% if data.pk in extra.current_packages %}
       display:none

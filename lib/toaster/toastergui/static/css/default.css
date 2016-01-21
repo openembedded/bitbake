@@ -153,6 +153,9 @@ select { width: auto; }
 /* make tables Chrome-happy (me, not so much) */
 table { table-layout: fixed; word-wrap: break-word; }
 
+table p { margin-bottom: 0 }
+.table td { vertical-align: middle; }
+
 /* styles for the new build button */
 .new-build .btn-primary { padding: 4px 30px; }
 .new-build .alert { margin-top: 10px; }
