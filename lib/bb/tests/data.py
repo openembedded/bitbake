@@ -80,6 +80,11 @@ class DataExpansions(unittest.TestCase):
         val = self.d.expand("${@d.getVar('foo', True) + ' ${bar}'}")
         self.assertEqual(str(val), "value_of_foo value_of_bar")
 
+    def test_python_unexpanded(self):
+        self.d.setVar("bar", "${unsetvar}")
+        val = self.d.expand("${@d.getVar('foo', True) + ' ${bar}'}")
+        self.assertEqual(str(val), "${@d.getVar('foo', True) + ' ${unsetvar}'}")
+
     def test_python_snippet_syntax_error(self):
         self.d.setVar("FOO", "${@foo = 5}")
         self.assertRaises(bb.data_smart.ExpansionError, self.d.getVar, "FOO", True)

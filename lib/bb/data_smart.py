@@ -384,7 +384,12 @@ class DataSmart(MutableMapping):
             olds = s
             try:
                 s = __expand_var_regexp__.sub(varparse.var_sub, s)
-                s = __expand_python_regexp__.sub(varparse.python_sub, s)
+                try:
+                    s = __expand_python_regexp__.sub(varparse.python_sub, s)
+                except SyntaxError as e:
+                    # Likely unmatched brackets, just don't expand the expression
+                    if e.msg != "EOL while scanning string literal":
+                        raise
                 if s == olds:
                     break
             except ExpansionError:
