@@ -379,3 +379,29 @@ def getRuntimeProviders(dataCache, rdepend):
             logger.debug(1, "Assuming %s is a dynamic package, but it may not exist" % rdepend)
 
     return rproviders
+
+
+def buildWorldTargetList(dataCache):
+    """
+    Build package list for "bitbake world"
+    """
+    if dataCache.world_target:
+        return
+
+    logger.debug(1, "collating packages for \"world\"")
+    for f in dataCache.possible_world:
+        terminal = True
+        pn = dataCache.pkg_fn[f]
+
+        for p in dataCache.pn_provides[pn]:
+            if p.startswith('virtual/'):
+                logger.debug(2, "World build skipping %s due to %s provider starting with virtual/", f, p)
+                terminal = False
+                break
+            for pf in dataCache.providers[p]:
+                if dataCache.pkg_fn[pf] != pn:
+                    logger.debug(2, "World build skipping %s due to both us and %s providing %s", f, pf, p)
+                    terminal = False
+                    break
+        if terminal:
+            dataCache.world_target.add(pn)

@@ -1109,28 +1109,6 @@ class BBCooker:
         tree = self.generatePkgDepTreeData(pkgs, 'build')
         bb.event.fire(bb.event.TargetsTreeGenerated(tree), self.data)
 
-    def buildWorldTargetList(self):
-        """
-         Build package list for "bitbake world"
-        """
-        parselog.debug(1, "collating packages for \"world\"")
-        for f in self.recipecache.possible_world:
-            terminal = True
-            pn = self.recipecache.pkg_fn[f]
-
-            for p in self.recipecache.pn_provides[pn]:
-                if p.startswith('virtual/'):
-                    parselog.debug(2, "World build skipping %s due to %s provider starting with virtual/", f, p)
-                    terminal = False
-                    break
-                for pf in self.recipecache.providers[p]:
-                    if self.recipecache.pkg_fn[pf] != pn:
-                        parselog.debug(2, "World build skipping %s due to both us and %s providing %s", f, pf, p)
-                        terminal = False
-                        break
-            if terminal:
-                self.recipecache.world_target.add(pn)
-
     def interactiveMode( self ):
         """Drop off into a shell"""
         try:
@@ -1591,7 +1569,7 @@ class BBCooker:
                 parselog.warn("Explicit target \"%s\" is in ASSUME_PROVIDED, ignoring" % pkg)
 
         if 'world' in pkgs_to_build:
-            self.buildWorldTargetList()
+            bb.providers.buildWorldTargetList(self.recipecache)
             pkgs_to_build.remove('world')
             for t in self.recipecache.world_target:
                 pkgs_to_build.append(t)

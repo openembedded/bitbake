@@ -172,6 +172,8 @@ class TaskData:
         if fnid in self.tasks_fnid:
             return
 
+        self.add_extra_deps(fn, dataCache)
+
         for task in task_deps['tasks']:
 
             # Work out task dependencies
@@ -241,6 +243,21 @@ class TaskData:
             if dep in self.failed_rdeps:
                 self.fail_fnid(fnid)
                 return
+
+    def add_extra_deps(self, fn, dataCache):
+        func = dataCache.extradepsfunc.get(fn, None)
+        if func:
+            bb.providers.buildWorldTargetList(dataCache)
+            pn = dataCache.pkg_fn[fn]
+            params = {'deps': dataCache.deps[fn],
+                      'world_target': dataCache.world_target,
+                      'pkg_pn': dataCache.pkg_pn,
+                      'self_pn': pn}
+            funcname = '_%s_calculate_extra_depends' % pn.replace('-', '_')
+            paramlist = ','.join(params.keys())
+            func = 'def %s(%s):\n%s\n\n%s(%s)' % (funcname, paramlist, func, funcname, paramlist)
+            bb.utils.better_exec(func, params)
+
 
     def have_build_target(self, target):
         """
