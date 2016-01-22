@@ -429,7 +429,14 @@ class TaskData:
             return
 
         if not item in dataCache.providers:
-            bb.event.fire(bb.event.NoProvider(item, dependees=self.get_dependees_str(item), reasons=self.get_reasons(item), close_matches=self.get_close_matches(item, dataCache.providers.keys())), cfgData)
+            close_matches = self.get_close_matches(item, dataCache.providers.keys())
+            # Is it in RuntimeProviders ?
+            all_p = bb.providers.getRuntimeProviders(dataCache, item)
+            for fn in all_p:
+                new = dataCache.pkg_fn[fn] + " RPROVIDES " + item
+                if new not in close_matches:
+                    close_matches.append(new)
+            bb.event.fire(bb.event.NoProvider(item, dependees=self.get_dependees_str(item), reasons=self.get_reasons(item), close_matches=close_matches), cfgData)
             raise bb.providers.NoProvider(item)
 
         if self.have_build_target(item):
