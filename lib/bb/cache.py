@@ -214,7 +214,8 @@ class CoreRecipeInfo(RecipeInfoCommon):
             rprovides += self.rprovides_pkg[package]
 
         for rprovide in rprovides:
-            cachedata.rproviders[rprovide].append(fn)
+            if fn not in cachedata.rproviders[rprovide]:
+                cachedata.rproviders[rprovide].append(fn)
 
         for package in self.packages_dynamic:
             cachedata.packages_dynamic[package].append(fn)
