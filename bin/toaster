@@ -108,7 +108,7 @@ stop_system()
 
 start_bitbake() {
     unset BBSERVER
-    bitbake --postread conf/toaster.conf --server-only -t xmlrpc -B 0.0.0.0:0
+    bitbake --read conf/toaster.conf --server-only -t xmlrpc -B 0.0.0.0:0
     if [ $? -ne 0 ]; then
         echo "Bitbake server start failed"
         return 1
