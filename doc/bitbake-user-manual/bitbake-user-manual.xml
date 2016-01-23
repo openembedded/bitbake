@@ -15,18 +15,25 @@
             </imageobject>
         </mediaobject>
 
-        <title>
-            BitBake User Manual
-        </title>
+        <title>BitBake User Manual</title>
 
         <authorgroup>
-            <author>
-                <firstname>Richard Purdie, Chris Larson, and </firstname> <surname>Phil Blundell</surname>
-                <affiliation>
-                    <orgname>BitBake Community</orgname>
-                </affiliation>
-                <email>bitbake-devel@lists.openembedded.org</email>
-            </author>
+          <author>
+            <firstname>Richard</firstname>
+            <surname>Purdie</surname>
+            <affiliation>
+                <orgname>BitBake Community</orgname>
+            </affiliation>
+            <email>bitbake-devel@lists.openembedded.org</email>
+          </author>
+          <author>
+            <firstname>Chris</firstname>
+            <surname>Larson</surname>
+          </author>
+          <author>
+            <firstname>Phil</firstname>
+            <surname>Blundell</surname>
+          </author>
         </authorgroup>
 
 <!--
