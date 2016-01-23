@@ -1,9 +1,7 @@
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
 "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd">
 
-<book id='bitbake-user-manual' lang='en'
-        xmlns:xi="http://www.w3.org/2003/XInclude"
-        >
+<book id='bitbake-user-manual' lang='en'>
     <bookinfo>
 
         <mediaobject>
@@ -79,16 +77,16 @@
         </legalnotice>
     </bookinfo>
 
-    <xi:include href="bitbake-user-manual-intro.xml"/>
+    <xi:include href="bitbake-user-manual-intro.xml" xmlns:xi="http://www.w3.org/2003/XInclude"/>
 
-    <xi:include href="bitbake-user-manual-execution.xml"/>
+    <xi:include href="bitbake-user-manual-execution.xml" xmlns:xi="http://www.w3.org/2003/XInclude"/>
 
-    <xi:include href="bitbake-user-manual-metadata.xml"/>
+    <xi:include href="bitbake-user-manual-metadata.xml" xmlns:xi="http://www.w3.org/2003/XInclude"/>
 
-    <xi:include href="bitbake-user-manual-fetching.xml"/>
+    <xi:include href="bitbake-user-manual-fetching.xml" xmlns:xi="http://www.w3.org/2003/XInclude"/>
 
-    <xi:include href="bitbake-user-manual-ref-variables.xml"/>
+    <xi:include href="bitbake-user-manual-ref-variables.xml" xmlns:xi="http://www.w3.org/2003/XInclude"/>
 
-    <xi:include href="bitbake-user-manual-hello.xml"/>
+    <xi:include href="bitbake-user-manual-hello.xml" xmlns:xi="http://www.w3.org/2003/XInclude"/>
 
 </book>

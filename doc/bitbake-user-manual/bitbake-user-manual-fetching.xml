@@ -58,10 +58,10 @@
             This code unpacks the downloaded files to the
             specified by <filename>WORKDIR</filename>.
             <note>
-                For convenience, the naming in these examples matches
+                <para>For convenience, the naming in these examples matches
                 the variables used by OpenEmbedded.
                 If you want to see the above code in action, examine
-                the OpenEmbedded class file <filename>base.bbclass</filename>.
+                the OpenEmbedded class file <filename>base.bbclass</filename>.</para>
             </note>
             The <filename>SRC_URI</filename> and <filename>WORKDIR</filename>
             variables are not hardcoded into the fetcher, since those fetcher
@@ -177,8 +177,8 @@
             BitBake uses this stamp during subsequent builds to avoid
             downloading or comparing a checksum for the file again.
             <note>
-                It is assumed that local storage is safe from data corruption.
-                If this were not the case, there would be bigger issues to worry about.
+                <para>It is assumed that local storage is safe from data corruption.
+                If this were not the case, there would be bigger issues to worry about.</para>
             </note>
         </para>
 
@@ -272,10 +272,10 @@
                 <link linkend='var-FILESDIR'><filename>FILESDIR</filename></link>
                 is used to find the appropriate relative file.
                 <note>
-                    <filename>FILESDIR</filename> is deprecated and can
+                    <para><filename>FILESDIR</filename> is deprecated and can
                     be replaced with <filename>FILESPATH</filename>.
                     Because <filename>FILESDIR</filename> is likely to be
-                    removed, you should not use this variable in any new code.
+                    removed, you should not use this variable in any new code.</para>
                 </note>
                 If the file cannot be found, it is assumed that it is available in
                 <link linkend='var-DL_DIR'><filename>DL_DIR</filename></link>
@@ -326,20 +326,20 @@
                 </literallayout>
             </para>
             <note>
-               Because URL parameters are delimited by semi-colons, this can
+               <para>Because URL parameters are delimited by semi-colons, this can
                introduce ambiguity when parsing URLs that also contain semi-colons,
-               for example:
+               for example:</para>
                 <literallayout class='monospaced'>
      SRC_URI = "http://abc123.org/git/?p=gcc/gcc.git;a=snapshot;h=a5dd47"
                 </literallayout>
-               Such URLs should should be modified by replacing semi-colons with '&amp;' characters:
+               <para>Such URLs should should be modified by replacing semi-colons with '&amp;' characters:</para>
                <literallayout class='monospaced'>
      SRC_URI = "http://abc123.org/git/?p=gcc/gcc.git&amp;a=snapshot&amp;h=a5dd47"
                 </literallayout>
-                In most cases this should work. Treating semi-colons and '&amp;' in queries
+                <para>In most cases this should work. Treating semi-colons and '&amp;' in queries
                 identically is recommended by the World Wide Web Consortium (W3C).
                 Note that due to the nature of the URL, you may have to specify the name
-                of the downloaded file as well:
+                of the downloaded file as well:</para>
               <literallayout class='monospaced'>
      SRC_URI = "http://abc123.org/git/?p=gcc/gcc.git&amp;a=snapshot&amp;h=a5dd47;downloadfilename=myfile.bz2"
                 </literallayout>
@@ -667,13 +667,13 @@
                         The module, which must include the
                         prepending "/" character, in the selected VOB.
                         <note>
-                            The <filename>module</filename> and <filename>vob</filename>
+                            <para>The <filename>module</filename> and <filename>vob</filename>
                             options are combined to create the <filename>load</filename> rule in
                             the view config spec.
                             As an example, consider the <filename>vob</filename> and 
                             <filename>module</filename> values from the 
                             <filename>SRC_URI</filename> statement at the start of this section.
-                            Combining those values results in the following:
+                            Combining those values results in the following:</para>
                             <literallayout class='monospaced'>
      load /example_vob/example_module
                             </literallayout>
@@ -692,11 +692,11 @@
                 use the <filename>CCASE_CUSTOM_CONFIG_SPEC</filename> variable
                 in your recipe to define where the specification is written.
                 <note>
-                    the <filename>SRCREV</filename> loses its functionality if you
+                    <para>the <filename>SRCREV</filename> loses its functionality if you
                     specify this variable.
                     However, <filename>SRCREV</filename> is still used to label the
                     archive after a fetch even though it does not define what is
-                    fetched.
+                    fetched.</para>
                 </note>
             </para>
 

@@ -231,14 +231,14 @@
                 as its build system, files with the <filename>.bb</filename>
                 extension are referred to as recipes.
                 <note>
-                    The term "package" is also commonly used to describe recipes.
+                    <para>The term "package" is also commonly used to describe recipes.
                     However, since the same word is used to describe packaged
                     output from a project, it is best to maintain a single
                     descriptive term - "recipes".
                     Put another way, a single "recipe" file is quite capable
                     of generating a number of related but separately installable
                     "packages".
-                    In fact, that ability is fairly common.
+                    In fact, that ability is fairly common.</para>
                 </note>
             </para>
         </section>
@@ -421,10 +421,10 @@
                     source code repository gives you access to a known
                     branch or release of BitBake.
                     <note>
-                         Cloning the Git repository, as described earlier,
+                         <para>Cloning the Git repository, as described earlier,
                          is the preferred method for getting BitBake.
                          Cloning the repository makes it easier to update as
-                         patches are added to the stable branches.
+                         patches are added to the stable branches.</para>
                     </note></para>
                     <para>The following example downloads a snapshot of
                     BitBake version 1.17.0:
@@ -583,11 +583,12 @@
      $ bitbake -b foo.bb -c clean
                     </literallayout>
                     <note>
-                        The "-b" option explicitly does not handle recipe
+                      <para>
+                        The <option>-b</option> option explicitly does not handle recipe
                         dependencies.
                         Other than for debugging purposes, it is instead
                         recommended that you use the syntax presented in the
-                        next section.
+                        next section.</para>
                     </note>
                 </para>
             </section>

@@ -13,7 +13,7 @@
 </para>
 
 <note>
-    Following are some points regarding the variables listed in this glossary:
+    <para>Following are some points regarding the variables listed in this glossary:</para>
     <itemizedlist>
         <listitem><para>The variables listed in this glossary
             are specific to BitBake.
@@ -373,8 +373,8 @@
                     and
                     <link linkend='var-BB_ENV_EXTRAWHITE'><filename>BB_ENV_EXTRAWHITE</filename></link>.
                     <note>
-                        You must set this variable in the external environment
-                        in order for it to work.
+                        <para>You must set this variable in the external environment
+                        in order for it to work.</para>
                     </note>
                 </para>
             </glossdef>
@@ -390,8 +390,8 @@
                     set in
                     <link linkend='var-BB_ENV_WHITELIST'><filename>BB_ENV_WHITELIST</filename></link>.
                     <note>
-                        You must set this variable in the external
-                        environment in order for it to work.
+                        <para>You must set this variable in the external
+                        environment in order for it to work.</para>
                     </note>
                 </para>
             </glossdef>
@@ -602,9 +602,9 @@
                     The copy is taken before any whitelisted variable values
                     are filtered into BitBake's datastore.
                     <note>
-                        The contents of this variable is a datastore object
+                        <para>The contents of this variable is a datastore object
                         that can be queried using the normal datastore
-                        operations.
+                        operations.</para>
                     </note>
                 </para>
             </glossdef>
@@ -617,8 +617,8 @@
                     through from the external environment into BitBake's
                     datastore.
                     <note>
-                        You must set this variable in the external
-                        environment in order for it to work.
+                        <para>You must set this variable in the external
+                        environment in order for it to work.</para>
                     </note>
                 </para>
             </glossdef>
@@ -826,8 +826,8 @@
                             </para></listitem>
                     </itemizedlist>
                     <note>
-                        Stamp policies are largely obsolete with the
-                        introduction of setscene tasks.
+                        <para>Stamp policies are largely obsolete with the
+                        introduction of setscene tasks.</para>
                     </note>
                 </para>
             </glossdef>
@@ -866,9 +866,9 @@
                     You can use the <filename>BB_TASK_IONICE_LEVEL</filename>
                     variable to adjust the I/O priority of these tasks.
                     <note>
-                        This variable works similarly to the
+                        <para>This variable works similarly to the
                         <link linkend='var-BB_TASK_NICE_LEVEL'><filename>BB_TASK_NICE_LEVEL</filename></link>
-                        variable except with a task's I/O priorities.
+                        variable except with a task's I/O priorities.</para>
                     </note>
                 </para>
 
@@ -892,12 +892,12 @@
                     You do not need any special privileges to use this range
                     of priority values.
                     <note>
-                        In order for your I/O priority settings to take effect,
+                        <para>In order for your I/O priority settings to take effect,
                         you need the Completely Fair Queuing (CFQ) Scheduler
                         selected for the backing block device.
                         To select the scheduler, use the following command form
                         where <replaceable>device</replaceable> is the device
-                        (e.g. sda, sdb, and so forth):
+                        (e.g. sda, sdb, and so forth):</para>
                         <literallayout class='monospaced'>
       $ sudo sh -c “echo cfq > /sys/block/<replaceable>device</replaceable>/queu/scheduler
                         </literallayout>
@@ -997,8 +997,8 @@
                     as incremented by the <filename>-d</filename> command line
                     option.
                     <note>
-                        You must set this variable in the external environment
-                        in order for it to work.
+                        <para>You must set this variable in the external environment
+                        in order for it to work.</para>
                     </note>
                 </para>
              </glossdef>
@@ -1049,11 +1049,11 @@
                     more information.
                     The default priority, if unspecified
                     for a layer with no dependencies, is the lowest defined priority + 1
-                    (or 1 if no priorities are defined).</para>
+                    (or 1 if no priorities are defined).
                 <tip>
-                    You can use the command <filename>bitbake-layers show-layers</filename> to list
-                    all configured layers along with their priorities.
-                </tip>
+                    <para>You can use the command <filename>bitbake-layers show-layers</filename> to list
+                    all configured layers along with their priorities.</para>
+                </tip></para>
             </glossdef>
         </glossentry>
 
@@ -1178,9 +1178,9 @@
                     </literallayout>
                     Notice how the vertical bar is used to append the fragments.
                     <note>
-                        When specifying a directory name, use the trailing
+                        <para>When specifying a directory name, use the trailing
                         slash character to ensure you match just that directory
-                        name.
+                        name.</para>
                     </note>
                 </para>
             </glossdef>
@@ -1260,8 +1260,8 @@
                     Using this variable is equivalent to using the
                     <filename>-u</filename> command-line option.
                     <note>
-                        You must set this variable in the external environment
-                        in order for it to work.
+                        <para>You must set this variable in the external environment
+                        in order for it to work.</para>
                     </note>
                 </para>
             </glossdef>
@@ -1326,14 +1326,15 @@
                     of the recipe to build by default in the absence of
                     <filename><link linkend='var-PREFERRED_VERSION'>PREFERRED_VERSION</link></filename>
                     being used to build the development version.
-                </para>
+                
                 <note>
-                    The bias provided by <filename>DEFAULT_PREFERENCE</filename>
+                    <para>The bias provided by <filename>DEFAULT_PREFERENCE</filename>
                     is weak and is overridden by
                     <filename><link linkend='var-BBFILE_PRIORITY'>BBFILE_PRIORITY</link></filename>
                     if that variable is different between two layers
-                    that contain different versions of the same recipe.
+                    that contain different versions of the same recipe.</para>
                 </note>
+                </para>
             </glossdef>
         </glossentry>
 
@@ -1408,16 +1409,17 @@
                 <para>
                     To exclude a recipe from a world build using this variable,
                     set the variable to "1" in the recipe.
-                </para>
+                
 
                 <note>
-                    Recipes added to <filename>EXCLUDE_FROM_WORLD</filename>
+                    <para>Recipes added to <filename>EXCLUDE_FROM_WORLD</filename>
                     may still be built during a world build in order to satisfy
                     dependencies of other recipes.
                     Adding a recipe to <filename>EXCLUDE_FROM_WORLD</filename>
                     only ensures that the recipe is not explicitly added
-                    to the list of build targets in a world build.
+                    to the list of build targets in a world build.</para>
                 </note>
+                </para>
             </glossdef>
         </glossentry>
 
@@ -1528,9 +1530,9 @@
                     was not found using
                     <link linkend='var-FILESPATH'><filename>FILESPATH</filename></link>.
                     <note>
-                        The <filename>FILESDIR</filename> variable is
+                        <para>The <filename>FILESDIR</filename> variable is
                         deprecated and you should use
-                        <filename>FILESPATH</filename> in all new code.
+                        <filename>FILESPATH</filename> in all new code.</para>
                     </note>
                 </para>
             </glossdef>

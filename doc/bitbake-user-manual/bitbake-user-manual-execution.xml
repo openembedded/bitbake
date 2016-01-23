@@ -265,8 +265,8 @@
             with <filename>BBFILES</filename> and stores the values of
             various variables into the datastore.
             <note>
-                Append files are applied in the order they are encountered in
-                <filename>BBFILES</filename>.
+                <para>Append files are applied in the order they are encountered in
+                <filename>BBFILES</filename>.</para>
             </note>
             For each file, a fresh copy of the base configuration is
             made, then the recipe is parsed line by line.
@@ -344,10 +344,10 @@
     BBFILE_PRIORITY_local = "10"
             </literallayout>
             <note>
-                The layers mechanism is now the preferred method of collecting
+                <para>The layers mechanism is now the preferred method of collecting
                 code.
                 While the collections code remains, its main use is to set layer
-                priorities and to deal with overlap (conflicts) between layers.
+                priorities and to deal with overlap (conflicts) between layers.</para>
             </note>
         </para>
     </section>
@@ -582,9 +582,9 @@
         </para>
 
         <note>
-            Some tasks are marked as "nostamp" tasks.
+            <para>Some tasks are marked as "nostamp" tasks.
             No timestamp file is created when these tasks are run.
-            Consequently, "nostamp" tasks are always rerun.
+            Consequently, "nostamp" tasks are always rerun.</para>
         </note>
 
         <para>
@@ -817,9 +817,9 @@
             to determine the stamps and delta where these two
             stamp trees diverge.
             <note>
-                It is likely that future versions of BitBake will
+                <para>It is likely that future versions of BitBake will
                 provide other signature handlers triggered through
-                additional "-S" parameters.
+                additional "-S" parameters.</para>
             </note>
         </para>
 

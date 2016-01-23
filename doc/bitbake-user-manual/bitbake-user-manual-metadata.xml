@@ -87,10 +87,10 @@
                 However, if <filename>A</filename> is not set,
                 the variable is set to "aval".
                 <note>
-                    This assignment is immediate.
+                    <para>This assignment is immediate.
                     Consequently, if multiple "?=" assignments
                     to a single variable exist, the first of those ends up getting
-                    used.
+                    used.</para>
                 </note>
             </para>
         </section>
@@ -228,8 +228,8 @@
                 The variable <filename>D</filename> becomes
                 "dvaladditional data".
                 <note>
-                    You must control all spacing when you use the
-                    override syntax.
+                    <para>You must control all spacing when you use the
+                    override syntax.</para>
                 </note>
             </para>
         </section>
@@ -647,9 +647,9 @@
                 <filename>classes/autotools.bbclass</filename>
                 in <filename>BBPATH</filename>.
                 <note>
-                    You can override any values and functions of the
+                    <para>You can override any values and functions of the
                     inherited class within your recipe by doing so
-                    after the "inherit" statement.
+                    after the "inherit" statement.</para>
                 </note>
             </para>
         </section>
@@ -675,14 +675,14 @@
      include test_defs.inc
                 </literallayout>
                 <note>
-                    The <filename>include</filename> directive does not
+                    <para>The <filename>include</filename> directive does not
                     produce an error when the file cannot be found.
                     Consequently, it is recommended that if the file you
                     are including is expected to exist, you should use
                     <link linkend='require-inclusion'><filename>require</filename></link>
                     instead of <filename>include</filename>.
                     Doing so makes sure that an error is produced if the
-                    file cannot be found.
+                    file cannot be found.</para>
                 </note>
             </para>
         </section>
@@ -754,10 +754,10 @@
                 "classes" subdirectory in one of the directories specified
                 in <filename>BBPATH</filename>.
                 <note>
-                    Because <filename>.conf</filename> files are parsed
+                    <para>Because <filename>.conf</filename> files are parsed
                     first during BitBake's execution, using
                     <filename>INHERIT</filename> to inherit a class effectively
-                    inherits the class globally (i.e. for all recipes).
+                    inherits the class globally (i.e. for all recipes).</para>
                 </note>
             </para>
         </section>
@@ -1142,12 +1142,12 @@
      export CCACHE_DIR
                         </literallayout>
                         <note>
-                            A side effect of the previous steps is that BitBake
+                            <para>A side effect of the previous steps is that BitBake
                             records the variable as a dependency of the build process
                             in things like the setscene checksums.
                             If doing so results in unnecessary rebuilds of tasks, you can
                             whitelist the variable so that the setscene code
-                            ignores the dependency when it creates checksums.
+                            ignores the dependency when it creates checksums.</para>
                         </note></para></listitem>
                 </orderedlist>
             </para>
@@ -1485,7 +1485,7 @@
             <link linkend='var-BBVERSIONS'><filename>BBVERSIONS</filename></link>
             variables.
             <note>
-                The mechanism for this class extension is extremely
+                <para>The mechanism for this class extension is extremely
                 specific to the implementation.
                 Usually, the recipe's
                 <link linkend='var-PROVIDES'><filename>PROVIDES</filename></link>,
@@ -1494,7 +1494,7 @@
                 variables would need to be modified by the extension class.
                 For specific examples, see the OE-Core
                 <filename>native</filename>, <filename>nativesdk</filename>,
-                and <filename>multilib</filename> classes.
+                and <filename>multilib</filename> classes.</para>
             </note>
             <itemizedlist>
                 <listitem><para><emphasis><filename>BBCLASSEXTEND</filename>:</emphasis>

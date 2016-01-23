@@ -129,7 +129,7 @@
         </para>
 
         <note>
-            This example was inspired by and drew heavily from these sources:
+            <para>This example was inspired by and drew heavily from these sources:</para>
             <itemizedlist>
                 <listitem><para>
                     <ulink url="http://www.mail-archive.com/yocto@yoctoproject.org/msg09379.html">Mailing List post - The BitBake equivalent of "Hello, World!"</ulink>
@@ -228,9 +228,9 @@
                 BitBake uses that directory to find the metadata it needs for
                 your project.
                 <note>
-                    When specifying your project directory, do not use the
+                    <para>When specifying your project directory, do not use the
                     tilde ("~") character as BitBake does not expand that character
-                    as the shell would.
+                    as the shell would.</para>
                 </note>
                 </para></listitem>
             <listitem><para><emphasis>Run Bitbake:</emphasis>
@@ -294,10 +294,10 @@
                 Here, the <filename>TMPDIR</filename> directory is set to
                 <filename>hello/tmp</filename>.
                 <note><title>Tip</title>
-                    You can always safely delete the <filename>tmp</filename>
+                    <para>You can always safely delete the <filename>tmp</filename>
                     directory in order to rebuild a BitBake target.
                     The build process creates the directory for you
-                    when you run BitBake.
+                    when you run BitBake.</para>
                 </note></para>
                 <para>For information about each of the other variables defined in this
                 example, click on the links to take you to the definitions in
@@ -376,8 +376,9 @@ ERROR: Unable to parse base: ParseError in configuration INHERITs: Could not inh
                 code separate from the general metadata used by BitBake.
                 Thus, this example creates and uses a layer called "mylayer".
                 <note>
-                    You can find additional information on adding a layer at
+                    <para>You can find additional information on adding a layer at
                     <ulink url='http://hambedded.org/blog/2012/11/24/from-bitbake-hello-world-to-an-image/#adding-an-example-layer'></ulink>.
+                    </para>
                 </note>
                 </para>
                 <para>Minimally, you need a recipe file and a layer configuration
@@ -483,7 +484,7 @@ ERROR: Unable to parse base: ParseError in configuration INHERITs: Could not inh
                 BitBake finds the <filename>printhello</filename> recipe and
                 successfully runs the task.
                 <note>
-                    After the first execution, re-running
+                    <para>After the first execution, re-running
                     <filename>bitbake printhello</filename> again will not
                     result in a BitBake run that prints the same console
                     output.
@@ -498,7 +499,7 @@ ERROR: Unable to parse base: ParseError in configuration INHERITs: Could not inh
                     If you delete the <filename>tmp</filename> directory
                     or run <filename>bitbake -c clean printhello</filename>
                     and then re-run the build, the "Hello, World!" message will
-                    be printed again.
+                    be printed again.</para>
                 </note>
                 </para></listitem>
         </orderedlist>
