@@ -5,6 +5,7 @@ from bldcontrol.bbcontroller import getBuildEnvironmentController, ShellCmdExcep
 from bldcontrol.models import BuildRequest, BuildEnvironment, BRError, BRVariable
 import os
 import logging
+import time
 
 logger = logging.getLogger("ToasterScheduler")
 
@@ -128,6 +129,12 @@ class Command(NoArgsCommand):
 
 
     def handle_noargs(self, **options):
-        self.cleanup()
-        self.archive()
-        self.schedule()
+        while True:
+            try:
+                self.cleanup()
+                self.archive()
+                self.schedule()
+            except:
+                pass
+
+            time.sleep(1)
