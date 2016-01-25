@@ -1233,7 +1233,9 @@
                     section for more information.
                     </para></listitem>
                 <listitem><para><emphasis>dirs:</emphasis>
-                    Directories that should be created before the task runs.
+                    Directories that should be created before the task runs. The
+                    last directory listed will be used as the work directory for the
+                    task.
                     </para></listitem>
                 <listitem><para><emphasis>lockfiles:</emphasis>
                      Specifies one or more lockfiles to lock while the task
