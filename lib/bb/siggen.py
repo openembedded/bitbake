@@ -44,6 +44,10 @@ class SignatureGenerator(object):
     def get_taskhash(self, fn, task, deps, dataCache):
         return "0"
 
+    def writeout_file_checksum_cache(self):
+        """Write/update the file checksum cache onto disk"""
+        return
+
     def set_taskdata(self, hashes, deps, checksum):
         return
 
@@ -214,6 +218,11 @@ class SignatureGeneratorBasic(SignatureGenerator):
         self.taskhash[k] = h
         #d.setVar("BB_TASKHASH_task-%s" % task, taskhash[task])
         return h
+
+    def writeout_file_checksum_cache(self):
+        """Write/update the file checksum cache onto disk"""
+        bb.fetch2.fetcher_parse_save()
+        bb.fetch2.fetcher_parse_done()
 
     def dump_sigtask(self, fn, task, stampbase, runtime):
         k = fn + "." + task
