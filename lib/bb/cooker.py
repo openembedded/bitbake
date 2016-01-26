@@ -2030,8 +2030,8 @@ class CookerParser(object):
             def init():
                 Parser.cfg = self.cfgdata
                 bb.utils.set_process_name(multiprocessing.current_process().name)
-                multiprocessing.util.Finalize(None, bb.codeparser.parser_cache_save, args=(self.cfgdata,), exitpriority=1)
-                multiprocessing.util.Finalize(None, bb.fetch.fetcher_parse_save, args=(self.cfgdata,), exitpriority=1)
+                multiprocessing.util.Finalize(None, bb.codeparser.parser_cache_save, exitpriority=1)
+                multiprocessing.util.Finalize(None, bb.fetch.fetcher_parse_save, exitpriority=1)
 
             self.feeder_quit = multiprocessing.Queue(maxsize=1)
             self.parser_quit = multiprocessing.Queue(maxsize=self.num_processes)
@@ -2085,8 +2085,8 @@ class CookerParser(object):
         sync = threading.Thread(target=self.bb_cache.sync)
         sync.start()
         multiprocessing.util.Finalize(None, sync.join, exitpriority=-100)
-        bb.codeparser.parser_cache_savemerge(self.cooker.data)
-        bb.fetch.fetcher_parse_done(self.cooker.data)
+        bb.codeparser.parser_cache_savemerge()
+        bb.fetch.fetcher_parse_done()
         if self.cooker.configuration.profile:
             profiles = []
             for i in self.process_names:

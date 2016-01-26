@@ -785,7 +785,7 @@ class MultiProcessCache(object):
         data = [{}]
         return data
 
-    def save_extras(self, d):
+    def save_extras(self):
         if not self.cachefile:
             return
 
@@ -815,7 +815,7 @@ class MultiProcessCache(object):
                 if h not in dest[j]:
                     dest[j][h] = source[j][h]
 
-    def save_merge(self, d):
+    def save_merge(self):
         if not self.cachefile:
             return
 

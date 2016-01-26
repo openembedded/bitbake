@@ -515,13 +515,13 @@ def fetcher_init(d):
         if hasattr(m, "init"):
             m.init(d)
 
-def fetcher_parse_save(d):
-    _checksum_cache.save_extras(d)
+def fetcher_parse_save():
+    _checksum_cache.save_extras()
 
-def fetcher_parse_done(d):
-    _checksum_cache.save_merge(d)
+def fetcher_parse_done():
+    _checksum_cache.save_merge()
 
-def fetcher_compare_revisions(d):
+def fetcher_compare_revisions():
     """
     Compare the revisions in the persistant cache with current values and
     return true/false on whether they've changed.

@@ -167,11 +167,11 @@ codeparsercache = CodeParserCache()
 def parser_cache_init(d):
     codeparsercache.init_cache(d)
 
-def parser_cache_save(d):
-    codeparsercache.save_extras(d)
+def parser_cache_save():
+    codeparsercache.save_extras()
 
-def parser_cache_savemerge(d):
-    codeparsercache.save_merge(d)
+def parser_cache_savemerge():
+    codeparsercache.save_merge()
 
 Logger = logging.getLoggerClass()
 class BufferedLogger(Logger):
