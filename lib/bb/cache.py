@@ -755,13 +755,14 @@ class MultiProcessCache(object):
         self.cachedata = self.create_cachedata()
         self.cachedata_extras = self.create_cachedata()
 
-    def init_cache(self, d):
+    def init_cache(self, d, cache_file_name=None):
         cachedir = (d.getVar("PERSISTENT_DIR", True) or
                     d.getVar("CACHE", True))
         if cachedir in [None, '']:
             return
         bb.utils.mkdirhier(cachedir)
-        self.cachefile = os.path.join(cachedir, self.__class__.cache_file_name)
+        self.cachefile = os.path.join(cachedir,
+                                      cache_file_name or self.__class__.cache_file_name)
         logger.debug(1, "Using cache in '%s'", self.cachefile)
 
         glf = bb.utils.lockfile(self.cachefile + ".lock")
