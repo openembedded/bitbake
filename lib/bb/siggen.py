@@ -4,6 +4,7 @@ import os
 import re
 import tempfile
 import bb.data
+from bb.checksum import FileChecksumCache
 
 logger = logging.getLogger('BitBake.SigGen')
 
@@ -91,6 +92,12 @@ class SignatureGeneratorBasic(SignatureGenerator):
         self.basewhitelist = set((data.getVar("BB_HASHBASE_WHITELIST", True) or "").split())
         self.taskwhitelist = None
         self.init_rundepcheck(data)
+        checksum_cache_file = data.getVar("BB_HASH_CHECKSUM_CACHE_FILE", True)
+        if checksum_cache_file:
+            self.checksum_cache = FileChecksumCache()
+            self.checksum_cache.init_cache(data, checksum_cache_file)
+        else:
+            self.checksum_cache = None
 
     def init_rundepcheck(self, data):
         self.taskwhitelist = data.getVar("BB_HASHTASK_WHITELIST", True) or None
@@ -194,7 +201,10 @@ class SignatureGeneratorBasic(SignatureGenerator):
             self.runtaskdeps[k].append(dep)
 
         if task in dataCache.file_checksums[fn]:
-            checksums = bb.fetch2.get_file_checksums(dataCache.file_checksums[fn][task], recipename)
+            if self.checksum_cache:
+                checksums = self.checksum_cache.get_checksums(dataCache.file_checksums[fn][task], recipename)
+            else:
+                checksums = bb.fetch2.get_file_checksums(dataCache.file_checksums[fn][task], recipename)
             for (f,cs) in checksums:
                 self.file_checksum_values[k][f] = cs
                 if cs:
@@ -221,8 +231,12 @@ class SignatureGeneratorBasic(SignatureGenerator):
 
     def writeout_file_checksum_cache(self):
         """Write/update the file checksum cache onto disk"""
-        bb.fetch2.fetcher_parse_save()
-        bb.fetch2.fetcher_parse_done()
+        if self.checksum_cache:
+            self.checksum_cache.save_extras()
+            self.checksum_cache.save_merge()
+        else:
+            bb.fetch2.fetcher_parse_save()
+            bb.fetch2.fetcher_parse_done()
 
     def dump_sigtask(self, fn, task, stampbase, runtime):
         k = fn + "." + task
