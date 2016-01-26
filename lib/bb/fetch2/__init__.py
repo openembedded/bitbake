@@ -29,11 +29,9 @@ from __future__ import absolute_import
 from __future__ import print_function
 import os, re
 import signal
-import glob
 import logging
 import urllib
 import urlparse
-import operator
 import bb.persist_data, bb.utils
 import bb.checksum
 from bb import data
@@ -1108,48 +1106,7 @@ def get_file_checksums(filelist, pn):
     it proceeds
 
     """
-
-    def checksum_file(f):
-        try:
-            checksum = _checksum_cache.get_checksum(f)
-        except OSError as e:
-            bb.warn("Unable to get checksum for %s SRC_URI entry %s: %s" % (pn, os.path.basename(f), e))
-            return None
-        return checksum
-
-    def checksum_dir(pth):
-        # Handle directories recursively
-        dirchecksums = []
-        for root, dirs, files in os.walk(pth):
-            for name in files:
-                fullpth = os.path.join(root, name)
-                checksum = checksum_file(fullpth)
-                if checksum:
-                    dirchecksums.append((fullpth, checksum))
-        return dirchecksums
-
-    checksums = []
-    for pth in filelist.split():
-        exist = pth.split(":")[1]
-        if exist == "False":
-            continue
-        pth = pth.split(":")[0]
-        if '*' in pth:
-            # Handle globs
-            for f in glob.glob(pth):
-                if os.path.isdir(f):
-                    checksums.extend(checksum_dir(f))
-                else:
-                    checksum = checksum_file(f)
-                    checksums.append((f, checksum))
-        elif os.path.isdir(pth):
-            checksums.extend(checksum_dir(pth))
-        else:
-            checksum = checksum_file(pth)
-            checksums.append((pth, checksum))
-
-    checksums.sort(key=operator.itemgetter(1))
-    return checksums
+    return _checksum_cache.get_checksums(filelist, pn)
 
 
 class FetchData(object):
