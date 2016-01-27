@@ -1759,11 +1759,24 @@ class CookerCollectFiles(object):
         bbmask = config.getVar('BBMASK', True)
 
         if bbmask:
+            # First validate the individual regular expressions and ignore any
+            # that do not compile
+            bbmasks = []
+            for mask in bbmask.split():
+                try:
+                    re.compile(mask)
+                    bbmasks.append(mask)
+                except sre_constants.error:
+                    collectlog.critical("BBMASK contains an invalid regular expression, ignoring: %s" % mask)
+
+            # Then validate the combined regular expressions. This should never
+            # fail, but better safe than sorry...
+            bbmask = "|".join(bbmasks)
             try:
                 bbmask_compiled = re.compile(bbmask)
             except sre_constants.error:
-                collectlog.critical("BBMASK is not a valid regular expression, ignoring.")
-                return list(newfiles), 0
+                collectlog.critical("BBMASK is not a valid regular expression, ignoring: %s" % bbmask)
+                bbmask = None
 
         bbfiles = []
         bbappend = []
