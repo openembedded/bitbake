@@ -1426,7 +1426,6 @@ class CustomImageRecipe(Recipe):
                     Q(pk__in=self.excludes_set.values_list('pk', flat=True)) |
                     Q(name__icontains="packagegroup") |
                     Q(name__icontains="locale")):
-                print pkg.name
                 packages_conf += pkg.name+' '
 
         packages_conf += "\""
@@ -1434,6 +1433,29 @@ class CustomImageRecipe(Recipe):
         base_recipe = open("%s/%s" %
                            (self.base_recipe.layer_version.dirpath,
                             self.base_recipe.file_path), 'r').read()
+
+        # Add a special case for when the recipe we have based a custom image
+        # recipe on requires another recipe.
+        # For example:
+        # "require core-image-minimal.bb" is changed to:
+        # "require recipes-core/images/core-image-minimal.bb"
+
+        if "require" in base_recipe:
+            req_search = re.search(r'(require\s+)(.+\.bb\s*$)',
+                                   base_recipe,
+                                   re.MULTILINE)
+
+            require_filename = req_search.group(2).strip()
+
+            corrected_location = Recipe.objects.filter(
+                Q(layer_version=self.base_recipe.layer_version) &
+                Q(file_path__icontains=require_filename)).last().file_path
+
+            new_require_line = "require %s" % corrected_location
+
+            base_recipe = \
+                    base_recipe.replace(req_search.group(0), new_require_line)
+
 
         info = {"date" : timezone.now().strftime("%Y-%m-%d %H:%M:%S"),
                 "base_recipe" : base_recipe,
