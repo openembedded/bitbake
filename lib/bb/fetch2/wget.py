@@ -37,6 +37,7 @@ from   bb.fetch2 import FetchMethod
 from   bb.fetch2 import FetchError
 from   bb.fetch2 import logger
 from   bb.fetch2 import runfetchcmd
+from   bb.utils import export_proxies
 from   bs4 import BeautifulSoup
 from   bs4 import SoupStrainer
 
@@ -218,22 +219,6 @@ class Wget(FetchMethod):
                         fetch.connection_cache.remove_connection(h.host, h.port)
 
                 return resp
-
-        def export_proxies(d):
-            variables = ['http_proxy', 'HTTP_PROXY', 'https_proxy', 'HTTPS_PROXY',
-                            'ftp_proxy', 'FTP_PROXY', 'no_proxy', 'NO_PROXY']
-            exported = False
-
-            for v in variables:
-                if v in os.environ.keys():
-                    exported = True
-                else:
-                    v_proxy = d.getVar(v, True)
-                    if v_proxy is not None:
-                        os.environ[v] = v_proxy
-                        exported = True
-
-            return exported
 
         class HTTPMethodFallback(urllib2.BaseHandler):
             """

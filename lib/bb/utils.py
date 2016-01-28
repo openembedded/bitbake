@@ -1406,3 +1406,22 @@ def set_process_name(name):
         libc.prctl(15, byref(buff), 0, 0, 0)
     except:
         pass
+
+# export common proxies variables from datastore to environment
+def export_proxies(d):
+    import os
+
+    variables = ['http_proxy', 'HTTP_PROXY', 'https_proxy', 'HTTPS_PROXY',
+                    'ftp_proxy', 'FTP_PROXY', 'no_proxy', 'NO_PROXY']
+    exported = False
+
+    for v in variables:
+        if v in os.environ.keys():
+            exported = True
+        else:
+            v_proxy = d.getVar(v, True)
+            if v_proxy is not None:
+                os.environ[v] = v_proxy
+                exported = True
+
+    return exported
