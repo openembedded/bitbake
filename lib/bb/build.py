@@ -277,9 +277,8 @@ bb_exit_handler() {
     case $ret in
     0)  ;;
     *)  case $BASH_VERSION in
-        "")   echo "WARNING: exit code $ret from a shell command.";;
-        *)    echo "WARNING: ${BASH_SOURCE[0]}:${BASH_LINENO[0]} exit $ret from
-  \"$BASH_COMMAND\"";;
+        "") echo "WARNING: exit code $ret from a shell command.";;
+        *)  echo "WARNING: ${BASH_SOURCE[0]}:${BASH_LINENO[0]} exit $ret from '$BASH_COMMAND'";;
         esac
         exit $ret
     esac
