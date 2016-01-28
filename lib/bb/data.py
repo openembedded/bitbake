@@ -227,6 +227,7 @@ def emit_var(var, o=sys.__stdout__, d = init(), all=False):
 
     if func:
         # NOTE: should probably check for unbalanced {} within the var
+        val = val.rstrip('\n')
         o.write("%s() {\n%s\n}\n" % (varExpanded, val))
         return 1
 
