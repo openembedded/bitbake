@@ -765,20 +765,7 @@ class SelectPackagesTable(PackagesTable):
     def setup_columns(self, *args, **kwargs):
         super(SelectPackagesTable, self).setup_columns(*args, **kwargs)
 
-        add_remove_template = '''
-        {% if data.is_locale_package %}
-          <p class="text-center">
-            <span class="muted">Locale package</span>
-            <i class="icon-question-sign get-help hover-help" title=""
-               data-original-title="This package is included in your image
-               because the locale is specified in the IMAGE_LINGUAS variable"
-               style="visibility: hidden;">
-            </i>
-          </p>
-        {% else %}
-          {% include "pkg_add_rm_btn.html" %}
-        {% endif %}
-        '''
+        add_remove_template = '{% include "pkg_add_rm_btn.html" %}'
 
         self.add_column(title="Add | Remove",
                         hideable=False,
