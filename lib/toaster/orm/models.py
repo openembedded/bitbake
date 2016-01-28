@@ -1457,7 +1457,7 @@ class CustomImageRecipe(Recipe):
             for pkg in self.appends_set.all():
                 packages_conf += pkg.name+' '
         else:
-            packages_conf = "IMAGE_INSTALL = \""
+            packages_conf = "IMAGE_FEATURES =\"\"\nIMAGE_INSTALL = \""
             # We add all the known packages to be built by this recipe apart
             # from the packagegroups, which would bring the excluded package
             # back in and locale packages which are dynamic packages which
