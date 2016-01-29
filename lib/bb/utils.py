@@ -1395,3 +1395,14 @@ def ioprio_set(who, cls, value):
             raise ValueError("Unable to set ioprio, syscall returned %s" % rc)
     else:
         bb.warn("Unable to set IO Prio for arch %s" % _unamearch)
+
+def set_process_name(name):
+    from ctypes import cdll, byref, create_string_buffer
+    # This is nice to have for debugging, not essential
+    try:
+        libc = cdll.LoadLibrary('libc.so.6')
+        buff = create_string_buffer(len(name)+1)
+        buff.value = name
+        libc.prctl(15, byref(buff), 0, 0, 0)
+    except:
+        pass
