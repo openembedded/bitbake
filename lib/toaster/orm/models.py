@@ -1584,3 +1584,4 @@ def invalidate_cache(**kwargs):
 
 django.db.models.signals.post_save.connect(invalidate_cache)
 django.db.models.signals.post_delete.connect(invalidate_cache)
+django.db.models.signals.m2m_changed.connect(invalidate_cache)
