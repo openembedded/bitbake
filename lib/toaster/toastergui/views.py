@@ -2527,14 +2527,24 @@ if True:
                         "not found" % package_id}
 
         if request.method == 'GET':
+            # If no package_id then list the current packages
             if not package_id:
+                total_size = 0
                 packages = recipe.get_all_packages().values("id",
                                                             "name",
-                                                            "version")
+                                                            "version",
+                                                            "size")
+                for package in packages:
+                    package['size_formatted'] = \
+                            filtered_filesizeformat(package['size'])
+                    total_size += package['size']
 
                 return {"error": "ok",
                         "packages" : list(packages),
-                        "total" : len(packages)
+                        "total" : len(packages),
+                        "total_size" : total_size,
+                        "total_size_formatted" :
+                        filtered_filesizeformat(total_size)
                        }
             else:
                 all_current_packages = recipe.get_all_packages()
