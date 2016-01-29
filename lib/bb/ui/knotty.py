@@ -272,6 +272,8 @@ def main(server, eventHandler, params, tf = TerminalFilter):
     logger.addHandler(console)
     logger.addHandler(errconsole)
 
+    bb.utils.set_process_name("KnottyUI")
+
     if params.options.remote_server and params.options.kill_server:
         server.terminateServer()
         return

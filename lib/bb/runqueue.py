@@ -884,6 +884,7 @@ class RunQueue:
         if self.cooker.configuration.profile:
             magic = "decafbadbad"
         if fakeroot:
+            magic = magic + "beef"
             fakerootcmd = self.cfgData.getVar("FAKEROOTCMD", True)
             fakerootenv = (self.cfgData.getVar("FAKEROOTBASEENV", True) or "").split()
             env = os.environ.copy()

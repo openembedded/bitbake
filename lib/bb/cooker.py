@@ -2012,6 +2012,7 @@ class CookerParser(object):
             bb.event.fire(bb.event.ParseStarted(self.toparse), self.cfgdata)
             def init():
                 Parser.cfg = self.cfgdata
+                bb.utils.set_process_name(multiprocessing.current_process().name)
                 multiprocessing.util.Finalize(None, bb.codeparser.parser_cache_save, args=(self.cfgdata,), exitpriority=1)
                 multiprocessing.util.Finalize(None, bb.fetch.fetcher_parse_save, args=(self.cfgdata,), exitpriority=1)
 

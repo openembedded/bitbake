@@ -104,6 +104,7 @@ class BBUIEventQueue:
     def startCallbackHandler(self):
 
         self.server.timeout = 1
+        bb.utils.set_process_name("UIEventQueue")
         while not self.server.quit:
             try:
                 self.server.handle_request()

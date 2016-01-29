@@ -79,6 +79,8 @@ class PRServer(SimpleXMLRPCServer):
         # 60 iterations between syncs or sync if dirty every ~30 seconds
         iterations_between_sync = 60
 
+        bb.utils.set_process_name("PRServ Handler")
+
         while not self.quit:
             try:
                 (request, client_address) = self.requestqueue.get(True, 30)
@@ -140,6 +142,8 @@ class PRServer(SimpleXMLRPCServer):
     def work_forever(self,):
         self.quit = False
         self.timeout = 0.5
+
+        bb.utils.set_process_name("PRServ")
 
         logger.info("Started PRServer with DBfile: %s, IP: %s, PORT: %s, PID: %s" %
                      (self.dbfile, self.host, self.port, str(os.getpid())))

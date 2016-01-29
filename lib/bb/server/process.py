@@ -106,6 +106,7 @@ class ProcessServer(Process, BaseImplServer):
         # the UI and communicated to us
         self.quitin.close()
         signal.signal(signal.SIGINT, signal.SIG_IGN)
+        bb.utils.set_process_name("Cooker")
         while not self.quit:
             try:
                 if self.command_channel.poll():
@@ -212,6 +213,7 @@ class ProcessEventQueue(multiprocessing.queues.Queue):
     def __init__(self, maxsize):
         multiprocessing.queues.Queue.__init__(self, maxsize)
         self.exit = False
+        bb.utils.set_process_name("ProcessEQueue")
 
     def setexit(self):
         self.exit = True
