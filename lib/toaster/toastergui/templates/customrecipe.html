@@ -28,6 +28,7 @@
         name: "{{recipe.name}}",
         includedPackagesCount: {{recipe.includes_set.count}},
         baseRecipeId: {{recipe.base_recipe.pk}},
+        xhrPackageListUrl: "{% url 'xhr_customrecipe_packages' recipe.pk %}",
       }
     };
 
@@ -143,12 +144,12 @@
           Approx. packages included
           <i class="icon-question-sign get-help" title="" data-original-title="The number of packages included is based on information from previous builds and from parsing layers, so we can never be sure it is 100% accurate"></i>
         </dt>
-        <dd class="no-packages">{{recipe.get_all_packages.count}}</dd>
+        <dd id="total-num-packages">{{recipe.get_all_packages.count}}</dd>
         <dt>
           Approx. package size
           <i class="icon-question-sign get-help" title="" data-original-title="Package size is based on information from previous builds, so we can never be sure it is 100% accurate"></i>
         </dt>
-        <dd>{{approx_pkg_size.size__sum|filtered_filesizeformat}}</dd>
+        <dd id="total-size-packages">{{approx_pkg_size.size__sum|filtered_filesizeformat}}</dd>
         {% if last_build %}
         <dt>Last build</dt>
         <dd>

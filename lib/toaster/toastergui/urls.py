@@ -171,6 +171,10 @@ urlpatterns = patterns('toastergui.views',
         # image customisation functionality
         url(r'^xhr_customrecipe/(?P<recipe_id>\d+)/packages/(?P<package_id>\d+|)$',
             'xhr_customrecipe_packages', name='xhr_customrecipe_packages'),
+
+        url(r'^xhr_customrecipe/(?P<recipe_id>\d+)/packages/$',
+            'xhr_customrecipe_packages', name='xhr_customrecipe_packages'),
+
         url(r'^xhr_customrecipe/(?P<recipe_id>\d+)$', 'xhr_customrecipe_id',
             name='xhr_customrecipe_id'),
         url(r'^xhr_customrecipe/', 'xhr_customrecipe',
