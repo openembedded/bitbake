@@ -1986,8 +1986,6 @@ class CookerParser(object):
         self.total = len(filelist)
 
         self.current = 0
-        self.num_processes = int(self.cfgdata.getVar("BB_NUMBER_PARSE_THREADS", True) or
-                                 multiprocessing.cpu_count())
         self.process_names = []
 
         self.bb_cache = bb.cache.Cache(self.cfgdata, self.cfghash, cooker.caches_array)
@@ -2001,6 +1999,9 @@ class CookerParser(object):
                 self.fromcache.append((filename, appends))
         self.toparse = self.total - len(self.fromcache)
         self.progress_chunk = max(self.toparse / 100, 1)
+
+        self.num_processes = min(int(self.cfgdata.getVar("BB_NUMBER_PARSE_THREADS", True) or
+                                 multiprocessing.cpu_count()), len(self.willparse))
 
         self.start()
         self.haveshutdown = False
