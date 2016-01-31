@@ -305,9 +305,9 @@ class BitbakeWorker(object):
 
     def sigterm_exception(self, signum, stackframe):
         if signum == signal.SIGTERM:
-            bb.warn("Worker recieved SIGTERM, shutting down...")
+            bb.warn("Worker received SIGTERM, shutting down...")
         elif signum == signal.SIGHUP:
-            bb.warn("Worker recieved SIGHUP, shutting down...")
+            bb.warn("Worker received SIGHUP, shutting down...")
         self.handle_finishnow(None)
         signal.signal(signal.SIGTERM, signal.SIG_DFL)
         os.kill(os.getpid(), signal.SIGTERM)
