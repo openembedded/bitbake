@@ -289,6 +289,7 @@ def main(server, eventHandler, params, tf = TerminalFilter):
     llevel, debug_domains = bb.msg.constructLogOptions()
     server.runCommand(["setEventMask", server.getEventHandle(), llevel, debug_domains, _evt_list])
 
+    universe = False
     if not params.observe_only:
         params.updateFromServer(server)
         params.updateToServer(server, os.environ.copy())
@@ -299,6 +300,8 @@ def main(server, eventHandler, params, tf = TerminalFilter):
         if 'msg' in cmdline and cmdline['msg']:
             logger.error(cmdline['msg'])
             return 1
+        if cmdline['action'][0] == "buildTargets" and "universe" in cmdline['action'][1]:
+            universe = True
 
         ret, error = server.runCommand(cmdline['action'])
         if error:
@@ -444,8 +447,6 @@ def main(server, eventHandler, params, tf = TerminalFilter):
                 logger.info("consider defining a PREFERRED_PROVIDER entry to match %s", event._item)
                 continue
             if isinstance(event, bb.event.NoProvider):
-                return_value = 1
-                errors = errors + 1
                 if event._runtime:
                     r = "R"
                 else:
@@ -456,13 +457,20 @@ def main(server, eventHandler, params, tf = TerminalFilter):
                     if event._close_matches:
                         extra = ". Close matches:\n  %s" % '\n  '.join(event._close_matches)
 
+                # For universe builds, only show these as warnings, not errors
+                h = logger.warning
+                if not universe:
+                    return_value = 1
+                    errors = errors + 1
+                    h = logger.error
+
                 if event._dependees:
-                    logger.error("Nothing %sPROVIDES '%s' (but %s %sDEPENDS on or otherwise requires it)%s", r, event._item, ", ".join(event._dependees), r, extra)
+                    h("Nothing %sPROVIDES '%s' (but %s %sDEPENDS on or otherwise requires it)%s", r, event._item, ", ".join(event._dependees), r, extra)
                 else:
-                    logger.error("Nothing %sPROVIDES '%s'%s", r, event._item, extra)
+                    h("Nothing %sPROVIDES '%s'%s", r, event._item, extra)
                 if event._reasons:
                     for reason in event._reasons:
-                        logger.error("%s", reason)
+                        h("%s", reason)
                 continue
 
             if isinstance(event, bb.runqueue.sceneQueueTaskStarted):
