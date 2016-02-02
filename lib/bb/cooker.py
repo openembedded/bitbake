@@ -653,7 +653,7 @@ class BBCooker:
         data.expandKeys(envdata)
         for e in envdata.keys():
             if data.getVarFlag( e, 'python', envdata ):
-                logger.plain("\npython %s () {\n%s}\n", e, envdata.getVar(e, True))
+                logger.plain("\npython %s () {\n%s}\n", e, envdata.getVar(e, False))
 
 
     def buildTaskData(self, pkgs_to_build, task, abort, allowincomplete=False):

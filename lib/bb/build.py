@@ -239,7 +239,7 @@ def exec_func_python(func, d, runfile, cwd=None):
     """Execute a python BB 'function'"""
 
     bbfile = d.getVar('FILE', True)
-    code = _functionfmt.format(function=func, body=d.getVar(func, True))
+    code = _functionfmt.format(function=func, body=d.getVar(func, False))
     bb.utils.mkdirhier(os.path.dirname(runfile))
     with open(runfile, 'w') as script:
         bb.data.emit_func_python(func, script, d)
