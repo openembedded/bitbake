@@ -362,27 +362,27 @@ def build_dependencies(key, keys, shelldeps, varflagsexcl, d):
            value = varflags.get("vardepvalue")
         elif varflags.get("func"):
             if varflags.get("python"):
-                parsedvar = d.expandWithRefs(value, key)
                 parser = bb.codeparser.PythonParser(key, logger)
-                if parsedvar.value and "\t" in parsedvar.value:
+                if value and "\t" in value:
                     logger.warn("Variable %s contains tabs, please remove these (%s)" % (key, d.getVar("FILE", True)))
-                parser.parse_python(parsedvar.value, filename=varflags.get("filename"), lineno=varflags.get("lineno"))
+                parser.parse_python(value, filename=varflags.get("filename"), lineno=varflags.get("lineno"))
                 deps = deps | parser.references
+                deps = deps | (keys & parser.execs)
                 value = handle_contains(value, parser.contains, d)
             else:
                 parsedvar = d.expandWithRefs(value, key)
                 parser = bb.codeparser.ShellParser(key, logger)
                 parser.parse_shell(parsedvar.value)
                 deps = deps | shelldeps
+                deps = deps | parsedvar.references
+                deps = deps | (keys & parser.execs) | (keys & parsedvar.execs)
+                value = handle_contains(value, parsedvar.contains, d)
             if vardeps is None:
                 parser.log.flush()
             if "prefuncs" in varflags:
                 deps = deps | set(varflags["prefuncs"].split())
             if "postfuncs" in varflags:
                 deps = deps | set(varflags["postfuncs"].split())
-            deps = deps | parsedvar.references
-            deps = deps | (keys & parser.execs) | (keys & parsedvar.execs)
-            value = handle_contains(value, parsedvar.contains, d)
         else:
             parser = d.expandWithRefs(value, key)
             deps |= parser.references
