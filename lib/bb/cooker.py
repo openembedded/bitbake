@@ -1429,14 +1429,21 @@ class BBCooker:
         dump = {}
         for k in self.data.keys():
             try:
-                v = self.data.getVar(k, True)
+                expand = True
+                flags = self.data.getVarFlags(k)
+                if flags and "func" in flags and "python" in flags:
+                    expand = False
+                v = self.data.getVar(k, expand)
                 if not k.startswith("__") and not isinstance(v, bb.data_smart.DataSmart):
                     dump[k] = {
     'v' : v ,
     'history' : self.data.varhistory.variable(k),
                     }
                     for d in flaglist:
-                        dump[k][d] = self.data.getVarFlag(k, d)
+                        if flags and d in flags:
+                            dump[k][d] = flags[d]
+                        else:
+                            dump[k][d] = None
             except Exception as e:
                 print(e)
         return dump
