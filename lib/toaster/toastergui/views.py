@@ -2362,6 +2362,27 @@ if True:
 
         # create custom recipe
         try:
+
+            # Only allowed chars in name are a-z, 0-9 and -
+            if re.search(r'[^a-z|0-9|-]', request.POST["name"]):
+                return {"error": "invalid-name"}
+
+            # Are there any recipes with the name already?
+            for existing_recipe in Recipe.objects.filter(
+                name=request.POST["name"]):
+                try:
+                    ci = CustomImageRecipe.objects.get(pk=existing_recipe.pk)
+                    if ci.project == params["project"]:
+                        return {"error": "already-exists" }
+                    else:
+                        # It is a CustomImageRecipe but not in our project
+                        # this is fine so
+                        continue
+                except:
+                    # It isn't a CustomImageRecipe so is a recipe from
+                    # another source.
+                    return {"error": "already-exists" }
+
             # create layer 'Custom layer' and verion if needed
             layer = Layer.objects.get_or_create(
                 name="toaster-custom-images",
