@@ -692,7 +692,7 @@ class DataSmart(MutableMapping):
                             match = active[a]
                             del active[a]
             if match:
-                value = self.getVar(match)
+                value = self.getVar(match, False)
 
         if local_var is not None and value is None:
             if flag in local_var:
