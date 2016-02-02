@@ -156,8 +156,8 @@ class MethodNode(AstNode):
             anonfuncs = data.getVar('__BBANONFUNCS', False) or []
             anonfuncs.append(funcname)
             data.setVar('__BBANONFUNCS', anonfuncs)
-        else:
-            data.setVarFlag(self.func_name, "func", 1)
+            data.setVarFlag(funcname, "python", 1)
+        data.setVarFlag(funcname, "func", 1)
         data.setVar(funcname, text, parsing=True)
         data.setVarFlag(funcname, 'filename', self.filename)
         data.setVarFlag(funcname, 'lineno', str(self.lineno - len(self.body)))
