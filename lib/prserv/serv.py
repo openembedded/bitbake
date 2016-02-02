@@ -216,7 +216,6 @@ class PRServer(SimpleXMLRPCServer):
     def cleanup_handles(self):
         signal.signal(signal.SIGINT, self.sigint_handler)
         signal.signal(signal.SIGTERM, self.sigterm_handler)
-        os.umask(0)
         os.chdir("/")
 
         sys.stdout.flush()
