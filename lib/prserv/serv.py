@@ -62,9 +62,6 @@ class PRServer(SimpleXMLRPCServer):
         self.register_function(self.importone, "importone")
         self.register_introspection_functions()
 
-        self.db = prserv.db.PRData(self.dbfile)
-        self.table = self.db["PRMAIN"]
-
         self.requestqueue = Queue.Queue()
         self.handlerthread = threading.Thread(target = self.process_request_thread)
         self.handlerthread.daemon = False
@@ -100,10 +97,12 @@ class PRServer(SimpleXMLRPCServer):
             self.table.sync_if_dirty()
 
     def sigint_handler(self, signum, stack):
-        self.table.sync()
+        if self.table:
+            self.table.sync()
 
     def sigterm_handler(self, signum, stack):
-        self.table.sync()
+        if self.table:
+            self.table.sync()
         raise SystemExit
 
     def process_request(self, request, client_address):
@@ -144,6 +143,10 @@ class PRServer(SimpleXMLRPCServer):
         self.timeout = 0.5
 
         bb.utils.set_process_name("PRServ")
+
+        # DB connection must be created after all forks
+        self.db = prserv.db.PRData(self.dbfile)
+        self.table = self.db["PRMAIN"]
 
         logger.info("Started PRServer with DBfile: %s, IP: %s, PORT: %s, PID: %s" %
                      (self.dbfile, self.host, self.port, str(os.getpid())))
