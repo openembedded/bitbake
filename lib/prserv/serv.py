@@ -103,7 +103,7 @@ class PRServer(SimpleXMLRPCServer):
     def sigterm_handler(self, signum, stack):
         if self.table:
             self.table.sync()
-        raise SystemExit
+        self.quit=True
 
     def process_request(self, request, client_address):
         self.requestqueue.put((request, client_address))
