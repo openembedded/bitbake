@@ -147,7 +147,7 @@ class DataContext(dict):
 
     def __missing__(self, key):
         value = self.metadata.getVar(key, True)
-        if value is None or self.metadata.getVarFlag(key, 'func'):
+        if value is None or self.metadata.getVarFlag(key, 'func', False):
             raise KeyError(key)
         else:
             return value
@@ -480,7 +480,7 @@ class DataSmart(MutableMapping):
             base = match.group('base')
             keyword = match.group("keyword")
             override = match.group('add')
-            l = self.getVarFlag(base, keyword) or []
+            l = self.getVarFlag(base, keyword, False) or []
             l.append([value, override])
             self.setVarFlag(base, keyword, l, ignore=True)
             # And cause that to be recorded:
@@ -582,11 +582,11 @@ class DataSmart(MutableMapping):
             self.setVar(newkey, val, ignore=True, parsing=True)
 
         for i in (__setvar_keyword__):
-            src = self.getVarFlag(key, i)
+            src = self.getVarFlag(key, i, False)
             if src is None:
                 continue
 
-            dest = self.getVarFlag(newkey, i) or []
+            dest = self.getVarFlag(newkey, i, False) or []
             dest.extend(src)
             self.setVarFlag(newkey, i, dest, ignore=True)
 

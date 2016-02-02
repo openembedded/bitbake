@@ -1002,7 +1002,7 @@ def trusted_network(d, url):
         return True
 
     pkgname = d.expand(d.getVar('PN', False))
-    trusted_hosts = d.getVarFlag('BB_ALLOWED_NETWORKS', pkgname)
+    trusted_hosts = d.getVarFlag('BB_ALLOWED_NETWORKS', pkgname, False)
 
     if not trusted_hosts:
         trusted_hosts = d.getVar('BB_ALLOWED_NETWORKS', True)
@@ -1185,13 +1185,13 @@ class FetchData(object):
         elif self.type not in ["http", "https", "ftp", "ftps", "sftp"]:
             self.md5_expected = None
         else:
-            self.md5_expected = d.getVarFlag("SRC_URI", self.md5_name)
+            self.md5_expected = d.getVarFlag("SRC_URI", self.md5_name, False)
         if self.sha256_name in self.parm:
             self.sha256_expected = self.parm[self.sha256_name]
         elif self.type not in ["http", "https", "ftp", "ftps", "sftp"]:
             self.sha256_expected = None
         else:
-            self.sha256_expected = d.getVarFlag("SRC_URI", self.sha256_name)
+            self.sha256_expected = d.getVarFlag("SRC_URI", self.sha256_name, False)
         self.ignore_checksums = False
 
         self.names = self.parm.get("name",'default').split(',')

@@ -631,7 +631,7 @@ def build_environment(d):
     """
     import bb.data
     for var in bb.data.keys(d):
-        export = d.getVarFlag(var, "export")
+        export = d.getVarFlag(var, "export", False)
         if export:
             os.environ[var] = d.getVar(var, True) or ""
 

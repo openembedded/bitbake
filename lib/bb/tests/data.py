@@ -399,13 +399,13 @@ class TestFlags(unittest.TestCase):
         self.d.setVarFlag("foo", "flag2", "value of flag2")
 
     def test_setflag(self):
-        self.assertEqual(self.d.getVarFlag("foo", "flag1"), "value of flag1")
-        self.assertEqual(self.d.getVarFlag("foo", "flag2"), "value of flag2")
+        self.assertEqual(self.d.getVarFlag("foo", "flag1", False), "value of flag1")
+        self.assertEqual(self.d.getVarFlag("foo", "flag2", False), "value of flag2")
 
     def test_delflag(self):
         self.d.delVarFlag("foo", "flag2")
-        self.assertEqual(self.d.getVarFlag("foo", "flag1"), "value of flag1")
-        self.assertEqual(self.d.getVarFlag("foo", "flag2"), None)
+        self.assertEqual(self.d.getVarFlag("foo", "flag1", False), "value of flag1")
+        self.assertEqual(self.d.getVarFlag("foo", "flag2", False), None)
 
 
 class Contains(unittest.TestCase):
