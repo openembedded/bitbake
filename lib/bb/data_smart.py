@@ -663,7 +663,7 @@ class DataSmart(MutableMapping):
                 self.dict["__exportlist"]["_content"] = set()
             self.dict["__exportlist"]["_content"].add(var)
 
-    def getVarFlag(self, var, flag, expand=False, noweakdefault=False, parsing=False):
+    def getVarFlag(self, var, flag, expand, noweakdefault=False, parsing=False):
         local_var = self._findVar(var)
         value = None
         if flag == "_content" and var in self.overridedata and not parsing:
