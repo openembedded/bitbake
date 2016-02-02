@@ -22,12 +22,11 @@
       <span class="help-block span8">Image names must be unique. They should not contain spaces or capital letters, and the only allowed special character is dash (-).<p></p>
       </span></div>
     <div class="control-group controls">
-      <input type="text" class="huge span5" placeholder="Type the name, something like 'core-image-myimage'">
-        <span class="help-block" style="display:none">Image names cannot contain spaces or capital letters. The only allowed special character is dash (-)</span>
-        <span class="help-block" style="display: none">An image with this name already exists. Image names must be unique: try a different one.</span>
+      <input type="text" class="huge span5" placeholder="Type the name, something like 'core-image-myimage'" required>
+        <span class="help-block error" id="invalid-name-help" style="display:none"></span>
       </div>
     </div>
     <div class="modal-footer">
-      <a href="#" id="create-new-custom-image-btn" class="btn btn-primary btn-large" data-original-title="" title="">Create custom image</a>
+      <button id="create-new-custom-image-btn" class="btn btn-primary btn-large" data-original-title="" title="" disabled>Create custom image</button>
     </div>
 </div>
