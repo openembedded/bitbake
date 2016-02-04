@@ -124,7 +124,7 @@ class Osc(FetchMethod):
         f.write("scheme = http\n")
         f.write("su-wrapper = su -c\n")
         f.write("build-root = %s\n" % data.expand('${WORKDIR}', d))
-        f.write("urllist = http://moblin-obs.jf.intel.com:8888/build/%(project)s/%(repository)s/%(buildarch)s/:full/%(name)s.rpm\n")
+        f.write("urllist = %s\n" % d.getVar("OSCURLLIST", True))
         f.write("extra-pkgs = gzip\n")
         f.write("\n")
         f.write("[%s]\n" % ud.host)
