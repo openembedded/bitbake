@@ -1635,6 +1635,9 @@ class BBCooker:
         else:
             self.state = state.shutdown
 
+        if self.parser:
+            self.parser.shutdown(clean=not force, force=force)
+
     def finishcommand(self):
         self.state = state.initial
 
