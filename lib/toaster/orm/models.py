@@ -787,6 +787,11 @@ class Package_DependencyManager(models.Manager):
         """
         return self.all().aggregate(Sum('depends_on__size'))
 
+    def all_depends(self):
+        """ Returns just the depends packages and not any other dep_type """
+        return self.filter(Q(dep_type=Package_Dependency.TYPE_RDEPENDS) |
+                           Q(dep_type=Package_Dependency.TYPE_TRDEPENDS))
+
 class Package_Dependency(models.Model):
     TYPE_RDEPENDS = 0
     TYPE_TRDEPENDS = 1
