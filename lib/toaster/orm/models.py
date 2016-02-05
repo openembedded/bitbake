@@ -1446,6 +1446,7 @@ class CustomImageRecipe(Recipe):
     search_allowed_fields = ['name']
     base_recipe = models.ForeignKey(Recipe, related_name='based_on_recipe')
     project = models.ForeignKey(Project)
+    last_updated = models.DateTimeField(null=True, default=None)
 
     def get_last_successful_built_target(self):
         """ Return the last successful built target object if one exists
