@@ -1447,6 +1447,13 @@ class CustomImageRecipe(Recipe):
     base_recipe = models.ForeignKey(Recipe, related_name='based_on_recipe')
     project = models.ForeignKey(Project)
 
+    def get_last_successful_built_target(self):
+        """ Return the last successful built target object if one exists
+        otherwise return None """
+        return Target.objects.filter(Q(build__outcome=Build.SUCCEEDED) &
+                                     Q(build__project=self.project) &
+                                     Q(target=self.name)).last()
+
     def get_all_packages(self):
         """Get the included packages and any appended packages"""
         return CustomImagePackage.objects.filter((Q(recipe_appends=self) |
