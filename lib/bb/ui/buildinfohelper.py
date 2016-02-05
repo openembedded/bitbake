@@ -558,6 +558,10 @@ class ORMWrapper(object):
             else:
                 packagedict[p]['object'], created = \
                         CustomImagePackage.objects.get_or_create(name=searchname)
+                # Clear the Package_Dependency objects as we're going to update
+                # the CustomImagePackage with the latest dependency information
+                packagedict[p]['object'].package_dependencies_target.all().delete()
+                packagedict[p]['object'].package_dependencies_source.all().delete()
                 try:
                     recipe = self._cached_get(Recipe,
                                               name=built_recipe.name,
@@ -611,21 +615,6 @@ class ORMWrapper(object):
                     tdeptype = Package_Dependency.TYPE_TRECOMMENDS
 
                 try:
-                 # If this is a built package we are always going to have
-                 # new package objects as it's part of the build history
-                 # which also means new package dependency for each object.
-                 # However if they are project packages we don't want to
-                 # duplicate these so check if they exist or not first
-                    if built_package == False:
-                        try:
-                            Package_Dependency.objects.get(
-                                package=packagedict[p]['object'],
-                                depends_on=packagedict[px]['object'],
-                                dep_type=tdeptype)
-                            continue
-                        except Package_Dependency.DoesNotExist:
-                            pass
-
                     packagedeps_objs.append(Package_Dependency(
                         package = packagedict[p]['object'],
                         depends_on = packagedict[px]['object'],
