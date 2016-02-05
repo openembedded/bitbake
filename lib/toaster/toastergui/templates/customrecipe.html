@@ -161,12 +161,15 @@
         <dd><a href="{% url 'layerdetails' project.id recipe.layer_version.pk %}">{{recipe.layer_version.layer.name}}</a></dd>
         <dt>Based on</dt>
         <dd><a href="{% url 'recipedetails' project.id recipe.base_recipe.pk %}">{{recipe.base_recipe.name}}</a></dd>
-        {% if last_build %}
+        {% if recipe.get_last_successful_built_target %}
+        {% with recipe.get_last_successful_built_target as last_build_target %}
         <dt>Last build</dt>
         <dd>
           <i class="icon-ok-sign success"></i>
-          <a href="{% url 'projectbuilds' project.id%}">{{last_build.completed_on|date:"d/m/y H:i"}}</a>
+          <a href="{% url 'builddashboard' last_build_target.build.pk %}">
+            {{last_build_target.build.completed_on|date:"d/m/y H:i"}}</a>
         </dd>
+        {% endwith %}
         {% endif %}
         <dt>Recipe file</dt>
         <dd>
@@ -175,26 +178,32 @@
         </dd>
         <dt>Layer</dt>
         <dd><a href="{% url 'layerdetails' project.id recipe.layer_version.pk %}">{{recipe.layer_version.layer.name}}</a></dd>
+        {% if recipe.summary %}
         <dt>
           Summary
         </dt>
         <dd>
           {{recipe.summary}}
         </dd>
+        {% endif %}
+        {% if recipe.description %}
         <dt>
           Description
         </dt>
         <dd>
           {{recipe.description}}
         </dd>
+        {% endif %}
         <dt>Version</dt>
         <dd>
           {{recipe.version}}
         </dd>
+        {% if recipe.section %}
         <dt>Section</dt>
         <dd>
           {{recipe.section}}
         </dd>
+        {% endif %}
         <dt>License</dt>
         <dd>
           {{recipe.license}}
