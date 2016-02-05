@@ -1455,11 +1455,57 @@ class CustomImageRecipe(Recipe):
                                      Q(build__project=self.project) &
                                      Q(target=self.name)).last()
 
+    def update_package_list(self):
+        """ Update the package list from the last good build of this
+        CustomImageRecipe
+        """
+        # Check if we're aldready up-to-date or not
+        target = self.get_last_successful_built_target()
+        if target == None:
+            # So we've never actually built this Custom recipe but what about
+            # the recipe it's based on?
+            target = \
+                Target.objects.filter(Q(build__outcome=Build.SUCCEEDED) &
+                                      Q(build__project=self.project) &
+                                      Q(target=self.base_recipe.name)).last()
+            if target == None:
+                return
+
+        if target.build.completed_on == self.last_updated:
+            return
+
+        self.includes_set.clear()
+
+        excludes_list = self.excludes_set.values_list('name', flat=True)
+        appends_list = self.appends_set.values_list('name', flat=True)
+
+        built_packages_list = \
+            target.target_installed_package_set.values_list('package__name',
+                                                            flat=True)
+        for built_package in built_packages_list:
+            # Is the built package in the custom packages list?
+            if built_package in excludes_list:
+                continue
+
+            if built_package in appends_list:
+                continue
+
+            cust_img_p = \
+                    CustomImagePackage.objects.get(name=built_package)
+            self.includes_set.add(cust_img_p)
+
+
+        self.last_updated = target.build.completed_on
+        self.save()
+
     def get_all_packages(self):
         """Get the included packages and any appended packages"""
+        self.update_package_list()
+
         return CustomImagePackage.objects.filter((Q(recipe_appends=self) |
-                                              Q(recipe_includes=self)) &
-                                             ~Q(recipe_excludes=self))
+                                                  Q(recipe_includes=self)) &
+                                                 ~Q(recipe_excludes=self))
+
 
     def generate_recipe_file_contents(self):
         """Generate the contents for the recipe file."""
