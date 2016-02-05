@@ -1518,14 +1518,9 @@ class CustomImageRecipe(Recipe):
         else:
             packages_conf = "IMAGE_FEATURES =\"\"\nIMAGE_INSTALL = \""
             # We add all the known packages to be built by this recipe apart
-            # from the packagegroups, which would bring the excluded package
-            # back in and locale packages which are dynamic packages which
-            # bitbake will not know about.
-            for pkg in \
-                    self.includes_set.exclude(
-                    Q(pk__in=self.excludes_set.values_list('pk', flat=True)) |
-                    Q(name__icontains="packagegroup") |
-                    Q(name__icontains="locale")):
+            # from locale packages which are are controlled with IMAGE_LINGUAS.
+            for pkg in self.get_all_packages().exclude(
+                name__icontains="locale"):
                 packages_conf += pkg.name+' '
 
         packages_conf += "\""
