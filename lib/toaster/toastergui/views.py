@@ -2637,6 +2637,18 @@ if True:
 
             else:
                 recipe.appends_set.add(package)
+                # Add the dependencies we think will be added to the recipe
+                # as a result of appending this package.
+                # TODO this should recurse down the entire deps tree
+                for dep in package.package_dependencies_source.all_depends():
+                    try:
+                        cust_package = CustomImagePackage.objects.get(
+                                           name=dep.depends_on.name)
+
+                        recipe.includes_set.add(cust_package)
+                    except:
+                        logger.warning("Could not add package's suggested"
+                                       "dependencies to the list")
 
             return {"error": "ok"}
 
