@@ -908,7 +908,7 @@ class BBCooker:
         logger.info("PN build list saved to 'pn-buildlist'")
         for pn in depgraph["depends"]:
             for depend in depgraph["depends"][pn]:
-                print('"%s" -> "%s"' % (pn, depend), file=depends_file)
+                print('"%s" -> "%s" [style=solid]' % (pn, depend), file=depends_file)
         for pn in depgraph["rdepends-pn"]:
             for rdepend in depgraph["rdepends-pn"][pn]:
                 print('"%s" -> "%s" [style=dashed]' % (pn, rdepend), file=depends_file)
@@ -926,13 +926,13 @@ class BBCooker:
             else:
                 print('"%s" [label="%s(%s) %s\\n%s"]' % (package, package, pn, version, fn), file=depends_file)
             for depend in depgraph["depends"][pn]:
-                print('"%s" -> "%s"' % (package, depend), file=depends_file)
+                print('"%s" -> "%s" [style=solid]' % (package, depend), file=depends_file)
         for package in depgraph["rdepends-pkg"]:
             for rdepend in depgraph["rdepends-pkg"][package]:
                 print('"%s" -> "%s" [style=dashed]' % (package, rdepend), file=depends_file)
         for package in depgraph["rrecs-pkg"]:
             for rdepend in depgraph["rrecs-pkg"][package]:
-                print('"%s" -> "%s" [style=dashed]' % (package, rdepend), file=depends_file)
+                print('"%s" -> "%s" [style=dotted]' % (package, rdepend), file=depends_file)
         print("}", file=depends_file)
         logger.info("Package dependencies saved to 'package-depends.dot'")
 
