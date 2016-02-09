@@ -141,22 +141,33 @@ class DataNode(AstNode):
 class MethodNode(AstNode):
     tr_tbl = string.maketrans('/.+-@%&', '_______')
 
-    def __init__(self, filename, lineno, func_name, body):
+    def __init__(self, filename, lineno, func_name, body, python, fakeroot):
         AstNode.__init__(self, filename, lineno)
         self.func_name = func_name
         self.body = body
+        self.python = python
+        self.fakeroot = fakeroot
 
     def eval(self, data):
         text = '\n'.join(self.body)
         funcname = self.func_name
         if self.func_name == "__anonymous":
             funcname = ("__anon_%s_%s" % (self.lineno, self.filename.translate(MethodNode.tr_tbl)))
+            self.python = True
             text = "def %s(d):\n" % (funcname) + text
             bb.methodpool.insert_method(funcname, text, self.filename, self.lineno - len(self.body))
             anonfuncs = data.getVar('__BBANONFUNCS', False) or []
             anonfuncs.append(funcname)
             data.setVar('__BBANONFUNCS', anonfuncs)
-            data.setVarFlag(funcname, "python", 1)
+        if data.getVar(funcname, False):
+            # clean up old version of this piece of metadata, as its
+            # flags could cause problems
+            data.delVarFlag(funcname, 'python')
+            data.delVarFlag(funcname, 'fakeroot')
+        if self.python:
+            data.setVarFlag(funcname, "python", "1")
+        if self.fakeroot:
+            data.setVarFlag(funcname, "fakeroot", "1")
         data.setVarFlag(funcname, "func", 1)
         data.setVar(funcname, text, parsing=True)
         data.setVarFlag(funcname, 'filename', self.filename)
@@ -180,27 +191,6 @@ class PythonMethodNode(AstNode):
         data.setVar(self.function, text, parsing=True)
         data.setVarFlag(self.function, 'filename', self.filename)
         data.setVarFlag(self.function, 'lineno', str(self.lineno - len(self.body) - 1))
-
-class MethodFlagsNode(AstNode):
-    def __init__(self, filename, lineno, key, m):
-        AstNode.__init__(self, filename, lineno)
-        self.key = key
-        self.m = m
-
-    def eval(self, data):
-        if data.getVar(self.key, False):
-            # clean up old version of this piece of metadata, as its
-            # flags could cause problems
-            data.setVarFlag(self.key, 'python', None)
-            data.setVarFlag(self.key, 'fakeroot', None)
-        if self.m.group("py") is not None:
-            data.setVarFlag(self.key, "python", "1")
-        else:
-            data.delVarFlag(self.key, "python")
-        if self.m.group("fr") is not None:
-            data.setVarFlag(self.key, "fakeroot", "1")
-        else:
-            data.delVarFlag(self.key, "fakeroot")
 
 class ExportFuncsNode(AstNode):
     def __init__(self, filename, lineno, fns, classname):
@@ -284,14 +274,11 @@ def handleExport(statements, filename, lineno, m):
 def handleData(statements, filename, lineno, groupd):
     statements.append(DataNode(filename, lineno, groupd))
 
-def handleMethod(statements, filename, lineno, func_name, body):
-    statements.append(MethodNode(filename, lineno, func_name, body))
+def handleMethod(statements, filename, lineno, func_name, body, python, fakeroot):
+    statements.append(MethodNode(filename, lineno, func_name, body, python, fakeroot))
 
 def handlePythonMethod(statements, filename, lineno, funcname, modulename, body):
     statements.append(PythonMethodNode(filename, lineno, funcname, modulename, body))
-
-def handleMethodFlags(statements, filename, lineno, key, m):
-    statements.append(MethodFlagsNode(filename, lineno, key, m))
 
 def handleExportFuncs(statements, filename, lineno, m, classname):
     statements.append(ExportFuncsNode(filename, lineno, m.group(1), classname))

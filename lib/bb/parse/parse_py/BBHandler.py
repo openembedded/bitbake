@@ -166,7 +166,7 @@ def feeder(lineno, s, fn, root, statements, eof=False):
     if __infunc__:
         if s == '}':
             __body__.append('')
-            ast.handleMethod(statements, fn, lineno, __infunc__[0], __body__)
+            ast.handleMethod(statements, fn, lineno, __infunc__[0], __body__, __infunc__[3], __infunc__[4])
             __infunc__ = []
             __body__ = []
         else:
@@ -211,8 +211,7 @@ def feeder(lineno, s, fn, root, statements, eof=False):
 
     m = __func_start_regexp__.match(s)
     if m:
-        __infunc__ = [m.group("func") or "__anonymous", fn, lineno]
-        ast.handleMethodFlags(statements, fn, lineno, __infunc__[0], m)
+        __infunc__ = [m.group("func") or "__anonymous", fn, lineno, m.group("py") is not None, m.group("fr") is not None]
         return
 
     m = __def_regexp__.match(s)
