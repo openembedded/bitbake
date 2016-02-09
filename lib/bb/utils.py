@@ -363,15 +363,6 @@ def _print_exception(t, value, tb, realfile, text, context):
                         error.extend(_print_trace(text, tbextract[level+1][1]))
                 except:
                     error.append(tbformat[level+1])
-            elif "d" in context and tbextract[level+1][2]:
-                # Try and find the code in the datastore based on the functionname
-                d = context["d"]
-                functionname = tbextract[level+1][2]
-                text = d.getVar(functionname, True)
-                if text:
-                    error.extend(_print_trace(text.split('\n'), tbextract[level+1][1]))
-                else:
-                    error.append(tbformat[level+1])
             else:
                 error.append(tbformat[level+1])
             nexttb = tb.tb_next
