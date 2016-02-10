@@ -308,12 +308,17 @@ class LocalhostBEController(BuildEnvironmentController):
         # get the bb server running with the build req id and build env id
         bbctrl = self.getBBController()
 
-        # set variables
+        # set variables; TOASTER_BRBE is not set on the server, as this
+        # causes events from command-line builds to be attached to the last
+        # Toaster-triggered build; instead, TOASTER_BRBE is fired as an event so
+        # that toasterui can set it on the buildinfohelper;
+        # see https://bugzilla.yoctoproject.org/show_bug.cgi?id=9021
         for var in variables:
-            bbctrl.setVariable(var.name, var.value)
             if var.name == 'TOASTER_BRBE':
                 bbctrl.triggerEvent('bb.event.MetadataEvent("SetBRBE", "%s")' \
                                      % var.value)
+            else:
+                bbctrl.setVariable(var.name, var.value)
 
         # Add 'toaster' and 'buildhistory' to INHERIT variable
         inherit = {item.strip() for item in bbctrl.getVariable('INHERIT').split()}

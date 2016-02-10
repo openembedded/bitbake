@@ -832,8 +832,13 @@ class BuildInfoHelper(object):
         self.orm_wrapper = ORMWrapper()
         self.has_build_history = has_build_history
         self.tmp_dir = self.server.runCommand(["getVariable", "TMPDIR"])[0]
-        self.brbe    = self.server.runCommand(["getVariable", "TOASTER_BRBE"])[0]
-        self.project = self.server.runCommand(["getVariable", "TOASTER_PROJECT"])[0]
+
+        # this is set for Toaster-triggered builds by localhostbecontroller
+        # via toasterui
+        self.brbe = None
+
+        self.project = None
+
         logger.debug(1, "buildinfohelper: Build info helper inited %s" % vars(self))
 
 
@@ -843,8 +848,6 @@ class BuildInfoHelper(object):
 
     def _get_build_information(self, build_log_path):
         build_info = {}
-        # Generate an identifier for each new build
-
         build_info['machine'] = self.server.runCommand(["getVariable", "MACHINE"])[0]
         build_info['distro'] = self.server.runCommand(["getVariable", "DISTRO"])[0]
         build_info['distro_version'] = self.server.runCommand(["getVariable", "DISTRO_VERSION"])[0]
@@ -853,9 +856,7 @@ class BuildInfoHelper(object):
         build_info['cooker_log_path'] = build_log_path
         build_info['build_name'] = self.server.runCommand(["getVariable", "BUILDNAME"])[0]
         build_info['bitbake_version'] = self.server.runCommand(["getVariable", "BB_VERSION"])[0]
-        build_info['brbe'] = self.server.runCommand(["getVariable", "TOASTER_BRBE"])[0]
         build_info['project'] = self.project = self.server.runCommand(["getVariable", "TOASTER_PROJECT"])[0]
-
         return build_info
 
     def _get_task_information(self, event, recipe):
@@ -967,7 +968,6 @@ class BuildInfoHelper(object):
         build_information = self._get_build_information(build_log_path)
 
         # Update brbe and project as they can be changed for every build
-        self.brbe = build_information['brbe']
         self.project = build_information['project']
 
         build_obj = self.orm_wrapper.create_build_object(build_information, self.brbe, self.project)
@@ -1487,3 +1487,8 @@ class BuildInfoHelper(object):
 
         if not connection.features.autocommits_when_autocommit_is_off:
             transaction.set_autocommit(True)
+
+        # unset the brbe; this is to prevent subsequent command-line builds
+        # being incorrectly attached to the previous Toaster-triggered build;
+        # see https://bugzilla.yoctoproject.org/show_bug.cgi?id=9021
+        self.brbe = None
