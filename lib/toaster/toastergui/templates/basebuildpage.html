@@ -13,7 +13,7 @@
             <li>
             {% block parentbreadcrumb %}
             <a href="{%url 'builddashboard' build.pk%}">
-                {{build.get_sorted_target_list.0.target}} {%if build.target_set.all.count > 1%}(+ {{build.target_set.all.count|add:"-1"}}){%endif%} ({{build.completed_on|date:"d/m/y H:i"}})
+              {{build.get_sorted_target_list.0.target}} {%if build.target_set.all.count > 1%}(+{{build.target_set.all.count|add:"-1"}}){%endif%} {{build.machine}} ({{build.completed_on|date:"d/m/y H:i"}})
             </a>
             {% endblock %}
             </li>
@@ -24,7 +24,6 @@
             $('#breadcrumb > li').append('<span class="divider">&rarr;</span>');
             $('#breadcrumb > li:last').addClass("active");
             $('#breadcrumb > li:last > span, #breadcrumb > li:first > span').remove();
-	    console.log("done");
         });
         </script>
     </div>

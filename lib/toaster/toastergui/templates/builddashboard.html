@@ -6,10 +6,9 @@
 {% block parentbreadcrumb %}
 {% if build.get_sorted_target_list.count > 0 %}
   {{build.get_sorted_target_list.0.target}}
-  &nbsp;
 {% endif %}
 
-{%if build.target_set.all.count > 1%}(+ {{build.target_set.all.count|add:"-1"}}){%endif%} {{build.machine}} ({{build.completed_on|date:"d/m/y H:i"}})
+{%if build.target_set.all.count > 1%}(+{{build.target_set.all.count|add:"-1"}}){%endif%} {{build.machine}} ({{build.completed_on|date:"d/m/y H:i"}})
 {% endblock %}
 
 {% block buildinfomain %}
