@@ -38,8 +38,9 @@
             {% if build.target_set.all.count > 0 %}
                 <span data-toggle="tooltip"
                   {% if build.target_set.all.count > 1 %}
-                    title="Targets:
-                    {% for target in build.target_set.all %}
+                    {{build.get_sorted_target_list.0.target}}
+                    title="Recipes:
+                    {% for target in build.get_sorted_target_list %}
                         {% if target.task %}
                             {{target.target}}:{{target.task}}
                         {% else %}
@@ -49,12 +50,12 @@
                   {% endif %}
                 >
                 {% if build.target_set.all.0.task %}
-                    {{build.target_set.all.0.target}}:{{build.target_set.all.0.task}}
+                    {{build.get_sorted_target_list.0.target}}:{{build.target_set.all.0.task}}
                 {% else %}
-                    {{build.target_set.all.0.target}}
+                    {{build.get_sorted_target_list.0.target}}
                 {% endif %}
                 {% if build.target_set.all.count > 1 %}
-                    (+ {{build.target_set.all.count|add:"-1"}})
+                    (+{{build.target_set.all.count|add:"-1"}})
                 {% endif %}
                 </span>
              {% endif %}
