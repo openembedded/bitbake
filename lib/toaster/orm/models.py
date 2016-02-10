@@ -1097,8 +1097,7 @@ class LayerIndexLayerSource(LayerSource):
 
         # update layers
         layers_info = _get_json_response(apilinks['layerItems'])
-        if not connection.features.autocommits_when_autocommit_is_off:
-            transaction.set_autocommit(False)
+
         for li in layers_info:
             # Special case for the openembedded-core layer
             if li['name'] == oe_core_layer:
@@ -1130,17 +1129,12 @@ class LayerIndexLayerSource(LayerSource):
             l.description = li['description']
             l.save()
 
-        if not connection.features.autocommits_when_autocommit_is_off:
-            transaction.set_autocommit(True)
-
         # update layerbranches/layer_versions
         logger.debug("Fetching layer information")
         layerbranches_info = _get_json_response(apilinks['layerBranches']
                 + "?filter=branch:%s" % "OR".join(map(lambda x: str(x.up_id), [i for i in Branch.objects.filter(layer_source = self) if i.up_id is not None] ))
             )
 
-        if not connection.features.autocommits_when_autocommit_is_off:
-            transaction.set_autocommit(False)
         for lbi in layerbranches_info:
             lv, created = Layer_Version.objects.get_or_create(layer_source = self,
                     up_id = lbi['id'],
@@ -1153,14 +1147,10 @@ class LayerIndexLayerSource(LayerSource):
             lv.commit = lbi['actual_branch']
             lv.dirpath = lbi['vcs_subdir']
             lv.save()
-        if not connection.features.autocommits_when_autocommit_is_off:
-            transaction.set_autocommit(True)
 
         # update layer dependencies
         layerdependencies_info = _get_json_response(apilinks['layerDependencies'])
         dependlist = {}
-        if not connection.features.autocommits_when_autocommit_is_off:
-            transaction.set_autocommit(False)
         for ldi in layerdependencies_info:
             try:
                 lv = Layer_Version.objects.get(layer_source = self, up_id = ldi['layerbranch'])
@@ -1178,8 +1168,6 @@ class LayerIndexLayerSource(LayerSource):
             LayerVersionDependency.objects.filter(layer_version = lv).delete()
             for lvd in dependlist[lv]:
                 LayerVersionDependency.objects.get_or_create(layer_version = lv, depends_on = lvd)
-        if not connection.features.autocommits_when_autocommit_is_off:
-            transaction.set_autocommit(True)
 
 
         # update machines
@@ -1188,8 +1176,6 @@ class LayerIndexLayerSource(LayerSource):
                 + "?filter=layerbranch:%s" % "OR".join(map(lambda x: str(x.up_id), Layer_Version.objects.filter(layer_source = self)))
             )
 
-        if not connection.features.autocommits_when_autocommit_is_off:
-            transaction.set_autocommit(False)
         for mi in machines_info:
             mo, created = Machine.objects.get_or_create(layer_source = self, up_id = mi['id'], layer_version = Layer_Version.objects.get(layer_source = self, up_id = mi['layerbranch']))
             mo.up_date = mi['updated']
@@ -1197,16 +1183,11 @@ class LayerIndexLayerSource(LayerSource):
             mo.description = mi['description']
             mo.save()
 
-        if not connection.features.autocommits_when_autocommit_is_off:
-            transaction.set_autocommit(True)
-
         # update recipes; paginate by layer version / layer branch
         logger.debug("Fetching target information")
         recipes_info = _get_json_response(apilinks['recipes']
                 + "?filter=layerbranch:%s" % "OR".join(map(lambda x: str(x.up_id), Layer_Version.objects.filter(layer_source = self)))
             )
-        if not connection.features.autocommits_when_autocommit_is_off:
-            transaction.set_autocommit(False)
         for ri in recipes_info:
             try:
                 ro, created = Recipe.objects.get_or_create(layer_source = self, up_id = ri['id'], layer_version = Layer_Version.objects.get(layer_source = self, up_id = ri['layerbranch']))
@@ -1228,8 +1209,6 @@ class LayerIndexLayerSource(LayerSource):
             except IntegrityError as e:
                 logger.debug("Failed saving recipe, ignoring: %s (%s:%s)" % (e, ro.layer_version, ri['filepath']+"/"+ri['filename']))
                 ro.delete()
-        if not connection.features.autocommits_when_autocommit_is_off:
-            transaction.set_autocommit(True)
 
 class BitbakeVersion(models.Model):
 
