@@ -642,7 +642,9 @@ class TaskData:
             if prefix and not name.startswith(prefix):
                 continue
             if self.have_build_target(name):
-                provmap[name] = self.fn_index[self.get_provider(name)[0]]
+                provider = self.get_provider(name)
+                if provider:
+                    provmap[name] = self.fn_index[provider[0]]
         return provmap
 
     def dump_data(self):
