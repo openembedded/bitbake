@@ -144,6 +144,10 @@ class BBCooker:
         self.watcher.bbwatchedfiles = []
         self.notifier = pyinotify.Notifier(self.watcher, self.notifications)
 
+        # If being called by something like tinfoil, we need to clean cached data 
+        # which may now be invalid
+        bb.parse.__mtime_cache = {}
+        bb.parse.BBHandler.cached_statements = {}
 
         self.initConfigurationData()
 
@@ -197,13 +201,13 @@ class BBCooker:
     def config_notifications(self, event):
         if not event.pathname in self.configwatcher.bbwatchedfiles:
             return
-        if not event.path in self.inotify_modified_files:
-            self.inotify_modified_files.append(event.path)
+        if not event.pathname in self.inotify_modified_files:
+            self.inotify_modified_files.append(event.pathname)
         self.baseconfig_valid = False
 
     def notifications(self, event):
-        if not event.path in self.inotify_modified_files:
-            self.inotify_modified_files.append(event.path)
+        if not event.pathname in self.inotify_modified_files:
+            self.inotify_modified_files.append(event.pathname)
         self.parsecache_valid = False
 
     def add_filewatch(self, deps, watcher=None):
@@ -1505,6 +1509,8 @@ class BBCooker:
         # reload files for which we got notifications
         for p in self.inotify_modified_files:
             bb.parse.update_cache(p)
+            if p in bb.parse.BBHandler.cached_statements:
+                del bb.parse.BBHandler.cached_statements[p]
         self.inotify_modified_files = []
 
         if not self.baseconfig_valid:
