@@ -2185,8 +2185,11 @@ if True:
         layers_added = [];
 
         # Rudimentary check for any possible html tags
-        if "<" in request.POST:
-          return HttpResponse(jsonfilter({"error": "Invalid character <"}), content_type = "application/json")
+        for val in request.POST.values():
+            if "<" in val:
+                return HttpResponse(jsonfilter(
+                    {"error": "Invalid character <"}),
+                    content_type="application/json")
 
         prj = Project.objects.get(pk=request.POST['project_id'])
 

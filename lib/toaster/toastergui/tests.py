@@ -155,7 +155,7 @@ class ViewTests(TestCase):
         response = self.client.post(reverse('xhr_importlayer'), args)
         data = json.loads(response.content)
         self.assertEqual(response.status_code, 200)
-        self.assertNotEqual(data["error"], "ok")
+        self.assertEqual(data["error"], "ok")
 
         #Test to verify import of a layer successful
         args['name'] = "meta-oe"
