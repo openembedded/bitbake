@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('orm', '0002_auto_20151210_1209'),
+        ('orm', '0002_customimagerecipe'),
     ]
 
     operations = [

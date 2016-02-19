@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('orm', '0001_initial'),
+        ('orm', '0003_customimagepackage'),
     ]
 
     operations = [

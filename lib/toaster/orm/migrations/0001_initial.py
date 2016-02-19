@@ -58,13 +58,6 @@ class Migration(migrations.Migration):
             ],
         ),
         migrations.CreateModel(
-            name='CustomImageRecipe',
-            fields=[
-                ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
-                ('name', models.CharField(max_length=100)),
-            ],
-        ),
-        migrations.CreateModel(
             name='HelpText',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
@@ -436,21 +429,6 @@ class Migration(migrations.Migration):
             field=models.ForeignKey(default=None, to='orm.LayerSource', null=True),
         ),
         migrations.AddField(
-            model_name='customimagerecipe',
-            name='base_recipe',
-            field=models.ForeignKey(to='orm.Recipe'),
-        ),
-        migrations.AddField(
-            model_name='customimagerecipe',
-            name='packages',
-            field=models.ManyToManyField(to='orm.Package'),
-        ),
-        migrations.AddField(
-            model_name='customimagerecipe',
-            name='project',
-            field=models.ForeignKey(to='orm.Project'),
-        ),
-        migrations.AddField(
             model_name='build',
             name='project',
             field=models.ForeignKey(to='orm.Project'),
@@ -518,10 +496,6 @@ class Migration(migrations.Migration):
         migrations.AlterUniqueTogether(
             name='layer',
             unique_together=set([('layer_source', 'up_id'), ('layer_source', 'name')]),
-        ),
-        migrations.AlterUniqueTogether(
-            name='customimagerecipe',
-            unique_together=set([('name', 'project')]),
         ),
         migrations.AlterUniqueTogether(
             name='branch',
