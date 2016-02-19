@@ -617,6 +617,7 @@ class SoftwareRecipesTable(RecipesTable):
         super(SoftwareRecipesTable, self).setup_queryset(*args, **kwargs)
 
         self.queryset = self.queryset.filter(is_image=False)
+        self.queryset = self.queryset.order_by(self.default_orderby)
 
 
     def setup_columns(self, *args, **kwargs):
