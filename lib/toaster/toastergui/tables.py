@@ -654,7 +654,9 @@ class PackagesTable(ToasterTable):
                                       ).last()
 
         if target:
-            return target.build.package_set.all()
+            pkgs = target.target_installed_package_set.values_list('package',
+                                                                   flat=True)
+            return Package.objects.filter(pk__in=pkgs)
 
         # Target/recipe never successfully built so empty queryset
         return Package.objects.none()
