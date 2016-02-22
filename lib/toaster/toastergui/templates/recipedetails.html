@@ -6,11 +6,8 @@
 
 <div class="section">
   <ul class="breadcrumb">
-    <li class="muted">
-      {{project.name}}
-    </li>
     <li>
-      <a href="{% url 'project' project.id %}">Configuration</a>
+      <a href="{% url 'project' project.id %}">{{project.name}}</a>
       <span class="divider">&rarr;</span>
     </li>
     <li>

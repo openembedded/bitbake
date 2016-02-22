@@ -8,7 +8,7 @@
 <!-- Breadcrumbs -->
     <div class="section">
         <ul class="breadcrumb" id="breadcrumb">
-            <li class="muted">{{build.project.name}}:</li>
+            <li><a href="{% url 'project' build.project.id %}">{{build.project.name}}</a></li>
             <li><a href="{% url 'projectbuilds' build.project.id %}">Builds</a></li>
             <li>
             {% block parentbreadcrumb %}
@@ -23,7 +23,7 @@
         $( function () {
             $('#breadcrumb > li').append('<span class="divider">&rarr;</span>');
             $('#breadcrumb > li:last').addClass("active");
-            $('#breadcrumb > li:last > span, #breadcrumb > li:first > span').remove();
+            $('#breadcrumb > li:last > span').remove();
         });
         </script>
     </div>

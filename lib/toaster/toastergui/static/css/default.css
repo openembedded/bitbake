@@ -10,7 +10,6 @@
 
 /* Style the breadcrumb */
 .breadcrumb { display: inline-block; background-color: transparent; }
-.breadcrumb li:first-child { padding-right: 10px; }
 
 /* Styles for the help information */
 .get-help { color: #CCCCCC; }
