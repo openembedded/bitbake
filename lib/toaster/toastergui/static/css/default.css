@@ -197,7 +197,7 @@ table p { margin-bottom: 0 }
 .configuration-alert p { margin-bottom: 0px; }
 .project-form { margin-top: 10px; }
 .add-layers .btn-block + .btn-block, .build .btn-block + .btn-block { margin-top: 0px; }
-input.huge { font-size: 17.5px; padding: 11px 19px; }
+input.huge { font-size: 17.5px; padding: 11px; min-width: 60%; }
 .build-form { margin-bottom: 0px; }
 .build-form .input-append { margin-bottom: 0px; }
 .build-form .btn-large { padding: 11px 35px; }
