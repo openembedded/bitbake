@@ -589,12 +589,19 @@ class NewCustomImagesTable(ImageRecipesTable):
         self.queryset = self.queryset.filter(is_image=True)
 
     def setup_columns(self, *args, **kwargs):
+
+        name_link_template = '''
+        <a href="{% url 'recipedetails' extra.pid data.pk %}">{{data.name}}</a>
+        '''
+
         self.add_column(title="Image recipe",
                         help_text="When you build an image recipe, you get an "
                                   "image: a root file system you can"
                                   "deploy to a machine",
                         hideable=False,
                         orderable=True,
+                        static_data_name="name",
+                        static_data_template=name_link_template,
                         field_name="name")
 
         super(ImageRecipesTable, self).setup_columns(*args, **kwargs)
