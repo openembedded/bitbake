@@ -114,6 +114,7 @@ th > a, th > span { font-weight: normal; }
 /* Styles for the navbar actions */
 .btn-group + .btn-group { margin-right: 10px; }
 .navbar-inner > .btn-group { margin-top: 6px; }
+[id^="search-input-"], #search { width: 80%; }
 
 /* Styles for the parent item in the left navigation */
 
