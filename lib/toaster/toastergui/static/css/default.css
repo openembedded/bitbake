@@ -51,6 +51,7 @@ dd li { line-height: 25px; }
 /* Style the filter modal dialogs */
 .modal { width: 800px; margin-left: -400px; }
 .modal-footer .btn { float: left; }
+.modal-body { max-height: 300px; }
 
 /* Hover style for the clear search icon */
 .icon-remove-sign:hover { color: #999999; cursor: pointer; }
