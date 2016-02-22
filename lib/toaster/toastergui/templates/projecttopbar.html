@@ -44,14 +44,14 @@
 {% if not project.is_default %}
   <div id="project-topbar">
     <ul class="nav nav-pills">
-      <li>
-        <a href="{% url 'projectbuilds' project.id %}">
-          Builds ({{project.get_number_of_builds}})
-        </a>
-      </li>
       <li id="topbar-configuration-tab">
         <a href="{% url 'project' project.id %}">
           Configuration
+        </a>
+      </li>
+      <li>
+        <a href="{% url 'projectbuilds' project.id %}">
+          Builds ({{project.get_number_of_builds}})
         </a>
       </li>
       <li>
