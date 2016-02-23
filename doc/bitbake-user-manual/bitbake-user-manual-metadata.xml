@@ -840,6 +840,18 @@
                 is a global variable and is always automatically
                 available.
            </para>
+
+           <note>
+                Variable expressions (e.g. <filename>${X}</filename>) are no
+                longer expanded within Python functions.
+                This behavior is intentional in order to allow you to freely
+                set variable values to expandable expressions without having
+                them expanded prematurely.
+                If you do wish to expand a variable within a Python function,
+                use <filename>d.getVar("X", True)</filename>.
+                Or, for more complicated expressions, use
+                <filename>d.expand()</filename>.
+           </note>
         </section>
 
         <section id='python-functions'>
