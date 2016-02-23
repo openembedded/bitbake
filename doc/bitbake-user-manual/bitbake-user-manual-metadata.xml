@@ -1783,6 +1783,10 @@
                             <entry align="left"><filename>d.delVarFlags("X")</filename></entry>
                             <entry align="left">Deletes all the flags for the variable "X".</entry>
                         </row>
+                        <row>
+                            <entry align="left"><filename>d.expand(expression)</filename></entry>
+                            <entry align="left">Expands variable references in the specified string expression.</entry>
+                        </row>
                     </tbody>
                 </tgroup>
             </informaltable>
