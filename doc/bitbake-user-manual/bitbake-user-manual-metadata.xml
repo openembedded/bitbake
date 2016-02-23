@@ -1107,10 +1107,18 @@
             <title>Passing Information Into the Build Task Environment</title>
 
             <para>
-                When running a task, BitBake tightly controls the execution
+                When running a task, BitBake tightly controls the shell execution
                 environment of the build tasks to make
                 sure unwanted contamination from the build machine cannot
                 influence the build.
+                <note>
+                    By default, BitBake cleans the environment to include only those
+                    things exported or listed in its whitelist to ensure that the build
+                    environment is reproducible and consistent.
+                    You can prevent this "cleaning" by setting the
+                    <link linkend='var-BB_PRESERVE_ENV'><filename>BB_PRESERVE_ENV</filename></link>
+                    variable.
+                </note>
                 Consequently, if you do want something to get passed into the
                 build task environment, you must take these two steps:
                 <orderedlist>
@@ -1118,14 +1126,16 @@
                         Tell BitBake to load what you want from the environment
                         into the datastore.
                         You can do so through the
+                        <link linkend='var-BB_ENV_WHITELIST'><filename>BB_ENV_WHITELIST</filename></link>
+                        and
                         <link linkend='var-BB_ENV_EXTRAWHITE'><filename>BB_ENV_EXTRAWHITE</filename></link>
-                        variable.
+                        variables.
                         For example, assume you want to prevent the build system from
                         accessing your <filename>$HOME/.ccache</filename>
                         directory.
-                        The following command tells BitBake to load
-                        <filename>CCACHE_DIR</filename> from the environment into
-                        the datastore:
+                        The following command "whitelists" the environment variable
+                        <filename>CCACHE_DIR</filename> causing BitBack to allow that
+                        variable into the datastore:
                         <literallayout class='monospaced'>
      export BB_ENV_EXTRAWHITE="$BB_ENV_EXTRAWHITE CCACHE_DIR"
                         </literallayout></para></listitem>
@@ -1173,12 +1183,6 @@
                 </literallayout>
                 The previous example returns <filename>BAR</filename> from the original
                 execution environment.
-            </para>
-
-            <para>
-                By default, BitBake cleans the environment to include only those
-                things exported or listed in its whitelist to ensure that the build
-                environment is reproducible and consistent.
             </para>
         </section>
     </section>
