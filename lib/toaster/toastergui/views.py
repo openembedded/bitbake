@@ -480,7 +480,12 @@ def builddashboard( request, build_id ):
             if ( ndx < 0 ):
                 ndx = 0;
             f = i.file_name[ ndx + 1: ]
-            imageFiles.append({ 'id': i.id, 'path': f, 'size' : i.file_size })
+            imageFiles.append({
+                'id': i.id,
+                'path': f,
+                'size': i.file_size,
+                'suffix': i.suffix
+            })
         if t.is_image and (len(imageFiles) <= 0 or len(t.license_manifest_path) <= 0):
             targetHasNoImages = True
         elem[ 'imageFiles' ] = imageFiles

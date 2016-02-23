@@ -550,6 +550,8 @@ class BuildArtifact(models.Model):
 
         return self.file_name
 
+    def get_basename(self):
+        return os.path.basename(self.file_name)
 
     def is_available(self):
         return self.build.buildrequest.environment.has_artifact(self.file_name)
@@ -587,6 +589,12 @@ class Target_Image_File(models.Model):
     target = models.ForeignKey(Target)
     file_name = models.FilePathField(max_length=254)
     file_size = models.IntegerField()
+
+    @property
+    def suffix(self):
+        filename, suffix = os.path.splitext(self.file_name)
+        suffix = suffix.lstrip('.')
+        return suffix
 
 class Target_File(models.Model):
     ITYPE_REGULAR = 1
