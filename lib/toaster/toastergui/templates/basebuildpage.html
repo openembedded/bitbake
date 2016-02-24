@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load projecttags %}
+{% load project_url_tag %}
 {% load humanize %}
 {% block pagecontent %}
 
@@ -8,8 +9,10 @@
 <!-- Breadcrumbs -->
     <div class="section">
         <ul class="breadcrumb" id="breadcrumb">
-            <li><a href="{% url 'project' build.project.id %}">{{build.project.name}}</a></li>
-            <li><a href="{% url 'projectbuilds' build.project.id %}">Builds</a></li>
+            <li><a href="{% project_url build.project %}">{{build.project.name}}</a></li>
+            {% if not build.project.is_default %}
+                <li><a href="{% url 'projectbuilds' build.project.id %}">Builds</a></li>
+            {% endif %}
             <li>
             {% block parentbreadcrumb %}
             <a href="{%url 'builddashboard' build.pk%}">
