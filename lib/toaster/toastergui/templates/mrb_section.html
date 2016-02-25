@@ -113,7 +113,7 @@
                         {% url 'project' build.project.id as purl %}{{purl|json}},
                         {{build.target_set.all|get_tasks|json}})'>
 
-                        Run again
+                        Rebuild
                   </button>
               {% endif %}
             </div>

@@ -951,7 +951,7 @@ class AllBuildsPageTests(TestCase):
 
     def test_run_again(self):
         """
-        "Run again" button should not be shown for command-line builds,
+        "Rebuild" button should not be shown for command-line builds,
         but should be shown for other builds
         """
         build1 = Build.objects.create(**self.project1_build_success)
