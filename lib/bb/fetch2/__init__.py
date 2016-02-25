@@ -1318,6 +1318,11 @@ class FetchMethod(object):
         iterate = False
         file = urldata.localpath
 
+        # Localpath can't deal with 'dir/*' entries, so it converts them to '.',
+        # but it must be corrected back for local files copying
+        if urldata.basename == '*' and file.endswith('/.'):
+            file = '%s/%s' % (file.rstrip('/.'), urldata.path)
+
         try:
             unpack = bb.utils.to_boolean(urldata.parm.get('unpack'), True)
         except ValueError as exc:
@@ -1375,50 +1380,32 @@ class FetchMethod(object):
             elif file.endswith('.7z'):
                 cmd = '7za x -y %s 1>/dev/null' % file
 
+        # If 'subdir' param exists, create a dir and use it as destination for unpack cmd
+        if 'subdir' in urldata.parm:
+            unpackdir = '%s/%s' % (rootdir, urldata.parm.get('subdir'))
+            bb.utils.mkdirhier(unpackdir)
+        else:
+            unpackdir = rootdir
+
         if not unpack or not cmd:
             # If file == dest, then avoid any copies, as we already put the file into dest!
-            dest = os.path.join(rootdir, os.path.basename(file))
-            if (file != dest) and not (os.path.exists(dest) and os.path.samefile(file, dest)):
-                if os.path.isdir(file):
-                    # If for example we're asked to copy file://foo/bar, we need to unpack the result into foo/bar
-                    basepath = getattr(urldata, "basepath", None)
-                    destdir = "."
-                    if basepath and basepath.endswith("/"):
-                        basepath = basepath.rstrip("/")
-                    elif basepath:
-                        basepath = os.path.dirname(basepath)
-                    if basepath and basepath.find("/") != -1:
-                        destdir = basepath[:basepath.rfind('/')]
-                        destdir = destdir.strip('/')
-                    if destdir != "." and not os.access("%s/%s" % (rootdir, destdir), os.F_OK):
-                        os.makedirs("%s/%s" % (rootdir, destdir))
-                    cmd = 'cp -fpPR %s %s/%s/' % (file, rootdir, destdir)
-                    #cmd = 'tar -cf - -C "%d" -ps . | tar -xf - -C "%s/%s/"' % (file, rootdir, destdir)
-                else:
-                    # The "destdir" handling was specifically done for FILESPATH
-                    # items.  So, only do so for file:// entries.
-                    if urldata.type == "file" and urldata.path.find("/") != -1:
-                       destdir = urldata.path.rsplit("/", 1)[0]
-                       if urldata.parm.get('subdir') != None:
-                          destdir = urldata.parm.get('subdir') + "/" + destdir
-                    else:
-                       if urldata.parm.get('subdir') != None:
-                          destdir = urldata.parm.get('subdir')
-                       else:
-                          destdir = "."
-                    bb.utils.mkdirhier("%s/%s" % (rootdir, destdir))
-                    cmd = 'cp -f %s %s/%s/' % (file, rootdir, destdir)
+            dest = os.path.join(unpackdir, os.path.basename(file))
+            if file != dest and not (os.path.exists(dest) and os.path.samefile(file, dest)):
+                destdir = '.'
+                # For file:// entries all intermediate dirs in path must be created at destination
+                if urldata.type == "file":
+                    urlpath = urldata.path.rstrip('/') # Trailing '/' does a copying to wrong place
+                    if urlpath.find("/") != -1:
+                        destdir = urlpath.rsplit("/", 1)[0] + '/'
+                        bb.utils.mkdirhier("%s/%s" % (unpackdir, destdir))
+                cmd = 'cp -fpPR %s %s' % (file, destdir)
 
         if not cmd:
             return
 
-        # Change to subdir before executing command
+        # Change to unpackdir before executing command
         save_cwd = os.getcwd();
-        os.chdir(rootdir)
-        if 'subdir' in urldata.parm:
-            newdir = ("%s/%s" % (rootdir, urldata.parm.get('subdir')))
-            bb.utils.mkdirhier(newdir)
-            os.chdir(newdir)
+        os.chdir(unpackdir)
 
         path = data.getVar('PATH', True)
         if path:
