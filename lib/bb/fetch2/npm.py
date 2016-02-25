@@ -59,6 +59,7 @@ class Npm(FetchMethod):
          logger.debug(2, "Calling cleanup %s" % ud.pkgname)
          bb.utils.remove(ud.localpath, False)
          bb.utils.remove(ud.pkgdatadir, True)
+         bb.utils.remove(ud.fullmirror, False)
 
     def urldata_init(self, ud, d):
         """
@@ -82,11 +83,15 @@ class Npm(FetchMethod):
         prefixdir = "npm/%s" % ud.pkgname
         ud.pkgdatadir = d.expand("${DL_DIR}/%s" % prefixdir)
         if not os.path.exists(ud.pkgdatadir):
-            bb.utils.mkdirhiet(ud.pkgdatadir)
+            bb.utils.mkdirhier(ud.pkgdatadir)
         ud.localpath = d.expand("${DL_DIR}/npm/%s" % ud.bbnpmmanifest)
 
         self.basecmd = d.getVar("FETCHCMD_wget", True) or "/usr/bin/env wget -O -t 2 -T 30 -nv --passive-ftp --no-check-certificate "
         self.basecmd += " --directory-prefix=%s " % prefixdir
+
+        ud.write_tarballs = ((data.getVar("BB_GENERATE_MIRROR_TARBALLS", d, True) or "0") != "0")
+        ud.mirrortarball = 'npm_%s-%s.tar.xz' % (ud.pkgname, ud.version)
+        ud.fullmirror = os.path.join(d.getVar("DL_DIR", True), ud.mirrortarball)
 
     def need_update(self, ud, d):
         if os.path.exists(ud.localpath):
@@ -202,6 +207,15 @@ class Npm(FetchMethod):
         shrinkobj = {}
         lockdown = {}
 
+        if not os.listdir(ud.pkgdatadir) and os.path.exists(ud.fullmirror):
+            dest = d.getVar("DL_DIR", True)
+            bb.utils.mkdirhier(dest)
+            save_cwd = os.getcwd()
+            os.chdir(dest)
+            runfetchcmd("tar -xJf %s" % (ud.fullmirror), d)
+            os.chdir(save_cwd)
+            return
+
         shwrf = d.getVar('NPM_SHRINKWRAP', True)
         logger.debug(2, "NPM shrinkwrap file is %s" % shwrf)
         try:
@@ -224,3 +238,18 @@ class Npm(FetchMethod):
 
         with open(ud.localpath, 'w') as outfile:
             json.dump(jsondepobj, outfile)
+
+    def build_mirror_data(self, ud, d):
+        # Generate a mirror tarball if needed
+        if ud.write_tarballs and not os.path.exists(ud.fullmirror):
+            # it's possible that this symlink points to read-only filesystem with PREMIRROR
+            if os.path.islink(ud.fullmirror):
+                os.unlink(ud.fullmirror)
+
+            save_cwd = os.getcwd()
+            os.chdir(d.getVar("DL_DIR", True))
+            logger.info("Creating tarball of npm data")
+            runfetchcmd("tar -cJf %s npm/%s npm/%s" % (ud.fullmirror, ud.bbnpmmanifest, ud.pkgname), d)
+            runfetchcmd("touch %s.done" % (ud.fullmirror), d)
+            os.chdir(save_cwd)
+
