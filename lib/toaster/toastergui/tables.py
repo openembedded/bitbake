@@ -183,8 +183,8 @@ class LayersTable(ToasterTable):
                         static_data_name="dependencies",
                         static_data_template=deps_template)
 
-        self.add_column(title="Add | Delete",
-                        help_text="Add or delete layers to / from your project",
+        self.add_column(title="Add | Remove",
+                        help_text="Add or remove layers to / from your project",
                         hideable=False,
                         filter_name="in_current_project",
                         static_data_name="add-del-layers",
