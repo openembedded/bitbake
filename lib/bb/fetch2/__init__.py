@@ -626,6 +626,9 @@ def verify_donestamp(ud, d, origud=None):
     Returns True, if the donestamp exists and is valid, False otherwise. When
     returning False, any existing done stamps are removed.
     """
+    if not ud.needdonestamp:
+        return True
+
     if not os.path.exists(ud.donestamp):
         return False
 
@@ -684,6 +687,9 @@ def update_stamp(ud, d):
         donestamp is file stamp indicating the whole fetching is done
         this function update the stamp after verifying the checksum
     """
+    if not ud.needdonestamp:
+        return
+
     if os.path.exists(ud.donestamp):
         # Touch the done stamp file to show active use of the download
         try:
@@ -935,8 +941,9 @@ def try_mirror_url(fetch, origud, ud, ld, check = False):
         if origud.mirrortarball and os.path.basename(ud.localpath) == os.path.basename(origud.mirrortarball) \
                 and os.path.basename(ud.localpath) != os.path.basename(origud.localpath):
             # Create donestamp in old format to avoid triggering a re-download
-            bb.utils.mkdirhier(os.path.dirname(ud.donestamp))
-            open(ud.donestamp, 'w').close()
+            if ud.donestamp:
+                bb.utils.mkdirhier(os.path.dirname(ud.donestamp))
+                open(ud.donestamp, 'w').close()
             dest = os.path.join(dldir, os.path.basename(ud.localpath))
             if not os.path.exists(dest):
                 os.symlink(ud.localpath, dest)
@@ -1119,6 +1126,7 @@ class FetchData(object):
     def __init__(self, url, d, localonly = False):
         # localpath is the location of a downloaded result. If not set, the file is local.
         self.donestamp = None
+        self.needdonestamp = True
         self.localfile = ""
         self.localpath = None
         self.lockfile = None
@@ -1183,6 +1191,10 @@ class FetchData(object):
             self.localpath = self.method.localpath(self, d)
 
         dldir = d.getVar("DL_DIR", True)
+
+        if not self.needdonestamp:
+            return
+
         # Note: .done and .lock files should always be in DL_DIR whereas localpath may not be.
         if self.localpath and self.localpath.startswith(dldir):
             basepath = self.localpath
@@ -1533,7 +1545,8 @@ class Fetch(object):
             m = ud.method
             localpath = ""
 
-            lf = bb.utils.lockfile(ud.lockfile)
+            if ud.lockfile:
+                lf = bb.utils.lockfile(ud.lockfile)
 
             try:
                 self.d.setVar("BB_NO_NETWORK", network)
@@ -1599,7 +1612,8 @@ class Fetch(object):
                 raise
 
             finally:
-                bb.utils.unlockfile(lf)
+                if ud.lockfile:
+                    bb.utils.unlockfile(lf)
 
     def checkstatus(self, urls=None):
         """
