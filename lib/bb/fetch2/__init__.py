@@ -327,7 +327,7 @@ class URI(object):
     def path(self, path):
         self._path = path
 
-        if re.compile("^/").match(path):
+        if not path or re.compile("^/").match(path):
             self.relative = False
         else:
             self.relative = True
@@ -375,9 +375,12 @@ def decodeurl(url):
     if locidx != -1 and type.lower() != 'file':
         host = location[:locidx]
         path = location[locidx:]
-    else:
+    elif type.lower() == 'file':
         host = ""
         path = location
+    else:
+        host = location
+        path = ""
     if user:
         m = re.compile('(?P<user>[^:]+)(:?(?P<pswd>.*))').match(user)
         if m:

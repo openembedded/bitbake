@@ -228,7 +228,38 @@ class URITest(unittest.TestCase):
             'params': {},
             'query': {},
             'relative': False
+        },
+        "http://somesite.net;someparam=1": {
+            'uri': 'http://somesite.net;someparam=1',
+            'scheme': 'http',
+            'hostname': 'somesite.net',
+            'port': None,
+            'hostport': 'somesite.net',
+            'path': '',
+            'userinfo': '',
+            'userinfo': '',
+            'username': '',
+            'password': '',
+            'params': {"someparam" : "1"},
+            'query': {},
+            'relative': False
+        },
+        "file://somelocation;someparam=1": {
+            'uri': 'file:somelocation;someparam=1',
+            'scheme': 'file',
+            'hostname': '',
+            'port': None,
+            'hostport': '',
+            'path': 'somelocation',
+            'userinfo': '',
+            'userinfo': '',
+            'username': '',
+            'password': '',
+            'params': {"someparam" : "1"},
+            'query': {},
+            'relative': True
         }
+
     }
 
     def test_uri(self):
@@ -627,11 +658,18 @@ class URLHandle(unittest.TestCase):
        "http://www.google.com/index.html" : ('http', 'www.google.com', '/index.html', '', '', {}),
        "cvs://anoncvs@cvs.handhelds.org/cvs;module=familiar/dist/ipkg" : ('cvs', 'cvs.handhelds.org', '/cvs', 'anoncvs', '', {'module': 'familiar/dist/ipkg'}),
        "cvs://anoncvs:anonymous@cvs.handhelds.org/cvs;tag=V0-99-81;module=familiar/dist/ipkg" : ('cvs', 'cvs.handhelds.org', '/cvs', 'anoncvs', 'anonymous', {'tag': 'V0-99-81', 'module': 'familiar/dist/ipkg'}),
-       "git://git.openembedded.org/bitbake;branch=@foo" : ('git', 'git.openembedded.org', '/bitbake', '', '', {'branch': '@foo'})
+       "git://git.openembedded.org/bitbake;branch=@foo" : ('git', 'git.openembedded.org', '/bitbake', '', '', {'branch': '@foo'}),
+       "file://somelocation;someparam=1": ('file', '', 'somelocation', '', '', {'someparam': '1'}),
     }
+    # we require a pathname to encodeurl but users can still pass such urls to 
+    # decodeurl and we need to handle them
+    decodedata = datatable.copy()
+    decodedata.update({
+       "http://somesite.net;someparam=1": ('http', 'somesite.net', '', '', '', {'someparam': '1'}),
+    })
 
     def test_decodeurl(self):
-        for k, v in self.datatable.items():
+        for k, v in self.decodedata.items():
             result = bb.fetch.decodeurl(k)
             self.assertEqual(result, v)
 
