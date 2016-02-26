@@ -63,6 +63,8 @@ class Wget(FetchMethod):
             ud.basename = os.path.basename(ud.path)
 
         ud.localfile = data.expand(urllib.unquote(ud.basename), d)
+        if not ud.localfile:
+            ud.localfile = data.expand(urllib.unquote(ud.host + ud.path).replace("/", "."), d)
 
         self.basecmd = d.getVar("FETCHCMD_wget", True) or "/usr/bin/env wget -t 2 -T 30 -nv --passive-ftp --no-check-certificate"
 
