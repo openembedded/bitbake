@@ -1188,8 +1188,11 @@ class FetchData(object):
             basepath = self.localpath
         elif self.localpath:
             basepath = dldir + os.sep + os.path.basename(self.localpath)
-        else:
+        elif self.basepath or self.basename:
             basepath = dldir + os.sep + (self.basepath or self.basename)
+        else:
+             bb.fatal("Can't determine lock path for url %s" % url)
+
         self.donestamp = basepath + '.done'
         self.lockfile = basepath + '.lock'
 
