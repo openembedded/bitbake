@@ -1394,7 +1394,10 @@ class FetchMethod(object):
                 destdir = '.'
                 # For file:// entries all intermediate dirs in path must be created at destination
                 if urldata.type == "file":
-                    urlpath = urldata.path.rstrip('/') # Trailing '/' does a copying to wrong place
+                    # Trailing '/' does a copying to wrong place
+                    urlpath = urldata.path.rstrip('/')
+                    # Want files places relative to cwd so no leading '/'
+                    urlpath = urlpath.lstrip('/')
                     if urlpath.find("/") != -1:
                         destdir = urlpath.rsplit("/", 1)[0] + '/'
                         bb.utils.mkdirhier("%s/%s" % (unpackdir, destdir))
