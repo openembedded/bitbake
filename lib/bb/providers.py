@@ -121,11 +121,14 @@ def findPreferredProvider(pn, cfgData, dataCache, pkg_pn = None, item = None):
     preferred_file = None
     preferred_ver = None
 
-    localdata = data.createCopy(cfgData)
-    localdata.setVar('OVERRIDES', "%s:pn-%s:%s" % (data.getVar('OVERRIDES', localdata), pn, pn))
-    bb.data.update_data(localdata)
+    # pn can contain '_', e.g. gcc-cross-x86_64 and an override cannot
+    # hence we do this manually rather than use OVERRIDES
+    preferred_v = cfgData.getVar("PREFERRED_VERSION_pn-%s" % pn, True)
+    if not preferred_v:
+        preferred_v = cfgData.getVar("PREFERRED_VERSION_%s" % pn, True)
+    if not preferred_v:
+        preferred_v = cfgData.getVar("PREFERRED_VERSION", True)
 
-    preferred_v = localdata.getVar('PREFERRED_VERSION', True)
     if preferred_v:
         m = re.match('(\d+:)*(.*)(_.*)*', preferred_v)
         if m:
