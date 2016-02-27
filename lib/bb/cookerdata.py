@@ -212,8 +212,12 @@ def findConfigFile(configfile, data):
         for i in bbpath.split(":"):
             search.append(os.path.join(i, "conf", configfile))
     path = os.getcwd()
+    builddir = os.environ.get('BUILDDIR', '')
+    if builddir != '' and os.path.exists(builddir):
+        search.append(os.path.join(builddir, "conf", configfile))
     while path != "/":
-        search.append(os.path.join(path, "conf", configfile))
+        if builddir != path:
+            search.append(os.path.join(path, "conf", configfile))
         path, _ = os.path.split(path)
 
     for i in search:
