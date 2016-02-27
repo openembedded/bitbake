@@ -205,6 +205,9 @@ def _inherit(bbclass, data):
     bb.parse.BBHandler.inherit(bbclass, "configuration INHERITs", 0, data)
     return data
 
+# Save environment on execution
+__BUILDDIR = os.environ.get('BUILDDIR', '')
+
 def findConfigFile(configfile, data):
     search = []
     bbpath = data.getVar("BBPATH", True)
@@ -212,7 +215,7 @@ def findConfigFile(configfile, data):
         for i in bbpath.split(":"):
             search.append(os.path.join(i, "conf", configfile))
     path = os.getcwd()
-    builddir = os.environ.get('BUILDDIR', '')
+    builddir = __BUILDDIR
     if builddir != '' and os.path.exists(builddir):
         search.append(os.path.join(builddir, "conf", configfile))
     while path != "/":
