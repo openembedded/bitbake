@@ -175,7 +175,7 @@ class Npm(FetchMethod):
     def _getshrinkeddependencies(self, pkg, data, version, d, ud, lockdown, manifest):
         logger.debug(2, "NPM shrinkwrap file is %s" % data)
         outputurl = "invalid"
-        if ('resolved' not in data):
+        if ('resolved' not in data) or (not data['resolved'].startswith('http')):
             # will be the case for ${PN}
             fetchcmd = "npm view %s@%s dist.tarball --registry %s" % (pkg, version, ud.registry)
             logger.debug(2, "Found this matching URL: %s" % str(fetchcmd))
