@@ -1349,7 +1349,7 @@ class BBCooker:
                 failures += len(exc.args)
                 retval = False
             except SystemExit as exc:
-                self.command.finishAsyncCommand()
+                self.command.finishAsyncCommand(str(exc))
                 return False
 
             if not retval:
@@ -1385,7 +1385,7 @@ class BBCooker:
                 failures += len(exc.args)
                 retval = False
             except SystemExit as exc:
-                self.command.finishAsyncCommand()
+                self.command.finishAsyncCommand(str(exc))
                 return False
 
             if not retval:
