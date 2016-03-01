@@ -53,10 +53,12 @@ class ServerCommunicator():
         while True:
             # don't let the user ctrl-c while we're waiting for a response
             try:
-                if self.connection.poll(20):
-                    return self.connection.recv()
-                else:
-                    bb.fatal("Timeout while attempting to communicate with bitbake server")
+                for idx in range(0,4): # 0, 1, 2, 3
+                    if self.connection.poll(5):
+                        return self.connection.recv()
+                    else:
+                        bb.warn("Timeout while attempting to communicate with bitbake server")
+                bb.fatal("Gave up; Too many tries: timeout while attempting to communicate with bitbake server")
             except KeyboardInterrupt:
                 pass
 
