@@ -138,7 +138,7 @@ class BuildEnvironmentController(object):
             After this method executes, self.be bbaddress/bbport MUST point to a running and free server,
             and the bbstate MUST be  updated to "started".
         """
-        raise Exception("FIXME: Must override in order to actually start the BB server")
+        raise NotImplementedError("FIXME: Must override in order to actually start the BB server")
 
 
     def setLayers(self, bitbake, ls):
@@ -149,7 +149,7 @@ class BuildEnvironmentController(object):
 
             a word of attention: by convention, the first layer for any build will be poky!
         """
-        raise Exception("FIXME: Must override setLayers")
+        raise NotImplementedError("FIXME: Must override setLayers")
 
 
     def getBBController(self):
@@ -176,16 +176,16 @@ class BuildEnvironmentController(object):
             up to the implementing BEC. The return MUST be a REST URL where a GET will actually return
             the content of the artifact, e.g. for use as a "download link" in a web UI.
         """
-        raise Exception("Must return the REST URL of the artifact")
+        raise NotImplementedError("Must return the REST URL of the artifact")
 
     def release(self):
         """ This stops the server and releases any resources. After this point, all resources
             are un-available for further reference
         """
-        raise Exception("Must override BE release")
+        raise NotImplementedError("Must override BE release")
 
     def triggerBuild(self, bitbake, layers, variables, targets):
-        raise Exception("Must override BE release")
+        raise NotImplementedError("Must override BE release")
 
 class ShellCmdException(Exception):
     pass

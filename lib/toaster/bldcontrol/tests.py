@@ -48,13 +48,12 @@ class BEControllerTests(object):
         self.assertTrue(err == '', "bitbake server pid %s not stopped" % err)
 
     def test_serverStartAndStop(self):
-        from bldcontrol.sshbecontroller import NotImplementedException
         obe =  self._getBuildEnvironment()
         bc = self._getBEController(obe)
         try:
             # setting layers, skip any layer info
             bc.setLayers(BITBAKE_LAYER, POKY_LAYERS)
-        except NotImplementedException,  e:
+        except NotImplementedError:
             print "Test skipped due to command not implemented yet"
             return True
         # We are ok with the exception as we're handling the git already exists
@@ -74,14 +73,13 @@ class BEControllerTests(object):
         self._serverForceStop(bc)
 
     def test_getBBController(self):
-        from bldcontrol.sshbecontroller import NotImplementedException
         obe = self._getBuildEnvironment()
         bc = self._getBEController(obe)
         layerSet = False
         try:
             # setting layers, skip any layer info
             layerSet = bc.setLayers(BITBAKE_LAYER, POKY_LAYERS)
-        except NotImplementedException:
+        except NotImplementedError:
             print "Test skipped due to command not implemented yet"
             return True
         # We are ok with the exception as we're handling the git already exists
