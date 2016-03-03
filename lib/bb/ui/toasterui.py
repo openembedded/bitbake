@@ -102,10 +102,13 @@ _evt_list = [
     "bb.command.CommandExit",
     "bb.command.CommandFailed",
     "bb.cooker.CookerExit",
-    "bb.event.BuildBase",
+    "bb.event.BuildCompleted",
+    "bb.event.BuildStarted",
     "bb.event.CacheLoadCompleted",
     "bb.event.CacheLoadProgress",
     "bb.event.CacheLoadStarted",
+    "bb.event.ConfigParsed",
+    "bb.event.DepTreeGenerated",
     "bb.event.LogExecTTY",
     "bb.event.MetadataEvent",
     "bb.event.MultipleProviders",
@@ -113,9 +116,16 @@ _evt_list = [
     "bb.event.ParseCompleted",
     "bb.event.ParseProgress",
     "bb.event.ParseStarted",
-    "bb.runqueue.runQueueExitWait",
+    "bb.event.RecipeParsed",
+    "bb.event.SanityCheck",
+    "bb.event.SanityCheckPassed",
+    "bb.event.TreeDataPreparationCompleted",
+    "bb.event.TreeDataPreparationStarted",
+    "bb.runqueue.runQueueTaskCompleted",
     "bb.runqueue.runQueueTaskFailed",
+    "bb.runqueue.runQueueTaskSkipped",
     "bb.runqueue.runQueueTaskStarted",
+    "bb.runqueue.sceneQueueTaskCompleted",
     "bb.runqueue.sceneQueueTaskFailed",
     "bb.runqueue.sceneQueueTaskStarted",
     "logging.LogRecord"]
@@ -393,19 +403,6 @@ def main(server, eventHandler, params):
             if isinstance(event, bb.cooker.CookerExit):
                 # shutdown when bitbake server shuts down
                 main.shutdown = 1
-                continue
-
-            # ignore
-            if isinstance(event, (bb.event.BuildBase,
-                                  bb.event.StampUpdate,
-                                  bb.event.RecipePreFinalise,
-                                  bb.runqueue.runQueueEvent,
-                                  bb.runqueue.runQueueExitWait,
-                                  bb.event.OperationProgress,
-                                  bb.command.CommandFailed,
-                                  bb.command.CommandExit,
-                                  bb.command.CommandCompleted,
-                                  bb.event.ReachableStamps)):
                 continue
 
             if isinstance(event, bb.event.DepTreeGenerated):
