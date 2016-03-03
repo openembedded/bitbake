@@ -12,10 +12,8 @@ class BuildEnvironment(models.Model):
     )
 
     TYPE_LOCAL = 0
-    TYPE_SSH   = 1
     TYPE = (
         (TYPE_LOCAL, "local"),
-        (TYPE_SSH, "ssh"),
     )
 
     LOCK_FREE = 0

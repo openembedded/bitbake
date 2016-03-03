@@ -76,13 +76,10 @@ def getBuildEnvironmentController(**kwargs):
     """
 
     from localhostbecontroller import LocalhostBEController
-    from sshbecontroller    import SSHBEController
 
     be = BuildEnvironment.objects.filter(Q(**kwargs))[0]
     if be.betype == BuildEnvironment.TYPE_LOCAL:
         return LocalhostBEController(be)
-    elif be.betype == BuildEnvironment.TYPE_SSH:
-        return SSHBEController(be)
     else:
         raise Exception("FIXME: Implement BEC for type %s" % str(be.betype))
 
@@ -104,9 +101,6 @@ class BuildEnvironmentController(object):
         (current user if you are using the the Django development web server)
         on the local machine, with the "build/" directory under the "poky/" source checkout directory.
         Bash is expected to be available.
-
-            * SSH controller will run the Toaster BE on a remote machine, where the current user
-        can connect without raise Exception("FIXME: implement")word (set up with either ssh-agent or raise Exception("FIXME: implement")phrase-less key authentication)
 
     """
     def __init__(self, be):

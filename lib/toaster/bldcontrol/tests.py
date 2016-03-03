@@ -9,7 +9,6 @@ from django.test import TestCase
 
 from bldcontrol.bbcontroller import BitbakeController, BuildSetupException
 from bldcontrol.localhostbecontroller import LocalhostBEController
-from bldcontrol.sshbecontroller import SSHBEController
 from bldcontrol.models import BuildEnvironment, BuildRequest
 from bldcontrol.management.commands.runbuilds import Command
 
@@ -109,29 +108,6 @@ class LocalhostBEControllerTests(TestCase, BEControllerTests):
 
     def _getBEController(self, obe):
         return LocalhostBEController(obe)
-
-class SSHBEControllerTests(TestCase, BEControllerTests):
-    def __init__(self, *args):
-        super(SSHBEControllerTests, self).__init__(*args)
-
-    def _getBuildEnvironment(self):
-        return BuildEnvironment.objects.create(
-                lock = BuildEnvironment.LOCK_FREE,
-                betype = BuildEnvironment.TYPE_SSH,
-                address = test_address,
-                sourcedir = test_sourcedir,
-                builddir = test_builddir )
-
-    def _getBEController(self, obe):
-        return SSHBEController(obe)
-
-    def test_pathExists(self):
-        obe = BuildEnvironment.objects.create(betype = BuildEnvironment.TYPE_SSH, address= test_address)
-        sbc = SSHBEController(obe)
-        self.assertTrue(sbc._pathexists("/"))
-        self.assertFalse(sbc._pathexists("/.deadbeef"))
-        self.assertTrue(sbc._pathexists(sbc._shellcmd("pwd")))
-
 
 class RunBuildsCommandTests(TestCase):
     def test_bec_select(self):
