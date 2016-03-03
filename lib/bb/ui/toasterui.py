@@ -388,7 +388,10 @@ def main(server, eventHandler, params):
             if isinstance(event, (bb.command.CommandCompleted,
                                   bb.command.CommandFailed,
                                   bb.command.CommandExit)):
-                errorcode = 0
+                if params.observe_only:
+                    errorcode = 0
+                else:
+                    main.shutdown = 1
 
                 continue
 
