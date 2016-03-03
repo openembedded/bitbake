@@ -168,8 +168,23 @@ def main(server, eventHandler, params):
         build_history_enabled = False
 
     if not params.observe_only:
-        logger.error("ToasterUI can only work in observer mode")
-        return 1
+        params.updateFromServer(server)
+        params.updateToServer(server, os.environ.copy())
+        cmdline = params.parseActions()
+        if not cmdline:
+            print("Nothing to do.  Use 'bitbake world' to build everything, or run 'bitbake --help' for usage information.")
+            return 1
+        if 'msg' in cmdline and cmdline['msg']:
+            logger.error(cmdline['msg'])
+            return 1
+
+        ret, error = server.runCommand(cmdline['action'])
+        if error:
+            logger.error("Command '%s' failed: %s" % (cmdline, error))
+            return 1
+        elif ret != True:
+            logger.error("Command '%s' failed: returned %s" % (cmdline, ret))
+            return 1
 
     # set to 1 when toasterui needs to shut down
     main.shutdown = 0
