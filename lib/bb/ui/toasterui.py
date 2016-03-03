@@ -244,6 +244,7 @@ def main(server, eventHandler, params):
                     build_log, build_log_file_path = _open_build_log(log_dir)
 
                 buildinfohelper.store_started_build(event, build_log_file_path)
+                continue
 
             if isinstance(event, (bb.build.TaskStarted, bb.build.TaskSucceeded, bb.build.TaskFailedSilent)):
                 buildinfohelper.update_and_store_task(event)
