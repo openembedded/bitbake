@@ -92,15 +92,33 @@ def _close_build_log(build_log):
         build_log.close()
         logger.removeHandler(build_log)
 
-_evt_list = [ "bb.runqueue.runQueueExitWait", "bb.event.LogExecTTY", "logging.LogRecord",
-              "bb.build.TaskFailed", "bb.build.TaskBase", "bb.event.ParseStarted",
-              "bb.event.ParseProgress", "bb.event.ParseCompleted", "bb.event.CacheLoadStarted",
-              "bb.event.CacheLoadProgress", "bb.event.CacheLoadCompleted", "bb.command.CommandFailed",
-              "bb.command.CommandExit", "bb.command.CommandCompleted",  "bb.cooker.CookerExit",
-              "bb.event.MultipleProviders", "bb.event.NoProvider", "bb.runqueue.sceneQueueTaskStarted",
-              "bb.runqueue.runQueueTaskStarted", "bb.runqueue.runQueueTaskFailed", "bb.runqueue.sceneQueueTaskFailed",
-              "bb.event.BuildBase", "bb.build.TaskStarted", "bb.build.TaskSucceeded", "bb.build.TaskFailedSilent",
-              "bb.event.MetadataEvent"]
+_evt_list = [
+    "bb.build.TaskBase",
+    "bb.build.TaskFailed",
+    "bb.build.TaskFailedSilent",
+    "bb.build.TaskStarted",
+    "bb.build.TaskSucceeded",
+    "bb.command.CommandCompleted",
+    "bb.command.CommandExit",
+    "bb.command.CommandFailed",
+    "bb.cooker.CookerExit",
+    "bb.event.BuildBase",
+    "bb.event.CacheLoadCompleted",
+    "bb.event.CacheLoadProgress",
+    "bb.event.CacheLoadStarted",
+    "bb.event.LogExecTTY",
+    "bb.event.MetadataEvent",
+    "bb.event.MultipleProviders",
+    "bb.event.NoProvider",
+    "bb.event.ParseCompleted",
+    "bb.event.ParseProgress",
+    "bb.event.ParseStarted",
+    "bb.runqueue.runQueueExitWait",
+    "bb.runqueue.runQueueTaskFailed",
+    "bb.runqueue.runQueueTaskStarted",
+    "bb.runqueue.sceneQueueTaskFailed",
+    "bb.runqueue.sceneQueueTaskStarted",
+    "logging.LogRecord"]
 
 def main(server, eventHandler, params):
     # set to a logging.FileHandler instance when a build starts;
