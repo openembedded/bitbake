@@ -2653,6 +2653,13 @@ if True:
                                            name=dep.depends_on.name)
 
                         recipe.includes_set.add(cust_package)
+                        try:
+                            # when adding the pre-requisite package make sure it's not in the
+                            #   excluded list from a prior removal.
+                            recipe.excludes_set.remove(cust_package)
+                        except Package.DoesNotExist:
+                            #   Don't care if the package had never been excluded
+                            pass
                     except:
                         logger.warning("Could not add package's suggested"
                                        "dependencies to the list")
