@@ -158,7 +158,7 @@ class LayersTable(ToasterTable):
         {% endwith %}
         '''
 
-        self.add_column(title="Revision",
+        self.add_column(title="Git revision",
                         help_text="The Git branch, tag or commit. For the layers from the OpenEmbedded layer source, the revision is always the branch compatible with the Yocto Project version you selected for this project",
                         static_data_name="revision",
                         static_data_template=revision_template)
@@ -269,7 +269,7 @@ class MachinesTable(ToasterTable):
                         static_data_template=layer_link_template,
                         orderable=True)
 
-        self.add_column(title="Revision",
+        self.add_column(title="Git revision",
                         help_text="The Git branch, tag or commit. For the layers from the OpenEmbedded layer source, the revision is always the branch compatible with the Yocto Project version you selected for this project",
                         hidden=True,
                         field_name="layer_version__get_vcs_reference")
@@ -428,7 +428,7 @@ class RecipesTable(ToasterTable):
                         orderable=True,
                         field_name="license")
 
-        self.add_column(title="Revision",
+        self.add_column(title="Git revision",
                         hidden=True,
                         field_name="layer_version__get_vcs_reference")
 

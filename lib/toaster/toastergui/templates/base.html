@@ -77,7 +77,7 @@
           <span class="brand">
             <a href="/">Toaster</a>
             {% if DEBUG %}
-            <i class="icon-info-sign" title="<strong>Toaster version information</strong>" data-content="<dl><dt>Branch</dt><dd>{{TOASTER_BRANCH}}</dd><dt>Revision</dt><dd>{{TOASTER_REVISION}}</dd></dl>"></i>
+            <i class="icon-info-sign" title="<strong>Toaster version information</strong>" data-content="<dl><dt>Git branch</dt><dd>{{TOASTER_BRANCH}}</dd><dt>Git revision</dt><dd>{{TOASTER_REVISION}}</dd></dl>"></i>
             {% endif %}
           </span>
           {% if request.resolver_match.url_name != 'landing' and request.resolver_match.url_name != 'newproject' %}
