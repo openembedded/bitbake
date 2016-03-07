@@ -57,10 +57,10 @@ class Npm(FetchMethod):
         logger.debug(1, "NpmFetch: %s", msg)
 
     def clean(self, ud, d):
-         logger.debug(2, "Calling cleanup %s" % ud.pkgname)
-         bb.utils.remove(ud.localpath, False)
-         bb.utils.remove(ud.pkgdatadir, True)
-         bb.utils.remove(ud.fullmirror, False)
+        logger.debug(2, "Calling cleanup %s" % ud.pkgname)
+        bb.utils.remove(ud.localpath, False)
+        bb.utils.remove(ud.pkgdatadir, True)
+        bb.utils.remove(ud.fullmirror, False)
 
     def urldata_init(self, ud, d):
         """
@@ -105,32 +105,32 @@ class Npm(FetchMethod):
         runfetchcmd(command, d, quiet)
 
     def _unpackdep(self, ud, pkg, data, destdir, dldir, d):
-       file = data[pkg]['tgz']
-       logger.debug(2, "file to extract is %s" % file)
-       if file.endswith('.tgz') or file.endswith('.tar.gz') or file.endswith('.tar.Z'):
+        file = data[pkg]['tgz']
+        logger.debug(2, "file to extract is %s" % file)
+        if file.endswith('.tgz') or file.endswith('.tar.gz') or file.endswith('.tar.Z'):
             cmd = 'tar xz --strip 1 --no-same-owner -f %s/%s' % (dldir, file)
-       else:
+        else:
             bb.fatal("NPM package %s downloaded not a tarball!" % file)
 
-       # Change to subdir before executing command
-       save_cwd = os.getcwd()
-       if not os.path.exists(destdir):
-           os.makedirs(destdir)
-       os.chdir(destdir)
-       path = d.getVar('PATH', True)
-       if path:
+        # Change to subdir before executing command
+        save_cwd = os.getcwd()
+        if not os.path.exists(destdir):
+            os.makedirs(destdir)
+        os.chdir(destdir)
+        path = d.getVar('PATH', True)
+        if path:
             cmd = "PATH=\"%s\" %s" % (path, cmd)
-       bb.note("Unpacking %s to %s/" % (file, os.getcwd()))
-       ret = subprocess.call(cmd, preexec_fn=subprocess_setup, shell=True)
-       os.chdir(save_cwd)
+        bb.note("Unpacking %s to %s/" % (file, os.getcwd()))
+        ret = subprocess.call(cmd, preexec_fn=subprocess_setup, shell=True)
+        os.chdir(save_cwd)
 
-       if ret != 0:
+        if ret != 0:
             raise UnpackError("Unpack command %s failed with return value %s" % (cmd, ret), ud.url)
 
-       if 'deps' not in data[pkg]:
+        if 'deps' not in data[pkg]:
             return
-       for dep in data[pkg]['deps']:
-           self._unpackdep(ud, dep, data[pkg]['deps'], "%s/node_modules/%s" % (destdir, dep), dldir, d)
+        for dep in data[pkg]['deps']:
+            self._unpackdep(ud, dep, data[pkg]['deps'], "%s/node_modules/%s" % (destdir, dep), dldir, d)
 
 
     def unpack(self, ud, destdir, d):
