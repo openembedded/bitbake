@@ -144,13 +144,15 @@ class Npm(FetchMethod):
 
     def _getdependencies(self, pkg, data, version, d, ud):
         pkgfullname = pkg
-        if version:
+        if version != '*' and not '/' in version:
             pkgfullname += "@%s" % version
         logger.debug(2, "Calling getdeps on %s" % pkg)
         fetchcmd = "npm view %s dist.tarball --registry %s" % (pkgfullname, ud.registry)
         output = runfetchcmd(fetchcmd, d, True)
         # npm may resolve multiple versions
         outputarray = output.strip().splitlines()
+        if not outputarray:
+            raise FetchError("The command '%s' returned no output" % fetchcmd)
         # we just take the latest version npm resolved
         #logger.debug(2, "Output URL is %s - %s - %s" % (ud.basepath, ud.basename, ud.localfile))
         outputurl = outputarray[len(outputarray)-1].rstrip()
