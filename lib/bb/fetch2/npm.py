@@ -108,7 +108,7 @@ class Npm(FetchMethod):
         file = data[pkg]['tgz']
         logger.debug(2, "file to extract is %s" % file)
         if file.endswith('.tgz') or file.endswith('.tar.gz') or file.endswith('.tar.Z'):
-            cmd = 'tar xz --strip 1 --no-same-owner -f %s/%s' % (dldir, file)
+            cmd = 'tar xz --strip 1 --no-same-owner --warning=no-unknown-keyword -f %s/%s' % (dldir, file)
         else:
             bb.fatal("NPM package %s downloaded not a tarball!" % file)
 
