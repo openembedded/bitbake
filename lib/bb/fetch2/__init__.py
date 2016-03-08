@@ -1153,13 +1153,13 @@ class FetchData(object):
         elif self.type not in ["http", "https", "ftp", "ftps", "sftp"]:
             self.md5_expected = None
         else:
-            self.md5_expected = d.getVarFlag("SRC_URI", self.md5_name, False)
+            self.md5_expected = d.getVarFlag("SRC_URI", self.md5_name, True)
         if self.sha256_name in self.parm:
             self.sha256_expected = self.parm[self.sha256_name]
         elif self.type not in ["http", "https", "ftp", "ftps", "sftp"]:
             self.sha256_expected = None
         else:
-            self.sha256_expected = d.getVarFlag("SRC_URI", self.sha256_name, False)
+            self.sha256_expected = d.getVarFlag("SRC_URI", self.sha256_name, True)
         self.ignore_checksums = False
 
         self.names = self.parm.get("name",'default').split(',')
