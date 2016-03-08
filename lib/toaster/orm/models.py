@@ -723,9 +723,23 @@ class Task(models.Model):
     work_directory = models.FilePathField(max_length=255, blank=True)
     script_type = models.IntegerField(choices=TASK_CODING, default=CODING_NA)
     line_number = models.IntegerField(default=0)
-    disk_io = models.IntegerField(null=True)
-    cpu_usage = models.DecimalField(max_digits=8, decimal_places=2, null=True)
+
+    # start/end times
+    started = models.DateTimeField(null=True)
+    ended = models.DateTimeField(null=True)
+
+    # in seconds; this is stored to enable sorting
     elapsed_time = models.DecimalField(max_digits=8, decimal_places=2, null=True)
+
+    # in bytes; note that disk_io is stored to enable sorting
+    disk_io = models.IntegerField(null=True)
+    disk_io_read = models.IntegerField(null=True)
+    disk_io_write = models.IntegerField(null=True)
+
+    # in seconds
+    cpu_time_user = models.DecimalField(max_digits=8, decimal_places=2, null=True)
+    cpu_time_system = models.DecimalField(max_digits=8, decimal_places=2, null=True)
+
     sstate_result = models.IntegerField(choices=SSTATE_RESULT, default=SSTATE_NA)
     message = models.CharField(max_length=240)
     logfile = models.FilePathField(max_length=255, blank=True)

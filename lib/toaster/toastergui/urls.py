@@ -64,7 +64,7 @@ urlpatterns = patterns('toastergui.views',
         url(r'^build/(?P<build_id>\d+)/configuration$', 'configuration', name='configuration'),
         url(r'^build/(?P<build_id>\d+)/configvars$', 'configvars', name='configvars'),
         url(r'^build/(?P<build_id>\d+)/buildtime$', 'buildtime', name='buildtime'),
-        url(r'^build/(?P<build_id>\d+)/cpuusage$', 'cpuusage', name='cpuusage'),
+        url(r'^build/(?P<build_id>\d+)/cputime$', 'cputime', name='cputime'),
         url(r'^build/(?P<build_id>\d+)/diskio$', 'diskio', name='diskio'),
 
         # image information dir

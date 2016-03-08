@@ -1005,11 +1005,11 @@ def tasks_common(request, build_id, variant, task_anchor):
         object_search_display="disk I/O data"
         filter_search_display="tasks"
         (pagesize, orderby) = _get_parameters_values(request, 25, 'disk_io:-')
-    elif 'cpuusage'  == variant:
-        title_variant='CPU usage'
-        object_search_display="CPU usage data"
+    elif 'cputime'  == variant:
+        title_variant='CPU time'
+        object_search_display="CPU time data"
         filter_search_display="tasks"
-        (pagesize, orderby) = _get_parameters_values(request, 25, 'cpu_usage:-')
+        (pagesize, orderby) = _get_parameters_values(request, 25, 'cpu_time_system:-')
     else :
         title_variant='Tasks'
         object_search_display="tasks"
@@ -1161,23 +1161,38 @@ def tasks_common(request, build_id, variant, task_anchor):
         del tc_time['clclass']
         tc_cache['hidden']='1'
 
-    tc_cpu={
-        'name':'CPU usage',
-        'qhelp':'The percentage of task CPU utilization',
-        'orderfield': _get_toggle_order(request, "cpu_usage", True),
-        'ordericon':_get_toggle_order_icon(request, "cpu_usage"),
-        'orderkey' : 'cpu_usage',
-        'clclass': 'cpu_used', 'hidden' : 1,
+    tc_cpu_time_system={
+        'name':'System CPU time (secs)',
+        'qhelp':'Total amount of time spent executing in kernel mode, in ' +
+                'seconds. Note that this time can be greater than the task ' +
+                'time due to parallel execution.',
+        'orderfield': _get_toggle_order(request, "cpu_time_system", True),
+        'ordericon':_get_toggle_order_icon(request, "cpu_time_system"),
+        'orderkey' : 'cpu_time_system',
+        'clclass': 'cpu_time_system', 'hidden' : 1,
     }
 
-    if  'cpuusage' == variant:
-        tc_cpu['hidden']='0'
-        del tc_cpu['clclass']
+    tc_cpu_time_user={
+        'name':'User CPU time (secs)',
+        'qhelp':'Total amount of time spent executing in user mode, in seconds. ' +
+                'Note that this time can be greater than the task time due to ' +
+                'parallel execution.',
+        'orderfield': _get_toggle_order(request, "cpu_time_user", True),
+        'ordericon':_get_toggle_order_icon(request, "cpu_time_user"),
+        'orderkey' : 'cpu_time_user',
+        'clclass': 'cpu_time_user', 'hidden' : 1,
+    }
+
+    if 'cputime' == variant:
+        tc_cpu_time_system['hidden']='0'
+        tc_cpu_time_user['hidden']='0'
+        del tc_cpu_time_system['clclass']
+        del tc_cpu_time_user['clclass']
         tc_cache['hidden']='1'
 
     tc_diskio={
-        'name':'Disk I/O (ms)',
-        'qhelp':'Number of miliseconds the task spent doing disk input and output',
+        'name':'Disk I/O (bytes)',
+        'qhelp':'Number of bytes written to and read from the disk during the task',
         'orderfield': _get_toggle_order(request, "disk_io", True),
         'ordericon':_get_toggle_order_icon(request, "disk_io"),
         'orderkey' : 'disk_io',
@@ -1208,7 +1223,8 @@ def tasks_common(request, build_id, variant, task_anchor):
                     tc_outcome,
                     tc_cache,
                     tc_time,
-                    tc_cpu,
+                    tc_cpu_time_system,
+                    tc_cpu_time_user,
                     tc_diskio,
                 ]}
 
@@ -1229,9 +1245,8 @@ def buildtime(request, build_id):
 def diskio(request, build_id):
     return tasks_common(request, build_id, 'diskio', '')
 
-def cpuusage(request, build_id):
-    return tasks_common(request, build_id, 'cpuusage', '')
-
+def cputime(request, build_id):
+    return tasks_common(request, build_id, 'cputime', '')
 
 def recipes(request, build_id):
     template = 'recipes.html'

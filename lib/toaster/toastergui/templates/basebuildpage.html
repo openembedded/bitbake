@@ -67,8 +67,8 @@
               {% block nav-buildtime %}
                   <li><a href="{% url 'buildtime' build.pk %}">Time</a></li>
               {% endblock %}
-              {% block nav-cpuusage %}
-                  <li><a href="{% url 'cpuusage' build.pk %}">CPU usage</a></li>
+              {% block nav-cputime %}
+                  <li><a href="{% url 'cputime' build.pk %}">CPU time</a></li>
               {% endblock %}
               {% block nav-diskio %}
                   <li><a href="{% url 'diskio' build.pk %}">Disk I/O</a></li>

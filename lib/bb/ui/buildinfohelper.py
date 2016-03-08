@@ -50,6 +50,7 @@ from bb.msg import BBLogFormatter as formatter
 from django.db import models
 from pprint import pformat
 import logging
+from datetime import datetime, timedelta
 
 from django.db import transaction, connection
 
@@ -119,6 +120,12 @@ class ORMWrapper(object):
             vars(self)[dictname][key] = clazz.objects.get(**kwargs)
 
         return vars(self)[dictname][key]
+
+    def _timestamp_to_datetime(self, secs):
+        """
+        Convert timestamp in seconds to Python datetime
+        """
+        return datetime(1970, 1, 1) + timedelta(seconds=secs)
 
     # pylint: disable=no-self-use
     # we disable detection of no self use in functions because the methods actually work on the object
@@ -223,6 +230,28 @@ class ORMWrapper(object):
         target.license_manifest_path = license_manifest_path
         target.save()
 
+    def update_task_object(self, build, task_name, recipe_name, task_stats):
+        """
+        Find the task for build which matches the recipe and task name
+        to be stored
+        """
+        task_to_update = Task.objects.get(
+            build = build,
+            task_name = task_name,
+            recipe__name = recipe_name
+        )
+
+        task_to_update.started = self._timestamp_to_datetime(task_stats['started'])
+        task_to_update.ended = self._timestamp_to_datetime(task_stats['ended'])
+        task_to_update.elapsed_time = (task_stats['ended'] - task_stats['started'])
+        task_to_update.cpu_time_user = task_stats['cpu_time_user']
+        task_to_update.cpu_time_system = task_stats['cpu_time_system']
+        task_to_update.disk_io_read = task_stats['disk_io_read']
+        task_to_update.disk_io_write = task_stats['disk_io_write']
+        task_to_update.disk_io = task_stats['disk_io_read'] + task_stats['disk_io_write']
+
+        task_to_update.save()
+
     def get_update_task_object(self, task_information, must_exist = False):
         assert 'build' in task_information
         assert 'recipe' in task_information
@@ -258,14 +287,6 @@ class ORMWrapper(object):
             elif outcome_task_setscene == Task.OUTCOME_FAILED:
                 task_object.sstate_result = Task.SSTATE_FAILED
                 object_changed = True
-
-        # mark down duration if we have a start time and a current time
-        if 'start_time' in task_information.keys() and 'end_time' in task_information.keys():
-            duration = task_information['end_time'] - task_information['start_time']
-            task_object.elapsed_time = duration
-            object_changed = True
-            del task_information['start_time']
-            del task_information['end_time']
 
         if object_changed:
             task_object.save()
@@ -1091,31 +1112,11 @@ class BuildInfoHelper(object):
 
 
     def store_tasks_stats(self, event):
-        for (taskfile, taskname, taskstats, recipename) in BuildInfoHelper._get_data_from_event(event):
-            localfilepath = taskfile.split(":")[-1]
-            assert localfilepath.startswith("/")
+        task_data = BuildInfoHelper._get_data_from_event(event)
 
-            recipe_information = self._get_recipe_information_from_taskfile(taskfile)
-            try:
-                if recipe_information['file_path'].startswith(recipe_information['layer_version'].local_path):
-                    recipe_information['file_path'] = recipe_information['file_path'][len(recipe_information['layer_version'].local_path):].lstrip("/")
-
-                recipe_object = Recipe.objects.get(layer_version = recipe_information['layer_version'],
-                            file_path__endswith = recipe_information['file_path'],
-                            name = recipename)
-            except Recipe.DoesNotExist:
-                logger.error("Could not find recipe for recipe_information %s name %s" , pformat(recipe_information), recipename)
-                raise
-
-            task_information = {}
-            task_information['build'] = self.internal_state['build']
-            task_information['recipe'] = recipe_object
-            task_information['task_name'] = taskname
-            task_information['cpu_usage'] = taskstats['cpu_usage']
-            task_information['disk_io'] = taskstats['disk_io']
-            if 'elapsed_time' in taskstats:
-                task_information['elapsed_time'] = taskstats['elapsed_time']
-            self.orm_wrapper.get_update_task_object(task_information)
+        for (task_file, task_name, task_stats, recipe_name) in task_data:
+            build = self.internal_state['build']
+            self.orm_wrapper.update_task_object(build, task_name, recipe_name, task_stats)
 
     def update_and_store_task(self, event):
         assert 'taskfile' in vars(event)
@@ -1136,13 +1137,6 @@ class BuildInfoHelper(object):
         recipe_information = self._get_recipe_information_from_taskfile(realtaskfile)
         recipe = self.orm_wrapper.get_update_recipe_object(recipe_information, True)
         task_information = self._get_task_information(event,recipe)
-
-        if 'time' in vars(event):
-            if not 'start_time' in self.internal_state['taskdata'][identifier]:
-                self.internal_state['taskdata'][identifier]['start_time'] = event.time
-            else:
-                task_information['end_time'] = event.time
-                task_information['start_time'] = self.internal_state['taskdata'][identifier]['start_time']
 
         task_information['outcome'] = self.internal_state['taskdata'][identifier]['outcome']
 
