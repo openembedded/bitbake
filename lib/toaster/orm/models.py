@@ -19,9 +19,12 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+from __future__ import unicode_literals
+
 from django.db import models, IntegrityError
 from django.db.models import F, Q, Avg, Max, Sum
 from django.utils import timezone
+from django.utils.encoding import force_bytes
 
 from django.core.urlresolvers import reverse
 
@@ -1614,7 +1617,7 @@ class LogMessage(models.Model):
     lineno = models.IntegerField(null=True)
 
     def __str__(self):
-        return "%s %s %s" % (self.get_level_display(), self.message, self.build)
+        return force_bytes('%s %s %s' % (self.get_level_display(), self.message, self.build))
 
 def invalidate_cache(**kwargs):
     from django.core.cache import cache

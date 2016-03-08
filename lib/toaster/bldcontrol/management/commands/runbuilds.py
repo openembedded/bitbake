@@ -47,7 +47,7 @@ class Command(NoArgsCommand):
                 logger.debug("runbuilds: No build env")
                 return
 
-            logger.debug("runbuilds: starting build %s, environment %s" % (br, bec.be))
+            logger.debug("runbuilds: starting build %s, environment %s" % (str(br).decode('utf-8'), bec.be))
 
             # write the build identification variable
             BRVariable.objects.create(req = br, name="TOASTER_BRBE", value="%d:%d" % (br.pk, bec.be.pk))

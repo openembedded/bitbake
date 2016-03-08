@@ -1,5 +1,7 @@
+from __future__ import unicode_literals
 from django.db import models
 from django.core.validators import MaxValueValidator, MinValueValidator
+from django.utils.encoding import force_bytes
 from orm.models import Project, ProjectLayer, ProjectVariable, ProjectTarget, Build, Layer_Version
 
 # a BuildEnvironment is the equivalent of the "build/" directory on the localhost
@@ -94,7 +96,7 @@ class BuildRequest(models.Model):
         return self.brvariable_set.get(name="MACHINE").value
 
     def __str__(self):
-        return "%s %s" % (self.project, self.get_state_display())
+        return force_bytes('%s %s' % (self.project, self.get_state_display()))
 
 # These tables specify the settings for running an actual build.
 # They MUST be kept in sync with the tables in orm.models.Project*
