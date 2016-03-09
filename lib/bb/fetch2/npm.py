@@ -145,7 +145,7 @@ class Npm(FetchMethod):
     def _getdependencies(self, pkg, data, version, d, ud):
         pkgfullname = pkg
         if version != '*' and not '/' in version:
-            pkgfullname += "@%s" % version
+            pkgfullname += "@'%s'" % version
         logger.debug(2, "Calling getdeps on %s" % pkg)
         fetchcmd = "npm view %s dist.tarball --registry %s" % (pkgfullname, ud.registry)
         output = runfetchcmd(fetchcmd, d, True)
