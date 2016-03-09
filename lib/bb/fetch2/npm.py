@@ -75,10 +75,10 @@ class Npm(FetchMethod):
         # TODO: find a way to get an sha1/sha256 manifest of pkg & all deps
         ud.pkgname = ud.parm.get("name", None)
         if not ud.pkgname:
-            raise ParameterError("NPM fetcher requires a name parameter")
+            raise ParameterError("NPM fetcher requires a name parameter", ud.url)
         ud.version = ud.parm.get("version", None)
         if not ud.version:
-            raise ParameterError("NPM fetcher requires a version parameter")
+            raise ParameterError("NPM fetcher requires a version parameter", ud.url)
         ud.bbnpmmanifest = "%s-%s.deps.json" % (ud.pkgname, ud.version)
         ud.registry = "http://%s" % ud.basename
         prefixdir = "npm/%s" % ud.pkgname
