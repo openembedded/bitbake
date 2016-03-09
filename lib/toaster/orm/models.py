@@ -262,8 +262,10 @@ class Project(models.Model):
         """ Returns Queryset of all Layer_Versions which are compatible with
         this project"""
         queryset = Layer_Version.objects.filter(
-            (Q(up_branch__name=self.release.branch_name) & Q(build=None))
-            | Q(project=self))
+            (Q(up_branch__name=self.release.branch_name) &
+             Q(build=None) &
+             Q(project=None)) |
+             Q(project=self))
 
         return queryset
 
