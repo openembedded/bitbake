@@ -80,7 +80,7 @@ class Npm(FetchMethod):
         if not ud.version:
             raise ParameterError("NPM fetcher requires a version parameter", ud.url)
         ud.bbnpmmanifest = "%s-%s.deps.json" % (ud.pkgname, ud.version)
-        ud.registry = "http://%s" % ud.basename
+        ud.registry = "http://%s" % (ud.url.replace('npm://', '', 1).split(';'))[0]
         prefixdir = "npm/%s" % ud.pkgname
         ud.pkgdatadir = d.expand("${DL_DIR}/%s" % prefixdir)
         if not os.path.exists(ud.pkgdatadir):
