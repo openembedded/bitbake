@@ -115,7 +115,6 @@ _evt_list = [
     "bb.event.NoProvider",
     "bb.event.ParseCompleted",
     "bb.event.ParseProgress",
-    "bb.event.ParseStarted",
     "bb.event.RecipeParsed",
     "bb.event.SanityCheck",
     "bb.event.SanityCheckPassed",
