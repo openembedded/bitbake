@@ -446,13 +446,6 @@ def main(server, eventHandler, params):
             exception_data = traceback.format_exc()
             logger.error("%s\n%s" , e, exception_data)
 
-            _, _, tb = sys.exc_info()
-            if tb is not None:
-                curr = tb
-                while curr is not None:
-                    logger.error("Error data dump %s\n%s\n" , traceback.format_tb(curr,1), pformat(curr.tb_frame.f_locals))
-                    curr = curr.tb_next
-
             # save them to database, if possible; if it fails, we already logged to console.
             try:
                 buildinfohelper.store_log_exception("%s\n%s" % (str(e), exception_data))
