@@ -242,7 +242,7 @@ class ProcessEventQueue(multiprocessing.queues.Queue):
 
 
 class BitBakeServer(BitBakeBaseServer):
-    def initServer(self):
+    def initServer(self, single_use=True):
         # establish communication channels.  We use bidirectional pipes for
         # ui <--> server command/response pairs
         # and a queue for server -> ui event notifications

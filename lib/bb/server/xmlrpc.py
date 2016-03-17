@@ -186,12 +186,12 @@ class XMLRPCServer(SimpleXMLRPCServer, BaseImplServer):
     # remove this when you're done with debugging
     # allow_reuse_address = True
 
-    def __init__(self, interface):
+    def __init__(self, interface, single_use=False):
         """
         Constructor
         """
         BaseImplServer.__init__(self)
-        self.single_use = interface[1] == 0 # anonymous port, not getting reused
+        self.single_use = single_use
         # Use auto port configuration
         if (interface[1] == -1):
             interface = (interface[0], 0)
@@ -332,9 +332,9 @@ class BitBakeXMLRPCServerConnection(BitBakeBaseServerConnection):
             pass
 
 class BitBakeServer(BitBakeBaseServer):
-    def initServer(self, interface = ("localhost", 0)):
+    def initServer(self, interface = ("localhost", 0), single_use = False):
         self.interface = interface
-        self.serverImpl = XMLRPCServer(interface)
+        self.serverImpl = XMLRPCServer(interface, single_use)
 
     def detach(self):
         daemonize.createDaemon(self.serverImpl.serve_forever, "bitbake-cookerdaemon.log")
