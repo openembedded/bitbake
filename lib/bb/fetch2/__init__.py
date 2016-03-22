@@ -713,7 +713,7 @@ def subprocess_setup():
 def get_autorev(d):
     #  only not cache src rev in autorev case
     if d.getVar('BB_SRCREV_POLICY', True) != "cache":
-        d.setVar('__BB_DONT_CACHE', '1')
+        d.setVar('BB_DONT_CACHE', '1')
     return "AUTOINC"
 
 def get_srcrev(d, method_name='sortable_revision'):

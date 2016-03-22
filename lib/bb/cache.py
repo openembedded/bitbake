@@ -99,7 +99,7 @@ class CoreRecipeInfo(RecipeInfoCommon):
         self.timestamp = bb.parse.cached_mtime(filename)
         self.variants = self.listvar('__VARIANTS', metadata) + ['']
         self.appends = self.listvar('__BBAPPEND', metadata)
-        self.nocache = self.getvar('__BB_DONT_CACHE', metadata)
+        self.nocache = self.getvar('BB_DONT_CACHE', metadata)
 
         self.skipreason = self.getvar('__SKIPPED', metadata)
         if self.skipreason:
