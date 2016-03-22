@@ -652,6 +652,51 @@
                     after the "inherit" statement.
                 </note>
             </para>
+
+            <para>
+                If necessary, it is possible to inherit a class
+                conditionally by using
+                a variable expression after the <filename>inherit</filename>
+                statement.
+                Here is an example:
+                <literallayout class='monospaced'>
+     inherit ${VARNAME}
+                </literallayout>
+                If <filename>VARNAME</filename> is going to be set, it needs
+                to be set before the <filename>inherit</filename> statement
+                is parsed.
+                One way to achieve a conditional inherit in this case is to use
+                overrides:
+                <literallayout class='monospaced'>
+     VARIABLE = ""
+     VARIABLE_someoverride = "myclass"
+                </literallayout>
+            </para>
+
+            <para>
+                Another method is by using anonymous Python.
+                Here is an example:
+                <literallayout class='monospaced'>
+     python () {
+         if condition == value:
+             d.setVar('VARIABLE', 'myclass')
+         else:
+             d.setVar('VARIABLE', '')
+     }
+                </literallayout>
+            </para>
+
+            <para>
+                Alternatively, you could use an in-line Python expression
+                in the following form:
+                <literallayout class='monospaced'>
+     inherit ${@'classname' if condition else ''}
+     inherit ${@functionname(params)}
+                </literallayout>
+                In all cases, if the expression evaluates to an empty
+                string, the statement does not trigger a syntax error
+                because it becomes a no-op.
+            </para>
         </section>
 
         <section id='include-directive'>
