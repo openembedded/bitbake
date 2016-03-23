@@ -2407,7 +2407,7 @@ if True:
 
             # create layer 'Custom layer' and verion if needed
             layer = Layer.objects.get_or_create(
-                name="toaster-custom-images",
+                name=CustomImageRecipe.LAYER_NAME,
                 summary="Layer for custom recipes",
                 vcs_url="file:///toaster_created_layer")[0]
 

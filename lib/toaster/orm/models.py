@@ -1449,6 +1449,10 @@ class ProjectLayer(models.Model):
         unique_together = (("project", "layercommit"),)
 
 class CustomImageRecipe(Recipe):
+
+    # CustomImageRecipe's belong to layers called:
+    LAYER_NAME = "toaster-custom-images"
+
     search_allowed_fields = ['name']
     base_recipe = models.ForeignKey(Recipe, related_name='based_on_recipe')
     project = models.ForeignKey(Project)
