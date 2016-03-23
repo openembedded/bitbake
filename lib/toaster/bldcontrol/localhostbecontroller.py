@@ -217,9 +217,9 @@ class LocalhostBEController(BuildEnvironmentController):
             raise BuildSetupException("BE is not consistent: bblayers.conf file missing at %s" % bblayerconf)
 
         # 5. create custom layer and add custom recipes to it
-        layerpath = os.path.join(self.be.sourcedir, "_meta-toaster-custom")
-        if os.path.isdir(layerpath):
-            shutil.rmtree(layerpath) # remove leftovers from previous builds
+        layerpath = os.path.join(self.be.sourcedir,
+                                 "_meta-toaster-custom_",
+                                 bitbake.req.project.name)
         for target in targets:
             try:
                 customrecipe = CustomImageRecipe.objects.get(name=target.target,
