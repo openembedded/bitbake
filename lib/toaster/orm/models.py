@@ -1534,10 +1534,13 @@ class CustomImageRecipe(Recipe):
                 packages_conf += pkg.name+' '
 
         packages_conf += "\""
-
-        base_recipe = open("%s/%s" %
-                           (self.base_recipe.layer_version.dirpath,
-                            self.base_recipe.file_path), 'r').read()
+        try:
+            base_recipe = open("%s/%s" %
+                               (self.base_recipe.layer_version.dirpath,
+                                self.base_recipe.file_path), 'r').read()
+        except IOError:
+            # The path may now be the full path if the recipe has been built
+            base_recipe = open(self.base_recipe.file_path, 'r').read()
 
         # Add a special case for when the recipe we have based a custom image
         # recipe on requires another recipe.
