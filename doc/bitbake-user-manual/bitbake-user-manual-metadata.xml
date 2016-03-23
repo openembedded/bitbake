@@ -603,8 +603,13 @@
                 BitBake uses the
                 <link linkend='var-BBPATH'><filename>BBPATH</filename></link>
                 variable to locate needed include and class files.
-                The <filename>BBPATH</filename> variable is analogous to
-                the environment variable <filename>PATH</filename>.
+                Additionally, BitBake searches the current directory for
+                <filename>include</filename> and <filename>require</filename>
+                directives.
+                <note>
+                    The <filename>BBPATH</filename> variable is analogous to
+                    the environment variable <filename>PATH</filename>.
+                </note>
             </para>
 
             <para>
