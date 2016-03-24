@@ -420,10 +420,10 @@ class Wget(FetchMethod):
         version_dir = ['', '', '']
         version = ['', '', '']
 
-        dirver_regex = re.compile("(\D*)((\d+[\.\-_])+(\d+))")
+        dirver_regex = re.compile("(?P<pfx>\D*)(?P<ver>(\d+[\.\-_])+(\d+))")
         s = dirver_regex.search(dirver)
         if s:
-            version_dir[1] = s.group(2)
+            version_dir[1] = s.group('ver')
         else:
             version_dir[1] = dirver
 
@@ -438,9 +438,9 @@ class Wget(FetchMethod):
         for line in soup.find_all('a', href=True):
             s = dirver_regex.search(line['href'].strip("/"))
             if s:
-                version_dir_new = ['', s.group(2), '']
+                version_dir_new = ['', s.group('ver'), '']
                 if self._vercmp(version_dir, version_dir_new) <= 0:
-                    dirver_new = s.group(1) + s.group(2)
+                    dirver_new = s.group('pfx') + s.group('ver')
                     path = ud.path.replace(dirver, dirver_new, True) \
                         .split(package)[0]
                     uri = bb.fetch.encodeurl([ud.type, ud.host, path,
