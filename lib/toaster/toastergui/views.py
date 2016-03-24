@@ -2538,6 +2538,60 @@ if True:
 
         return response
 
+    def _traverse_dependents(next_package_id, rev_deps, all_current_packages, tree_level=0):
+        """
+        Recurse through reverse dependency tree for next_package_id.
+        Limit the reverse dependency search to packages not already scanned,
+        that is, not already in rev_deps.
+        Limit the scan to a depth (tree_level) not exceeding the count of
+        all packages in the custom image, and if that depth is exceeded
+        return False, pop out of the recursion, and write a warning
+        to the log, but this is unlikely, suggesting a dependency loop
+        not caught by bitbake.
+        On return, the input/output arg rev_deps is appended with queryset
+        dictionary elements, annotated for use in the customimage template.
+        The list has unsorted, but unique elements.
+        """
+        max_dependency_tree_depth = all_current_packages.count()
+        if tree_level >= max_dependency_tree_depth:
+            logger.warning(
+                "The number of reverse dependencies "
+                "for this package exceeds " + max_dependency_tree_depth +
+                " and the remaining reverse dependencies will not be removed")
+            return True
+
+        package = CustomImagePackage.objects.get(id=next_package_id)
+        dependents = \
+            package.package_dependencies_target.annotate(
+                name=F('package__name'),
+                pk=F('package__pk'),
+                size=F('package__size'),
+            ).values("name", "pk", "size").exclude(
+                ~Q(pk__in=all_current_packages)
+            )
+
+        for pkg in dependents:
+            if pkg in rev_deps:
+                # already seen, skip dependent search
+                continue
+
+            rev_deps.append(pkg)
+            if (_traverse_dependents(
+                pkg["pk"], rev_deps, all_current_packages, tree_level+1)):
+                return True
+
+        return False
+
+    def _get_all_dependents(package_id, all_current_packages):
+        """
+        Returns sorted list of recursive reverse dependencies for package_id,
+        as a list of dictionary items, by recursing through dependency
+        relationships.
+        """
+        rev_deps = []
+        _traverse_dependents(package_id, rev_deps, all_current_packages)
+        rev_deps = sorted(rev_deps, key=lambda x: x["name"])
+        return rev_deps
 
     @xhr_response
     def xhr_customrecipe_packages(request, recipe_id, package_id):
@@ -2606,15 +2660,9 @@ if True:
                 )
 
                 # Reverse dependencies which are needed by packages that are
-                # in the image
-                reverse_deps = package.package_dependencies_target.annotate(
-                    name=F('package__name'),
-                    pk=F('package__pk'),
-                    size=F('package__size'),
-                ).values("name", "pk", "size").exclude(
-                    ~Q(pk__in=all_current_packages)
-                )
-
+                # in the image. Recursive search providing all dependents,
+                # not just immediate dependents.
+                reverse_deps = _get_all_dependents(package_id, all_current_packages)
                 total_size_deps = 0
                 total_size_reverse_deps = 0
 
@@ -2658,6 +2706,11 @@ if True:
 
             else:
                 recipe.appends_set.add(package)
+                # Make sure that package is not in the excludes set
+                try:
+                    recipe.excludes_set.remove(package)
+                except:
+                    pass
                 # Add the dependencies we think will be added to the recipe
                 # as a result of appending this package.
                 # TODO this should recurse down the entire deps tree
@@ -2668,11 +2721,12 @@ if True:
 
                         recipe.includes_set.add(cust_package)
                         try:
-                            # when adding the pre-requisite package make sure it's not in the
-                            #   excluded list from a prior removal.
+                            # When adding the pre-requisite package, make
+                            # sure it's not in the excluded list from a
+                            # prior removal.
                             recipe.excludes_set.remove(cust_package)
                         except Package.DoesNotExist:
-                            #   Don't care if the package had never been excluded
+                            # Don't care if the package had never been excluded
                             pass
                     except:
                         logger.warning("Could not add package's suggested"
@@ -2688,6 +2742,19 @@ if True:
                     recipe.excludes_set.add(package)
                 else:
                     recipe.appends_set.remove(package)
+                all_current_packages = recipe.get_all_packages()
+                reverse_deps_dictlist = _get_all_dependents(package.pk, all_current_packages)
+                ids = [entry['pk'] for entry in reverse_deps_dictlist]
+                reverse_deps = CustomImagePackage.objects.filter(id__in=ids)
+                for r in reverse_deps:
+                    try:
+                        if r.id in included_packages:
+                            recipe.excludes_set.add(r)
+                        else:
+                            recipe.appends_set.remove(r)
+                    except:
+                        pass
+
                 return {"error": "ok"}
             except CustomImageRecipe.DoesNotExist:
                 return {"error": "Tried to remove package that wasn't present"}
