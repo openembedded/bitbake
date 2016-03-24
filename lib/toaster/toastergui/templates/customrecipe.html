@@ -66,13 +66,14 @@
     <h3><span class="package-to-rm-name"></span> reverse dependencies</h3>
   </div>
   <div class="modal-body">
-    <p>Based on information from a previous build it is likely that <strong class="package-to-rm-name"></strong> may be added again as the following packages directly depend on it for your custom image:</p>
+    <p> <strong class="reverse-deps-count"></strong> <span class="reverse-deps-package"></span> in your image <span class="reverse-deps-depends"></span> on <strong class="package-to-rm-name"></strong>:</p>
     <ul id="package-reverse-dep-list">
     </ul>
+    <p>In order to remove <strong class="package-to-rm-name"></strong>, you must remove <span class="reverse-deps-this"></span> <strong class="reverse-deps-count"></strong> <span class="reverse-deps-package"></span> as well.</p>
   </div>
   <div class="modal-footer">
     <p class="help-block text-left">Total package size: <strong id="package-reverse-deps-total-size"></strong></p>
-    <button id="rm-package-reverse-deps-modal-btn" type="submit" class="btn btn-primary" data-dismiss="modal">Remove package</button>
+    <button id="rm-package-reverse-deps-modal-btn" type="submit" class="btn btn-primary" data-dismiss="modal">Remove all <span class="reverse-deps-count-plus1"></button>
     <button class="btn" data-dismiss="modal">Cancel</button>
   </div>
 </div>
