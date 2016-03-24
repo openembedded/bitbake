@@ -110,8 +110,7 @@ class GitSM(Git):
         os.chdir(tmpclonedir)
         runfetchcmd(ud.basecmd + " reset --hard", d)
         runfetchcmd(ud.basecmd + " checkout " + ud.revisions[ud.names[0]], d)
-        runfetchcmd(ud.basecmd + " submodule init", d)
-        runfetchcmd(ud.basecmd + " submodule update", d)
+        runfetchcmd(ud.basecmd + " submodule update --init --recursive", d)
         self._set_relative_paths(tmpclonedir)
         runfetchcmd("sed " + gitdir + "/config -i -e 's/bare.*=.*false/bare = true/'", d)
         os.rename(gitdir, ud.clonedir,)
@@ -132,6 +131,4 @@ class GitSM(Git):
         submodules = self.uses_submodules(ud, d)
         if submodules:
             runfetchcmd(ud.basecmd + " checkout " + ud.revisions[ud.names[0]], d)
-            runfetchcmd(ud.basecmd + " submodule init", d)
-            runfetchcmd(ud.basecmd + " submodule update", d)
-
+            runfetchcmd(ud.basecmd + " submodule update --init --recursive", d)
