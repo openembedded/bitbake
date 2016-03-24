@@ -915,6 +915,10 @@ def rename_bad_checksum(ud, suffix):
 def try_mirror_url(fetch, origud, ud, ld, check = False):
     # Return of None or a value means we're finished
     # False means try another url
+
+    if ud.lockfile and ud.lockfile != origud.lockfile:
+        lf = bb.utils.lockfile(ud.lockfile)
+
     try:
         if check:
             found = ud.method.checkstatus(fetch, ud, ld)
@@ -980,6 +984,10 @@ def try_mirror_url(fetch, origud, ud, ld, check = False):
         except UnboundLocalError:
             pass
         return False
+    finally:
+        if ud.lockfile and ud.lockfile != origud.lockfile:
+            bb.utils.unlockfile(lf)
+
 
 def try_mirrors(fetch, d, origud, mirrors, check = False):
     """
