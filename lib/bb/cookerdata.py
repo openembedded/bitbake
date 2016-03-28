@@ -182,7 +182,7 @@ def catch_parse_error(func):
             parselog.critical(traceback.format_exc())
             parselog.critical("Unable to parse %s: %s" % (fn, exc))
             sys.exit(1)
-        except (bb.parse.ParseError, bb.data_smart.ExpansionError) as exc:
+        except bb.data_smart.ExpansionError as exc:
             import traceback
 
             bbdir = os.path.dirname(__file__) + os.sep
@@ -193,6 +193,8 @@ def catch_parse_error(func):
                 if not fn.startswith(bbdir):
                     break
             parselog.critical("Unable to parse %s", fn, exc_info=(exc_class, exc, tb))
+        except bb.parse.ParseError as exc:
+            parselog.critical(str(exc))
             sys.exit(1)
     return wrapped
 
