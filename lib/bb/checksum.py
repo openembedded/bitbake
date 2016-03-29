@@ -123,12 +123,14 @@ class FileChecksumCache(MultiProcessCache):
                 # Handle globs
                 for f in glob.glob(pth):
                     if os.path.isdir(f):
-                        checksums.extend(checksum_dir(f))
+                        if not os.path.islink(f):
+                            checksums.extend(checksum_dir(f))
                     else:
                         checksum = checksum_file(f)
                         checksums.append((f, checksum))
             elif os.path.isdir(pth):
-                checksums.extend(checksum_dir(pth))
+                if not os.path.islink(pth):
+                    checksums.extend(checksum_dir(pth))
             else:
                 checksum = checksum_file(pth)
                 checksums.append((pth, checksum))
