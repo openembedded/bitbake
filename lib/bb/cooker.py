@@ -1768,7 +1768,8 @@ class CookerCollectFiles(object):
                 globbed = glob.glob(f)
                 if not globbed and os.path.exists(f):
                     globbed = [f]
-                for g in globbed:
+                # glob gives files in order on disk. Sort to be deterministic.
+                for g in sorted(globbed):
                     if g not in newfiles:
                         newfiles.append(g)
 
