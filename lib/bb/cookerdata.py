@@ -292,6 +292,8 @@ class CookerDataBuilder(object):
                 parselog.debug(2, "Adding layer %s", layer)
                 if 'HOME' in approved and '~' in layer:
                     layer = os.path.expanduser(layer)
+                if layer.endswith('/'):
+                    layer = layer.rstrip('/')
                 data.setVar('LAYERDIR', layer)
                 data = parse_config_file(os.path.join(layer, "conf", "layer.conf"), data)
                 data.expandVarref('LAYERDIR')
