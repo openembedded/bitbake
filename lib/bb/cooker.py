@@ -2064,7 +2064,6 @@ class CookerParser(object):
             bb.event.fire(event, self.cfgdata)
             self.feeder_quit.put(None)
             for process in self.processes:
-                self.jobs.put(None)
                 self.parser_quit.put(None)
         else:
             self.feeder_quit.put('cancel')
