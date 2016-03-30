@@ -372,7 +372,7 @@ def _print_exception(t, value, tb, realfile, text, context):
     finally:
         logger.error("\n".join(error))
 
-def better_exec(code, context, text = None, realfile = "<code>"):
+def better_exec(code, context, text = None, realfile = "<code>", pythonexception=False):
     """
     Similiar to better_compile, better_exec will
     print the lines that are responsible for the
@@ -389,6 +389,8 @@ def better_exec(code, context, text = None, realfile = "<code>"):
         # Error already shown so passthrough, no need for traceback
         raise
     except Exception as e:
+        if pythonexception:
+            raise
         (t, value, tb) = sys.exc_info()
         try:
             _print_exception(t, value, tb, realfile, text, context)
