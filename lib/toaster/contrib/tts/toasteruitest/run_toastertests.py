@@ -146,7 +146,7 @@ if __name__ == "__main__":
     except:
         ret = 1
         import traceback
-        traceback.print_exc(5)
+        traceback.print_exc()
     finally:
         if os.getenv('TOASTER_SUITE'):
             del os.environ['TOASTER_SUITE']
