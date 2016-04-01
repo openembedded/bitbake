@@ -1548,11 +1548,10 @@ class CustomImageRecipe(Recipe):
         # "require core-image-minimal.bb" is changed to:
         # "require recipes-core/images/core-image-minimal.bb"
 
-        if "require" in base_recipe:
-            req_search = re.search(r'(require\s+)(.+\.bb\s*$)',
+        req_search = re.search(r'(require\s+)(.+\.bb\s*$)',
                                    base_recipe,
                                    re.MULTILINE)
-
+        if req_search:
             require_filename = req_search.group(2).strip()
 
             corrected_location = Recipe.objects.filter(
