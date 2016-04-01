@@ -22,12 +22,12 @@
   </object>
   <object pk="1" model="orm.ProjectVariable">
     <field to="orm.project" name="project" rel="ManyToOneRel">1</field>
-    <field type="CharField" name="name">machine</field>
+    <field type="CharField" name="name">MACHINE</field>
     <field type="TextField" name="value">qemux86</field>
   </object>
   <object pk="2" model="orm.ProjectVariable">
     <field to="orm.project" name="project" rel="ManyToOneRel">2</field>
-    <field type="CharField" name="name">machine</field>
+    <field type="CharField" name="name">MACHINE</field>
     <field type="TextField" name="value">qemux86</field>
   </object>
   <object pk="1" model="orm.build">
