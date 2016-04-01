@@ -611,42 +611,49 @@ class FetcherNetworkTest(FetcherTest):
             os.chdir(os.path.dirname(self.unpackdir))
             fetcher.unpack(self.unpackdir)
 
-        def test_trusted_network(self):
-            # Ensure trusted_network returns False when the host IS in the list.
-            url = "git://Someserver.org/foo;rev=1"
-            self.d.setVar("BB_ALLOWED_NETWORKS", "server1.org someserver.org server2.org server3.org")
-            self.assertTrue(bb.fetch.trusted_network(self.d, url))
 
-        def test_wild_trusted_network(self):
-            # Ensure trusted_network returns true when the *.host IS in the list.
-            url = "git://Someserver.org/foo;rev=1"
-            self.d.setVar("BB_ALLOWED_NETWORKS", "server1.org *.someserver.org server2.org server3.org")
-            self.assertTrue(bb.fetch.trusted_network(self.d, url))
+class TrustedNetworksTest(FetcherTest):
+    def test_trusted_network(self):
+        # Ensure trusted_network returns False when the host IS in the list.
+        url = "git://Someserver.org/foo;rev=1"
+        self.d.setVar("BB_ALLOWED_NETWORKS", "server1.org someserver.org server2.org server3.org")
+        self.assertTrue(bb.fetch.trusted_network(self.d, url))
 
-        def test_prefix_wild_trusted_network(self):
-            # Ensure trusted_network returns true when the prefix matches *.host.
-            url = "git://git.Someserver.org/foo;rev=1"
-            self.d.setVar("BB_ALLOWED_NETWORKS", "server1.org *.someserver.org server2.org server3.org")
-            self.assertTrue(bb.fetch.trusted_network(self.d, url))
+    def test_wild_trusted_network(self):
+        # Ensure trusted_network returns true when the *.host IS in the list.
+        url = "git://Someserver.org/foo;rev=1"
+        self.d.setVar("BB_ALLOWED_NETWORKS", "server1.org *.someserver.org server2.org server3.org")
+        self.assertTrue(bb.fetch.trusted_network(self.d, url))
 
-        def test_two_prefix_wild_trusted_network(self):
-            # Ensure trusted_network returns true when the prefix matches *.host.
-            url = "git://something.git.Someserver.org/foo;rev=1"
-            self.d.setVar("BB_ALLOWED_NETWORKS", "server1.org *.someserver.org server2.org server3.org")
-            self.assertTrue(bb.fetch.trusted_network(self.d, url))
+    def test_prefix_wild_trusted_network(self):
+        # Ensure trusted_network returns true when the prefix matches *.host.
+        url = "git://git.Someserver.org/foo;rev=1"
+        self.d.setVar("BB_ALLOWED_NETWORKS", "server1.org *.someserver.org server2.org server3.org")
+        self.assertTrue(bb.fetch.trusted_network(self.d, url))
 
-        def test_untrusted_network(self):
-            # Ensure trusted_network returns False when the host is NOT in the list.
-            url = "git://someserver.org/foo;rev=1"
-            self.d.setVar("BB_ALLOWED_NETWORKS", "server1.org server2.org server3.org")
-            self.assertFalse(bb.fetch.trusted_network(self.d, url))
+    def test_two_prefix_wild_trusted_network(self):
+        # Ensure trusted_network returns true when the prefix matches *.host.
+        url = "git://something.git.Someserver.org/foo;rev=1"
+        self.d.setVar("BB_ALLOWED_NETWORKS", "server1.org *.someserver.org server2.org server3.org")
+        self.assertTrue(bb.fetch.trusted_network(self.d, url))
 
-        def test_wild_untrusted_network(self):
-            # Ensure trusted_network returns False when the host is NOT in the list.
-            url = "git://*.someserver.org/foo;rev=1"
-            self.d.setVar("BB_ALLOWED_NETWORKS", "server1.org server2.org server3.org")
-            self.assertFalse(bb.fetch.trusted_network(self.d, url))
+    def test_port_trusted_network(self):
+        # Ensure trusted_network returns True, even if the url specifies a port.
+        url = "git://someserver.org:8080/foo;rev=1"
+        self.d.setVar("BB_ALLOWED_NETWORKS", "someserver.org")
+        self.assertTrue(bb.fetch.trusted_network(self.d, url))
 
+    def test_untrusted_network(self):
+        # Ensure trusted_network returns False when the host is NOT in the list.
+        url = "git://someserver.org/foo;rev=1"
+        self.d.setVar("BB_ALLOWED_NETWORKS", "server1.org server2.org server3.org")
+        self.assertFalse(bb.fetch.trusted_network(self.d, url))
+
+    def test_wild_untrusted_network(self):
+        # Ensure trusted_network returns False when the host is NOT in the list.
+        url = "git://*.someserver.org/foo;rev=1"
+        self.d.setVar("BB_ALLOWED_NETWORKS", "server1.org server2.org server3.org")
+        self.assertFalse(bb.fetch.trusted_network(self.d, url))
 
 class URLHandle(unittest.TestCase):
 
