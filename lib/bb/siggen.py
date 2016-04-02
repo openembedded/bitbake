@@ -248,6 +248,7 @@ class SignatureGeneratorBasic(SignatureGenerator):
         bb.utils.mkdirhier(os.path.dirname(sigfile))
 
         data = {}
+        data['task'] = task
         data['basewhitelist'] = self.basewhitelist
         data['taskwhitelist'] = self.taskwhitelist
         data['taskdeps'] = self.taskdeps[fn][task]
@@ -267,6 +268,7 @@ class SignatureGeneratorBasic(SignatureGenerator):
             data['runtaskhashes'] = {}
             for dep in data['runtaskdeps']:
                 data['runtaskhashes'][dep] = self.taskhash[dep]
+            data['taskhash'] = self.taskhash[k]
 
         taint = self.read_taint(fn, task, stampbase)
         if taint:
@@ -289,6 +291,15 @@ class SignatureGeneratorBasic(SignatureGenerator):
             except OSError:
                 pass
             raise err
+
+        computed_basehash = calc_basehash(data)
+        if computed_basehash != self.basehash[k]:
+            bb.error("Basehash mismatch %s verses %s for %s" % (computed_basehash, self.basehash[k], k))
+        if k in self.taskhash:
+            computed_taskhash = calc_taskhash(data)
+            if computed_taskhash != self.taskhash[k]:
+                bb.error("Taskhash mismatch %s verses %s for %s" % (computed_taskhash, self.taskhash[k], k))
+
 
     def dump_sigs(self, dataCache, options):
         for fn in self.taskdeps:
@@ -506,6 +517,37 @@ def compare_sigfiles(a, b, recursecb = None):
     return output
 
 
+def calc_basehash(sigdata):
+    task = sigdata['task']
+    basedata = sigdata['varvals'][task]
+
+    if basedata is None:
+        basedata = ''
+
+    alldeps = sigdata['taskdeps']
+    for dep in alldeps:
+        basedata = basedata + dep
+        val = sigdata['varvals'][dep]
+        if val is not None:
+            basedata = basedata + str(val)
+
+    return hashlib.md5(basedata).hexdigest()
+
+def calc_taskhash(sigdata):
+    data = sigdata['basehash']
+
+    for dep in sigdata['runtaskdeps']:
+        data = data + sigdata['runtaskhashes'][dep]
+
+    for c in sigdata['file_checksum_values']:
+        data = data + c[1]
+
+    if 'taint' in sigdata:
+        data = data + sigdata['taint']
+
+    return hashlib.md5(data).hexdigest()
+
+
 def dump_sigfile(a):
     output = []
 
@@ -539,17 +581,13 @@ def dump_sigfile(a):
     if 'taint' in a_data:
         output.append("Tainted (by forced/invalidated task): %s" % a_data['taint'])
 
-    data = a_data['basehash']
-    for dep in a_data['runtaskdeps']:
-        data = data + a_data['runtaskhashes'][dep]
+    if 'task' in a_data:
+        computed_basehash = calc_basehash(a_data)
+        output.append("Computed base hash is %s and from file %s" % (computed_basehash, a_data['basehash']))
+    else:
+        output.append("Unable to compute base hash")
 
-    for c in a_data['file_checksum_values']:
-        data = data + c[1]
-
-    if 'taint' in a_data:
-        data = data + a_data['taint']
-
-    h = hashlib.md5(data).hexdigest()
-    output.append("Computed Hash is %s" % h)
+    computed_taskhash = calc_taskhash(a_data)
+    output.append("Computed task hash is %s" % computed_taskhash)
 
     return output
