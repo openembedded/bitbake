@@ -49,9 +49,6 @@ class SignatureGenerator(object):
         """Write/update the file checksum cache onto disk"""
         return
 
-    def set_taskdata(self, hashes, deps, checksum):
-        return
-
     def stampfile(self, stampbase, file_name, taskname, extrainfo):
         return ("%s.%s.%s" % (stampbase, taskname, extrainfo)).rstrip('.')
 
