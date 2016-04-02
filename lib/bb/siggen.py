@@ -38,6 +38,7 @@ class SignatureGenerator(object):
         self.taskhash = {}
         self.runtaskdeps = {}
         self.file_checksum_values = {}
+        self.taints = {}
 
     def finalise(self, fn, d, varient):
         return
@@ -65,10 +66,10 @@ class SignatureGenerator(object):
         return
 
     def get_taskdata(self):
-       return (self.runtaskdeps, self.taskhash, self.file_checksum_values)
+       return (self.runtaskdeps, self.taskhash, self.file_checksum_values, self.taints)
 
     def set_taskdata(self, data):
-        self.runtaskdeps, self.taskhash, self.file_checksum_values = data
+        self.runtaskdeps, self.taskhash, self.file_checksum_values, self.taints = data
 
 
 class SignatureGeneratorBasic(SignatureGenerator):
@@ -543,7 +544,10 @@ def calc_taskhash(sigdata):
         data = data + c[1]
 
     if 'taint' in sigdata:
-        data = data + sigdata['taint']
+        if 'nostamp:' in sigdata['taint']:
+            data = data + sigdata['taint'][8:]
+        else:
+            data = data + sigdata['taint']
 
     return hashlib.md5(data).hexdigest()
 
