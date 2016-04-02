@@ -186,8 +186,9 @@ class SignatureGeneratorBasic(SignatureGenerator):
         k = fn + "." + task
         data = dataCache.basetaskhash[k]
         self.runtaskdeps[k] = []
-        self.file_checksum_values[k] = {}
+        self.file_checksum_values[k] = []
         recipename = dataCache.pkg_fn[fn]
+
         for dep in sorted(deps, key=clean_basepath):
             depname = dataCache.pkg_fn[self.pkgnameextract.search(dep).group('fn')]
             if not self.rundep_check(fn, recipename, task, dep, depname, dataCache):
@@ -203,7 +204,7 @@ class SignatureGeneratorBasic(SignatureGenerator):
             else:
                 checksums = bb.fetch2.get_file_checksums(dataCache.file_checksums[fn][task], recipename)
             for (f,cs) in checksums:
-                self.file_checksum_values[k][f] = cs
+                self.file_checksum_values[k].append((f,cs))
                 if cs:
                     data = data + cs
 
@@ -262,7 +263,7 @@ class SignatureGeneratorBasic(SignatureGenerator):
 
         if runtime and k in self.taskhash:
             data['runtaskdeps'] = self.runtaskdeps[k]
-            data['file_checksum_values'] = [(os.path.basename(f), cs) for f,cs in self.file_checksum_values[k].items()]
+            data['file_checksum_values'] = [(os.path.basename(f), cs) for f,cs in self.file_checksum_values[k]]
             data['runtaskhashes'] = {}
             for dep in data['runtaskdeps']:
                 data['runtaskhashes'][dep] = self.taskhash[dep]
