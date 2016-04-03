@@ -238,9 +238,12 @@ class SignatureGeneratorBasic(SignatureGenerator):
             bb.fetch2.fetcher_parse_done()
 
     def dump_sigtask(self, fn, task, stampbase, runtime):
+
         k = fn + "." + task
-        if runtime == "customfile":
+        referencestamp = stampbase
+        if isinstance(runtime, str) and runtime.startswith("customfile"):
             sigfile = stampbase
+            referencestamp = runtime[11:]
         elif runtime and k in self.taskhash:
             sigfile = stampbase + "." + task + ".sigdata" + "." + self.taskhash[k]
         else:
@@ -271,7 +274,7 @@ class SignatureGeneratorBasic(SignatureGenerator):
                 data['runtaskhashes'][dep] = self.taskhash[dep]
             data['taskhash'] = self.taskhash[k]
 
-        taint = self.read_taint(fn, task, stampbase)
+        taint = self.read_taint(fn, task, referencestamp)
         if taint:
             data['taint'] = taint
 
@@ -341,7 +344,8 @@ def dump_this_task(outfile, d):
     import bb.parse
     fn = d.getVar("BB_FILENAME", True)
     task = "do_" + d.getVar("BB_CURRENTTASK", True)
-    bb.parse.siggen.dump_sigtask(fn, task, outfile, "customfile")
+    referencestamp = bb.build.stamp_internal(task, d, None, True)
+    bb.parse.siggen.dump_sigtask(fn, task, outfile, "customfile:" + referencestamp)
 
 def clean_basepath(a):
     b = a.rsplit("/", 2)[1] + a.rsplit("/", 2)[2]
