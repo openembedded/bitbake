@@ -2084,13 +2084,23 @@ if True:
 
         name = "_js_unit_test_prj_"
 
-        # If there is an existing project by this name delete it. We don't want
-        # Lots of duplicates cluttering up the projects.
+        # If there is an existing project by this name delete it.
+        # We don't want Lots of duplicates cluttering up the projects.
         Project.objects.filter(name=name).delete()
 
-        new_project = Project.objects.create_project(name=name, release=release)
+        new_project = Project.objects.create_project(name=name,
+                                                     release=release)
+        # Add a layer
+        layer = new_project.get_all_compatible_layer_versions().first()
 
-        context = { 'project' : new_project }
+        ProjectLayer.objects.get_or_create(layercommit=layer,
+                                           project=new_project)
+
+        # make sure we have a machine set for this project
+        ProjectVariable.objects.get_or_create(project=new_project,
+                                              name="MACHINE",
+                                              value="qemux86")
+        context = {'project': new_project}
         return render(request, "js-unit-tests.html", context)
 
     from django.views.decorators.csrf import csrf_exempt
