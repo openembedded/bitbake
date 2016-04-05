@@ -924,6 +924,24 @@ def to_boolean(string, default=None):
         raise ValueError("Invalid value for to_boolean: %s" % string)
 
 def contains(variable, checkvalues, truevalue, falsevalue, d):
+    """Check if a variable contains all the values specified.
+
+    Arguments:
+
+    variable -- the variable name. This will be fetched and expanded (using
+    d.getVar(variable, True)) and then split into a set().
+
+    checkvalues -- if this is a string it is split on whitespace into a set(),
+    otherwise coerced directly into a set().
+
+    truevalue -- the value to return if checkvalues is a subset of variable.
+
+    falsevalue -- the value to return if variable is empty or if checkvalues is
+    not a subset of variable.
+
+    d -- the data store.
+    """
+
     val = d.getVar(variable, True)
     if not val:
         return falsevalue
@@ -932,7 +950,7 @@ def contains(variable, checkvalues, truevalue, falsevalue, d):
         checkvalues = set(checkvalues.split())
     else:
         checkvalues = set(checkvalues)
-    if checkvalues.issubset(val): 
+    if checkvalues.issubset(val):
         return truevalue
     return falsevalue
 
