@@ -100,6 +100,7 @@ stop_system()
     unset DATABASE_URL
     unset TOASTER_CONF
     unset TOASTER_DIR
+    unset BITBAKE_UI
     trap - SIGHUP
     #trap - SIGCHLD
     INSTOPSYSTEM=0
@@ -259,6 +260,7 @@ case $CMD in
             echo "Failed ${CMD}."
             return 4
         fi
+        export BITBAKE_UI='toasterui'
         export DATABASE_URL=`$MANAGE get-dburl`
         $MANAGE runbuilds & echo $! >${BUILDDIR}/.runbuilds.pid
         # set fail safe stop system on terminal exit
