@@ -195,7 +195,8 @@ def main(server, eventHandler, params):
     taskfailures = []
     first = True
 
-    buildinfohelper = BuildInfoHelper(server, build_history_enabled)
+    buildinfohelper = BuildInfoHelper(server, build_history_enabled,
+                                      os.getenv('TOASTER_BRBE'))
 
     # write our own log files into bitbake's log directory;
     # we're only interested in the path to the parent directory of

@@ -849,7 +849,7 @@ class BuildInfoHelper(object):
     # pylint: disable=bad-continuation
     # we do not follow the python conventions for continuation indentation due to long lines here
 
-    def __init__(self, server, has_build_history = False):
+    def __init__(self, server, has_build_history = False, brbe = None):
         self.internal_state = {}
         self.internal_state['taskdata'] = {}
         self.internal_state['targets'] = []
@@ -865,7 +865,7 @@ class BuildInfoHelper(object):
 
         # this is set for Toaster-triggered builds by localhostbecontroller
         # via toasterui
-        self.brbe = None
+        self.brbe = brbe
 
         self.project = None
 
