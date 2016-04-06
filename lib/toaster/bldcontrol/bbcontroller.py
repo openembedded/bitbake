@@ -127,14 +127,6 @@ class BuildEnvironmentController(object):
         bblayerconffile.write("# line added by toaster build control\nBBLAYERS = \"" + " ".join(layerlist) + "\"")
         bblayerconffile.close()
 
-    def startBBServer(self):
-        """ Starts a  BB server with Toaster toasterui set up to record the builds, an no controlling UI.
-            After this method executes, self.be bbaddress/bbport MUST point to a running and free server,
-            and the bbstate MUST be  updated to "started".
-        """
-        raise NotImplementedError("FIXME: Must override in order to actually start the BB server")
-
-
     def setLayers(self, bitbake, ls):
         """ Checks-out bitbake executor and layers from git repositories.
             Sets the layer variables in the config file, after validating local layer paths.
@@ -151,7 +143,6 @@ class BuildEnvironmentController(object):
             starts if needed; or reconnects to the server if we can
         """
         if not self.connection:
-            self.startBBServer()
             self.be.lock = BuildEnvironment.LOCK_RUNNING
             self.be.save()
 

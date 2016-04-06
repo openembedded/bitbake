@@ -70,38 +70,6 @@ class LocalhostBEController(BuildEnvironmentController):
             logger.debug("localhostbecontroller: shellcmd success")
             return out
 
-    def startBBServer(self):
-        assert self.pokydirname and os.path.exists(self.pokydirname)
-        assert self.islayerset
-
-        # find our own toasterui listener/bitbake
-        from toaster.bldcontrol.management.commands.loadconf import _reduce_canon_path
-
-        toaster = _reduce_canon_path(os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../../bin/toaster"))
-        assert os.path.exists(toaster) and os.path.isfile(toaster)
-
-        # restart bitbake server and toastergui observer
-        self._shellcmd("bash -c 'source %s restart-bitbake'" % toaster, self.be.builddir)
-        logger.debug("localhostbecontroller: restarted bitbake server")
-
-        # read port number from bitbake.lock
-        self.be.bbport = ""
-        bblock = os.path.join(self.be.builddir, 'bitbake.lock')
-        if os.path.exists(bblock):
-            with open(bblock) as fplock:
-                for line in fplock:
-                    if ":" in line:
-                        self.be.bbport = line.split(":")[-1].strip()
-                        logger.debug("localhostbecontroller: bitbake port %s", self.be.bbport)
-                        break
-
-        if not self.be.bbport:
-            raise BuildSetupException("localhostbecontroller: can't read bitbake port from %s" % bblock)
-
-        self.be.bbaddress = "localhost"
-        self.be.bbstate = BuildEnvironment.SERVER_STARTED
-        self.be.save()
-
     def getGitCloneDirectory(self, url, branch):
         """Construct unique clone directory name out of url and branch."""
         if branch != "HEAD":
