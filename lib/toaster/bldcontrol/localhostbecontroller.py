@@ -180,11 +180,6 @@ class LocalhostBEController(BuildEnvironmentController):
 
         logger.debug("localhostbecontroller: current layer list %s " % pformat(layerlist))
 
-        # 4. update the bblayers.conf
-        bblayerconf = os.path.join(self.be.builddir, "conf/bblayers.conf")
-        if not os.path.exists(bblayerconf):
-            raise BuildSetupException("BE is not consistent: bblayers.conf file missing at %s" % bblayerconf)
-
         # 5. create custom layer and add custom recipes to it
         layerpath = os.path.join(self.be.builddir,
                                  CustomImageRecipe.LAYER_NAME)
@@ -247,10 +242,8 @@ class LocalhostBEController(BuildEnvironmentController):
         if os.path.isdir(layerpath):
             layerlist.append(layerpath)
 
-        BuildEnvironmentController._updateBBLayers(bblayerconf, layerlist)
-
         self.islayerset = True
-        return True
+        return layerlist
 
     def readServerLogFile(self):
         return open(os.path.join(self.be.builddir, "toaster_server.log"), "r").read()

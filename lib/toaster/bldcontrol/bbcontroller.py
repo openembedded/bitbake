@@ -109,24 +109,6 @@ class BuildEnvironmentController(object):
         self.be = be
         self.connection = None
 
-    @staticmethod
-    def _updateBBLayers(bblayerconf, layerlist):
-        conflines = open(bblayerconf, "r").readlines()
-
-        bblayerconffile = open(bblayerconf, "w")
-        skip = 0
-        for i in xrange(len(conflines)):
-            if skip > 0:
-                skip =- 1
-                continue
-            if conflines[i].startswith("# line added by toaster"):
-                skip = 1
-            else:
-                bblayerconffile.write(conflines[i])
-
-        bblayerconffile.write("# line added by toaster build control\nBBLAYERS = \"" + " ".join(layerlist) + "\"")
-        bblayerconffile.close()
-
     def setLayers(self, bitbake, ls):
         """ Checks-out bitbake executor and layers from git repositories.
             Sets the layer variables in the config file, after validating local layer paths.
