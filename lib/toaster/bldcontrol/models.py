@@ -4,6 +4,8 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.utils.encoding import force_bytes
 from orm.models import Project, ProjectLayer, ProjectVariable, ProjectTarget, Build, Layer_Version
 
+import logging
+logger = logging.getLogger("toaster")
 # a BuildEnvironment is the equivalent of the "build/" directory on the localhost
 class BuildEnvironment(models.Model):
     SERVER_STOPPED = 0
@@ -64,7 +66,8 @@ class BuildRequest(models.Model):
     REQ_COMPLETED = 3
     REQ_FAILED = 4
     REQ_DELETED = 5
-    REQ_ARCHIVE = 6
+    REQ_CANCELLING = 6
+    REQ_ARCHIVE = 7
 
     REQUEST_STATE = (
         (REQ_CREATED, "created"),
@@ -73,6 +76,7 @@ class BuildRequest(models.Model):
         (REQ_COMPLETED, "completed"),
         (REQ_FAILED, "failed"),
         (REQ_DELETED, "deleted"),
+        (REQ_CANCELLING, "cancelling"),
         (REQ_ARCHIVE, "archive"),
     )
 
@@ -84,6 +88,27 @@ class BuildRequest(models.Model):
     state       = models.IntegerField(choices = REQUEST_STATE, default = REQ_CREATED)
     created     = models.DateTimeField(auto_now_add = True)
     updated     = models.DateTimeField(auto_now = True)
+
+    def __init__(self, *args, **kwargs):
+        super(BuildRequest, self).__init__(*args, **kwargs)
+        # Save the old state incase it's about to be modified
+        self.old_state = self.state
+
+    def save(self, *args, **kwargs):
+        # Check that the state we're trying to set is not going backwards
+        # e.g. from REQ_FAILED to REQ_INPROGRESS
+        if self.old_state != self.state and self.old_state > self.state:
+            logger.warn("Invalid state change requested: "
+                        "Cannot go from %s to %s - ignoring request" %
+                        (BuildRequest.REQUEST_STATE[self.old_state][1],
+                         BuildRequest.REQUEST_STATE[self.state][1])
+                       )
+            # Set property back to the old value
+            self.state = self.old_state
+            return
+
+        super(BuildRequest, self).save(*args, **kwargs)
+
 
     def get_duration(self):
         return (self.updated - self.created).total_seconds()
