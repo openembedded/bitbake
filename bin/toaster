@@ -175,15 +175,11 @@ fi
 # make sure that the toaster.sqlite file doesn't default to `pwd` like it currently does.
 export TOASTER_DIR=`pwd`
 
-NOTOASTERUI=0
 WEBSERVER=1
 WEB_PORT="8000"
 unset CMD
 for param in $*; do
     case $param in
-    noui )
-            NOTOASTERUI=1
-    ;;
     noweb )
             WEBSERVER=0
     ;;
