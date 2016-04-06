@@ -250,44 +250,76 @@ class LocalhostBEController(BuildEnvironmentController):
 
 
     def triggerBuild(self, bitbake, layers, variables, targets, brbe):
-        # set up the build environment with the needed layers
-        self.setLayers(bitbake, layers, targets)
+        layers = self.setLayers(bitbake, layers, targets)
+
+        # init build environment from the clone
+        builddir = '%s-toaster-%d' % (self.be.builddir, bitbake.req.project.id)
+        oe_init = os.path.join(self.pokydirname, 'oe-init-build-env')
+        # init build environment
+        self._shellcmd('source %s %s' % (oe_init, builddir), self.be.sourcedir)
+
+        # update bblayers.conf
+        bblconfpath = os.path.join(builddir, "conf/bblayers.conf")
+        conflines = open(bblconfpath, "r").readlines()
+        skip = False
+        with open(bblconfpath, 'w') as bblayers:
+            for line in conflines:
+                if line.startswith("# line added by toaster"):
+                    skip = True
+                    continue
+                if skip:
+                    skip = False
+                else:
+                    bblayers.write(line)
+
+            bblayers.write('# line added by toaster build control\n'
+                           'BBLAYERS = "%s"' % ' '.join(layers))
 
         # write configuration file
-        filepath = os.path.join(self.be.builddir, "conf/toaster.conf")
-        with open(filepath, 'w') as conf:
+        confpath = os.path.join(builddir, 'conf/toaster.conf')
+        with open(confpath, 'w') as conf:
             for var in variables:
                 conf.write('%s="%s"\n' % (var.name, var.value))
             conf.write('INHERIT+="toaster buildhistory"')
 
-        # get the bb server running with the build req id and build env id
-        bbctrl = self.getBBController()
+        # run bitbake server from the clone
+        bitbake = os.path.join(self.pokydirname, 'bitbake', 'bin', 'bitbake')
+        self._shellcmd('source %s %s; BITBAKE_UI="" %s --read %s '
+                       '--server-only -t xmlrpc -B 0.0.0.0:0' % (oe_init, builddir,
+                       bitbake, confpath), self.be.sourcedir)
 
-        # set variables; TOASTER_BRBE is not set on the server, as this
-        # causes events from command-line builds to be attached to the last
-        # Toaster-triggered build; instead, TOASTER_BRBE is fired as an event so
-        # that toasterui can set it on the buildinfohelper;
-        # see https://bugzilla.yoctoproject.org/show_bug.cgi?id=9021
-        for var in variables:
-            if var.name == 'TOASTER_BRBE':
-                bbctrl.triggerEvent('bb.event.MetadataEvent("SetBRBE", "%s")' \
-                                     % var.value)
-            else:
-                bbctrl.setVariable(var.name, var.value)
+        # read port number from bitbake.lock
+        self.be.bbport = ""
+        bblock = os.path.join(builddir, 'bitbake.lock')
+        with open(bblock) as fplock:
+            for line in fplock:
+                if ":" in line:
+                    self.be.bbport = line.split(":")[-1].strip()
+                    logger.debug("localhostbecontroller: bitbake port %s", self.be.bbport)
+                    break
 
-        # Add 'toaster' and 'buildhistory' to INHERIT variable
-        inherit = {item.strip() for item in bbctrl.getVariable('INHERIT').split()}
-        inherit = inherit.union(["toaster", "buildhistory"])
-        bbctrl.setVariable('INHERIT', ' '.join(inherit))
+        if not self.be.bbport:
+            raise BuildSetupException("localhostbecontroller: can't read bitbake port from %s" % bblock)
 
-        # trigger the build command
-        task = reduce(lambda x, y: x if len(y)== 0 else y, map(lambda y: y.task, targets))
-        if len(task) == 0:
-            task = None
+        self.be.bbaddress = "localhost"
+        self.be.bbstate = BuildEnvironment.SERVER_STARTED
+        self.be.lock = BuildEnvironment.LOCK_RUNNING
+        self.be.save()
 
-        bbctrl.build(list(map(lambda x:x.target, targets)), task)
+        bbtargets = ''
+        for target in targets:
+            task = target.task
+            if task:
+                if not task.startswith('do_'):
+                    task = 'do_' + task
+                task = ':%s' % task
+            bbtargets += '%s%s ' % (target.target, task)
 
-        logger.debug("localhostbecontroller: Build launched, exiting. Follow build logs at %s/toaster_ui.log" % self.be.builddir)
+        # run build with local bitbake
+        log = os.path.join(builddir, 'toaster_ui.log')
+        self._shellcmd('TOASTER_BRBE="%s" BBSERVER="0.0.0.0:-1" '
+                       '../bitbake/bin/bitbake %s -u toasterui '
+                       '>>%s 2>&1 &' % (brbe, bbtargets, log), builddir)
 
-        # disconnect from the server
-        bbctrl.disconnect()
+        logger.debug('localhostbecontroller: Build launched, exiting. '
+                     'Follow build logs at %s' % log)
