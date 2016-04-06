@@ -218,6 +218,15 @@ class ORMWrapper(object):
         assert isinstance(errors, int)
         assert isinstance(warnings, int)
 
+        if build.outcome == Build.CANCELLED:
+            return
+        try:
+            if build.buildrequest.state == BuildRequest.REQ_CANCELLING:
+                return
+        except AttributeError:
+            # We may not have a buildrequest if this is a command line build
+            pass
+
         outcome = Build.SUCCEEDED
         if errors or taskfailures:
             outcome = Build.FAILED
@@ -1405,9 +1414,17 @@ class BuildInfoHelper(object):
         be.lock = BuildEnvironment.LOCK_LOCK
         be.save()
         br = BuildRequest.objects.get(pk = br_id)
+
+        # if we're 'done' because we got cancelled update the build outcome
+        if br.state == BuildRequest.REQ_CANCELLING:
+            logger.info("Build cancelled")
+            br.build.outcome = Build.CANCELLED
+            br.build.save()
+            errorcode = 0
+
         if errorcode == 0:
             # request archival of the project artifacts
-            br.state = BuildRequest.REQ_ARCHIVE
+            br.state = BuildRequest.REQ_COMPLETED
         else:
             br.state = BuildRequest.REQ_FAILED
         br.save()
