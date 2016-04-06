@@ -372,9 +372,9 @@ def main(server, eventHandler, params):
 
                 # update the build info helper on BuildCompleted, not on CommandXXX
                 buildinfohelper.update_build_information(event, errors, warnings, taskfailures)
+
+                brbe = buildinfohelper.brbe
                 buildinfohelper.close(errorcode)
-                # mark the log output; controllers may kill the toasterUI after seeing this log
-                logger.info("ToasterUI build done 1, brbe: %s", buildinfohelper.brbe )
 
                 # we start a new build info
                 logger.debug("ToasterUI prepared for new build")
@@ -383,7 +383,7 @@ def main(server, eventHandler, params):
                 taskfailures = []
                 buildinfohelper = BuildInfoHelper(server, build_history_enabled)
 
-                logger.info("ToasterUI build done 2")
+                logger.info("ToasterUI build done, brbe: %s", brbe)
                 continue
 
             if isinstance(event, (bb.command.CommandCompleted,
