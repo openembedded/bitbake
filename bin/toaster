@@ -17,7 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see http://www.gnu.org/licenses/.
 
-# Usage: source toaster [start|stop|restart-bitbake]
+# Usage: source toaster [start|stop]
 #                       [webport=<port>] [noui] [noweb]
 
 # Helper function to kill a background toaster development server
@@ -95,7 +95,6 @@ stop_system()
         kill `cat ${BUILDDIR}/.toasterui.pid` 2>/dev/null
         rm ${BUILDDIR}/.toasterui.pid
     fi
-    stop_bitbake
     webserverKillAll
     # unset exported variables
     unset DATABASE_URL
@@ -104,31 +103,6 @@ stop_system()
     trap - SIGHUP
     #trap - SIGCHLD
     INSTOPSYSTEM=0
-}
-
-start_bitbake() {
-    unset BBSERVER
-    bitbake --read conf/toaster.conf --server-only -t xmlrpc -B 0.0.0.0:0
-    if [ $? -ne 0 ]; then
-        echo "Bitbake server start failed"
-        return 1
-    fi
-    export BBSERVER=0.0.0.0:-1
-    export DATABASE_URL=`$MANAGE get-dburl`
-    # we start the TOASTERUI only if not inhibited
-    if [ $NOTOASTERUI -eq 0 ]; then
-        bitbake --observe-only -u toasterui --remote-server=$BBSERVER -t xmlrpc \
-            >>${BUILDDIR}/toaster_ui.log 2>&1 \
-            & echo $! >${BUILDDIR}/.toasterui.pid
-    fi
-    return 0
-}
-
-stop_bitbake() {
-    BBSERVER=0.0.0.0:-1 bitbake -m
-    unset BBSERVER
-    # force stop any misbehaving bitbake server
-    lsof -t bitbake.lock | awk '{print $2}' | grep "[0-9]\+" | xargs -n1 -r kill
 }
 
 verify_prereq() {
@@ -229,15 +203,6 @@ if [ `basename \"$0\"` = `basename \"${TOASTER}\"` ]; then
     return 1
 fi
 
-if [ "$1" = 'restart-bitbake' ] ; then
-    stop_bitbake
-    sleep 1
-    start_bitbake
-    rc=$?
-    sleep 3
-    return $rc
-fi
-
 verify_prereq || return 1
 
 # We make sure we're running in the current shell and in a good environment
@@ -281,16 +246,6 @@ case $CMD in
              $MANAGE checksocket "0.0.0.0:$WEB_PORT" || return 1
         fi
 
-        # Make sure it's safe to start by checking bitbake lock
-        if [ -e $BUILDDIR/bitbake.lock ]; then
-            python -c "import fcntl; fcntl.flock(open(\"$BUILDDIR/bitbake.lock\"), fcntl.LOCK_EX|fcntl.LOCK_NB)" 2>/dev/null
-            if [ $? -ne 0 ] ; then
-                echo "Error: bitbake lock state error. File locks show that the system is on." 1>&2
-                echo "Please wait for the current build to finish, stop and then start the system again." 1>&2
-                return 3
-            fi
-        fi
-
         # kill Toaster web server if it's alive
         if [ -e $BUILDDIR/.toastermain.pid ] && kill -0 `cat $BUILDDIR/.toastermain.pid`; then
             echo "Warning: bitbake appears to be dead, but the Toaster web server is running." 1>&2
@@ -308,22 +263,12 @@ case $CMD in
             echo "Failed ${CMD}."
             return 4
         fi
-        start_bitbake
-        if [ $? -eq 0 ]; then
-            $MANAGE runbuilds & echo $! >${BUILDDIR}/.runbuilds.pid
-            # set fail safe stop system on terminal exit
-            trap stop_system SIGHUP
-            echo "Successful ${CMD}."
-            return 0
-        else
-            # failed start, do stop
-            stop_system
-            echo "Failed ${CMD}."
-            return 1
-        fi
-        # stop system on terminal exit
-        set -o monitor
+        export DATABASE_URL=`$MANAGE get-dburl`
+        $MANAGE runbuilds & echo $! >${BUILDDIR}/.runbuilds.pid
+        # set fail safe stop system on terminal exit
         trap stop_system SIGHUP
+        echo "Successful ${CMD}."
+        return 0
     ;;
     stop )
         stop_system
