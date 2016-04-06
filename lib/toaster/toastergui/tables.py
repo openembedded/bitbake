@@ -1080,8 +1080,9 @@ class BuildsTable(ToasterTable):
         """
         queryset = self.get_builds()
 
-        # don't include in progress builds
-        queryset = queryset.exclude(outcome=Build.IN_PROGRESS)
+        # Don't include in progress builds pr cancelled builds
+        queryset = queryset.exclude(Q(outcome=Build.IN_PROGRESS) |
+                                    Q(outcome=Build.CANCELLED))
 
         # sort
         queryset = queryset.order_by(self.default_orderby)
