@@ -49,15 +49,13 @@ class Command(NoArgsCommand):
 
             logger.debug("runbuilds: starting build %s, environment %s" % (str(br).decode('utf-8'), bec.be))
 
-            # write the build identification variable
-            BRVariable.objects.create(req = br, name="TOASTER_BRBE", value="%d:%d" % (br.pk, bec.be.pk))
-
             # let the build request know where it is being executed
             br.environment = bec.be
             br.save()
 
             # this triggers an async build
-            bec.triggerBuild(br.brbitbake, br.brlayer_set.all(), br.brvariable_set.all(), br.brtarget_set.all())
+            bec.triggerBuild(br.brbitbake, br.brlayer_set.all(), br.brvariable_set.all(),
+                             br.brtarget_set.all(), "%d:%d" % (br.pk, bec.be.pk))
 
         except Exception as e:
             logger.error("runbuilds: Error launching build %s" % e)

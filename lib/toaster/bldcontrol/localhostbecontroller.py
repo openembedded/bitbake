@@ -256,7 +256,7 @@ class LocalhostBEController(BuildEnvironmentController):
         return open(os.path.join(self.be.builddir, "toaster_server.log"), "r").read()
 
 
-    def triggerBuild(self, bitbake, layers, variables, targets):
+    def triggerBuild(self, bitbake, layers, variables, targets, brbe):
         # set up the build environment with the needed layers
         self.setLayers(bitbake, layers, targets)
 
