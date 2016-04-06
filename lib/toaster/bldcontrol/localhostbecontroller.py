@@ -51,12 +51,14 @@ class LocalhostBEController(BuildEnvironmentController):
         self.pokydirname = None
         self.islayerset = False
 
-    def _shellcmd(self, command, cwd = None):
+    def _shellcmd(self, command, cwd=None, nowait=False):
         if cwd is None:
             cwd = self.be.sourcedir
 
         logger.debug("lbc_shellcmmd: (%s) %s" % (cwd, command))
         p = subprocess.Popen(command, cwd = cwd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        if nowait:
+            return
         (out,err) = p.communicate()
         p.wait()
         if p.returncode:
