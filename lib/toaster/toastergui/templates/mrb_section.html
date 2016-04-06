@@ -2,6 +2,21 @@
 {% load projecttags %}
 {% load project_url_tag %}
 {% load humanize %}
+<script src="{% static 'js/mrbsection.js' %}"></script>
+<script>
+  $(document).ready(function () {
+    var ctx = {
+      mrbType : "{{mrb_type}}",
+    }
+
+    try {
+      mrbSectionInit(ctx);
+    } catch (e) {
+      document.write("Sorry, An error has occurred loading this page");
+      console.warn(e);
+    }
+  });
+</script>
 
 {%if mru and mru.count > 0%}
 
@@ -99,7 +114,7 @@
                   " title="Builds in this project cannot be started from Toaster: they are started from the command line">
                   </i>
               {% else %}
-                  <button class="btn
+                  <button class="run-again-btn btn
                       {% if build.outcome == build.SUCCEEDED %}
                           btn-success
                       {% elif build.outcome == build.FAILED %}
@@ -108,10 +123,9 @@
                           btn-info
                       {%endif%}
                       pull-right"
-                      onclick='scheduleBuild({% url 'projectbuilds' build.project.id as bpi %}{{bpi|json}},
-                        {{build.project.name|json}},
-                        {% url 'project' build.project.id as purl %}{{purl|json}},
-                        {{build.target_set.all|get_tasks|json}})'>
+                      data-request-url="{% url 'xhr_buildrequest' build.project.pk %}"
+                      data-target='{{build.target_set.all|get_tasks|json}}'>
+
 
                         Rebuild
                   </button>
@@ -119,100 +133,46 @@
             </div>
     {%endif%}
     {%if build.outcome == build.IN_PROGRESS %}
-            <div class="span4 offset1">
-              <div class="progress" id="build-pc-done-title-{{build.pk}}" style="margin-top:5px;" data-toggle="tooltip" title="{{build.completeper}}% of tasks complete">
-                  <div id="build-pc-done-bar-{{build.pk}}" style="width: {{build.completeper}}%;" class="bar"></div>
-                </div>
-            </div>
-            <div class="lead pull-right"><span id="build-pc-done-{{build.pk}}">{{build.completeper}}</span>% of tasks complete</div>
-    {%endif%}
-        </div>
+    <div class="span4" style="display:none" id="cancelling-msg-{{build.buildrequest.pk}}">
+      <p class="lead">Cancelling the build ...</p>
     </div>
+    <div class="span4 offset1 progress-info">
+      <div class="progress" id="build-pc-done-title-{{build.pk}}" style="margin-top:5px;" data-toggle="tooltip" title="{{build.completeper}}% of tasks complete">
+        <div id="build-pc-done-bar-{{build.pk}}" style="width: {{build.completeper}}%;" class="bar"></div>
+      </div>
+    </div>
+    <div class="lead span3 progress-info"><span id="build-pc-done-{{build.pk}}">{{build.completeper}}</span>% of tasks complete</div>
+    {# No build cancel for command line builds project #}
+    {% if build.project.is_default %}
+    <i class="icon-question-sign get-help get-help-blue pull-right" title="" data-original-title="Builds in this project cannot be cancelled from Toaster: they can only be cancalled from the command line"></i>
+    {% else %}
+    <div class="lead pull-right progress-info">
+      <button class="cancel-build-btn btn btn-info pull-right"
+          data-buildrequest-id={{build.buildrequest.pk}}
+          data-request-url="{% url 'xhr_buildrequest' build.project.pk %}" >
+        Cancel
+      </button>
+    </div>
+    {% endif %}
+
+    {%endif%} {# end if in progress #}
+
+    {% if build.outcome == build.CANCELLED %}
+    <div class="span4">
+      <p class="lead">Build cancelled</p>
+    </div>
+    <button class="btn btn-info pull-right run-again-btn"
+        data-request-url="{% url 'xhr_buildrequest' build.project.pk %}"
+        data-target='{{build.target_set.all|get_tasks|json}}'>
+      Rebuild
+
+    </button>
+    {% endif %}
+  </div>
+</div>
 
   {% endfor %}
   </div>
-
-<script>
-
-function scheduleBuild(url, projectName, projectUrl, buildlist) {
-  console.log("scheduleBuild");
-  libtoaster.startABuild(url, null, buildlist.join(" "), function(){
-    console.log("reloading page");
-    window.location.reload();
-  }, null);
-}
-
-$(document).ready(function(){
-
-  $(".cancel-build-btn").click(function (){
-    var url = $(this).data('request-url');
-    var buildIds = $(this).data('build-id');
-    var btn = $(this);
-
-    libtoaster.cancelABuild(url, buildIds, function(){
-      btn.parents(".alert").fadeOut();
-    }, null);
-  });
-
-  {%if mrb_type == 'project' %}
-  var projectBuilds = true;
-  {% else %}
-  var projectBuilds = false;
-  {% endif %}
-
-  var progressTimer;
-
-  if (projectBuilds === true){
-    progressTimer = window.setInterval(function() {
-      libtoaster.getProjectInfo(libtoaster.ctx.projectPageUrl,
-        function(prjInfo){
-          /* These two are needed because a build can be 100% and still
-           * in progress due to the fact that the % done is updated at the
-           * start of a task so it can be doing the last task at 100%
-           */
-          var inProgress = 0;
-          var allPercentDone = 0;
-
-          for (var i in prjInfo.builds){
-            var build = prjInfo.builds[i];
-
-            if (build.outcome === "In Progress" ||
-               $(".progress .bar").length > 0){
-              /* Update the build progress */
-              var percentDone;
-
-              if (build.outcome !== "In Progress"){
-                /* We have to ignore the value when it's Succeeded because it
-                *   goes back to 0
-                */
-                percentDone = 100;
-              } else {
-                percentDone = build.percentDone;
-                inProgress++;
-              }
-
-              $("#build-pc-done-" + build.id).text(percentDone);
-              $("#build-pc-done-title-" + build.id).attr("title", percentDone);
-              $("#build-pc-done-bar-" + build.id).css("width",
-                String(percentDone) + "%");
-
-              allPercentDone += percentDone;
-            }
-          }
-
-          if (allPercentDone === (100 * prjInfo.builds.length) && !inProgress)
-            window.location.reload();
-
-          /* Our progress bar is not still showing so shutdown the polling. */
-          if ($(".progress .bar").length === 0)
-            window.clearInterval(progressTimer);
-
-      });
-    }, 1500);
-  }
-});
-
-</script>
 
 {%endif%}
 
