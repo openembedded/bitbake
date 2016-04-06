@@ -197,7 +197,10 @@ class Project(models.Model):
     def get_number_of_builds(self):
         """Return the number of builds which have ended"""
 
-        return self.build_set.filter(~Q(outcome=Build.IN_PROGRESS)).count()
+        return self.build_set.exclude(
+            Q(outcome=Build.IN_PROGRESS) |
+            Q(outcome=Build.CANCELLED)
+        ).count()
 
     def get_last_build_id(self):
         try:
