@@ -22,7 +22,7 @@
 from toastergui.widgets import ToasterTable
 from orm.models import Recipe, ProjectLayer, Layer_Version, Machine, Project
 from orm.models import CustomImageRecipe, Package, Target, Build, LogMessage, Task
-from orm.models import CustomImagePackage, ProjectTarget
+from orm.models import CustomImagePackage
 from django.db.models import Q, Max, Sum, Count, When, Case, Value, IntegerField
 from django.conf.urls import url
 from django.core.urlresolvers import reverse, resolve
@@ -1400,47 +1400,6 @@ class BuildsTable(ToasterTable):
         failed_tasks_filter.add_action(without_failed_tasks_action)
         self.add_filter(failed_tasks_filter)
 
-    def post(self, request, *args, **kwargs):
-        """ Process HTTP POSTs which make build requests """
-
-        project = Project.objects.get(pk=kwargs['pid'])
-
-        if 'buildCancel' in request.POST:
-            for i in request.POST['buildCancel'].strip().split(" "):
-                try:
-                    br = BuildRequest.objects.select_for_update().get(project = project, pk = i, state__lte = BuildRequest.REQ_QUEUED)
-                    br.state = BuildRequest.REQ_DELETED
-                    br.save()
-                except BuildRequest.DoesNotExist:
-                    pass
-
-        if 'buildDelete' in request.POST:
-            for i in request.POST['buildDelete'].strip().split(" "):
-                try:
-                    BuildRequest.objects.select_for_update().get(project = project, pk = i, state__lte = BuildRequest.REQ_DELETED).delete()
-                except BuildRequest.DoesNotExist:
-                    pass
-
-        if 'targets' in request.POST:
-            ProjectTarget.objects.filter(project = project).delete()
-            s = str(request.POST['targets'])
-            for t in s.translate(None, ";%|\"").split(" "):
-                if ":" in t:
-                    target, task = t.split(":")
-                else:
-                    target = t
-                    task = ""
-                ProjectTarget.objects.create(project = project,
-                                             target = target,
-                                             task = task)
-            project.schedule_build()
-
-        # redirect back to builds page so any new builds in progress etc.
-        # are visible
-        response = HttpResponse()
-        response.status_code = 302
-        response['Location'] = request.build_absolute_uri()
-        return response
 
 class AllBuildsTable(BuildsTable):
     """ Builds page for all builds """

@@ -22,6 +22,7 @@ from django.views.generic import RedirectView, TemplateView
 from django.http import HttpResponseBadRequest
 from toastergui import tables
 from toastergui import typeaheads
+from toastergui import api
 
 urlpatterns = patterns('toastergui.views',
         # landing page
@@ -179,6 +180,10 @@ urlpatterns = patterns('toastergui.views',
             name='xhr_customrecipe_id'),
         url(r'^xhr_customrecipe/', 'xhr_customrecipe',
             name='xhr_customrecipe'),
+
+        url(r'^xhr_buildrequest/project/(?P<pid>\d+)$',
+           api.XhrBuildRequest.as_view(),
+            name='xhr_buildrequest'),
 
           # default redirection
         url(r'^$', RedirectView.as_view(url='landing', permanent=True)),
