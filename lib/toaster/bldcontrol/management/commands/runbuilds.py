@@ -1,5 +1,7 @@
 from django.core.management.base import NoArgsCommand, CommandError
 from django.db import transaction
+from django.db.models import Q
+
 from orm.models import Build, ToasterSetting, LogMessage, Target
 from bldcontrol.bbcontroller import getBuildEnvironmentController, ShellCmdException, BuildSetupException
 from bldcontrol.models import BuildRequest, BuildEnvironment, BRError, BRVariable
@@ -86,13 +88,20 @@ class Command(NoArgsCommand):
     def cleanup(self):
         from django.utils import timezone
         from datetime import timedelta
-        # environments locked for more than 30 seconds - they should be unlocked
-        BuildEnvironment.objects.filter(buildrequest__state__in=[BuildRequest.REQ_FAILED, BuildRequest.REQ_COMPLETED]).filter(lock=BuildEnvironment.LOCK_LOCK).filter(updated__lt = timezone.now() - timedelta(seconds = 30)).update(lock = BuildEnvironment.LOCK_FREE)
-
-
         # update all Builds that failed to start
 
         for br in BuildRequest.objects.filter(state = BuildRequest.REQ_FAILED, build__outcome = Build.IN_PROGRESS):
+        # environments locked for more than 30 seconds
+        # they should be unlocked
+        BuildEnvironment.objects.filter(
+            Q(buildrequest__state__in=[BuildRequest.REQ_FAILED,
+                                       BuildRequest.REQ_COMPLETED,
+                                       BuildRequest.REQ_CANCELLING]) &
+            Q(lock=BuildEnvironment.LOCK_LOCK) &
+            Q(updated__lt=timezone.now() - timedelta(seconds = 30))
+        ).update(lock=BuildEnvironment.LOCK_FREE)
+
+
             # transpose the launch errors in ToasterExceptions
             br.build.outcome = Build.FAILED
             for brerror in br.brerror_set.all():
@@ -124,6 +133,15 @@ class Command(NoArgsCommand):
 
             br.build.save()
         pass
+
+        # Make sure the LOCK is removed for builds which have been fully
+        # cancelled
+        for br in BuildRequest.objects.filter(
+            Q(build__outcome=Build.CANCELLED) &
+            Q(state=BuildRequest.REQ_CANCELLING) &
+            ~Q(environment=None)):
+            br.environment.lock = BuildEnvironment.LOCK_FREE
+            br.environment.save()
 
 
     def handle_noargs(self, **options):
