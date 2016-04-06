@@ -320,11 +320,13 @@ class LocalhostBEController(BuildEnvironmentController):
 
         # run build with local bitbake. stop the server after the build.
         log = os.path.join(builddir, 'toaster_ui.log')
+        local_bitbake = os.path.join(os.path.dirname(os.getenv('BBBASEDIR')),
+                                     'bitbake')
         self._shellcmd(['bash -c \"(TOASTER_BRBE="%s" BBSERVER="0.0.0.0:-1" '
-                        '../bitbake/bin/bitbake %s -u toasterui --token="" >>%s 2>&1;'
+                        '%s %s -u toasterui --token="" >>%s 2>&1;'
                         'BITBAKE_UI="" BBSERVER=0.0.0.0:-1 %s -m)&\"' \
-                        % (brbe, bbtargets, log, bitbake)], builddir,
-                        nowait=True)
+                        % (brbe, local_bitbake, bbtargets, log, bitbake)],
+                        builddir, nowait=True)
 
         logger.debug('localhostbecontroller: Build launched, exiting. '
                      'Follow build logs at %s' % log)
