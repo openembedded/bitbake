@@ -19,7 +19,7 @@
 
 # Temporary home for the UI's misc API
 
-from orm.models import Project, ProjectTarget
+from orm.models import Project, ProjectTarget, Build
 from bldcontrol.models import BuildRequest
 from bldcontrol import bbcontroller
 from django.http import HttpResponse, JsonResponse
@@ -32,18 +32,54 @@ class XhrBuildRequest(View):
         return HttpResponse()
 
     def post(self, request, *args, **kwargs):
-        """ Process HTTP POSTs which make build requests """
+        """
+          Build control
+
+          Entry point: /xhr_buildrequest/<project_id>
+          Method: POST
+
+          Args:
+              id: id of build to change
+              buildCancel = build_request_id ...
+              buildDelete = id ...
+              targets = recipe_name ...
+
+          Returns:
+              {"error": "ok"}
+            or
+              {"error": <error message>}
+        """
 
         project = Project.objects.get(pk=kwargs['pid'])
 
         if 'buildCancel' in request.POST:
             for i in request.POST['buildCancel'].strip().split(" "):
                 try:
-                    br = BuildRequest.objects.select_for_update().get(project = project, pk = i, state__lte = BuildRequest.REQ_QUEUED)
-                    br.state = BuildRequest.REQ_DELETED
+                    br = BuildRequest.objects.get(project=project, pk=i)
+
+                    try:
+                        bbctrl = bbcontroller.BitbakeController(br.environment)
+                        bbctrl.forceShutDown()
+                    except:
+                        # We catch a bunch of exceptions here because
+                        # this is where the server has not had time to start up
+                        # and the build request or build is in transit between
+                        # processes.
+                        # We can safely just set the build as cancelled
+                        # already as it never got started
+                        build = br.build
+                        build.outcome = Build.CANCELLED
+                        build.save()
+
+                    # We now hand over to the buildinfohelper to update the
+                    # build state once we've finished cancelling
+                    br.state = BuildRequest.REQ_CANCELLING
                     br.save()
+
                 except BuildRequest.DoesNotExist:
-                    pass
+                    return JsonResponse({'error':'No such build id %s' % i})
+
+            return JsonResponse({'error': 'ok'})
 
         if 'buildDelete' in request.POST:
             for i in request.POST['buildDelete'].strip().split(" "):
@@ -51,6 +87,7 @@ class XhrBuildRequest(View):
                     BuildRequest.objects.select_for_update().get(project = project, pk = i, state__lte = BuildRequest.REQ_DELETED).delete()
                 except BuildRequest.DoesNotExist:
                     pass
+            return JsonResponse({'error': 'ok' })
 
         if 'targets' in request.POST:
             ProjectTarget.objects.filter(project = project).delete()
@@ -66,9 +103,8 @@ class XhrBuildRequest(View):
                                              task = task)
             project.schedule_build()
 
-        # redirect back to builds page so any new builds in progress etc.
-        # are visible
+            return JsonResponse({'error': 'ok' })
+
         response = HttpResponse()
-        response.status_code = 302
-        response['Location'] = request.build_absolute_uri()
+        response.status_code = 500
         return response
