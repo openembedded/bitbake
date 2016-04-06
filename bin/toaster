@@ -101,6 +101,7 @@ stop_system()
     unset TOASTER_CONF
     unset TOASTER_DIR
     unset BITBAKE_UI
+    unset BBBASEDIR
     trap - SIGHUP
     #trap - SIGCHLD
     INSTOPSYSTEM=0
@@ -131,7 +132,7 @@ else
     TOASTER=$0
 fi
 
-BBBASEDIR=`dirname $TOASTER`/..
+export BBBASEDIR=`dirname $TOASTER`/..
 MANAGE=$BBBASEDIR/lib/toaster/manage.py
 OEROOT=`dirname $TOASTER`/../..
 
