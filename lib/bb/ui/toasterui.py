@@ -377,11 +377,14 @@ def main(server, eventHandler, params):
                 buildinfohelper.close(errorcode)
 
                 # we start a new build info
-                logger.debug("ToasterUI prepared for new build")
-                errors = 0
-                warnings = 0
-                taskfailures = []
-                buildinfohelper = BuildInfoHelper(server, build_history_enabled)
+                if params.observe_only:
+                    logger.debug("ToasterUI prepared for new build")
+                    errors = 0
+                    warnings = 0
+                    taskfailures = []
+                    buildinfohelper = BuildInfoHelper(server, build_history_enabled)
+                else:
+                    main.shutdown = 1
 
                 logger.info("ToasterUI build done, brbe: %s", brbe)
                 continue
