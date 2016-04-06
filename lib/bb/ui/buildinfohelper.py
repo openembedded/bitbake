@@ -1420,6 +1420,7 @@ class BuildInfoHelper(object):
             logger.info("Build cancelled")
             br.build.outcome = Build.CANCELLED
             br.build.save()
+            self.internal_state['build'] = br.build
             errorcode = 0
 
         if errorcode == 0:
