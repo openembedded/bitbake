@@ -241,14 +241,16 @@ class ORMWrapper(object):
             recipe__name = recipe_name
         )
 
-        task_to_update.started = self._timestamp_to_datetime(task_stats['started'])
-        task_to_update.ended = self._timestamp_to_datetime(task_stats['ended'])
-        task_to_update.elapsed_time = (task_stats['ended'] - task_stats['started'])
-        task_to_update.cpu_time_user = task_stats['cpu_time_user']
-        task_to_update.cpu_time_system = task_stats['cpu_time_system']
-        task_to_update.disk_io_read = task_stats['disk_io_read']
-        task_to_update.disk_io_write = task_stats['disk_io_write']
-        task_to_update.disk_io = task_stats['disk_io_read'] + task_stats['disk_io_write']
+        if 'started' in task_stats and 'ended' in task_stats:
+            task_to_update.started = self._timestamp_to_datetime(task_stats['started'])
+            task_to_update.ended = self._timestamp_to_datetime(task_stats['ended'])
+            task_to_update.elapsed_time = (task_stats['ended'] - task_stats['started'])
+        task_to_update.cpu_time_user = task_stats.get('cpu_time_user')
+        task_to_update.cpu_time_system = task_stats.get('cpu_time_system')
+        if 'disk_io_read' in task_stats and 'disk_io_write' in task_stats:
+            task_to_update.disk_io_read = task_stats['disk_io_read']
+            task_to_update.disk_io_write = task_stats['disk_io_write']
+            task_to_update.disk_io = task_stats['disk_io_read'] + task_stats['disk_io_write']
 
         task_to_update.save()
 
