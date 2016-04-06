@@ -1231,8 +1231,8 @@ class BuildInfoHelper(object):
         for target in self.internal_state['targets']:
             if target.is_image:
                 pkgdata = BuildInfoHelper._get_data_from_event(event)['pkgdata']
-                imgdata = BuildInfoHelper._get_data_from_event(event)['imgdata'][target.target]
-                filedata = BuildInfoHelper._get_data_from_event(event)['filedata'][target.target]
+                imgdata = BuildInfoHelper._get_data_from_event(event)['imgdata'].get(target.target, {})
+                filedata = BuildInfoHelper._get_data_from_event(event)['filedata'].get(target.target, {})
 
                 try:
                     self.orm_wrapper.save_target_package_information(self.internal_state['build'], target, imgdata, pkgdata, self.internal_state['recipes'], built_package=True)
