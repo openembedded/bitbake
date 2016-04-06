@@ -24,7 +24,7 @@ server and queue them for the UI to process. This process must be used to avoid
 client/server deadlocks.
 """
 
-import socket, threading, pickle
+import socket, threading, pickle, collections
 from SimpleXMLRPCServer import SimpleXMLRPCServer, SimpleXMLRPCRequestHandler
 
 class BBUIEventQueue:
@@ -51,7 +51,13 @@ class BBUIEventQueue:
         # giving up
 
         for count_tries in range(5):
-            self.EventHandle, error = self.BBServer.registerEventHandler(self.host, self.port)
+            ret = self.BBServer.registerEventHandler(self.host, self.port)
+
+            if isinstance(ret, collections.Iterable):
+                self.EventHandle, error = ret
+            else:
+                self.EventHandle = ret
+                error = ""
 
             if self.EventHandle != None:
                 break
