@@ -252,9 +252,9 @@ case $CMD in
         fi
 
         # Create configuration file
-        conf=${BUILDDIR}/conf/toaster.conf
-        echo "# Created by toaster start script" > $conf
-        echo "INHERIT+=\"toaster buildhistory\"" >> $conf
+        conf=${BUILDDIR}/conf/local.conf
+        line='INHERIT+="toaster buildhistory"'
+        grep -q "$line" $conf || echo $line >> $conf
 
         if [ $WEBSERVER -gt 0 ] && ! webserverStartAll; then
             echo "Failed ${CMD}."
