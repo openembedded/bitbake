@@ -63,6 +63,9 @@ class BitbakeController(object):
             task = "build"
         return self._runCommand(["buildTargets", targets, task])
 
+    def forceShutDown(self):
+        return self._runCommand(["stateForceShutdown"])
+
 
 
 def getBuildEnvironmentController(**kwargs):
