@@ -321,7 +321,7 @@ class LocalhostBEController(BuildEnvironmentController):
         # run build with local bitbake. stop the server after the build.
         log = os.path.join(builddir, 'toaster_ui.log')
         self._shellcmd(['bash -c \"(TOASTER_BRBE="%s" BBSERVER="0.0.0.0:-1" '
-                        '../bitbake/bin/bitbake %s -u toasterui >>%s 2>&1;'
+                        '../bitbake/bin/bitbake %s -u toasterui --token="" >>%s 2>&1;'
                         'BITBAKE_UI="" BBSERVER=0.0.0.0:-1 %s -m)&\"' \
                         % (brbe, bbtargets, log, bitbake)], builddir,
                         nowait=True)
