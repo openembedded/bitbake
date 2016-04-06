@@ -163,12 +163,6 @@ class BuildEnvironmentController(object):
         """
         raise NotImplementedError("Must return the REST URL of the artifact")
 
-    def release(self):
-        """ This stops the server and releases any resources. After this point, all resources
-            are un-available for further reference
-        """
-        raise NotImplementedError("Must override BE release")
-
     def triggerBuild(self, bitbake, layers, variables, targets):
         raise NotImplementedError("Must override BE release")
 

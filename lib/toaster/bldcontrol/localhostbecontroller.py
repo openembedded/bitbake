@@ -255,12 +255,6 @@ class LocalhostBEController(BuildEnvironmentController):
     def readServerLogFile(self):
         return open(os.path.join(self.be.builddir, "toaster_server.log"), "r").read()
 
-    def release(self):
-        assert self.be.sourcedir and os.path.exists(self.be.builddir)
-        import shutil
-        shutil.rmtree(os.path.join(self.be.sourcedir, "build"))
-        assert not os.path.exists(self.be.builddir)
-
 
     def triggerBuild(self, bitbake, layers, variables, targets):
         # set up the build environment with the needed layers
