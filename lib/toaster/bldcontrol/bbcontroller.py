@@ -37,11 +37,12 @@ class BitbakeController(object):
         It is outside the scope of this class on how the server is started and aquired
     """
 
-    def __init__(self, connection):
-        self.connection = connection
+    def __init__(self, be):
+        self.connection = bb.server.xmlrpc._create_server(be.bbaddress,
+                                                          int(be.bbport))[0]
 
     def _runCommand(self, command):
-        result, error = self.connection.connection.runCommand(command)
+        result, error = self.connection.runCommand(command)
         if error:
             raise Exception(error)
         return result
@@ -121,25 +122,6 @@ class BuildEnvironmentController(object):
             a word of attention: by convention, the first layer for any build will be poky!
         """
         raise NotImplementedError("FIXME: Must override setLayers")
-
-
-    def getBBController(self):
-        """ returns a BitbakeController to an already started server; this is the point where the server
-            starts if needed; or reconnects to the server if we can
-        """
-        if not self.connection:
-            self.be.lock = BuildEnvironment.LOCK_RUNNING
-            self.be.save()
-
-        server = bb.server.xmlrpc.BitBakeXMLRPCClient()
-        server.initServer()
-        server.saveConnectionDetails("%s:%s" % (self.be.bbaddress, self.be.bbport))
-        self.connection = server.establishConnection([])
-
-        self.be.bbtoken = self.connection.transport.connection_token
-        self.be.save()
-
-        return BitbakeController(self.connection)
 
     def getArtifact(self, path):
         """ This call returns an artifact identified by the 'path'. How 'path' is interpreted as
