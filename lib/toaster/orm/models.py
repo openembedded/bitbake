@@ -822,6 +822,13 @@ class Package_DependencyManager(models.Manager):
         """
         return self.all().aggregate(Sum('depends_on__size'))
 
+    def get_total_revdeps_size(self):
+        """ Returns the total file size of all the packages that depend on
+        this package.
+        """
+        return self.all().aggregate(Sum('package_id__size'))
+
+
     def all_depends(self):
         """ Returns just the depends packages and not any other dep_type """
         return self.filter(Q(dep_type=Package_Dependency.TYPE_RDEPENDS) |

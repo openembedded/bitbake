@@ -725,6 +725,12 @@ class PackagesTable(ToasterTable):
                         static_data_template='\
                         {% include "snippets/pkg_dependencies_popover.html" %}')
 
+        self.add_column(title="Reverse dependencies",
+                        static_data_name="reverse_dependencies",
+                        static_data_template='\
+                        {% include "snippets/pkg_revdependencies_popover.html" %}',
+                        hidden=True)
+
         self.add_column(title="Recipe",
                         field_name="recipe__name",
                         orderable=True,
