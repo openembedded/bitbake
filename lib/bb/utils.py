@@ -1158,7 +1158,7 @@ def edit_metadata(meta_lines, variables, varfunc, match_overrides=False):
                 if in_var.endswith('()'):
                     if full_value.count('{') - full_value.count('}') >= 0:
                         continue
-                full_value = full_value[:-1]
+                    full_value = full_value[:-1]
                 if handle_var_end():
                     updated = True
                     checkspc = True

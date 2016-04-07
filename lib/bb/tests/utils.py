@@ -176,7 +176,7 @@ do_functionname() {
         # Test file doesn't get modified with some the same values
         self._testeditfile({'THIS': ('that', None, 0, True),
                         'OTHER': ('anothervalue', None, 0, True),
-                        'MULTILINE3': ('               c1               c2               c3', None, 4, False)}, self._origfile)
+                        'MULTILINE3': ('               c1               c2               c3 ', None, 4, False)}, self._origfile)
 
     def test_edit_metadata_file_1(self):
 
