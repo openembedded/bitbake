@@ -23,6 +23,7 @@ import unittest
 import bb
 import os
 import tempfile
+import re
 
 class VerCmpString(unittest.TestCase):
 
@@ -377,6 +378,27 @@ do_functionname() {
         self.assertTrue(updated, 'List should be updated but isn\'t')
         self.assertEqual(newlines, newfile5.splitlines(True))
 
+    # Make sure the orig value matches what we expect it to be
+    def test_edit_metadata_origvalue(self):
+        origfile = """
+MULTILINE = "  stuff \\
+    morestuff"
+"""
+        expected_value = "stuff morestuff"
+        global value_in_callback
+        value_in_callback = ""
+
+        def handle_var(varname, origvalue, op, newlines):
+            global value_in_callback
+            value_in_callback = origvalue
+            return (origvalue, op, -1, False)
+
+        bb.utils.edit_metadata(origfile.splitlines(True),
+                               ['MULTILINE'],
+                               handle_var)
+
+        testvalue = re.sub('\s+', ' ', value_in_callback.strip())
+        self.assertEqual(expected_value, testvalue)
 
 class EditBbLayersConf(unittest.TestCase):
 
