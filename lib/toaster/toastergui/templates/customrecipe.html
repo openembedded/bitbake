@@ -103,25 +103,26 @@
         Download recipe file
       </a>
     </div>
-    <div id="no-package-results" class="air" style="display:none;">
+    <div id="no-results-special-{{table_name}}" class="air" style="display:none;">
       <div class="alert">
         <h3>No packages found</h3>
-        <p>You might consider <a href="all-software-recipes.html">searching the list of recipes</a> instead. If you find a recipe that matches the name of the package you want:</p>
+        <p>You might consider <a href={% url 'projectsoftwarerecipes' project.id %}>searching the list of recipes</a> instead. If you find a recipe that matches the name of the package you want:</p>
         <ol>
           <li>Add the layer providing the recipe to your project</li>
           <li>Build the recipe</li>
           <li>Once the build completes, come back to this page and search for the package</li>
         </ol>
         <form class="input-append no-results">
-          <input type="text" class="input-xlarge" value="search query">
-            <a href="#" class="add-on btn">
-              <i class="icon-remove"></i>
-            </a>
-            <button class="btn">Search</button>
-            <button class="btn btn-link" id="show-all">Show all packages</button>
-          </form>
-        </div>
+          <input type="text" class="input-xlarge no-results-search-input" id="no-results-search-input-{{table_name}}" name="search" placeholder="Search {{title|lower}}" />
+          <a href="#" class="add-on btn" id="no-results-remove-search-btn" tabindex="-1">
+            <i class="icon-remove"></i>
+          </a>
+          <button class="btn search-submit-{{table_name}}">Search</button>
+          <button class="btn btn-link" id="no-results-show-all-packages">Show all packages</button>
+        </form>
       </div>
+      </div>
+      <div id="results-found-{{table_name}}">
       <div id="packages-table">
         {% if recipe.get_all_packages.count == 0 and last_build == None %}
         <h2> Add | Remove packages </h2>
@@ -135,6 +136,7 @@
         <h2>{{title}} (<span class="table-count-{{table_name}}">0</span>) </h2>
         {% include "toastertable.html" %}
         {% endif %}
+      </div>
       </div>
     </div>
     <div class="span4 well">
