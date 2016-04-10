@@ -261,6 +261,13 @@ class RunQueueData:
         taskname = self.runq_task[task] + task_name_suffix
         return "%s, %s" % (fn, taskname)
 
+    def get_short_user_idstring(self, task, task_name_suffix = ""):
+        fn = self.taskData.fn_index[self.runq_fnid[task]]
+        pn = self.dataCache.pkg_fn[fn]
+        taskname = self.runq_task[task] + task_name_suffix
+        return "%s:%s" % (pn, taskname)
+
+
     def get_task_id(self, fnid, taskname):
         for listid in xrange(len(self.runq_fnid)):
             if self.runq_fnid[listid] == fnid and self.runq_task[listid] == taskname:
@@ -753,11 +760,72 @@ class RunQueueData:
                         seen_pn.append(pn)
                     else:
                         bb.fatal("Multiple versions of %s are due to be built (%s). Only one version of a given PN should be built in any given build. You likely need to set PREFERRED_VERSION_%s to select the correct version or don't depend on multiple versions." % (pn, " ".join(prov_list[prov]), pn))
-                msg = "Multiple .bb files are due to be built which each provide %s (%s)." % (prov, " ".join(prov_list[prov]))
+                msg = "Multiple .bb files are due to be built which each provide %s:\n  %s" % (prov, "\n  ".join(prov_list[prov]))
+                #
+                # Construct a list of things which uniquely depend on each provider
+                # since this may help the user figure out which dependency is triggering this warning
+                #
+                msg += "\nA list of tasks depending on these providers is shown and may help explain where the dependency comes from."
+                deplist = {}
+                commondeps = None
+                for provfn in prov_list[prov]:
+                    deps = set()
+                    for task, fnid in enumerate(self.runq_fnid):
+                        fn = taskData.fn_index[fnid]
+                        if fn != provfn:
+                            continue
+                        for dep in self.runq_revdeps[task]:
+                            fn = taskData.fn_index[self.runq_fnid[dep]]
+                            if fn == provfn:
+                                continue
+                            deps.add(self.get_short_user_idstring(dep))
+                    if not commondeps:
+                        commondeps = set(deps)
+                    else:
+                        commondeps &= deps
+                    deplist[provfn] = deps
+                for provfn in deplist:
+                    msg += "\n%s has unique dependees:\n  %s" % (provfn, "\n  ".join(deplist[provfn] - commondeps))
+                #
+                # Construct a list of provides and runtime providers for each recipe
+                # (rprovides has to cover RPROVIDES, PACKAGES, PACKAGES_DYNAMIC)
+                #
+                msg += "\nIt could be that one recipe provides something the other doesn't and should. The following provider and runtime provider differences may be helpful."
+                provide_results = {}
+                rprovide_results = {}
+                commonprovs = None
+                commonrprovs = None
+                for provfn in prov_list[prov]:
+                    provides = set(self.dataCache.fn_provides[provfn])
+                    rprovides = set()
+                    for rprovide in self.dataCache.rproviders:
+                        if provfn in self.dataCache.rproviders[rprovide]:
+                            rprovides.add(rprovide)
+                    for package in self.dataCache.packages:
+                        if provfn in self.dataCache.packages[package]:
+                            rprovides.add(package)
+                    for package in self.dataCache.packages_dynamic:
+                        if provfn in self.dataCache.packages_dynamic[package]:
+                            rprovides.add(package)
+                    if not commonprovs:
+                        commonprovs = set(provides)
+                    else:
+                        commonprovs &= provides
+                    provide_results[provfn] = provides
+                    if not commonrprovs:
+                        commonrprovs = set(rprovides)
+                    else:
+                        commonrprovs &= rprovides
+                    rprovide_results[provfn] = rprovides
+                #msg += "\nCommon provides:\n  %s" % ("\n  ".join(commonprovs))
+                #msg += "\nCommon rprovides:\n  %s" % ("\n  ".join(commonrprovs))
+                for provfn in prov_list[prov]:
+                    msg += "\n%s has unique provides:\n  %s" % (provfn, "\n  ".join(provide_results[provfn] - commonprovs))
+                    msg += "\n%s has unique rprovides:\n  %s" % (provfn, "\n  ".join(rprovide_results[provfn] - commonrprovs))
+
                 if self.warn_multi_bb:
                     logger.warn(msg)
                 else:
-                    msg += "\n This usually means one provides something the other doesn't and should."
                     logger.error(msg)
 
         # Create a whitelist usable by the stamp checks
