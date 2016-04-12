@@ -11,13 +11,16 @@
 
 <!-- Begin container -->
 
-<div class="row-fluid span11">
+<div class="row">
+  <div class="col-md-12">
     <div class="page-header">
         <h1>{{recipe.name}}_{{recipe.version}}</h1>
     </div>
+  </div>
 </div>
 
-<div class="row-fluid span7 tabbable">
+<div class="row">
+  <div class="col-md-8 tabbable">
     <ul class="nav nav-pills">
         <li>
             <a href="{% url "recipe" build.pk recipe.id "1" %}">
@@ -86,9 +89,10 @@
             {% endif %}
         </div> {# tab-pane #}
     </div> {# tab-content #}
-</div> {# span7 #}
+</div> {# col-md-8 #}
 
-<div class="row span4 well">
+<div class="col-md-4">
+  <div class="well">
     <h2>About {{recipe.name}}</h2>
     <dl class="item-info">
         {% if recipe.summary %}
@@ -119,5 +123,8 @@
             <dd>{{recipe.license}}</dd>
         {% endif %}
     </dl>
+  </div>
 </div>
+
+</div> <!-- end row -->
 {% endblock pagedetailinfomain %}

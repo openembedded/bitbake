@@ -12,13 +12,16 @@
 
 <!-- Begin container -->
 
-<div class="row span11">
+<div class="row">
+  <div class="col-md-12">
     <div class="page-header">
         <h1>{{object.name}}_{{object.version}}</h1>
     </div>
+  </div>
 </div>
 
-<div class="row span7 tabbable">
+<div class="row">
+  <div class="col-md-8 tabbable">
     <ul class="nav nav-pills">
         <li class="{{tab_states.1}}">
             <a href="#information" data-toggle="tab">
@@ -231,7 +234,8 @@
     </div>
 </div>
 
-<div class="row span4 well">
+<div class="col-md-4">
+  <div class="well">
     <h2>About {{object.name}}</h2>
     <dl class="item-info">
         {% if object.summary %}
@@ -262,6 +266,9 @@
             <dd>{{object.license}}</dd>
         {% endif %}
     </dl>
+  </div>
 </div>
+
+</div> <!-- end row -->
 
 {% endblock %}

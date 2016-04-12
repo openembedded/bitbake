@@ -79,7 +79,8 @@ class ToasterTable(TemplateView):
     def get_context_data(self, **kwargs):
         context = super(ToasterTable, self).get_context_data(**kwargs)
         context['title'] = self.title
-        context['table_name'] = type(self).__name__.lower()
+        context['table_name'] =  type(self).__name__.lower()
+        context['empty_state'] = self.empty_state
 
         return context
 

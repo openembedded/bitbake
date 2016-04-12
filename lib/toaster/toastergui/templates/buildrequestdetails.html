@@ -8,11 +8,11 @@
 {% block projectinfomain %}
       <!-- begin content -->
 
-          <div class="row-fluid">
+          <div class="row">
 
             <!-- end left sidebar container -->
             <!-- Begin right container -->
-            <div class="span10">
+            <div class="col-md-10">
               <div class="page-header">
                 <h1>
  <span data-toggle="tooltip" {%if buildrequest.brtarget_set.all.count > 1%}title="Targets: {%for target in buildrequest.brtarget_set.all%}{{target.target}} {%endfor%}"{%endif%}>{{buildrequest.brtarget_set.all.0.target}} {%if buildrequest.brtarget_set.all.count > 1%}(+ {{buildrequest.brtarget_set.all.count|add:"-1"}}){%endif%} {{buildrequest.get_machine}} </span>
@@ -45,7 +45,7 @@
                   </div>
                   <div class="accordion-body collapse in" id="collapse-errors">
                     <div class="accordion-inner">
-                      <div class="span10">
+                      <div class="col-md-10">
                {% for error in buildrequest.brerror_set.all %}
                         <div class="alert alert-error">
                           ERROR: <div class="air well"><pre>{{error.errmsg}}</pre></div>
@@ -58,7 +58,7 @@
                 </div>
               </div>
             </div>
-          </div> <!-- end of row-fluid -->
+          </div> <!-- end of row -->
 
 
 {%endblock%}

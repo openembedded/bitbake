@@ -13,17 +13,15 @@
 
 {% block buildinfomain %}
 <!-- page title -->
-<div class="row-fluid span10">
+<div class="col-md-10">
  <div class="page-header">
      <h1>{{build.target_set.all|dictsort:"target"|join:", "}} {{build.machine}}</h1>
  </div>
-</div>
 
 <!-- build result bar -->
-<div class="row-fluid span10 pull-right">
   <div class="alert {%if build.outcome == build.SUCCEEDED%}alert-success{%elif build.outcome == build.FAILED%}alert-error{%else%}alert-info{%endif%}">
-    <div class="row-fluid lead">
-            <span class="pull-left"><strong>
+    <div class="lead">
+            <span><strong>
                 {%if build.outcome == build.SUCCEEDED%}Completed{%elif build.outcome == build.FAILED%}Failed{%else%}{%endif%}
               </strong> on
             {{build.completed_on|date:"d/m/y H:i"}}
@@ -50,22 +48,21 @@
 {%endif%}
     </div>
   </div>
-</div>
 
 {% if build.errors.count %}
-<div class="accordion span10 pull-right" id="errors">
-  <div class="accordion-group">
-    <div class="accordion-heading">
-            <a class="accordion-toggle error toggle-errors">
+<div class="panel-group" id="errors">
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      <a class="panel-title error toggle-errors" href="#">
          <h2 id="error-toggle">
            <i class="icon-minus-sign"></i>
            {{build.errors.count}} error{{build.errors.count|pluralize}}
          </h2>
       </a>
     </div>
-    <div class="accordion-body collapse in" id="collapse-errors">
-      <div class="accordion-inner">
-        <div class="span10">
+    <div class="panel-collapse collapse in" id="collapse-errors">
+      <div class="panel-body">
+        <div class="col-md-10">
           {% for error in build.errors %}
             <div class="alert alert-error" data-error="{{ error.id }}">
               <pre>{{error.message}}</pre>
@@ -81,7 +78,6 @@
 {%if build.outcome == build.SUCCEEDED%}
 <!-- built images -->
 {% if hasImages %}
-<div class="row-fluid span10 pull-right">
     <h2>Images</h2>
     {% for target in targets %}
         {% if target.target.is_image %}
@@ -95,20 +91,22 @@
             <dd>{{target.pkgsz|filtered_filesizeformat}}</dd>
                         {% if target.targetHasNoImages %}
                 </dl>
-                <div class="row-fluid">
-                    <div class="alert alert-info span7">
-                    <p>
-                                    <b>This build did not create any image files</b>
-                                  </p>
-                                  <p>
-                                    This is probably because valid image and license manifest
-                                    files from a previous build already exist in your
-                                    <code>.../poky/build/tmp/deploy</code>
-                                    directory. You can
-                                    also <a href="{% url 'targetpkg' build.pk target.target.pk %}">view the
-                                      license manifest information</a> in Toaster.
-                                  </p>
+                <div class="row">
+                  <div class="col-md-7">
+                    <div class="alert alert-info">
+                      <p>
+                      <strong>This build did not create any image files</strong>
+                      </p>
+                      <p>
+                      This is probably because valid image and license manifest
+                      files from a previous build already exist in your
+                      <code>.../poky/build/tmp/deploy</code>
+                      directory. You can
+                      also <a href="{% url 'targetpkg' build.pk target.target.pk %}">view the
+                        license manifest information</a> in Toaster.
+                      </p>
                     </div>
+                  </div>
                 </div>
         {% else %}
             <dt>
@@ -140,7 +138,6 @@
     </div>
         {% endif %}
     {% endfor %}
-</div>
 {% endif %}
 
 {%else%}
@@ -149,7 +146,6 @@
 
 <!-- other artifacts -->
 {% if build.buildartifact_set.all.count > 0 %}
-<div class="row-fluid span10 pull-right">
 <h2>Other artifacts</h2>
 
     <div class="well dashboard-section">
@@ -170,20 +166,22 @@
 	</dl>
     </div>
 
-</div>
 {% endif %}
 <!-- build summary -->
-<div class="row-fluid span10 pull-right">
 <h2>Build summary</h2>
-    <div class="well span4 dashboard-section" style="margin-left:0px;">
+  <div class="row">
+    <div class="col-md-4 dashboard-section">
+      <div class="well well-transparent">
         <h4><a href="{%url 'configuration' build.pk%}">Configuration</a></h4>
             <dl>
         <dt>Machine</dt><dd>{{build.machine}}</dd>
         <dt>Distro</dt><dd>{{build.distro}}</dd>
         <dt>Layers</dt>{% for i in build.layer_version_build.all|dictsort:"layer.name" %}<dd>{{i.layer.name}}</dd>{%endfor%}
             </dl>
+      </div>
     </div>
-    <div class="well span4 dashboard-section">
+    <div class="col-md-4 dashboard-section">
+      <div class="well well-transparent">
         <h4><a href="{%url 'tasks' build.pk%}">Tasks</a></h4>
             <dl>
             {% query build.task_build outcome=4 order__gt=0 as exectask%}
@@ -230,30 +228,33 @@
 %
         </dd>
             </dl>
+      </div>
     </div>
-    <div class="well span4 dashboard-section">
+    <div class="col-md-4 dashboard-section">
+      <div class="well well-transparent">
         <h4><a href="{% url 'recipes' build.pk %}">Recipes</a> & <a href="{% url 'packages' build.pk %}">Packages</a></h4>
             <dl>
         <dt>Recipes built</dt><dd><a href="{% url 'recipes' build.pk %}">{{recipecount}}</a></dd>
         <dt>Packages built</dt><dd><a href="{% url 'packages' build.pk %}">{{packagecount}}</a></dd>
             </dl>
     </div>
+  </div>
 </div>
 
 {% if build.warnings.count %}
-<div class="accordion span10 pull-right" id="warnings">
-  <div class="accordion-group">
-    <div class="accordion-heading">
-      <a class="accordion-toggle warning toggle-warnings">
+<div class="panel-group" id="warnings">
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      <a class="panel-title warning toggle-warnings" href="#">
         <h2 id="warning-toggle">
           <i class="icon-warning-sign"></i>
           {{build.warnings.count}} warning{{build.warnings.count|pluralize}}
         </h2>
       </a>
     </div>
-    <div class="accordion-body collapse" id="collapse-warnings">
-      <div class="accordion-inner">
-        <div class="span10">
+    <div class="panel-collapse collapse" id="collapse-warnings">
+      <div class="panel-body">
+        <div class="col-md-10">
           {% for warning in logmessages %}{% if warning.level == 1 %}
             <div class="alert alert-warning">
               <pre>{{warning.message}}</pre>
@@ -265,6 +266,8 @@
   </div>
 </div>
 {% endif %}
+
+</div> <!-- end 10 column row -->
 
 <script type="text/javascript">
     $(document).ready(function() {

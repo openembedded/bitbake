@@ -12,7 +12,7 @@
 {% endblock %}
 
 {% block buildinfomain %}
-<div class="span10">
+<div class="col-md-10">
 <div class="page-header">
 <h1>
   {% if request.GET.search and objects.paginator.count > 0  %}
@@ -26,15 +26,13 @@
 </div>
 
 {% if objects.paginator.count == 0 %}
-  <div class="row-fluid">
-      <div class="alert">
-        <form class="no-results input-append" id="searchform">
-            <input id="search" name="search" class="input-xxlarge" type="text" value="{%if request.GET.search%}{{request.GET.search}}{%endif%}"/>{% if request.GET.search %}<a href="javascript:$('#search').val('');searchform.submit()" class="add-on btn" tabindex="-1"><i class="icon-remove"></i></a>{% endif %}
-            <button class="btn" type="submit" value="Search">Search</button>
-            <button class="btn btn-link" onclick="javascript:$('#search').val('');searchform.submit()">Show all recipes</button>
-        </form>
-      </div>
-  </div>
+<div class="alert">
+  <form class="no-results input-append" id="searchform">
+    <input id="search" name="search" class="input-xxlarge" type="text" value="{%if request.GET.search%}{{request.GET.search}}{%endif%}"/>{% if request.GET.search %}<a href="javascript:$('#search').val('');searchform.submit()" class="input-append-addon btn" tabindex="-1"><i class="glyphicon glyphicon-remove"></i></a>{% endif %}
+    <button class="btn" type="submit" value="Search">Search</button>
+    <button class="btn btn-link" onclick="javascript:$('#search').val('');searchform.submit()">Show all recipes</button>
+  </form>
+</div>
 
 {% else %}
 {% include "basetable_top.html" %}
@@ -55,7 +53,7 @@
             {% if count %}
             <a class="btn"
                 title="<a href='{% url "recipe" build.pk recipe.pk %}#dependencies'>{{recipe.name}}</a> dependencies"
-                data-content="<ul class='unstyled'>
+                data-content="<ul class='list-unstyled'>
                   {% for i in deps|dictsort:"depends_on.name"%}
                     <li><a href='{% url "recipe" build.pk i.depends_on.pk %}'>{{i.depends_on.name}}</a></li>
                   {% endfor %}
@@ -73,7 +71,7 @@
             {% if count %}
             <a class="btn"
                 title="<a href='{% url "recipe" build.pk recipe.pk %}#brought-in-by'>{{recipe.name}}</a> reverse dependencies"
-                data-content="<ul class='unstyled'>
+                data-content="<ul class='list-unstyled'>
                   {% for i in revs|dictsort:"recipe.name" %}
                     <li><a href='{% url "recipe" build.pk i.recipe.pk %}'>{{i.recipe.name}}</a></li>
                   {% endfor %}
@@ -97,7 +95,7 @@
         <!-- Layer commit -->
         <td class="layer_version__layer__commit">
             <a class="btn"
-                data-content="<ul class='unstyled'>
+                data-content="<ul class='list-unstyled'>
                   <li>{{recipe.layer_version.commit}}</li>
                 </ul>">
                 {{recipe.layer_version.commit|truncatechars:13}}

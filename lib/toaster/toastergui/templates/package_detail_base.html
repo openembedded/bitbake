@@ -43,21 +43,25 @@
 {% endblock localbreadcrumb %}
 
 {% block pagedetailinfomain %}
-    <div class="row span11">
+    <div class="row">
+      <div class="col-md-12">
         <div class="page-header">
             {% block mainheading %}
             <h1>{{package.fullpackagespec}}</h1>
             {% endblock %}
         </div> <!-- page-header -->
-    </div> <!-- row span11 page-header -->
+      </div> <!-- col-md-12 page-header -->
+    </div> <!-- end row -->
 
     {% block twocolumns %}
-    <div class="row span7 tabbable">
+    <div class="row">
+    <div class="col-md-8 tabbable">
         {% block tabcontent %}
         {% endblock tabcontent %}
-    </div> <!-- row span7 -->
+    </div> <!-- row col-md-8 -->
 
-    <div class="row span4 well">
+    <div class="col-md-4">
+      <div class="well">
         <h2>Package information</h2>
 
         <!-- info presented as definition list -->
@@ -124,7 +128,7 @@
                     # Removed per team meeting of 1/29/2014 until
                     # decision on index search algorithm
                     <a href="http://layers.openembedded.org"  target="_blank">
-                    <i class="icon-share get-info"></i>
+                    <i class="glyphicon glyphicon-share get-info"></i>
                     </a>
                     {% endcomment %}
                 {% endif %}
@@ -144,6 +148,8 @@
             <dd class="iscommit">{{package.recipe.layer_version.commit}}</dd>
 
         </dl>
-    </div> <!-- row4 well -->
+      <div> <!-- end well -->
+    </div> <!-- end 4-column section -->
     {% endblock twocolumns %}
+  </div> <!-- end row -->
 {% endblock pagedetailinfomain %}

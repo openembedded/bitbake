@@ -2,12 +2,10 @@
     </table>
 
 <!-- Show pagination controls -->
-<div class="pagination pagination-centered">
-   <div class="pull-left">
-   Showing {{objects.start_index}} to {{objects.end_index}} out of {{objects.paginator.count}} entries.
-   </div>
+<div>
+   <!--span class="help-inline">Showing {{objects.start_index}} to {{objects.end_index}} out of {{objects.paginator.count}} entries.</span-->
 
-   <ul class="pagination" style="display: block-inline">
+   <ul class="pagination">
 {%if objects.has_previous %}
   <li><a href="javascript:reload_params({'page':{{objects.previous_page_number}}})">&laquo;</a></li>
 {%else%}
@@ -23,8 +21,8 @@
 {%endif%}
   </ul>
   <div class="pull-right">
-    <span class="help-inline" style="padding-top:5px;">Show rows:</span>
-    <select style="margin-top:5px;margin-bottom:0px;" class="pagesize">
+    <span class="help-inline">Show rows:</span>
+    <select class="pagesize">
       {% with "10 25 50 100 150" as list%}
         {% for i in list.split %}
             <option value="{{i}}">{{i}}</option>

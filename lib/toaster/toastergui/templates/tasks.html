@@ -39,7 +39,7 @@
 {% endblock %}
 
 {% block buildinfomain %}
-<div class="span10">
+<div class="col-md-10">
 {% if not request.GET.filter and not request.GET.search and not objects.paginator.count %}
   <!-- Empty - no data in database -->
   <div class="page-header">
@@ -64,14 +64,12 @@
   </div>
 
   {% if objects.paginator.count == 0 %}
-  <div class="row-fluid">
-      <div class="alert">
-        <form class="no-results input-append" id="searchform">
-            <input id="search" name="search" class="input-xxlarge" type="text" value="{{request.GET.search}}"/>{% if request.GET.search %}<a href="javascript:$('#search').val('');searchform.submit()" class="add-on btn" tabindex="-1"><i class="icon-remove"></i></a>{% endif %}
-            <button class="btn" type="submit" value="Search">Search</button>
-            <button class="btn btn-link" onclick="javascript:$('#search').val('');searchform.submit()">Show all tasks</button>
-        </form>
-      </div>
+  <div class="alert">
+    <form class="no-results input-append" id="searchform">
+      <input id="search" name="search" class="input-xxlarge" type="text" value="{{request.GET.search}}"/>{% if request.GET.search %}<a href="javascript:$('#search').val('');searchform.submit()" class="input-append-addon btn" tabindex="-1"><i class="glyphicon glyphicon-remove"></i></a>{% endif %}
+      <button class="btn" type="submit" value="Search">Search</button>
+      <button class="btn btn-link" onclick="javascript:$('#search').val('');searchform.submit()">Show all tasks</button>
+    </form>
   </div>
 
 

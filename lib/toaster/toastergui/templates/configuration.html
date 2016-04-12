@@ -12,14 +12,14 @@
 
 {% block buildinfomain %}
 <!-- page title -->
-<div class="row-fluid span10">
+<div class="col-md-10">
+
  <div class="page-header">
      <h1>Configuration</h1>
  </div>
-</div>
 
 <!-- configuration table -->
-<div class="row-fluid pull-right span10" id="navTab">
+<div id="navTab">
 <ul class="nav nav-pills">
     <li class="active"><a href="#">Summary</a></li>
     <li class=""><a href="{% url 'configvars' build.id %}">BitBake variables</a></li>
@@ -44,29 +44,32 @@
           {% endfor %} </ul> </dd> {% endif %}
     </dl>
     <h3>Layers</h3>
-    <div class="span9" style="margin-left:0px;">
-    <table class="table table-bordered table-hover">
-      <thead>
-        <tr>
-          <th>Layer</th>
-          <th>Layer branch</th>
-          <th>Layer commit</th>
-        </tr>
-      </thead>
-      <tbody>{% for lv in build.layer_version_build.all|dictsort:"layer.name" %}
-        <tr>
+    <div class="row">
+      <div class="col-md-9">
+        <table class="table table-bordered table-hover">
+          <thead>
+            <tr>
+              <th>Layer</th>
+              <th>Layer branch</th>
+              <th>Layer commit</th>
+            </tr>
+          </thead>
+          <tbody>{% for lv in build.layer_version_build.all|dictsort:"layer.name" %}
+          <tr>
             <td>{{lv.layer.name}}</td>
             <td>{{lv.branch}}</td>
-            <td> <a class="btn" data-content="<ul class='unstyled'>
-                <li>{{lv.commit}}</li> </ul>">
-                    {{lv.commit|truncatechars:13}}
-                </a></td>
-        </tr>{% endfor %}
-      </tbody>
-    </table>
+            <td> <a class="btn" data-content="<ul class='list-unstyled'>
+                  <li>{{lv.commit}}</li> </ul>">
+                {{lv.commit|truncatechars:13}}
+            </a></td>
+          </tr>{% endfor %}
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 
-
 </div>
+
+</div> <!-- end of 10-column section -->
 {% endblock %}

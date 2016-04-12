@@ -18,7 +18,7 @@ $(document).ready(function() {
   });
 });
 </script>
-<div class="row-fluid">
+
 {% if objects.paginator.count > 10 or request.GET.search %}
   {% if objects.paginator.count == 0 %}
   <div class="alert">
@@ -32,8 +32,8 @@ $(document).ready(function() {
       <input type="hidden" value="name:+" name="orderby">
       <input type="hidden" value="l" name="page">
   {% if request.GET.search %}
-      <a class="add-on btn search-clear">
-        <i class="icon-remove"></i>
+      <a class="input-append-addon btn search-clear">
+        <i class="glyphicon glyphicon-remove"></i>
       </a>
   {% endif %}
       <button type="submit" class="btn">Search</button>
@@ -65,4 +65,4 @@ $(document).ready(function() {
   </div>
   {% endif %}
 {% endif %}
-</div> {# row-fluid #}
+

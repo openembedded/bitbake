@@ -11,7 +11,8 @@
 
 {% block pagedetailinfomain %}
 
-<div class="row span11">
+<div class="row">
+  <div class="col-md-12">
     <div class="page-header">
         <h1><a href="{%url 'recipe' build.pk task.recipe.pk %}">{{task.recipe.name}}_{{task.recipe.version}}</a> {{task.task_name}}</h1>
     </div>
@@ -24,16 +25,16 @@
 {%if task.task_executed %}
     {# executed tasks outcome #}
     {% if task.logfile %}
-            <a class="btn btn-large" href="{% url 'build_artifact' build.id "tasklogfile" task.pk %}" style="margin:15px;">Download task log</a>
+            <a class="btn btn-lg" href="{% url 'build_artifact' build.id "tasklogfile" task.pk %}" style="margin:15px;">Download task log</a>
     {% endif %}
         {# show stack trace for failed task #}
         {% if task.outcome == task.OUTCOME_FAILED and log_head %}
             <h3>Python stack trace</h3>
             <div>
                 <pre style="min-height:160px;">
-                    <code>{{log_head}}</code><a id="full-trace-show" data-target="#fulltrace" data-toggle="collapse" class="btn btn-mini">...</a>
+                    <code>{{log_head}}</code><a id="full-trace-show" data-target="#fulltrace" data-toggle="collapse" class="btn btn-xs">...</a>
                     <div id="fulltrace" class="collapse" style="margin-top: -20px; height: 0px;">
-                        <code>{{log_body}}</code><br><a id="full-trace-hide" class="btn btn-mini collapsed" style="font-family:Helvetica Neue" data-target="#fulltrace" data-toggle="collapse">Collapse stack trace<i class="icon-caret-up"></i></a></div></pre>
+                        <code>{{log_body}}</code><br><a id="full-trace-hide" class="btn btn-xs collapsed" style="font-family:Helvetica Neue" data-target="#fulltrace" data-toggle="collapse">Collapse stack trace<i class="icon-caret-up"></i></a></div></pre>
             </div>
         {% endif %}
 {% else %}
@@ -122,7 +123,7 @@
     {%elif task.outcome == task.OUTCOME_CACHED%}
             {% for t in task.get_related_setscene %}
                 {% if forloop.last %}
-                    <a class="btn btn-large" href="{% url 'build_artifact' build.id "tasklogfile" t.pk %}" style="margin:15px;">Download task log</a>
+                    <a class="btn btn-lg" href="{% url 'build_artifact' build.id "tasklogfile" t.pk %}" style="margin:15px;">Download task log</a>
                 {% endif %}
             {% endfor %}
 
@@ -153,8 +154,8 @@
     <dd>
         {{task.sstate_checksum}}
     </dd>
-</dl>
     {% if task.sstate_result != task.SSTATE_NA %}
+  </dl>
         <div class="alert alert-info">Attempting to restore output from sstate cache
             <i class="icon-question-sign get-help get-help-blue" title="The build system is searching for the task output in your <code>sstate-cache</code> directory and mirrors. If the build system finds the task output, it will reuse it instead of building it from scratch by running the real task. Reusing the task output makes the build faster"></i>
         </div>
@@ -273,5 +274,6 @@
     </dl>
 
 </div>
+
 {% endblock %}
 
