@@ -341,3 +341,22 @@ input.input-lg {
   line-height: 1.33333;
   padding: 10px 16px;
 }
+
+/* styling for standalone typeahead library */
+.tt-menu {
+  margin-top: 2px;
+  border-radius: 4px;
+  width: 100%;
+}
+
+.tt-suggestion {
+  cursor: pointer;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.tt-suggestion.active {
+  background-color: #0081c2;
+  color: white;
+}
