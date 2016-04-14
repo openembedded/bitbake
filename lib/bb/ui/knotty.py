@@ -371,7 +371,8 @@ def main(server, eventHandler, params, tf = TerminalFilter):
                     if event.taskpid in helper.running_tasks:
                         taskinfo = helper.running_tasks[event.taskpid]
                         event.msg = taskinfo['title'] + ': ' + event.msg
-
+                if hasattr(event, 'fn'):
+                        event.msg = event.fn + ': ' + event.msg
                 logger.handle(event)
                 continue
 

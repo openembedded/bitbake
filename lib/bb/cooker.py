@@ -1970,9 +1970,17 @@ class Parser(multiprocessing.Process):
 
     def parse(self, filename, appends, caches_array):
         try:
+            # Record the filename we're parsing into any events generated
+            def parse_filter(self, record):
+                record.taskpid = bb.event.worker_pid
+                record.fn = filename
+                return True
+
             # Reset our environment and handlers to the original settings
             bb.utils.set_context(self.context.copy())
             bb.event.set_class_handlers(self.handlers.copy())
+            bb.event.LogHandler.filter = parse_filter
+
             return True, bb.cache.Cache.parse(filename, appends, self.cfg, caches_array)
         except Exception as exc:
             tb = sys.exc_info()[2]
