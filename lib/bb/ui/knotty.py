@@ -453,7 +453,10 @@ def main(server, eventHandler, params, tf = TerminalFilter):
                 logger.info("multiple providers are available for %s%s (%s)", event._is_runtime and "runtime " or "",
                             event._item,
                             ", ".join(event._candidates))
-                logger.info("consider defining a PREFERRED_PROVIDER entry to match %s", event._item)
+                rtime = ""
+                if event._is_runtime:
+                    rtime = "R"
+                logger.info("consider defining a PREFERRED_%sPROVIDER entry to match %s" % (rtime, event._item))
                 continue
             if isinstance(event, bb.event.NoProvider):
                 if event._runtime:
