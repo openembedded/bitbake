@@ -226,7 +226,7 @@ def findBestProvider(pn, cfgData, dataCache, pkg_pn = None, item = None):
 def _filterProviders(providers, item, cfgData, dataCache):
     """
     Take a list of providers and filter/reorder according to the
-    environment variables and previous build results
+    environment variables
     """
     eligible = []
     preferred_versions = {}
@@ -283,7 +283,7 @@ def _filterProviders(providers, item, cfgData, dataCache):
 def filterProviders(providers, item, cfgData, dataCache):
     """
     Take a list of providers and filter/reorder according to the
-    environment variables and previous build results
+    environment variables
     Takes a "normal" target item
     """
 
@@ -311,7 +311,7 @@ def filterProviders(providers, item, cfgData, dataCache):
 def filterProvidersRunTime(providers, item, cfgData, dataCache):
     """
     Take a list of providers and filter/reorder according to the
-    environment variables and previous build results
+    environment variables
     Takes a "runtime" target item
     """
 
