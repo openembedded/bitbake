@@ -809,6 +809,16 @@
                     <filename>INHERIT</filename> to inherit a class effectively
                     inherits the class globally (i.e. for all recipes).
                 </note>
+                If you want to use the directive to inherit
+                multiple classes, you can provide them on the same line in the
+                <filename>local.conf</filename> file.
+                Use spaces to separate the classes.
+                The following example shows how to inherit both the
+                <filename>autotools</filename> and <filename>pkgconfig</filename>
+                classes:
+                <literallayout class='monospaced'>
+     inherit autotools pkgconfig
+                </literallayout>
             </para>
         </section>
     </section>
