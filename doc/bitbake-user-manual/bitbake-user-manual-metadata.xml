@@ -379,6 +379,12 @@
                 You can use <filename>OVERRIDES</filename> to conditionally select
                 a specific version of a variable and to conditionally
                 append or prepend the value of a variable.
+                <note>
+                    Overrides can only use lower-case characters.
+                    Additionally, underscores are not permitted in override names
+                    as they are used to separate overrides from each other and
+                    from the variable name.
+                </note>
                 <itemizedlist>
                     <listitem><para><emphasis>Selecting a Variable:</emphasis>
                         The <filename>OVERRIDES</filename> variable is
