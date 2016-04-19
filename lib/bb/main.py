@@ -247,7 +247,7 @@ class BitBakeConfigParameters(cookerdata.ConfigParameters):
         if "BBTOKEN" in os.environ:
             options.xmlrpctoken = os.environ["BBTOKEN"]
 
-        if "BBEVENTLOG" is os.environ:
+        if "BBEVENTLOG" in os.environ:
             options.writeeventlog = os.environ["BBEVENTLOG"]
 
         # fill in proper log name if not supplied
