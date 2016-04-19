@@ -264,11 +264,17 @@ class Project(models.Model):
     def get_all_compatible_layer_versions(self):
         """ Returns Queryset of all Layer_Versions which are compatible with
         this project"""
-        queryset = Layer_Version.objects.filter(
-            (Q(up_branch__name=self.release.branch_name) &
-             Q(build=None) &
-             Q(project=None)) |
-             Q(project=self))
+        queryset = None
+
+        # guard on release, as it can be null
+        if self.release:
+            queryset = Layer_Version.objects.filter(
+                (Q(up_branch__name=self.release.branch_name) &
+                 Q(build=None) &
+                 Q(project=None)) |
+                 Q(project=self))
+        else:
+            queryset = Layer_Version.objects.none()
 
         return queryset
 
