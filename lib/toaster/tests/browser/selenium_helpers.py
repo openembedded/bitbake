@@ -185,7 +185,11 @@ class SeleniumTestCase(StaticLiveServerTestCase):
 
     def enter_text(self, selector, value):
         """ Insert text into element matching selector """
-        field = self.wait_until_present(selector)
+        # note that keyup events don't occur until the element is clicked
+        # (in the case of <input type="text"...>, for example), so simulate
+        # user clicking the element before inserting text into it
+        field = self.click(selector)
+
         field.send_keys(value)
         return field
 
