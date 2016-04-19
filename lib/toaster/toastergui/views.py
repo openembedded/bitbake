@@ -2409,21 +2409,24 @@ if True:
             if re.search(r'[^a-z|0-9|-]', request.POST["name"]):
                 return {"error": "invalid-name"}
 
-            # Are there any recipes with the name already?
-            for existing_recipe in Recipe.objects.filter(
-                name=request.POST["name"]):
-                try:
-                    ci = CustomImageRecipe.objects.get(pk=existing_recipe.pk)
-                    if ci.project == params["project"]:
-                        return {"error": "already-exists" }
-                    else:
-                        # It is a CustomImageRecipe but not in our project
-                        # this is fine so
-                        continue
-                except:
-                    # It isn't a CustomImageRecipe so is a recipe from
-                    # another source.
-                    return {"error": "already-exists" }
+            custom_images = CustomImageRecipe.objects.all()
+
+            # Are there any recipes with this name already in our project?
+            existing_image_recipes_in_project = custom_images.filter(
+                name=request.POST["name"], project=params["project"])
+
+            if existing_image_recipes_in_project.count() > 0:
+                return {"error": "image-already-exists"}
+
+            # Are there any recipes with this name which aren't custom
+            # image recipes?
+            custom_image_ids = custom_images.values_list('id', flat=True)
+            existing_non_image_recipes = Recipe.objects.filter(
+                Q(name=request.POST["name"]) & ~Q(pk__in=custom_image_ids)
+            )
+
+            if existing_non_image_recipes.count() > 0:
+                return {"error": "recipe-already-exists"}
 
             # create layer 'Custom layer' and verion if needed
             layer = Layer.objects.get_or_create(
