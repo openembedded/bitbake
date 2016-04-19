@@ -503,33 +503,37 @@ class Build(models.Model):
         return Recipe.objects.filter(criteria) \
                              .select_related('layer_version', 'layer_version__layer')
 
-    def get_custom_image_recipe_names(self):
-        """
-        Get the names of custom image recipes for this build's project
-        as a list; this is used to screen out custom image recipes from the
-        recipes for the build by name, and to distinguish image recipes from
-        custom image recipes
-        """
-        custom_image_recipes = \
-            CustomImageRecipe.objects.filter(project=self.project)
-        return custom_image_recipes.values_list('name', flat=True)
-
     def get_image_recipes(self):
         """
-        Returns a queryset of image recipes related to this build, sorted
-        by name
+        Returns a list of image Recipes (custom and built-in) related to this
+        build, sorted by name; note that this has to be done in two steps, as
+        there's no way to get all the custom image recipes and image recipes
+        in one query
         """
-        criteria = Q(is_image=True)
-        return self.get_recipes().filter(criteria).order_by('name')
+        custom_image_recipes = self.get_custom_image_recipes()
+        custom_image_recipe_names = custom_image_recipes.values_list('name', flat=True)
+
+        not_custom_image_recipes = ~Q(name__in=custom_image_recipe_names) & \
+                                   Q(is_image=True)
+
+        built_image_recipes = self.get_recipes().filter(not_custom_image_recipes)
+
+        # append to the custom image recipes and sort
+        customisable_image_recipes = list(
+            itertools.chain(custom_image_recipes, built_image_recipes)
+        )
+
+        return sorted(customisable_image_recipes, key=lambda recipe: recipe.name)
 
     def get_custom_image_recipes(self):
         """
-        Returns a queryset of custom image recipes related to this build,
+        Returns a queryset of CustomImageRecipes related to this build,
         sorted by name
         """
-        custom_image_recipe_names = self.get_custom_image_recipe_names()
-        criteria = Q(is_image=True) & Q(name__in=custom_image_recipe_names)
-        return self.get_recipes().filter(criteria).order_by('name')
+        built_recipe_names = self.get_recipes().values_list('name', flat=True)
+        criteria = Q(name__in=built_recipe_names) & Q(project=self.project)
+        queryset = CustomImageRecipe.objects.filter(criteria).order_by('name')
+        return queryset
 
     def get_outcome_text(self):
         return Build.BUILD_OUTCOME[int(self.outcome)][1]
@@ -1380,6 +1384,9 @@ class Layer(models.Model):
 
 # LayerCommit class is synced with layerindex.LayerBranch
 class Layer_Version(models.Model):
+    """
+    A Layer_Version either belongs to a single project or no project
+    """
     search_allowed_fields = ["layer__name", "layer__summary", "layer__description", "layer__vcs_url", "dirpath", "up_branch__name", "commit", "branch"]
     build = models.ForeignKey(Build, related_name='layer_version_build', default = None, null = True)
     layer = models.ForeignKey(Layer, related_name='layer_version_layer')

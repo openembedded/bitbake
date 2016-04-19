@@ -507,6 +507,7 @@ def builddashboard( request, build_id ):
 
     context = {
             'build'           : build,
+            'project'         : build.project,
             'hasImages'       : hasImages,
             'ntargets'        : ntargets,
             'targets'         : targets,
@@ -797,6 +798,7 @@ eans multiple licenses exist that cover different parts of the source',
     context = {
         'objectname': variant,
         'build'                : build,
+        'project'              : build.project,
         'target'               : Target.objects.filter( pk = target_id )[ 0 ],
         'objects'              : packages,
         'packages_sum'         : packages_sum[ 'installed_size__sum' ],
@@ -937,7 +939,10 @@ def dirinfo(request, build_id, target_id, file_path=None):
             if head != sep:
                 dir_list.insert(0, head)
 
-    context = { 'build': Build.objects.get(pk=build_id),
+    build = Build.objects.get(pk=build_id)
+
+    context = { 'build': build,
+                'project': build.project,
                 'target': Target.objects.get(pk=target_id),
                 'packages_sum': packages_sum['installed_size__sum'],
                 'objects': objects,
@@ -1211,6 +1216,7 @@ def tasks_common(request, build_id, variant, task_anchor):
                 'filter_search_display': filter_search_display,
                 'mainheading': title_variant,
                 'build': build,
+                'project': build.project,
                 'objects': task_objects,
                 'default_orderby' : default_orderby,
                 'search_term': search_term,
@@ -1282,6 +1288,7 @@ def recipes(request, build_id):
     context = {
         'objectname': 'recipes',
         'build': build,
+        'project': build.project,
         'objects': recipes,
         'default_orderby' : 'name:+',
         'recipe_deps' : deps,
@@ -1366,10 +1373,12 @@ def configuration(request, build_id):
                  'MACHINE', 'DISTRO', 'DISTRO_VERSION', 'TUNE_FEATURES', 'TARGET_FPU')
     context = dict(Variable.objects.filter(build=build_id, variable_name__in=var_names)\
                                            .values_list('variable_name', 'variable_value'))
+    build = Build.objects.get(pk=build_id)
     context.update({'objectname': 'configuration',
                     'object_search_display':'variables',
                     'filter_search_display':'variables',
-                    'build': Build.objects.get(pk=build_id),
+                    'build': build,
+                    'project': build.project,
                     'targets': Target.objects.filter(build=build_id)})
     return render(request, template, context)
 
@@ -1406,12 +1415,15 @@ def configvars(request, build_id):
         file_filter += '/bitbake.conf'
     build_dir=re.sub("/tmp/log/.*","",Build.objects.get(pk=build_id).cooker_log_path)
 
+    build = Build.objects.get(pk=build_id)
+
     context = {
                 'objectname': 'configvars',
                 'object_search_display':'BitBake variables',
                 'filter_search_display':'variables',
                 'file_filter': file_filter,
-                'build': Build.objects.get(pk=build_id),
+                'build': build,
+                'project': build.project,
                 'objects' : variables,
                 'total_count':queryset_with_search.count(),
                 'default_orderby' : 'variable_name:+',
@@ -1480,6 +1492,7 @@ def bpackage(request, build_id):
     context = {
         'objectname': 'packages built',
         'build': build,
+        'project': build.project,
         'objects' : packages,
         'default_orderby' : 'name:+',
         'tablecols':[
@@ -1554,7 +1567,12 @@ def bpackage(request, build_id):
 def bfile(request, build_id, package_id):
     template = 'bfile.html'
     files = Package_File.objects.filter(package = package_id)
-    context = {'build': Build.objects.get(pk=build_id), 'objects' : files}
+    build = Build.objects.get(pk=build_id)
+    context = {
+        'build': build,
+        'project': build.project,
+        'objects' : files
+    }
     return render(request, template, context)
 
 

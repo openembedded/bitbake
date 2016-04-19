@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load projecttags %}
 {% load project_url_tag %}
-{% load queryset_to_list_filter %}
+{% load objects_to_dictionaries_filter %}
 {% load humanize %}
 {% block pagecontent %}
   <!-- breadcrumbs -->
@@ -81,33 +81,40 @@
           </p>
         </li>
 
-        <li>
-          <!-- edit custom image built during this build -->
-          <p class="navbar-btn" data-role="edit-custom-image-trigger">
-            <button class="btn btn-block">Edit custom image</button>
-          </p>
-          {% include 'editcustomimage_modal.html' %}
-          <script>
-            $(document).ready(function () {
-              var editableCustomImageRecipes = {{ build.get_custom_image_recipes | queryset_to_list:"id,name" | json }};
+        {% with build.get_custom_image_recipes as custom_image_recipes %}
+          {% if custom_image_recipes.count > 0 %}
+            <!-- edit custom image built during this build -->
+            <li>
+              <p class="navbar-btn" data-role="edit-custom-image-trigger">
+                <button class="btn btn-block">Edit custom image</button>
+                {% include 'editcustomimage_modal.html' %}
+                <script>
+                  var editableCustomImageRecipes = {{ custom_image_recipes | objects_to_dictionaries:"id,name" | json }};
 
-              // edit custom image which was built during this build
-              var editCustomImageModal = $('#edit-custom-image-modal');
-              var editCustomImageTrigger = $('[data-role="edit-custom-image-trigger"]');
+                  $(document).ready(function () {
+                    var editCustomImageTrigger = $('[data-role="edit-custom-image-trigger"]');
+                    var editCustomImageModal = $('#edit-custom-image-modal');
 
-              editCustomImageTrigger.click(function () {
-                // if there is a single editable custom image, go direct to the edit
-                // page for it; if there are multiple editable custom images, show
-                // dialog to select one of them for editing
-
-                // single editable custom image
-
-                // multiple editable custom images
-                editCustomImageModal.modal('show');
-              });
-            });
-          </script>
-        </li>
+                    // edit custom image which was built during this build
+                    editCustomImageTrigger.click(function () {
+                      // single editable custom image: redirect to the edit page
+                      // for that image
+                      if (editableCustomImageRecipes.length === 1) {
+                        var url = '{% url "customrecipe" build.project.id custom_image_recipes.first.id %}';
+                        document.location.href = url;
+                      }
+                      // multiple editable custom images: show modal to select
+                      // one of them for editing
+                      else {
+                        editCustomImageModal.modal('show');
+                      }
+                    });
+                  });
+                </script>
+              </p>
+            </li>
+          {% endif %}
+        {% endwith %}
 
         <li>
           <!-- new custom image from image recipe in this build -->
@@ -119,7 +126,7 @@
             // imageRecipes includes both custom image recipes and built-in
             // image recipes, any of which can be used as the basis for a
             // new custom image
-            var imageRecipes = {{ build.get_image_recipes | queryset_to_list:"id,name" | json }};
+            var imageRecipes = {{ build.get_image_recipes | objects_to_dictionaries:"id,name" | json }};
 
             $(document).ready(function () {
               var newCustomImageModal = $('#new-custom-image-modal');
@@ -131,6 +138,7 @@
                 if (!imageRecipes.length) {
                   return;
                 }
+
                 newCustomImageModalSetRecipes(imageRecipes);
                 newCustomImageModal.modal('show');
               });
