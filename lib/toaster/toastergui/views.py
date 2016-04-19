@@ -663,7 +663,9 @@ def recipe_packages(request, build_id, recipe_id):
 
 def target_common( request, build_id, target_id, variant ):
     template = "target.html"
-    (pagesize, orderby) = _get_parameters_values(request, 25, 'name:+')
+    default_orderby = 'name:+'
+
+    (pagesize, orderby) = _get_parameters_values(request, 25, default_orderby)
     mandatory_parameters = { 'count': pagesize,  'page' : 1, 'orderby': orderby }
     retval = _verify_parameters( request.GET, mandatory_parameters )
     if retval:
@@ -682,8 +684,6 @@ def target_common( request, build_id, target_id, variant ):
             Package, queryset, filter_string, search_term, ordering_string, 'name' )
     queryset = queryset.select_related("recipe", "recipe__layer_version", "recipe__layer_version__layer")
     packages = _build_page_range( Paginator(queryset, pagesize), request.GET.get( 'page', 1 ))
-
-
 
     build = Build.objects.get( pk = build_id )
 
@@ -801,7 +801,7 @@ eans multiple licenses exist that cover different parts of the source',
         'objects'              : packages,
         'packages_sum'         : packages_sum[ 'installed_size__sum' ],
         'object_search_display': "packages included",
-        'default_orderby'      : orderby,
+        'default_orderby'      : default_orderby,
         'tablecols'            : [
                     tc_package,
                     tc_packageVersion,
@@ -996,29 +996,29 @@ def tasks_common(request, build_id, variant, task_anchor):
         anchor=task_anchor
 
     # default ordering depends on variant
-    if   'buildtime' == variant:
-        title_variant='Time'
-        object_search_display="time data"
-        filter_search_display="tasks"
-        (pagesize, orderby) = _get_parameters_values(request, 25, 'elapsed_time:-')
-    elif 'diskio'    == variant:
-        title_variant='Disk I/O'
-        object_search_display="disk I/O data"
-        filter_search_display="tasks"
-        (pagesize, orderby) = _get_parameters_values(request, 25, 'disk_io:-')
-    elif 'cputime'  == variant:
+    default_orderby = None
+    filter_search_display = 'tasks'
+
+    if 'buildtime' == variant:
+        default_orderby = 'elapsed_time:-'
+        title_variant = 'Time'
+        object_search_display = 'time data'
+    elif 'diskio' == variant:
+        default_orderby = 'disk_io:-'
+        title_variant = 'Disk I/O'
+        object_search_display = 'disk I/O data'
+    elif 'cputime' == variant:
+        default_orderby = 'cpu_time_system:-'
         title_variant='CPU time'
-        object_search_display="CPU time data"
-        filter_search_display="tasks"
-        (pagesize, orderby) = _get_parameters_values(request, 25, 'cpu_time_system:-')
-    else :
-        title_variant='Tasks'
-        object_search_display="tasks"
-        filter_search_display="tasks"
-        (pagesize, orderby) = _get_parameters_values(request, 25, 'order:+')
+        object_search_display = 'CPU time data'
+    else:
+        default_orderby = 'order:+'
+        title_variant = 'Tasks'
+        object_search_display = 'tasks'
 
+    (pagesize, orderby) = _get_parameters_values(request, 25, default_orderby)
 
-    mandatory_parameters = { 'count': pagesize,  'page' : 1, 'orderby': orderby }
+    mandatory_parameters = {'count': pagesize, 'page' : 1, 'orderby': orderby}
 
     template = 'tasks.html'
     retval = _verify_parameters( request.GET, mandatory_parameters )
@@ -1212,7 +1212,7 @@ def tasks_common(request, build_id, variant, task_anchor):
                 'mainheading': title_variant,
                 'build': build,
                 'objects': task_objects,
-                'default_orderby' : orderby,
+                'default_orderby' : default_orderby,
                 'search_term': search_term,
                 'total_count': queryset_with_search.count(),
                 'tablecols':[
