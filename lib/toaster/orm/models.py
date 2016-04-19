@@ -490,6 +490,47 @@ class Build(models.Model):
         tgts = Target.objects.filter(build_id = self.id).order_by( 'target' );
         return( tgts );
 
+    def get_recipes(self):
+        """
+        Get the recipes related to this build;
+        note that the related layer versions and layers are also prefetched
+        by this query, as this queryset can be sorted by these objects in the
+        build recipes view; prefetching them here removes the need
+        for another query in that view
+        """
+        layer_versions = Layer_Version.objects.filter(build=self)
+        criteria = Q(layer_version__id__in=layer_versions)
+        return Recipe.objects.filter(criteria) \
+                             .select_related('layer_version', 'layer_version__layer')
+
+    def get_custom_image_recipe_names(self):
+        """
+        Get the names of custom image recipes for this build's project
+        as a list; this is used to screen out custom image recipes from the
+        recipes for the build by name, and to distinguish image recipes from
+        custom image recipes
+        """
+        custom_image_recipes = \
+            CustomImageRecipe.objects.filter(project=self.project)
+        return custom_image_recipes.values_list('name', flat=True)
+
+    def get_image_recipes(self):
+        """
+        Returns a queryset of image recipes related to this build, sorted
+        by name
+        """
+        criteria = Q(is_image=True)
+        return self.get_recipes().filter(criteria).order_by('name')
+
+    def get_custom_image_recipes(self):
+        """
+        Returns a queryset of custom image recipes related to this build,
+        sorted by name
+        """
+        custom_image_recipe_names = self.get_custom_image_recipe_names()
+        criteria = Q(is_image=True) & Q(name__in=custom_image_recipe_names)
+        return self.get_recipes().filter(criteria).order_by('name')
+
     def get_outcome_text(self):
         return Build.BUILD_OUTCOME[int(self.outcome)][1]
 

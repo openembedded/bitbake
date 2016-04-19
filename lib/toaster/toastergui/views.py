@@ -1257,7 +1257,10 @@ def recipes(request, build_id):
     if retval:
         return _redirect_parameters( 'recipes', request.GET, mandatory_parameters, build_id = build_id)
     (filter_string, search_term, ordering_string) = _search_tuple(request, Recipe)
-    queryset = Recipe.objects.filter(layer_version__id__in=Layer_Version.objects.filter(build=build_id)).select_related("layer_version", "layer_version__layer")
+
+    build = Build.objects.get(pk=build_id)
+
+    queryset = build.get_recipes()
     queryset = _get_queryset(Recipe, queryset, filter_string, search_term, ordering_string, 'name')
 
     recipes = _build_page_range(Paginator(queryset, pagesize),request.GET.get('page', 1))
@@ -1275,8 +1278,6 @@ def recipes(request, build_id):
         for recipe_dep in [x for x in queryset_dependency if x.depends_on_id == recipe.id]:
             revlist.append(recipe_dep)
         revs[recipe.id] = revlist
-
-    build = Build.objects.get(pk=build_id)
 
     context = {
         'objectname': 'recipes',
