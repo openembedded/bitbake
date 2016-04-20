@@ -250,6 +250,12 @@ class BitBakeConfigParameters(cookerdata.ConfigParameters):
         if "BBEVENTLOG" in os.environ:
             options.writeeventlog = os.environ["BBEVENTLOG"]
 
+        if "BBPRECONF" in os.environ:
+            option.prefile.append(os.environ["BBPRECONF"])
+
+        if "BBPOSTCONF" in os.environ:
+            option.postfile.append(os.environ["BBPOSTCONF"])
+
         # fill in proper log name if not supplied
         if options.writeeventlog is not None and len(options.writeeventlog) == 0:
             import datetime
