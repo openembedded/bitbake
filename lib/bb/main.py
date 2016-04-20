@@ -194,18 +194,16 @@ class BitBakeConfigParameters(cookerdata.ConfigParameters):
         parser.add_option("-P", "--profile", help = "Profile the command and save reports.",
                    action = "store_true", dest = "profile", default = False)
 
-        env_ui = os.environ.get('BITBAKE_UI', None)
-        default_ui = env_ui or 'knotty'
         # @CHOICES@ is substituted out by BitbakeHelpFormatter above
         parser.add_option("-u", "--ui", help = "The user interface to use (@CHOICES@ - default %default).",
-                   action="store", dest="ui", default=default_ui)
+                   action="store", dest="ui", default=os.environ.get('BITBAKE_UI', 'knotty'))
 
         # @CHOICES@ is substituted out by BitbakeHelpFormatter above
         parser.add_option("-t", "--servertype", help = "Choose which server type to use (@CHOICES@ - default %default).",
-                   action = "store", dest = "servertype", default = "process")
+                   action = "store", dest = "servertype", default = ["process", "xmlrpc"]["BBSERVER" in os.environ])
 
         parser.add_option("", "--token", help = "Specify the connection token to be used when connecting to a remote server.",
-                   action = "store", dest = "xmlrpctoken")
+                   action = "store", dest = "xmlrpctoken", default = os.environ.get("BBTOKEN"))
 
         parser.add_option("", "--revisions-changed", help = "Set the exit code depending on whether upstream floating revisions have changed or not.",
                    action = "store_true", dest = "revisions_changed", default = False)
@@ -223,7 +221,7 @@ class BitBakeConfigParameters(cookerdata.ConfigParameters):
                    action = "store_true", dest = "setsceneonly", default = False)
 
         parser.add_option("", "--remote-server", help = "Connect to the specified server.",
-                   action = "store", dest = "remote_server", default = False)
+                   action = "store", dest = "remote_server", default = os.environ.get("BBSERVER"))
 
         parser.add_option("-m", "--kill-server", help = "Terminate the remote server.",
                     action = "store_true", dest = "kill_server", default = False)
@@ -235,21 +233,11 @@ class BitBakeConfigParameters(cookerdata.ConfigParameters):
                    action = "store_true", dest = "status_only", default = False)
 
         parser.add_option("-w", "--write-log", help = "Writes the event log of the build to a bitbake event json file. Use '' (empty string) to assign the name automatically.",
-                   action = "store", dest = "writeeventlog")
+                   action = "store", dest = "writeeventlog", default = os.environ.get("BBEVENTLOG"))
 
         options, targets = parser.parse_args(argv)
 
-        # some environmental variables set also configuration options
-        if "BBSERVER" in os.environ:
-            options.servertype = "xmlrpc"
-            options.remote_server = os.environ["BBSERVER"]
-
-        if "BBTOKEN" in os.environ:
-            options.xmlrpctoken = os.environ["BBTOKEN"]
-
-        if "BBEVENTLOG" in os.environ:
-            options.writeeventlog = os.environ["BBEVENTLOG"]
-
+        # use configuration files from environment variables
         if "BBPRECONF" in os.environ:
             option.prefile.append(os.environ["BBPRECONF"])
 
