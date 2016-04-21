@@ -17,10 +17,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see http://www.gnu.org/licenses/.
 
-# Usage: source toaster [start|stop]
-#                       [webport=<port>] [noui] [noweb]
-
-# Helper function to kill a background toaster development server
+HELP="
+Usage: source toaster start|stop [webport=<address:port>] [noweb]
+    Optional arguments:
+        [noweb] Setup the environment for building with toaster but don't start the development server
+        [webport] Set the development server (default: localhost:8000)
+"
 
 webserverKillAll()
 {
@@ -193,6 +195,12 @@ for param in $*; do
     ;;
     webport=*)
             WEB_PORT="${param#*=}"
+    ;;
+    *)
+            echo "$HELP"
+            return 1
+    ;;
+
     esac
 done
 
@@ -226,11 +234,9 @@ if [ "$CMD" = "start" ] ; then
 	return 1
 fi
 elif [ "$CMD" = "" ]; then
-    if [ -z "$BBSERVER" ]; then
-        CMD="start"
-    else
-        CMD="stop"
-    fi
+    echo "No command specified"
+    echo "$HELP"
+    return 1
 fi
 
 echo "The system will $CMD."
