@@ -255,7 +255,9 @@ case $CMD in
     start )
         # check if addr:port is not in use
         if [ "$CMD" == 'start' ]; then
-             $MANAGE checksocket "$ADDR_PORT" || return 1
+            if [ $WEBSERVER -gt 0 ]; then
+                $MANAGE checksocket "$ADDR_PORT" || return 1
+            fi
         fi
 
         # kill Toaster web server if it's alive
