@@ -807,13 +807,14 @@ def runfetchcmd(cmd, d, quiet=False, cleanup=None):
                   'GIT_SSL_CAINFO',
                   'GIT_SMART_HTTP',
                   'SSH_AUTH_SOCK', 'SSH_AGENT_PID',
-                  'SOCKS5_USER', 'SOCKS5_PASSWD']
+                  'SOCKS5_USER', 'SOCKS5_PASSWD',
+                  'DBUS_SESSION_BUS_ADDRESS']
 
     if not cleanup:
         cleanup = []
 
     for var in exportvars:
-        val = d.getVar(var, True)
+        val = d.getVar(var, True) or d.getVar("BB_ORIGENV", False).getVar(var, True)
         if val:
             cmd = 'export ' + var + '=\"%s\"; %s' % (val, cmd)
 
