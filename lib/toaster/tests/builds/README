@@ -6,7 +6,7 @@ Your oe build environment must be sourced/initialised for these tests to run.
 The simplest way to run the tests are the following commands:
 
 $ . oe-init-build-env
-$ cd lib/toaster/ # path my vary but this is into toaster's directory
+$ cd bitbake/lib/toaster/ # path my vary but this is into toaster's directory
 $ DJANGO_SETTINGS_MODULE='toastermain.settings-test' ./manage.py test tests.builds
 
 Optional environment variables:
