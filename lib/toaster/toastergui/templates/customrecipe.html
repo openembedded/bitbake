@@ -4,6 +4,7 @@
 {% load static %}
 {% block pagecontent %}
 
+{% with recipe.get_base_recipe_file as base_recipe_file %}
 <div class="section">
   <ul class="breadcrumb">
     <li>
@@ -99,8 +100,15 @@
       <a class="btn btn-large span6 build-custom-image" href="#" style="width: 50%">
         Build {{recipe.name}}
       </a>
-      <a href="{% url 'customrecipedownload' project.id recipe.id %}" class="btn btn-large span6" style="width: 50%">
+      <a href="{% url 'customrecipedownload' project.id recipe.id %}" class="btn btn-large span6" style="width: 50%"
+        {% if not base_recipe_file %}
+        disabled="disabled"
+        {% endif %}>
         Download recipe file
+        {% if not base_recipe_file %}
+        <i class="icon-question-sign get-help"
+          data-original-title="The {{recipe.name}} recipe cannot yet be downloaded as the Based on recipe '{{recipe.base_recipe.name}}' has not yet been fetched"></i>
+        {% endif %}
       </a>
     </div>
     <div id="no-results-special-{{table_name}}" class="air" style="display:none;">
@@ -177,7 +185,9 @@
         <dt>Recipe file</dt>
         <dd>
           <code>{{recipe.name}}_{{recipe.version}}.bb</code>
+          {% if base_recipe_path %}
           <a href="{% url 'customrecipedownload' project.pk recipe.pk %}"><i class="icon-share" title="" data-original-title="View recipe file"></i></a>
+          {% endif %}
         </dd>
         <dt>Layer</dt>
         <dd><a href="{% url 'layerdetails' project.id recipe.layer_version.pk %}">{{recipe.layer_version.layer.name}}</a></dd>
@@ -220,4 +230,5 @@
     </div>
   </div>
 
+{% endwith %}{# end base_recipe_file #}
   {% endblock %}
