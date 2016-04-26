@@ -130,6 +130,7 @@ class SeleniumTestCase(StaticLiveServerTestCase):
         # instantiate the Selenium webdriver once for all the test methods
         # in this test case
         cls.driver = create_selenium_driver()
+        cls.driver.maximize_window()
 
     @classmethod
     def tearDownClass(cls):
