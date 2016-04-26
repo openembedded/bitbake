@@ -1585,6 +1585,21 @@ class CustomImageRecipe(Recipe):
                                                   Q(recipe_includes=self)) &
                                                  ~Q(recipe_excludes=self))
 
+    def get_base_recipe_file(self):
+        """Get the base recipe file path if it exists on the file system"""
+        path_schema_one = "%s/%s" % (self.base_recipe.layer_version.dirpath,
+                                     self.base_recipe.file_path)
+
+        path_schema_two = self.base_recipe.file_path
+
+        if os.path.exists(path_schema_one):
+            return path_schema_one
+
+        # The path may now be the full path if the recipe has been built
+        if os.path.exists(path_schema_two):
+            return path_schema_two
+
+        return None
 
     def generate_recipe_file_contents(self):
         """Generate the contents for the recipe file."""
@@ -1599,17 +1614,16 @@ class CustomImageRecipe(Recipe):
             # We add all the known packages to be built by this recipe apart
             # from locale packages which are are controlled with IMAGE_LINGUAS.
             for pkg in self.get_all_packages().exclude(
-                name__icontains="locale"):
+                    name__icontains="locale"):
                 packages_conf += pkg.name+' '
 
         packages_conf += "\""
-        try:
-            base_recipe = open("%s/%s" %
-                               (self.base_recipe.layer_version.dirpath,
-                                self.base_recipe.file_path), 'r').read()
-        except IOError:
-            # The path may now be the full path if the recipe has been built
-            base_recipe = open(self.base_recipe.file_path, 'r').read()
+
+        base_recipe_path = self.get_base_recipe_file()
+        if base_recipe_path:
+            base_recipe = open(base_recipe_path, 'r').read()
+        else:
+            raise IOError("Based on recipe file not found")
 
         # Add a special case for when the recipe we have based a custom image
         # recipe on requires another recipe.
@@ -1618,8 +1632,8 @@ class CustomImageRecipe(Recipe):
         # "require recipes-core/images/core-image-minimal.bb"
 
         req_search = re.search(r'(require\s+)(.+\.bb\s*$)',
-                                   base_recipe,
-                                   re.MULTILINE)
+                               base_recipe,
+                               re.MULTILINE)
         if req_search:
             require_filename = req_search.group(2).strip()
 
@@ -1629,19 +1643,19 @@ class CustomImageRecipe(Recipe):
 
             new_require_line = "require %s" % corrected_location
 
-            base_recipe = \
-                    base_recipe.replace(req_search.group(0), new_require_line)
+            base_recipe = base_recipe.replace(req_search.group(0),
+                                              new_require_line)
 
-
-        info = {"date" : timezone.now().strftime("%Y-%m-%d %H:%M:%S"),
-                "base_recipe" : base_recipe,
-                "recipe_name" : self.name,
-                "base_recipe_name" : self.base_recipe.name,
-                "license" : self.license,
-                "summary" : self.summary,
-                "description" : self.description,
-                "packages_conf" : packages_conf.strip(),
-               }
+        info = {
+            "date": timezone.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "base_recipe": base_recipe,
+            "recipe_name": self.name,
+            "base_recipe_name": self.base_recipe.name,
+            "license": self.license,
+            "summary": self.summary,
+            "description": self.description,
+            "packages_conf": packages_conf.strip()
+        }
 
         recipe_contents = ("# Original recipe %(base_recipe_name)s \n"
                            "%(base_recipe)s\n\n"
