@@ -495,12 +495,9 @@ class CustomImagesTable(ToasterTable):
                         static_data_template=name_link_template)
 
         recipe_file_template = '''
-        <code>{{data.name}}_{{data.version}}.bb</code>
         {% if data.get_base_recipe_file %}
-        <a href="{% url 'customrecipedownload' extra.pid data.pk %}">
-        <i class="icon-download-alt" data-original-title="Download recipe
-        file"></i>
-        </a>
+        <code>{{data.name}}_{{data.version}}.bb</code>
+        <a href="{% url 'customrecipedownload' extra.pid data.pk %}" class="icon-download-alt get-help" title="Download recipe file"></a>
         {% endif %}'''
 
         self.add_column(title="Recipe file",

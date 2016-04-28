@@ -107,7 +107,7 @@
         Download recipe file
         {% if not base_recipe_file %}
         <i class="icon-question-sign get-help"
-          data-original-title="The {{recipe.name}} recipe cannot yet be downloaded as the Based on recipe '{{recipe.base_recipe.name}}' has not yet been fetched"></i>
+          data-original-title="The recipe file doesn't exist yet, so you cannot download it. You need to build your custom image first"></i>
         {% endif %}
       </a>
     </div>
@@ -182,13 +182,13 @@
         </dd>
         {% endwith %}
         {% endif %}
+        {% if base_recipe_file %}
         <dt>Recipe file</dt>
         <dd>
           <code>{{recipe.name}}_{{recipe.version}}.bb</code>
-          {% if base_recipe_path %}
-          <a href="{% url 'customrecipedownload' project.pk recipe.pk %}"><i class="icon-share" title="" data-original-title="View recipe file"></i></a>
-          {% endif %}
+          <a href="{% url 'customrecipedownload' project.pk recipe.pk %}"><i class="icon-download-alt" title="Download recipe file"></i></a>
         </dd>
+        {% endif %}
         <dt>Layer</dt>
         <dd><a href="{% url 'layerdetails' project.id recipe.layer_version.pk %}">{{recipe.layer_version.layer.name}}</a></dd>
         {% if recipe.summary %}
