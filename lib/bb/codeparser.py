@@ -191,6 +191,7 @@ class BufferedLogger(Logger):
 
 class PythonParser():
     getvars = (".getVar", ".appendVar", ".prependVar")
+    getvarflags = (".getVarFlag", ".appendVarFlag", ".prependVarFlag")
     containsfuncs = ("bb.utils.contains", "base_contains", "bb.utils.contains_any")
     execfuncs = ("bb.build.exec_func", "bb.build.exec_task")
 
@@ -210,15 +211,20 @@ class PythonParser():
 
     def visit_Call(self, node):
         name = self.called_node_name(node.func)
-        if name and name.endswith(self.getvars) or name in self.containsfuncs:
+        if name and (name.endswith(self.getvars) or name.endswith(self.getvarflags) or name in self.containsfuncs):
             if isinstance(node.args[0], ast.Str):
                 varname = node.args[0].s
                 if name in self.containsfuncs and isinstance(node.args[1], ast.Str):
                     if varname not in self.contains:
                         self.contains[varname] = set()
                     self.contains[varname].add(node.args[1].s)
-                else:                      
-                    self.references.add(node.args[0].s)
+                elif name.endswith(self.getvarflags):
+                    if isinstance(node.args[1], ast.Str):
+                        self.references.add('%s[%s]' % (varname, node.args[1].s))
+                    else:
+                        self.warn(node.func, node.args[1])
+                else:
+                    self.references.add(varname)
             else:
                 self.warn(node.func, node.args[0])
         elif name and name.endswith(".expand"):
