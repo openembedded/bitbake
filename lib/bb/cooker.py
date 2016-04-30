@@ -2147,8 +2147,11 @@ class CookerParser(object):
             return False
         except bb.data_smart.ExpansionError as exc:
             self.error += 1
-            _, value, _ = sys.exc_info()
-            logger.error('ExpansionError during parsing %s: %s', value.recipe, str(exc))
+            bbdir = os.path.dirname(__file__) + os.sep
+            etype, value, _ = sys.exc_info()
+            tb = list(itertools.dropwhile(lambda e: e.filename.startswith(bbdir), exc.traceback))
+            logger.error('ExpansionError during parsing %s', value.recipe,
+                         exc_info=(etype, value, tb))
             self.shutdown(clean=False)
             return False
         except Exception as exc:
