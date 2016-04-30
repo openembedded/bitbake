@@ -1636,6 +1636,17 @@
             </glossdef>
         </glossentry>
 
+        <glossentry id='var-LAYERDIR_RE'><glossterm>LAYERDIR_RE</glossterm>
+            <glossdef>
+                <para>When used inside the <filename>layer.conf</filename> configuration
+                    file, this variable provides the path of the current layer,
+                    escaped for use in a regular expression
+                    (<link linkend='var-BBFILE_PATTERN'><filename>BBFILE_PATTERN</filename></link>).
+                    This variable is not available outside of <filename>layer.conf</filename>
+                    and references are expanded immediately when parsing of the file completes.</para>
+            </glossdef>
+        </glossentry>
+
         <glossentry id='var-LAYERVERSION'><glossterm>LAYERVERSION</glossterm>
             <glossdef>
                 <para>Optionally specifies the version of a layer as a single number.

@@ -22,9 +22,11 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-import os, sys
-from functools import wraps
 import logging
+import os
+import re
+import sys
+from functools import wraps
 import bb
 from bb import data
 import bb.parse
@@ -296,9 +298,12 @@ class CookerDataBuilder(object):
                 if layer.endswith('/'):
                     layer = layer.rstrip('/')
                 data.setVar('LAYERDIR', layer)
+                data.setVar('LAYERDIR_RE', re.escape(layer))
                 data = parse_config_file(os.path.join(layer, "conf", "layer.conf"), data)
                 data.expandVarref('LAYERDIR')
+                data.expandVarref('LAYERDIR_RE')
 
+            data.delVar('LAYERDIR_RE')
             data.delVar('LAYERDIR')
 
         if not data.getVar("BBPATH", True):
