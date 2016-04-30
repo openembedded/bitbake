@@ -208,13 +208,23 @@ def fork_off_task(cfg, data, workerdata, fn, task, taskname, appends, taskdepdat
                 # exported_vars() returns a generator which *cannot* be passed to os.environ.update() 
                 # successfully. We also need to unset anything from the environment which shouldn't be there 
                 exports = bb.data.exported_vars(the_data)
+
                 bb.utils.empty_environment()
                 for e, v in exports:
                     os.environ[e] = v
+
                 for e in fakeenv:
                     os.environ[e] = fakeenv[e]
                     the_data.setVar(e, fakeenv[e])
                     the_data.setVarFlag(e, 'export', "1")
+
+                task_exports = the_data.getVarFlag(taskname, 'exports', True)
+                if task_exports:
+                    for e in task_exports.split():
+                        the_data.setVarFlag(e, 'export', '1')
+                        v = the_data.getVar(e, True)
+                        if v is not None:
+                            os.environ[e] = v
 
                 if quieterrors:
                     the_data.setVarFlag(taskname, "quieterrors", "1")

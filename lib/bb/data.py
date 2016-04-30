@@ -339,7 +339,7 @@ def build_dependencies(key, keys, shelldeps, varflagsexcl, d):
             deps |= parser.references
             deps = deps | (keys & parser.execs)
             return deps, value
-        varflags = d.getVarFlags(key, ["vardeps", "vardepvalue", "vardepsexclude", "vardepvalueexclude", "postfuncs", "prefuncs", "lineno", "filename"]) or {}
+        varflags = d.getVarFlags(key, ["vardeps", "vardepvalue", "vardepsexclude", "vardepvalueexclude", "exports", "postfuncs", "prefuncs", "lineno", "filename"]) or {}
         vardeps = varflags.get("vardeps")
         value = d.getVar(key, False)
 
@@ -383,6 +383,8 @@ def build_dependencies(key, keys, shelldeps, varflagsexcl, d):
                 deps = deps | set(varflags["prefuncs"].split())
             if "postfuncs" in varflags:
                 deps = deps | set(varflags["postfuncs"].split())
+            if "exports" in varflags:
+                deps = deps | set(varflags["exports"].split())
         else:
             parser = d.expandWithRefs(value, key)
             deps |= parser.references
