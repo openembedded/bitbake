@@ -27,6 +27,7 @@ import bb
 import bb.msg
 import multiprocessing
 import fcntl
+import imp
 import subprocess
 import glob
 import fnmatch
@@ -1451,3 +1452,23 @@ def export_proxies(d):
                 exported = True
 
     return exported
+
+
+def load_plugins(logger, plugins, pluginpath):
+    def load_plugin(name):
+        logger.debug('Loading plugin %s' % name)
+        fp, pathname, description = imp.find_module(name, [pluginpath])
+        try:
+            return imp.load_module(name, fp, pathname, description)
+        finally:
+            if fp:
+                fp.close()
+
+    logger.debug('Loading plugins from %s...' % pluginpath)
+    for fn in glob.glob(os.path.join(pluginpath, '*.py')):
+        name = os.path.splitext(os.path.basename(fn))[0]
+        if name != '__init__':
+            plugin = load_plugin(name)
+            if hasattr(plugin, 'plugin_init'):
+                plugin.plugin_init(plugins)
+            plugins.append(plugin)
