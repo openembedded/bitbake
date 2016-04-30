@@ -917,7 +917,7 @@ class DataSmart(MutableMapping):
              yield k
 
     def __len__(self):
-        return len(frozenset(self))
+        return len(frozenset(iter(self)))
 
     def __getitem__(self, item):
         value = self.getVar(item, False)
