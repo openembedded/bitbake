@@ -61,8 +61,13 @@ def reset_cache():
 # in all namespaces, hence we add them to __builtins__.
 # If we do not do this and use the exec globals, they will
 # not be available to subfunctions.
-__builtins__['bb'] = bb
-__builtins__['os'] = os
+if hasattr(__builtins__, '__setitem__'):
+    builtins = __builtins__
+else:
+    builtins = __builtins__.__dict__
+
+builtins['bb'] = bb
+builtins['os'] = os
 
 class FuncFailed(Exception):
     def __init__(self, name = None, logfile = None):
