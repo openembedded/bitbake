@@ -1477,5 +1477,7 @@ def load_plugins(logger, plugins, pluginpath):
         if name != '__init__':
             plugin = load_plugin(name)
             if hasattr(plugin, 'plugin_init'):
-                plugin.plugin_init(plugins)
-            plugins.append(plugin)
+                obj = plugin.plugin_init(plugins)
+                plugins.append(obj or plugin)
+            else:
+                plugins.append(plugin)
