@@ -72,11 +72,16 @@ _catchall_handlers = {}
 _eventfilter = None
 _uiready = False
 
+if hasattr(__builtins__, '__setitem__'):
+    builtins = __builtins__
+else:
+    builtins = __builtins__.__dict__
+
 def execute_handler(name, handler, event, d):
     event.data = d
     addedd = False
-    if 'd' not in __builtins__:
-        __builtins__['d'] = d
+    if 'd' not in builtins:
+        builtins['d'] = d
         addedd = True
     try:
         ret = handler(event)
@@ -94,7 +99,7 @@ def execute_handler(name, handler, event, d):
     finally:
         del event.data
         if addedd:
-            del __builtins__['d']
+            del builtins['d']
 
 def fire_class_handlers(event, d):
     if isinstance(event, logging.LogRecord):
