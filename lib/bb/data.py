@@ -182,12 +182,12 @@ def inheritFromOS(d, savedenv, permitted):
 
 def emit_var(var, o=sys.__stdout__, d = init(), all=False):
     """Emit a variable to be sourced by a shell."""
-    if d.getVarFlag(var, "python", False):
+    func = d.getVarFlag(var, "func", False)
+    if d.getVarFlag(var, 'python', False) and func:
         return False
 
     export = d.getVarFlag(var, "export", False)
     unexport = d.getVarFlag(var, "unexport", False)
-    func = d.getVarFlag(var, "func", False)
     if not all and not export and not unexport and not func:
         return False
 
