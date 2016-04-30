@@ -28,6 +28,7 @@ import bb.msg
 import multiprocessing
 import fcntl
 import imp
+import itertools
 import subprocess
 import glob
 import fnmatch
@@ -41,6 +42,8 @@ from ctypes import cdll
 
 
 logger = logging.getLogger("BitBake.Util")
+python_extensions = [e for e, _, _ in imp.get_suffixes()]
+
 
 def clean_context():
     return {
@@ -1465,8 +1468,12 @@ def load_plugins(logger, plugins, pluginpath):
                 fp.close()
 
     logger.debug('Loading plugins from %s...' % pluginpath)
-    for fn in glob.glob(os.path.join(pluginpath, '*.py')):
-        name = os.path.splitext(os.path.basename(fn))[0]
+
+    expanded = (glob.glob(os.path.join(pluginpath, '*' + ext))
+                for ext in python_extensions)
+    files = itertools.chain.from_iterable(expanded)
+    names = set(os.path.splitext(os.path.basename(fn))[0] for fn in files)
+    for name in names:
         if name != '__init__':
             plugin = load_plugin(name)
             if hasattr(plugin, 'plugin_init'):
