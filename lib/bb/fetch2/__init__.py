@@ -813,8 +813,9 @@ def runfetchcmd(cmd, d, quiet=False, cleanup=None):
     if not cleanup:
         cleanup = []
 
+    origenv = d.getVar("BB_ORIGENV", False)
     for var in exportvars:
-        val = d.getVar(var, True) or d.getVar("BB_ORIGENV", False).getVar(var, True)
+        val = d.getVar(var, True) or (origenv and origenv.getVar(var, True))
         if val:
             cmd = 'export ' + var + '=\"%s\"; %s' % (val, cmd)
 
