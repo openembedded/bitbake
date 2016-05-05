@@ -477,7 +477,16 @@ class CustomImagesTable(ToasterTable):
 
     def get_context_data(self, **kwargs):
         context = super(CustomImagesTable, self).get_context_data(**kwargs)
+
+        empty_state_template = '''
+        You have not created any custom images yet.
+        <a href="{% url 'newcustomimage' data.pid %}">
+        Create your first custom image</a>
+        '''
+        context['empty_state'] = self.render_static_data(empty_state_template,
+                                                         kwargs)
         project = Project.objects.get(pk=kwargs['pid'])
+
         # TODO put project into the ToasterTable base class
         context['project'] = project
         return context

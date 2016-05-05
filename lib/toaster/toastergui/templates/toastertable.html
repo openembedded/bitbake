@@ -26,7 +26,7 @@
 {% include 'toastertable-filter.html' %}
 
 <div class="row-fluid" id="empty-state-{{table_name}}" style="display:none">
-  <div class="alert alert-info">{{empty_state}}</div>
+  <div class="alert alert-info">{{empty_state|safe}}</div>
 </div>
 
 <div id="no-results-{{table_name}}" style="display:none">
