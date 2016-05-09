@@ -57,9 +57,9 @@ else:
     except IOError as e:
         logger.error(str(e))
         sys.exit(1)
-    except cPickle.UnpicklingError, EOFError:
+    except (pickle.UnpicklingError, EOFError):
         logger.error('Invalid signature data - ensure you are specifying a sigdata/siginfo file')
         sys.exit(1)
 
     if output:
-        print '\n'.join(output)
+        print('\n'.join(output))

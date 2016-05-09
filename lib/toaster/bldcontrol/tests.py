@@ -53,7 +53,7 @@ class BEControllerTests(object):
             # setting layers, skip any layer info
             bc.setLayers(BITBAKE_LAYER, POKY_LAYERS)
         except NotImplementedError:
-            print "Test skipped due to command not implemented yet"
+            print("Test skipped due to command not implemented yet")
             return True
         # We are ok with the exception as we're handling the git already exists
         except BuildSetupException:
@@ -79,7 +79,7 @@ class BEControllerTests(object):
             # setting layers, skip any layer info
             layerSet = bc.setLayers(BITBAKE_LAYER, POKY_LAYERS)
         except NotImplementedError:
-            print "Test skipped due to command not implemented yet"
+            print("Test skipped due to command not implemented yet")
             return True
         # We are ok with the exception as we're handling the git already exists
         except BuildSetupException:

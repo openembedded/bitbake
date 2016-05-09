@@ -138,7 +138,7 @@ else:
                 try:
                     if pytz.timezone(zonename) is not None:
                         zonefilelist[hashlib.md5(open(filepath).read()).hexdigest()] = zonename
-                except UnknownTimeZoneError, ValueError:
+                except UnknownTimeZoneError as ValueError:
                     # we expect timezone failures here, just move over
                     pass
             except ImportError:

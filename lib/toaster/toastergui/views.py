@@ -910,7 +910,7 @@ def _get_dir_entries(build_id, target_id, start):
             response.append(entry)
 
         except Exception as e:
-            print "Exception ", e
+            print("Exception ", e)
             traceback.print_exc(e)
 
     # sort by directories first, then by name

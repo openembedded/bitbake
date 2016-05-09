@@ -70,11 +70,11 @@ class Command(NoArgsCommand):
                     return True
 
                 if len(be.sourcedir) == 0:
-                    print "\n -- Validation: The layers checkout directory must be set."
+                    print("\n -- Validation: The layers checkout directory must be set.")
                     is_changed = _update_sourcedir()
 
                 if not be.sourcedir.startswith("/"):
-                    print "\n -- Validation: The layers checkout directory must be set to an absolute path."
+                    print("\n -- Validation: The layers checkout directory must be set to an absolute path.")
                     is_changed = _update_sourcedir()
 
                 if is_changed:
@@ -87,16 +87,16 @@ class Command(NoArgsCommand):
                     return True
 
                 if len(be.builddir) == 0:
-                    print "\n -- Validation: The build directory must be set."
+                    print("\n -- Validation: The build directory must be set.")
                     is_changed = _update_builddir()
 
                 if not be.builddir.startswith("/"):
-                    print "\n -- Validation: The build directory must to be set to an absolute path."
+                    print("\n -- Validation: The build directory must to be set to an absolute path.")
                     is_changed = _update_builddir()
 
 
                 if is_changed:
-                    print "\nBuild configuration saved"
+                    print("\nBuild configuration saved")
                     be.save()
                     return True
 
@@ -104,20 +104,20 @@ class Command(NoArgsCommand):
                 if be.needs_import:
                     try:
                         config_file = os.environ.get('TOASTER_CONF')
-                        print "\nImporting file: %s" % config_file
+                        print("\nImporting file: %s" % config_file)
                         from loadconf import Command as LoadConfigCommand
 
                         LoadConfigCommand()._import_layer_config(config_file)
                         # we run lsupdates after config update
-                        print "\nLayer configuration imported. Updating information from the layer sources, please wait.\nYou can re-update any time later by running bitbake/lib/toaster/manage.py lsupdates"
+                        print("\nLayer configuration imported. Updating information from the layer sources, please wait.\nYou can re-update any time later by running bitbake/lib/toaster/manage.py lsupdates")
                         from django.core.management import call_command
                         call_command("lsupdates")
 
                         # we don't look for any other config files
                         return is_changed
                     except Exception as e:
-                        print "Failure while trying to import the toaster config file %s: %s" %\
-                            (config_file, e)
+                        print("Failure while trying to import the toaster config file %s: %s" %\
+                            (config_file, e))
                         traceback.print_exc(e)
 
                 return is_changed

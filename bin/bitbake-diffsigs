@@ -95,7 +95,7 @@ def find_compare_task(bbhandler, pn, taskname):
         # Recurse into signature comparison
         output = bb.siggen.compare_sigfiles(latestfiles[0], latestfiles[1], recursecb)
         if output:
-            print '\n'.join(output)
+            print('\n'.join(output))
     sys.exit(0)
 
 
@@ -130,9 +130,9 @@ else:
         except IOError as e:
             logger.error(str(e))
             sys.exit(1)
-        except cPickle.UnpicklingError, EOFError:
+        except (pickle.UnpicklingError, EOFError):
             logger.error('Invalid signature data - ensure you are specifying sigdata/siginfo files')
             sys.exit(1)
 
         if output:
-            print '\n'.join(output)
+            print('\n'.join(output))

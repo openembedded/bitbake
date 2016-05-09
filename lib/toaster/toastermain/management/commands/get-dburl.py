@@ -6,4 +6,4 @@ class Command(NoArgsCommand):
     help    = "get database url"
 
     def handle_noargs(self,**options):
-        print getDATABASE_URL()
+        print(getDATABASE_URL())
