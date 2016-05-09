@@ -32,6 +32,7 @@ from django.core import validators
 from django.conf import settings
 import django.db.models.signals
 
+import sys
 import os.path
 import re
 import itertools
