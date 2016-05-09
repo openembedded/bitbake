@@ -33,11 +33,12 @@
     {% endif %}
   </h1>
   <form id="project-name-change-form" style="margin-bottom: 0px; display: none;">
-    <div class="input-append">
+    <div class="input-append" id="validate-project-name">
       <input class="huge input-xxlarge" type="text" id="project-name-change-input" autocomplete="off" value="{{project.name}}">
         <button id="project-name-change-btn" class="btn btn-large" type="button">Save</button>
         <a href="#" id="project-name-change-cancel" class="btn btn-large btn-link">Cancel</a>
     </div>
+    <p class="help-block error" style="display: none;margin-top: 10px;" id="hint-error-project-name">A project with this name exists. Project names must be unique.</p>
   </form>
 </div>
 
