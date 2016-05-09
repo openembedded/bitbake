@@ -586,12 +586,12 @@ def verify_checksum(ud, d, precomputed={}):
             raise NoChecksumError('Missing SRC_URI checksum', ud.url)
 
         # Log missing sums so user can more easily add them
-        logger.warn('Missing md5 SRC_URI checksum for %s, consider adding to the recipe:\n'
-                    'SRC_URI[%s] = "%s"',
-                    ud.localpath, ud.md5_name, md5data)
-        logger.warn('Missing sha256 SRC_URI checksum for %s, consider adding to the recipe:\n'
-                    'SRC_URI[%s] = "%s"',
-                    ud.localpath, ud.sha256_name, sha256data)
+        logger.warning('Missing md5 SRC_URI checksum for %s, consider adding to the recipe:\n'
+                       'SRC_URI[%s] = "%s"',
+                       ud.localpath, ud.md5_name, md5data)
+        logger.warning('Missing sha256 SRC_URI checksum for %s, consider adding to the recipe:\n'
+                       'SRC_URI[%s] = "%s"',
+                       ud.localpath, ud.sha256_name, sha256data)
 
     # We want to alert the user if a checksum is defined in the recipe but
     # it does not match.
@@ -659,9 +659,9 @@ def verify_donestamp(ud, d, origud=None):
             # files to those containing the checksums.
             if not isinstance(e, EOFError):
                 # Ignore errors, they aren't fatal
-                logger.warn("Couldn't load checksums from donestamp %s: %s "
-                            "(msg: %s)" % (ud.donestamp, type(e).__name__,
-                                           str(e)))
+                logger.warning("Couldn't load checksums from donestamp %s: %s "
+                               "(msg: %s)" % (ud.donestamp, type(e).__name__,
+                                              str(e)))
 
     try:
         checksums = verify_checksum(ud, d, precomputed_checksums)
@@ -675,8 +675,8 @@ def verify_donestamp(ud, d, origud=None):
     except ChecksumError as e:
         # Checksums failed to verify, trigger re-download and remove the
         # incorrect stamp file.
-        logger.warn("Checksum mismatch for local file %s\n"
-                    "Cleaning and trying again." % ud.localpath)
+        logger.warning("Checksum mismatch for local file %s\n"
+                       "Cleaning and trying again." % ud.localpath)
         if os.path.exists(ud.localpath):
             rename_bad_checksum(ud, e.checksum)
         bb.utils.remove(ud.donestamp)
@@ -708,8 +708,8 @@ def update_stamp(ud, d):
         except ChecksumError as e:
             # Checksums failed to verify, trigger re-download and remove the
             # incorrect stamp file.
-            logger.warn("Checksum mismatch for local file %s\n"
-                        "Cleaning and trying again." % ud.localpath)
+            logger.warning("Checksum mismatch for local file %s\n"
+                           "Cleaning and trying again." % ud.localpath)
             if os.path.exists(ud.localpath):
                 rename_bad_checksum(ud, e.checksum)
             bb.utils.remove(ud.donestamp)
@@ -984,8 +984,8 @@ def try_mirror_url(fetch, origud, ud, ld, check = False):
 
     except bb.fetch2.BBFetchException as e:
         if isinstance(e, ChecksumError):
-            logger.warn("Mirror checksum failure for url %s (original url: %s)\nCleaning and trying again." % (ud.url, origud.url))
-            logger.warn(str(e))
+            logger.warning("Mirror checksum failure for url %s (original url: %s)\nCleaning and trying again." % (ud.url, origud.url))
+            logger.warning(str(e))
             if os.path.exists(ud.localpath):
                 rename_bad_checksum(ud, e.checksum)
         elif isinstance(e, NoChecksumError):
@@ -1200,7 +1200,7 @@ class FetchData(object):
             raise NonLocalMethod()
 
         if self.parm.get("proto", None) and "protocol" not in self.parm:
-            logger.warn('Consider updating %s recipe to use "protocol" not "proto" in SRC_URI.', d.getVar('PN', True))
+            logger.warning('Consider updating %s recipe to use "protocol" not "proto" in SRC_URI.', d.getVar('PN', True))
             self.parm["protocol"] = self.parm.get("proto", None)
 
         if hasattr(self.method, "urldata_init"):
@@ -1596,14 +1596,14 @@ class Fetch(object):
 
                     except BBFetchException as e:
                         if isinstance(e, ChecksumError):
-                            logger.warn("Checksum failure encountered with download of %s - will attempt other sources if available" % u)
+                            logger.warning("Checksum failure encountered with download of %s - will attempt other sources if available" % u)
                             logger.debug(1, str(e))
                             if os.path.exists(ud.localpath):
                                 rename_bad_checksum(ud, e.checksum)
                         elif isinstance(e, NoChecksumError):
                             raise
                         else:
-                            logger.warn('Failed to fetch URL %s, attempting MIRRORS if available' % u)
+                            logger.warning('Failed to fetch URL %s, attempting MIRRORS if available' % u)
                             logger.debug(1, str(e))
                         firsterr = e
                         # Remove any incomplete fetch

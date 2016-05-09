@@ -66,7 +66,7 @@ class LocalhostBEController(BuildEnvironmentController):
                 err = "command: %s \n%s" % (command, out)
             else:
                 err = "command: %s \n%s" % (command, err)
-            logger.warn("localhostbecontroller: shellcmd error %s" % err)
+            logger.warning("localhostbecontroller: shellcmd error %s" % err)
             raise ShellCmdException(err)
         else:
             logger.debug("localhostbecontroller: shellcmd success")

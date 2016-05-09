@@ -163,7 +163,7 @@ def main(server, eventHandler, params):
     inheritlist, _ = server.runCommand(["getVariable", "INHERIT"])
 
     if not "buildhistory" in inheritlist.split(" "):
-        logger.warn("buildhistory is not enabled. Please enable INHERIT += \"buildhistory\" to see image details.")
+        logger.warning("buildhistory is not enabled. Please enable INHERIT += \"buildhistory\" to see image details.")
         build_history_enabled = False
 
     if not params.observe_only:
@@ -433,7 +433,7 @@ def main(server, eventHandler, params):
                 buildinfohelper.store_dependency_information(event)
                 continue
 
-            logger.warn("Unknown event: %s", event)
+            logger.warning("Unknown event: %s", event)
             return_value += 1
 
         except EnvironmentError as ioerror:
@@ -461,5 +461,5 @@ def main(server, eventHandler, params):
     if interrupted and return_value == 0:
         return_value += 1
 
-    logger.warn("Return value is %d", return_value)
+    logger.warning("Return value is %d", return_value)
     return return_value

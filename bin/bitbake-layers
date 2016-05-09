@@ -654,7 +654,7 @@ build results (as the layer priority order has effectively changed).
                                     logger.plain('  Skipping layer config file %s' % f1full )
                                     continue
                                 else:
-                                    logger.warn('Overwriting file %s', fdest)
+                                    logger.warning('Overwriting file %s', fdest)
                             bb.utils.copyfile(f1full, fdest)
                             if ext == '.bb':
                                 for append in self.bbhandler.cooker.collection.get_file_appends(f1full):
@@ -790,8 +790,8 @@ Lists recipes with the bbappends that apply to them as subitems.
 
             if best_filename:
                 if best_filename in missing:
-                    logger.warn('%s: missing append for preferred version',
-                                best_filename)
+                    logger.warning('%s: missing append for preferred version',
+                                   best_filename)
             return True
         else:
             return False

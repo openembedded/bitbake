@@ -664,8 +664,8 @@ class ORMWrapper(object):
                         dep_type = tdeptype,
                         target = target_obj))
                 except KeyError as e:
-                    logger.warn("Could not add dependency to the package %s "
-                                "because %s is an unknown package", p, px)
+                    logger.warning("Could not add dependency to the package %s "
+                                   "because %s is an unknown package", p, px)
 
         if len(packagedeps_objs) > 0:
             Package_Dependency.objects.bulk_create(packagedeps_objs)
@@ -673,7 +673,7 @@ class ORMWrapper(object):
             logger.info("No package dependencies created")
 
         if len(errormsg) > 0:
-            logger.warn("buildinfohelper: target_package_info could not identify recipes: \n%s", errormsg)
+            logger.warning("buildinfohelper: target_package_info could not identify recipes: \n%s", errormsg)
 
     def save_target_image_file_information(self, target_obj, file_name, file_size):
         Target_Image_File.objects.create( target = target_obj,
@@ -932,7 +932,7 @@ class BuildInfoHelper(object):
                 return lvo
 
         #if we get here, we didn't read layers correctly; dump whatever information we have on the error log
-        logger.warn("Could not match layer version for recipe path %s : %s", path, self.orm_wrapper.layer_version_objects)
+        logger.warning("Could not match layer version for recipe path %s : %s", path, self.orm_wrapper.layer_version_objects)
 
         #mockup the new layer
         unknown_layer, _ = Layer.objects.get_or_create(name="Unidentified layer", layer_index_url="")
@@ -1003,7 +1003,7 @@ class BuildInfoHelper(object):
                 self.internal_state['lvs'][self.orm_wrapper.get_update_layer_object(layerinfos[layer], self.brbe)] = layerinfos[layer]['version']
                 self.internal_state['lvs'][self.orm_wrapper.get_update_layer_object(layerinfos[layer], self.brbe)]['local_path'] = layerinfos[layer]['local_path']
             except NotExisting as nee:
-                logger.warn("buildinfohelper: cannot identify layer exception:%s ", nee)
+                logger.warning("buildinfohelper: cannot identify layer exception:%s ", nee)
 
 
     def store_started_build(self, event, build_log_path):
@@ -1240,14 +1240,14 @@ class BuildInfoHelper(object):
                     self.orm_wrapper.save_target_package_information(self.internal_state['build'], target, imgdata, pkgdata, self.internal_state['recipes'], built_package=True)
                     self.orm_wrapper.save_target_package_information(self.internal_state['build'], target, imgdata.copy(), pkgdata, self.internal_state['recipes'], built_package=False)
                 except KeyError as e:
-                    logger.warn("KeyError in save_target_package_information"
-                                "%s ", e)
+                    logger.warning("KeyError in save_target_package_information"
+                                   "%s ", e)
 
                 try:
                     self.orm_wrapper.save_target_file_information(self.internal_state['build'], target, filedata)
                 except KeyError as e:
-                    logger.warn("KeyError in save_target_file_information"
-                                "%s ", e)
+                    logger.warning("KeyError in save_target_file_information"
+                                   "%s ", e)
 
 
 
@@ -1392,7 +1392,7 @@ class BuildInfoHelper(object):
         Task_Dependency.objects.bulk_create(taskdeps_objects)
 
         if len(errormsg) > 0:
-            logger.warn("buildinfohelper: dependency info not identify recipes: \n%s", errormsg)
+            logger.warning("buildinfohelper: dependency info not identify recipes: \n%s", errormsg)
 
 
     def store_build_package_information(self, event):

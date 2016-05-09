@@ -84,7 +84,7 @@ for t in os.walk(os.path.dirname(currentdir)):
         if not conflict:
             urlpatterns.insert(0, url(r'^' + modulename + '/', include ( modulename + '.urls')))
         else:
-            logger.warn("Module \'%s\' has a regexp conflict, was not added to the urlpatterns" % modulename)
+            logger.warning("Module \'%s\' has a regexp conflict, was not added to the urlpatterns" % modulename)
 
 from pprint import pformat
 #logger.debug("urlpatterns list %s", pformat(urlpatterns))

@@ -350,7 +350,7 @@ def main(server, eventHandler, params, tf = TerminalFilter):
                         tries -= 1
                     if tries:
                         continue
-                logger.warn(event.msg)
+                logger.warning(event.msg)
                 continue
 
             if isinstance(event, logging.LogRecord):
@@ -377,7 +377,7 @@ def main(server, eventHandler, params, tf = TerminalFilter):
                 continue
 
             if isinstance(event, bb.build.TaskFailedSilent):
-                logger.warn("Logfile for failed setscene task is %s" % event.logfile)
+                logger.warning("Logfile for failed setscene task is %s" % event.logfile)
                 continue
             if isinstance(event, bb.build.TaskFailed):
                 return_value = 1
@@ -509,8 +509,8 @@ def main(server, eventHandler, params, tf = TerminalFilter):
                 continue
 
             if isinstance(event, bb.runqueue.sceneQueueTaskFailed):
-                logger.warn("Setscene task %s (%s) failed with exit code '%s' - real task will be run instead",
-                             event.taskid, event.taskstring, event.exitcode)
+                logger.warning("Setscene task %s (%s) failed with exit code '%s' - real task will be run instead",
+                               event.taskid, event.taskstring, event.exitcode)
                 continue
 
             if isinstance(event, bb.event.DepTreeGenerated):

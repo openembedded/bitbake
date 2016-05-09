@@ -824,7 +824,7 @@ class RunQueueData:
                     msg += "\n%s has unique rprovides:\n  %s" % (provfn, "\n  ".join(rprovide_results[provfn] - commonrprovs))
 
                 if self.warn_multi_bb:
-                    logger.warn(msg)
+                    logger.warning(msg)
                 else:
                     logger.error(msg)
 
@@ -852,7 +852,7 @@ class RunQueueData:
             taskdep = self.dataCache.task_deps[fn]
             fnid = self.taskData.getfn_id(fn)
             if taskname not in taskData.tasks_lookup[fnid]:
-                logger.warn("Task %s does not exist, invalidating this task will have no effect" % taskname)
+                logger.warning("Task %s does not exist, invalidating this task will have no effect" % taskname)
             if 'nostamp' in taskdep and taskname in taskdep['nostamp']:
                 if error_nostamp:
                     bb.fatal("Task %s is marked nostamp, cannot invalidate this task" % taskname)

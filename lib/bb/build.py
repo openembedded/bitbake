@@ -172,7 +172,7 @@ def exec_func(func, d, dirs = None, pythonexception=False):
     body = d.getVar(func, False)
     if not body:
         if body is None:
-            logger.warn("Function %s doesn't exist", func)
+            logger.warning("Function %s doesn't exist", func)
         return
 
     flags = d.getVarFlags(func)

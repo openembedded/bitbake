@@ -364,7 +364,7 @@ class BitbakeWorker(object):
     def handle_ping(self, _):
         workerlog_write("Handling ping\n")
 
-        logger.warn("Pong from bitbake-worker!")
+        logger.warning("Pong from bitbake-worker!")
 
     def handle_quit(self, data):
         workerlog_write("Handling quit\n")

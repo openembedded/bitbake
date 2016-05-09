@@ -364,7 +364,7 @@ def build_dependencies(key, keys, shelldeps, varflagsexcl, d):
             if varflags.get("python"):
                 parser = bb.codeparser.PythonParser(key, logger)
                 if value and "\t" in value:
-                    logger.warn("Variable %s contains tabs, please remove these (%s)" % (key, d.getVar("FILE", True)))
+                    logger.warning("Variable %s contains tabs, please remove these (%s)" % (key, d.getVar("FILE", True)))
                 parser.parse_python(value, filename=varflags.get("filename"), lineno=varflags.get("lineno"))
                 deps = deps | parser.references
                 deps = deps | (keys & parser.execs)

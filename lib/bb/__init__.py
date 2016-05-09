@@ -85,7 +85,7 @@ def plain(*args):
 
 def debug(lvl, *args):
     if isinstance(lvl, basestring):
-        mainlogger.warn("Passed invalid debug level '%s' to bb.debug", lvl)
+        mainlogger.warning("Passed invalid debug level '%s' to bb.debug", lvl)
         args = (lvl,) + args
         lvl = 1
     mainlogger.debug(lvl, ''.join(args))
@@ -94,7 +94,7 @@ def note(*args):
     mainlogger.info(''.join(args))
 
 def warn(*args):
-    mainlogger.warn(''.join(args))
+    mainlogger.warning(''.join(args))
 
 def error(*args, **kwargs):
     mainlogger.error(''.join(args), extra=kwargs)

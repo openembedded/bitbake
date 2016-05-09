@@ -98,11 +98,11 @@ class BuildRequest(models.Model):
         # Check that the state we're trying to set is not going backwards
         # e.g. from REQ_FAILED to REQ_INPROGRESS
         if self.old_state != self.state and self.old_state > self.state:
-            logger.warn("Invalid state change requested: "
-                        "Cannot go from %s to %s - ignoring request" %
-                        (BuildRequest.REQUEST_STATE[self.old_state][1],
-                         BuildRequest.REQUEST_STATE[self.state][1])
-                       )
+            logger.warning("Invalid state change requested: "
+                           "Cannot go from %s to %s - ignoring request" %
+                           (BuildRequest.REQUEST_STATE[self.old_state][1],
+                            BuildRequest.REQUEST_STATE[self.state][1])
+                          )
             # Set property back to the old value
             self.state = self.old_state
             return
