@@ -19,9 +19,12 @@
         <div class="span6">
         <form method="POST">{% csrf_token %}
 
-            <fieldset>
+            <fieldset id="validate-project-name">
               <label>Project name <span class="muted">(required)</span></label>
-              <input type="text" class="input-xlarge" required id="new-project-name" name="projectname">
+              <div>
+                <input type="text" class="input-xlarge" required id="new-project-name" name="projectname">
+                <p class="help-block error" style="display: none;" id="hint-error-project-name">A project with this name exists. Project names must be unique.</p>
+              </div>
             </fieldset>
 <!--
             <fieldset>
@@ -112,6 +115,11 @@
                 $(".helptext").hide();
                 $('#description-' + new_release).fadeIn();
             });
+
+            libtoaster.makeProjectNameValidation($("#new-project-name"),
+                 $("#hint-error-project-name"), $("#validate-project-name"),
+                 $(".btn-primary"));
+
 
 /*			// Hide the project release when you select an analysis project
 			function projectType() {
