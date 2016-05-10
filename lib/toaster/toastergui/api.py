@@ -18,6 +18,7 @@
 
 
 # Temporary home for the UI's misc API
+import re
 
 from orm.models import Project, ProjectTarget, Build
 from bldcontrol.models import BuildRequest
@@ -92,7 +93,7 @@ class XhrBuildRequest(View):
         if 'targets' in request.POST:
             ProjectTarget.objects.filter(project = project).delete()
             s = str(request.POST['targets'])
-            for t in s.translate(None, ";%|\"").split(" "):
+            for t in re.sub(r'[;%|"]', '', s).split(" "):
                 if ":" in t:
                     target, task = t.split(":")
                 else:
