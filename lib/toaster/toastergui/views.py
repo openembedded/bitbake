@@ -2887,7 +2887,7 @@ if True:
             else:
                 context['dl_dir'] = ProjectVariable.objects.get(project = prj, name = "DL_DIR").value
             context['dl_dir_defined'] = "1"
-        except ProjectVariable.DoesNotExist,BuildEnvironment.DoesNotExist:
+        except (ProjectVariable.DoesNotExist, BuildEnvironment.DoesNotExist):
             pass
         try:
             context['fstypes'] =  ProjectVariable.objects.get(project = prj, name = "IMAGE_FSTYPES").value
@@ -2915,7 +2915,7 @@ if True:
             else:
                 context['sstate_dir'] = ProjectVariable.objects.get(project = prj, name = "SSTATE_DIR").value
             context['sstate_dir_defined'] = "1"
-        except ProjectVariable.DoesNotExist, BuildEnvironment.DoesNotExist:
+        except (ProjectVariable.DoesNotExist, BuildEnvironment.DoesNotExist):
             pass
 
         return context
@@ -2978,5 +2978,5 @@ if True:
                 return response
             else:
                 return render(request, "unavailable_artifact.html")
-        except ObjectDoesNotExist, IOError:
+        except (ObjectDoesNotExist, IOError):
             return render(request, "unavailable_artifact.html")
