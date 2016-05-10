@@ -2235,10 +2235,10 @@ if True:
 
 
     def xhr_importlayer(request):
-        if (not request.POST.has_key('vcs_url') or
-            not request.POST.has_key('name') or
-            not request.POST.has_key('git_ref') or
-            not request.POST.has_key('project_id')):
+        if ('vcs_url' not in request.POST or
+            'name' not in request.POST or
+            'git_ref' not in request.POST or
+            'project_id' not in request.POST):
           return HttpResponse(jsonfilter({"error": "Missing parameters; requires vcs_url, name, git_ref and project_id"}), content_type = "application/json")
 
         layers_added = [];
@@ -2294,7 +2294,7 @@ if True:
                 layer_version.save()
 
                 # Add the dependencies specified for this new layer
-                if (post_data.has_key("layer_deps") and
+                if ('layer_deps' in post_data and
                     version_created and
                     len(post_data["layer_deps"]) > 0):
                     for layer_dep_id in post_data["layer_deps"].split(","):
@@ -2348,7 +2348,7 @@ if True:
         def error_response(error):
             return HttpResponse(jsonfilter({"error": error}), content_type = "application/json")
 
-        if not request.POST.has_key("layer_version_id"):
+        if "layer_version_id" not in request.POST:
             return error_response("Please specify a layer version id")
         try:
             layer_version_id = request.POST["layer_version_id"]
@@ -2357,26 +2357,26 @@ if True:
             return error_response("Cannot find layer to update")
 
 
-        if request.POST.has_key("vcs_url"):
+        if "vcs_url" in request.POST:
             layer_version.layer.vcs_url = request.POST["vcs_url"]
-        if request.POST.has_key("dirpath"):
+        if "dirpath" in request.POST:
             layer_version.dirpath = request.POST["dirpath"]
-        if request.POST.has_key("commit"):
+        if "commit" in request.POST:
             layer_version.commit = request.POST["commit"]
-        if request.POST.has_key("up_branch"):
+        if "up_branch" in request.POST:
             layer_version.up_branch_id = int(request.POST["up_branch"])
 
-        if request.POST.has_key("add_dep"):
+        if "add_dep" in request.POST:
             lvd = LayerVersionDependency(layer_version=layer_version, depends_on_id=request.POST["add_dep"])
             lvd.save()
 
-        if request.POST.has_key("rm_dep"):
+        if "rm_dep" in request.POST:
             rm_dep = LayerVersionDependency.objects.get(layer_version=layer_version, depends_on_id=request.POST["rm_dep"])
             rm_dep.delete()
 
-        if request.POST.has_key("summary"):
+        if "summary" in request.POST:
             layer_version.layer.summary = request.POST["summary"]
-        if request.POST.has_key("description"):
+        if "description" in request.POST:
             layer_version.layer.description = request.POST["description"]
 
         try:
