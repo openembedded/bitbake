@@ -54,8 +54,8 @@ class Command(NoArgsCommand):
                 logger.debug("runbuilds: No build env")
                 return
 
-            logger.debug("runbuilds: starting build %s, environment %s" % \
-                         (str(br).decode('utf-8'), bec.be))
+            logger.info("runbuilds: starting build %s, environment %s" % \
+                        (br, bec.be))
 
             # let the build request know where it is being executed
             br.environment = bec.be
