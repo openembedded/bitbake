@@ -4,7 +4,7 @@ from orm.models import BitbakeVersion, Release, ReleaseDefaultLayer, ReleaseLaye
 from django.db import IntegrityError
 import os
 
-from checksettings import DN
+from .checksettings import DN
 
 import logging
 logger = logging.getLogger("toaster")

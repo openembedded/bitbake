@@ -105,7 +105,7 @@ class Command(NoArgsCommand):
                     try:
                         config_file = os.environ.get('TOASTER_CONF')
                         print("\nImporting file: %s" % config_file)
-                        from loadconf import Command as LoadConfigCommand
+                        from .loadconf import Command as LoadConfigCommand
 
                         LoadConfigCommand()._import_layer_config(config_file)
                         # we run lsupdates after config update

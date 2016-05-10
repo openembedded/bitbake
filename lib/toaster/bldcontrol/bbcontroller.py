@@ -79,7 +79,7 @@ def getBuildEnvironmentController(**kwargs):
         The return object MUST always be a BuildEnvironmentController.
     """
 
-    from localhostbecontroller import LocalhostBEController
+    from bldcontrol.localhostbecontroller import LocalhostBEController
 
     be = BuildEnvironment.objects.filter(Q(**kwargs))[0]
     if be.betype == BuildEnvironment.TYPE_LOCAL:
