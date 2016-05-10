@@ -2279,7 +2279,7 @@ if True:
         # Strip trailing/leading whitespace from all values
         # put into a new dict because POST one is immutable
         post_data = dict()
-        for key,val in request.POST.iteritems():
+        for key,val in request.POST.items():
           post_data[key] = val.strip()
 
 

@@ -278,12 +278,12 @@ class ToasterTable(TemplateView):
         # Make a unique cache name
         cache_name = self.__class__.__name__
 
-        for key, val in request.GET.iteritems():
+        for key, val in request.GET.items():
             if key == 'nocache':
                 continue
             cache_name = cache_name + str(key) + str(val)
 
-        for key, val in kwargs.iteritems():
+        for key, val in kwargs.items():
             cache_name = cache_name + str(key) + str(val)
 
         # No special chars allowed in the cache name apart from dash

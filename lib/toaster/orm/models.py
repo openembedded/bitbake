@@ -103,7 +103,7 @@ class GitURLValidator(validators.URLValidator):
 
 def GitURLField(**kwargs):
     r = models.URLField(**kwargs)
-    for i in xrange(len(r.validators)):
+    for i in range(len(r.validators)):
         if isinstance(r.validators[i], validators.URLValidator):
             r.validators[i] = GitURLValidator()
     return r
