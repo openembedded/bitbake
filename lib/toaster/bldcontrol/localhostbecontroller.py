@@ -70,7 +70,7 @@ class LocalhostBEController(BuildEnvironmentController):
             raise ShellCmdException(err)
         else:
             logger.debug("localhostbecontroller: shellcmd success")
-            return out
+            return out.decode('utf-8')
 
     def getGitCloneDirectory(self, url, branch):
         """Construct unique clone directory name out of url and branch."""

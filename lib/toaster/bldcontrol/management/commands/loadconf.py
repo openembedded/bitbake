@@ -54,7 +54,7 @@ class Command(BaseCommand):
             (out,err) = cmd.communicate()
             if cmd.returncode != 0:
                 logging.warning("Error while importing layer vcs_url: git error: %s" % err)
-            for line in out.split("\n"):
+            for line in out.decode('utf-8').split("\n"):
                 try:
                     (name, path) = line.split("\t", 1)
                     if name == remote_name:

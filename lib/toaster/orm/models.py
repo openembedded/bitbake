@@ -1169,7 +1169,7 @@ class LayerIndexLayerSource(LayerSource):
             except URLError as e:
                 raise Exception("Failed to read %s: %s" % (path, e.reason))
 
-            return json.loads(res.read())
+            return json.loads(res.read().decode('utf-8'))
 
         # verify we can get the basic api
         try:
