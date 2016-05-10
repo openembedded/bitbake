@@ -1147,18 +1147,26 @@ class LayerIndexLayerSource(LayerSource):
         assert self.apiurl is not None
         from django.db import transaction, connection
 
-        import urllib2, urlparse, json
+        import json
         import os
+
+        try:
+            from urllib.request import urlopen, URLError
+            from urllib.parse import urlparse
+        except ImportError:
+            from urllib2 import urlopen, URLError
+            from urlparse import urlparse
+
         proxy_settings = os.environ.get("http_proxy", None)
         oe_core_layer = 'openembedded-core'
 
         def _get_json_response(apiurl = self.apiurl):
-            _parsedurl = urlparse.urlparse(apiurl)
+            _parsedurl = urlparse(apiurl)
             path = _parsedurl.path
 
             try:
-                res = urllib2.urlopen(apiurl)
-            except urllib2.URLError as e:
+                res = urlopen(apiurl)
+            except URLError as e:
                 raise Exception("Failed to read %s: %s" % (path, e.reason))
 
             return json.loads(res.read())

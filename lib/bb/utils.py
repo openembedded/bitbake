@@ -41,7 +41,6 @@ from subprocess import getstatusoutput
 from contextlib import contextmanager
 from ctypes import cdll
 
-
 logger = logging.getLogger("BitBake.Util")
 python_extensions = [e for e, _, _ in imp.get_suffixes()]
 
