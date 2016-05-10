@@ -239,14 +239,20 @@ class ToasterTable(TemplateView):
             raise Exception("Search fields aren't defined in the model %s"
                             % self.queryset.model)
 
-        search_queries = []
+        search_queries = None
         for st in search_term.split(" "):
-            q_map = [Q(**{field + '__icontains': st})
-                     for field in self.queryset.model.search_allowed_fields]
+            queries = None
+            for field in self.queryset.model.search_allowed_fields:
+                query = Q(**{field + '__icontains': st})
+                if queries:
+                    queries |= query
+                else:
+                    queries = query
 
-            search_queries.append(reduce(operator.or_, q_map))
-
-        search_queries = reduce(operator.and_, search_queries)
+            if search_queries:
+               search_queries &= queries
+            else:
+               search_queries = queries
 
         self.queryset = self.queryset.filter(search_queries)
 
