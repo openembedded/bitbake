@@ -1183,7 +1183,7 @@ class LayerIndexLayerSource(LayerSource):
 
         # update branches; only those that we already have names listed in the
         # Releases table
-        whitelist_branch_names = map(lambda x: x.branch_name, Release.objects.all())
+        whitelist_branch_names = [rel.branch_name for rel in Release.objects.all()]
         if len(whitelist_branch_names) == 0:
             raise Exception("Failed to make list of branches to fetch")
 

@@ -333,8 +333,7 @@ class RecipesTable(ToasterTable):
         context = super(RecipesTable, self).get_context_data(**kwargs)
 
         context['project'] = project
-
-        context['projectlayers'] = map(lambda prjlayer: prjlayer.layercommit.id, ProjectLayer.objects.filter(project=context['project']))
+        context['projectlayers'] = [player.layercommit.id for player in ProjectLayer.objects.filter(project=context['project'])]
 
         return context
 

@@ -967,18 +967,19 @@ def dirinfo(request, build_id, target_id, file_path=None):
     return render(request, template, context)
 
 def _find_task_dep(task_object):
-    return map(lambda x: x.depends_on, Task_Dependency.objects.filter(task=task_object).filter(depends_on__order__gt = 0).exclude(depends_on__outcome = Task.OUTCOME_NA).select_related("depends_on"))
-
+    tdeps = Task_Dependency.objects.filter(task=task_object).filter(depends_on__order__gt=0)
+    tdeps = tdeps.exclude(depends_on__outcome=Task.OUTCOME_NA).select_related("depends_on")
+    return [x.depends_on for x in tdeps]
 
 def _find_task_revdep(task_object):
-    tp = []
-    tp = map(lambda t: t.task, Task_Dependency.objects.filter(depends_on=task_object).filter(task__order__gt=0).exclude(task__outcome = Task.OUTCOME_NA).select_related("task", "task__recipe", "task__build"))
-    return tp
+    tdeps = Task_Dependency.objects.filter(depends_on=task_object).filter(task__order__gt=0)
+    tdeps = tdeps.exclude(task__outcome = Task.OUTCOME_NA).select_related("task", "task__recipe", "task__build")
+    return [tdep.task for tdep in tdeps]
 
 def _find_task_revdep_list(tasklist):
-    tp = []
-    tp = map(lambda t: t.task, Task_Dependency.objects.filter(depends_on__in=tasklist).filter(task__order__gt=0).exclude(task__outcome = Task.OUTCOME_NA).select_related("task", "task__recipe", "task__build"))
-    return tp
+    tdeps = Task_Dependency.objects.filter(depends_on__in=tasklist).filter(task__order__gt=0)
+    tdeps = tdeps.exclude(task__outcome=Task.OUTCOME_NA).select_related("task", "task__recipe", "task__build")
+    return [tdep.task for tdep in tdeps]
 
 def _find_task_provider(task_object):
     task_revdeps = _find_task_revdep(task_object)
@@ -1979,7 +1980,8 @@ if True:
 
             except (IntegrityError, BadParameterException) as e:
                 # fill in page with previously submitted values
-                map(lambda x: context.__setitem__(x, request.POST.get(x, "-- missing")), mandatory_fields)
+                for field in mandatory_fields:
+                    context.__setitem__(field, request.POST.get(field, "-- missing"))
                 if isinstance(e, IntegrityError) and "username" in str(e):
                     context['alert'] = "Your chosen username is already used"
                 else:
@@ -2073,21 +2075,11 @@ if True:
             "prj" : {"name": prj.name, },
             "buildrequests" : prj.build_set.filter(outcome=Build.IN_PROGRESS),
             "builds" : Build.get_recent(prj),
-            "layers" :  map(lambda x: {
-                        "id": x.layercommit.pk,
-                        "orderid": x.pk,
-                        "name" : x.layercommit.layer.name,
-                        "vcs_url": x.layercommit.layer.vcs_url,
-                        "vcs_reference" : x.layercommit.get_vcs_reference(),
-                        "url": x.layercommit.layer.layer_index_url,
-                        "layerdetailurl": x.layercommit.get_detailspage_url(prj.pk),
-                # This branch name is actually the release
-                        "branch" : { "name" : x.layercommit.get_vcs_reference(), "layersource" : x.layercommit.up_branch.layer_source.name if x.layercommit.up_branch != None else None}},
-                    prj.projectlayer_set.all().order_by("id")),
-            "targets" : map(lambda x: {"target" : x.target, "task" : x.task, "pk": x.pk}, prj.projecttarget_set.all()),
-            "variables": map(lambda x: (x.name, x.value), prj.projectvariable_set.all()),
+            "layers" : layers,
+            "targets" : [{"target" : x.target, "task" : x.task, "pk": x.pk} for x in prj.projecttarget_set.all()],
+            "variables": [(x.name, x.value) for x in prj.projectvariable_set.all()],
             "freqtargets": freqtargets[:5],
-            "releases": map(lambda x: {"id": x.pk, "name": x.name, "description":x.description}, Release.objects.all()),
+            "releases": [{"id": x.pk, "name": x.name, "description":x.description} for x in Release.objects.all()],
             "project_html": 1,
             "recipesTypeAheadUrl": reverse('xhr_recipestypeahead', args=(prj.pk,)),
             "projectBuildsUrl": reverse('projectbuilds', args=(prj.pk,)),
@@ -2178,8 +2170,7 @@ if True:
                     retval.append(project)
 
             return response({"error":"ok",
-                             "rows" : map( _lv_to_dict(prj),
-                                          map(lambda x: x.layercommit, retval ))
+                             "rows": [_lv_to_dict(prj) for y in [x.layercommit for x in retval]]
                             })
 
         except Exception as e:
@@ -2225,7 +2216,7 @@ if True:
 
             return_data = {
                 "error": "ok",
-                'configvars'   : map(lambda x: (x.name, x.value, x.pk), configvars_query),
+                'configvars': [(x.name, x.value, x.pk) for x in configvars_query]
                }
             try:
                 return_data['distro'] = ProjectVariable.objects.get(project = prj, name = "DISTRO").value,
@@ -2848,7 +2839,7 @@ if True:
                 "vcs_url": dep.layer.vcs_url,
                 "vcs_reference": dep.get_vcs_reference()} \
                 for dep in layer_version.get_alldeps(project.id)]},
-            'projectlayers': map(lambda prjlayer: prjlayer.layercommit.id, ProjectLayer.objects.filter(project=project))
+            'projectlayers': [player.layercommit.id for player in ProjectLayer.objects.filter(project=project)]
         }
 
         return context
