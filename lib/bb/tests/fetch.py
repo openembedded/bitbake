@@ -450,7 +450,7 @@ class MirrorUriTest(FetcherTest):
 class FetcherLocalTest(FetcherTest):
     def setUp(self):
         def touch(fn):
-            with file(fn, 'a'):
+            with open(fn, 'a'):
                 os.utime(fn, None)
 
         super(FetcherLocalTest, self).setUp()

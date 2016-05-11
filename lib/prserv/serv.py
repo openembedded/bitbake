@@ -242,8 +242,8 @@ class PRServer(SimpleXMLRPCServer):
 
         sys.stdout.flush()
         sys.stderr.flush()
-        si = file('/dev/null', 'r')
-        so = file(self.logfile, 'a+')
+        si = open('/dev/null', 'r')
+        so = open(self.logfile, 'a+')
         se = so
         os.dup2(si.fileno(),sys.stdin.fileno())
         os.dup2(so.fileno(),sys.stdout.fileno())
@@ -263,7 +263,7 @@ class PRServer(SimpleXMLRPCServer):
 
         # write pidfile
         pid = str(os.getpid()) 
-        pf = file(self.pidfile, 'w')
+        pf = open(self.pidfile, 'w')
         pf.write("%s\n" % pid)
         pf.close()
 
@@ -323,7 +323,7 @@ def start_daemon(dbfile, host, port, logfile):
     ip = socket.gethostbyname(host)
     pidfile = PIDPREFIX % (ip, port)
     try:
-        pf = file(pidfile,'r')
+        pf = open(pidfile,'r')
         pid = int(pf.readline().strip())
         pf.close()
     except IOError:
@@ -350,7 +350,7 @@ def stop_daemon(host, port):
     ip = socket.gethostbyname(host)
     pidfile = PIDPREFIX % (ip, port)
     try:
-        pf = file(pidfile,'r')
+        pf = open(pidfile,'r')
         pid = int(pf.readline().strip())
         pf.close()
     except IOError:
