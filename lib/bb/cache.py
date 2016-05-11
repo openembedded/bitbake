@@ -339,7 +339,7 @@ class Cache(object):
                             value = pickled.load()
                         except Exception:
                             break
-                        if self.depends_cache.has_key(key):
+                        if key in self.depends_cache:
                             self.depends_cache[key].append(value)
                         else:
                             self.depends_cache[key] = [value]

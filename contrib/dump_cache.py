@@ -36,7 +36,7 @@ def main(argv=None):
     Get the mapping for the target recipe.
     """
     if len(argv) != 1:
-        print >>sys.stderr, "Error, need one argument!"
+        print("Error, need one argument!", file=sys.stderr)
         return 2
 
     cachefile = argv[0]
@@ -56,7 +56,7 @@ def main(argv=None):
                     continue
 
                 # 1.0 is the default version for a no PV recipe.
-                if val.__dict__.has_key("pv"):
+                if "pv" in val.__dict__:
                     pv = val.pv
                 else:
                     pv = "1.0"
