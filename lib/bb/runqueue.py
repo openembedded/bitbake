@@ -1085,15 +1085,19 @@ class RunQueue:
                 stampfile3 = bb.build.stampfile(taskname2 + "_setscene", self.rqdata.dataCache, fn2)
                 t2 = get_timestamp(stampfile2)
                 t3 = get_timestamp(stampfile3)
+                if t3 and not t2:
+                    continue
                 if t3 and t3 > t2:
-                   continue
+                    continue
                 if fn == fn2 or (fulldeptree and fn2 not in stampwhitelist):
                     if not t2:
                         logger.debug(2, 'Stampfile %s does not exist', stampfile2)
                         iscurrent = False
+                        break
                     if t1 < t2:
                         logger.debug(2, 'Stampfile %s < %s', stampfile, stampfile2)
                         iscurrent = False
+                        break
                     if recurse and iscurrent:
                         if dep in cache:
                             iscurrent = cache[dep]
