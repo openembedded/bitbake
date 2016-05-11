@@ -568,6 +568,7 @@ def preserved_envvars_exported():
         'SHELL',
         'TERM',
         'USER',
+        'LC_ALL',
     ]
 
 def preserved_envvars():
@@ -594,6 +595,12 @@ def filter_environment(good_vars):
         removed_vars[key] = os.environ[key]
         os.unsetenv(key)
         del os.environ[key]
+
+    # If we spawn a python process, we need to have a UTF-8 locale, else python's file
+    # access methods will use ascii. You can't change that mode once the interpreter is
+    # started so we have to ensure a locale is set. Ideally we'd use C.UTF-8 but not all
+    # distros support that and we need to set something.
+    os.environ["LC_ALL"] = "en_US.UTF-8"
 
     if removed_vars:
         logger.debug(1, "Removed the following variables from the environment: %s", ", ".join(removed_vars.keys()))
