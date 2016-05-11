@@ -278,6 +278,7 @@ def main(server, eventHandler, params, tf = TerminalFilter):
         server.terminateServer()
         return
 
+    consolelog = None
     if consolelogfile and not params.options.show_environment and not params.options.show_versions:
         bb.utils.mkdirhier(os.path.dirname(consolelogfile))
         conlogformat = bb.msg.BBLogFormatter(format_str)
@@ -590,5 +591,9 @@ def main(server, eventHandler, params, tf = TerminalFilter):
         import errno
         if e.errno == errno.EPIPE:
             pass
+
+    if consolelog:
+        logger.removeHandler(consolelog)
+        consolelog.close()
 
     return return_value
