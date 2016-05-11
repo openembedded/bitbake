@@ -159,7 +159,8 @@ def fork_off_task(cfg, data, workerdata, fn, task, taskname, appends, taskdepdat
         pipeout = os.fdopen(pipeout, 'wb', 0)
         pid = os.fork()
     except OSError as e:
-        bb.msg.fatal("RunQueue", "fork failed: %d (%s)" % (e.errno, e.strerror))
+        logger.critical("fork failed: %d (%s)" % (e.errno, e.strerror))
+        sys.exit(1)
 
     if pid == 0:
         def child():
