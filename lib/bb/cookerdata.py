@@ -192,7 +192,8 @@ def catch_parse_error(func):
                 fn, _, _, _ = traceback.extract_tb(tb, 1)[0]
                 if not fn.startswith(bbdir):
                     break
-            parselog.critical("Unable to parse %s", fn, exc_info=(exc_class, exc, tb))
+            parselog.critical("Unable to parse %s" % fn, exc_info=(exc_class, exc, tb))
+            sys.exit(1)
         except bb.parse.ParseError as exc:
             parselog.critical(str(exc))
             sys.exit(1)
