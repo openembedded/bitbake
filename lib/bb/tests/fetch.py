@@ -22,6 +22,7 @@
 import unittest
 import tempfile
 import subprocess
+import collections
 import os
 from bb.fetch2 import URI
 from bb.fetch2 import FetchMethod
@@ -133,10 +134,10 @@ class URITest(unittest.TestCase):
             'userinfo': 'anoncvs:anonymous',
             'username': 'anoncvs',
             'password': 'anonymous',
-            'params': {
-                'tag': 'V0-99-81',
-                'module': 'familiar/dist/ipkg'
-            },
+            'params': collections.OrderedDict([
+                ('tag', 'V0-99-81'),
+                ('module', 'familiar/dist/ipkg')
+            ]),
             'query': {},
             'relative': False
         },
@@ -660,7 +661,7 @@ class URLHandle(unittest.TestCase):
     datatable = {
        "http://www.google.com/index.html" : ('http', 'www.google.com', '/index.html', '', '', {}),
        "cvs://anoncvs@cvs.handhelds.org/cvs;module=familiar/dist/ipkg" : ('cvs', 'cvs.handhelds.org', '/cvs', 'anoncvs', '', {'module': 'familiar/dist/ipkg'}),
-       "cvs://anoncvs:anonymous@cvs.handhelds.org/cvs;tag=V0-99-81;module=familiar/dist/ipkg" : ('cvs', 'cvs.handhelds.org', '/cvs', 'anoncvs', 'anonymous', {'tag': 'V0-99-81', 'module': 'familiar/dist/ipkg'}),
+       "cvs://anoncvs:anonymous@cvs.handhelds.org/cvs;tag=V0-99-81;module=familiar/dist/ipkg" : ('cvs', 'cvs.handhelds.org', '/cvs', 'anoncvs', 'anonymous', collections.OrderedDict([('tag', 'V0-99-81'), ('module', 'familiar/dist/ipkg')])),
        "git://git.openembedded.org/bitbake;branch=@foo" : ('git', 'git.openembedded.org', '/bitbake', '', '', {'branch': '@foo'}),
        "file://somelocation;someparam=1": ('file', '', 'somelocation', '', '', {'someparam': '1'}),
     }

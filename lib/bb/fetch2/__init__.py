@@ -32,6 +32,7 @@ import signal
 import logging
 import urllib
 import urlparse
+import collections
 import bb.persist_data, bb.utils
 import bb.checksum
 from bb import data
@@ -297,7 +298,7 @@ class URI(object):
             if self.query else '')
 
     def _param_str_split(self, string, elmdelim, kvdelim="="):
-        ret = {}
+        ret = collections.OrderedDict()
         for k, v in [x.split(kvdelim, 1) for x in string.split(elmdelim)]:
             ret[k] = v
         return ret
@@ -390,7 +391,7 @@ def decodeurl(url):
         user = ''
         pswd = ''
 
-    p = {}
+    p = collections.OrderedDict()
     if parm:
         for s in parm.split(';'):
             if s:
