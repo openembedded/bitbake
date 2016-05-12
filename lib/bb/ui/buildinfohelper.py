@@ -1251,6 +1251,16 @@ class BuildInfoHelper(object):
 
 
 
+    def cancel_cli_build(self):
+        """
+        If a build is currently underway, set its state to CANCELLED;
+        note that this only gets called for command line builds which are
+        interrupted, so it doesn't touch any BuildRequest objects
+        """
+        build = self.internal_state['build']
+        if build:
+            build.outcome = Build.CANCELLED
+            build.save()
 
     def store_dependency_information(self, event):
         assert '_depgraph' in vars(event)
