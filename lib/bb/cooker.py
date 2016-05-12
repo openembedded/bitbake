@@ -2161,7 +2161,7 @@ class CookerParser(object):
             self.error += 1
             etype, value, tb = sys.exc_info()
             if hasattr(value, "recipe"):
-                logger.error('Unable to parse %s', value.recipe,
+                logger.error('Unable to parse %s' % value.recipe,
                             exc_info=(etype, value, exc.traceback))
             else:
                 # Most likely, an exception occurred during raising an exception
