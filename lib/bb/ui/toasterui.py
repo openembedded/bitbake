@@ -441,7 +441,22 @@ def main(server, eventHandler, params):
             if ioerror.args[0] == 4:
                 pass
         except KeyboardInterrupt:
-            main.shutdown = 1
+            if params.observe_only:
+                print("\nKeyboard Interrupt, exiting observer...")
+                main.shutdown = 2
+            if not params.observe_only and main.shutdown == 1:
+                print("\nSecond Keyboard Interrupt, stopping...\n")
+                _, error = server.runCommand(["stateForceShutdown"])
+                if error:
+                    logger.error("Unable to cleanly stop: %s" % error)
+            if not params.observe_only and main.shutdown == 0:
+                print("\nKeyboard Interrupt, closing down...\n")
+                interrupted = True
+                _, error = server.runCommand(["stateShutdown"])
+                if error:
+                    logger.error("Unable to cleanly shutdown: %s" % error)
+            buildinfohelper.cancel_cli_build()
+            main.shutdown = main.shutdown + 1
         except Exception as e:
             # print errors to log
             import traceback
