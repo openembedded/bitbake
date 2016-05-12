@@ -222,11 +222,10 @@ class ProcessEventQueue(multiprocessing.queues.Queue):
 
     def waitEvent(self, timeout):
         if self.exit:
-            sys.exit(1)
+            return self.getEvent()
         try:
             if not self.server.is_alive():
-                self.setexit()
-                return None
+                return self.getEvent()
             return self.get(True, timeout)
         except Empty:
             return None
@@ -235,9 +234,10 @@ class ProcessEventQueue(multiprocessing.queues.Queue):
         try:
             if not self.server.is_alive():
                 self.setexit()
-                return None
             return self.get(False)
         except Empty:
+            if self.exit:
+                sys.exit(1)
             return None
 
 
