@@ -25,7 +25,6 @@ BitBake build tools.
 #
 # Based on functions from the base bb module, Copyright 2003 Holger Schurig
 
-from future_builtins import zip
 import os
 import subprocess
 import logging

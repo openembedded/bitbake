@@ -25,8 +25,6 @@ BitBake build tools.
 #
 # Based on functions from the base bb module, Copyright 2003 Holger Schurig
 
-from __future__ import absolute_import
-from __future__ import print_function
 import os, re
 import signal
 import logging

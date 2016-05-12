@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+
 import inspect
 import traceback
 import bb.namedtuple_with_abc
