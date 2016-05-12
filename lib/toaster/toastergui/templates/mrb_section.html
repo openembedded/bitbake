@@ -125,8 +125,6 @@
                       pull-right"
                       data-request-url="{% url 'xhr_buildrequest' build.project.pk %}"
                       data-target='{{build.target_set.all|get_tasks|json}}'>
-
-
                         Rebuild
                   </button>
               {% endif %}
@@ -144,7 +142,7 @@
     <div class="lead span3 progress-info"><span id="build-pc-done-{{build.pk}}">{{build.completeper}}</span>% of tasks complete</div>
     {# No build cancel for command line builds project #}
     {% if build.project.is_default %}
-    <i class="icon-question-sign get-help get-help-blue pull-right" title="" data-original-title="Builds in this project cannot be cancelled from Toaster: they can only be cancalled from the command line"></i>
+    <i class="icon-question-sign get-help get-help-blue pull-right" title="" data-original-title="Builds in this project cannot be cancelled from Toaster: they can only be cancelled from the command line"></i>
     {% else %}
     <div class="lead pull-right progress-info">
       <button class="cancel-build-btn btn btn-info pull-right"
@@ -158,15 +156,20 @@
     {%endif%} {# end if in progress #}
 
     {% if build.outcome == build.CANCELLED %}
-    <div class="span4">
-      <p class="lead">Build cancelled</p>
-    </div>
-    <button class="btn btn-info pull-right run-again-btn"
-        data-request-url="{% url 'xhr_buildrequest' build.project.pk %}"
-        data-target='{{build.target_set.all|get_tasks|json}}'>
-      Rebuild
+      <div class="span4">
+        <p class="lead">Build cancelled</p>
+      </div>
 
-    </button>
+      {% if build.project.is_default %}
+        <i class="icon-question-sign get-help get-help-blue pull-right" title=""
+          data-original-title="Builds in this project cannot be rebuilt from Toaster: they can only be rebuilt from the command line"></i>
+      {% else %}
+        <button class="btn btn-info pull-right run-again-btn"
+                data-request-url="{% url 'xhr_buildrequest' build.project.pk %}"
+                data-target='{{build.target_set.all|get_tasks|json}}'>
+          Rebuild
+        </button>
+      {% endif %}
     {% endif %}
   </div>
 </div>
