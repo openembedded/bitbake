@@ -84,7 +84,7 @@ def plain(*args):
     mainlogger.plain(''.join(args))
 
 def debug(lvl, *args):
-    if isinstance(lvl, basestring):
+    if isinstance(lvl, str):
         mainlogger.warning("Passed invalid debug level '%s' to bb.debug", lvl)
         args = (lvl,) + args
         lvl = 1

@@ -28,26 +28,22 @@ BitBake build tools.
 import os, re
 import signal
 import logging
-import urllib
-import urlparse
+import urllib.request, urllib.parse, urllib.error
+if 'git' not in urllib.parse.uses_netloc:
+    urllib.parse.uses_netloc.append('git')
+import operator
 import collections
+import subprocess
+import pickle
 import bb.persist_data, bb.utils
 import bb.checksum
 from bb import data
 import bb.process
-import subprocess
 
 __version__ = "2"
 _checksum_cache = bb.checksum.FileChecksumCache()
 
 logger = logging.getLogger("BitBake.Fetcher")
-
-try:
-    import cPickle as pickle
-except ImportError:
-    import pickle
-    logger.info("Importing cPickle failed. "
-                "Falling back to a very slow implementation.")
 
 class BBFetchException(Exception):
     """Class all fetch exceptions inherit from"""
@@ -230,14 +226,14 @@ class URI(object):
         # them are not quite RFC compliant.
         uri, param_str = (uri.split(";", 1) + [None])[:2]
 
-        urlp = urlparse.urlparse(uri)
+        urlp = urllib.parse.urlparse(uri)
         self.scheme = urlp.scheme
 
         reparse = 0
 
         # Coerce urlparse to make URI scheme use netloc
-        if not self.scheme in urlparse.uses_netloc:
-            urlparse.uses_params.append(self.scheme)
+        if not self.scheme in urllib.parse.uses_netloc:
+            urllib.parse.uses_params.append(self.scheme)
             reparse = 1
 
         # Make urlparse happy(/ier) by converting local resources
@@ -248,7 +244,7 @@ class URI(object):
             reparse = 1
 
         if reparse:
-            urlp = urlparse.urlparse(uri)
+            urlp = urllib.parse.urlparse(uri)
 
         # Identify if the URI is relative or not
         if urlp.scheme in self._relative_schemes and \
@@ -264,7 +260,7 @@ class URI(object):
             if urlp.password:
                 self.userinfo += ':%s' % urlp.password
 
-        self.path = urllib.unquote(urlp.path)
+        self.path = urllib.parse.unquote(urlp.path)
 
         if param_str:
             self.params = self._param_str_split(param_str, ";")
@@ -312,11 +308,11 @@ class URI(object):
 
     @property
     def path_quoted(self):
-        return urllib.quote(self.path)
+        return urllib.parse.quote(self.path)
 
     @path_quoted.setter
     def path_quoted(self, path):
-        self.path = urllib.unquote(path)
+        self.path = urllib.parse.unquote(path)
 
     @property
     def path(self):
@@ -398,7 +394,7 @@ def decodeurl(url):
                 s1, s2 = s.split('=')
                 p[s1] = s2
 
-    return type, host, urllib.unquote(path), user, pswd, p
+    return type, host, urllib.parse.unquote(path), user, pswd, p
 
 def encodeurl(decoded):
     """Encodes a URL from tokens (scheme, network location, path,
@@ -422,7 +418,7 @@ def encodeurl(decoded):
     # Standardise path to ensure comparisons work
     while '//' in path:
         path = path.replace("//", "/")
-    url += "%s" % urllib.quote(path)
+    url += "%s" % urllib.parse.quote(path)
     if p:
         for parm in p:
             url += ";%s=%s" % (parm, p[parm])
@@ -1735,7 +1731,7 @@ class FetchConnectionCache(object):
             del self.cache[cn]
 
     def close_connections(self):
-        for cn in self.cache.keys():
+        for cn in list(self.cache.keys()):
             self.cache[cn].close()
             del self.cache[cn]
 

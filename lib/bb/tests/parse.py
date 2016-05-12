@@ -50,7 +50,7 @@ C = "3"
     def parsehelper(self, content, suffix = ".bb"):
 
         f = tempfile.NamedTemporaryFile(suffix = suffix)
-        f.write(content)
+        f.write(bytes(content, "utf-8"))
         f.flush()
         os.chdir(os.path.dirname(f.name))
         return f

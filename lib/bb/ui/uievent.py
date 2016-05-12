@@ -25,7 +25,7 @@ client/server deadlocks.
 """
 
 import socket, threading, pickle, collections
-from SimpleXMLRPCServer import SimpleXMLRPCServer, SimpleXMLRPCRequestHandler
+from xmlrpc.server import SimpleXMLRPCServer, SimpleXMLRPCRequestHandler
 
 class BBUIEventQueue:
     def __init__(self, BBServer, clientinfo=("localhost, 0")):
@@ -137,7 +137,7 @@ class UIXMLRPCServer (SimpleXMLRPCServer):
         SimpleXMLRPCServer.__init__( self,
                                     interface,
                                     requestHandler=SimpleXMLRPCRequestHandler,
-                                    logRequests=False, allow_none=True)
+                                    logRequests=False, allow_none=True, use_builtin_types=True)
 
     def get_request(self):
         while not self.quit:

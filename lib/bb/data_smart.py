@@ -372,7 +372,7 @@ class DataSmart(MutableMapping):
 
     def expandWithRefs(self, s, varname):
 
-        if not isinstance(s, basestring): # sanity check
+        if not isinstance(s, str): # sanity check
             return VariableParse(varname, self, s)
 
         if varname and varname in self.expand_cache:
@@ -966,4 +966,4 @@ class DataSmart(MutableMapping):
                     data.update({i:value})
 
         data_str = str([(k, data[k]) for k in sorted(data.keys())])
-        return hashlib.md5(data_str).hexdigest()
+        return hashlib.md5(data_str.encode("utf-8")).hexdigest()

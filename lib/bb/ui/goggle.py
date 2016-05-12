@@ -18,13 +18,18 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+from gi import pygtkcompat
+
+pygtkcompat.enable()
+pygtkcompat.enable_gtk(version='3.0')
+
 import gobject
 import gtk
-import xmlrpclib
+import xmlrpc.client
 from bb.ui.crumbs.runningbuild import RunningBuildTreeView, RunningBuild
 from bb.ui.crumbs.progress import ProgressBar
 
-import Queue
+import queue
 
 
 def event_handle_idle_func (eventHandler, build, pbar):
@@ -96,7 +101,7 @@ def main (server, eventHandler, params):
         elif ret != True:
             print("Error running command '%s': returned %s" % (cmdline, ret))
             return 1
-    except xmlrpclib.Fault as x:
+    except xmlrpcclient.Fault as x:
         print("XMLRPC Fault getting commandline:\n %s" % x)
         return 1
 

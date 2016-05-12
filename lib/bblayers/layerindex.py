@@ -1,10 +1,10 @@
 import argparse
-import httplib
+import http.client
 import json
 import logging
 import os
 import subprocess
-import urlparse
+import urllib.parse
 
 from bblayers.action import ActionPlugin
 
@@ -24,12 +24,12 @@ class LayerIndexPlugin(ActionPlugin):
     def get_json_data(self, apiurl):
         proxy_settings = os.environ.get("http_proxy", None)
         conn = None
-        _parsedurl = urlparse.urlparse(apiurl)
+        _parsedurl = urllib.parse.urlparse(apiurl)
         path = _parsedurl.path
         query = _parsedurl.query
 
         def parse_url(url):
-            parsedurl = urlparse.urlparse(url)
+            parsedurl = urllib.parse.urlparse(url)
             if parsedurl.netloc[0] == '[':
                 host, port = parsedurl.netloc[1:].split(']', 1)
                 if ':' in port:
@@ -46,11 +46,11 @@ class LayerIndexPlugin(ActionPlugin):
 
         if proxy_settings is None:
             host, port = parse_url(apiurl)
-            conn = httplib.HTTPConnection(host, port)
+            conn = http.client.HTTPConnection(host, port)
             conn.request("GET", path + "?" + query)
         else:
             host, port = parse_url(proxy_settings)
-            conn = httplib.HTTPConnection(host, port)
+            conn = http.client.HTTPConnection(host, port)
             conn.request("GET", apiurl)
 
         r = conn.getresponse()

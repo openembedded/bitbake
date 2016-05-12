@@ -35,11 +35,7 @@ import bb
 from bb import msg, data, event
 from bb import monitordisk
 import subprocess
-
-try:
-    import cPickle as pickle
-except ImportError:
-    import pickle
+import pickle
 
 bblogger = logging.getLogger("BitBake")
 logger = logging.getLogger("BitBake.RunQueue")
@@ -108,7 +104,7 @@ class RunQueueScheduler(object):
 
         self.buildable = []
         self.stamps = {}
-        for taskid in xrange(self.numTasks):
+        for taskid in range(self.numTasks):
             fn = self.rqdata.taskData.fn_index[self.rqdata.runq_fnid[taskid]]
             taskname = self.rqdata.runq_task[taskid]
             self.stamps[taskid] = bb.build.stampfile(taskname, self.rqdata.dataCache, fn)
@@ -127,12 +123,12 @@ class RunQueueScheduler(object):
         if len(self.buildable) == 1:
             taskid = self.buildable[0]
             stamp = self.stamps[taskid]
-            if stamp not in self.rq.build_stamps.itervalues():
+            if stamp not in self.rq.build_stamps.values():
                 return taskid
 
         if not self.rev_prio_map:
-            self.rev_prio_map = range(self.numTasks)
-            for taskid in xrange(self.numTasks):
+            self.rev_prio_map = list(range(self.numTasks))
+            for taskid in range(self.numTasks):
                 self.rev_prio_map[self.prio_map[taskid]] = taskid
 
         best = None
@@ -141,7 +137,7 @@ class RunQueueScheduler(object):
             prio = self.rev_prio_map[taskid]
             if bestprio is None or bestprio > prio:
                 stamp = self.stamps[taskid]
-                if stamp in self.rq.build_stamps.itervalues():
+                if stamp in self.rq.build_stamps.values():
                     continue
                 bestprio = prio
                 best = taskid
@@ -269,7 +265,7 @@ class RunQueueData:
 
 
     def get_task_id(self, fnid, taskname):
-        for listid in xrange(len(self.runq_fnid)):
+        for listid in range(len(self.runq_fnid)):
             if self.runq_fnid[listid] == fnid and self.runq_task[listid] == taskname:
                 return listid
         return None
@@ -291,7 +287,7 @@ class RunQueueData:
             """
             lowest = 0
             new_chain = []
-            for entry in xrange(len(chain)):
+            for entry in range(len(chain)):
                 if chain[entry] < chain[lowest]:
                     lowest = entry
             new_chain.extend(chain[lowest:])
@@ -304,7 +300,7 @@ class RunQueueData:
             """
             if len(chain1) != len(chain2):
                 return False
-            for index in xrange(len(chain1)):
+            for index in range(len(chain1)):
                 if chain1[index] != chain2[index]:
                     return False
             return True
@@ -375,7 +371,7 @@ class RunQueueData:
         deps_left = []
         task_done = []
 
-        for listid in xrange(numTasks):
+        for listid in range(numTasks):
             task_done.append(False)
             weight.append(1)
             deps_left.append(len(self.runq_revdeps[listid]))
@@ -399,7 +395,7 @@ class RunQueueData:
 
         # Circular dependency sanity check
         problem_tasks = []
-        for task in xrange(numTasks):
+        for task in range(numTasks):
             if task_done[task] is False or deps_left[task] != 0:
                 problem_tasks.append(task)
                 logger.debug(2, "Task %s (%s) is not buildable", task, self.get_user_idstring(task))
@@ -482,7 +478,7 @@ class RunQueueData:
                     if taskid is not None:
                         depends.add(taskid)
 
-        for task in xrange(len(taskData.tasks_name)):
+        for task in range(len(taskData.tasks_name)):
             depends = set()
             fnid = taskData.tasks_fnid[task]
             fn = taskData.fn_index[fnid]
@@ -597,7 +593,7 @@ class RunQueueData:
         for task in recursivetasks:
             extradeps[task].difference_update(recursivetasksselfref)
 
-        for task in xrange(len(taskData.tasks_name)):
+        for task in range(len(taskData.tasks_name)):
             # Add in extra dependencies
             if task in extradeps:
                  self.runq_depends[task] = extradeps[task]
@@ -675,7 +671,7 @@ class RunQueueData:
 
         maps = []
         delcount = 0
-        for listid in xrange(len(self.runq_fnid)):
+        for listid in range(len(self.runq_fnid)):
             if runq_build[listid-delcount] == 1:
                 maps.append(listid-delcount)
             else:
@@ -703,7 +699,7 @@ class RunQueueData:
 
         # Remap the dependencies to account for the deleted tasks
         # Check we didn't delete a task we depend on
-        for listid in xrange(len(self.runq_fnid)):
+        for listid in range(len(self.runq_fnid)):
             newdeps = []
             origdeps = self.runq_depends[listid]
             for origdep in origdeps:
@@ -715,14 +711,14 @@ class RunQueueData:
         logger.verbose("Assign Weightings")
 
         # Generate a list of reverse dependencies to ease future calculations
-        for listid in xrange(len(self.runq_fnid)):
+        for listid in range(len(self.runq_fnid)):
             for dep in self.runq_depends[listid]:
                 self.runq_revdeps[dep].add(listid)
 
         # Identify tasks at the end of dependency chains
         # Error on circular dependency loops (length two)
         endpoints = []
-        for listid in xrange(len(self.runq_fnid)):
+        for listid in range(len(self.runq_fnid)):
             revdeps = self.runq_revdeps[listid]
             if len(revdeps) == 0:
                 endpoints.append(listid)
@@ -740,7 +736,7 @@ class RunQueueData:
         # Sanity Check - Check for multiple tasks building the same provider
         prov_list = {}
         seen_fn = []
-        for task in xrange(len(self.runq_fnid)):
+        for task in range(len(self.runq_fnid)):
             fn = taskData.fn_index[self.runq_fnid[task]]
             if fn in seen_fn:
                 continue
@@ -905,7 +901,7 @@ class RunQueueData:
         Dump some debug information on the internal data structures
         """
         logger.debug(3, "run_tasks:")
-        for task in xrange(len(self.rqdata.runq_task)):
+        for task in range(len(self.rqdata.runq_task)):
             logger.debug(3, " (%s)%s - %s: %s   Deps %s RevDeps %s", task,
                          taskQueue.fn_index[self.rqdata.runq_fnid[task]],
                          self.rqdata.runq_task[task],
@@ -914,7 +910,7 @@ class RunQueueData:
                          self.rqdata.runq_revdeps[task])
 
         logger.debug(3, "sorted_tasks:")
-        for task1 in xrange(len(self.rqdata.runq_task)):
+        for task1 in range(len(self.rqdata.runq_task)):
             if task1 in self.prio_map:
                 task = self.prio_map[task1]
                 logger.debug(3, " (%s)%s - %s: %s   Deps %s RevDeps %s", task,
@@ -982,8 +978,8 @@ class RunQueue:
             "time" : self.cfgData.getVar("TIME", True),
         }
 
-        worker.stdin.write("<cookerconfig>" + pickle.dumps(self.cooker.configuration) + "</cookerconfig>")
-        worker.stdin.write("<workerdata>" + pickle.dumps(workerdata) + "</workerdata>")
+        worker.stdin.write(b"<cookerconfig>" + pickle.dumps(self.cooker.configuration) + b"</cookerconfig>")
+        worker.stdin.write(b"<workerdata>" + pickle.dumps(workerdata) + b"</workerdata>")
         worker.stdin.flush()
 
         return worker, workerpipe
@@ -993,8 +989,9 @@ class RunQueue:
             return
         logger.debug(1, "Teardown for bitbake-worker")
         try:
-           worker.stdin.write("<quit></quit>")
+           worker.stdin.write(b"<quit></quit>")
            worker.stdin.flush()
+           worker.stdin.close()
         except IOError:
            pass
         while worker.returncode is None:
@@ -1245,7 +1242,7 @@ class RunQueue:
         stamppresent = []
         valid_new = set()
 
-        for task in xrange(len(self.rqdata.runq_fnid)):
+        for task in range(len(self.rqdata.runq_fnid)):
             fn = self.rqdata.taskData.fn_index[self.rqdata.runq_fnid[task]]
             taskname = self.rqdata.runq_task[task]
             taskdep = self.rqdata.dataCache.task_deps[fn]
@@ -1287,7 +1284,7 @@ class RunQueue:
                     valid_new.add(dep)
 
         invalidtasks = set()
-        for task in xrange(len(self.rqdata.runq_fnid)):
+        for task in range(len(self.rqdata.runq_fnid)):
             if task not in valid_new and task not in noexec:
                 invalidtasks.add(task)
 
@@ -1346,7 +1343,7 @@ class RunQueue:
                     match = m
             if match is None:
                 bb.fatal("Can't find a task we're supposed to have written out? (hash: %s)?" % h)
-            matches = {k : v for k, v in matches.iteritems() if h not in k}
+            matches = {k : v for k, v in iter(matches.items()) if h not in k}
             if matches:
                 latestmatch = sorted(matches.keys(), key=lambda f: matches[f])[-1]
                 prevh = __find_md5__.search(latestmatch).group(0)
@@ -1395,17 +1392,15 @@ class RunQueueExecute:
         return True
 
     def finish_now(self):
-
         for worker in [self.rq.worker, self.rq.fakeworker]:
             if not worker:
                 continue
             try:
-                worker.stdin.write("<finishnow></finishnow>")
+                worker.stdin.write(b"<finishnow></finishnow>")
                 worker.stdin.flush()
             except IOError:
                 # worker must have died?
                 pass
-
         if len(self.failed_fnids) != 0:
             self.rq.state = runQueueFailed
             return
@@ -1468,7 +1463,7 @@ class RunQueueExecuteTasks(RunQueueExecute):
         initial_covered = self.rq.scenequeue_covered.copy()
 
         # Mark initial buildable tasks
-        for task in xrange(self.stats.total):
+        for task in range(self.stats.total):
             self.runq_running.append(0)
             self.runq_complete.append(0)
             if len(self.rqdata.runq_depends[task]) == 0:
@@ -1481,7 +1476,7 @@ class RunQueueExecuteTasks(RunQueueExecute):
         found = True
         while found:
             found = False
-            for task in xrange(self.stats.total):
+            for task in range(self.stats.total):
                 if task in self.rq.scenequeue_covered:
                     continue
                 logger.debug(1, 'Considering %s (%s): %s' % (task, self.rqdata.get_user_idstring(task), str(self.rqdata.runq_revdeps[task])))
@@ -1496,7 +1491,7 @@ class RunQueueExecuteTasks(RunQueueExecute):
         covered_remove = set()
         if self.rq.setsceneverify:
             invalidtasks = []
-            for task in xrange(len(self.rqdata.runq_task)):
+            for task in range(len(self.rqdata.runq_task)):
                 fn = self.rqdata.taskData.fn_index[self.rqdata.runq_fnid[task]]
                 taskname = self.rqdata.runq_task[task]
                 taskdep = self.rqdata.dataCache.task_deps[fn]
@@ -1684,10 +1679,10 @@ class RunQueueExecuteTasks(RunQueueExecute):
                         logger.critical("Failed to spawn fakeroot worker to run %s:%s: %s" % (fn, taskname, str(exc)))
                         self.rq.state = runQueueFailed
                         return True
-                self.rq.fakeworker.stdin.write("<runtask>" + pickle.dumps((fn, task, taskname, False, self.cooker.collection.get_file_appends(fn), taskdepdata)) + "</runtask>")
+                self.rq.fakeworker.stdin.write(b"<runtask>" + pickle.dumps((fn, task, taskname, False, self.cooker.collection.get_file_appends(fn), taskdepdata)) + b"</runtask>")
                 self.rq.fakeworker.stdin.flush()
             else:
-                self.rq.worker.stdin.write("<runtask>" + pickle.dumps((fn, task, taskname, False, self.cooker.collection.get_file_appends(fn), taskdepdata)) + "</runtask>")
+                self.rq.worker.stdin.write(b"<runtask>" + pickle.dumps((fn, task, taskname, False, self.cooker.collection.get_file_appends(fn), taskdepdata)) + b"</runtask>")
                 self.rq.worker.stdin.flush()
 
             self.build_stamps[task] = bb.build.stampfile(taskname, self.rqdata.dataCache, fn)
@@ -1706,7 +1701,7 @@ class RunQueueExecuteTasks(RunQueueExecute):
             return True
 
         # Sanity Checks
-        for task in xrange(self.stats.total):
+        for task in range(self.stats.total):
             if self.runq_buildable[task] == 0:
                 logger.error("Task %s never buildable!", task)
             if self.runq_running[task] == 0:
@@ -1764,14 +1759,14 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
         # therefore aims to collapse the huge runqueue dependency tree into a smaller one
         # only containing the setscene functions.
 
-        for task in xrange(self.stats.total):
+        for task in range(self.stats.total):
             self.runq_running.append(0)
             self.runq_complete.append(0)
             self.runq_buildable.append(0)
 
         # First process the chains up to the first setscene task.
         endpoints = {}
-        for task in xrange(len(self.rqdata.runq_fnid)):
+        for task in range(len(self.rqdata.runq_fnid)):
             sq_revdeps.append(copy.copy(self.rqdata.runq_revdeps[task]))
             sq_revdeps_new.append(set())
             if (len(self.rqdata.runq_revdeps[task]) == 0) and task not in self.rqdata.runq_setscene:
@@ -1833,7 +1828,7 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
                         newendpoints[dep] = tasks
             if len(newendpoints) != 0:
                 process_endpoints2(newendpoints)
-        for task in xrange(len(self.rqdata.runq_fnid)):
+        for task in range(len(self.rqdata.runq_fnid)):
             sq_revdeps2.append(copy.copy(self.rqdata.runq_revdeps[task]))
             sq_revdeps_new2.append(set())
             if (len(self.rqdata.runq_revdeps[task]) == 0) and task not in self.rqdata.runq_setscene:
@@ -1844,7 +1839,7 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
             if sq_revdeps_new2[task]:
                 self.unskippable.append(self.rqdata.runq_setscene.index(task))
 
-        for task in xrange(len(self.rqdata.runq_fnid)):
+        for task in range(len(self.rqdata.runq_fnid)):
             if task in self.rqdata.runq_setscene:
                 deps = set()
                 for dep in sq_revdeps_new[task]:
@@ -1883,7 +1878,7 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
              for dep in self.sq_harddeps[task]:
                  sq_revdeps_squash[dep].add(task)
 
-        #for task in xrange(len(sq_revdeps_squash)):
+        #for task in range(len(sq_revdeps_squash)):
         #    realtask = self.rqdata.runq_setscene[task]
         #    bb.warn("Task %s: %s_setscene is %s " % (task, self.rqdata.get_user_idstring(realtask) , sq_revdeps_squash[task]))
 
@@ -1891,13 +1886,13 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
         self.sq_revdeps = sq_revdeps_squash
         self.sq_revdeps2 = copy.deepcopy(self.sq_revdeps)
 
-        for task in xrange(len(self.sq_revdeps)):
+        for task in range(len(self.sq_revdeps)):
             self.sq_deps.append(set())
-        for task in xrange(len(self.sq_revdeps)):
+        for task in range(len(self.sq_revdeps)):
             for dep in self.sq_revdeps[task]:
                 self.sq_deps[dep].add(task)
 
-        for task in xrange(len(self.sq_revdeps)):
+        for task in range(len(self.sq_revdeps)):
             if len(self.sq_revdeps[task]) == 0:
                 self.runq_buildable[task] = 1
 
@@ -1910,7 +1905,7 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
             sq_task = []
             noexec = []
             stamppresent = []
-            for task in xrange(len(self.sq_revdeps)):
+            for task in range(len(self.sq_revdeps)):
                 realtask = self.rqdata.runq_setscene[task]
                 fn = self.rqdata.taskData.fn_index[self.rqdata.runq_fnid[realtask]]
                 taskname = self.rqdata.runq_task[realtask]
@@ -1947,7 +1942,7 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
             for v in valid:
                 valid_new.append(sq_task[v])
 
-            for task in xrange(len(self.sq_revdeps)):
+            for task in range(len(self.sq_revdeps)):
                 if task not in valid_new and task not in noexec:
                     realtask = self.rqdata.runq_setscene[task]
                     logger.debug(2, 'No package found, so skipping setscene task %s',
@@ -2024,7 +2019,7 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
         task = None
         if self.stats.active < self.number_tasks:
             # Find the next setscene to run
-            for nexttask in xrange(self.stats.total):
+            for nexttask in range(self.stats.total):
                 if self.runq_buildable[nexttask] == 1 and self.runq_running[nexttask] != 1:
                     if nexttask in self.unskippable:
                         logger.debug(2, "Setscene task %s is unskippable" % self.rqdata.get_user_idstring(self.rqdata.runq_setscene[nexttask]))                      
@@ -2076,10 +2071,10 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
             if 'fakeroot' in taskdep and taskname in taskdep['fakeroot'] and not self.cooker.configuration.dry_run:
                 if not self.rq.fakeworker:
                     self.rq.start_fakeworker(self)
-                self.rq.fakeworker.stdin.write("<runtask>" + pickle.dumps((fn, realtask, taskname, True, self.cooker.collection.get_file_appends(fn), None)) + "</runtask>")
+                self.rq.fakeworker.stdin.write(b"<runtask>" + pickle.dumps((fn, realtask, taskname, True, self.cooker.collection.get_file_appends(fn), None)) + b"</runtask>")
                 self.rq.fakeworker.stdin.flush()
             else:
-                self.rq.worker.stdin.write("<runtask>" + pickle.dumps((fn, realtask, taskname, True, self.cooker.collection.get_file_appends(fn), None)) + "</runtask>")
+                self.rq.worker.stdin.write(b"<runtask>" + pickle.dumps((fn, realtask, taskname, True, self.cooker.collection.get_file_appends(fn), None)) + b"</runtask>")
                 self.rq.worker.stdin.flush()
 
             self.runq_running[task] = 1
@@ -2091,7 +2086,7 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
             self.rq.read_workers()
             return self.rq.active_fds()
 
-        #for task in xrange(self.stats.total):
+        #for task in range(self.stats.total):
         #    if self.runq_running[task] != 1:
         #        buildable = self.runq_buildable[task]
         #        revdeps = self.sq_revdeps[task]
@@ -2227,7 +2222,7 @@ class runQueuePipe():
         if pipeout:
             pipeout.close()
         bb.utils.nonblockingfd(self.input)
-        self.queue = ""
+        self.queue = b""
         self.d = d
         self.rq = rq
         self.rqexec = rqexec
@@ -2251,7 +2246,7 @@ class runQueuePipe():
 
         start = len(self.queue)
         try:
-            self.queue = self.queue + self.input.read(102400)
+            self.queue = self.queue + (self.input.read(102400) or b"")
         except (OSError, IOError) as e:
             if e.errno != errno.EAGAIN:
                 raise
@@ -2259,8 +2254,8 @@ class runQueuePipe():
         found = True
         while found and len(self.queue):
             found = False
-            index = self.queue.find("</event>")
-            while index != -1 and self.queue.startswith("<event>"):
+            index = self.queue.find(b"</event>")
+            while index != -1 and self.queue.startswith(b"<event>"):
                 try:
                     event = pickle.loads(self.queue[7:index])
                 except ValueError as e:
@@ -2268,9 +2263,9 @@ class runQueuePipe():
                 bb.event.fire_from_worker(event, self.d)
                 found = True
                 self.queue = self.queue[index+8:]
-                index = self.queue.find("</event>")
-            index = self.queue.find("</exitcode>")
-            while index != -1 and self.queue.startswith("<exitcode>"):
+                index = self.queue.find(b"</event>")
+            index = self.queue.find(b"</exitcode>")
+            while index != -1 and self.queue.startswith(b"<exitcode>"):
                 try:
                     task, status = pickle.loads(self.queue[10:index])
                 except ValueError as e:
@@ -2278,7 +2273,7 @@ class runQueuePipe():
                 self.rqexec.runqueue_process_waitpid(task, status)
                 found = True
                 self.queue = self.queue[index+11:]
-                index = self.queue.find("</exitcode>")
+                index = self.queue.find(b"</exitcode>")
         return (end > start)
 
     def close(self):

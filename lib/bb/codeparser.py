@@ -1,21 +1,16 @@
 import ast
+import sys
 import codegen
 import logging
+import pickle
+import bb.pysh as pysh
 import os.path
 import bb.utils, bb.data
 from itertools import chain
-from pysh import pyshyacc, pyshlex, sherrors
+from bb.pysh import pyshyacc, pyshlex, sherrors
 from bb.cache import MultiProcessCache
 
-
 logger = logging.getLogger('BitBake.CodeParser')
-
-try:
-    import cPickle as pickle
-except ImportError:
-    import pickle
-    logger.info('Importing cPickle failed.  Falling back to a very slow implementation.')
-
 
 def check_indent(codestr):
     """If the code is indented, add a top level piece of code to 'remove' the indentation"""
@@ -68,7 +63,7 @@ class SetCache(object):
         
         new = []
         for i in items:
-            new.append(intern(i))
+            new.append(sys.intern(i))
         s = frozenset(new)
         if hash(s) in self.setcache:
             return self.setcache[hash(s)]

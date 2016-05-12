@@ -1,10 +1,10 @@
 import os,sys,logging
 import signal, time
-from SimpleXMLRPCServer import SimpleXMLRPCServer, SimpleXMLRPCRequestHandler
+from xmlrpc.server import SimpleXMLRPCServer, SimpleXMLRPCRequestHandler
 import threading
-import Queue
+import queue
 import socket
-import StringIO
+import io
 
 try:
     import sqlite3
@@ -64,7 +64,7 @@ class PRServer(SimpleXMLRPCServer):
         self.register_function(self.importone, "importone")
         self.register_introspection_functions()
 
-        self.requestqueue = Queue.Queue()
+        self.requestqueue = queue.Queue()
         self.handlerthread = threading.Thread(target = self.process_request_thread)
         self.handlerthread.daemon = False
 
@@ -83,7 +83,7 @@ class PRServer(SimpleXMLRPCServer):
         while not self.quit:
             try:
                 (request, client_address) = self.requestqueue.get(True, 30)
-            except Queue.Empty:
+            except queue.Empty:
                 self.table.sync_if_dirty()
                 continue
             try:
@@ -126,7 +126,7 @@ class PRServer(SimpleXMLRPCServer):
         Returns None if the database engine does not support dumping to
         script or if some other error is encountered in processing.
         """
-        buff = StringIO.StringIO()
+        buff = io.StringIO()
         try:
             self.table.sync()
             self.table.dump_db(buff)
@@ -420,7 +420,7 @@ class PRServiceConfigError(Exception):
 def auto_start(d):
     global singleton
 
-    host_params = filter(None, (d.getVar('PRSERV_HOST', True) or '').split(':'))
+    host_params = list(filter(None, (d.getVar('PRSERV_HOST', True) or '').split(':')))
     if not host_params:
         return None
 

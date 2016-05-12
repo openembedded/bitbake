@@ -29,7 +29,7 @@ import warnings
 sys.path.insert(0, os.path.join(os.path.abspath(os.path.dirname(sys.argv[0])), '../lib'))
 from bb.cache import CoreRecipeInfo
 
-import cPickle as pickle
+import pickle as pickle
 
 def main(argv=None):
     """

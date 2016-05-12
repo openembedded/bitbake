@@ -191,8 +191,8 @@ class PythonReferenceTest(ReferenceTest):
         if hasattr(bb.utils, "_context"):
             self.context = bb.utils._context
         else:
-            import __builtin__
-            self.context = __builtin__.__dict__
+            import builtins
+            self.context = builtins.__dict__
 
     def parseExpression(self, exp):
         parsedvar = self.d.expandWithRefs(exp, None)

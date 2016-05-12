@@ -30,13 +30,13 @@ import logging
 import multiprocessing
 import sre_constants
 import threading
-from cStringIO import StringIO
+from io import StringIO
 from contextlib import closing
 from functools import wraps
 from collections import defaultdict
 import bb, bb.exceptions, bb.command
 from bb import utils, data, parse, event, cache, providers, taskdata, runqueue, build
-import Queue
+import queue
 import signal
 import subprocess
 import errno
@@ -65,7 +65,7 @@ class CollectionError(bb.BBHandledException):
     """
 
 class state:
-    initial, parsing, running, shutdown, forceshutdown, stopped, error = range(7)
+    initial, parsing, running, shutdown, forceshutdown, stopped, error = list(range(7))
 
     @classmethod
     def get_name(cls, code):
@@ -93,7 +93,7 @@ class SkippedPackage:
 
 
 class CookerFeatures(object):
-    _feature_list = [HOB_EXTRA_CACHES, BASEDATASTORE_TRACKING, SEND_SANITYEVENTS] = range(3)
+    _feature_list = [HOB_EXTRA_CACHES, BASEDATASTORE_TRACKING, SEND_SANITYEVENTS] = list(range(3))
 
     def __init__(self):
         self._features=set()
@@ -110,8 +110,8 @@ class CookerFeatures(object):
     def __iter__(self):
         return self._features.__iter__()
 
-    def next(self):
-        return self._features.next()
+    def __next__(self):
+        return next(self._features)
 
 
 #============================================================================#
@@ -726,13 +726,13 @@ class BBCooker:
         depend_tree['providermap'] = {}
         depend_tree["layer-priorities"] = self.recipecache.bbfile_config_priorities
 
-        for name, fn in taskdata.get_providermap().iteritems():
+        for name, fn in list(taskdata.get_providermap().items()):
             pn = self.recipecache.pkg_fn[fn]
             if name != pn:
                 version = "%s:%s-%s" % self.recipecache.pkg_pepvpr[fn]
                 depend_tree['providermap'][name] = (pn, version)
 
-        for task in xrange(len(rq.rqdata.runq_fnid)):
+        for task in range(len(rq.rqdata.runq_fnid)):
             taskname = rq.rqdata.runq_task[task]
             fnid = rq.rqdata.runq_fnid[task]
             fn = taskdata.fn_index[fnid]
@@ -807,7 +807,7 @@ class BBCooker:
         _, taskdata = self.prepareTreeData(pkgs_to_build, task)
         tasks_fnid = []
         if len(taskdata.tasks_name) != 0:
-            for task in xrange(len(taskdata.tasks_name)):
+            for task in range(len(taskdata.tasks_name)):
                 tasks_fnid.append(taskdata.tasks_fnid[task])
 
         seen_fnids = []
@@ -825,7 +825,7 @@ class BBCooker:
                 cachefields = getattr(cache_class, 'cachefields', [])
                 extra_info = extra_info + cachefields
 
-        for task in xrange(len(tasks_fnid)):
+        for task in range(len(tasks_fnid)):
             fnid = tasks_fnid[task]
             fn = taskdata.fn_index[fnid]
             pn = self.recipecache.pkg_fn[fn]
@@ -953,7 +953,7 @@ class BBCooker:
         # Determine which bbappends haven't been applied
 
         # First get list of recipes, including skipped
-        recipefns = self.recipecache.pkg_fn.keys()
+        recipefns = list(self.recipecache.pkg_fn.keys())
         recipefns.extend(self.skiplist.keys())
 
         # Work out list of bbappends that have been applied
@@ -1152,7 +1152,7 @@ class BBCooker:
                         deplist = bb.utils.explode_dep_versions2(deps)
                     except bb.utils.VersionStringException as vse:
                         bb.fatal('Error parsing LAYERDEPENDS_%s: %s' % (c, str(vse)))
-                    for dep, oplist in deplist.iteritems():
+                    for dep, oplist in list(deplist.items()):
                         if dep in collection_list:
                             for opstr in oplist:
                                 layerver = self.data.getVar("LAYERVERSION_%s" % dep, True)
@@ -1888,7 +1888,7 @@ class Feeder(multiprocessing.Process):
         while True:
             try:
                 quit = self.quit.get_nowait()
-            except Queue.Empty:
+            except queue.Empty:
                 pass
             else:
                 if quit == 'cancel':
@@ -1902,7 +1902,7 @@ class Feeder(multiprocessing.Process):
 
             try:
                 self.to_parsers.put(job, timeout=0.5)
-            except Queue.Full:
+            except queue.Full:
                 self.jobs.insert(0, job)
                 continue
 
@@ -1942,7 +1942,7 @@ class Parser(multiprocessing.Process):
         while True:
             try:
                 self.quit.get_nowait()
-            except Queue.Empty:
+            except queue.Empty:
                 pass
             else:
                 self.results.cancel_join_thread()
@@ -1953,7 +1953,7 @@ class Parser(multiprocessing.Process):
             else:
                 try:
                     job = self.jobs.get(timeout=0.25)
-                except Queue.Empty:
+                except queue.Empty:
                     continue
 
                 if job is None:
@@ -1962,7 +1962,7 @@ class Parser(multiprocessing.Process):
 
             try:
                 self.results.put(result, timeout=0.25)
-            except Queue.Full:
+            except queue.Full:
                 pending.append(result)
 
     def parse(self, filename, appends, caches_array):
@@ -2115,7 +2115,7 @@ class CookerParser(object):
 
             try:
                 result = self.result_queue.get(timeout=0.25)
-            except Queue.Empty:
+            except queue.Empty:
                 pass
             else:
                 value = result[1]
@@ -2128,7 +2128,7 @@ class CookerParser(object):
         result = []
         parsed = None
         try:
-            parsed, result = self.results.next()
+            parsed, result = next(self.results)
         except StopIteration:
             self.shutdown()
             return False

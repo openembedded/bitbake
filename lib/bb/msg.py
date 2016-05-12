@@ -57,7 +57,7 @@ class BBLogFormatter(logging.Formatter):
     }
 
     color_enabled = False
-    BASECOLOR, BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE = range(29,38)
+    BASECOLOR, BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE = list(range(29,38))
 
     COLORS = {
         DEBUG3  : CYAN,

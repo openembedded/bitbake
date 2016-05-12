@@ -20,7 +20,7 @@ Usage in the recipe:
 
 import os
 import sys
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import json
 import subprocess
 import signal
@@ -196,9 +196,9 @@ class Npm(FetchMethod):
                 optdepsfound[dep] = dependencies[dep]
             else:
                 depsfound[dep] = dependencies[dep]
-        for dep, version in optdepsfound.iteritems():
+        for dep, version in optdepsfound.items():
             self._getdependencies(dep, data[pkg]['deps'], version, d, ud, optional=True)
-        for dep, version in depsfound.iteritems():
+        for dep, version in depsfound.items():
             self._getdependencies(dep, data[pkg]['deps'], version, d, ud)
 
     def _getshrinkeddependencies(self, pkg, data, version, d, ud, lockdown, manifest):

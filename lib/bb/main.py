@@ -27,6 +27,7 @@ import sys
 import logging
 import optparse
 import warnings
+import fcntl
 
 import bb
 from bb import event
@@ -336,10 +337,7 @@ def start_server(servermodule, configParams, configuration, features):
         server.saveConnectionDetails()
     except Exception as e:
         while hasattr(server, "event_queue"):
-            try:
-                import queue
-            except ImportError:
-                import Queue as queue
+            import queue
             try:
                 event = server.event_queue.get(block=False)
             except (queue.Empty, IOError):
@@ -363,7 +361,10 @@ def bitbake_main(configParams, configuration):
     # updates to log files for use with tail
     try:
         if sys.stdout.name == '<stdout>':
-            sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
+            # Reopen with O_SYNC (unbuffered)
+            fl = fcntl.fcntl(sys.stdout.fileno(), fcntl.F_GETFL)
+            fl |= os.O_SYNC
+            fcntl.fcntl(sys.stdout.fileno(), fcntl.F_SETFL, fl)
     except:
         pass
 

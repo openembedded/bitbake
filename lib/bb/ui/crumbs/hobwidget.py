@@ -612,7 +612,7 @@ class HobIconChecker(hic):
     def set_hob_icon_to_stock_icon(self, file_path, stock_id=""):
         try:
             pixbuf = gtk.gdk.pixbuf_new_from_file(file_path)
-        except Exception, e:
+        except Exception as e:
             return None
 
         if stock_id and (gtk.icon_factory_lookup_default(stock_id) == None):

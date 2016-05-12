@@ -35,8 +35,7 @@ import stat
 import bb
 import bb.msg
 import bb.process
-from contextlib import nested
-from bb import event, utils
+from bb import data, event, utils
 
 bblogger = logging.getLogger('BitBake')
 logger = logging.getLogger('BitBake.Build')
@@ -328,7 +327,7 @@ trap '' 0
 exit $ret
 ''')
 
-    os.chmod(runfile, 0775)
+    os.chmod(runfile, 0o775)
 
     cmd = runfile
     if d.getVarFlag(func, 'fakeroot', False):
@@ -342,12 +341,12 @@ exit $ret
         logfile = sys.stdout
 
     def readfifo(data):
-        lines = data.split('\0')
+        lines = data.split(b'\0')
         for line in lines:
-            splitval = line.split(' ', 1)
+            splitval = line.split(b' ', 1)
             cmd = splitval[0]
             if len(splitval) > 1:
-                value = splitval[1]
+                value = splitval[1].decode("utf-8")
             else:
                 value = ''
             if cmd == 'bbplain':
@@ -375,7 +374,7 @@ exit $ret
     if os.path.exists(fifopath):
         os.unlink(fifopath)
     os.mkfifo(fifopath)
-    with open(fifopath, 'r+') as fifo:
+    with open(fifopath, 'r+b', buffering=0) as fifo:
         try:
             bb.debug(2, "Executing shell function %s" % func)
 

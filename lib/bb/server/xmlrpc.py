@@ -31,31 +31,33 @@
     in the server's main loop.
 """
 
+import os
+import sys
+
+import hashlib
+import time
+import socket
+import signal
+import threading
+import pickle
+import inspect
+import select
+import http.client
+import xmlrpc.client
+from xmlrpc.server import SimpleXMLRPCServer, SimpleXMLRPCRequestHandler
+
 import bb
-import xmlrpclib, sys
 from bb import daemonize
 from bb.ui import uievent
-import hashlib, time
-import socket
-import os, signal
-import threading
-try:
-    import cPickle as pickle
-except ImportError:
-    import pickle
+from . import BitBakeBaseServer, BitBakeBaseServerConnection, BaseImplServer
 
 DEBUG = False
 
-from SimpleXMLRPCServer import SimpleXMLRPCServer, SimpleXMLRPCRequestHandler
-import inspect, select, httplib
-
-from . import BitBakeBaseServer, BitBakeBaseServerConnection, BaseImplServer
-
-class BBTransport(xmlrpclib.Transport):
+class BBTransport(xmlrpc.client.Transport):
     def __init__(self, timeout):
         self.timeout = timeout
         self.connection_token = None
-        xmlrpclib.Transport.__init__(self)
+        xmlrpc.client.Transport.__init__(self)
 
     # Modified from default to pass timeout to HTTPConnection
     def make_connection(self, host):
@@ -67,7 +69,7 @@ class BBTransport(xmlrpclib.Transport):
         # create a HTTP connection object from a host descriptor
         chost, self._extra_headers, x509 = self.get_host_info(host)
         #store the host argument along with the connection object
-        self._connection = host, httplib.HTTPConnection(chost, timeout=self.timeout)
+        self._connection = host, http.client.HTTPConnection(chost, timeout=self.timeout)
         return self._connection[1]
 
     def set_connection_token(self, token):
@@ -76,11 +78,11 @@ class BBTransport(xmlrpclib.Transport):
     def send_content(self, h, body):
         if self.connection_token:
             h.putheader("Bitbake-token", self.connection_token)
-        xmlrpclib.Transport.send_content(self, h, body)
+        xmlrpc.client.Transport.send_content(self, h, body)
 
 def _create_server(host, port, timeout = 60):
     t = BBTransport(timeout)
-    s = xmlrpclib.ServerProxy("http://%s:%d/" % (host, port), transport=t, allow_none=True)
+    s = xmlrpc.client.ServerProxy("http://%s:%d/" % (host, port), transport=t, allow_none=True, use_builtin_types=True)
     return s, t
 
 class BitBakeServerCommands():
@@ -128,7 +130,7 @@ class BitBakeServerCommands():
     def addClient(self):
         if self.has_client:
             return None
-        token = hashlib.md5(str(time.time())).hexdigest()
+        token = hashlib.md5(str(time.time()).encode("utf-8")).hexdigest()
         self.server.set_connection_token(token)
         self.has_client = True
         return token
@@ -232,7 +234,7 @@ class XMLRPCServer(SimpleXMLRPCServer, BaseImplServer):
         while not self.quit:
             fds = [self]
             nextsleep = 0.1
-            for function, data in self._idlefuns.items():
+            for function, data in list(self._idlefuns.items()):
                 retval = None
                 try:
                     retval = function(self, data, False)
@@ -267,7 +269,7 @@ class XMLRPCServer(SimpleXMLRPCServer, BaseImplServer):
                 pass
 
         # Tell idle functions we're exiting
-        for function, data in self._idlefuns.items():
+        for function, data in list(self._idlefuns.items()):
             try:
                 retval = function(self, data, True)
             except:
@@ -379,7 +381,7 @@ class BitBakeXMLRPCClient(BitBakeBaseServer):
             bb.warn("Could not create socket for %s:%s (%s)" % (host, port, str(e)))
             raise e
         try:
-            self.serverImpl = XMLRPCProxyServer(host, port)
+            self.serverImpl = XMLRPCProxyServer(host, port, use_builtin_types=True)
             self.connection = BitBakeXMLRPCServerConnection(self.serverImpl, (ip, 0), self.observer_only, featureset)
             return self.connection.connect(self.token)
         except Exception as e:

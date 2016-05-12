@@ -44,9 +44,9 @@ class HobProgressBar (gtk.ProgressBar):
         self.set_text(text)
 
     def set_stop_title(self, text=None):
-	if not text:
-	    text = ""
-	self.set_text(text)
+        if not text:
+            text = ""
+        self.set_text(text)
 
     def reset(self):
         self.set_fraction(0)

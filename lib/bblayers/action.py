@@ -117,7 +117,7 @@ build results (as the layer priority order has effectively changed).
         applied_appends = []
         for layer in layers:
             overlayed = []
-            for f in self.tinfoil.cooker.collection.overlayed.iterkeys():
+            for f in self.tinfoil.cooker.collection.overlayed.keys():
                 for of in self.tinfoil.cooker.collection.overlayed[f]:
                     if of.startswith(layer):
                         overlayed.append(of)

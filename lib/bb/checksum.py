@@ -19,19 +19,12 @@ import glob
 import operator
 import os
 import stat
+import pickle
 import bb.utils
 import logging
 from bb.cache import MultiProcessCache
 
 logger = logging.getLogger("BitBake.Cache")
-
-try:
-    import cPickle as pickle
-except ImportError:
-    import pickle
-    logger.info("Importing cPickle failed. "
-                "Falling back to a very slow implementation.")
-
 
 # mtime cache (non-persistent)
 # based upon the assumption that files do not change during bitbake run

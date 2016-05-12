@@ -23,14 +23,14 @@ import gtk
 import gobject
 import logging
 import time
-import urllib
-import urllib2
+import urllib.request, urllib.parse, urllib.error
+import urllib.request, urllib.error, urllib.parse
 import pango
 from bb.ui.crumbs.hobcolor import HobColors
 from bb.ui.crumbs.hobwidget import HobWarpCellRendererText, HobCellRendererPixbuf
 
 class RunningBuildModel (gtk.TreeStore):
-    (COL_LOG, COL_PACKAGE, COL_TASK, COL_MESSAGE, COL_ICON, COL_COLOR, COL_NUM_ACTIVE) = range(7)
+    (COL_LOG, COL_PACKAGE, COL_TASK, COL_MESSAGE, COL_ICON, COL_COLOR, COL_NUM_ACTIVE) = list(range(7))
 
     def __init__ (self):
         gtk.TreeStore.__init__ (self,
@@ -443,8 +443,8 @@ def do_pastebin(text):
     url = 'http://pastebin.com/api_public.php'
     params = {'paste_code': text, 'paste_format': 'text'}
 
-    req = urllib2.Request(url, urllib.urlencode(params))
-    response = urllib2.urlopen(req)
+    req = urllib.request.Request(url, urllib.parse.urlencode(params))
+    response = urllib.request.urlopen(req)
     paste_url = response.read()
 
     return paste_url
@@ -519,7 +519,7 @@ class RunningBuildTreeView (gtk.TreeView):
 
         # @todo Provide visual feedback to the user that it is done and that
         # it worked.
-        print paste_url
+        print(paste_url)
 
         self._add_to_clipboard(paste_url)
 

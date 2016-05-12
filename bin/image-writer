@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright (c) 2012 Wind River Systems, Inc.
 #
@@ -24,9 +24,13 @@ try:
 except RuntimeError as exc:
     sys.exit(str(exc))
 
+from gi import pygtkcompat
+
+pygtkcompat.enable()
+pygtkcompat.enable_gtk(version='3.0')
+
 import gtk
 import optparse
-import pygtk
 
 from bb.ui.crumbs.hobwidget import HobAltButton, HobButton
 from bb.ui.crumbs.hig.crumbsmessagedialog import CrumbsMessageDialog
