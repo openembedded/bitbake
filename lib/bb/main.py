@@ -116,7 +116,7 @@ def _showwarning(message, category, filename, lineno, file=None, line=None):
             _warnings_showwarning(message, category, filename, lineno, file, line)
     else:
         s = warnings.formatwarning(message, category, filename, lineno)
-        warnlog.warn(s)
+        warnlog.warning(s)
 
 warnings.showwarning = _showwarning
 warnings.filterwarnings("ignore")
