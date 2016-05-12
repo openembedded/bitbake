@@ -287,7 +287,7 @@ class LocalhostBEController(BuildEnvironmentController):
 
         # run bitbake server from the clone
         bitbake = os.path.join(self.pokydirname, 'bitbake', 'bin', 'bitbake')
-        self._shellcmd('bash -c \"source %s %s; BITBAKE_UI="" %s --read %s '
+        self._shellcmd('bash -c \"source %s %s; BITBAKE_UI="knotty" %s --read %s '
                        '--server-only -t xmlrpc -B 0.0.0.0:0\"' % (oe_init,
                        builddir, bitbake, confpath), self.be.sourcedir)
 
@@ -324,7 +324,7 @@ class LocalhostBEController(BuildEnvironmentController):
                                      'bitbake')
         self._shellcmd(['bash -c \"(TOASTER_BRBE="%s" BBSERVER="0.0.0.0:-1" '
                         '%s %s -u toasterui --token="" >>%s 2>&1;'
-                        'BITBAKE_UI="" BBSERVER=0.0.0.0:-1 %s -m)&\"' \
+                        'BITBAKE_UI="knotty" BBSERVER=0.0.0.0:-1 %s -m)&\"' \
                         % (brbe, local_bitbake, bbtargets, log, bitbake)],
                         builddir, nowait=True)
 
