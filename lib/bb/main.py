@@ -335,7 +335,6 @@ def start_server(servermodule, configParams, configuration, features):
         server.addcooker(cooker)
         server.saveConnectionDetails()
     except Exception as e:
-        exc_info = sys.exc_info()
         while hasattr(server, "event_queue"):
             try:
                 import queue
@@ -347,7 +346,7 @@ def start_server(servermodule, configParams, configuration, features):
                 break
             if isinstance(event, logging.LogRecord):
                 logger.handle(event)
-        raise exc_info[1], None, exc_info[2]
+        raise
     server.detach()
     cooker.lock.close()
     return server
