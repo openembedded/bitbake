@@ -28,13 +28,14 @@ class HobProgressBar (gtk.ProgressBar):
 
     def set_rcstyle(self, status):
         rcstyle = gtk.RcStyle()
-        rcstyle.fg[2] = gtk.gdk.Color(HobColors.BLACK)
-        if status == "stop":
-            rcstyle.bg[3] = gtk.gdk.Color(HobColors.WARNING)
-        elif status == "fail":
-            rcstyle.bg[3] = gtk.gdk.Color(HobColors.ERROR)
-        else:
-            rcstyle.bg[3] = gtk.gdk.Color(HobColors.RUNNING)
+#FIXME
+#        rcstyle.fg[2] = gtk.gdk.Color(HobColors.BLACK)
+#        if status == "stop":
+#            rcstyle.bg[3] = gtk.gdk.Color(HobColors.WARNING)
+#        elif status == "fail":
+#            rcstyle.bg[3] = gtk.gdk.Color(HobColors.ERROR)
+#        else:
+#            rcstyle.bg[3] = gtk.gdk.Color(HobColors.RUNNING)
         self.modify_style(rcstyle)
 
     def set_title(self, text=None):

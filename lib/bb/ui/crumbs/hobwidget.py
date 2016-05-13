@@ -273,13 +273,13 @@ class BaseHobButton(gtk.Button):
         style = button.get_style()
         style = gtk.rc_get_style_by_paths(gtk.settings_get_default(), 'gtk-button', 'gtk-button', gobject.TYPE_NONE)
 
-        button.set_flags(gtk.CAN_DEFAULT)
+        #FIXME button.set_flags(gtk.CAN_DEFAULT)
         button.grab_default()
 
 #        label = "<span size='x-large'><b>%s</b></span>" % gobject.markup_escape_text(button.get_label())
         label = button.get_label()
         button.set_label(label)
-        button.child.set_use_markup(True)
+        #FIXME button.child.set_use_markup(True)
 
 class HobButton(BaseHobButton):
     """
@@ -399,8 +399,8 @@ class HobInfoButton(gtk.EventBox):
         self.dialog = PropertyDialog(title = '',
                     parent = self.my_parent,
                     information = self.tip_markup,
-                    flags = gtk.DIALOG_DESTROY_WITH_PARENT
-                        | gtk.DIALOG_NO_SEPARATOR)
+                    flags = gtk.DIALOG_DESTROY_WITH_PARENT)
+                        #FMXIE | gtk.DIALOG_NO_SEPARATOR
 
         button = self.dialog.add_button("Close", gtk.RESPONSE_CANCEL)
         HobAltButton.style_button(button)

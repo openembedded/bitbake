@@ -67,7 +67,8 @@ class DeployWindow(gtk.Window):
 
         self.deploy_dialog = DeployImageDialog(Title, image_path, self,
                                         gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT
-                                        | gtk.DIALOG_NO_SEPARATOR, None, standalone=True)
+                                        , None, standalone=True)
+#FIXME | gtk.DIALOG_NO_SEPARATOR
         close_button = self.deploy_dialog.add_button("Close", gtk.RESPONSE_NO)
         HobAltButton.style_button(close_button)
         close_button.connect('clicked', gtk.main_quit)

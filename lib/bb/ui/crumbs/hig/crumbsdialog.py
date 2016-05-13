@@ -36,7 +36,7 @@ class CrumbsDialog(gtk.Dialog):
     def __init__(self, title="", parent=None, flags=0, buttons=None):
         super(CrumbsDialog, self).__init__(title, parent, flags, buttons)
 
-        self.set_property("has-separator", False) # note: deprecated in 2.22
+        #FIXME self.set_property("has-separator", False) # note: deprecated in 2.22
 
         self.set_border_width(6)
         self.vbox.set_property("spacing", 12)
