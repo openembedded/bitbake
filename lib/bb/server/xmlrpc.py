@@ -180,7 +180,7 @@ class XMLRPCProxyServer(BaseImplServer):
     """ not a real working server, but a stub for a proxy server connection
 
     """
-    def __init__(self, host, port):
+    def __init__(self, host, port, use_builtin_types=True):
         self.host = host
         self.port = port
 
