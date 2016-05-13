@@ -93,7 +93,7 @@ class SkippedPackage:
 
 
 class CookerFeatures(object):
-    _feature_list = [HOB_EXTRA_CACHES, SEND_DEPENDS_TREE, BASEDATASTORE_TRACKING, SEND_SANITYEVENTS] = range(4)
+    _feature_list = [HOB_EXTRA_CACHES, BASEDATASTORE_TRACKING, SEND_SANITYEVENTS] = range(3)
 
     def __init__(self):
         self._features=set()
@@ -360,14 +360,8 @@ class BBCooker:
                 # set our handler's event processor
                 event = EventWriter(self)       # self is the cooker here
 
-
-            # set up cooker features for this mock UI handler
-
-            # we need to write the dependency tree in the log
-            self.featureset.setFeature(CookerFeatures.SEND_DEPENDS_TREE)
             # register the log file writer as UI Handler
             bb.event.register_UIHhandler(EventLogWriteHandler())
-
 
         #
         # Copy of the data store which has been expanded.
