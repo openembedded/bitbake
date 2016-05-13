@@ -416,6 +416,7 @@ class Build(models.Model):
         # to show build progress in mrb_section.html
         for build in recent_builds:
             build.percentDone = build.completeper()
+            build.outcomeText = build.get_outcome_text()
 
         return recent_builds
 
