@@ -299,7 +299,7 @@ class SignatureGeneratorBasic(SignatureGenerator):
         computed_basehash = calc_basehash(data)
         if computed_basehash != self.basehash[k]:
             bb.error("Basehash mismatch %s verses %s for %s" % (computed_basehash, self.basehash[k], k))
-        if k in self.taskhash:
+        if runtime and k in self.taskhash:
             computed_taskhash = calc_taskhash(data)
             if computed_taskhash != self.taskhash[k]:
                 bb.error("Taskhash mismatch %s verses %s for %s" % (computed_taskhash, self.taskhash[k], k))
@@ -453,6 +453,11 @@ def compare_sigfiles(a, b, recursecb = None):
         for dep in changed:
             output.append("Variable %s value changed from '%s' to '%s'" % (dep, a_data['varvals'][dep], b_data['varvals'][dep]))
 
+    if not 'file_checksum_values' in a_data:
+         a_data['file_checksum_values'] = {}
+    if not 'file_checksum_values' in b_data:
+         b_data['file_checksum_values'] = {}
+
     changed, added, removed = file_checksums_diff(a_data['file_checksum_values'], b_data['file_checksum_values'])
     if changed:
         for f, old, new in changed:
@@ -464,6 +469,10 @@ def compare_sigfiles(a, b, recursecb = None):
         for f in removed:
             output.append("Dependency on checksum of file %s was removed" % (f))
 
+    if not 'runtaskdeps' in a_data:
+         a_data['runtaskdeps'] = {}
+    if not 'runtaskdeps' in b_data:
+         b_data['runtaskdeps'] = {}
 
     if len(a_data['runtaskdeps']) != len(b_data['runtaskdeps']):
         changed = ["Number of task dependencies changed"]
