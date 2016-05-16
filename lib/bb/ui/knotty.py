@@ -186,6 +186,7 @@ class TerminalFilter(object):
             lines = self.footer_present
             sys.stdout.write(self.curses.tparm(self.cuu, lines))
             sys.stdout.write(self.curses.tparm(self.ed))
+            sys.stdout.flush()
         self.footer_present = False
 
     def updateFooter(self):
@@ -568,6 +569,7 @@ def main(server, eventHandler, params, tf = TerminalFilter):
             main.shutdown = 2
             return_value = 1
     try:
+        termfilter.clearFooter()
         summary = ""
         if taskfailures:
             summary += pluralise("\nSummary: %s task failed:",
