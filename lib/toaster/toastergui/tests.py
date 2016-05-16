@@ -83,8 +83,12 @@ class ViewTests(TestCase):
         self.assertEqual(data["error"], "ok")
         self.assertTrue("rows" in data)
 
-        self.assertTrue(self.project.name in [x["name"] for x in data["rows"]])
-        self.assertTrue("id" in data["rows"][0])
+        name_found = False
+        for row in data["rows"]:
+            name_found = row['name'].find(self.project.name)
+
+        self.assertTrue(name_found,
+                        "project name not found in projects table")
 
     def test_typeaheads(self):
         """Test typeahead ReST API"""
@@ -322,22 +326,24 @@ class ViewTests(TestCase):
         self.assertEqual(response.status_code, 200, 'should be 200 OK status')
 
         # check other columns have been populated correctly
-        self.assertEqual(row1['name'], self.recipe1.name)
-        self.assertEqual(row1['version'], self.recipe1.version)
-        self.assertEqual(row1['get_description_or_summary'],
-                         self.recipe1.description)
-        self.assertEqual(row1['layer_version__layer__name'],
-                         self.recipe1.layer_version.layer.name)
-        self.assertEqual(row2['name'], self.recipe2.name)
-        self.assertEqual(row2['version'], self.recipe2.version)
-        self.assertEqual(row2['get_description_or_summary'],
-                         self.recipe2.description)
-        self.assertEqual(row2['layer_version__layer__name'],
-                         self.recipe2.layer_version.layer.name)
+        self.assertTrue(self.recipe1.name in row1['name'])
+        self.assertTrue(self.recipe1.version in row1['version'])
+        self.assertTrue(self.recipe1.description in
+                        row1['get_description_or_summary'])
+
+        self.assertTrue(self.recipe1.layer_version.layer.name in
+                        row1['layer_version__layer__name'])
+
+        self.assertTrue(self.recipe2.name in row2['name'])
+        self.assertTrue(self.recipe2.version in row2['version'])
+        self.assertTrue(self.recipe2.description in
+                        row2['get_description_or_summary'])
+
+        self.assertTrue(self.recipe2.layer_version.layer.name in
+                        row2['layer_version__layer__name'])
 
     def test_toaster_tables(self):
         """Test all ToasterTables instances"""
-        current_recipes = self.project.get_available_recipes()
 
         def get_data(table, options={}):
             """Send a request and parse the json response"""
@@ -354,11 +360,29 @@ class ViewTests(TestCase):
                     'layerid': self.lver.pk,
                     'recipeid': self.recipe1.pk,
                     'recipe_id': image_recipe.pk,
-                    'custrecipeid': self.customr.pk
-                   }
+                    'custrecipeid': self.customr.pk}
 
             response = table.get(request, **args)
             return json.loads(response.content)
+
+        def get_text_from_td(td):
+            """If we have html in the td then extract the text portion"""
+            # just so we don't waste time parsing non html
+            if "<" not in td:
+                ret = td
+            else:
+                ret = BeautifulSoup(td).text
+
+            # We change the td into ascii as a way to remove characters
+            # such as \xa0 (non break space) which mess with the ordering
+            # comparisons
+            ret.strip().encode('ascii',
+                               errors='replace').replace('?', ' ')
+            # Case where the td is empty
+            if len(ret):
+                return "0"
+            else:
+                return ret
 
         # Get a list of classes in tables module
         tables = inspect.getmembers(toastergui.tables, inspect.isclass)
@@ -379,8 +403,10 @@ class ViewTests(TestCase):
                             "Cannot test on a %s table with < 1 row" % name)
 
             if table.default_orderby:
-                row_one = all_data['rows'][0][table.default_orderby.strip("-")]
-                row_two = all_data['rows'][1][table.default_orderby.strip("-")]
+                row_one = get_text_from_td(
+                    all_data['rows'][0][table.default_orderby.strip("-")])
+                row_two = get_text_from_td(
+                    all_data['rows'][1][table.default_orderby.strip("-")])
 
                 if '-' in table.default_orderby:
                     self.assertTrue(row_one >= row_two,
@@ -399,28 +425,36 @@ class ViewTests(TestCase):
                     # If a column is orderable test it in both order
                     # directions ordering on the columns field_name
                     ascending = get_data(table_cls(),
-                                         {"orderby" : column['field_name']})
+                                         {"orderby": column['field_name']})
 
-                    row_one = ascending['rows'][0][column['field_name']]
-                    row_two = ascending['rows'][1][column['field_name']]
+                    row_one = get_text_from_td(
+                        ascending['rows'][0][column['field_name']])
+                    row_two = get_text_from_td(
+                        ascending['rows'][1][column['field_name']])
 
                     self.assertTrue(row_one <= row_two,
-                                    "Ascending sort applied but row 0 is less "
-                                    "than row 1 %s %s " %
-                                    (column['field_name'], name))
-
+                                    "Ascending sort applied but row 0: \"%s\""
+                                    " is less than row 1: \"%s\" "
+                                    "%s %s " %
+                                    (row_one, row_two,
+                                     column['field_name'], name))
 
                     descending = get_data(table_cls(),
-                                          {"orderby" :
+                                          {"orderby":
                                            '-'+column['field_name']})
 
-                    row_one = descending['rows'][0][column['field_name']]
-                    row_two = descending['rows'][1][column['field_name']]
+                    row_one = get_text_from_td(
+                        descending['rows'][0][column['field_name']])
+                    row_two = get_text_from_td(
+                        descending['rows'][1][column['field_name']])
 
                     self.assertTrue(row_one >= row_two,
-                                    "Descending sort applied but row 0 is "
-                                    "greater than row 1 %s %s" %
-                                    (column['field_name'], name))
+                                    "Descending sort applied but row 0: %s"
+                                    "is greater than row 1: %s"
+                                    "field %s table %s" %
+                                    (row_one,
+                                     row_two,
+                                     column['field_name'], name))
 
                     # If the two start rows are the same we haven't actually
                     # changed the order
