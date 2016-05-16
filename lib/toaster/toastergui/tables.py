@@ -190,17 +190,6 @@ class LayersTable(ToasterTable):
                         static_data_name="add-del-layers",
                         static_data_template='{% include "layer_btn.html" %}')
 
-        project = Project.objects.get(pk=kwargs['pid'])
-        self.add_column(title="LayerDetailsUrl",
-                        displayable = False,
-                        field_name="layerdetailurl",
-                        computation = lambda x: reverse('layerdetails', args=(project.id, x.id)))
-
-        self.add_column(title="name",
-                        displayable = False,
-                        field_name="name",
-                        computation = lambda x: x.layer.name)
-
 
 class MachinesTable(ToasterTable):
     """Table of Machines in Toaster"""
