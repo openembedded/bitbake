@@ -117,7 +117,7 @@ class shellCacheLine(object):
 
 class CodeParserCache(MultiProcessCache):
     cache_file_name = "bb_codeparser.dat"
-    CACHE_VERSION = 7
+    CACHE_VERSION = 8
 
     def __init__(self):
         MultiProcessCache.__init__(self)
