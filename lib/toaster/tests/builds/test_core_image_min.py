@@ -115,12 +115,19 @@ class BuildCoreImageMinimal(BuildTest):
     # be 0 (SSTATE_NA) - tc=833
     def test_Task_If_Outcome_1_3_Sstate_Result_Must_Be_0(self):
         tasks = Task.objects.filter(
-            outcome__in=(1, 3)).values('id', 'sstate_result')
+            outcome__in=(Task.OUTCOME_COVERED,
+                         Task.OUTCOME_PREBUILT)).values('id',
+                                                        'task_name',
+                                                        'sstate_result')
         cnt_err = []
 
         for task in tasks:
-            if (task['sstate_result'] != 0):
-                cnt_err.append(task['id'])
+            if (task['sstate_result'] != Task.SSTATE_NA and
+                    task['sstate_result'] != Task.SSTATE_MISS):
+                cnt_err.append({'id': task['id'],
+                                'name': task['task_name'],
+                                'sstate_result': task['sstate_result'],
+                               })
 
         self.assertEqual(len(cnt_err),
                          0,
