@@ -62,13 +62,14 @@
                 <span id="image_fstypes">{{fstypes}}</span>
                 <i class="icon-pencil" id="change-image_fstypes-icon"></i>
                 <form id="change-image_fstypes-form" style="display:none;">
+                    <label>Type the image types you want to build:</label>
                     <div class="input-append" id="validate-image_fstypes">
                         <input type="text" class="input-xlarge" id="new-imagefs_types">
                         <button id="apply-change-image_fstypes" type="button" class="btn">Save</button>
                         <button id="cancel-change-image_fstypes" type="button" class="btn btn-link">Cancel</button>
                     </div>
-                    </br><span class="help-block error" style="display:none;" id="hintError-image-fs_type">A valid image type cannot include underscores.</span>
-                    <p>Choose from known image types</p>
+                    <p class="help-block error" style="display:none;margin-top:10px;" id="hintError-image-fs_type">A valid image type cannot include underscores</p>
+                    <label>Or choose from known image types:</label>
                     <input id="filter-image_fstypes" type="text" placeholder="Search image types" class="span4">
                     <div id="all-image_fstypes" class="scrolling">
                     </div>
