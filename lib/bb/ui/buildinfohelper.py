@@ -21,19 +21,19 @@ import bb
 import re
 import os
 
-os.environ["DJANGO_SETTINGS_MODULE"] = "toaster.toastermain.settings"
-
-
 import django
 from django.utils import timezone
 
+import toaster
+# Add toaster module to the search path to help django.setup() find the right
+# modules
+sys.path.insert(0, os.path.dirname(toaster.__file__))
 
-def _configure_toaster():
-    """ Add toaster to sys path for importing modules
-    """
-    sys.path.append(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'toaster'))
-_configure_toaster()
-
+#Set the DJANGO_SETTINGS_MODULE if it's not already set
+os.environ["DJANGO_SETTINGS_MODULE"] =\
+    os.environ.get("DJANGO_SETTINGS_MODULE",
+                   "toaster.toastermain.settings")
+# Setup django framework (needs to be done before importing modules)
 django.setup()
 
 from orm.models import Build, Task, Recipe, Layer_Version, Layer, Target, LogMessage, HelpText
@@ -54,10 +54,10 @@ from datetime import datetime, timedelta
 
 from django.db import transaction, connection
 
+
 # pylint: disable=invalid-name
 # the logger name is standard throughout BitBake
 logger = logging.getLogger("ToasterLogger")
-
 
 class NotExisting(Exception):
     pass
