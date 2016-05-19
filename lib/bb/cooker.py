@@ -894,8 +894,8 @@ class BBCooker:
         depgraph = self.generateTaskDepTreeData(pkgs_to_build, task)
 
         # Prints a flattened form of package-depends below where subpackages of a package are merged into the main pn
-        depends_file = file('pn-depends.dot', 'w' )
-        buildlist_file = file('pn-buildlist', 'w' )
+        depends_file = open('pn-depends.dot', 'w' )
+        buildlist_file = open('pn-buildlist', 'w' )
         print("digraph depends {", file=depends_file)
         for pn in depgraph["pn"]:
             fn = depgraph["pn"][pn]["filename"]
@@ -911,9 +911,10 @@ class BBCooker:
             for rdepend in depgraph["rdepends-pn"][pn]:
                 print('"%s" -> "%s" [style=dashed]' % (pn, rdepend), file=depends_file)
         print("}", file=depends_file)
+        depends_file.close()
         logger.info("PN dependencies saved to 'pn-depends.dot'")
 
-        depends_file = file('package-depends.dot', 'w' )
+        depends_file = open('package-depends.dot', 'w' )
         print("digraph depends {", file=depends_file)
         for package in depgraph["packages"]:
             pn = depgraph["packages"][package]["pn"]
@@ -932,9 +933,10 @@ class BBCooker:
             for rdepend in depgraph["rrecs-pkg"][package]:
                 print('"%s" -> "%s" [style=dotted]' % (package, rdepend), file=depends_file)
         print("}", file=depends_file)
+        depends_file.close()
         logger.info("Package dependencies saved to 'package-depends.dot'")
 
-        tdepends_file = file('task-depends.dot', 'w' )
+        tdepends_file = open('task-depends.dot', 'w' )
         print("digraph depends {", file=tdepends_file)
         for task in depgraph["tdepends"]:
             (pn, taskname) = task.rsplit(".", 1)
@@ -944,6 +946,7 @@ class BBCooker:
             for dep in depgraph["tdepends"][task]:
                 print('"%s" -> "%s"' % (task, dep), file=tdepends_file)
         print("}", file=tdepends_file)
+        tdepends_file.close()
         logger.info("Task dependencies saved to 'task-depends.dot'")
 
     def show_appends_with_no_recipes(self):
