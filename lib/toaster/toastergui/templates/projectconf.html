@@ -62,12 +62,16 @@
                 <span id="image_fstypes">{{fstypes}}</span>
                 <i class="icon-pencil" id="change-image_fstypes-icon"></i>
                 <form id="change-image_fstypes-form" style="display:none;">
+                    <div class="input-append" id="validate-image_fstypes">
+                        <input type="text" class="input-xlarge" id="new-imagefs_types">
+                        <button id="apply-change-image_fstypes" type="button" class="btn">Save</button>
+                        <button id="cancel-change-image_fstypes" type="button" class="btn btn-link">Cancel</button>
+                    </div>
+                    </br><span class="help-block error" style="display:none;" id="hintError-image-fs_type">A valid image type cannot include underscores.</span>
+                    <p>Choose from known image types</p>
                     <input id="filter-image_fstypes" type="text" placeholder="Search image types" class="span4">
                     <div id="all-image_fstypes" class="scrolling">
                     </div>
-                    <span class="help-block" id="fstypes-error-message">You must select at least one image type</span>
-                    <button id="apply-change-image_fstypes" type="button" class="btn">Save</button>
-                    <button id="cancel-change-image_fstypes" type="button" class="btn btn-link">Cancel</button>
                 </form>
             </dd>
             {% endif %}
@@ -320,22 +324,6 @@
             d.className = d.className.replace(" error","");
             $("#apply-change-distro").removeAttr("disabled");
             return true;
-        }
-
-        // Test to insure at least one FS Type is checked
-        function enableFsTypesSave() {
-            var any_checked = 0;
-            $(".fs-checkbox-fstypes:checked").each(function(){
-                any_checked = 1;
-            });
-            if ( 0 == any_checked ) {
-                $("#apply-change-image_fstypes").attr("disabled","disabled");
-                $('#fstypes-error-message').show();
-            }
-            else {
-                $("#apply-change-image_fstypes").removeAttr("disabled");
-                $('#fstypes-error-message').hide();
-            }
         }
 
         // Preset or reset the Package Class checkbox labels
@@ -603,6 +591,46 @@
             {% if fstypes_defined %}
             // change IMAGE_FSTYPES variable
 
+            // get value of fstypes and add to the textbox
+            $("#new-imagefs_types").val("{{fstypes}}");
+
+            // If value of new-imagefs_types is empty disable save button
+            $("#new-imagefs_types").on("input", function() {
+              $(this).val($(this).val().replace(/\s+/g,' '));
+              if ($(this).val().length === 0) {
+                //$('#apply-change-image_fstypes').prop('disabled', true);
+                $('#apply-change-image_fstypes').attr("disabled", "disabled");
+              } else {
+                //$('#apply-change-image_fstypes').prop('disabled', false);
+                $('#apply-change-image_fstypes').removeAttr("disabled");
+              }
+
+              /*If user types imagefs do the action on checkboxes.
+                Lets say if an imagefstype typed by user and the same
+                imagefs is unchecked in the checkbox, then checkbox needs
+                to get checked. Similarly when user deletes imagefs from
+                textbox the checkbox which is checked gets unchecked.
+              */
+              $('#all-image_fstypes input').each(function(){
+                var imagefs_userval = $('#new-imagefs_types').val();
+                if( imagefs_userval.indexOf($(this).val()) > -1) {
+                   $(this).prop('checked', true);
+                } else {
+                   $(this).prop('checked', false);
+                }
+              });
+
+              // Validate underscore in image fs types
+              if ($(this).val().indexOf('_') > -1) {
+                $('#validate-image_fstypes').addClass('control-group error');
+                $('#hintError-image-fs_type').show();
+                $("#apply-change-image_fstypes").prop("disabled", true);
+              } else {
+                $('#validate-image_fstypes').removeClass('control-group error');
+                $('#hintError-image-fs_type').hide();
+              }
+            });
+
             $('#change-image_fstypes-icon').click(function() {
                 $('#change-image_fstypes-icon, #image_fstypes').hide();
                 $("#change-image_fstypes-form").slideDown();
@@ -630,19 +658,33 @@
                 document.getElementById("all-image_fstypes").innerHTML = html;
                 $('#no-match-fstypes').hide();
 
-                // Watch elements to disable Save when none are checked
-                $(".fs-checkbox-fstypes").each(function(){
-                    $(this).click(function() {
-                        enableFsTypesSave();
-                    });
-                });
-
                 // clear the previous filter values and warning messages
                 $("input#filter-image_fstypes").val("");
-                $('#fstypes-error-message').hide();
+            });
+
+            // When checkbox is checked/unchecked kindly update the text
+            $(document).on("change", "#all-image_fstypes :checkbox", function() {
+              var imagefs = $(this);
+              var imagefs_obj = $('#new-imagefs_types');
+              var imagefs_userval = imagefs_obj.val();
+              if ($(this).is(':checked')) {
+                if (imagefs_userval.indexOf($(imagefs).val()) === -1) {
+                  imagefs_obj.val(imagefs_userval + " " + $(imagefs).val());
+                }
+              } else {
+                if (imagefs_userval.indexOf($(imagefs).val()) > -1) {
+                  imagefs_obj.val(imagefs_userval.replace($(imagefs).val(), '').trim());
+                }
+              }
+              if ($('#new-imagefs_types').val().length === 0) {
+                $("#apply-change-image_fstypes").prop("disabled", true);
+              } else {
+                $("#apply-change-image_fstypes").prop("disabled", false);
+              }
             });
 
             $('#cancel-change-image_fstypes').click(function(){
+                $("#new-imagefs_types").val("{{fstypes}}");
                 $("#change-image_fstypes-form").slideUp(function() {
                     $('#image_fstypes, #change-image_fstypes-icon').show();
                 });
@@ -670,20 +712,7 @@
             });
 
             $('#apply-change-image_fstypes').click(function(){
-                // extract the selected fstypes and sort them
-                var fstypes_array = [];
-                var checkboxes = document.getElementsByClassName('fs-checkbox-fstypes');
-                $(".fs-checkbox-fstypes:checked").each(function(){
-                       fstypes_array.push($(this).val());
-                });
-                fstypes_array.sort();
-
-                // now make a string of them
-                var fstypes = '';
-                for (var i = 0, length = fstypes_array.length; i < length; i++) {
-                    fstypes += fstypes_array[i] + ' ';
-                }
-                fstypes = fstypes.trim();
+                var fstypes = $('#new-imagefs_types').val();
 
                 postEditAjaxRequest({"configvarChange" : 'IMAGE_FSTYPES:'+fstypes});
                 $('#image_fstypes').text(fstypes);
