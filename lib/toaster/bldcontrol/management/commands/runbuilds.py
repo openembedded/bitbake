@@ -158,22 +158,23 @@ class Command(NoArgsCommand):
             br.environment.lock = BuildEnvironment.LOCK_FREE
             br.environment.save()
 
+    def runbuild(self):
+        try:
+            self.cleanup()
+        except Exception as e:
+            logger.warn("runbuilds: cleanup exception %s" % str(e))
+
+        try:
+            self.archive()
+        except Exception as e:
+            logger.warn("runbuilds: archive exception %s" % str(e))
+
+        try:
+            self.schedule()
+        except Exception as e:
+            logger.warn("runbuilds: schedule exception %s" % str(e))
 
     def handle_noargs(self, **options):
         while True:
-            try:
-                self.cleanup()
-            except Exception as e:
-                logger.warning("runbuilds: cleanup exception %s" % str(e))
-
-            try:
-                self.archive()
-            except Exception as e:
-                logger.warning("runbuilds: archive exception %s" % str(e))
-
-            try:
-                self.schedule()
-            except Exception as e:
-                logger.warning("runbuilds: schedule exception %s" % str(e))
-
+            self.runbuild()
             time.sleep(1)
