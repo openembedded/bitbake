@@ -350,9 +350,10 @@ class Git(FetchMethod):
             head = "refs/heads/%s" % ud.unresolvedrev[name]
             tag = "refs/tags/%s" % ud.unresolvedrev[name]
         for s in [head, tag + "^{}", tag]:
-            for l in output.split('\n'):
-                if s in l:
-                    return l.split()[0]
+            for l in output.strip().split('\n'):
+                sha1, ref = l.split()
+                if s == ref:
+                    return sha1
         raise bb.fetch2.FetchError("Unable to resolve '%s' in upstream git repository in git ls-remote output for %s" % \
             (ud.unresolvedrev[name], ud.host+ud.path))
 
