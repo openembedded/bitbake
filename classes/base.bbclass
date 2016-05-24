@@ -43,7 +43,7 @@ python do_showdata() {
 	bb.data.emit_env(sys.__stdout__, d, True)
 	# emit the metadata which isnt valid shell
 	for e in bb.data.keys(d):
-		if d.getVarFlag(e, 'python'):
+		if d.getVarFlag(e, 'python', False):
 			bb.plain("\npython %s () {\n%s}" % (e, d.getVar(e, True)))
 }
 
@@ -52,7 +52,7 @@ do_listtasks[nostamp] = "1"
 python do_listtasks() {
 	import sys
 	for e in bb.data.keys(d):
-		if d.getVarFlag(e, 'task'):
+		if d.getVarFlag(e, 'task', False):
 			bb.plain("%s" % e)
 }
 
