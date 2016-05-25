@@ -1392,7 +1392,18 @@ class FetchMethod(object):
                 else:
                     cmd = 'rpm2cpio.sh %s | cpio -id' % (file)
             elif file.endswith('.deb') or file.endswith('.ipk'):
-                cmd = 'ar -p %s data.tar.gz | zcat | tar --no-same-owner -xpf -' % file
+                output = subprocess.check_output('ar -t %s' % file, preexec_fn=subprocess_setup, shell=True)
+                datafile = None
+                if output:
+                    for line in output.splitlines():
+                        if line.startswith('data.tar.'):
+                            datafile = line
+                            break
+                    else:
+                        raise UnpackError("Unable to unpack deb/ipk package - does not contain data.tar.* file", urldata.url)
+                else:
+                    raise UnpackError("Unable to unpack deb/ipk package - could not list contents", urldata.url)
+                cmd = 'ar x %s %s && tar --no-same-owner -xpf %s && rm %s' % (file, datafile, datafile, datafile)
             elif file.endswith('.tar.7z'):
                 cmd = '7z x -so %s | tar xf - ' % file
             elif file.endswith('.7z'):
