@@ -150,3 +150,132 @@ class BuiltPackagesTable(BuildTablesMixin, BuiltPackagesTableBase):
                 yield column
 
         self.columns = list(remove_dep_cols(self.columns))
+
+
+class BuiltRecipesTable(BuildTablesMixin):
+    """ Table to show the recipes that have been built in this build """
+
+    def __init__(self, *args, **kwargs):
+        super(BuiltRecipesTable, self).__init__(*args, **kwargs)
+        self.title = "Recipes built"
+        self.default_orderby = "name"
+
+    def setup_queryset(self, *args, **kwargs):
+        build = Build.objects.get(pk=kwargs['build_id'])
+        self.static_context_extra['build'] = build
+        self.queryset = build.get_recipes()
+        self.queryset = self.queryset.order_by(self.default_orderby)
+
+    def setup_columns(self, *args, **kwargs):
+        recipe_name_tmpl =\
+            '<a href="{% url "recipe" extra.build.pk data.pk %}">'\
+            '{{data.name}}'\
+            '</a>'
+
+        recipe_version_tmpl =\
+            '<a href="{% url "recipe" extra.build.pk data.pk %}">'\
+            '{{data.version}}'\
+            '</a>'
+
+        recipe_file_tmpl =\
+            '{{data.file_path}}'\
+            '{% if data.pathflags %}<i>({{data.pathflags}})</i>'\
+            '{% endif %}'
+
+        git_rev_template = '''
+        {% with vcs_ref=data.layer_version.commit %}
+        {% include 'snippets/gitrev_popover.html' %}
+        {% endwith %}
+        '''
+
+        depends_on_tmpl = '''
+        {% with deps=data.r_dependencies_recipe.all %}
+        {% with count=deps|length %}
+        {% if count %}
+        <a class="btn" title="
+        <a href='{% url "recipe" extra.build.pk data.pk %}#dependencies'>
+        {{data.name}}</a> dependencies"
+        data-content="<ul class='unstyled'>
+        {% for dep in deps|dictsort:"depends_on.name"%}
+        <li><a href='{% url "recipe" extra.build.pk dep.depends_on.pk %}'>
+        {{dep.depends_on.name}}</a></li>
+        {% endfor %}
+        </ul>">
+         {{count}}
+        </a>
+        {% endif %}{% endwith %}{% endwith %}
+        '''
+
+        rev_depends_tmpl = '''
+        {% with revs=data.r_dependencies_depends.all %}
+        {% with count=revs|length %}
+        {% if count %}
+        <a class="btn"
+        title="
+        <a href='{% url "recipe" extra.build.pk data.pk %}#brought-in-by'>
+        {{data.name}}</a> reverse dependencies"
+        data-content="<ul class='unstyled'>
+        {% for dep in revs|dictsort:"recipe.name" %}
+        <li>
+        <a href='{% url "recipe" extra.build.pk dep.recipe.pk %}'>
+        {{dep.recipe.name}}
+        </a></li>
+        {% endfor %}
+        </ul>">
+        {{count}}
+        </a>
+        {% endif %}{% endwith %}{% endwith %}
+        '''
+
+        self.add_column(title="Name",
+                        field_name="name",
+                        static_data_name='name',
+                        orderable=True,
+                        static_data_template=recipe_name_tmpl)
+
+        self.add_column(title="Version",
+                        field_name="version",
+                        static_data_name='version',
+                        static_data_template=recipe_version_tmpl)
+
+        self.add_column(title="Dependencies",
+                        static_data_name="dependencies",
+                        static_data_template=depends_on_tmpl,
+                        hidden=True)
+
+        self.add_column(title="Reverse dependencies",
+                        static_data_name="revdeps",
+                        static_data_template=rev_depends_tmpl,
+                        help_text='Recipe build-time reverse dependencies'
+                        ' (i.e. the recipes that depend on this recipe)',
+                        hidden=True)
+
+        self.add_column(title="Recipe file",
+                        field_name="file_path",
+                        static_data_name="file_path",
+                        static_data_template=recipe_file_tmpl)
+
+        self.add_column(title="Section",
+                        field_name="section",
+                        orderable=True)
+
+        self.add_column(title="License",
+                        field_name="license",
+                        help_text='Multiple license names separated by the'
+                        ' pipe character indicates a choice between licenses.'
+                        ' Multiple license names separated by the ampersand'
+                        ' character indicates multiple licenses exist that'
+                        ' cover different parts of the source',
+                        orderable=True)
+
+        self.add_column(title="Layer",
+                        field_name="layer_version__layer__name",
+                        orderable=True)
+
+        self.add_column(title="Layer branch",
+                        field_name="layer_version__branch",
+                        orderable=True)
+
+        self.add_column(title="Layer commit",
+                        static_data_name="commit",
+                        static_data_template=git_rev_template)
