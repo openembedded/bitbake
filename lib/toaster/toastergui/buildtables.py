@@ -19,8 +19,8 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-from orm.models import Build, Task
-from django.db.models import Q
+from orm.models import Build, Task, Target, Package
+from django.db.models import Q, Sum
 
 import toastergui.tables as tables
 from toastergui.widgets import ToasterTable
@@ -153,6 +153,65 @@ class BuiltPackagesTable(BuildTablesMixin, BuiltPackagesTableBase):
                 yield column
 
         self.columns = list(remove_dep_cols(self.columns))
+
+
+class InstalledPackagesTable(BuildTablesMixin, BuiltPackagesTableBase):
+    """ Show all packages installed in an image """
+    def __init__(self, *args, **kwargs):
+        super(InstalledPackagesTable, self).__init__(*args, **kwargs)
+        self.title = "Installed Packages"
+        self.default_orderby = "name"
+
+    def make_package_list(self, target):
+        # The database design means that you get the intermediate objects and
+        # not package objects like you'd really want so we get them here
+        pkgs = target.target_installed_package_set.values_list('package',
+                                                               flat=True)
+        return Package.objects.filter(pk__in=pkgs)
+
+    def get_context_data(self, **kwargs):
+        context = super(InstalledPackagesTable,
+                        self).get_context_data(**kwargs)
+
+        target = Target.objects.get(pk=kwargs['target_id'])
+        packages = self.make_package_list(target)
+
+        context['packages_sum'] = packages.aggregate(
+            Sum('installed_size'))['installed_size__sum']
+
+        context['target'] = target
+        return context
+
+    def setup_queryset(self, *args, **kwargs):
+        build = Build.objects.get(pk=kwargs['build_id'])
+        self.static_context_extra['build'] = build
+
+        target = Target.objects.get(pk=kwargs['target_id'])
+        self.queryset = self.make_package_list(target)
+
+    def setup_columns(self, *args, **kwargs):
+        super(InstalledPackagesTable, self).setup_columns(**kwargs)
+        self.add_column(title="Installed size",
+                        static_data_name="installed_size",
+                        static_data_template="{% load projecttags %}"
+                        "{{data.size|filtered_filesizeformat}}",
+                        orderable=True)
+
+        # Add the template to show installed name for installed packages
+        install_name_tmpl =\
+            ('{{data.name}} '
+             '{% if data.installed_name and data.installed_name !='
+             ' data.name %}'
+             '<span class="muted"> as {{data.installed_name}}</span>'
+             ' <i class="icon-question-sign get-help hover-help"'
+             ' title="{{data.name}} was renamed at packaging time and'
+             ' was installed in your image as {{data.installed_name}}'
+             '"></i>{% endif %} ')
+
+        for column in self.columns:
+            if column['static_data_name'] == 'name':
+                column['static_data_template'] = install_name_tmpl
+                break
 
 
 class BuiltRecipesTable(BuildTablesMixin):

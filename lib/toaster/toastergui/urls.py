@@ -68,9 +68,12 @@ urlpatterns = patterns('toastergui.views',
         url(r'^build/(?P<build_id>\d+)/package_included_reverse_dependencies/(?P<target_id>\d+)/(?P<package_id>\d+)$',
             'package_included_reverse_dependencies', name='package_included_reverse_dependencies'),
 
-        # images are known as targets in the internal model
-        url(r'^build/(?P<build_id>\d+)/target/(?P<target_id>\d+)$', 'target', name='target'),
-        url(r'^build/(?P<build_id>\d+)/target/(?P<target_id>\d+)/targetpkg$', 'targetpkg', name='targetpkg'),
+        url(r'^build/(?P<build_id>\d+)/target/(?P<target_id>\d+)$',
+            buildtables.InstalledPackagesTable.as_view(
+                template_name="target.html"),
+            name='target'),
+
+
         url(r'^dentries/build/(?P<build_id>\d+)/target/(?P<target_id>\d+)$', 'xhr_dirinfo', name='dirinfo_ajax'),
         url(r'^build/(?P<build_id>\d+)/target/(?P<target_id>\d+)/dirinfo$', 'dirinfo', name='dirinfo'),
         url(r'^build/(?P<build_id>\d+)/target/(?P<target_id>\d+)/dirinfo_filepath/_(?P<file_path>(?:/[^/\n]+)*)$', 'dirinfo', name='dirinfo_filepath'),

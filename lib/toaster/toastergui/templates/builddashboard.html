@@ -102,7 +102,7 @@
                       files from a previous build already exist in your
                       <code>.../poky/build/tmp/deploy</code>
                       directory. You can
-                      also <a href="{% url 'targetpkg' build.pk target.target.pk %}">view the
+                      also <a href="{% url 'target' build.pk target.target.pk %}">view the
                         license manifest information</a> in Toaster.
                       </p>
                     </div>
@@ -115,7 +115,7 @@
                 License manifest
             </dt>
             <dd>
-                <a href="{% url 'targetpkg' build.pk target.target.pk %}">View in Toaster</a> |
+                <a href="{% url 'target' build.pk target.target.pk %}">View in Toaster</a> |
                 <a href="{% url 'build_artifact' build.pk 'licensemanifest' target.target.pk %}">Download</a></dd>
             <dt>
                 <i class="icon-question-sign get-help" title="Image files are stored in <code>/build/tmp/deploy/images/</code>"></i>
