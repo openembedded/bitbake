@@ -29,6 +29,8 @@ from django.core.paginator import Paginator, EmptyPage
 from django.db.models import Q
 from orm.models import Project, ProjectLayer, Layer_Version
 from django.template import Context, Template
+from django.template import VariableDoesNotExist
+from django.template import TemplateSyntaxError
 from django.core.serializers.json import DjangoJSONEncoder
 from django.core.exceptions import FieldError
 from django.conf.urls import url, patterns
@@ -349,10 +351,20 @@ class ToasterTable(TemplateView):
                         # so that this can be used as the html class name
                         col['field_name'] = col['static_data_name']
 
-                        # Render the template given
-                        required_data[col['static_data_name']] = \
-                            self.render_static_data(
-                                col['static_data_template'], model_obj)
+                        try:
+                            # Render the template given
+                            required_data[col['static_data_name']] = \
+                                    self.render_static_data(
+                                        col['static_data_template'], model_obj)
+                        except (TemplateSyntaxError,
+                                VariableDoesNotExist) as e:
+                            logger.error("could not render template code"
+                                         "%s %s %s",
+                                         col['static_data_template'],
+                                         e, self.__class__.__name__)
+                            required_data[col['static_data_name']] =\
+                                '<!--error-->'
+
                     else:
                         # Traverse to any foriegn key in the field
                         # e.g. recipe__layer_version__name
