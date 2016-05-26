@@ -47,6 +47,7 @@ class BuiltPackagesTableBase(tables.PackagesTable):
     def setup_queryset(self, *args, **kwargs):
         build = Build.objects.get(pk=kwargs['build_id'])
         self.static_context_extra['build'] = build
+        self.static_context_extra['target_name'] = None
         self.queryset = build.package_set.all().exclude(recipe=None)
         self.queryset = self.queryset.order_by(self.default_orderby)
 
@@ -187,7 +188,15 @@ class InstalledPackagesTable(BuildTablesMixin, BuiltPackagesTableBase):
         self.static_context_extra['build'] = build
 
         target = Target.objects.get(pk=kwargs['target_id'])
+        # We send these separately because in the case of image details table
+        # we don't have a target just the recipe name as the target
+        self.static_context_extra['target_name'] = target.target
+        self.static_context_extra['target_id'] = target.pk
+
+        self.static_context_extra['add_links'] = True
+
         self.queryset = self.make_package_list(target)
+        self.queryset = self.queryset.order_by(self.default_orderby)
 
     def setup_columns(self, *args, **kwargs):
         super(InstalledPackagesTable, self).setup_columns(**kwargs)
@@ -195,11 +204,13 @@ class InstalledPackagesTable(BuildTablesMixin, BuiltPackagesTableBase):
                         static_data_name="installed_size",
                         static_data_template="{% load projecttags %}"
                         "{{data.size|filtered_filesizeformat}}",
-                        orderable=True)
+                        orderable=True,
+                        hidden=True)
 
         # Add the template to show installed name for installed packages
         install_name_tmpl =\
-            ('{{data.name}} '
+            ('<a href="{% url "package_included_detail" extra.build.pk'
+             ' extra.target_id data.pk %}">{{data.name}}</a>'
              '{% if data.installed_name and data.installed_name !='
              ' data.name %}'
              '<span class="muted"> as {{data.installed_name}}</span>'

@@ -297,3 +297,11 @@ def cut_path_prefix(fullpath, prefixes):
         if fullpath.startswith(prefix):
             return relpath(fullpath, prefix)
     return fullpath
+
+
+@register.filter
+def for_target(package_dependencies, target):
+    """ filter the dependencies to be displayed by the supplied target
+    if no dependences are found for the target then return the predicted
+    dependences"""
+    return package_dependencies.for_target_or_none(target)

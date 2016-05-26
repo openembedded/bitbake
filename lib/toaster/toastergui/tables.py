@@ -22,7 +22,7 @@
 from toastergui.widgets import ToasterTable
 from orm.models import Recipe, ProjectLayer, Layer_Version, Machine, Project
 from orm.models import CustomImageRecipe, Package, Target, Build, LogMessage, Task
-from orm.models import CustomImagePackage
+from orm.models import CustomImagePackage, Package_DependencyManager
 from django.db.models import Q, Max, Sum, Count, When, Case, Value, IntegerField
 from django.conf.urls import url
 from django.core.urlresolvers import reverse, resolve
@@ -695,6 +695,7 @@ class PackagesTable(ToasterTable):
 
     def setup_queryset(self, *args, **kwargs):
         recipe = Recipe.objects.get(pk=kwargs['recipe_id'])
+        self.static_context_extra['target_name'] = recipe.name
 
         self.queryset = self.create_package_list(recipe, kwargs['pid'])
         self.queryset = self.queryset.order_by('name')
@@ -766,7 +767,19 @@ class SelectPackagesTable(PackagesTable):
 
         self.queryset = self.queryset.order_by('name')
 
+        # This target is the target used to work out which group of dependences
+        # to display, if we've built the custom image we use it otherwise we
+        # can use the based recipe instead
+        if prj.build_set.filter(target__target=self.cust_recipe.name).count()\
+           > 0:
+            self.static_context_extra['target_name'] = self.cust_recipe.name
+        else:
+            self.static_context_extra['target_name'] =\
+                    Package_DependencyManager.TARGET_LATEST
+
         self.static_context_extra['recipe_id'] = kwargs['custrecipeid']
+
+
         self.static_context_extra['current_packages'] = \
                 current_packages.values_list('pk', flat=True)
 

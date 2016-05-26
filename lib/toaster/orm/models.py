@@ -862,30 +862,69 @@ class CustomImagePackage(Package):
                                             related_name='appends_set')
 
 
-
 class Package_DependencyManager(models.Manager):
     use_for_related_fields = True
+    TARGET_LATEST = "use-latest-target-for-target"
 
     def get_queryset(self):
         return super(Package_DependencyManager, self).get_queryset().exclude(package_id = F('depends_on__id'))
 
-    def get_total_source_deps_size(self):
-        """ Returns the total file size of all the packages that depend on
-        thispackage.
-        """
-        return self.all().aggregate(Sum('depends_on__size'))
+    def for_target_or_none(self, target):
+        """ filter the dependencies to be displayed by the supplied target
+        if no dependences are found for the target then try None as the target
+        which will return the dependences calculated without the context of a
+        target e.g. non image recipes.
 
-    def get_total_revdeps_size(self):
-        """ Returns the total file size of all the packages that depend on
-        this package.
+        returns: { size, packages }
         """
-        return self.all().aggregate(Sum('package_id__size'))
+        package_dependencies = self.all_depends().order_by('depends_on__name')
 
+        if target is self.TARGET_LATEST:
+            installed_deps =\
+                    package_dependencies.filter(~Q(target__target=None))
+        else:
+            installed_deps =\
+                    package_dependencies.filter(Q(target__target=target))
+
+        packages_list = None
+        total_size = 0
+
+        # If we have installed depdencies for this package and target then use
+        # these to display
+        if installed_deps.count() > 0:
+            packages_list = installed_deps
+            total_size = installed_deps.aggregate(
+                Sum('depends_on__size'))['depends_on__size__sum']
+        else:
+            new_list = []
+            package_names = []
+
+            # Find dependencies for the package that we know about even if
+            # it's not installed on a target e.g. from a non-image recipe
+            for p in package_dependencies.filter(Q(target=None)):
+                if p.depends_on.name in package_names:
+                    continue
+                else:
+                    package_names.append(p.depends_on.name)
+                    new_list.append(p.pk)
+                    # while we're here we may as well total up the size to
+                    # avoid iterating again
+                    total_size += p.depends_on.size
+
+            # We want to return a queryset here for consistency so pick the
+            # deps from the new_list
+            packages_list = package_dependencies.filter(Q(pk__in=new_list))
+
+        return {'packages': packages_list,
+                'size': total_size}
 
     def all_depends(self):
-        """ Returns just the depends packages and not any other dep_type """
+        """ Returns just the depends packages and not any other dep_type
+        Note that this is for any target
+        """
         return self.filter(Q(dep_type=Package_Dependency.TYPE_RDEPENDS) |
                            Q(dep_type=Package_Dependency.TYPE_TRDEPENDS))
+
 
 class Package_Dependency(models.Model):
     TYPE_RDEPENDS = 0

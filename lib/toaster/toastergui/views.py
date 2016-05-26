@@ -2060,7 +2060,9 @@ if True:
 
                 # Dependencies for package which aren't satisfied by the
                 # current packages in the custom image recipe
-                deps = package.package_dependencies_source.annotate(
+                deps =\
+                    package.package_dependencies_source.for_target_or_none(
+                        recipe.name)['packages'].annotate(
                     name=F('depends_on__name'),
                     pk=F('depends_on__pk'),
                     size=F('depends_on__size'),
