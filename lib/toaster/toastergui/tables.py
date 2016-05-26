@@ -146,15 +146,8 @@ class LayersTable(ToasterTable):
                         static_data_template=git_dir_template)
 
         revision_template =  '''
-        {% load projecttags  %}
         {% with vcs_ref=data.get_vcs_reference %}
-        {% if vcs_ref|is_shaid %}
-        <a class="btn" data-content="<ul class='unstyled'> <li>{{vcs_ref}}</li> </ul>">
-        {{vcs_ref|truncatechars:10}}
-        </a>
-        {% else %}
-        {{vcs_ref}}
-        {% endif %}
+        {% include 'snippets/gitrev_popover.html' %}
         {% endwith %}
         '''
 
@@ -718,6 +711,7 @@ class PackagesTable(ToasterTable):
 
         self.add_column(title="Approx Size",
                         orderable=True,
+                        field_name="size",
                         static_data_name="size",
                         static_data_template="{% load projecttags %} \
                         {{data.size|filtered_filesizeformat}}")

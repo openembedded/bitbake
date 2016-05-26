@@ -23,10 +23,19 @@
       {% block localbreadcrumb %}{% endblock %}
     </ul>
     <script>
-      $( function () {
+      $(document).ready(function(){
         $('#breadcrumb > li').append('<span class="divider">&rarr;</span>');
         $('#breadcrumb > li:last').addClass("active");
         $('#breadcrumb > li:last > span').remove();
+
+        $("#build-menu li a").each(function(){
+          /* Set the page active state in the Build menu */
+          if (window.location.href.split('?')[0] === $(this).prop("href")){
+            $(this).parent().addClass("active");
+          } else {
+            $(this).parent().removeClass("active");
+          }
+        });
       });
     </script>
   </div>
@@ -35,7 +44,7 @@
   <div class="row">
     <!-- begin left sidebar container -->
     <div id="nav" class="col-md-2">
-      <ul class="nav nav-list well">
+      <ul class="nav nav-list well" id="build-menu">
         <li
           {% if request.resolver_match.url_name == 'builddashboard'  %}
             class="active"
@@ -54,25 +63,14 @@
         {% block nav-configuration %}
           <li><a href="{% url 'configuration' build.pk %}">Configuration</a></li>
         {% endblock %}
-        {% block nav-tasks %}
+
           <li><a href="{% url 'tasks' build.pk %}">Tasks</a></li>
-        {% endblock %}
-        {% block nav-recipes %}
           <li><a href="{% url 'recipes' build.pk %}">Recipes</a></li>
-        {% endblock %}
-        {% block nav-packages %}
           <li><a href="{% url 'packages' build.pk %}">Packages</a></li>
-        {% endblock %}
           <li class="nav-header">Performance</li>
-        {% block nav-buildtime %}
           <li><a href="{% url 'buildtime' build.pk %}">Time</a></li>
-        {% endblock %}
-        {% block nav-cputime %}
           <li><a href="{% url 'cputime' build.pk %}">CPU usage</a></li>
-        {% endblock %}
-        {% block nav-diskio %}
           <li><a href="{% url 'diskio' build.pk %}">Disk I/O</a></li>
-        {% endblock %}
 
         <li class="divider"></li>
 

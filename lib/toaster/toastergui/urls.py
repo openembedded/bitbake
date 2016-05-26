@@ -21,6 +21,7 @@ from django.views.generic import RedirectView, TemplateView
 
 from django.http import HttpResponseBadRequest
 from toastergui import tables
+from toastergui import buildtables
 from toastergui import typeaheads
 from toastergui import api
 
@@ -44,7 +45,11 @@ urlpatterns = patterns('toastergui.views',
         url(r'^build/(?P<build_id>\d+)/recipe/(?P<recipe_id>\d+)$', 'recipe', name='recipe'),
         url(r'^build/(?P<build_id>\d+)/recipe_packages/(?P<recipe_id>\d+)$', 'recipe_packages', name='recipe_packages'),
 
-        url(r'^build/(?P<build_id>\d+)/packages/$', 'bpackage', name='packages'),
+        url(r'^build/(?P<build_id>\d+)/packages/$',
+            buildtables.BuiltPackagesTable.as_view(
+                template_name="buildinfo-toastertable.html"),
+            name='packages'),
+
         url(r'^build/(?P<build_id>\d+)/package/(?P<package_id>\d+)$', 'package_built_detail',
                 name='package_built_detail'),
         url(r'^build/(?P<build_id>\d+)/package_built_dependencies/(?P<package_id>\d+)$',
