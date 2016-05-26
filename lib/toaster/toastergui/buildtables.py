@@ -19,10 +19,13 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-from orm.models import Build
-import toastergui.tables as tables
+from orm.models import Build, Task
+from django.db.models import Q
 
+import toastergui.tables as tables
 from toastergui.widgets import ToasterTable
+from toastergui.tablefilter import TableFilter
+from toastergui.tablefilter import TableFilterActionToggle
 
 
 class BuildTablesMixin(ToasterTable):
@@ -279,3 +282,223 @@ class BuiltRecipesTable(BuildTablesMixin):
         self.add_column(title="Layer commit",
                         static_data_name="commit",
                         static_data_template=git_rev_template)
+
+
+class BuildTasksTable(BuildTablesMixin):
+    """ Table to show the tasks that run in this build """
+
+    def __init__(self, *args, **kwargs):
+        super(BuildTasksTable, self).__init__(*args, **kwargs)
+        self.title = "Tasks"
+        self.default_orderby = "order"
+
+        # Toggle these columns on off for Time/CPU usage/Disk I/O tables
+        self.toggle_columns = {}
+
+    def setup_queryset(self, *args, **kwargs):
+        build = Build.objects.get(pk=kwargs['build_id'])
+        self.static_context_extra['build'] = build
+        self.queryset = build.task_build.filter(~Q(order=None))
+        self.queryset = self.queryset.order_by(self.default_orderby)
+
+    def setup_filters(self, *args, **kwargs):
+        # Execution outcome types filter
+        executed_outcome = TableFilter(name="execution_outcome",
+                                       title="Filter Tasks by 'Executed")
+
+        exec_outcome_action_exec = TableFilterActionToggle(
+            "executed",
+            "Executed Tasks",
+            Q(task_executed=True))
+
+        exec_outcome_action_not_exec = TableFilterActionToggle(
+            "not_executed",
+            "Not Executed Tasks",
+            Q(task_executed=False))
+
+        executed_outcome.add_action(exec_outcome_action_exec)
+        executed_outcome.add_action(exec_outcome_action_not_exec)
+
+        # Task outcome types filter
+        task_outcome = TableFilter(name="task_outcome",
+                                   title="Filter Task by 'Outcome'")
+
+        for outcome_enum, title in Task.TASK_OUTCOME:
+            action = TableFilterActionToggle(
+                title.replace(" ", "_").lower(),
+                "%s Tasks" % title,
+                Q(outcome=outcome_enum))
+
+            task_outcome.add_action(action)
+
+        # SSTATE outcome types filter
+        sstate_outcome = TableFilter(name="sstate_outcome",
+                                     title="Filter Task by 'Cache attempt'")
+
+        for sstate_result_enum, title in Task.SSTATE_RESULT:
+            action = TableFilterActionToggle(
+                title.replace(" ", "_").lower(),
+                "Tasks with '%s' attempts" % title,
+                Q(sstate_result=sstate_result_enum))
+
+            sstate_outcome.add_action(action)
+
+        self.add_filter(sstate_outcome)
+        self.add_filter(executed_outcome)
+        self.add_filter(task_outcome)
+
+    def setup_columns(self, *args, **kwargs):
+        self.toggle_columns['order'] = len(self.columns)
+
+        recipe_name_tmpl =\
+            '<a href="{% url "recipe" extra.build.pk data.recipe.pk %}">'\
+            '{{data.recipe.name}}'\
+            '</a>'
+
+        recipe_version_tmpl =\
+            '<a href="{% url "recipe" extra.build.pk data.recipe.pk %}">'\
+            '{{data.recipe.version}}'\
+            '</a>'
+
+        def task_link_tmpl(val):
+            return ('<a name="task-{{data.order}}"'
+                    'href="{%% url "task" extra.build.pk data.pk %%}">'
+                    '%s'
+                    '</a>') % str(val)
+
+        self.add_column(title="Order",
+                        static_data_name="order",
+                        static_data_template=task_link_tmpl('{{data.order}}'),
+                        orderable=True)
+
+        self.add_column(title="Recipe",
+                        static_data_name='recipe__name',
+                        static_data_template=recipe_name_tmpl,
+                        orderable=True)
+
+        self.add_column(title="Recipe version",
+                        static_data_name='recipe__version',
+                        static_data_template=recipe_version_tmpl)
+
+        self.add_column(title="Task",
+                        static_data_name="task_name",
+                        static_data_template=task_link_tmpl(
+                            "{{data.task_name}}"),
+                        orderable=True)
+
+        self.add_column(title="Executed",
+                        static_data_name="task_executed",
+                        static_data_template=task_link_tmpl(
+                            "{{data.get_executed_display}}"),
+                        filter_name='execution_outcome',
+                        orderable=True)
+
+        self.static_context_extra['OUTCOME_FAILED'] = Task.OUTCOME_FAILED
+        outcome_tmpl = task_link_tmpl("{{data.outcome_text}}")
+        outcome_tmpl = ('%s '
+                        '{%% if data.outcome = extra.OUTCOME_FAILED %%}'
+                        '<a href="{%% url "build_artifact" extra.build.pk '
+                        '          "tasklogfile" data.pk %%}">'
+                        ' <i class="icon-download-alt" '
+                        '    title="Download task log file"></i>'
+                        '</a> {%% endif %%}'
+                        '<i class="icon-question-sign get-help '
+                        'hover-help" style="visibility: hidden;" '
+                        'title="{{data.get_outcome_help}}"></i>'
+                        ) % outcome_tmpl
+
+        self.add_column(title="Outcome",
+                        static_data_name="outcome",
+                        static_data_template=outcome_tmpl,
+                        filter_name="task_outcome",
+                        orderable=True)
+
+        self.add_column(title="Cache attempt",
+                        static_data_name="sstate_result",
+                        static_data_template=task_link_tmpl(
+                            "{{data.sstate_text}}"),
+                        filter_name="sstate_outcome",
+                        orderable=True)
+
+        self.toggle_columns['elapsed_time'] = len(self.columns)
+
+        self.add_column(
+            title="Time (secs)",
+            static_data_name="elapsed_time",
+            static_data_template='{% load projecttags %}{% load humanize %}'
+            '{{data.elapsed_time|format_none_and_zero|floatformat:2}}',
+            orderable=True,
+            hidden=True)
+
+        self.toggle_columns['cpu_time_sys'] = len(self.columns)
+
+        self.add_column(
+            title="System CPU time (secs)",
+            static_data_name="cpu_time_system",
+            static_data_template='{% load projecttags %}{% load humanize %}'
+            '{{data.cpu_time_system|format_none_and_zero|floatformat:2}}',
+            hidden=True,
+            orderable=True)
+
+        self.toggle_columns['cpu_time_user'] = len(self.columns)
+
+        self.add_column(
+            title="User CPU time (secs)",
+            static_data_name="cpu_time_user",
+            static_data_template='{% load projecttags %}{% load humanize %}'
+            '{{data.cpu_time_user|format_none_and_zero|floatformat:2}}',
+            hidden=True,
+            orderable=True)
+
+        self.toggle_columns['disk_io'] = len(self.columns)
+
+        self.add_column(
+            title="Disk I/O (ms)",
+            static_data_name="disk_io",
+            static_data_template='{% load projecttags %}{% load humanize %}'
+            '{{data.disk_io|format_none_and_zero|filtered_filesizeformat}}',
+            hidden=True,
+            orderable=True)
+
+
+class BuildTimeTable(BuildTasksTable):
+    """ Same as tasks table but the Time column is default displayed"""
+
+    def __init__(self, *args, **kwargs):
+        super(BuildTimeTable, self).__init__(*args, **kwargs)
+        self.default_orderby = "-elapsed_time"
+
+    def setup_columns(self, *args, **kwargs):
+        super(BuildTimeTable, self).setup_columns(**kwargs)
+
+        self.columns[self.toggle_columns['order']]['hidden'] = True
+        self.columns[self.toggle_columns['elapsed_time']]['hidden'] = False
+
+
+class BuildCPUTimeTable(BuildTasksTable):
+    """ Same as tasks table but the CPU usage columns are default displayed"""
+
+    def __init__(self, *args, **kwargs):
+        super(BuildCPUTimeTable, self).__init__(*args, **kwargs)
+        self.default_orderby = "-cpu_time_system"
+
+    def setup_columns(self, *args, **kwargs):
+        super(BuildCPUTimeTable, self).setup_columns(**kwargs)
+
+        self.columns[self.toggle_columns['order']]['hidden'] = True
+        self.columns[self.toggle_columns['cpu_time_sys']]['hidden'] = False
+        self.columns[self.toggle_columns['cpu_time_user']]['hidden'] = False
+
+
+class BuildIOTable(BuildTasksTable):
+    """ Same as tasks table but the Disk IO column is default displayed"""
+
+    def __init__(self, *args, **kwargs):
+        super(BuildIOTable, self).__init__(*args, **kwargs)
+        self.default_orderby = "-disk_io"
+
+    def setup_columns(self, *args, **kwargs):
+        super(BuildIOTable, self).setup_columns(**kwargs)
+
+        self.columns[self.toggle_columns['order']]['hidden'] = True
+        self.columns[self.toggle_columns['disk_io']]['hidden'] = False

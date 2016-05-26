@@ -196,7 +196,7 @@
         <i class="icon-question-sign get-help" title="The running sequence of each task in the build"></i>
         Task order
     </dt>
-    <dd><a href="{%url "tasks_task" build.pk task.order %}#{{task.order}}">{{task.order}}</a></dd>
+    <dd><a href="{%url "tasks" build.pk %}?page={{task_in_tasks_table_pg}}&limit=25#task-{{task.order}}">{{task.order}}</a></dd>
     {% if task.task_executed %}
         <dt>
             <i class="icon-question-sign get-help" title="Indicates if this task executes a Python or Shell function(s)"></i>

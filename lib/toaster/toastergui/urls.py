@@ -35,9 +35,11 @@ urlpatterns = patterns('toastergui.views',
 
         # build info navigation
         url(r'^build/(?P<build_id>\d+)$', 'builddashboard', name="builddashboard"),
+        url(r'^build/(?P<build_id>\d+)/tasks/$',
+            buildtables.BuildTasksTable.as_view(
+                template_name="buildinfo-toastertable.html"),
+            name='tasks'),
 
-        url(r'^build/(?P<build_id>\d+)/tasks/$', 'tasks', name='tasks'),
-        url(r'^build/(?P<build_id>\d+)/tasks/(?P<task_id>\d+)/$', 'tasks_task', name='tasks_task'),
         url(r'^build/(?P<build_id>\d+)/task/(?P<task_id>\d+)$', 'task', name='task'),
 
         url(r'^build/(?P<build_id>\d+)/recipes/$',
@@ -74,9 +76,20 @@ urlpatterns = patterns('toastergui.views',
         url(r'^build/(?P<build_id>\d+)/target/(?P<target_id>\d+)/dirinfo_filepath/_(?P<file_path>(?:/[^/\n]+)*)$', 'dirinfo', name='dirinfo_filepath'),
         url(r'^build/(?P<build_id>\d+)/configuration$', 'configuration', name='configuration'),
         url(r'^build/(?P<build_id>\d+)/configvars$', 'configvars', name='configvars'),
-        url(r'^build/(?P<build_id>\d+)/buildtime$', 'buildtime', name='buildtime'),
-        url(r'^build/(?P<build_id>\d+)/cputime$', 'cputime', name='cputime'),
-        url(r'^build/(?P<build_id>\d+)/diskio$', 'diskio', name='diskio'),
+        url(r'^build/(?P<build_id>\d+)/buildtime$',
+            buildtables.BuildTimeTable.as_view(
+                template_name="buildinfo-toastertable.html"),
+            name='buildtime'),
+
+        url(r'^build/(?P<build_id>\d+)/cputime$',
+            buildtables.BuildCPUTimeTable.as_view(
+                template_name="buildinfo-toastertable.html"),
+            name='cputime'),
+
+        url(r'^build/(?P<build_id>\d+)/diskio$',
+            buildtables.BuildIOTable.as_view(
+                template_name="buildinfo-toastertable.html"),
+            name='diskio'),
 
         # image information dir
         url(r'^build/(?P<build_id>\d+)/target/(?P<target_id>\d+)/packagefile/(?P<packagefile_id>\d+)$',
