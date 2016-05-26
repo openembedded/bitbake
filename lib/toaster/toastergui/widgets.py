@@ -50,7 +50,7 @@ logger = logging.getLogger("toaster")
 from toastergui.tablefilter import TableFilterMap
 
 
-class NoFieldOrDataNme(Exception):
+class NoFieldOrDataName(Exception):
     pass
 
 class ToasterTable(TemplateView):
@@ -337,10 +337,11 @@ class ToasterTable(TemplateView):
                     if not field:
                         field = col['static_data_name']
                     if not field:
-                        raise NoFieldOrDataNme("Must supply a field_name or"
-                                               "static_data_name for column"
-                                               "%s.%s" %
-                                               (self.__class__.__name__, col))
+                        raise NoFieldOrDataName("Must supply a field_name or"
+                                                "static_data_name for column"
+                                                "%s.%s" %
+                                                (self.__class__.__name__, col)
+                                                )
 
                     # Check if we need to process some static data
                     if "static_data_name" in col and col['static_data_name']:
