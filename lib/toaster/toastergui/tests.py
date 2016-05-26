@@ -25,6 +25,7 @@ from django.test import TestCase
 from django.test.client import RequestFactory
 from django.core.urlresolvers import reverse
 from django.utils import timezone
+from django.db.models import Q
 
 from orm.models import Project, Release, BitbakeVersion, Package, LogMessage
 from orm.models import ReleaseLayerSourcePriority, LayerSource, Layer, Build
@@ -57,7 +58,6 @@ class ViewTests(TestCase):
 
         self.project = Project.objects.first()
         self.recipe1 = Recipe.objects.get(pk=2)
-        self.recipe2 = Recipe.objects.last()
         self.customr = CustomImageRecipe.objects.first()
         self.cust_package = CustomImagePackage.objects.first()
         self.package = Package.objects.first()
@@ -311,7 +311,6 @@ class ViewTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
 
-
     def test_software_recipes_table(self):
         """Test structure returned for Software RecipesTable"""
         table = SoftwareRecipesTable()
@@ -319,27 +318,35 @@ class ViewTests(TestCase):
         response = table.get(request, pid=self.project.id)
         data = json.loads(response.content)
 
+        recipes = Recipe.objects.filter(Q(is_image=False))
+        self.assertTrue(len(recipes) > 1,
+                        "Need more than one software recipe to test "
+                        "SoftwareRecipesTable")
+
+        recipe1 = recipes[0]
+        recipe2 = recipes[1]
+
         rows = data['rows']
-        row1 = next(x for x in rows if x['name'] == self.recipe1.name)
-        row2 = next(x for x in rows if x['name'] == self.recipe2.name)
+        row1 = next(x for x in rows if x['name'] == recipe1.name)
+        row2 = next(x for x in rows if x['name'] == recipe2.name)
 
         self.assertEqual(response.status_code, 200, 'should be 200 OK status')
 
         # check other columns have been populated correctly
-        self.assertTrue(self.recipe1.name in row1['name'])
-        self.assertTrue(self.recipe1.version in row1['version'])
-        self.assertTrue(self.recipe1.description in
+        self.assertTrue(recipe1.name in row1['name'])
+        self.assertTrue(recipe1.version in row1['version'])
+        self.assertTrue(recipe1.description in
                         row1['get_description_or_summary'])
 
-        self.assertTrue(self.recipe1.layer_version.layer.name in
+        self.assertTrue(recipe1.layer_version.layer.name in
                         row1['layer_version__layer__name'])
 
-        self.assertTrue(self.recipe2.name in row2['name'])
-        self.assertTrue(self.recipe2.version in row2['version'])
-        self.assertTrue(self.recipe2.description in
+        self.assertTrue(recipe2.name in row2['name'])
+        self.assertTrue(recipe2.version in row2['version'])
+        self.assertTrue(recipe2.description in
                         row2['get_description_or_summary'])
 
-        self.assertTrue(self.recipe2.layer_version.layer.name in
+        self.assertTrue(recipe2.layer_version.layer.name in
                         row2['layer_version__layer__name'])
 
     def test_toaster_tables(self):
@@ -360,7 +367,9 @@ class ViewTests(TestCase):
                     'layerid': self.lver.pk,
                     'recipeid': self.recipe1.pk,
                     'recipe_id': image_recipe.pk,
-                    'custrecipeid': self.customr.pk}
+                    'custrecipeid': self.customr.pk,
+                    'build_id': 1,
+                    'target_id': 1}
 
             response = table.get(request, **args)
             return json.loads(response.content)
@@ -386,11 +395,14 @@ class ViewTests(TestCase):
 
         # Get a list of classes in tables module
         tables = inspect.getmembers(toastergui.tables, inspect.isclass)
+        tables.extend(inspect.getmembers(toastergui.buildtables,
+                                         inspect.isclass))
 
         for name, table_cls in tables:
             # Filter out the non ToasterTables from the tables module
             if not issubclass(table_cls, toastergui.widgets.ToasterTable) or \
-                table_cls == toastergui.widgets.ToasterTable:
+                table_cls == toastergui.widgets.ToasterTable or \
+               'Mixin' in name:
                 continue
 
             # Get the table data without any options, this also does the
