@@ -424,7 +424,7 @@ class Build(models.Model):
         tf = Task.objects.filter(build = self)
         tfc = tf.count()
         if tfc > 0:
-            completeper = tf.exclude(order__isnull=True).count()*100/tfc
+            completeper = tf.exclude(order__isnull=True).count()*100 // tfc
         else:
             completeper = 0
         return completeper

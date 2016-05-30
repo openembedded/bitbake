@@ -90,7 +90,7 @@ def whitespace_space_filter(value, arg):
 def divide(value, arg):
     if int(arg) == 0:
         return -1
-    return int(value) / int(arg)
+    return int(value) // int(arg)
 
 @register.filter
 def multiply(value, arg):
