@@ -200,16 +200,19 @@ def _verify_parameters(g, mandatory_parameters):
     return None
 
 def _redirect_parameters(view, g, mandatory_parameters, *args, **kwargs):
-    import urllib
+    try:
+        from urllib import unquote, urlencode
+    except ImportError:
+        from urllib.parse import unquote, urlencode
     url = reverse(view, kwargs=kwargs)
     params = {}
     for i in g:
         params[i] = g[i]
     for i in mandatory_parameters:
         if not i in params:
-            params[i] = urllib.unquote(str(mandatory_parameters[i]))
+            params[i] = unquote(str(mandatory_parameters[i]))
 
-    return redirect(url + "?%s" % urllib.urlencode(params), permanent = False, **kwargs)
+    return redirect(url + "?%s" % urlencode(params), permanent = False, **kwargs)
 
 class RedirectException(Exception):
     def __init__(self, view, g, mandatory_parameters, *args, **kwargs):

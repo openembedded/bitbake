@@ -38,7 +38,11 @@ import json
 import collections
 import operator
 import re
-import urllib
+
+try:
+    from urllib import unquote_plus
+except ImportError:
+    from urllib.parse import unquote_plus
 
 import logging
 logger = logging.getLogger("toaster")
