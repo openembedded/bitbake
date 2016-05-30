@@ -111,7 +111,7 @@ stop_system()
 
 verify_prereq() {
     # Verify Django version
-    reqfile=$(python -c "import os; print(os.path.realpath('$BBBASEDIR/toaster-requirements.txt'))")
+    reqfile=$(python3 -c "import os; print(os.path.realpath('$BBBASEDIR/toaster-requirements.txt'))")
     exp='s/Django\([><=]\+\)\([^,]\+\),\([><=]\+\)\(.\+\)/'
     exp=$exp'import sys,django;version=django.get_version().split(".");'
     exp=$exp'sys.exit(not (version \1 "\2".split(".") and version \3 "\4".split(".")))/p'
@@ -135,7 +135,7 @@ else
 fi
 
 export BBBASEDIR=`dirname $TOASTER`/..
-MANAGE=$BBBASEDIR/lib/toaster/manage.py
+MANAGE="python3 $BBBASEDIR/lib/toaster/manage.py"
 OEROOT=`dirname $TOASTER`/../..
 
 # this is the configuraton file we are using for toaster
@@ -162,7 +162,7 @@ fi
 
 if [ "$TOASTER_CONF" = "" ]; then
     TOASTER_CONF="$TEMPLATECONF/toasterconf.json"
-    export TOASTER_CONF=$(python -c "import os; print(os.path.realpath('$TOASTER_CONF'))")
+    export TOASTER_CONF=$(python3 -c "import os; print(os.path.realpath('$TOASTER_CONF'))")
 fi
 
 if [ ! -f $TOASTER_CONF ]; then
