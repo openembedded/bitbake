@@ -14,13 +14,13 @@
 <!-- page title -->
 <div class="col-md-10">
 
- <div class="page-header">
+ <div class="page-header build-data">
      <h1>Configuration</h1>
  </div>
 
 <!-- configuration table -->
 <div id="navTab">
-<ul class="nav nav-pills">
+<ul class="nav nav-tabs">
     <li class="active"><a href="#">Summary</a></li>
     <li class=""><a href="{% url 'configvars' build.id %}">BitBake variables</a></li>
 </ul>
@@ -39,13 +39,13 @@
       {%if TUNE_FEATURES %}<dt>Tune features</dt><dd>{{TUNE_FEATURES}}</dd> {% endif %}
       {%if TARGET_FPU %}<dt>Target FPU</dt><dd>{{TARGET_FPU}}</dd> {% endif %}
       {%if targets.all %}<dt>Target(s)</dt>
-          <dd> <ul> {% for target in targets.all %}
+          <dd> <ul class="list-unstyled"> {% for target in targets.all %}
                <li>{{target.target}}{%if forloop.counter > 1 %}<br>{% endif %}</li>
           {% endfor %} </ul> </dd> {% endif %}
     </dl>
     <h3>Layers</h3>
     <div class="row">
-      <div class="col-md-9">
+      <div class="col-md-9 table-responsive">
         <table class="table table-bordered table-hover">
           <thead>
             <tr>
@@ -58,7 +58,7 @@
           <tr>
             <td>{{lv.layer.name}}</td>
             <td>{{lv.branch}}</td>
-            <td> <a class="btn" data-content="<ul class='list-unstyled'>
+            <td> <a class="btn btn-default" data-content="<ul class='list-unstyled'>
                   <li>{{lv.commit}}</li> </ul>">
                 {{lv.commit|truncatechars:13}}
             </a></td>

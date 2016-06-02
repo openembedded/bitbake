@@ -18,7 +18,7 @@
 
 {% block buildinfomain %}
 <div class="col-md-10">
-    <div class="page-header">
+    <div class="page-header build-data">
         <h1>
             {% if request.GET.search and objects.paginator.count > 0 %}
                 {{objects.paginator.count}} package{{objects.paginator.count|pluralize}} found
@@ -30,16 +30,16 @@
         </h1>
     </div>
 <div id="navTab">
-    <ul class="nav nav-pills">
+    <ul class="nav nav-tabs">
         <li class="active">
             <a href="#target">
-            <i class="icon-question-sign get-help" title="Of all the packages built, the subset installed in the root file system of this image"></i>
+            <span class="glyphicon glyphicon-question-sign get-help" title="Of all the packages built, the subset installed in the root file system of this image"></span>
                 Packages included ({{target.package_count}} - {{packages_sum|filtered_filesizeformat}})
             </a>
         </li>
         <li>
             <a href="{% url 'dirinfo' build.id target.id %}">
-                <i class="icon-question-sign get-help" title="The directories and files in the root file system of this image"></i>
+                <span class="glyphicon glyphicon-question-sign get-help" title="The directories and files in the root file system of this image"></span>
                 Directory structure
             </a>
         </li>
@@ -51,6 +51,6 @@
         {% include "toastertable.html" %}
         {% endwith %}
     </div> <!-- tabpane -->
-	</div> <!--navTab -->>
+	</div> <!--navTab -->
 <!-- col-md-10 -->
 {% endblock buildinfomain %}

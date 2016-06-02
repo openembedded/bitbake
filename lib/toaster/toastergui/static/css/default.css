@@ -22,11 +22,21 @@ img.logo { height: 30px; vertical-align: bottom; }
 /* Increase popovers width to fit commit SHAs */
 .popover { max-width: 350px; }
 
+/* Set a limit to popover height to handle long dependency lists */
+.popover-content { max-height: 350px; overflow: scroll; }
+
+/* Set a limit to modal dialogs height to handle long variable history */
+[id^="variable-"] .modal-content { max-height: 550px; overflow-y: scroll; }
+
+/* Make sure long values in variable history do not make the modal dialogs
+ * scroll horizontally */
+[id^="variable-"] .modal-content p { word-break: break-all; }
+
 /* Increase bottom margin of definition lists inside popovers for the Toaster version information in the top navbar, and also inside the right hand columns of our details pages */
 .popover-content dd,
-.well dd { margin-bottom: 15px; }
+.item-info dd { margin-bottom: 15px; }
 
-/* Style the horizonal definition lists */
+/* Style the horizontal definition lists */
 .dl-horizontal dt { width: 200px; line-height: 25px; }
 .dl-horizontal dd { margin-left: 220px; line-height: 25px; }
 
@@ -48,21 +58,24 @@ img.logo { height: 30px; vertical-align: bottom; }
 
 /* Styles for our table controls */
 .form-control[id^="search-input-"],
-.form-control[id^="new-search-input-"] { width: 30em; }
+.form-control[id^="new-search-input-"],
+#search{ width: 30em; }
 #search-input-selectpackagestable,
 #search-input-packagestable,
-.form-control[id^="no-results-search-input-"]{ width: 20em; }
+.form-control[id^="no-results-search-input-"] { width: 20em; }
 #edit-columns-button { margin-right: 30px; }
-.navbar-default[id^="table-chrome-"] { background-color: transparent; }
+.navbar-default[id^="table-chrome-"],
+#variables .navbar-default { background-color: transparent; }
 [id^="table-chrome-collapse-"] .navbar-form { margin-left: -15px; }
-.dropdown-menu.editcol { padding-left: 10px; min-width: 180px; }
+.dropdown-menu.editcol { padding-left: 10px; min-width: 200px; }
 span[class^="remove-search-btn-"] { position: absolute; right: 5px; top: 0; bottom: 0; height: 14px; margin: auto; font-size: 14px; cursor: pointer; color: #777;}
 span[class^="remove-search-btn-"]:hover { color: #333; }
 #no-results-special-selectpackagestable .form-inline { margin-top: 20px; }
 [id^="pagination-"] .pagination,
 [id^="pagination-"] .navbar-form { margin-top: 0; }
 [id^="table-chrome-"] .navbar-form { margin-left: -15px; margin-right: -15px; }
-[id^="table-chrome-"] .detail-page-contols { padding-left: 0; padding-right: 0; }
+[id^="table-chrome-"] .detail-page-contols,
+#packages-built .detail-page-controls { padding-left: 0; padding-right: 0; }
 
 /* Override the default font-weight for labels: it's a bit too much */
 label { font-weight: normal; }
@@ -86,7 +99,7 @@ dd > .glyphicon-ok-circle { color: #3c763d; }
 tbody > tr > td > .glyphicon-minus-sign { color: #a94442; }
 .glyphicon-download-alt,
 .glyphicon-edit { color: #337ab7; }
-.failed_tasks .glyphicon-download-alt { margin-left: 5px; } 
+.failed_tasks .glyphicon-download-alt { margin-left: 5px; }
 .glyphicon-download-alt:hover,
 .glyphicon-edit:hover { color: #23527c; cursor: pointer; text-decoration: none; }
 .glyphicon-trash { color: #a94442; }
@@ -98,7 +111,8 @@ tbody > tr > td > .glyphicon-minus-sign { color: #a94442; }
 h1 > .glyphicon-edit,
 p.lead .glyphicon { font-size: 16px; }
 h2 > .glyphicon-question-sign,
-h3 > .glyphicon-question-sign { font-size: 14px; }
+h3 > .glyphicon-question-sign,
+.heading-help { font-size: 14px; }
 
 /* Create a class for wells without background colour */
 .well-transparent { background-color: transparent; }
@@ -205,6 +219,13 @@ td > .tooltip-inner,
 #recipestable .get_description_or_summary { width: 40%; }
 #machinestable .name { white-space: nowrap; }
 #machinestable .description { width: 45%; }
+#otable .variable_value,
+#otable .file { word-break: break-all; width: 25%; }
+[id^="variable-"] .file { word-break: break-all; }
+
+/* For the tables still not ported to ToasterTables, style the table headings
+ * that are not sortable */
+th > span.text-muted { font-weight: normal; }
 
 /* Override the rather ugly default code styles */
 code { color: #333; background-color: transparent; }
@@ -234,7 +255,7 @@ code { color: #333; background-color: transparent; }
 .date-filter-controls span { margin: 0 10px; }
 
 /* Style the fixed positioned notifications */
-.loading-notification { position: fixed; z-index: 101; top: 3%; left: 40%; right: 40%; -webkit-box-shadow: 0 0 10px #c09853; -moz-box-shadow: 0 0 10px #c09853; box-shadow: 0 0 10px #c09853; } 
+#loading-notification { position: fixed; z-index: 1101; top: 3%; left: 40%; right: 40%; -webkit-box-shadow: 0 0 10px #c09853; -moz-box-shadow: 0 0 10px #c09853; box-shadow: 0 0 10px #c09853; }
 
 .change-notification { position: fixed; z-index: 1101; top: 4%; left: 30%; right: 30%; -webkit-box-shadow: 0 0 10px #3a87ad; -moz-box-shadow: 0 0 10px #3a87ad; box-shadow: 0 0 10px #3a87ad; }
 
@@ -246,3 +267,76 @@ code { color: #333; background-color: transparent; }
 
 /* Style the Toaster screenshot in the landing page */
 .img-thumbnail { padding: 0; }
+
+/* Set the layout for the build information pages */
+
+#nav { margin-top: 10px; }
+.page-header.build-data { margin-top: 0px; }
+.build-data > h1 { margin-top: 8px; }
+
+/* Style the build outcome information in the build dashboard */
+.log { margin-left: 30px; }
+.show-warnings { font-weight: 700; color: #8a6d3b; }
+.show-warnings:hover { color: #66512c; }
+
+/* Style the errors and warnings information in the build dashboard */
+#errors .panel-heading { background-color: transparent; color: #843534; }
+#warnings .panel-heading { background-color: transparent; color: #8a6d3b; }
+#warnings .panel-heading a:hover { color: #66512c; }
+h2.panel-title { font-size: 30px; }
+.alert-danger pre,
+.alert-warning pre { background-color: transparent; border: none; }
+.alert-danger pre { color: #a94442; }
+#error-info pre,
+#warning-info pre { white-space: pre-wrap; }
+.alert-warning pre { color: #8a6d3b; }
+
+/* Style the wells in the build dashboard */
+.dashboard-section h3 { margin-top: 10px; margin-bottom: 20px; }
+.col-md-4.dashboard-section dd { margin-bottom: 10px; }
+
+/* Make the help in tables insivisble until you hover over the right cell */
+.hover-help { visibility: hidden; }
+
+/* Blue hightlight animation for tasks and directory structure tables */
+.highlight { -webkit-animation: target-fade 15s 1; -moz-animation: target-fade 15s 1; animation: target-fade 15s 1; }
+@-webkit-keyframes target-fade { 0% { background-color: #D9EDF7; } 25% { background-color: #D9EDF7; } 100% { background-color: white; } }
+@-moz-keyframes target-fade { 0% { background-color: #D9EDF7; } 25% { background-color: #D9EDF7; } 100% { background-color: white; } }
+@keyframes target-fade { 0% { background-color: #D9EDF7; } 25% { background-color: #D9EDF7; } 100% { background-color: white; } }
+
+/* Copied in from newer version of Font-Awesome 4.3.0 */
+.fa-spin {
+  -webkit-animation: fa-spin 2s infinite linear;
+  animation: fa-spin 2s infinite linear;
+  display: inline-block;
+}
+.fa-pulse {
+  -webkit-animation: fa-spin 1s infinite steps(8);
+  animation: fa-spin 1s infinite steps(8);
+  display: inline-block;
+}
+
+@-webkit-keyframes fa-spin {
+  0% {
+    -webkit-transform: rotate(0deg);
+    transform: rotate(0deg);
+  }
+  100% {
+    -webkit-transform: rotate(359deg);
+    transform: rotate(359deg);
+  }
+}
+
+@keyframes fa-spin {
+  0% {
+    -webkit-transform: rotate(0deg);
+    -moz-transform: rotate(0deg);
+    transform: rotate(0deg);
+  }
+  100% {
+    -webkit-transform: rotate(359deg);
+    -moz-transform: rotate(359deg);
+    transform: rotate(359deg);
+  }
+}
+/* End copied in from newer version of Font-Awesome 4.3.0 */

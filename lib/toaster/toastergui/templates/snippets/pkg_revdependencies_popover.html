@@ -5,7 +5,7 @@
 {% with count_package=package_deps.packages|length %}
 
 {% if count_package > 0 %}
-  <a data-content='<ul class="unstyled">
+  <a data-content='<ul class="list-unstyled">
   {% for dep in package_deps.packages|dictsort:"package.name" %}
      <li>
       {% if extra.add_links %}

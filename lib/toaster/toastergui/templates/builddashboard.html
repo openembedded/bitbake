@@ -14,57 +14,49 @@
 {% block buildinfomain %}
 <!-- page title -->
 <div class="col-md-10">
- <div class="page-header">
+ <div class="page-header build-data">
      <h1>{{build.target_set.all|dictsort:"target"|join:", "}} {{build.machine}}</h1>
  </div>
 
 <!-- build result bar -->
-  <div class="alert {%if build.outcome == build.SUCCEEDED%}alert-success{%elif build.outcome == build.FAILED%}alert-error{%else%}alert-info{%endif%}">
-    <div class="lead">
-            <span><strong>
-                {%if build.outcome == build.SUCCEEDED%}Completed{%elif build.outcome == build.FAILED%}Failed{%else%}{%endif%}
-              </strong> on
-            {{build.completed_on|date:"d/m/y H:i"}}
-</span>
-{% if  build.warnings.count or build.errors.count %}
-&nbsp;with
-{% endif %}
-{%if build.outcome == build.SUCCEEDED or build.outcome == build.FAILED %}
-{% if  build.errors.count %}
-     <span > <i class="icon-minus-sign red"></i><strong><a href="#errors" class="error show-errors"> {{build.errors.count}} error{{build.errors.count|pluralize}}</a></strong></span>
-{% endif %}
-{% if  build.warnings.count %}
-{% if  build.errors.count %}
-    and
-{% endif %}
-    <span > <i class="icon-warning-sign yellow"></i><strong><a href="#warnings" class="warning show-warnings"> {{build.warnings.count}} warning{{build.warnings.count|pluralize}}</a></strong></span>
-{% endif %}
-            <span class="pull-right">Build time: <a href="{% url 'buildtime' build.pk %}">{{ build.timespent_seconds|sectohms }}</a>
-            {% if build.cooker_log_path %}
-                <a class="btn {%if build.outcome == build.SUCCEEDED%}btn-success{%else%}btn-danger{%endif%} pull-right log" href="{% url 'build_artifact' build.id "cookerlog" build.id %}">Download build log</a>
-            {% endif %}
-            </span>
-
-{%endif%}
-    </div>
-  </div>
+  <div class="alert {%if build.outcome == build.SUCCEEDED%}alert-success{%elif build.outcome == build.FAILED%}alert-danger{%else%}alert-info{%endif%}">
+		<span><strong>{%if build.outcome == build.SUCCEEDED%}Completed{%elif build.outcome == build.FAILED%}Failed{%else%}{%endif%}</strong> on {{build.completed_on|date:"d/m/y H:i"}}</span>
+		{% if  build.warnings.count or build.errors.count %}
+		<span>with</span>
+		{% endif %}
+		{%if build.outcome == build.SUCCEEDED or build.outcome == build.FAILED %}
+			{% if  build.errors.count %}
+			<a href="#errors" class="alert-link show-errors"> {{build.errors.count}} error{{build.errors.count|pluralize}}</a>
+			{% endif %}
+			{% if  build.warnings.count %}
+				{% if  build.errors.count %}and{% endif %}
+				<a href="#warnings" class="show-warnings"> {{build.warnings.count}} warning{{build.warnings.count|pluralize}}</a>
+			{% endif %}
+			{% if build.cooker_log_path %}
+			<a class="alert-link pull-right log" href="{% url 'build_artifact' build.id "cookerlog" build.id %}">Download build log</a>
+			{% endif %}
+			<span class="pull-right">
+				Build time:
+				<a class="alert-link" href="{% url 'buildtime' build.pk %}">{{ build.timespent_seconds|sectohms }}</a>
+			</span>
+		{%endif%}
+</div>
 
 {% if build.errors.count %}
-<div class="panel-group" id="errors">
-  <div class="panel panel-default">
+  <div class="panel panel-default" id="errors">
     <div class="panel-heading">
-      <a class="panel-title error toggle-errors" href="#">
-         <h2 id="error-toggle">
-           <i class="icon-minus-sign"></i>
+      <h2 class="panel-title">
+         <span class="glyphicon glyphicon-minus-sign"></span>
+         <a data-toggle="collapse" href="#error-info" id="error-toggle">
            {{build.errors.count}} error{{build.errors.count|pluralize}}
-         </h2>
-      </a>
+         </a>
+      </h2>
     </div>
-    <div class="panel-collapse collapse in" id="collapse-errors">
+    <div class="panel-collapse collapse in" id="error-info">
       <div class="panel-body">
         <div class="col-md-10">
           {% for error in build.errors %}
-            <div class="alert alert-error" data-error="{{ error.id }}">
+            <div class="alert alert-danger" data-error="{{ error.id }}">
               <pre>{{error.message}}</pre>
             </div>
           {% endfor %}
@@ -72,7 +64,6 @@
       </div>
     </div>
   </div>
-</div>
 {% endif %}
 
 {%if build.outcome == build.SUCCEEDED%}
@@ -81,9 +72,8 @@
     <h2>Images</h2>
     {% for target in targets %}
         {% if target.target.is_image %}
-    <div class="well dashboard-section">
-        <h3><a href="{% url 'target' build.pk target.target.pk %}">{{target.target}}</a>
-                </h3>
+    <div class="well well-transparent dashboard-section">
+        <h3><a href="{% url 'target' build.pk target.target.pk %}">{{target.target}}</a></h3>
         <dl class="dl-horizontal">
             <dt>Packages included</dt>
             <dd><a href="{% url 'target' build.pk target.target.pk %}">{{target.npkg}}</a></dd>
@@ -100,7 +90,7 @@
                       <p>
                       This is probably because valid image and license manifest
                       files from a previous build already exist in your
-                      <code>.../poky/build/tmp/deploy</code>
+                      <code>build/tmp/deploy</code>
                       directory. You can
                       also <a href="{% url 'target' build.pk target.target.pk %}">view the
                         license manifest information</a> in Toaster.
@@ -110,7 +100,7 @@
                 </div>
         {% else %}
             <dt>
-                <i class="icon-question-sign get-help" title="The location in disk of the license manifest, a document listing all packages installed in your image and their licenses"></i>
+                <span class="glyphicon glyphicon-question-sign get-help" title="The location in disk of the license manifest, a document listing all packages installed in your image and their licenses"></span>
 
                 License manifest
             </dt>
@@ -118,11 +108,11 @@
                 <a href="{% url 'target' build.pk target.target.pk %}">View in Toaster</a> |
                 <a href="{% url 'build_artifact' build.pk 'licensemanifest' target.target.pk %}">Download</a></dd>
             <dt>
-                <i class="icon-question-sign get-help" title="Image files are stored in <code>/build/tmp/deploy/images/</code>"></i>
+                <span class="glyphicon glyphicon-question-sign get-help" title="Image files are stored in <code>build/tmp/deploy/images/</code>"></span>
                 Image files
             </dt>
             <dd>
-                <ul>
+                <ul class="list-unstyled">
                     {% for i in target.imageFiles %}
                         <li>
                             <a href="{% url 'build_artifact' build.pk 'imagefile' i.id %}">
@@ -148,10 +138,10 @@
 {% if build.buildartifact_set.all.count > 0 %}
 <h2>Other artifacts</h2>
 
-    <div class="well dashboard-section">
+    <div class="well well-transparent dashboard-section">
         <dl class="dl-horizontal">
             <dt>
-                <i class="icon-question-sign get-help" title="Build artifacts discovered in <i>tmp/deploy/images</i>. Usually kernel images and kernel modules."></i>
+                <span class="glyphicon glyphicon-question-sign get-help" title="Build artifacts discovered in <i>tmp/deploy/images</i>. Usually kernel images and kernel modules."></span>
                 Other artifacts</dt>
             <dd><div>
               {% for ba in build.buildartifact_set.all|dictsort:"file_name" %}
@@ -172,51 +162,51 @@
   <div class="row">
     <div class="col-md-4 dashboard-section">
       <div class="well well-transparent">
-        <h4><a href="{%url 'configuration' build.pk%}">Configuration</a></h4>
+        <h3><a href="{%url 'configuration' build.pk%}">Configuration</a></h3>
             <dl>
         <dt>Machine</dt><dd>{{build.machine}}</dd>
         <dt>Distro</dt><dd>{{build.distro}}</dd>
-        <dt>Layers</dt>{% for i in build.layer_version_build.all|dictsort:"layer.name" %}<dd>{{i.layer.name}}</dd>{%endfor%}
+        <dt>Layers</dt><dd><ul class="list-unstyled">{% for i in build.layer_version_build.all|dictsort:"layer.name" %}<li>{{i.layer.name}}</li>{%endfor%}</ul></dd>
             </dl>
       </div>
     </div>
     <div class="col-md-4 dashboard-section">
       <div class="well well-transparent">
-        <h4><a href="{%url 'tasks' build.pk%}">Tasks</a></h4>
+        <h3><a href="{%url 'tasks' build.pk%}">Tasks</a></h3>
             <dl>
             {% query build.task_build outcome=4 order__gt=0 as exectask%}
             {% if exectask.count > 0 %}
                 <dt>Failed tasks</dt>
                 <dd>
                 {% if exectask.count == 1 %}
-                    <a class="error" href="{% url "task" build.id exectask.0.id %}">
+                    <a class="text-danger" href="{% url "task" build.id exectask.0.id %}">
                         {{exectask.0.recipe.name}}
                         <span class="task-name">{{exectask.0.task_name}}</span>
                     </a>
 
                         <a href="{% url 'build_artifact' build.id "tasklogfile" exectask.0.id %}">
-                            <i class="icon-download-alt" title="" data-original-title="Download task log file"></i>
+                            <span class="glyphicon glyphicon-download-alt get-help" title="Download task log file"></i>
                         </a>
 
                 {% elif exectask.count > 1%}
-                    <a class="error" href="{% url "tasks" build.id %}?filter=outcome%3A4">{{exectask.count}}</a>
+                    <a class="text-danger" href="{% url "tasks" build.id %}?filter=outcome%3A4">{{exectask.count}}</a>
                 {% endif %}
                 </dd>
             {% endif %}
         <dt>Total number of tasks</dt><dd><a href="{% url 'tasks' build.pk %}">{% query build.task_build order__gt=0 as alltasks %}{{alltasks.count}}</a></dd>
         <dt>
             Tasks executed
-            <i class="icon-question-sign get-help" title="'Executed' tasks are those that need to be run in order to generate the task output"></i>
+            <span class="glyphicon glyphicon-question-sign get-help" title="'Executed' tasks are those that need to be run in order to generate the task output"></span>
         </dt>
         <dd><a href="{% url 'tasks' build.pk %}?filter=task_executed%3A1&amp;count=25&amp;search=&amp;page=1&amp;orderby=order%3A%2B">{% query build.task_build task_executed=1 order__gt=0 as exectask%}{{exectask.count}}</a></dd>
         <dt>
             Tasks not executed
-            <i class="icon-question-sign get-help" title="'Not executed' tasks don't need to run because their outcome is provided by another task"></i>
+            <span class="glyphicon glyphicon-question-sign get-help" title="'Not executed' tasks don't need to run because their outcome is provided by another task"></span>
         </dt>
         <dd><a href="{% url 'tasks' build.pk %}?filter=task_executed%3A0&amp;count=25&amp;search=&amp;page=1&amp;orderby=order%3A%2B">{% query build.task_build task_executed=0 order__gt=0 as noexectask%}{{noexectask.count}}</a></dd>
         <dt>
             Reuse
-            <i class="icon-question-sign get-help" title="The percentage of 'not executed' tasks over the total number of tasks, which is a measure of the efficiency of your build"></i>
+            <span class="glyphicon glyphicon-question-sign get-help" title="The percentage of 'not executed' tasks over the total number of tasks, which is a measure of the efficiency of your build"></span>
         </dt>
         <dd>
 {% query build.task_build order__gt=0 as texec %}
@@ -232,7 +222,7 @@
     </div>
     <div class="col-md-4 dashboard-section">
       <div class="well well-transparent">
-        <h4><a href="{% url 'recipes' build.pk %}">Recipes</a> & <a href="{% url 'packages' build.pk %}">Packages</a></h4>
+        <h3><a href="{% url 'recipes' build.pk %}">Recipes</a> & <a href="{% url 'packages' build.pk %}">Packages</a></h3>
             <dl>
         <dt>Recipes built</dt><dd><a href="{% url 'recipes' build.pk %}">{{recipecount}}</a></dd>
         <dt>Packages built</dt><dd><a href="{% url 'packages' build.pk %}">{{packagecount}}</a></dd>
@@ -242,17 +232,14 @@
 </div>
 
 {% if build.warnings.count %}
-<div class="panel-group" id="warnings">
-  <div class="panel panel-default">
+  <div class="panel panel-default" id="warnings">
     <div class="panel-heading">
-      <a class="panel-title warning toggle-warnings" href="#">
-        <h2 id="warning-toggle">
-          <i class="icon-warning-sign"></i>
-          {{build.warnings.count}} warning{{build.warnings.count|pluralize}}
-        </h2>
-      </a>
+      <h2 class="panel-title">
+          <span class="glyphicon glyphicon-warning-sign"></span>
+          <a id="warning-toggle" href="#warning-info" data-toggle="collapse">{{build.warnings.count}} warning{{build.warnings.count|pluralize}}</a>
+      </h2>
     </div>
-    <div class="panel-collapse collapse" id="collapse-warnings">
+    <div class="panel-collapse collapse" id="warning-info">
       <div class="panel-body">
         <div class="col-md-10">
           {% for warning in logmessages %}{% if warning.level == 1 %}
@@ -264,7 +251,6 @@
       </div>
     </div>
   </div>
-</div>
 {% endif %}
 
 </div> <!-- end 10 column row -->
@@ -273,8 +259,13 @@
     $(document).ready(function() {
         //show warnings section when requested from the previous page
         if (location.href.search('#warnings') > -1) {
-            $('#collapse-warnings').addClass('in');
+            $('#warning-info').addClass('in');
         }
+	
+	//show warnings section when requested from the build outcome
+	$(".show-warnings").click(function() {
+	    $('#warning-info').addClass('in');
+	});
     });
 </script>
 

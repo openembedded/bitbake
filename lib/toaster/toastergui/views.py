@@ -898,7 +898,6 @@ def configvars(request, build_id):
                 },
                 {'name': 'Value',
                  'qhelp': "The value assigned to the variable",
-                 'dclass': "span4",
                 },
                 {'name': 'Set in file',
                  'qhelp': "The last configuration file that touched the variable value",

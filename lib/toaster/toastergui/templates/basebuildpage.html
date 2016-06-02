@@ -7,7 +7,7 @@
 
 <div class="row">
   <!-- breadcrumbs -->
-  <div class="section">
+  <div class="col-md-12">
     <ul class="breadcrumb" id="breadcrumb">
       <li><a href="{% project_url build.project %}">{{build.project.name}}</a></li>
       {% if not build.project.is_default %}
@@ -44,12 +44,12 @@
   <div class="row">
     <!-- begin left sidebar container -->
     <div id="nav" class="col-md-2">
-      <ul class="nav nav-list well" id="build-menu">
+      <ul class="nav nav-pills nav-stacked" id="build-menu">
         <li
           {% if request.resolver_match.url_name == 'builddashboard'  %}
             class="active"
           {% endif %} >
-          <a class="nav-parent" href="{% url 'builddashboard' build.pk %}">Build summary</a>
+          <a  href="{% url 'builddashboard' build.pk %}">Build summary</a>
         </li>
         {% if build.target_set.all.0.is_image and build.outcome == 0 %}
           <li class="nav-header">Images</li>
@@ -72,56 +72,42 @@
           <li><a href="{% url 'cputime' build.pk %}">CPU usage</a></li>
           <li><a href="{% url 'diskio' build.pk %}">Disk I/O</a></li>
 
-        <li class="divider"></li>
-
-        <li>
-          <p class="navbar-btn">
-            <a class="btn btn-block" href="{% url 'build_artifact' build.id 'cookerlog' build.id %}">
-              Download build log
-            </a>
-          </p>
-        </li>
+	<li class="nav-header">Actions</li>
+       	<a class="btn btn-default btn-block navbar-btn" href="{% url 'build_artifact' build.id 'cookerlog' build.id %}">Download build log</a>
 
         {% with build.get_custom_image_recipes as custom_image_recipes %}
           {% if custom_image_recipes.count > 0 %}
             <!-- edit custom image built during this build -->
-            <li>
-              <p class="navbar-btn" data-role="edit-custom-image-trigger">
-                <button class="btn btn-block">Edit custom image</button>
-                {% include 'editcustomimage_modal.html' %}
-                <script>
-                  var editableCustomImageRecipes = {{ custom_image_recipes | objects_to_dictionaries:"id,name" | json }};
+              <button class="btn btn-default btn-block navbar-btn" data-role="edit-custom-image-trigger">Edit custom image</button>
+              {% include 'editcustomimage_modal.html' %}
+              <script>
+                var editableCustomImageRecipes = {{ custom_image_recipes | objects_to_dictionaries:"id,name" | json }};
 
-                  $(document).ready(function () {
-                    var editCustomImageTrigger = $('[data-role="edit-custom-image-trigger"]');
-                    var editCustomImageModal = $('#edit-custom-image-modal');
+                $(document).ready(function () {
+                  var editCustomImageTrigger = $('[data-role="edit-custom-image-trigger"]');
+                  var editCustomImageModal = $('#edit-custom-image-modal');
 
-                    // edit custom image which was built during this build
-                    editCustomImageTrigger.click(function () {
-                      // single editable custom image: redirect to the edit page
-                      // for that image
-                      if (editableCustomImageRecipes.length === 1) {
-                        var url = '{% url "customrecipe" build.project.id custom_image_recipes.first.id %}';
-                        document.location.href = url;
-                      }
-                      // multiple editable custom images: show modal to select
-                      // one of them for editing
-                      else {
-                        editCustomImageModal.modal('show');
-                      }
-                    });
+                  // edit custom image which was built during this build
+                  editCustomImageTrigger.click(function () {
+                    // single editable custom image: redirect to the edit page
+                    // for that image
+                    if (editableCustomImageRecipes.length === 1) {
+                      var url = '{% url "customrecipe" build.project.id custom_image_recipes.first.id %}';
+                      document.location.href = url;
+                    }
+                    // multiple editable custom images: show modal to select
+                    // one of them for editing
+                    else {
+                      editCustomImageModal.modal('show');
+                    }
                   });
-                </script>
-              </p>
-            </li>
+                });
+              </script>
           {% endif %}
         {% endwith %}
 
-        <li>
           <!-- new custom image from image recipe in this build -->
-          <p class="navbar-btn" data-role="new-custom-image-trigger">
-            <button class="btn btn-block">New custom image</button>
-          </p>
+          <button class="btn btn-default btn-block navbar-btn" data-role="new-custom-image-trigger">New custom image</button>
           {% include 'newcustomimage_modal.html' %}
           <script>
             // imageRecipes includes both custom image recipes and built-in
@@ -145,7 +131,6 @@
               });
             });
           </script>
-        </li>
       </ul>
 
     </div>

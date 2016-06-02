@@ -112,11 +112,11 @@ def task_color(task_object, show_green=False):
         show_green argument should be True to get green color.
     """
     if not task_object.task_executed:
-        return 'class=muted'
+        return 'class=text-muted'
     elif task_object.outcome == task_object.OUTCOME_FAILED:
-        return 'class=error'
+        return 'class=text-danger'
     elif task_object.outcome == task_object.OUTCOME_SUCCESS and show_green:
-        return 'class=green'
+        return 'class=text-success'
     else:
         return ''
 
@@ -250,15 +250,15 @@ from django.utils.safestring import mark_safe
 @register.filter
 def format_vpackage_rowclass(size):
     if size == -1:
-        return mark_safe('class="muted"')
+        return mark_safe('class="text-muted"')
     return ''
 
 @register.filter
 def format_vpackage_namehelp(name):
     r =  name + '&nbsp;'
-    r += '<i class="icon-question-sign get-help hover-help"'
+    r += '<span class="glyphicon glyphicon-question-sign get-help hover-help"'
     r += ' title = "' + name + ' has not been built">'
-    r += '</i>'
+    r += '</span>'
     return mark_safe(r)
 
 @register.filter

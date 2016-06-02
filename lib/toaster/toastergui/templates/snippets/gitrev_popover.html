@@ -1,6 +1,6 @@
 {% load projecttags  %}
 {% if vcs_ref|is_shaid %}
-<a class="btn" data-content="<ul class='unstyled'> <li>{{vcs_ref}}</li> </ul>">
+<a class="btn btn-default" data-content="{{vcs_ref}}">
  {{vcs_ref|truncatechars:10}}
 </a>
 {% else %}

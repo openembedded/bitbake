@@ -260,10 +260,10 @@ class BuiltRecipesTable(BuildTablesMixin):
         {% with deps=data.r_dependencies_recipe.all %}
         {% with count=deps|length %}
         {% if count %}
-        <a class="btn" title="
+        <a class="btn btn-default" title="
         <a href='{% url "recipe" extra.build.pk data.pk %}#dependencies'>
         {{data.name}}</a> dependencies"
-        data-content="<ul class='unstyled'>
+        data-content="<ul class='list-unstyled'>
         {% for dep in deps|dictsort:"depends_on.name"%}
         <li><a href='{% url "recipe" extra.build.pk dep.depends_on.pk %}'>
         {{dep.depends_on.name}}</a></li>
@@ -278,11 +278,11 @@ class BuiltRecipesTable(BuildTablesMixin):
         {% with revs=data.r_dependencies_depends.all %}
         {% with count=revs|length %}
         {% if count %}
-        <a class="btn"
+        <a class="btn btn-default"
         title="
         <a href='{% url "recipe" extra.build.pk data.pk %}#brought-in-by'>
         {{data.name}}</a> reverse dependencies"
-        data-content="<ul class='unstyled'>
+        data-content="<ul class='list-unstyled'>
         {% for dep in revs|dictsort:"recipe.name" %}
         <li>
         <a href='{% url "recipe" extra.build.pk dep.recipe.pk %}'>
