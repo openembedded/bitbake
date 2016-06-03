@@ -65,9 +65,10 @@ class SetCache(object):
         for i in items:
             new.append(sys.intern(i))
         s = frozenset(new)
-        if hash(s) in self.setcache:
-            return self.setcache[hash(s)]
-        self.setcache[hash(s)] = s
+        h = hash(s)
+        if h in self.setcache:
+            return self.setcache[h]
+        self.setcache[h] = s
         return s
 
 codecache = SetCache()
