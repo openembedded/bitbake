@@ -6,11 +6,15 @@ import pickle
 import bb.pysh as pysh
 import os.path
 import bb.utils, bb.data
+import hashlib
 from itertools import chain
 from bb.pysh import pyshyacc, pyshlex, sherrors
 from bb.cache import MultiProcessCache
 
 logger = logging.getLogger('BitBake.CodeParser')
+
+def bbhash(s):
+    return hashlib.md5(s.encode("utf-8")).hexdigest()
 
 def check_indent(codestr):
     """If the code is indented, add a top level piece of code to 'remove' the indentation"""
@@ -270,7 +274,7 @@ class PythonParser():
         if not node or not node.strip():
             return
 
-        h = hash(str(node))
+        h = bbhash(str(node))
 
         if h in codeparsercache.pythoncache:
             self.references = set(codeparsercache.pythoncache[h].refs)
@@ -315,7 +319,7 @@ class ShellParser():
         commands it executes.
         """
 
-        h = hash(str(value))
+        h = bbhash(str(value))
 
         if h in codeparsercache.shellcache:
             self.execs = set(codeparsercache.shellcache[h].execs)
