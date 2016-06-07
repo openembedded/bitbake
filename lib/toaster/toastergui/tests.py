@@ -77,7 +77,7 @@ class ViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response['Content-Type'].startswith('application/json'))
 
-        data = json.loads(response.content)
+        data = json.loads(response.content.decode('utf-8'))
 
         self.assertTrue("error" in data)
         self.assertEqual(data["error"], "ok")
@@ -106,7 +106,7 @@ class ViewTests(TestCase):
             self.assertEqual(response.status_code, 200)
             self.assertTrue(response['Content-Type'].startswith('application/json'))
 
-            data = json.loads(response.content)
+            data = json.loads(response.content.decode('utf-8'))
 
             self.assertTrue("error" in data)
             self.assertEqual(data["error"], "ok")
@@ -157,26 +157,26 @@ class ViewTests(TestCase):
                 'project_id': self.project.id,
                 'dir_path' : "/path/in/repository"}
         response = self.client.post(reverse('xhr_importlayer'), args)
-        data = json.loads(response.content)
+        data = json.loads(response.content.decode('utf-8'))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(data["error"], "ok")
 
         #Test to verify import of a layer successful
         args['name'] = "meta-oe"
         response = self.client.post(reverse('xhr_importlayer'), args)
-        data = json.loads(response.content)
+        data = json.loads(response.content.decode('utf-8'))
         self.assertTrue(data["error"], "ok")
 
         #Test for html tag in the data
         args['<'] = "testing html tag"
         response = self.client.post(reverse('xhr_importlayer'), args)
-        data = json.loads(response.content)
+        data = json.loads(response.content.decode('utf-8'))
         self.assertNotEqual(data["error"], "ok")
 
         #Empty data passed
         args = {}
         response = self.client.post(reverse('xhr_importlayer'), args)
-        data = json.loads(response.content)
+        data = json.loads(response.content.decode('utf-8'))
         self.assertNotEqual(data["error"], "ok")
 
     def test_custom_ok(self):
@@ -186,7 +186,7 @@ class ViewTests(TestCase):
                   'base': self.recipe1.id}
         response = self.client.post(url, params)
         self.assertEqual(response.status_code, 200)
-        data = json.loads(response.content)
+        data = json.loads(response.content.decode('utf-8'))
         self.assertEqual(data['error'], 'ok')
         self.assertTrue('url' in data)
         # get recipe from the database
@@ -202,7 +202,7 @@ class ViewTests(TestCase):
                        {'name': 'custom', 'project': self.project.id}]:
             response = self.client.post(url, params)
             self.assertEqual(response.status_code, 200)
-            data = json.loads(response.content)
+            data = json.loads(response.content.decode('utf-8'))
             self.assertNotEqual(data["error"], "ok")
 
     def test_xhr_custom_wrong_project(self):
@@ -211,7 +211,7 @@ class ViewTests(TestCase):
         params = {'name': 'custom', 'project': 0, "base": self.recipe1.id}
         response = self.client.post(url, params)
         self.assertEqual(response.status_code, 200)
-        data = json.loads(response.content)
+        data = json.loads(response.content.decode('utf-8'))
         self.assertNotEqual(data["error"], "ok")
 
     def test_xhr_custom_wrong_base(self):
@@ -220,7 +220,7 @@ class ViewTests(TestCase):
         params = {'name': 'custom', 'project': self.project.id, "base": 0}
         response = self.client.post(url, params)
         self.assertEqual(response.status_code, 200)
-        data = json.loads(response.content)
+        data = json.loads(response.content.decode('utf-8'))
         self.assertNotEqual(data["error"], "ok")
 
     def test_xhr_custom_details(self):
@@ -235,7 +235,7 @@ class ViewTests(TestCase):
                              'project_id': self.project.id,
                             }
                    }
-        self.assertEqual(json.loads(response.content), expected)
+        self.assertEqual(json.loads(response.content.decode('utf-8')), expected)
 
     def test_xhr_custom_del(self):
         """Test deleting custom recipe"""
@@ -248,12 +248,12 @@ class ViewTests(TestCase):
         url = reverse('xhr_customrecipe_id', args=(recipe.id,))
         response = self.client.delete(url)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(json.loads(response.content), {"error": "ok"})
+        self.assertEqual(json.loads(response.content.decode('utf-8')), {"error": "ok"})
         # try to delete not-existent recipe
         url = reverse('xhr_customrecipe_id', args=(recipe.id,))
         response = self.client.delete(url)
         self.assertEqual(response.status_code, 200)
-        self.assertNotEqual(json.loads(response.content)["error"], "ok")
+        self.assertNotEqual(json.loads(response.content.decode('utf-8'))["error"], "ok")
 
     def test_xhr_custom_packages(self):
         """Test adding and deleting package to a custom recipe"""
@@ -263,7 +263,7 @@ class ViewTests(TestCase):
                                                  self.cust_package.id)))
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(json.loads(response.content),
+        self.assertEqual(json.loads(response.content.decode('utf-8')),
                          {"error": "ok"})
         self.assertEqual(self.customr.appends_set.first().name,
                          self.cust_package.name)
@@ -274,7 +274,7 @@ class ViewTests(TestCase):
 
         response = self.client.delete(del_url)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(json.loads(response.content), {"error": "ok"})
+        self.assertEqual(json.loads(response.content.decode('utf-8')), {"error": "ok"})
         all_packages = self.customr.get_all_packages().values_list('pk',
                                                                    flat=True)
 
@@ -286,7 +286,7 @@ class ViewTests(TestCase):
 
         response = self.client.delete(del_url)
         self.assertEqual(response.status_code, 200)
-        self.assertNotEqual(json.loads(response.content)["error"], "ok")
+        self.assertNotEqual(json.loads(response.content.decode('utf-8'))["error"], "ok")
 
     def test_xhr_custom_packages_err(self):
         """Test error conditions of xhr_customrecipe_packages"""
@@ -297,7 +297,7 @@ class ViewTests(TestCase):
             for method in (self.client.put, self.client.delete):
                 response = method(url)
                 self.assertEqual(response.status_code, 200)
-                self.assertNotEqual(json.loads(response.content),
+                self.assertNotEqual(json.loads(response.content.decode('utf-8')),
                                     {"error": "ok"})
 
     def test_download_custom_recipe(self):
@@ -316,7 +316,7 @@ class ViewTests(TestCase):
         table = SoftwareRecipesTable()
         request = RequestFactory().get('/foo/', {'format': 'json'})
         response = table.get(request, pid=self.project.id)
-        data = json.loads(response.content)
+        data = json.loads(response.content.decode('utf-8'))
 
         recipes = Recipe.objects.filter(Q(is_image=False))
         self.assertTrue(len(recipes) > 1,
@@ -372,7 +372,7 @@ class ViewTests(TestCase):
                     'target_id': 1}
 
             response = table.get(request, **args)
-            return json.loads(response.content)
+            return json.loads(response.content.decode('utf-8'))
 
         def get_text_from_td(td):
             """If we have html in the td then extract the text portion"""
