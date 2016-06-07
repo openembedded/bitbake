@@ -304,7 +304,7 @@ class ViewTests(TestCase):
         """Download the recipe file generated for the custom image"""
 
         # Create a dummy recipe file for the custom image generation to read
-        open("/tmp/a_recipe.bb", 'wa').close()
+        open("/tmp/a_recipe.bb", 'a').close()
         response = self.client.get(reverse('customrecipedownload',
                                            args=(self.project.id,
                                                  self.customr.id)))
