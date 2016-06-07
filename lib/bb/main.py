@@ -281,10 +281,10 @@ class BitBakeConfigParameters(cookerdata.ConfigParameters):
 
         # use configuration files from environment variables
         if "BBPRECONF" in os.environ:
-            option.prefile.append(os.environ["BBPRECONF"])
+            options.prefile.append(os.environ["BBPRECONF"])
 
         if "BBPOSTCONF" in os.environ:
-            option.postfile.append(os.environ["BBPOSTCONF"])
+            options.postfile.append(os.environ["BBPOSTCONF"])
 
         # fill in proper log name if not supplied
         if options.writeeventlog is not None and len(options.writeeventlog) == 0:
