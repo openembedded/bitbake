@@ -382,12 +382,6 @@ class ViewTests(TestCase):
             else:
                 ret = BeautifulSoup(td).text
 
-            # We change the td into ascii as a way to remove characters
-            # such as \xa0 (non break space) which mess with the ordering
-            # comparisons
-            ret.strip().encode('ascii',
-                               errors='replace').replace('?', ' ')
-            # Case where the td is empty
             if len(ret):
                 return "0"
             else:
