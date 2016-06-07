@@ -1067,7 +1067,7 @@ class BuildInfoHelper(object):
 
         for t in self.internal_state['targets']:
             if t.is_image == True:
-                output_files = list(evdata.viewkeys())
+                output_files = list(evdata.keys())
                 for output in output_files:
                     if t.target in output and 'rootfs' in output and not output.endswith(".manifest"):
                         self.orm_wrapper.save_target_image_file_information(t, output, evdata[output])
