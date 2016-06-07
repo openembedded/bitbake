@@ -219,7 +219,7 @@ class ToasterTable(TemplateView):
 
         try:
             filter_name, action_name = filters.split(':')
-            action_params = urllib.unquote_plus(filter_value)
+            action_params = unquote_plus(filter_value)
         except ValueError:
             return
 
