@@ -268,7 +268,7 @@ def _get_filtering_query(filter_string):
         or_values = kv[1].split(OR_VALUE_SEPARATOR)
         query = None
         for key, val in zip(or_keys, or_values):
-            x = __get_q_for_val(k, val)
+            x = __get_q_for_val(key, val)
             query = query | x if query else x
 
         and_query = and_query & query if and_query else query
