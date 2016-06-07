@@ -2338,7 +2338,7 @@ if True:
             )
 
             if file_name and response_file_name:
-                fsock = open(file_name, "r")
+                fsock = open(file_name, "rb")
                 content_type = MimeTypeFinder.get_mimetype(file_name)
 
                 response = HttpResponse(fsock, content_type = content_type)
