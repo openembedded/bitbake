@@ -18,6 +18,13 @@
 {% load projecttags %}
 
 <script type='text/javascript'>
+  var ctx = {};
+  ctx.target = "{{target.target}}";
+
+  $(document).ready(function(){
+    $("#menu-"+ctx.target).addClass("active");
+  });
+
     function setupTreetable() {
         $("#dirtable").treetable({
             expandable: true,

@@ -23,6 +23,9 @@
       {% block localbreadcrumb %}{% endblock %}
     </ul>
     <script>
+
+      var configVarUrl = "{% url 'configvars' build.id %}";
+
       $(document).ready(function(){
         $('#breadcrumb > li').append('<span class="divider">&rarr;</span>');
         $('#breadcrumb > li:last').addClass("active");
@@ -30,10 +33,18 @@
 
         $("#build-menu li a").each(function(){
           /* Set the page active state in the Build menu */
-          if (window.location.href.split('?')[0] === $(this).prop("href")){
+          var currentUrl = window.location.href.split('?')[0]; 
+          if (currentUrl === $(this).prop("href")){
             $(this).parent().addClass("active");
           } else {
-            $(this).parent().removeClass("active");
+            /* Special case the configvar as this is part of configuration
+             * page but is a separate url
+             */
+            if (window.location.pathname === configVarUrl){
+              $("#menu-configuration").addClass("active");
+            } else {
+              $(this).parent().removeClass("active");
+            }
           }
         });
       });
@@ -55,15 +66,12 @@
           <li class="nav-header">Images</li>
           {% block nav-target %}
             {% for t in build.get_sorted_target_list %}
-              <li><a href="{% url 'target' build.pk t.pk %}">{{t.target}}</a><li>
+            <li id="menu-{{t.target}}"><a href="{% url 'target' build.pk t.pk %}">{{t.target}}</a><li>
             {% endfor %}
           {% endblock %}
         {% endif %}
         <li class="nav-header">Build</li>
-        {% block nav-configuration %}
-          <li><a href="{% url 'configuration' build.pk %}">Configuration</a></li>
-        {% endblock %}
-
+          <li id="menu-configuration"><a href="{% url 'configuration' build.pk %}">Configuration</a></li>
           <li><a href="{% url 'tasks' build.pk %}">Tasks</a></li>
           <li><a href="{% url 'recipes' build.pk %}">Recipes</a></li>
           <li><a href="{% url 'packages' build.pk %}">Packages</a></li>
