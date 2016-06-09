@@ -37,6 +37,7 @@ import errno
 import signal
 import ast
 import collections
+import copy
 from subprocess import getstatusoutput
 from contextlib import contextmanager
 from ctypes import cdll
@@ -407,8 +408,13 @@ def better_exec(code, context, text = None, realfile = "<code>", pythonexception
 def simple_exec(code, context):
     exec(code, get_context(), context)
 
-def better_eval(source, locals):
-    return eval(source, get_context(), locals)
+def better_eval(source, locals, extraglobals = None):
+    ctx = get_context()
+    if extraglobals:
+        ctx = copy.copy(ctx)
+        for g in extraglobals:
+            ctx[g] = extraglobals[g]
+    return eval(source, ctx, locals)
 
 @contextmanager
 def fileslocked(files):

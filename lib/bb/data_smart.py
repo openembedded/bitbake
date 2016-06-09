@@ -135,7 +135,7 @@ class VariableParse:
                     self.contains[k] = parser.contains[k].copy()
                 else:
                     self.contains[k].update(parser.contains[k])
-            value = utils.better_eval(codeobj, DataContext(self.d))
+            value = utils.better_eval(codeobj, DataContext(self.d), {'d' : self.d})
             return str(value)
 
 
