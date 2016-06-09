@@ -134,11 +134,11 @@ class BuiltPackagesTable(BuildTablesMixin, BuiltPackagesTableBase):
         self.default_orderby = "name"
 
         self.empty_state =\
-            ('<strong>No packages were built.</strong> How did this happen?'
-             'Well, BitBake reuses as much stuff as possible.'
-             'If all of the packages needed were already built and available'
-             'in your build infrastructure, BitBake'
-             'will not rebuild any of them. This might be slightly confusing,'
+            ('<strong>No packages were built.</strong> How did this happen? '
+             'Well, BitBake reuses as much stuff as possible. '
+             'If all of the packages needed were already built and available '
+             'in your build infrastructure, BitBake '
+             'will not rebuild any of them. This might be slightly confusing, '
              'but it does make everything faster.')
 
     def setup_columns(self, *args, **kwargs):
