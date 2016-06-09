@@ -1785,9 +1785,9 @@
                     </thead>
                     <tbody>
                         <row>
-                            <entry align="left"><filename>d.getVar("X", expand=False)</filename></entry>
+                            <entry align="left"><filename>d.getVar("X", expand)</filename></entry>
                             <entry align="left">Returns the value of variable "X".
-                                Using "expand=True" expands the value.</entry>
+                            Using "expand=True" expands the value.</entry>
                         </row>
                         <row>
                             <entry align="left"><filename>d.setVar("X", "value")</filename></entry>
@@ -1810,9 +1810,9 @@
                             <entry align="left">Renames the variable "X" to "Y".</entry>
                         </row>
                         <row>
-                            <entry align="left"><filename>d.getVarFlag("X", flag, expand=False)</filename></entry>
-                            <entry align="left">Gets then named flag from the variable "X".
-                                Using "expand=True" expands the named flag.</entry>
+                            <entry align="left"><filename>d.getVarFlag("X", flag, expand)</filename></entry>
+                            <entry align="left">Returns the value of variable "X".
+                                Using "expand=True" expands the value.</entry>
                         </row>
                         <row>
                             <entry align="left"><filename>d.setVarFlag("X", flag, "value")</filename></entry>
