@@ -803,7 +803,8 @@ def runfetchcmd(cmd, d, quiet=False, cleanup=None):
                   'GIT_SMART_HTTP',
                   'SSH_AUTH_SOCK', 'SSH_AGENT_PID',
                   'SOCKS5_USER', 'SOCKS5_PASSWD',
-                  'DBUS_SESSION_BUS_ADDRESS']
+                  'DBUS_SESSION_BUS_ADDRESS',
+                  'P4CONFIG']
 
     if not cleanup:
         cleanup = []
