@@ -389,6 +389,8 @@ class BuildTasksTable(BuildTablesMixin):
                                    title="Filter Task by 'Outcome'")
 
         for outcome_enum, title in Task.TASK_OUTCOME:
+            if outcome_enum is Task.OUTCOME_NA:
+                continue
             action = TableFilterActionToggle(
                 title.replace(" ", "_").lower(),
                 "%s Tasks" % title,
