@@ -761,7 +761,7 @@ def _get_dir_entries(build_id, target_id, start):
 
         except Exception as e:
             print("Exception ", e)
-            traceback.print_exc(e)
+            traceback.print_exc()
 
     # sort by directories first, then by name
     rsorted = sorted(response, key=lambda entry :  entry['name'])

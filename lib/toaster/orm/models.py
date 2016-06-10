@@ -1217,7 +1217,7 @@ class LayerIndexLayerSource(LayerSource):
             import traceback
             if proxy_settings is not None:
                 logger.info("EE: Using proxy %s" % proxy_settings)
-            logger.warning("EE: could not connect to %s, skipping update: %s\n%s" % (self.apiurl, e, traceback.format_exc(e)))
+            logger.warning("EE: could not connect to %s, skipping update: %s\n%s" % (self.apiurl, e, traceback.format_exc()))
             return
 
         # update branches; only those that we already have names listed in the

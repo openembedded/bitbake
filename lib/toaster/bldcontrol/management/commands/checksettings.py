@@ -118,7 +118,7 @@ class Command(NoArgsCommand):
                     except Exception as e:
                         print("Failure while trying to import the toaster config file %s: %s" %\
                             (config_file, e))
-                        traceback.print_exc(e)
+                        traceback.print_exc()
 
                 return is_changed
 
