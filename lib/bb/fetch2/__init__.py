@@ -1395,7 +1395,7 @@ class FetchMethod(object):
                 output = subprocess.check_output('ar -t %s' % file, preexec_fn=subprocess_setup, shell=True)
                 datafile = None
                 if output:
-                    for line in output.splitlines():
+                    for line in output.decode().splitlines():
                         if line.startswith('data.tar.'):
                             datafile = line
                             break
