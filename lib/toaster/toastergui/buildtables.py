@@ -75,8 +75,8 @@ class BuiltPackagesTableBase(tables.PackagesTable):
                     {%% endif %%}
                     ''' % {'value': val})
 
-        add_pkg_link_to = ['name', 'version', 'size', 'license']
-        add_recipe_link_to = ['recipe__name', 'recipe__version']
+        add_pkg_link_to = 'name'
+        add_recipe_link_to = 'recipe__name'
 
         # Add the recipe and pkg build links to the required columns
         for column in self.columns:
@@ -84,7 +84,7 @@ class BuiltPackagesTableBase(tables.PackagesTable):
             tmplv = column['field_name'].replace('__', '.')
             tmplv = "{{data.%s}}" % tmplv
 
-            if column['field_name'] in add_pkg_link_to:
+            if column['field_name'] is add_pkg_link_to:
                 # Don't overwrite an existing template
                 if column['static_data_template']:
                     column['static_data_template'] =\
@@ -94,7 +94,7 @@ class BuiltPackagesTableBase(tables.PackagesTable):
 
                 column['static_data_name'] = column['field_name']
 
-            elif column['field_name'] in add_recipe_link_to:
+            elif column['field_name'] is add_recipe_link_to:
                 # Don't overwrite an existing template
                 if column['static_data_template']:
                     column['static_data_template'] =\
@@ -160,7 +160,7 @@ class InstalledPackagesTable(BuildTablesMixin, BuiltPackagesTableBase):
     """ Show all packages installed in an image """
     def __init__(self, *args, **kwargs):
         super(InstalledPackagesTable, self).__init__(*args, **kwargs)
-        self.title = "Installed Packages"
+        self.title = "Packages Included"
         self.default_orderby = "name"
 
     def make_package_list(self, target):
@@ -213,11 +213,11 @@ class InstalledPackagesTable(BuildTablesMixin, BuiltPackagesTableBase):
              ' extra.target_id data.pk %}">{{data.name}}</a>'
              '{% if data.installed_name and data.installed_name !='
              ' data.name %}'
-             '<span class="muted"> as {{data.installed_name}}</span>'
-             ' <i class="icon-question-sign get-help hover-help"'
+             '<span class="text-muted"> as {{data.installed_name}}</span>'
+             ' <span class="glyphicon glyphicon-question-sign get-help hover-help"'
              ' title="{{data.name}} was renamed at packaging time and'
              ' was installed in your image as {{data.installed_name}}'
-             '"></i>{% endif %} ')
+             '"></span>{% endif %} ')
 
         for column in self.columns:
             if column['static_data_name'] == 'name':
@@ -243,11 +243,6 @@ class BuiltRecipesTable(BuildTablesMixin):
         recipe_name_tmpl =\
             '<a href="{% url "recipe" extra.build.pk data.pk %}">'\
             '{{data.name}}'\
-            '</a>'
-
-        recipe_version_tmpl =\
-            '<a href="{% url "recipe" extra.build.pk data.pk %}">'\
-            '{{data.version}}'\
             '</a>'
 
         recipe_file_tmpl =\
@@ -307,30 +302,28 @@ class BuiltRecipesTable(BuildTablesMixin):
                         static_data_template=recipe_name_tmpl)
 
         self.add_column(title="Version",
-                        field_name="version",
-                        static_data_name='version',
-                        static_data_template=recipe_version_tmpl)
+                        field_name="version")
 
         self.add_column(title="Dependencies",
                         static_data_name="dependencies",
-                        static_data_template=depends_on_tmpl,
-                        hidden=True)
+                        static_data_template=depends_on_tmpl)
 
         self.add_column(title="Reverse dependencies",
                         static_data_name="revdeps",
                         static_data_template=rev_depends_tmpl,
                         help_text='Recipe build-time reverse dependencies'
-                        ' (i.e. the recipes that depend on this recipe)',
-                        hidden=True)
+                        ' (i.e. the recipes that depend on this recipe)')
 
         self.add_column(title="Recipe file",
                         field_name="file_path",
                         static_data_name="file_path",
-                        static_data_template=recipe_file_tmpl)
+                        static_data_template=recipe_file_tmpl,
+                        hidden=True)
 
         self.add_column(title="Section",
                         field_name="section",
-                        orderable=True)
+                        orderable=True,
+                        hidden=True)
 
         self.add_column(title="License",
                         field_name="license",
@@ -347,11 +340,13 @@ class BuiltRecipesTable(BuildTablesMixin):
 
         self.add_column(title="Layer branch",
                         field_name="layer_version__branch",
-                        orderable=True)
+                        orderable=True,
+                        hidden=True)
 
         self.add_column(title="Layer commit",
                         static_data_name="commit",
-                        static_data_template=git_rev_template)
+                        static_data_template=git_rev_template,
+                        hidden=True)
 
 
 class BuildTasksTable(BuildTablesMixin):
@@ -425,11 +420,6 @@ class BuildTasksTable(BuildTablesMixin):
             '{{data.recipe.name}}'\
             '</a>'
 
-        recipe_version_tmpl =\
-            '<a href="{% url "recipe" extra.build.pk data.recipe.pk %}">'\
-            '{{data.recipe.version}}'\
-            '</a>'
-
         def task_link_tmpl(val):
             return ('<a name="task-{{data.order}}"'
                     'href="{%% url "task" extra.build.pk data.pk %%}">'
@@ -438,7 +428,13 @@ class BuildTasksTable(BuildTablesMixin):
 
         self.add_column(title="Order",
                         static_data_name="order",
-                        static_data_template=task_link_tmpl('{{data.order}}'),
+                        static_data_template='{{data.order}}',
+                        orderable=True)
+
+        self.add_column(title="Task",
+                        static_data_name="task_name",
+                        static_data_template=task_link_tmpl(
+                            "{{data.task_name}}"),
                         orderable=True)
 
         self.add_column(title="Recipe",
@@ -447,34 +443,26 @@ class BuildTasksTable(BuildTablesMixin):
                         orderable=True)
 
         self.add_column(title="Recipe version",
-                        static_data_name='recipe__version',
-                        static_data_template=recipe_version_tmpl)
-
-        self.add_column(title="Task",
-                        static_data_name="task_name",
-                        static_data_template=task_link_tmpl(
-                            "{{data.task_name}}"),
-                        orderable=True)
+                        field_name='recipe__version')
 
         self.add_column(title="Executed",
                         static_data_name="task_executed",
-                        static_data_template=task_link_tmpl(
-                            "{{data.get_executed_display}}"),
+                        static_data_template='{{data.get_executed_display}}',
                         filter_name='execution_outcome',
                         orderable=True)
 
         self.static_context_extra['OUTCOME_FAILED'] = Task.OUTCOME_FAILED
-        outcome_tmpl = task_link_tmpl("{{data.outcome_text}}")
+        outcome_tmpl = '{{data.outcome_text}}'
         outcome_tmpl = ('%s '
                         '{%% if data.outcome = extra.OUTCOME_FAILED %%}'
                         '<a href="{%% url "build_artifact" extra.build.pk '
                         '          "tasklogfile" data.pk %%}">'
-                        ' <i class="icon-download-alt" '
-                        '    title="Download task log file"></i>'
+                        ' <span class="glyphicon glyphicon-download-alt'
+                        ' get-help" title="Download task log file"></span>'
                         '</a> {%% endif %%}'
-                        '<i class="icon-question-sign get-help '
-                        'hover-help" style="visibility: hidden;" '
-                        'title="{{data.get_outcome_help}}"></i>'
+                        '<span class="glyphicon glyphicon-question-sign'
+                        ' get-help hover-help" style="visibility: hidden;" '
+                        'title="{{data.get_outcome_help}}"></span>'
                         ) % outcome_tmpl
 
         self.add_column(title="Outcome",
@@ -483,10 +471,11 @@ class BuildTasksTable(BuildTablesMixin):
                         filter_name="task_outcome",
                         orderable=True)
 
+        self.toggle_columns['sstate_result'] = len(self.columns)
+
         self.add_column(title="Cache attempt",
                         static_data_name="sstate_result",
-                        static_data_template=task_link_tmpl(
-                            "{{data.sstate_text}}"),
+                        static_data_template='{{data.sstate_text}}',
                         filter_name="sstate_outcome",
                         orderable=True)
 
@@ -542,6 +531,7 @@ class BuildTimeTable(BuildTasksTable):
         super(BuildTimeTable, self).setup_columns(**kwargs)
 
         self.columns[self.toggle_columns['order']]['hidden'] = True
+        self.columns[self.toggle_columns['sstate_result']]['hidden'] = True
         self.columns[self.toggle_columns['elapsed_time']]['hidden'] = False
 
 
@@ -556,6 +546,7 @@ class BuildCPUTimeTable(BuildTasksTable):
         super(BuildCPUTimeTable, self).setup_columns(**kwargs)
 
         self.columns[self.toggle_columns['order']]['hidden'] = True
+        self.columns[self.toggle_columns['sstate_result']]['hidden'] = True
         self.columns[self.toggle_columns['cpu_time_sys']]['hidden'] = False
         self.columns[self.toggle_columns['cpu_time_user']]['hidden'] = False
 
@@ -571,4 +562,5 @@ class BuildIOTable(BuildTasksTable):
         super(BuildIOTable, self).setup_columns(**kwargs)
 
         self.columns[self.toggle_columns['order']]['hidden'] = True
+        self.columns[self.toggle_columns['sstate_result']]['hidden'] = True
         self.columns[self.toggle_columns['disk_io']]['hidden'] = False
