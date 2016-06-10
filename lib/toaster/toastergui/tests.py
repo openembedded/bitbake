@@ -380,7 +380,7 @@ class ViewTests(TestCase):
             if "<" not in td:
                 ret = td
             else:
-                ret = BeautifulSoup(td).text
+                ret = BeautifulSoup(td, "html.parser").text
 
             if len(ret):
                 return "0"
