@@ -116,7 +116,7 @@ class BBUIEventQueue:
                 self.server.handle_request()
             except Exception as e:
                 import traceback
-                logger.error("BBUIEventQueue.startCallbackHandler: Exception while trying to handle request: %s\n%s" % (e, traceback.format_exc(e)))
+                logger.error("BBUIEventQueue.startCallbackHandler: Exception while trying to handle request: %s\n%s" % (e, traceback.format_exc()))
 
         self.server.server_close()
 

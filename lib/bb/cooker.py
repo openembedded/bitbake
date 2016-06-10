@@ -330,7 +330,7 @@ class BBCooker:
                                 f.write("%s\n" % json.dumps({"class":event.__module__ + "." + event.__class__.__name__, "vars":json.dumps(pickle.dumps(event)) }))
                             except Exception as e:
                                 import traceback
-                                print(e, traceback.format_exc(e))
+                                print(e, traceback.format_exc())
 
 
                     def send(self, event):
