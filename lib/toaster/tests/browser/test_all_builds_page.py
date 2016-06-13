@@ -27,6 +27,7 @@ from tests.browser.selenium_helpers import SeleniumTestCase
 
 from orm.models import BitbakeVersion, Release, Project, Build, Target
 
+
 class TestAllBuildsPage(SeleniumTestCase):
     """ Tests for all builds page /builds/ """
 
@@ -95,17 +96,17 @@ class TestAllBuildsPage(SeleniumTestCase):
         url = reverse('all-builds')
         self.get(url)
 
-        # shouldn't see a run again button for command-line builds
-        selector = 'div[data-latest-build-result="%s"] button' % default_build.id
+        # shouldn't see a rebuild button for command-line builds
+        selector = 'div[data-latest-build-result="%s"] a.run-again-btn' % default_build.id
         run_again_button = self.find_all(selector)
         self.assertEqual(len(run_again_button), 0,
-                         'should not see a run again button for cli builds')
+                         'should not see a rebuild button for cli builds')
 
-        # should see a run again button for non-command-line builds
-        selector = 'div[data-latest-build-result="%s"] button' % build1.id
+        # should see a rebuild button for non-command-line builds
+        selector = 'div[data-latest-build-result="%s"] a.run-again-btn' % build1.id
         run_again_button = self.find_all(selector)
         self.assertEqual(len(run_again_button), 1,
-                         'should see a run again button for non-cli builds')
+                         'should see a rebuild button for non-cli builds')
 
     def test_tooltips_on_project_name(self):
         """
@@ -124,7 +125,7 @@ class TestAllBuildsPage(SeleniumTestCase):
         # get the project name cells from the table
         cells = self.find_all('#allbuildstable td[class="project"]')
 
-        selector = 'i.get-help'
+        selector = 'span.get-help'
 
         for cell in cells:
             content = cell.get_attribute('innerHTML')

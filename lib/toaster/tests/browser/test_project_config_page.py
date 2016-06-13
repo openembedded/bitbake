@@ -99,7 +99,10 @@ class TestProjectConfigsPage(SeleniumTestCase):
 
         self.wait_until_visible('#new-imagefs_types')
 
-        checkboxes = self.driver.find_elements_by_xpath("//input[@class='fs-checkbox-fstypes']")
+        checkboxes_selector = '.fs-checkbox-fstypes'
+
+        self.wait_until_visible(checkboxes_selector)
+        checkboxes = self.find_all(checkboxes_selector)
 
         for checkbox in checkboxes:
             if checkbox.get_attribute("value") == "cpio":
