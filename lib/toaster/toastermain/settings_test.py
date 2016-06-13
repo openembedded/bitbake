@@ -24,7 +24,7 @@
 # Settings overlay to use for running tests
 # DJANGO_SETTINGS_MODULE=toastermain.settings-test
 
-from settings import *
+from toastermain.settings import *
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG

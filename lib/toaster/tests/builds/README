@@ -7,7 +7,7 @@ The simplest way to run the tests are the following commands:
 
 $ . oe-init-build-env
 $ cd bitbake/lib/toaster/ # path my vary but this is into toaster's directory
-$ DJANGO_SETTINGS_MODULE='toastermain.settings-test' ./manage.py test tests.builds
+$ DJANGO_SETTINGS_MODULE='toastermain.settings_test' ./manage.py test tests.builds
 
 Optional environment variables:
  - TOASTER_DIR (where toaster keeps it's artifacts)
