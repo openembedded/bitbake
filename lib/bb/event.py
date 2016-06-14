@@ -227,6 +227,13 @@ def remove(name, handler):
     """Remove an Event handler"""
     _handlers.pop(name)
 
+def get_handlers():
+    return _handlers
+
+def set_handlers(handlers):
+    global _handlers
+    _handlers = handlers
+
 def set_eventfilter(func):
     global _eventfilter
     _eventfilter = func

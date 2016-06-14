@@ -306,7 +306,8 @@ def handleInherit(statements, filename, lineno, m):
     statements.append(InheritNode(filename, lineno, classes))
 
 def finalize(fn, d, variant = None):
-    all_handlers = {}
+    saved_handlers = bb.event.get_handlers().copy()
+
     for var in d.getVar('__BBHANDLERS', False) or []:
         # try to add the handler
         handlerfn = d.getVarFlag(var, "filename", False)
@@ -331,6 +332,7 @@ def finalize(fn, d, variant = None):
     d.setVar('BBINCLUDED', bb.parse.get_file_depends(d))
 
     bb.event.fire(bb.event.RecipeParsed(fn), d)
+    bb.event.set_handlers(saved_handlers)
 
 def _create_variants(datastores, names, function, onlyfinalise):
     def create_variant(name, orig_d, arg = None):
