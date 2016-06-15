@@ -778,6 +778,7 @@ def deltask(task, d):
     bbtasks = d.getVar('__BBTASKS', False) or []
     if task in bbtasks:
         bbtasks.remove(task)
+        d.delVarFlag(task, 'task')
         d.setVar('__BBTASKS', bbtasks)
 
     d.delVarFlag(task, 'deps')
