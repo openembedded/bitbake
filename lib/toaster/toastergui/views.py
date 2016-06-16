@@ -324,7 +324,7 @@ def _get_search_results(search_term, queryset, model):
     for st in search_term.split(" "):
         queries = None
         for field in model.search_allowed_fields:
-            query =  Q(**{x+'__icontains': st})
+            query = Q(**{field + '__icontains': st})
             queries = queries | query if queries else query
 
         search_object = search_object & queries if search_object else queries
