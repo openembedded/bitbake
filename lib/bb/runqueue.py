@@ -347,7 +347,7 @@ class RunQueueData:
                     if dep not in total_deps:
                         total_deps.append(dep)
 
-            explored_deps[taskid] = total_deps
+            explored_deps[tid] = total_deps
 
         for task in tasks:
             find_chains(task, [])
