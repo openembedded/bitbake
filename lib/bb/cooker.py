@@ -44,6 +44,7 @@ import prserv.serv
 import pyinotify
 import json
 import pickle
+import codecs
 
 logger      = logging.getLogger("BitBake")
 collectlog  = logging.getLogger("BitBake.Collection")
@@ -143,7 +144,9 @@ class EventLogWriteHandler:
         def write_event(self, event):
             with open(self.eventfile, "a") as f:
                 try:
-                    f.write("%s\n" % json.dumps({"class":event.__module__ + "." + event.__class__.__name__, "vars":json.dumps(pickle.dumps(event)) }))
+                    str_event = codecs.encode(pickle.dumps(event), 'base64').decode('utf-8')
+                    f.write("%s\n" % json.dumps({"class": event.__module__ + "." + event.__class__.__name__,
+                                                 "vars": str_event}))
                 except Exception as e:
                     import traceback
                     print(e, traceback.format_exc())
