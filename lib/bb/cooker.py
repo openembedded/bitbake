@@ -42,6 +42,8 @@ import subprocess
 import errno
 import prserv.serv
 import pyinotify
+import json
+import pickle
 
 logger      = logging.getLogger("BitBake")
 collectlog  = logging.getLogger("BitBake.Collection")
@@ -114,6 +116,63 @@ class CookerFeatures(object):
         return next(self._features)
 
 
+class EventLogWriteHandler:
+
+    def __init__(self, cooker, eventfile):
+        # set our handler's event processor
+        self.event = self.EventWriter(cooker, eventfile)
+
+    class EventWriter:
+        def __init__(self, cooker, eventfile):
+            self.file_inited = None
+            self.cooker = cooker
+            self.eventfile = eventfile
+            self.event_queue = []
+
+        def init_file(self):
+            try:
+                # delete the old log
+                os.remove(self.eventfile)
+            except:
+                pass
+
+            # write current configuration data
+            with open(eventfile, "w") as f:
+                f.write("%s\n" % json.dumps({ "allvariables" : self.cooker.getAllKeysWithFlags(["doc", "func"])}))
+
+        def write_event(self, event):
+            with open(self.eventfile, "a") as f:
+                try:
+                    f.write("%s\n" % json.dumps({"class":event.__module__ + "." + event.__class__.__name__, "vars":json.dumps(pickle.dumps(event)) }))
+                except Exception as e:
+                    import traceback
+                    print(e, traceback.format_exc())
+
+
+        def send(self, event):
+            event_class = event.__module__ + "." + event.__class__.__name__
+
+            # init on bb.event.BuildStarted
+            if self.file_inited is None:
+                if  event_class == "bb.event.BuildStarted":
+                    self.init_file()
+                    self.file_inited = True
+
+                    # write pending events
+                    for e in self.event_queue:
+                        self.write_event(e)
+
+                    # also write the current event
+                    self.write_event(event)
+
+                else:
+                    # queue all events until the file is inited
+                    self.event_queue.append(event)
+
+            else:
+                # we have the file, just write the event
+                self.write_event(event)
+
 #============================================================================#
 # BBCooker
 #============================================================================#
@@ -150,6 +209,11 @@ class BBCooker:
         bb.parse.BBHandler.cached_statements = {}
 
         self.initConfigurationData()
+
+        # we log all events to a file if so directed
+        if self.configuration.writeeventlog:
+            # register the log file writer as UI Handler
+            bb.event.register_UIHhandler(EventLogWriteHandler(self, self.configuration.writeeventlog))
 
         self.inotify_modified_files = []
 
@@ -300,68 +364,6 @@ class BBCooker:
 
         if consolelog:
             self.data.setVar("BB_CONSOLELOG", consolelog)
-
-        # we log all events to a file if so directed
-        if self.configuration.writeeventlog:
-            import json, pickle
-            DEFAULT_EVENTFILE = self.configuration.writeeventlog
-            class EventLogWriteHandler():
-
-                class EventWriter():
-                    def __init__(self, cooker):
-                        self.file_inited = None
-                        self.cooker = cooker
-                        self.event_queue = []
-
-                    def init_file(self):
-                        try:
-                            # delete the old log
-                            os.remove(DEFAULT_EVENTFILE)
-                        except:
-                            pass
-
-                        # write current configuration data
-                        with open(DEFAULT_EVENTFILE, "w") as f:
-                            f.write("%s\n" % json.dumps({ "allvariables" : self.cooker.getAllKeysWithFlags(["doc", "func"])}))
-
-                    def write_event(self, event):
-                        with open(DEFAULT_EVENTFILE, "a") as f:
-                            try:
-                                f.write("%s\n" % json.dumps({"class":event.__module__ + "." + event.__class__.__name__, "vars":json.dumps(pickle.dumps(event)) }))
-                            except Exception as e:
-                                import traceback
-                                print(e, traceback.format_exc())
-
-
-                    def send(self, event):
-                        event_class = event.__module__ + "." + event.__class__.__name__
-
-                        # init on bb.event.BuildStarted
-                        if self.file_inited is None:
-                            if  event_class == "bb.event.BuildStarted":
-                                self.init_file()
-                                self.file_inited = True
-
-                                # write pending events
-                                for e in self.event_queue:
-                                    self.write_event(e)
-
-                                # also write the current event
-                                self.write_event(event)
-
-                            else:
-                                # queue all events until the file is inited
-                                self.event_queue.append(event)
-
-                        else:
-                            # we have the file, just write the event
-                            self.write_event(event)
-
-                # set our handler's event processor
-                event = EventWriter(self)       # self is the cooker here
-
-            # register the log file writer as UI Handler
-            bb.event.register_UIHhandler(EventLogWriteHandler())
 
         #
         # Copy of the data store which has been expanded.
