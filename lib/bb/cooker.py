@@ -131,12 +131,6 @@ class EventLogWriteHandler:
             self.event_queue = []
 
         def init_file(self):
-            try:
-                # delete the old log
-                os.remove(self.eventfile)
-            except:
-                pass
-
             # write current configuration data
             with open(eventfile, "w") as f:
                 f.write("%s\n" % json.dumps({ "allvariables" : self.cooker.getAllKeysWithFlags(["doc", "func"])}))
