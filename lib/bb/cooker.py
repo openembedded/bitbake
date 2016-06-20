@@ -33,7 +33,7 @@ import threading
 from io import StringIO
 from contextlib import closing
 from functools import wraps
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 import bb, bb.exceptions, bb.command
 from bb import utils, data, parse, event, cache, providers, taskdata, runqueue, build
 import queue
@@ -117,58 +117,52 @@ class CookerFeatures(object):
         return next(self._features)
 
 
-class EventLogWriteHandler:
-
+class EventWriter:
     def __init__(self, cooker, eventfile):
-        # set our handler's event processor
-        self.event = self.EventWriter(cooker, eventfile)
+        self.file_inited = None
+        self.cooker = cooker
+        self.eventfile = eventfile
+        self.event_queue = []
 
-    class EventWriter:
-        def __init__(self, cooker, eventfile):
-            self.file_inited = None
-            self.cooker = cooker
-            self.eventfile = eventfile
-            self.event_queue = []
+    def init_file(self):
+        # write current configuration data
+        with open(eventfile, "w") as f:
+            f.write("%s\n" % json.dumps({ "allvariables" : self.cooker.getAllKeysWithFlags(["doc", "func"])}))
 
-        def init_file(self):
-            # write current configuration data
-            with open(eventfile, "w") as f:
-                f.write("%s\n" % json.dumps({ "allvariables" : self.cooker.getAllKeysWithFlags(["doc", "func"])}))
-
-        def write_event(self, event):
-            with open(self.eventfile, "a") as f:
-                try:
-                    str_event = codecs.encode(pickle.dumps(event), 'base64').decode('utf-8')
-                    f.write("%s\n" % json.dumps({"class": event.__module__ + "." + event.__class__.__name__,
-                                                 "vars": str_event}))
-                except Exception as e:
-                    import traceback
-                    print(e, traceback.format_exc())
+    def write_event(self, event):
+        with open(self.eventfile, "a") as f:
+            try:
+                str_event = codecs.encode(pickle.dumps(event), 'base64').decode('utf-8')
+                f.write("%s\n" % json.dumps({"class": event.__module__ + "." + event.__class__.__name__,
+                                             "vars": str_event}))
+            except Exception as e:
+                import traceback
+                print(e, traceback.format_exc())
 
 
-        def send(self, event):
-            event_class = event.__module__ + "." + event.__class__.__name__
+    def send(self, event):
+        event_class = event.__module__ + "." + event.__class__.__name__
 
-            # init on bb.event.BuildStarted
-            if self.file_inited is None:
-                if  event_class == "bb.event.BuildStarted":
-                    self.init_file()
-                    self.file_inited = True
+        # init on bb.event.BuildStarted
+        if self.file_inited is None:
+            if  event_class == "bb.event.BuildStarted":
+                self.init_file()
+                self.file_inited = True
 
-                    # write pending events
-                    for e in self.event_queue:
-                        self.write_event(e)
+                # write pending events
+                for e in self.event_queue:
+                    self.write_event(e)
 
-                    # also write the current event
-                    self.write_event(event)
-
-                else:
-                    # queue all events until the file is inited
-                    self.event_queue.append(event)
+                # also write the current event
+                self.write_event(event)
 
             else:
-                # we have the file, just write the event
-                self.write_event(event)
+                # queue all events until the file is inited
+                self.event_queue.append(event)
+
+        else:
+            # we have the file, just write the event
+            self.write_event(event)
 
 #============================================================================#
 # BBCooker
@@ -210,7 +204,9 @@ class BBCooker:
         # we log all events to a file if so directed
         if self.configuration.writeeventlog:
             # register the log file writer as UI Handler
-            bb.event.register_UIHhandler(EventLogWriteHandler(self, self.configuration.writeeventlog))
+            writer = EventWriter(self, self.configuration.writeeventlog)
+            EventLogWriteHandler = namedtuple('EventLogWriteHandler', ['event'])
+            bb.event.register_UIHhandler(EventLogWriteHandler(writer))
 
         self.inotify_modified_files = []
 
