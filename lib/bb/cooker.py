@@ -124,45 +124,38 @@ class EventWriter:
         self.eventfile = eventfile
         self.event_queue = []
 
-    def init_file(self):
-        # write current configuration data
-        with open(eventfile, "w") as f:
-            f.write("%s\n" % json.dumps({ "allvariables" : self.cooker.getAllKeysWithFlags(["doc", "func"])}))
-
     def write_event(self, event):
         with open(self.eventfile, "a") as f:
             try:
                 str_event = codecs.encode(pickle.dumps(event), 'base64').decode('utf-8')
                 f.write("%s\n" % json.dumps({"class": event.__module__ + "." + event.__class__.__name__,
                                              "vars": str_event}))
-            except Exception as e:
+            except Exception as err:
                 import traceback
-                print(e, traceback.format_exc())
-
+                print(err, traceback.format_exc())
 
     def send(self, event):
-        event_class = event.__module__ + "." + event.__class__.__name__
+        if self.file_inited:
+            # we have the file, just write the event
+            self.write_event(event)
+        else:
+            # init on bb.event.BuildStarted
+            name = "%s.%s" % (event.__module__, event.__class__.__name__)
+            if name == "bb.event.BuildStarted":
+                with open(self.eventfile, "w") as f:
+                    f.write("%s\n" % json.dumps({ "allvariables" : self.cooker.getAllKeysWithFlags(["doc", "func"])}))
 
-        # init on bb.event.BuildStarted
-        if self.file_inited is None:
-            if  event_class == "bb.event.BuildStarted":
-                self.init_file()
                 self.file_inited = True
 
                 # write pending events
-                for e in self.event_queue:
-                    self.write_event(e)
+                for evt in self.event_queue:
+                    self.write_event(evt)
 
                 # also write the current event
                 self.write_event(event)
-
             else:
                 # queue all events until the file is inited
                 self.event_queue.append(event)
-
-        else:
-            # we have the file, just write the event
-            self.write_event(event)
 
 #============================================================================#
 # BBCooker
