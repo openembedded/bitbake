@@ -41,7 +41,8 @@
       </div>
       <button id="apply-change-dl_dir" class="btn btn-default" type="button">Save</button>
       <button id="cancel-change-dl_dir" type="button" class="btn btn-link">Cancel</button>
-      <p class="help-block" id="hintError-dl_dir">A valid directory cannot include spaces or any of these characters: . \ ? % * : | " " < ></p>
+      <p class="help-block" id="hintError-dl_dir" style="display:none;">The directory path cannot include spaces or any of these characters: . \ ? % * : | " " &lt; &gt;</p>
+      <p class="help-block" id="hintError-initialChar-dl_dir" style="display:none;">The directory path should either start with a /, e.g. /home/toaster/downloads; or with a variable, e.g. ${TOPDIR}/downloads.</p>
     </form>
     </dd>
     {% endif %}
@@ -88,7 +89,7 @@
         <input type="text" class="form-control" id="new-image_install" placeholder="Type one or more package names">
       </div>
       <button id="apply-change-image_install" class="btn btn-default" type="button">Save</button>
-      <button id="cancel-change-image_install" type="button" class="btn btn-link">Cancel</button>  
+      <button id="cancel-change-image_install" type="button" class="btn btn-link">Cancel</button>
     </form>
     </dd>
     {% endif %}
@@ -149,7 +150,8 @@
       </div>
       <button id="apply-change-sstate_dir" class="btn btn-default" type="button">Save</button>
       <button id="cancel-change-sstate_dir" type="button" class="btn btn-link">Cancel</button>
-      <p class="help-block" id="hintError-sstate_dir">A valid directory cannot include spaces or any of these characters: . \ ? % * : | " " < ></p>
+      <p class="help-block" id="hintError-sstate_dir" style="display:none;">The directory path cannot include spaces or any of these characters: . \ ? % * : | " " &lt; &gt;</p>
+      <p class="help-block" id="hintError-initialChar-sstate_dir" style="display:none;">The directory path should either start with a /, e.g. /home/toaster/sstate-cache; or with a variable, e.g. ${TOPDIR}/sstate-cache.</p>
     </form>
     </dd>
     {% endif %}
@@ -368,8 +370,8 @@ function setEventHandlersForDynamicElements() {
     $("#new-config_var_"+pk).val(current_val);
     if ( $("#new-config_var_"+pk).val().length ) {
       $("#apply-change-config_var_"+pk).removeAttr("disabled");
-    } 
-    else { 
+    }
+    else {
       $("#apply-change-config_var_"+pk).attr("disabled");
     }
   });
@@ -409,7 +411,7 @@ function setEventHandlersForDynamicElements() {
     var pk = $(this).attr("x-data");
 
     // fade out the variable+value div, then refresh the variable list
-    $(this).fadeOut(); 
+    $(this).fadeOut();
     $(this).tooltip("hide");
     $("config_var_entry_"+pk).fadeOut();
     $('#config_var_value_'+pk).parent("dd").fadeOut();
@@ -552,7 +554,6 @@ $(document).ready(function() {
 
   // change DL_DIR variable
   $('#change-dl_dir-icon').click(function() {
-    $('#hintError-dl_dir').hide();
     $('#change-dl_dir-form').removeClass('has-error');
     // preset the edit value
     var current_val = $("#dl_dir").text().trim();
@@ -574,6 +575,8 @@ $(document).ready(function() {
   });
 
   $('#cancel-change-dl_dir').click(function(){
+    $("#hintError-dl_dir").hide();
+    $("#hintError-initialChar-dl_dir").hide();
     $("#change-dl_dir-form").slideUp(function() {
       $('#dl_dir, #change-dl_dir-icon').show();
     });
@@ -582,20 +585,31 @@ $(document).ready(function() {
   $("#new-dl_dir").on('input', function(){
     if ($(this).val().trim().length == 0) {
       $("#apply-change-dl_dir").attr("disabled","disabled");
+      $('#change-dl_dir-form').addClass('has-error');
+      $('#hintError-dl_dir').hide();
+      $('#hintError-initialChar-dl_dir').hide();
     }
     else {
       var input = $(this);
-      var re = /^\/([^ <>\\|":\.%\?\*]+)$/;
+      var reBeginWithSlash = /^\//;
+      var reCheckVariable = /^\$/;
+      var re = /([ <>\\|":\.%\?\*]+)/;
       var invalidDir = re.test(input.val());
-      console.log(invalidDir);
-      if ( invalidDir ) {
-        $('#change-dl_dir-form').removeClass('has-error');
-        $("#apply-change-dl_dir").removeAttr("disabled");
-        $('#hintError-dl_dir').hide();
-      } else {
+      var invalidSlash = reBeginWithSlash.test(input.val());
+      var invalidVar = reCheckVariable.test(input.val());
+      if (!invalidSlash && !invalidVar) {
+        $('#change-dl_dir-form').addClass('has-error');
+        $("#apply-change-dl_dir").attr("disabled","disabled");
+        $('#hintError-initialChar-dl_dir').show();
+      } else if (invalidDir) {
         $('#change-dl_dir-form').addClass('has-error');
         $("#apply-change-dl_dir").attr("disabled","disabled");
         $('#hintError-dl_dir').show();
+      } else {
+        $('#change-dl_dir-form').removeClass('has-error');
+        $("#apply-change-dl_dir").removeAttr("disabled");
+        $('#hintError-dl_dir').hide();
+        $('#hintError-initialChar-dl_dir').hide();
       }
     }
   });
@@ -904,7 +918,7 @@ $(document).ready(function() {
 
   // change SSTATE_DIR variable
   $('#change-sstate_dir-icon').click(function() {
-    $('#hintError-sstate_dir').hide();
+    $('#change-sstate_dir-form').removeClass('has-error');
     // preset the edit value
     var current_val = $("span#sstate_dir").text().trim();
     if (current_val == "Not set") {
@@ -926,6 +940,8 @@ $(document).ready(function() {
   });
 
   $('#cancel-change-sstate_dir').click(function(){
+    $("#hintError-sstate_dir").hide();
+    $("#hintError-initialChar-sstate_dir").hide();
     $("#change-sstate_dir-form").slideUp(function() {
       $('#sstate_dir, #change-sstate_dir-icon').show();
     });
@@ -934,20 +950,31 @@ $(document).ready(function() {
   $("#new-sstate_dir").on('input', function(){
     if ($(this).val().trim().length == 0) {
       $("#apply-change-sstate_dir").attr("disabled","disabled");
+      $('#change-sstate_dir-form').addClass('has-error');
+      $('#hintError-sstate_dir').hide();
+      $('#hintError-initialChar-sstate_dir').hide();
     }
     else {
       var input = $(this);
-      var re = /^\/([^ <>\\|":\.%\?\*]+)$/;
+      var reBeginWithSlash = /^\//;
+      var reCheckVariable = /^\$/;
+      var re = /([ <>\\|":\.%\?\*]+)/;
       var invalidDir = re.test(input.val());
-      console.log(invalidDir);
-      if ( invalidDir ) {
+      var invalidSlash = reBeginWithSlash.test(input.val());
+      var invalidVar = reCheckVariable.test(input.val());
+      if (!invalidSlash && !invalidVar) {
+        $('#change-sstate_dir-form').addClass('has-error');
+        $("#apply-change-sstate_dir").attr("disabled","disabled");
+        $('#hintError-initialChar-sstate_dir').show();
+      } else if (invalidDir) {
+          $('#change-sstate_dir-form').addClass('has-error');
+          $("#apply-change-sstate_dir").attr("disabled","disabled");
+          $('#hintError-sstate_dir').show();
+      } else {
         $('#change-sstate_dir-form').removeClass('has-error');
         $("#apply-change-sstate_dir").removeAttr("disabled");
         $('#hintError-sstate_dir').hide();
-      } else {
-        $('#change-sstate_dir-form').addClass('has-error');
-        $("#apply-change-sstate_dir").attr("disabled","disabled");
-        $('#hintError-sstate_dir').show();
+        $('#hintError-initialChar-sstate_dir').hide();
       }
     }
   });
