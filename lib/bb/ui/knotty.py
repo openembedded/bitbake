@@ -90,7 +90,7 @@ class NonInteractiveProgress(object):
         self.msg = msg
         self.maxval = maxval
 
-    def start(self):
+    def start(self, update=True):
         self.fobj.write("%s..." % self.msg)
         self.fobj.flush()
         return self
@@ -304,7 +304,7 @@ _evt_list = [ "bb.runqueue.runQueueExitWait", "bb.event.LogExecTTY", "logging.Lo
               "bb.event.MultipleProviders", "bb.event.NoProvider", "bb.runqueue.sceneQueueTaskStarted",
               "bb.runqueue.runQueueTaskStarted", "bb.runqueue.runQueueTaskFailed", "bb.runqueue.sceneQueueTaskFailed",
               "bb.event.BuildBase", "bb.build.TaskStarted", "bb.build.TaskSucceeded", "bb.build.TaskFailedSilent",
-              "bb.build.TaskProgress"]
+              "bb.build.TaskProgress", "bb.event.ProcessStarted", "bb.event.ProcessProgress", "bb.event.ProcessFinished"]
 
 def main(server, eventHandler, params, tf = TerminalFilter):
 
@@ -577,6 +577,17 @@ def main(server, eventHandler, params, tf = TerminalFilter):
                 continue
 
             if isinstance(event, bb.event.DepTreeGenerated):
+                continue
+
+            if isinstance(event, bb.event.ProcessStarted):
+                parseprogress = new_progress(event.processname, event.total)
+                parseprogress.start(False)
+                continue
+            if isinstance(event, bb.event.ProcessProgress):
+                parseprogress.update(event.progress)
+                continue
+            if isinstance(event, bb.event.ProcessFinished):
+                parseprogress.finish()
                 continue
 
             # ignore
