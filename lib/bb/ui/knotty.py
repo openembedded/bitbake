@@ -89,6 +89,7 @@ class NonInteractiveProgress(object):
     def __init__(self, msg, maxval):
         self.msg = msg
         self.maxval = maxval
+        self.finished = False
 
     def start(self, update=True):
         self.fobj.write("%s..." % self.msg)
@@ -99,8 +100,11 @@ class NonInteractiveProgress(object):
         pass
 
     def finish(self):
+        if self.finished:
+            return
         self.fobj.write("done.\n")
         self.fobj.flush()
+        self.finished = True
 
 def new_progress(msg, maxval):
     if interactive:
@@ -204,6 +208,8 @@ class TerminalFilter(object):
         console.addFilter(InteractConsoleLogFilter(self, format))
         errconsole.addFilter(InteractConsoleLogFilter(self, format))
 
+        self.main_progress = None
+
     def clearFooter(self):
         if self.footer_present:
             lines = self.footer_present
@@ -246,11 +252,20 @@ class TerminalFilter(object):
 
         if self.main.shutdown:
             content = "Waiting for %s running tasks to finish:" % len(activetasks)
-        elif not len(activetasks):
-            content = "No currently running tasks (%s of %s)" % (self.helper.tasknumber_current, self.helper.tasknumber_total)
+            print(content)
         else:
-            content = "Currently %s running tasks (%s of %s):" % (len(activetasks), self.helper.tasknumber_current, self.helper.tasknumber_total)
-        print(content)
+            if not len(activetasks):
+                content = "No currently running tasks (%s of %s)" % (self.helper.tasknumber_current, self.helper.tasknumber_total)
+            else:
+                content = "Currently %2s running tasks (%s of %s)" % (len(activetasks), self.helper.tasknumber_current, self.helper.tasknumber_total)
+            maxtask = self.helper.tasknumber_total + 1
+            if not self.main_progress or self.main_progress.maxval != maxtask:
+                widgets = [' ', progressbar.Percentage(), ' ', progressbar.Bar()]
+                self.main_progress = BBProgress("Running tasks", maxtask, widgets=widgets)
+                self.main_progress.start(False)
+            self.main_progress.setmessage(content)
+            self.main_progress.update(self.helper.tasknumber_current)
+            print('')
         lines = 1 + int(len(content) / (self.columns + 1))
         for tasknum, task in enumerate(tasks[:(self.rows - 2)]):
             if isinstance(task, tuple):
