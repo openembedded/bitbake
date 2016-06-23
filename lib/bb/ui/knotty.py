@@ -287,6 +287,12 @@ def main(server, eventHandler, params, tf = TerminalFilter):
         bb.msg.addDefaultlogFilter(consolelog)
         consolelog.setFormatter(conlogformat)
         logger.addHandler(consolelog)
+        loglink = os.path.join(os.path.dirname(consolelogfile), 'console-latest.log')
+        bb.utils.remove(loglink)
+        try:
+           os.symlink(os.path.basename(consolelogfile), loglink)
+        except OSError:
+           pass
 
     llevel, debug_domains = bb.msg.constructLogOptions()
     server.runCommand(["setEventMask", server.getEventHandle(), llevel, debug_domains, _evt_list])
