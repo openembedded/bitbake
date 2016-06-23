@@ -51,7 +51,7 @@ class BBProgress(progressbar.ProgressBar):
             self._resize_default = None
         progressbar.ProgressBar.__init__(self, maxval, [self.msg + ": "] + widgets, fd=sys.stdout)
 
-    def _handle_resize(self, signum, frame):
+    def _handle_resize(self, signum=None, frame=None):
         progressbar.ProgressBar._handle_resize(self, signum, frame)
         if self._resize_default:
             self._resize_default(signum, frame)
