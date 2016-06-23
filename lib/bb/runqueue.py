@@ -240,6 +240,7 @@ class RunQueueData:
 
         self.stampwhitelist = cfgData.getVar("BB_STAMP_WHITELIST", True) or ""
         self.multi_provider_whitelist = (cfgData.getVar("MULTI_PROVIDER_WHITELIST", True) or "").split()
+        self.setscenewhitelist = get_setscene_enforce_whitelist(cfgData)
 
         self.reset()
 
@@ -1596,8 +1597,51 @@ class RunQueueExecuteTasks(RunQueueExecute):
         Run the tasks in a queue prepared by rqdata.prepare()
         """
 
-        self.rq.read_workers()
+        if self.rqdata.setscenewhitelist:
+            # Check tasks that are going to run against the whitelist
+            def check_norun_task(tid, showerror=False):
+                fn = fn_from_tid(tid)
+                taskname = taskname_from_tid(tid)
+                # Ignore covered tasks
+                if tid in self.rq.scenequeue_covered:
+                    return False
+                # Ignore stamped tasks
+                if self.rq.check_stamp_task(tid, taskname, cache=self.stampcache):
+                    return False
+                # Ignore noexec tasks
+                taskdep = self.rqdata.dataCache.task_deps[fn]
+                if 'noexec' in taskdep and taskname in taskdep['noexec']:
+                    return False
 
+                pn = self.rqdata.dataCache.pkg_fn[fn]
+                if not check_setscene_enforce_whitelist(pn, taskname, self.rqdata.setscenewhitelist):
+                    if showerror:
+                        if tid in self.rqdata.runq_setscene_tids:
+                            logger.error('Task %s.%s attempted to execute unexpectedly and should have been setscened' % (pn, taskname))
+                        else:
+                            logger.error('Task %s.%s attempted to execute unexpectedly' % (pn, taskname))
+                    return True
+                return False
+            # Look to see if any tasks that we think shouldn't run are going to
+            unexpected = False
+            for tid in self.rqdata.runtaskentries:
+                if check_norun_task(tid):
+                    unexpected = True
+                    break
+            if unexpected:
+                # Run through the tasks in the rough order they'd have executed and print errors
+                # (since the order can be useful - usually missing sstate for the last few tasks
+                # is the cause of the problem)
+                task = self.sched.next()
+                while task is not None:
+                    check_norun_task(task, showerror=True)
+                    self.task_skip(task, 'Setscene enforcement check')
+                    task = self.sched.next()
+
+                self.rq.state = runQueueCleanUp
+                return True
+
+        self.rq.read_workers()
 
         if self.stats.total == 0:
             # nothing to do
@@ -1940,6 +1984,16 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
         self.scenequeue_covered.add(task)
         self.scenequeue_updatecounters(task)
 
+    def check_taskfail(self, task):
+        if self.rqdata.setscenewhitelist:
+            realtask = task.split('_setscene')[0]
+            fn = fn_from_tid(realtask)
+            taskname = taskname_from_tid(realtask)
+            pn = self.rqdata.dataCache.pkg_fn[fn]
+            if not check_setscene_enforce_whitelist(pn, taskname, self.rqdata.setscenewhitelist):
+                logger.error('Task %s.%s failed' % (pn, taskname + "_setscene"))
+                self.rq.state = runQueueCleanUp
+
     def task_complete(self, task):
         self.stats.taskCompleted()
         bb.event.fire(sceneQueueTaskCompleted(task, self.stats, self.rq), self.cfgData)
@@ -1950,6 +2004,7 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
         bb.event.fire(sceneQueueTaskFailed(task, self.stats, result, self), self.cfgData)
         self.scenequeue_notcovered.add(task)
         self.scenequeue_updatecounters(task, True)
+        self.check_taskfail(task)
 
     def task_failoutright(self, task):
         self.runq_running.add(task)
@@ -2231,3 +2286,27 @@ class runQueuePipe():
         if len(self.queue) > 0:
             print("Warning, worker left partial message: %s" % self.queue)
         self.input.close()
+
+def get_setscene_enforce_whitelist(d):
+    if d.getVar('BB_SETSCENE_ENFORCE', True) != '1':
+        return None
+    whitelist = (d.getVar("BB_SETSCENE_ENFORCE_WHITELIST", True) or "").split()
+    outlist = []
+    for item in whitelist[:]:
+        if item.startswith('%:'):
+            for target in sys.argv[1:]:
+                if not target.startswith('-'):
+                    outlist.append(target.split(':')[0] + ':' + item.split(':')[1])
+        else:
+            outlist.append(item)
+    return outlist
+
+def check_setscene_enforce_whitelist(pn, taskname, whitelist):
+    import fnmatch
+    if whitelist:
+        item = '%s:%s' % (pn, taskname)
+        for whitelist_item in whitelist:
+            if fnmatch.fnmatch(item, whitelist_item):
+                return True
+        return False
+    return True
