@@ -182,8 +182,11 @@ def constructLogOptions():
         debug_domains["BitBake.%s" % domainarg] = logging.DEBUG - dlevel + 1
     return level, debug_domains
 
-def addDefaultlogFilter(handler, cls = BBLogFilter):
+def addDefaultlogFilter(handler, cls = BBLogFilter, forcelevel=None):
     level, debug_domains = constructLogOptions()
+
+    if forcelevel is not None:
+        level = forcelevel
 
     cls(handler, level, debug_domains)
 

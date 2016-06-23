@@ -161,7 +161,7 @@ class TerminalFilter(object):
                 cr = (25, 80)
         return cr
 
-    def __init__(self, main, helper, console, errconsole, format):
+    def __init__(self, main, helper, console, errconsole, format, quiet):
         self.main = main
         self.helper = helper
         self.cuu = None
@@ -169,6 +169,7 @@ class TerminalFilter(object):
         self.interactive = sys.stdout.isatty()
         self.footer_present = False
         self.lastpids = []
+        self.quiet = quiet
 
         if not self.interactive:
             return
@@ -267,25 +268,26 @@ class TerminalFilter(object):
             self.main_progress.update(self.helper.tasknumber_current)
             print('')
         lines = 1 + int(len(content) / (self.columns + 1))
-        for tasknum, task in enumerate(tasks[:(self.rows - 2)]):
-            if isinstance(task, tuple):
-                pbar, progress, rate, start_time = task
-                if not pbar.start_time:
-                    pbar.start(False)
-                    if start_time:
-                        pbar.start_time = start_time
-                pbar.setmessage('%s:%s' % (tasknum, pbar.msg.split(':', 1)[1]))
-                if progress > -1:
-                    pbar.setextra(rate)
-                    output = pbar.update(progress)
+        if not self.quiet:
+            for tasknum, task in enumerate(tasks[:(self.rows - 2)]):
+                if isinstance(task, tuple):
+                    pbar, progress, rate, start_time = task
+                    if not pbar.start_time:
+                        pbar.start(False)
+                        if start_time:
+                            pbar.start_time = start_time
+                    pbar.setmessage('%s:%s' % (tasknum, pbar.msg.split(':', 1)[1]))
+                    if progress > -1:
+                        pbar.setextra(rate)
+                        output = pbar.update(progress)
+                    else:
+                        output = pbar.update(1)
+                    if not output or (len(output) <= pbar.term_width):
+                        print('')
                 else:
-                    output = pbar.update(1)
-                if not output or (len(output) <= pbar.term_width):
-                    print('')
-            else:
-                content = "%s: %s" % (tasknum, task)
-                print(content)
-            lines = lines + 1 + int(len(content) / (self.columns + 1))
+                    content = "%s: %s" % (tasknum, task)
+                    print(content)
+                lines = lines + 1 + int(len(content) / (self.columns + 1))
         self.footer_present = lines
         self.lastpids = runningpids[:]
         self.lastcount = self.helper.tasknumber_current
@@ -336,7 +338,10 @@ def main(server, eventHandler, params, tf = TerminalFilter):
     errconsole = logging.StreamHandler(sys.stderr)
     format_str = "%(levelname)s: %(message)s"
     format = bb.msg.BBLogFormatter(format_str)
-    bb.msg.addDefaultlogFilter(console, bb.msg.BBLogFilterStdOut)
+    if params.options.quiet:
+        bb.msg.addDefaultlogFilter(console, bb.msg.BBLogFilterStdOut, bb.msg.BBLogFormatter.WARNING)
+    else:
+        bb.msg.addDefaultlogFilter(console, bb.msg.BBLogFilterStdOut)
     bb.msg.addDefaultlogFilter(errconsole, bb.msg.BBLogFilterStdErr)
     console.setFormatter(format)
     errconsole.setFormatter(format)
@@ -399,7 +404,7 @@ def main(server, eventHandler, params, tf = TerminalFilter):
     warnings = 0
     taskfailures = []
 
-    termfilter = tf(main, helper, console, errconsole, format)
+    termfilter = tf(main, helper, console, errconsole, format, params.options.quiet)
     atexit.register(termfilter.finish)
 
     while True:
@@ -498,8 +503,9 @@ def main(server, eventHandler, params, tf = TerminalFilter):
                     continue
 
                 parseprogress.finish()
-                print(("Parsing of %d .bb files complete (%d cached, %d parsed). %d targets, %d skipped, %d masked, %d errors."
-                    % ( event.total, event.cached, event.parsed, event.virtuals, event.skipped, event.masked, event.errors)))
+                if not params.options.quiet:
+                    print(("Parsing of %d .bb files complete (%d cached, %d parsed). %d targets, %d skipped, %d masked, %d errors."
+                        % ( event.total, event.cached, event.parsed, event.virtuals, event.skipped, event.masked, event.errors)))
                 continue
 
             if isinstance(event, bb.event.CacheLoadStarted):
@@ -510,7 +516,8 @@ def main(server, eventHandler, params, tf = TerminalFilter):
                 continue
             if isinstance(event, bb.event.CacheLoadCompleted):
                 cacheprogress.finish()
-                print("Loaded %d entries from dependency cache." % event.num_entries)
+                if not params.options.quiet:
+                    print("Loaded %d entries from dependency cache." % event.num_entries)
                 continue
 
             if isinstance(event, bb.command.CommandFailed):
@@ -670,7 +677,7 @@ def main(server, eventHandler, params, tf = TerminalFilter):
         if return_value and errors:
             summary += pluralise("\nSummary: There was %s ERROR message shown, returning a non-zero exit code.",
                                  "\nSummary: There were %s ERROR messages shown, returning a non-zero exit code.", errors)
-        if summary:
+        if summary and not params.options.quiet:
             print(summary)
 
         if interrupted:
