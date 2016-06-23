@@ -241,6 +241,7 @@ class RunQueueData:
         self.stampwhitelist = cfgData.getVar("BB_STAMP_WHITELIST", True) or ""
         self.multi_provider_whitelist = (cfgData.getVar("MULTI_PROVIDER_WHITELIST", True) or "").split()
         self.setscenewhitelist = get_setscene_enforce_whitelist(cfgData)
+        self.init_progress_reporter = bb.progress.DummyMultiStageProcessProgressReporter()
 
         self.reset()
 
@@ -432,7 +433,8 @@ class RunQueueData:
             # Nothing to do
             return 0
 
-        logger.info("Preparing RunQueue")
+        self.init_progress_reporter.start()
+        self.init_progress_reporter.next_stage()
 
         # Step A - Work out a list of tasks to run
         #
@@ -562,8 +564,9 @@ class RunQueueData:
         # e.g. do_sometask[recrdeptask] = "do_someothertask"
         # (makes sure sometask runs after someothertask of all DEPENDS, RDEPENDS and intertask dependencies, recursively)
         # We need to do this separately since we need all of runtaskentries[*].depends to be complete before this is processed
+        self.init_progress_reporter.next_stage(len(recursivetasks))
         extradeps = {}
-        for tid in recursivetasks:
+        for taskcounter, tid in enumerate(recursivetasks):
             extradeps[tid] = set(self.runtaskentries[tid].depends)
 
             tasknames = recursivetasks[tid]
@@ -585,6 +588,7 @@ class RunQueueData:
             if tid in recursiveitasks:
                 for dep in recursiveitasks[tid]:
                     generate_recdeps(dep)
+            self.init_progress_reporter.update(taskcounter)
 
         # Remove circular references so that do_a[recrdeptask] = "do_a do_b" can work
         for tid in recursivetasks:
@@ -599,6 +603,8 @@ class RunQueueData:
             if tid in self.runtaskentries[tid].depends:
                 logger.debug(2, "Task %s contains self reference!", tid)
                 self.runtaskentries[tid].depends.remove(tid)
+
+        self.init_progress_reporter.next_stage()
 
         # Step B - Mark all active tasks
         #
@@ -664,6 +670,8 @@ class RunQueueData:
             else:
                 mark_active(tid, 1)
 
+        self.init_progress_reporter.next_stage()
+
         # Step C - Prune all inactive tasks
         #
         # Once all active tasks are marked, prune the ones we don't need.
@@ -673,6 +681,8 @@ class RunQueueData:
             if tid not in runq_build:
                 del self.runtaskentries[tid]
                 delcount += 1
+
+        self.init_progress_reporter.next_stage()
 
         #
         # Step D - Sanity checks and computation
@@ -689,10 +699,14 @@ class RunQueueData:
 
         logger.verbose("Assign Weightings")
 
+        self.init_progress_reporter.next_stage()
+
         # Generate a list of reverse dependencies to ease future calculations
         for tid in self.runtaskentries:
             for dep in self.runtaskentries[tid].depends:
                 self.runtaskentries[dep].revdeps.add(tid)
+
+        self.init_progress_reporter.next_stage()
 
         # Identify tasks at the end of dependency chains
         # Error on circular dependency loops (length two)
@@ -709,9 +723,13 @@ class RunQueueData:
 
         logger.verbose("Compute totals (have %s endpoint(s))", len(endpoints))
 
+        self.init_progress_reporter.next_stage()
+
         # Calculate task weights
         # Check of higher length circular dependencies
         self.runq_weight = self.calculate_task_weights(endpoints)
+
+        self.init_progress_reporter.next_stage()
 
         # Sanity Check - Check for multiple tasks building the same provider
         prov_list = {}
@@ -804,6 +822,8 @@ class RunQueueData:
                 else:
                     logger.error(msg)
 
+        self.init_progress_reporter.next_stage()
+
         # Create a whitelist usable by the stamp checks
         stampfnwhitelist = []
         for entry in self.stampwhitelist.split():
@@ -812,6 +832,8 @@ class RunQueueData:
             fn = self.taskData.build_targets[entry][0]
             stampfnwhitelist.append(fn)
         self.stampfnwhitelist = stampfnwhitelist
+
+        self.init_progress_reporter.next_stage()
 
         # Iterate over the task list looking for tasks with a 'setscene' function
         self.runq_setscene_tids = []
@@ -837,6 +859,8 @@ class RunQueueData:
                 logger.verbose("Invalidate task %s, %s", taskname, fn)
                 bb.parse.siggen.invalidate_task(taskname, self.dataCache, fn)
 
+        self.init_progress_reporter.next_stage()
+
         # Invalidate task if force mode active
         if self.cooker.configuration.force:
             for (fn, target) in self.target_pairs:
@@ -850,6 +874,8 @@ class RunQueueData:
                         st = "do_%s" % st
                     invalidate_task(fn, st, True)
 
+        self.init_progress_reporter.next_stage()
+
         # Create and print to the logs a virtual/xxxx -> PN (fn) table
         virtmap = taskData.get_providermap(prefix="virtual/")
         virtpnmap = {}
@@ -858,6 +884,8 @@ class RunQueueData:
             bb.debug(2, "%s resolved to: %s (%s)" % (v, virtpnmap[v], virtmap[v]))
         if hasattr(bb.parse.siggen, "tasks_resolved"):
             bb.parse.siggen.tasks_resolved(virtmap, virtpnmap, self.dataCache)
+
+        self.init_progress_reporter.next_stage()
 
         # Iterate over the task list and call into the siggen code
         dealtwith = set()
@@ -1096,14 +1124,25 @@ class RunQueue:
 
         if self.state is runQueuePrepare:
             self.rqexe = RunQueueExecuteDummy(self)
+            # NOTE: if you add, remove or significantly refactor the stages of this
+            # process then you should recalculate the weightings here. This is quite
+            # easy to do - just change the next line temporarily to pass debug=True as
+            # the last parameter and you'll get a printout of the weightings as well
+            # as a map to the lines where next_stage() was called. Of course this isn't
+            # critical, but it helps to keep the progress reporting accurate.
+            self.rqdata.init_progress_reporter = bb.progress.MultiStageProcessProgressReporter(self.cooker.data,
+                                                            "Initialising tasks",
+                                                            [43, 967, 4, 3, 1, 5, 3, 7, 13, 1, 2, 1, 1, 246, 35, 1, 38, 1, 35, 2, 338, 204, 142, 3, 3, 37, 244])
             if self.rqdata.prepare() == 0:
                 self.state = runQueueComplete
             else:
                 self.state = runQueueSceneInit
+                self.rqdata.init_progress_reporter.next_stage()
 
                 # we are ready to run,  emit dependency info to any UI or class which
                 # needs it
                 depgraph = self.cooker.buildDependTree(self, self.rqdata.taskData)
+                self.rqdata.init_progress_reporter.next_stage()
                 bb.event.fire(bb.event.DepTreeGenerated(depgraph), self.cooker.data)
 
         if self.state is runQueueSceneInit:
@@ -1116,7 +1155,9 @@ class RunQueue:
                     self.write_diffscenetasks(invalidtasks)
                 self.state = runQueueComplete
             else:
+                self.rqdata.init_progress_reporter.next_stage()
                 self.start_worker()
+                self.rqdata.init_progress_reporter.next_stage()
                 self.rqexe = RunQueueExecuteScenequeue(self)
 
         if self.state in [runQueueSceneRun, runQueueRunning, runQueueCleanUp]:
@@ -1129,6 +1170,8 @@ class RunQueue:
             if self.cooker.configuration.setsceneonly:
                 self.state = runQueueComplete
             else:
+                # Just in case we didn't setscene
+                self.rqdata.init_progress_reporter.finish()
                 logger.info("Executing RunQueue Tasks")
                 self.rqexe = RunQueueExecuteTasks(self)
                 self.state = runQueueRunning
@@ -1769,6 +1812,8 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
         # therefore aims to collapse the huge runqueue dependency tree into a smaller one
         # only containing the setscene functions.
 
+        self.rqdata.init_progress_reporter.next_stage()
+
         # First process the chains up to the first setscene task.
         endpoints = {}
         for tid in self.rqdata.runtaskentries:
@@ -1778,6 +1823,8 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
                 #bb.warn("Added endpoint %s" % (tid))
                 endpoints[tid] = set()
 
+        self.rqdata.init_progress_reporter.next_stage()
+
         # Secondly process the chains between setscene tasks.
         for tid in self.rqdata.runq_setscene_tids:
             #bb.warn("Added endpoint 2 %s" % (tid))
@@ -1786,6 +1833,8 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
                         endpoints[dep] = set()
                     #bb.warn("  Added endpoint 3 %s" % (dep))
                     endpoints[dep].add(tid)
+
+        self.rqdata.init_progress_reporter.next_stage()
 
         def process_endpoints(endpoints):
             newendpoints = {}
@@ -1810,6 +1859,8 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
                 process_endpoints(newendpoints)
 
         process_endpoints(endpoints)
+
+        self.rqdata.init_progress_reporter.next_stage()
 
         # Build a list of setscene tasks which are "unskippable"
         # These are direct endpoints referenced by the build
@@ -1847,7 +1898,9 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
             if sq_revdeps_new2[tid]:
                 self.unskippable.append(tid)
 
-        for tid in self.rqdata.runtaskentries:
+        self.rqdata.init_progress_reporter.next_stage(len(self.rqdata.runtaskentries))
+
+        for taskcounter, tid in enumerate(self.rqdata.runtaskentries):
             if tid in self.rqdata.runq_setscene_tids:
                 deps = set()
                 for dep in sq_revdeps_new[tid]:
@@ -1855,6 +1908,9 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
                 sq_revdeps_squash[tid] = deps
             elif len(sq_revdeps_new[tid]) != 0:
                 bb.msg.fatal("RunQueue", "Something went badly wrong during scenequeue generation, aborting. Please report this problem.")
+            self.rqdata.init_progress_reporter.update(taskcounter)
+
+        self.rqdata.init_progress_reporter.next_stage()
 
         # Resolve setscene inter-task dependencies
         # e.g. do_sometask_setscene[depends] = "targetname:do_someothertask_setscene"
@@ -1882,9 +1938,13 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
                     # Have to zero this to avoid circular dependencies
                     sq_revdeps_squash[deptid] = set()
 
+        self.rqdata.init_progress_reporter.next_stage()
+
         for task in self.sq_harddeps:
              for dep in self.sq_harddeps[task]:
                  sq_revdeps_squash[dep].add(task)
+
+        self.rqdata.init_progress_reporter.next_stage()
 
         #for tid in sq_revdeps_squash:
         #    for dep in sq_revdeps_squash[tid]:
@@ -1900,6 +1960,8 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
         for tid in self.sq_revdeps:
             for dep in self.sq_revdeps[tid]:
                 self.sq_deps[dep].add(tid)
+
+        self.rqdata.init_progress_reporter.next_stage()
 
         for tid in self.sq_revdeps:
             if len(self.sq_revdeps[tid]) == 0:
@@ -1955,6 +2017,8 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
                 if tid not in valid_new and tid not in noexec:
                     logger.debug(2, 'No package found, so skipping setscene task %s', tid)
                     self.outrightfail.append(tid)
+
+        self.rqdata.init_progress_reporter.finish()
 
         logger.info('Executing SetScene Tasks')
 

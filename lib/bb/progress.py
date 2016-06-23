@@ -195,3 +195,45 @@ class MultiStageProgressReporter(object):
                 else:
                     out.append('Up to finish: %d' % stage_weight)
             bb.warn('Stage times:\n  %s' % '\n  '.join(out))
+
+class MultiStageProcessProgressReporter(MultiStageProgressReporter):
+    """
+    Version of MultiStageProgressReporter intended for use with
+    standalone processes (such as preparing the runqueue)
+    """
+    def __init__(self, d, processname, stage_weights, debug=False):
+        self._processname = processname
+        MultiStageProgressReporter.__init__(self, d, stage_weights, debug)
+
+    def start(self):
+        bb.event.fire(bb.event.ProcessStarted(self._processname, 100), self._data)
+
+    def _fire_progress(self, taskprogress):
+        bb.event.fire(bb.event.ProcessProgress(self._processname, taskprogress), self._data)
+
+    def finish(self):
+        MultiStageProgressReporter.finish(self)
+        bb.event.fire(bb.event.ProcessFinished(self._processname), self._data)
+
+class DummyMultiStageProcessProgressReporter(MultiStageProgressReporter):
+    """
+    MultiStageProcessProgressReporter that takes the calls and does nothing
+    with them (to avoid a bunch of "if progress_reporter:" checks)
+    """
+    def __init__(self):
+        MultiStageProcessProgressReporter.__init__(self, "", None, [])
+
+    def _fire_progress(self, taskprogress, rate=None):
+        pass
+
+    def start(self):
+        pass
+
+    def next_stage(self, stage_total=None):
+        pass
+
+    def update(self, stage_progress):
+        pass
+
+    def finish(self):
+        pass
