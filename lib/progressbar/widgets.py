@@ -353,3 +353,39 @@ class BouncingBar(Bar):
         if not self.fill_left: rpad, lpad = lpad, rpad
 
         return '%s%s%s%s%s' % (left, lpad, marker, rpad, right)
+
+
+class BouncingSlider(Bar):
+    """
+    A slider that bounces back and forth in response to update() calls
+    without reference to the actual value. Based on a combination of
+    BouncingBar from a newer version of this module and RotatingMarker.
+    """
+    def __init__(self, marker='<=>'):
+        self.curmark = -1
+        self.forward = True
+        Bar.__init__(self, marker=marker)
+    def update(self, pbar, width):
+        left, marker, right = (format_updatable(i, pbar) for i in
+                               (self.left, self.marker, self.right))
+
+        width -= len(left) + len(right)
+        if width < 0:
+            return ''
+
+        if pbar.finished: return '%s%s%s' % (left, width * '=', right)
+
+        self.curmark = self.curmark + 1
+        position = int(self.curmark % (width * 2 - 1))
+        if position + len(marker) > width:
+            self.forward = not self.forward
+            self.curmark = 1
+            position = 1
+        lpad = ' ' * (position - 1)
+        rpad = ' ' * (width - len(marker) - len(lpad))
+
+        if not self.forward:
+            temp = lpad
+            lpad = rpad
+            rpad = temp
+        return '%s%s%s%s%s' % (left, lpad, marker, rpad, right)

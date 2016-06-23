@@ -40,10 +40,13 @@ logger = logging.getLogger("BitBake")
 interactive = sys.stdout.isatty()
 
 class BBProgress(progressbar.ProgressBar):
-    def __init__(self, msg, maxval):
+    def __init__(self, msg, maxval, widgets=None):
         self.msg = msg
-        widgets = [progressbar.Percentage(), ' ', progressbar.Bar(), ' ',
-           progressbar.ETA()]
+        self.extrapos = -1
+        if not widgets:
+            widgets = [progressbar.Percentage(), ' ', progressbar.Bar(), ' ',
+            progressbar.ETA()]
+            self.extrapos = 4
 
         try:
             self._resize_default = signal.getsignal(signal.SIGWINCH)
@@ -55,10 +58,30 @@ class BBProgress(progressbar.ProgressBar):
         progressbar.ProgressBar._handle_resize(self, signum, frame)
         if self._resize_default:
             self._resize_default(signum, frame)
+
     def finish(self):
         progressbar.ProgressBar.finish(self)
         if self._resize_default:
             signal.signal(signal.SIGWINCH, self._resize_default)
+
+    def setmessage(self, msg):
+        self.msg = msg
+        self.widgets[0] = msg
+
+    def setextra(self, extra):
+        if extra:
+            extrastr = str(extra)
+            if extrastr[0] != ' ':
+                extrastr = ' ' + extrastr
+            if extrastr[-1] != ' ':
+                extrastr += ' '
+        else:
+            extrastr = ' '
+        self.widgets[self.extrapos] = extrastr
+
+    def _need_update(self):
+        # We always want the bar to print when update() is called
+        return True
 
 class NonInteractiveProgress(object):
     fobj = sys.stdout
@@ -195,15 +218,31 @@ class TerminalFilter(object):
         activetasks = self.helper.running_tasks
         failedtasks = self.helper.failed_tasks
         runningpids = self.helper.running_pids
-        if self.footer_present and (self.lastcount == self.helper.tasknumber_current) and (self.lastpids == runningpids):
+        if self.footer_present and not self.helper.needUpdate:
             return
+        self.helper.needUpdate = False
         if self.footer_present:
             self.clearFooter()
         if (not self.helper.tasknumber_total or self.helper.tasknumber_current == self.helper.tasknumber_total) and not len(activetasks):
             return
         tasks = []
         for t in runningpids:
-            tasks.append("%s (pid %s)" % (activetasks[t]["title"], t))
+            progress = activetasks[t].get("progress", None)
+            if progress is not None:
+                pbar = activetasks[t].get("progressbar", None)
+                rate = activetasks[t].get("rate", None)
+                start_time = activetasks[t].get("starttime", None)
+                if not pbar or pbar.bouncing != (progress < 0):
+                    if progress < 0:
+                        pbar = BBProgress("0: %s (pid %s) " % (activetasks[t]["title"], t), 100, widgets=[progressbar.BouncingSlider()])
+                        pbar.bouncing = True
+                    else:
+                        pbar = BBProgress("0: %s (pid %s) " % (activetasks[t]["title"], t), 100)
+                        pbar.bouncing = False
+                    activetasks[t]["progressbar"] = pbar
+                tasks.append((pbar, progress, rate, start_time))
+            else:
+                tasks.append("%s (pid %s)" % (activetasks[t]["title"], t))
 
         if self.main.shutdown:
             content = "Waiting for %s running tasks to finish:" % len(activetasks)
@@ -214,8 +253,23 @@ class TerminalFilter(object):
         print(content)
         lines = 1 + int(len(content) / (self.columns + 1))
         for tasknum, task in enumerate(tasks[:(self.rows - 2)]):
-            content = "%s: %s" % (tasknum, task)
-            print(content)
+            if isinstance(task, tuple):
+                pbar, progress, rate, start_time = task
+                if not pbar.start_time:
+                    pbar.start(False)
+                    if start_time:
+                        pbar.start_time = start_time
+                pbar.setmessage('%s:%s' % (tasknum, pbar.msg.split(':', 1)[1]))
+                if progress > -1:
+                    pbar.setextra(rate)
+                    output = pbar.update(progress)
+                else:
+                    output = pbar.update(1)
+                if not output or (len(output) <= pbar.term_width):
+                    print('')
+            else:
+                content = "%s: %s" % (tasknum, task)
+                print(content)
             lines = lines + 1 + int(len(content) / (self.columns + 1))
         self.footer_present = lines
         self.lastpids = runningpids[:]
@@ -249,7 +303,8 @@ _evt_list = [ "bb.runqueue.runQueueExitWait", "bb.event.LogExecTTY", "logging.Lo
               "bb.command.CommandExit", "bb.command.CommandCompleted",  "bb.cooker.CookerExit",
               "bb.event.MultipleProviders", "bb.event.NoProvider", "bb.runqueue.sceneQueueTaskStarted",
               "bb.runqueue.runQueueTaskStarted", "bb.runqueue.runQueueTaskFailed", "bb.runqueue.sceneQueueTaskFailed",
-              "bb.event.BuildBase", "bb.build.TaskStarted", "bb.build.TaskSucceeded", "bb.build.TaskFailedSilent"]
+              "bb.event.BuildBase", "bb.build.TaskStarted", "bb.build.TaskSucceeded", "bb.build.TaskFailedSilent",
+              "bb.build.TaskProgress"]
 
 def main(server, eventHandler, params, tf = TerminalFilter):
 
@@ -535,7 +590,8 @@ def main(server, eventHandler, params, tf = TerminalFilter):
                                   bb.event.OperationStarted,
                                   bb.event.OperationCompleted,
                                   bb.event.OperationProgress,
-                                  bb.event.DiskFull)):
+                                  bb.event.DiskFull,
+                                  bb.build.TaskProgress)):
                 continue
 
             logger.error("Unknown event: %s", event)

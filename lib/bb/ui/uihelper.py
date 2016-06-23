@@ -18,6 +18,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 import bb.build
+import time
 
 class BBUIHelper:
     def __init__(self):
@@ -31,7 +32,7 @@ class BBUIHelper:
 
     def eventHandler(self, event):
         if isinstance(event, bb.build.TaskStarted):
-            self.running_tasks[event.pid] = { 'title' : "%s %s" % (event._package, event._task) }
+            self.running_tasks[event.pid] = { 'title' : "%s %s" % (event._package, event._task), 'starttime' : time.time() }
             self.running_pids.append(event.pid)
             self.needUpdate = True
         if isinstance(event, bb.build.TaskSucceeded):
@@ -51,6 +52,10 @@ class BBUIHelper:
         if isinstance(event, bb.runqueue.runQueueTaskStarted) or isinstance(event, bb.runqueue.sceneQueueTaskStarted):
             self.tasknumber_current = event.stats.completed + event.stats.active + event.stats.failed + 1
             self.tasknumber_total = event.stats.total
+            self.needUpdate = True
+        if isinstance(event, bb.build.TaskProgress):
+            self.running_tasks[event.pid]['progress'] = event.progress
+            self.running_tasks[event.pid]['rate'] = event.rate
             self.needUpdate = True
 
     def getTasks(self):

@@ -3,6 +3,8 @@
 # progressbar  - Text progress bar library for Python.
 # Copyright (c) 2005 Nilton Volpato
 #
+# (With some small changes after importing into BitBake)
+#
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
 # License as published by the Free Software Foundation; either
@@ -261,12 +263,14 @@ class ProgressBar(object):
         now = time.time()
         self.seconds_elapsed = now - self.start_time
         self.next_update = self.currval + self.update_interval
-        self.fd.write(self._format_line() + '\r')
+        output = self._format_line()
+        self.fd.write(output + '\r')
         self.fd.flush()
         self.last_update_time = now
+        return output
 
 
-    def start(self):
+    def start(self, update=True):
         """Starts measuring time, and prints the bar at 0%.
 
         It returns self so you can use it like this:
@@ -289,8 +293,12 @@ class ProgressBar(object):
             self.update_interval = self.maxval / self.num_intervals
 
 
-        self.start_time = self.last_update_time = time.time()
-        self.update(0)
+        self.start_time = time.time()
+        if update:
+            self.last_update_time = self.start_time
+            self.update(0)
+        else:
+            self.last_update_time = 0
 
         return self
 

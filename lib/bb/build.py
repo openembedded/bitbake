@@ -35,6 +35,7 @@ import stat
 import bb
 import bb.msg
 import bb.process
+import bb.progress
 from bb import data, event, utils
 
 bblogger = logging.getLogger('BitBake')
@@ -136,6 +137,25 @@ class TaskInvalid(TaskBase):
     def __init__(self, task, metadata):
         super(TaskInvalid, self).__init__(task, None, metadata)
         self._message = "No such task '%s'" % task
+
+class TaskProgress(event.Event):
+    """
+    Task made some progress that could be reported to the user, usually in
+    the form of a progress bar or similar.
+    NOTE: this class does not inherit from TaskBase since it doesn't need
+    to - it's fired within the task context itself, so we don't have any of
+    the context information that you do in the case of the other events.
+    The event PID can be used to determine which task it came from.
+    The progress value is normally 0-100, but can also be negative
+    indicating that progress has been made but we aren't able to determine
+    how much.
+    The rate is optional, this is simply an extra string to display to the
+    user if specified.
+    """
+    def __init__(self, progress, rate=None):
+        self.progress = progress
+        self.rate = rate
+        event.Event.__init__(self)
 
 
 class LogTee(object):
@@ -339,6 +359,20 @@ exit $ret
         logfile = LogTee(logger, sys.stdout)
     else:
         logfile = sys.stdout
+
+    progress = d.getVarFlag(func, 'progress', True)
+    if progress:
+        if progress == 'percent':
+            # Use default regex
+            logfile = bb.progress.BasicProgressHandler(d, outfile=logfile)
+        elif progress.startswith('percent:'):
+            # Use specified regex
+            logfile = bb.progress.BasicProgressHandler(d, regex=progress.split(':', 1)[1], outfile=logfile)
+        elif progress.startswith('outof:'):
+            # Use specified regex
+            logfile = bb.progress.OutOfProgressHandler(d, regex=progress.split(':', 1)[1], outfile=logfile)
+        else:
+            bb.warn('%s: invalid task progress varflag value "%s", ignoring' % (func, progress))
 
     def readfifo(data):
         lines = data.split(b'\0')
