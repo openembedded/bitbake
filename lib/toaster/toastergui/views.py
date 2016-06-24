@@ -1533,11 +1533,16 @@ if True:
     def xhr_configvaredit(request, pid):
         try:
             prj = Project.objects.get(id = pid)
+            # There are cases where user can add variables which hold values
+            # like http://, file:/// etc. In such case a simple split(":")
+            # would fail. One example is SSTATE_MIRRORS variable. So we use
+            # max_split var to handle them.
+            max_split = 1
             # add conf variables
             if 'configvarAdd' in request.POST:
                 t=request.POST['configvarAdd'].strip()
                 if ":" in t:
-                    variable, value = t.split(":")
+                    variable, value = t.split(":", max_split)
                 else:
                     variable = t
                     value = ""
@@ -1547,7 +1552,7 @@ if True:
             if 'configvarChange' in request.POST:
                 t=request.POST['configvarChange'].strip()
                 if ":" in t:
-                    variable, value = t.split(":")
+                    variable, value = t.split(":", max_split)
                 else:
                     variable = t
                     value = ""
@@ -2210,7 +2215,7 @@ if True:
         vars_blacklist  = {
             'PARALLEL_MAKE','BB_NUMBER_THREADS',
             'BB_DISKMON_DIRS','BB_NUMBER_THREADS','CVS_PROXY_HOST','CVS_PROXY_PORT',
-            'PARALLEL_MAKE','SSTATE_MIRRORS','TMPDIR',
+            'PARALLEL_MAKE','TMPDIR',
             'all_proxy','ftp_proxy','http_proxy ','https_proxy'
             }
 
