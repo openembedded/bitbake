@@ -97,13 +97,13 @@ class TestAllBuildsPage(SeleniumTestCase):
         self.get(url)
 
         # shouldn't see a rebuild button for command-line builds
-        selector = 'div[data-latest-build-result="%s"] a.run-again-btn' % default_build.id
+        selector = 'div[data-latest-build-result="%s"] .rebuild-btn' % default_build.id
         run_again_button = self.find_all(selector)
         self.assertEqual(len(run_again_button), 0,
                          'should not see a rebuild button for cli builds')
 
         # should see a rebuild button for non-command-line builds
-        selector = 'div[data-latest-build-result="%s"] a.run-again-btn' % build1.id
+        selector = 'div[data-latest-build-result="%s"] .rebuild-btn' % build1.id
         run_again_button = self.find_all(selector)
         self.assertEqual(len(run_again_button), 1,
                          'should see a rebuild button for non-cli builds')

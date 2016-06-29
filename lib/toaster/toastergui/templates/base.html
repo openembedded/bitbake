@@ -22,6 +22,8 @@
     </script>
     <script src="{% static 'js/typeahead.jquery.js' %}">
     </script>
+    <script src="{% static 'js/jsrender.min.js' %}">
+    </script>
     <script src="{% static 'js/prettify.js' %}">
     </script>
     <script src="{% static 'js/libtoaster.js' %}">
@@ -32,6 +34,8 @@
     </script>
     {% endif %}
     <script>
+      $.views.settings.delimiters("<%", "%>");
+
       libtoaster.ctx = {
         jsUrl : "{% static 'js/' %}",
         htmlUrl : "{% static 'html/' %}",
@@ -48,7 +52,9 @@
         xhrCustomRecipeUrl : "{% url 'xhr_customrecipe' %}",
         projectId : {{project.id}},
         xhrBuildRequestUrl: "{% url 'xhr_buildrequest' project.id %}",
+        mostRecentBuildsUrl: "{% url 'most_recent_builds' %}?project_id={{project.id}}",
         {% else %}
+        mostRecentBuildsUrl: "{% url 'most_recent_builds' %}",
         projectId : undefined,
         projectPageUrl : undefined,
         projectName : undefined,

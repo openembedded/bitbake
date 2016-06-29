@@ -24,7 +24,7 @@
 
     <h2 class="top-air" data-role="page-title"></h2>
 
-    {% if not build_in_progress_none_completed %} 
+    {% if not build_in_progress_none_completed %}
     {% url 'projectbuilds' project.id as xhr_table_url %}
     {% include 'toastertable.html' %}
     {% endif %}

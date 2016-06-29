@@ -271,14 +271,6 @@ def get_dict_value(dictionary, key):
         return ''
 
 @register.filter
-def format_build_date(completed_on):
-    now = timezone.now()
-    delta = now - completed_on
-
-    if delta.days >= 1:
-        return True
-
-@register.filter
 def is_shaid(text):
     """ return True if text length is 40 characters and all hex-digits
     """

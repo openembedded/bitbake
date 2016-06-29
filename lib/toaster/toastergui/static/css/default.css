@@ -45,6 +45,7 @@ img.logo { height: 30px; vertical-align: bottom; }
 .alert-link.build-warnings,
 .glyphicon-warning-sign.build-warnings { color: #8a6d3b; }
 .build-result .project-name { margin-top: -10px; margin-bottom: 5px; }
+.rebuild-btn, .cancel-build-btn { cursor: pointer; }
 
 /* Styles for the help information */
 .get-help { color: #CCCCCC; }

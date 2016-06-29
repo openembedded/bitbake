@@ -1,26 +1,9 @@
 {% load static %}
-{% load projecttags %}
-{% load project_url_tag %}
 {% load humanize %}
+{% load project_url_tag %}
 <script src="{% static 'js/mrbsection.js' %}"></script>
 
-<script>
-  $(document).ready(function () {
-    var ctx = {
-      mrbType : "{{mrb_type}}",
-    }
-
-    try {
-      mrbSectionInit(ctx);
-    } catch (e) {
-      document.write("Sorry, An error has occurred loading this page");
-      console.warn(e);
-    }
-  });
-</script>
-
 {% if mru %}
-
   {% if mrb_type == 'project' %}
     <h2>
       Latest project builds
@@ -38,6 +21,7 @@
   <div id="latest-builds">
     {% for build in mru %}
       <div data-latest-build-result="{{build.id}}" class="alert build-result {% if build.outcome == build.SUCCEEDED %}alert-success{% elif build.outcome == build.FAILED %}alert-danger{% else %}alert-info{% endif %}">
+        <!-- project title -->
         {% if mrb_type != 'project' %}
           <div class="row project-name">
             <div class="col-md-12">
@@ -48,134 +32,180 @@
           </div>
         {% endif %}
 
-        <div class="row">
-          <div class="col-md-3">
-            {% if build.outcome == build.SUCCEEDED or build.outcome == build.FAILED %}
-              <a href="{% url 'builddashboard' build.pk %}" class="alert-link">
-            {% endif %}
-
-            {% if build.target_set.all.count > 0 %}
-              <span data-toggle="tooltip"
-                {% if build.target_set.all.count > 1 %}
-                  {{build.get_sorted_target_list.0.target}}
-                  title="Recipes:
-                  {% for target in build.get_sorted_target_list %}
-                    {% if target.task %}
-                      {{target.target}}:{{target.task}}
-                    {% else %}
-                      {{target.target}}
-                    {% endif %}
-                  {% endfor %}"
-                {% endif %}
-              >
-                {% if build.target_set.all.0.task %}
-                  {{build.get_sorted_target_list.0.target}}:{{build.target_set.all.0.task}}
-                {% else %}
-                  {{build.get_sorted_target_list.0.target}}
-                {% endif %}
-
-                {% if build.target_set.all.count > 1 %}
-                  (+{{build.target_set.all.count|add:"-1"}})
-                {% endif %}
-              </span>
-            {% endif %}
-            {% if build.outcome == build.SUCCEEDED or build.outcome == build.FAILED %}
-              </a>
-            {% endif %}
+        <div class="row" data-role="build-status-container">
+          <div class="col-md-12">
+            Loading...
           </div>
-
-          {% if build.outcome == build.SUCCEEDED or build.outcome == build.FAILED %}
-            <div class="col-md-2">
-              {% if build.completed_on|format_build_date  %}
-                {{build.completed_on|date:'d/m/y H:i'}}
-              {% else %}
-                {{ build.completed_on|date:'H:i' }}
-              {% endif %}
-            </div>
-          {% endif %}
-
-          {% if build.outcome == build.SUCCEEDED or build.outcome == build.FAILED %}
-            <div class="col-md-2">
-              {% if build.errors.count %}
-                <span class="glyphicon glyphicon-minus-sign"></span>
-                <a href="{%url 'builddashboard' build.pk%}#errors" class="alert-link">
-                  {{build.errors.count}} error{{build.errors.count|pluralize}}
-                </a>
-              {% endif %}
-            </div>
-
-            <div class="col-md-2">
-              {% if build.warnings.count %}
-                <span class="glyphicon glyphicon-warning-sign build-warnings"></span>
-                <a href="{%url 'builddashboard' build.pk%}#warnings" class="alert-link build-warnings">
-                  {{build.warnings.count}} warning{{build.warnings.count|pluralize}}
-                </a>
-              {% endif %}
-            </div>
-
-            <div class="col-md-3">
-              Build time: <a class="alert-link" href="{% url 'buildtime' build.pk %}">{{ build.timespent_seconds|sectohms }}
-              </a>
-
-              {% if build.project.is_default %}
-                <span class="pull-right glyphicon glyphicon-question-sign get-help {% if build.outcome == build.SUCCEEDED %}get-help-green{% elif build.outcome == build.FAILED %}get-help-red{% else %}get-help-blue{% endif %}"
-                title="Builds in this project cannot be started from Toaster: they are started from the command line">
-                </span>
-              {% else %}
-                <a href="#" class="run-again-btn alert-link {% if build.outcome == build.SUCCEEDED %}success{% elif build.outcome == build.FAILED %}danger{% else %}info{% endif %} pull-right"
-                data-request-url="{% url 'xhr_buildrequest' build.project.pk %}"
-                data-target='{{build.target_set.all|get_tasks|json}}'>
-                  <span class="glyphicon glyphicon-repeat"></span>
-                  Rebuild
-                </a>
-              {% endif %}
-            </div>
-          {% endif %}
-
-          {% if build.outcome == build.IN_PROGRESS %}
-            <div class="col-md-4" style="display:none" id="cancelling-msg-{{build.buildrequest.pk}}">
-              Cancelling the build ...
-            </div>
-
-            <div class="col-md-4 col-md-offset-1 progress-info">
-              <div class="progress" id="build-pc-done-title-{{build.pk}}">
-                <div id="build-pc-done-bar-{{build.pk}}" style="width: {{build.completeper}}%;" class="progress-bar">
-                </div>
-              </div>
-            </div>
-
-            <div class="col-md-4 progress-info">
-              <span id="build-pc-done-{{build.pk}}">{{build.completeper}}</span>% of tasks complete
-              {# No build cancel for command line builds project #}
-              {% if build.project.is_default %}
-                <span class="glyphicon glyphicon-question-sign get-help get-help-blue pull-right" title="Builds in this project cannot be cancelled from Toaster: they can only be cancelled from the command line"></span>
-              {% else %}
-                <a href="#" class="cancel-build-btn pull-right alert-link"
-                data-buildrequest-id={{build.buildrequest.pk}}
-                data-request-url="{% url 'xhr_buildrequest' build.project.pk %}">
-                  <span class="glyphicon glyphicon-remove-circle"></span>
-                  Cancel
-                </a>
-              {% endif %}
-            </div>
-          {% endif %} {# end if in progress #}
-
-          {% if build.outcome == build.CANCELLED %}
-            <div class="col-md-6">
-              Build cancelled
-            </div>
-
-            <div class="col-md-3">
-              <a href="#" class="info pull-right run-again-btn alert-link"
-              data-request-url="{% url 'xhr_buildrequest' build.project.pk %}"
-              data-target='{{build.target_set.all|get_tasks|json}}'>
-                <span class="glyphicon glyphicon-repeat"></span>
-                Rebuild
-              </a>
-            </div>
-          {% endif %}
         </div>
       </div>
     {% endfor %}
   </div>
 {% endif %}
+
+<!-- build main template -->
+<script id="build-template" type="text/x-jsrender">
+  <div class="col-md-3">
+    <!-- only show link for completed builds -->
+    <%if state == 'Succeeded' || state == 'Failed'%>
+      <a class="alert-link" href="<%:dashboard_url%>">
+        <span data-toggle="tooltip" data-role="targets-text" title="Recipes: <%:targets%>">
+          <%:targets_abbreviated%>
+        </span>
+      </a>
+    <%else%>
+      <span data-toggle="tooltip" data-role="targets-text" title="Recipes: <%:targets%>">
+        <%:targets_abbreviated%>
+      </span>
+    <%/if%>
+  </div>
+
+  <%if state == 'Queued'%>
+    <%include tmpl='#queued-build-template'/%>
+  <%else state == 'Succeeded' || state == 'Failed'%>
+    <%include tmpl='#succeeded-or-failed-build-template'/%>
+  <%else state == 'Cancelling'%>
+    <%include tmpl='#cancelling-build-template'/%>
+  <%else state == 'In Progress'%>
+    <%include tmpl='#in-progress-build-template'/%>
+  <%else state == 'Cancelled'%>
+    <%include tmpl='#cancelled-build-template'/%>
+  <%/if%>
+</script>
+
+<!-- queued build -->
+<script id="queued-build-template" type="text/x-jsrender">
+  <div class="col-md-5">
+    Build queued
+  </div>
+
+  <div class="col-md-4">
+    <%if is_default_project_build%>
+      <!-- no cancel icon -->
+      <span class="glyphicon glyphicon-question-sign get-help get-help-blue pull-right" title="Builds in this project cannot be cancelled from Toaster: they can only be cancelled from the command line"></span>
+    <%else%>
+      <!-- cancel button -->
+      <span class="cancel-build-btn pull-right alert-link"
+      data-buildrequest-id="<%:id%>" data-request-url="<%:cancel_url%>">
+        <span class="glyphicon glyphicon-remove-circle"></span>
+        Cancel
+      </span>
+    <%/if%>
+  </div>
+</script>
+
+<!-- in progress build -->
+<script id="in-progress-build-template" type="text/x-jsrender">
+  <!-- progress bar and task completion percentage -->
+  <div data-role="build-status" class="col-md-4 col-md-offset-1 progress-info">
+    <!-- progress bar -->
+    <div class="progress" id="build-pc-done-title-<%:id%>">
+      <div id="build-pc-done-bar-<%:id%>"
+           style="width: <%:tasks_complete_percentage%>%;"
+           class="progress-bar">
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4 progress-info">
+    <!-- task completion percentage -->
+    <span id="build-pc-done-<%:id%>"><%:tasks_complete_percentage%></span>% of
+    tasks complete
+    <%if is_default_project_build%>
+      <!-- no cancel icon -->
+      <span class="glyphicon glyphicon-question-sign get-help get-help-blue pull-right" title="Builds in this project cannot be cancelled from Toaster: they can only be cancelled from the command line"></span>
+    <%else%>
+      <!-- cancel button -->
+      <span class="cancel-build-btn pull-right alert-link"
+      data-buildrequest-id="<%:id%>" data-request-url="<%:cancel_url%>">
+        <span class="glyphicon glyphicon-remove-circle"></span>
+        Cancel
+      </span>
+    <%/if%>
+  </div>
+</script>
+
+<!-- cancelling build -->
+<script id="cancelling-build-template" type="text/x-jsrender">
+  <div class="col-md-9">
+    Cancelling the build ...
+  </div>
+</script>
+
+<!-- succeeded or failed build -->
+<script id="succeeded-or-failed-build-template" type="text/x-jsrender">
+  <!-- completed_on -->
+  <div class="col-md-2">
+    <%:completed_on%>
+  </div>
+
+  <!-- errors -->
+  <div class="col-md-2">
+    <%if errors%>
+      <span class="glyphicon glyphicon-minus-sign"></span>
+      <a href="<%:dashboard_errors_url%>" class="alert-link">
+        <%:errors%> error<%:errors_pluralize%>
+      </a>
+    <%/if%>
+  </div>
+
+  <!-- warnings -->
+  <div class="col-md-2">
+    <%if warnings%>
+      <span class="glyphicon glyphicon-minus-sign"></span>
+      <a href="<%:dashboard_warnings_url%>" class="alert-link">
+        <%:warnings%> warning<%:warnings_pluralize%>
+      </a>
+    <%/if%>
+  </div>
+
+  <!-- build time -->
+  <div class="col-md-3">
+    Build time: <a class="alert-link" href="<%:buildtime_url%>"><%:buildtime%></a>
+
+    <%if is_default_project_build%>
+      <!-- info icon -->
+      <span class="pull-right glyphicon glyphicon-question-sign get-help <%if state == 'Success'%>get-help-green<%else state == 'Failed'%>get-help-red<%else%>get-help-blue<%/if%>"
+      title="Builds in this project cannot be started from Toaster: they are started from the command line">
+      </span>
+    <%else%>
+      <!-- rebuild button -->
+      <span class="rebuild-btn alert-link <%if state == 'Success'%>success<%else state == 'Failed'%>danger<%else%>info<%/if%> pull-right"
+      data-request-url="<%:rebuild_url%>" data-target='<%:build_targets_json%>'>
+        <span class="glyphicon glyphicon-repeat"></span>
+        Rebuild
+      </span>
+    <%/if%>
+  </div>
+</script>
+
+<!-- cancelled build -->
+<script id="cancelled-build-template" type="text/x-jsrender">
+  <!-- build cancelled message -->
+  <div class="col-md-6">
+    Build cancelled
+  </div>
+
+  <!-- rebuild button -->
+  <div class="col-md-3">
+    <span class="info pull-right rebuild-btn alert-link"
+    data-request-url="<%:rebuild_url%>" data-target='<%:build_targets_json%>'>
+      <span class="glyphicon glyphicon-repeat"></span>
+      Rebuild
+    </span>
+  </div>
+</script>
+
+<script>
+  $(document).ready(function () {
+    var ctx = {
+      mrbType : "{{mrb_type}}",
+    }
+
+    try {
+      mrbSectionInit(ctx);
+    } catch (e) {
+      document.write("Sorry, An error has occurred loading this page");
+      console.warn(e);
+    }
+  });
+</script>

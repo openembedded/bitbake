@@ -10,4 +10,6 @@ Foundation and individual contributors.
 
 * Twitter typeahead.js redistributed under the MIT license. Note that the JS source has one small modification, so the full unminified file is currently included to make it obvious where this is.
 
+* jsrender is redistributed under the MIT license.
+
 * QUnit is redistributed under the MIT license.
