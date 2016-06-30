@@ -104,7 +104,7 @@ class Wget(FetchMethod):
 
         return True
 
-    def checkstatus(self, fetch, ud, d):
+    def checkstatus(self, fetch, ud, d, try_again=True):
         import urllib.request, urllib.error, urllib.parse, socket, http.client
         from urllib.response import addinfourl
         from bb.fetch2 import FetchConnectionCache
@@ -278,9 +278,13 @@ class Wget(FetchMethod):
             r.get_method = lambda: "HEAD"
             opener.open(r)
         except urllib.error.URLError as e:
-            # debug for now to avoid spamming the logs in e.g. remote sstate searches
-            logger.debug(2, "checkstatus() urlopen failed: %s" % e)
-            return False
+            if try_again:
+                logger.debug(2, "checkstatus: trying again")
+                return self.checkstatus(fetch, ud, d, False)
+            else:
+                # debug for now to avoid spamming the logs in e.g. remote sstate searches
+                logger.debug(2, "checkstatus() urlopen failed: %s" % e)
+                return False
         return True
 
     def _parse_path(self, regex, s):
