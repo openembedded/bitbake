@@ -1404,15 +1404,37 @@ if True:
         pid = prj.id
 
         from collections import Counter
-        freqtargets = []
-        try:
-            btargets = sum(build.target_set.all() for build in Build.objects.filter(project=prj, outcome__lt=Build.IN_PROGRESS))
-            brtargets = sum(br.brtarget_set.all() for br in BuildRequest.objects.filter(project = prj, state = BuildRequest.REQ_FAILED))
-            freqtargets = [x.target for x in btargets] + [x.target for x in brtargets]
-        except TypeError:
-            pass
-        freqtargets = Counter(freqtargets)
-        freqtargets = sorted(freqtargets, key = lambda x: freqtargets[x], reverse=True)
+
+        freqtargets = Counter(Target.objects.filter(
+            Q(build__project=prj),
+            ~Q(build__outcome=Build.IN_PROGRESS)
+        ).order_by("target").values_list("target", flat=True))
+
+        freqtargets = freqtargets.most_common(5)
+
+        # We now have the targets in order of frequency but if there are two
+        # with the same frequency then we need to make sure those are in
+        # alphabetical order without losing the frequency ordering
+
+        tmp = []
+        switch = None
+        for i, freqtartget in enumerate(freqtargets):
+            target, count = freqtartget
+            try:
+                target_next, count_next = freqtargets[i+1]
+                if count == count_next and target > target_next:
+                    switch = target
+                    continue
+            except IndexError:
+                pass
+
+            tmp.append(target)
+
+            if switch:
+                tmp.append(switch)
+                switch = None
+
+        freqtargets = tmp
 
         layers = [{"id": x.layercommit.pk, "orderid": x.pk, "name" : x.layercommit.layer.name,
                    "vcs_url": x.layercommit.layer.vcs_url, "vcs_reference" : x.layercommit.get_vcs_reference(),
@@ -1432,7 +1454,7 @@ if True:
             "layers" : layers,
             "targets" : [{"target" : x.target, "task" : x.task, "pk": x.pk} for x in prj.projecttarget_set.all()],
             "variables": [(x.name, x.value) for x in prj.projectvariable_set.all()],
-            "freqtargets": freqtargets[:5],
+            "freqtargets": freqtargets,
             "releases": [{"id": x.pk, "name": x.name, "description":x.description} for x in Release.objects.all()],
             "project_html": 1,
             "recipesTypeAheadUrl": reverse('xhr_recipestypeahead', args=(prj.pk,)),
