@@ -436,8 +436,7 @@ class BitbakeWorker(object):
             self.build_pipes[pipe].read()
 
 try:
-    sys.stdin = sys.stdin.detach()
-    worker = BitbakeWorker(sys.stdin)
+    worker = BitbakeWorker(os.fdopen(sys.stdin.fileno(), 'rb'))
     if not profiling:
         worker.serve()
     else:
