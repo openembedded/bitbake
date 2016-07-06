@@ -58,6 +58,37 @@ class ProgressHandler(object):
             self._lastevent = ts
             self._progress = progress
 
+class LineFilterProgressHandler(ProgressHandler):
+    """
+    A ProgressHandler variant that provides the ability to filter out
+    the lines if they contain progress information. Additionally, it
+    filters out anything before the last line feed on a line. This can
+    be used to keep the logs clean of output that we've only enabled for
+    getting progress, assuming that that can be done on a per-line
+    basis.
+    """
+    def __init__(self, d, outfile=None):
+        self._linebuffer = ''
+        super(LineFilterProgressHandler, self).__init__(d, outfile)
+
+    def write(self, string):
+        self._linebuffer += string
+        while True:
+            breakpos = self._linebuffer.find('\n') + 1
+            if breakpos == 0:
+                break
+            line = self._linebuffer[:breakpos]
+            self._linebuffer = self._linebuffer[breakpos:]
+            # Drop any line feeds and anything that precedes them
+            lbreakpos = line.rfind('\r') + 1
+            if lbreakpos:
+                line = line[lbreakpos:]
+            if self.writeline(line):
+                super(LineFilterProgressHandler, self).write(line)
+
+    def writeline(self, line):
+        return True
+
 class BasicProgressHandler(ProgressHandler):
     def __init__(self, d, regex=r'(\d+)%', outfile=None):
         super(BasicProgressHandler, self).__init__(d, outfile)
