@@ -190,7 +190,10 @@ urlpatterns = patterns('toastergui.views',
             name='xhr_configvaredit'),
 
         url(r'^xhr_importlayer/$', 'xhr_importlayer', name='xhr_importlayer'),
-        url(r'^xhr_updatelayer/$', 'xhr_updatelayer', name='xhr_updatelayer'),
+
+        url(r'^xhr_layer/(?P<layerversion_id>\d+)$',
+            api.XhrLayer.as_view(),
+            name='xhr_layer'),
 
         # JS Unit tests
         url(r'^js-unit-tests/$', 'jsunittests', name='js-unit-tests'),

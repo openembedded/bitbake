@@ -20,11 +20,14 @@
 # Temporary home for the UI's misc API
 import re
 
-from orm.models import Project, ProjectTarget, Build
+from orm.models import Project, ProjectTarget, Build, Layer_Version
+from orm.models import LayerVersionDependency, LayerSource, ProjectLayer
 from bldcontrol.models import BuildRequest
 from bldcontrol import bbcontroller
 from django.http import HttpResponse, JsonResponse
 from django.views.generic import View
+from django.core.urlresolvers import reverse
+
 
 
 class XhrBuildRequest(View):
@@ -109,3 +112,97 @@ class XhrBuildRequest(View):
         response = HttpResponse()
         response.status_code = 500
         return response
+
+
+class XhrLayer(View):
+    """ Get and Update Layer information """
+
+    def post(self, request, *args, **kwargs):
+        """
+          Update a layer
+
+          Entry point: /xhr_layer/<layerversion_id>
+          Method: POST
+
+          Args:
+              vcs_url, dirpath, commit, up_branch, summary, description
+
+              add_dep = append a layerversion_id as a dependency
+              rm_dep = remove a layerversion_id as a depedency
+          Returns:
+              {"error": "ok"}
+            or
+              {"error": <error message>}
+        """
+
+        def error_response(error):
+            return JsonResponse({"error": error})
+
+        try:
+            # We currently only allow Imported layers to be edited
+            layer_version = Layer_Version.objects.get(
+                id=kwargs['layerversion_id'],
+                project=kwargs['pid'],
+                layer_source__sourcetype=LayerSource.TYPE_IMPORTED)
+
+        except Layer_Version.DoesNotExist:
+            return error_response("Cannot find imported layer to update")
+
+        if "vcs_url" in request.POST:
+            layer_version.layer.vcs_url = request.POST["vcs_url"]
+        if "dirpath" in request.POST:
+            layer_version.dirpath = request.POST["dirpath"]
+        if "commit" in request.POST:
+            layer_version.commit = request.POST["commit"]
+            layer_version.branch = request.POST["commit"]
+        if "up_branch" in request.POST:
+            layer_version.up_branch_id = int(request.POST["up_branch"])
+        if "summary" in request.POST:
+            layer_version.layer.summary = request.POST["summary"]
+        if "description" in request.POST:
+            layer_version.layer.description = request.POST["description"]
+
+        if "add_dep" in request.POST:
+            lvd = LayerVersionDependency(
+                layer_version=layer_version,
+                depends_on_id=request.POST["add_dep"])
+            lvd.save()
+
+        if "rm_dep" in request.POST:
+            rm_dep = LayerVersionDependency.objects.get(
+                layer_version=layer_version,
+                depends_on_id=request.POST["rm_dep"])
+            rm_dep.delete()
+
+        try:
+            layer_version.layer.save()
+            layer_version.save()
+        except Exception as e:
+            return error_response("Could not update layer version entry: %s"
+                                  % e)
+
+        return JsonResponse({"error": "ok"})
+
+    def delete(self, request, *args, **kwargs):
+        try:
+            # We currently only allow Imported layers to be deleted
+            layer_version = Layer_Version.objects.get(
+                id=kwargs['layerversion_id'],
+                project=kwargs['pid'],
+                layer_source__sourcetype=LayerSource.TYPE_IMPORTED)
+        except Layer_Version.DoesNotExist:
+            return error_response("Cannot find imported layer to delete")
+
+        try:
+            ProjectLayer.objects.get(project=kwargs['pid'],
+                                     layercommit=layer_version).delete()
+        except ProjectLayer.DoesNotExist:
+            pass
+
+        layer_version.layer.delete()
+        layer_version.delete()
+
+        return JsonResponse({
+            "error": "ok",
+            "redirect": reverse('project', args=(kwargs['pid'],))
+        })

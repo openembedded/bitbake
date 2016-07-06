@@ -1739,49 +1739,6 @@ if True:
 
         return HttpResponse(jsonfilter(json_response), content_type = "application/json")
 
-    def xhr_updatelayer(request):
-
-        def error_response(error):
-            return HttpResponse(jsonfilter({"error": error}), content_type = "application/json")
-
-        if "layer_version_id" not in request.POST:
-            return error_response("Please specify a layer version id")
-        try:
-            layer_version_id = request.POST["layer_version_id"]
-            layer_version = Layer_Version.objects.get(id=layer_version_id)
-        except Layer_Version.DoesNotExist:
-            return error_response("Cannot find layer to update")
-
-
-        if "vcs_url" in request.POST:
-            layer_version.layer.vcs_url = request.POST["vcs_url"]
-        if "dirpath" in request.POST:
-            layer_version.dirpath = request.POST["dirpath"]
-        if "commit" in request.POST:
-            layer_version.commit = request.POST["commit"]
-        if "up_branch" in request.POST:
-            layer_version.up_branch_id = int(request.POST["up_branch"])
-
-        if "add_dep" in request.POST:
-            lvd = LayerVersionDependency(layer_version=layer_version, depends_on_id=request.POST["add_dep"])
-            lvd.save()
-
-        if "rm_dep" in request.POST:
-            rm_dep = LayerVersionDependency.objects.get(layer_version=layer_version, depends_on_id=request.POST["rm_dep"])
-            rm_dep.delete()
-
-        if "summary" in request.POST:
-            layer_version.layer.summary = request.POST["summary"]
-        if "description" in request.POST:
-            layer_version.layer.description = request.POST["description"]
-
-        try:
-            layer_version.layer.save()
-            layer_version.save()
-        except Exception as e:
-            return error_response("Could not update layer version entry: %s" % e)
-
-        return HttpResponse(jsonfilter({"error": "ok",}), content_type = "application/json")
 
     @xhr_response
     def xhr_customrecipe(request):
