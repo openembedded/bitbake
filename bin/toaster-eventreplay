@@ -30,6 +30,7 @@ from __future__ import print_function
 import os
 import sys, logging
 import codecs
+from collections import namedtuple
 
 # mangle syspath to allow easy import of modules
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
@@ -159,17 +160,6 @@ class FileReadEventsServerConnection():
 
         self.events = FileReadEventsServerConnection.EventReader(self)
 
-
-
-
-
-class MockConfigParameters():
-    """ stand-in for cookerdata.ConfigParameters; as we don't really config a cooker, this
-        serves just to supply needed interfaces for the toaster ui to work """
-    def __init__(self):
-        self.observe_only = True            # we can only read files
-
-
 # run toaster ui on our mock bitbake class
 if __name__ == "__main__":
     if len(sys.argv) < 2:
@@ -178,7 +168,7 @@ if __name__ == "__main__":
 
     file_name = sys.argv[-1]
     mock_connection = FileReadEventsServerConnection(file_name)
-    configParams = MockConfigParameters()
+    configParams = namedtuple('ConfigParams', ['observe_only'])(True)
 
     # run the main program and set exit code to the returned value
     sys.exit(toasterui.main(mock_connection.connection, mock_connection.events, configParams))
