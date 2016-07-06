@@ -86,6 +86,8 @@ class FileReadEventsServerConnection():
             """ do not do anything """
             pass
 
+        def getEventHandle(self):
+            pass
 
 
     class EventReader():
