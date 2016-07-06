@@ -53,6 +53,7 @@ class FileReadEventsServerConnection():
         """
         def __init__(self, sc):
             self._sc = sc
+            self.eventmask = []
 
         def runCommand(self, commandArray):
             """ emulates running a command on the server; only read-only commands are accepted """
@@ -79,6 +80,11 @@ class FileReadEventsServerConnection():
                     except Exception as e:
                         print(e)
                 return (dump, None)
+
+            elif command_name == 'setEventMask':
+                self.eventmask = commandArray[-1]
+                return True, None
+
             else:
                 raise Exception("Command %s not implemented" % commandArray[0])
 
