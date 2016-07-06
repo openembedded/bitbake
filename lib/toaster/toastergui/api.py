@@ -29,6 +29,9 @@ from django.views.generic import View
 from django.core.urlresolvers import reverse
 
 
+def error_response(error):
+    return JsonResponse({"error": error})
+
 
 class XhrBuildRequest(View):
 
@@ -81,20 +84,24 @@ class XhrBuildRequest(View):
                     br.save()
 
                 except BuildRequest.DoesNotExist:
-                    return JsonResponse({'error':'No such build id %s' % i})
+                    return error_response('No such build id %s' % i)
 
-            return JsonResponse({'error': 'ok'})
+            return error_response('ok')
 
         if 'buildDelete' in request.POST:
             for i in request.POST['buildDelete'].strip().split(" "):
                 try:
-                    BuildRequest.objects.select_for_update().get(project = project, pk = i, state__lte = BuildRequest.REQ_DELETED).delete()
+                    BuildRequest.objects.select_for_update().get(
+                        project=project,
+                        pk=i,
+                        state__lte=BuildRequest.REQ_DELETED).delete()
+
                 except BuildRequest.DoesNotExist:
                     pass
-            return JsonResponse({'error': 'ok' })
+            return error_response("ok")
 
         if 'targets' in request.POST:
-            ProjectTarget.objects.filter(project = project).delete()
+            ProjectTarget.objects.filter(project=project).delete()
             s = str(request.POST['targets'])
             for t in re.sub(r'[;%|"]', '', s).split(" "):
                 if ":" in t:
@@ -102,12 +109,12 @@ class XhrBuildRequest(View):
                 else:
                     target = t
                     task = ""
-                ProjectTarget.objects.create(project = project,
-                                             target = target,
-                                             task = task)
+                ProjectTarget.objects.create(project=project,
+                                             target=target,
+                                             task=task)
             project.schedule_build()
 
-            return JsonResponse({'error': 'ok' })
+            return error_response('ok')
 
         response = HttpResponse()
         response.status_code = 500
@@ -134,9 +141,6 @@ class XhrLayer(View):
             or
               {"error": <error message>}
         """
-
-        def error_response(error):
-            return JsonResponse({"error": error})
 
         try:
             # We currently only allow Imported layers to be edited
