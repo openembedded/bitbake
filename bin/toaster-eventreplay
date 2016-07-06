@@ -29,6 +29,7 @@
 from __future__ import print_function
 import os
 import sys, logging
+import codecs
 
 # mangle syspath to allow easy import of modules
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
@@ -117,7 +118,8 @@ class FileReadEventsServerConnection():
             try:
                 event_data = json.loads(line.strip())
                 event_class = _import_class(event_data['class'])
-                event_object = pickle.loads(json.loads(event_data['vars']))
+                event_str = event_data['vars'].encode('utf-8')
+                event_object = pickle.loads(codecs.decode(event_str, 'base64'))
             except ValueError as e:
                 print("Failed loading ", line)
                 raise e
