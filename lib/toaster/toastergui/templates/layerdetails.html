@@ -6,6 +6,20 @@
 {% block title %} {{layerversion.layer.name}} - {{project.name}} - Toaster {% endblock %}
 {% block pagecontent %}
 
+<div id="delete-layer-modal" class="modal fade" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-body">
+		  Are you sure you want to delete the <strong>{{layerversion.layer.name}}</strong> layer?
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="layer-delete-confirmed" class="btn btn-primary">Delete</button>
+        <button type="button" class="btn btn-default btn-link" data-dismiss="modal">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="row">
   <div class="col-md-12">
     <ul class="breadcrumb">
@@ -44,7 +58,7 @@
 
     $(document).ready(function(){
       var ctx = {
-        xhrUpdateLayerUrl : "{% url 'xhr_layer' layerversion.pk %}",
+        xhrUpdateLayerUrl : "{% url 'xhr_layer' project.id layerversion.pk %}",
         layerVersion : {
           name : "{{layerversion.layer.name}}",
           id : {{layerversion.id}},
@@ -271,6 +285,10 @@
             </dd>
             {% endif %}
           </dl>
+          {% if layerversion.layer_source_id and layerversion.layer_source.sourcetype == layerversion.layer_source.TYPE_IMPORTED %}
+          <i class="icon-trash text-danger"></i>
+          <a href="#delete-layer-modal"  role="button" class="text-danger" data-toggle="modal" data-target="#delete-layer-modal">Delete {{layerversion.layer.name}}</a>
+          {% endif %}
         </div>
       </div>
     </div>
