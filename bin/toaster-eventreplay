@@ -26,24 +26,19 @@
 # as a build eventlog, and the ToasterUI is used to process events in the file
 # and log data in the database
 
-from __future__ import print_function
-import os
-import sys, logging
+import sys
+import json
+import pickle
 import codecs
+
 from collections import namedtuple
 
 # mangle syspath to allow easy import of modules
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-                                'lib'))
-
+from os.path import join, dirname, abspath
+sys.path.insert(0, join(dirname(dirname(abspath(__file__))), 'lib'))
 
 import bb.cooker
 from bb.ui import toasterui
-import sys
-import logging
-
-import json, pickle
-
 
 class FileReadEventsServerConnection():
     """  Emulates a connection to a bitbake server that feeds
