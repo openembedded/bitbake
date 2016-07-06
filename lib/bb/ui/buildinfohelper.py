@@ -125,7 +125,7 @@ class ORMWrapper(object):
         """
         Convert timestamp in seconds to Python datetime
         """
-        return datetime(1970, 1, 1) + timedelta(seconds=secs)
+        return timezone.make_aware(datetime(1970, 1, 1) + timedelta(seconds=secs))
 
     # pylint: disable=no-self-use
     # we disable detection of no self use in functions because the methods actually work on the object
