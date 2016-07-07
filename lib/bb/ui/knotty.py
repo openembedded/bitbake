@@ -496,13 +496,16 @@ def main(server, eventHandler, params, tf = TerminalFilter):
                 parseprogress = new_progress("Parsing recipes", event.total).start()
                 continue
             if isinstance(event, bb.event.ParseProgress):
-                parseprogress.update(event.current)
+                if parseprogress:
+                    parseprogress.update(event.current)
+                else:
+                    bb.warn("Got ParseProgress event for parsing that never started?")
                 continue
             if isinstance(event, bb.event.ParseCompleted):
                 if not parseprogress:
                     continue
-
                 parseprogress.finish()
+                pasreprogress = None
                 if not params.options.quiet:
                     print(("Parsing of %d .bb files complete (%d cached, %d parsed). %d targets, %d skipped, %d masked, %d errors."
                         % ( event.total, event.cached, event.parsed, event.virtuals, event.skipped, event.masked, event.errors)))
@@ -606,10 +609,15 @@ def main(server, eventHandler, params, tf = TerminalFilter):
                 parseprogress.start(False)
                 continue
             if isinstance(event, bb.event.ProcessProgress):
-                parseprogress.update(event.progress)
+                if parseprogress:
+                    parseprogress.update(event.progress)
+                else:
+                    bb.warn("Got ProcessProgress event for someting that never started?")
                 continue
             if isinstance(event, bb.event.ProcessFinished):
-                parseprogress.finish()
+                if parseprogress:
+                    parseprogress.finish()
+                parseprogress = None
                 continue
 
             # ignore
