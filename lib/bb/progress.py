@@ -209,6 +209,9 @@ class MultiStageProcessProgressReporter(MultiStageProgressReporter):
         bb.event.fire(bb.event.ProcessStarted(self._processname, 100), self._data)
 
     def _fire_progress(self, taskprogress):
+        if taskprogress == 0:
+            self.start()
+            return
         bb.event.fire(bb.event.ProcessProgress(self._processname, taskprogress), self._data)
 
     def finish(self):
