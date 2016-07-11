@@ -26,7 +26,9 @@
           <div class="row project-name">
             <div class="col-md-12">
               <small>
-                <a class="alert-link text-uppercase" href={% project_url build.project %}>{{build.project.name}}</a>
+                <a class="alert-link text-uppercase" href="{% project_url build.project %}">
+                  {{build.project.name}}
+                </a>
               </small>
             </div>
           </div>
@@ -52,14 +54,18 @@
           <%:targets_abbreviated%>
         </span>
       </a>
-    <%else%>
+    <%else targets_abbreviated !== ''%>
       <span data-toggle="tooltip" data-role="targets-text" title="Recipes: <%:targets%>">
         <%:targets_abbreviated%>
       </span>
+    <%else%>
+      ...targets not yet available...
     <%/if%>
   </div>
 
-  <%if state == 'Queued'%>
+  <%if state == 'Parsing'%>
+    <%include tmpl='#parsing-recipes-build-template'/%>
+  <%else state == 'Queued'%>
     <%include tmpl='#queued-build-template'/%>
   <%else state == 'Succeeded' || state == 'Failed'%>
     <%include tmpl='#succeeded-or-failed-build-template'/%>
@@ -75,21 +81,38 @@
 <!-- queued build -->
 <script id="queued-build-template" type="text/x-jsrender">
   <div class="col-md-5">
+    <span class="glyphicon glyphicon-question-sign get-help get-help-blue" title="This build is waiting for
+the build directory to become available"></span>
+
     Build queued
   </div>
 
   <div class="col-md-4">
-    <%if is_default_project_build%>
-      <!-- no cancel icon -->
-      <span class="glyphicon glyphicon-question-sign get-help get-help-blue pull-right" title="Builds in this project cannot be cancelled from Toaster: they can only be cancelled from the command line"></span>
-    <%else%>
-      <!-- cancel button -->
-      <span class="cancel-build-btn pull-right alert-link"
-      data-buildrequest-id="<%:id%>" data-request-url="<%:cancel_url%>">
-        <span class="glyphicon glyphicon-remove-circle"></span>
-        Cancel
-      </span>
-    <%/if%>
+    <!-- cancel button -->
+    <%include tmpl='#cancel-template'/%>
+  </div>
+</script>
+
+<!-- parsing recipes build -->
+<script id="parsing-recipes-build-template" type="text/x-jsrender">
+  <!-- progress bar and parse completion percentage -->
+  <div data-role="build-status" class="col-md-4 col-md-offset-1 progress-info">
+    <!-- progress bar -->
+    <div class="progress">
+      <div id="recipes-parsed-percentage-bar-<%:id%>"
+           style="width: <%:recipes_parsed_percentage%>%;"
+           class="progress-bar">
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4 progress-info">
+    <!-- parse completion percentage -->
+    <span class="glyphicon glyphicon-question-sign get-help get-help-blue" title="BitBake is parsing the layers required for your build"></span>
+
+    Parsing <span id="recipes-parsed-percentage-<%:id%>"><%:recipes_parsed_percentage%></span>% complete
+
+    <%include tmpl='#cancel-template'/%>
   </div>
 </script>
 
@@ -110,17 +133,9 @@
     <!-- task completion percentage -->
     <span id="build-pc-done-<%:id%>"><%:tasks_complete_percentage%></span>% of
     tasks complete
-    <%if is_default_project_build%>
-      <!-- no cancel icon -->
-      <span class="glyphicon glyphicon-question-sign get-help get-help-blue pull-right" title="Builds in this project cannot be cancelled from Toaster: they can only be cancelled from the command line"></span>
-    <%else%>
-      <!-- cancel button -->
-      <span class="cancel-build-btn pull-right alert-link"
-      data-buildrequest-id="<%:id%>" data-request-url="<%:cancel_url%>">
-        <span class="glyphicon glyphicon-remove-circle"></span>
-        Cancel
-      </span>
-    <%/if%>
+
+    <!-- cancel button -->
+    <%include tmpl='#cancel-template'/%>
   </div>
 </script>
 
@@ -162,19 +177,8 @@
   <div class="col-md-3">
     Build time: <a class="alert-link" href="<%:buildtime_url%>"><%:buildtime%></a>
 
-    <%if is_default_project_build%>
-      <!-- info icon -->
-      <span class="pull-right glyphicon glyphicon-question-sign get-help <%if state == 'Success'%>get-help-green<%else state == 'Failed'%>get-help-red<%else%>get-help-blue<%/if%>"
-      title="Builds in this project cannot be started from Toaster: they are started from the command line">
-      </span>
-    <%else%>
-      <!-- rebuild button -->
-      <span class="rebuild-btn alert-link <%if state == 'Success'%>success<%else state == 'Failed'%>danger<%else%>info<%/if%> pull-right"
-      data-request-url="<%:rebuild_url%>" data-target='<%:build_targets_json%>'>
-        <span class="glyphicon glyphicon-repeat"></span>
-        Rebuild
-      </span>
-    <%/if%>
+    <!-- rebuild button -->
+    <%include tmpl='#rebuild-template'/%>
   </div>
 </script>
 
@@ -187,12 +191,40 @@
 
   <!-- rebuild button -->
   <div class="col-md-3">
-    <span class="info pull-right rebuild-btn alert-link"
+    <%include tmpl='#rebuild-template'/%>
+  </div>
+</script>
+
+<!-- rebuild button or no rebuild icon -->
+<script id="rebuild-template" type="text/x-jsrender">
+  <%if is_default_project_build%>
+    <!-- no rebuild info icon -->
+    <span class="pull-right glyphicon glyphicon-question-sign get-help <%if state == 'Success'%>get-help-green<%else state == 'Failed'%>get-help-red<%else%>get-help-blue<%/if%>"
+    title="Builds in this project cannot be started from Toaster: they are started from the command line">
+    </span>
+  <%else%>
+    <!-- rebuild button -->
+    <span class="rebuild-btn alert-link <%if state == 'Success'%>success<%else state == 'Failed'%>danger<%else%>info<%/if%> pull-right"
     data-request-url="<%:rebuild_url%>" data-target='<%:build_targets_json%>'>
       <span class="glyphicon glyphicon-repeat"></span>
       Rebuild
     </span>
-  </div>
+  <%/if%>
+</script>
+
+<!-- cancel button or no cancel icon -->
+<script id="cancel-template" type="text/x-jsrender">
+  <%if is_default_project_build%>
+    <!-- no cancel icon -->
+    <span class="glyphicon glyphicon-question-sign get-help get-help-blue pull-right" title="Builds in this project cannot be cancelled from Toaster: they can only be cancelled from the command line"></span>
+  <%else%>
+    <!-- cancel button -->
+    <span class="cancel-build-btn pull-right alert-link"
+    data-buildrequest-id="<%:buildrequest_id%>" data-request-url="<%:cancel_url%>">
+      <span class="glyphicon glyphicon-remove-circle"></span>
+      Cancel
+    </span>
+  <%/if%>
 </script>
 
 <script>

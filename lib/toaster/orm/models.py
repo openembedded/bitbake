@@ -397,8 +397,14 @@ class Build(models.Model):
     completed_on = models.DateTimeField()
     outcome = models.IntegerField(choices=BUILD_OUTCOME, default=IN_PROGRESS)
     cooker_log_path = models.CharField(max_length=500)
-    build_name = models.CharField(max_length=100)
+    build_name = models.CharField(max_length=100, default='')
     bitbake_version = models.CharField(max_length=50)
+
+    # number of recipes to parse for this build
+    recipes_to_parse = models.IntegerField(default=1)
+
+    # number of recipes parsed so far for this build
+    recipes_parsed = models.IntegerField(default=0)
 
     @staticmethod
     def get_recent(project=None):
@@ -615,6 +621,13 @@ class Build(models.Model):
         else:
             return False
 
+    def is_parsing(self):
+        """
+        True if the build is still parsing recipes
+        """
+        return self.outcome == Build.IN_PROGRESS and \
+            self.recipes_parsed < self.recipes_to_parse
+
     def get_state(self):
         """
         Get the state of the build; one of 'Succeeded', 'Failed', 'In Progress',
@@ -628,6 +641,8 @@ class Build(models.Model):
             return 'Cancelling';
         elif self.is_queued():
             return 'Queued'
+        elif self.is_parsing():
+            return 'Parsing'
         else:
             return self.get_outcome_text()
 

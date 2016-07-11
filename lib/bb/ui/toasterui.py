@@ -102,6 +102,7 @@ _evt_list = [
     "bb.command.CommandExit",
     "bb.command.CommandFailed",
     "bb.cooker.CookerExit",
+    "bb.event.BuildInit",
     "bb.event.BuildCompleted",
     "bb.event.BuildStarted",
     "bb.event.CacheLoadCompleted",
@@ -115,6 +116,7 @@ _evt_list = [
     "bb.event.NoProvider",
     "bb.event.ParseCompleted",
     "bb.event.ParseProgress",
+    "bb.event.ParseStarted",
     "bb.event.RecipeParsed",
     "bb.event.SanityCheck",
     "bb.event.SanityCheckPassed",
@@ -231,19 +233,30 @@ def main(server, eventHandler, params):
             # pylint: disable=protected-access
             # the code will look into the protected variables of the event; no easy way around this
 
-            # we treat ParseStarted as the first event of toaster-triggered
-            # builds; that way we get the Build Configuration included in the log
-            # and any errors that occur before BuildStarted is fired
             if isinstance(event, bb.event.ParseStarted):
                 if not (build_log and build_log_file_path):
                     build_log, build_log_file_path = _open_build_log(log_dir)
+
+                buildinfohelper.store_started_build(build_log_file_path)
+                buildinfohelper.set_recipes_to_parse(event.total)
                 continue
 
-            if isinstance(event, bb.event.BuildStarted):
-                if not (build_log and build_log_file_path):
-                    build_log, build_log_file_path = _open_build_log(log_dir)
+            # create a build object in buildinfohelper from either BuildInit
+            # (if available) or BuildStarted (for jethro and previous versions)
+            if isinstance(event, (bb.event.BuildStarted, bb.event.BuildInit)):
+                buildinfohelper.save_build_name_and_targets(event)
 
-                buildinfohelper.store_started_build(event, build_log_file_path)
+                # get additional data from BuildStarted
+                if isinstance(event, bb.event.BuildStarted):
+                    buildinfohelper.save_build_layers_and_variables()
+                continue
+
+            if isinstance(event, bb.event.ParseProgress):
+                buildinfohelper.set_recipes_parsed(event.current)
+                continue
+
+            if isinstance(event, bb.event.ParseCompleted):
+                buildinfohelper.set_recipes_parsed(event.total)
                 continue
 
             if isinstance(event, (bb.build.TaskStarted, bb.build.TaskSucceeded, bb.build.TaskFailedSilent)):
@@ -288,10 +301,6 @@ def main(server, eventHandler, params):
             # these events are unprocessed now, but may be used in the future to log
             # timing and error informations from the parsing phase in Toaster
             if isinstance(event, (bb.event.SanityCheckPassed, bb.event.SanityCheck)):
-                continue
-            if isinstance(event, bb.event.ParseProgress):
-                continue
-            if isinstance(event, bb.event.ParseCompleted):
                 continue
             if isinstance(event, bb.event.CacheLoadStarted):
                 continue

@@ -87,7 +87,7 @@ class XhrBuildRequest(View):
                     br.save()
 
                 except BuildRequest.DoesNotExist:
-                    return error_response('No such build id %s' % i)
+                    return error_response('No such build request id %s' % i)
 
             return error_response('ok')
 
@@ -255,6 +255,14 @@ class MostRecentBuildsView(View):
             build = {}
             build['id'] = build_obj.pk
             build['dashboard_url'] = dashboard_url
+
+            buildrequest_id = None
+            if hasattr(build_obj, 'buildrequest'):
+                buildrequest_id = build_obj.buildrequest.pk
+            build['buildrequest_id'] = buildrequest_id
+
+            build['recipes_parsed_percentage'] = \
+                int((build_obj.recipes_parsed / build_obj.recipes_to_parse) * 100)
 
             tasks_complete_percentage = 0
             if build_obj.outcome in (Build.SUCCEEDED, Build.FAILED):

@@ -150,55 +150,48 @@ class ORMWrapper(object):
     # pylint: disable=bad-continuation
     # we do not follow the python conventions for continuation indentation due to long lines here
 
-    def create_build_object(self, build_info, brbe, project_id):
+    def create_build_object(self, build_info, brbe):
         assert 'machine' in build_info
         assert 'distro' in build_info
         assert 'distro_version' in build_info
         assert 'started_on' in build_info
         assert 'cooker_log_path' in build_info
-        assert 'build_name' in build_info
         assert 'bitbake_version' in build_info
 
         prj = None
         buildrequest = None
-        if brbe is not None:            # this build was triggered by a request from a user
+        if brbe is not None:
+            # Toaster-triggered build
             logger.debug(1, "buildinfohelper: brbe is %s" % brbe)
             br, _ = brbe.split(":")
-            buildrequest = BuildRequest.objects.get(pk = br)
+            buildrequest = BuildRequest.objects.get(pk=br)
             prj = buildrequest.project
-
-        elif project_id is not None:    # this build was triggered by an external system for a specific project
-            logger.debug(1, "buildinfohelper: project is %s" % prj)
-            prj = Project.objects.get(pk = project_id)
-
-        else:                           # this build was triggered by a legacy system, or command line interactive mode
+        else:
+            # CLI build
             prj = Project.objects.get_or_create_default_project()
             logger.debug(1, "buildinfohelper: project is not specified, defaulting to %s" % prj)
-
 
         if buildrequest is not None:
             build = buildrequest.build
             logger.info("Updating existing build, with %s", build_info)
             build.project = prj
-            build.machine=build_info['machine']
-            build.distro=build_info['distro']
-            build.distro_version=build_info['distro_version']
-            build.cooker_log_path=build_info['cooker_log_path']
-            build.build_name=build_info['build_name']
-            build.bitbake_version=build_info['bitbake_version']
+            build.machine = build_info['machine']
+            build.distro = build_info['distro']
+            build.distro_version = build_info['distro_version']
+            build.cooker_log_path = build_info['cooker_log_path']
+            build.bitbake_version = build_info['bitbake_version']
             build.save()
 
         else:
             build = Build.objects.create(
-                                    project = prj,
-                                    machine=build_info['machine'],
-                                    distro=build_info['distro'],
-                                    distro_version=build_info['distro_version'],
-                                    started_on=build_info['started_on'],
-                                    completed_on=build_info['started_on'],
-                                    cooker_log_path=build_info['cooker_log_path'],
-                                    build_name=build_info['build_name'],
-                                    bitbake_version=build_info['bitbake_version'])
+                project=prj,
+                machine=build_info['machine'],
+                distro=build_info['distro'],
+                distro_version=build_info['distro_version'],
+                started_on=build_info['started_on'],
+                completed_on=build_info['started_on'],
+                cooker_log_path=build_info['cooker_log_path'],
+                bitbake_version=build_info['bitbake_version'])
 
         logger.debug(1, "buildinfohelper: build is created %s" % build)
 
@@ -207,6 +200,10 @@ class ORMWrapper(object):
             buildrequest.save()
 
         return build
+
+    def update_build_name(self, build, build_name):
+        build.build_name = build_name
+        build.save()
 
     @staticmethod
     def get_or_create_targets(target_info):
@@ -924,9 +921,7 @@ class BuildInfoHelper(object):
         build_info['started_on'] = timezone.now()
         build_info['completed_on'] = timezone.now()
         build_info['cooker_log_path'] = build_log_path
-        build_info['build_name'] = self.server.runCommand(["getVariable", "BUILDNAME"])[0]
         build_info['bitbake_version'] = self.server.runCommand(["getVariable", "BB_VERSION"])[0]
-        build_info['project'] = self.project = self.server.runCommand(["getVariable", "TOASTER_PROJECT"])[0]
         return build_info
 
     def _get_task_information(self, event, recipe):
@@ -1032,17 +1027,28 @@ class BuildInfoHelper(object):
             except NotExisting as nee:
                 logger.warning("buildinfohelper: cannot identify layer exception:%s ", nee)
 
-
-    def store_started_build(self, event, build_log_path):
-        assert '_pkgs' in vars(event)
+    def store_started_build(self, build_log_path):
         build_information = self._get_build_information(build_log_path)
+        self.internal_state['build'] = \
+            self.orm_wrapper.create_build_object(build_information, self.brbe)
 
-        # Update brbe and project as they can be changed for every build
-        self.project = build_information['project']
+    def save_build_name_and_targets(self, event):
+        # NB the BUILDNAME variable isn't set until BuildInit (or
+        # BuildStarted for older bitbakes)
+        build_name = self.server.runCommand(["getVariable", "BUILDNAME"])[0]
+        self.orm_wrapper.update_build_name(self.internal_state['build'],
+            build_name)
 
-        build_obj = self.orm_wrapper.create_build_object(build_information, self.brbe, self.project)
+        # create target information
+        assert '_pkgs' in vars(event)
+        target_information = {}
+        target_information['targets'] = event._pkgs
+        target_information['build'] = self.internal_state['build']
 
-        self.internal_state['build'] = build_obj
+        self.internal_state['targets'] = self.orm_wrapper.get_or_create_targets(target_information)
+
+    def save_build_layers_and_variables(self):
+        build_obj = self.internal_state['build']
 
         # save layer version information for this build
         if not 'lvs' in self.internal_state:
@@ -1052,13 +1058,6 @@ class BuildInfoHelper(object):
                 self.orm_wrapper.get_update_layer_version_object(build_obj, layer_obj, self.internal_state['lvs'][layer_obj])
 
             del self.internal_state['lvs']
-
-        # create target information
-        target_information = {}
-        target_information['targets'] = event._pkgs
-        target_information['build'] = build_obj
-
-        self.internal_state['targets'] = self.orm_wrapper.get_or_create_targets(target_information)
 
         # Save build configuration
         data = self.server.runCommand(["getAllKeysWithFlags", ["doc", "func"]])[0]
@@ -1089,6 +1088,41 @@ class BuildInfoHelper(object):
         self.orm_wrapper.save_build_variables(build_obj, data)
 
         return self.brbe
+
+    def set_recipes_to_parse(self, num_recipes):
+        """
+        Set the number of recipes which need to be parsed for this build.
+        This is set the first time ParseStarted is received by toasterui.
+        """
+        if self.internal_state['build']:
+            self.internal_state['build'].recipes_to_parse = num_recipes
+            self.internal_state['build'].save()
+
+    def set_recipes_parsed(self, num_recipes):
+        """
+        Set the number of recipes parsed so far for this build; this is updated
+        each time a ParseProgress or ParseCompleted event is received by
+        toasterui.
+        """
+        if self.internal_state['build']:
+            if num_recipes <= self.internal_state['build'].recipes_to_parse:
+                self.internal_state['build'].recipes_parsed = num_recipes
+                self.internal_state['build'].save()
+
+    def update_target_image_file(self, event):
+        evdata = BuildInfoHelper._get_data_from_event(event)
+
+        for t in self.internal_state['targets']:
+            if t.is_image == True:
+                output_files = list(evdata.keys())
+                for output in output_files:
+                    if t.target in output and 'rootfs' in output and not output.endswith(".manifest"):
+                        self.orm_wrapper.save_target_image_file_information(t, output, evdata[output])
+
+    def update_artifact_image_file(self, event):
+        evdata = BuildInfoHelper._get_data_from_event(event)
+        for artifact_path in evdata.keys():
+            self.orm_wrapper.save_artifact_information(self.internal_state['build'], artifact_path, evdata[artifact_path])
 
     def update_build_information(self, event, errors, warnings, taskfailures):
         if 'build' in self.internal_state:
