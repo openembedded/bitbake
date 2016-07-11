@@ -1624,15 +1624,32 @@
         <title>Dependencies</title>
 
         <para>
-            To allow for efficient operation given multiple processes
-            executing in parallel, BitBake handles dependencies at
-            the task level.
-            BitBake supports a robust method to handle these dependencies.
-        </para>
+            To allow for efficient parallel processing, BitBake handles
+            dependencies at the task level.
+            Dependencies can exist both between tasks within a single recipe
+            and between tasks in different recipes.
+            Following are examples of each:
+            <itemizedlist>
+                <listitem><para>For tasks within a single recipe, a
+                    recipe's <filename>do_configure</filename>
+                    task might need to complete before its
+                    <filename>do_compile</filename> task can run.
+                    </para></listitem>
+                <listitem><para>For tasks in different recipes, one
+                    recipe's <filename>do_configure</filename>
+                    task might require another recipe's
+                    <filename>do_populate_sysroot</filename>
+                    task to finish first such that the libraries and headers
+                    provided by the other recipe are available.
+                    </para></listitem>
+             </itemizedlist>
+         </para>
 
-        <para>
-            This section describes several types of dependency mechanisms.
-        </para>
+         <para>
+             This section describes several ways to declare dependencies.
+             Remember, even though dependencies are declared in different ways, they
+             are all simply dependencies between tasks.
+         </para>
 
         <section id='dependencies-internal-to-the-bb-file'>
             <title>Dependencies Internal to the <filename>.bb</filename> File</title>
