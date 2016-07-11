@@ -1235,6 +1235,7 @@ class BBCooker:
         """
         Build the file matching regexp buildfile
         """
+        bb.event.fire(bb.event.BuildInit(), self.expanded_data)
 
         # Too many people use -b because they think it's how you normally
         # specify a target to be built, so show a warning
@@ -1376,6 +1377,9 @@ class BBCooker:
 
         if not task.startswith("do_"):
             task = "do_%s" % task
+
+        packages = ["%s:%s" % (target, task) for target in targets]
+        bb.event.fire(bb.event.BuildInit(packages), self.expanded_data)
 
         taskdata, runlist, fulltargetlist = self.buildTaskData(targets, task, self.configuration.abort)
 

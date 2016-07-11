@@ -382,7 +382,11 @@ class BuildBase(Event):
 
 
 
-
+class BuildInit(BuildBase):
+    """buildFile or buildTargets was invoked"""
+    def __init__(self, p=[]):
+        name = None
+        BuildBase.__init__(self, name, p)
 
 class BuildStarted(BuildBase, OperationStarted):
     """bbmake build run started"""
