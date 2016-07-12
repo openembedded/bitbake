@@ -103,12 +103,15 @@
         {% if not target.targetHasNoImages %}
           <dl class="dl-horizontal">
             <dt>
-                <span class="glyphicon glyphicon-question-sign get-help" title="The location in disk of the license manifest, a document listing all packages installed in your image and their licenses"></span>
-                License manifest
+              Manifests
             </dt>
+
             <dd>
-                <a href="{% url 'target' build.pk target.target.pk %}">View in Toaster</a> |
-                <a href="{% url 'build_artifact' build.pk 'licensemanifest' target.target.pk %}">Download</a></dd>
+              <a href="{% url 'build_artifact' build.pk 'licensemanifest' target.target.pk %}">License manifest</a>
+            </dd>
+          </dl>
+
+          <dl class="dl-horizontal">
             <dt>
                 <span class="glyphicon glyphicon-question-sign get-help" title="Image files are stored in <code>build/tmp/deploy/images/</code>"></span>
                 Image files
