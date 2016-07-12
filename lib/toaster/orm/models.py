@@ -449,6 +449,19 @@ class Build(models.Model):
                 break
         return has_images
 
+    def has_image_targets(self):
+        """
+        Returns True if a build has any targets which were built from
+        image recipes.
+        """
+        targets = Target.objects.filter(build_id=self.id)
+        has_image_targets = False
+        for target in targets:
+            if target.is_image:
+                has_image_targets = True
+                break
+        return has_image_targets
+
     def get_image_file_extensions(self):
         """
         Get string of file name extensions for images produced by this build;

@@ -117,30 +117,32 @@
         {% endwith %}
 
           <!-- new custom image from image recipe in this build -->
-          <button class="btn btn-default btn-block navbar-btn" data-role="new-custom-image-trigger">New custom image</button>
-          {% include 'newcustomimage_modal.html' %}
-          <script>
-            // imageRecipes includes both custom image recipes and built-in
-            // image recipes, any of which can be used as the basis for a
-            // new custom image
-            var imageRecipes = {{ build.get_image_recipes | objects_to_dictionaries:"id,name" | json }};
+          {% if build.has_image_targets %}
+            <button class="btn btn-default btn-block navbar-btn" data-role="new-custom-image-trigger">New custom image</button>
+            {% include 'newcustomimage_modal.html' %}
+            <script>
+              // imageRecipes includes both custom image recipes and built-in
+              // image recipes, any of which can be used as the basis for a
+              // new custom image
+              var imageRecipes = {{ build.get_image_recipes | objects_to_dictionaries:"id,name" | json }};
 
-            $(document).ready(function () {
-              var newCustomImageModal = $('#new-custom-image-modal');
-              var newCustomImageTrigger = $('[data-role="new-custom-image-trigger"]');
+              $(document).ready(function () {
+                var newCustomImageModal = $('#new-custom-image-modal');
+                var newCustomImageTrigger = $('[data-role="new-custom-image-trigger"]');
 
-              // show create new custom image modal to select an image built
-              // during this build as the basis for the custom recipe
-              newCustomImageTrigger.click(function () {
-                if (!imageRecipes.length) {
-                  return;
-                }
+                // show create new custom image modal to select an image built
+                // during this build as the basis for the custom recipe
+                newCustomImageTrigger.click(function () {
+                  if (!imageRecipes.length) {
+                    return;
+                  }
 
-                newCustomImageModalSetRecipes(imageRecipes);
-                newCustomImageModal.modal('show');
+                  newCustomImageModalSetRecipes(imageRecipes);
+                  newCustomImageModal.modal('show');
+                });
               });
-            });
-          </script>
+            </script>
+          {% endif %}
       </ul>
 
     </div>
