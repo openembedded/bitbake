@@ -74,7 +74,7 @@
     {% for target in targets %}
         {% if target.target.is_image %}
     <div class="well well-transparent dashboard-section">
-        <h3><a href="{% url 'target' build.pk target.target.pk %}">{{target.target}}</a></h3>
+        <h3><a href="{% url 'target' build.pk target.target.pk %}">{{target.target.target}}</a></h3>
         <dl class="dl-horizontal">
             <dt>Packages included</dt>
             <dd><a href="{% url 'target' build.pk target.target.pk %}">{{target.npkg}}</a></dd>
@@ -123,6 +123,19 @@
                         </li>
                     {% endfor %}
                 </ul>
+            </dd>
+            <dt>
+                Kernel artifacts
+            </dt>
+            <dd>
+                <ul class="list-unstyled">
+                    {% for artifact in target.target_artifacts|dictsort:"basename" %}
+                        <li>
+                            <a href="{% url 'build_artifact' build.id 'targetartifactfile' artifact.id %}">{{artifact.basename}}</a>
+                            ({{artifact.file_size|filtered_filesizeformat}})
+                        </li>
+                    {% endfor %}
+                  </ul>
             </dd>
         </dl>
         {% endif %}

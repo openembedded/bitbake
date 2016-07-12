@@ -22,7 +22,7 @@
 from __future__ import unicode_literals
 
 from django.db import models, IntegrityError
-from django.db.models import F, Q, Avg, Max, Sum
+from django.db.models import F, Q, Avg, Max, Sum, Count
 from django.utils import timezone
 from django.utils.encoding import force_bytes
 
@@ -438,7 +438,9 @@ class Build(models.Model):
 
     def get_image_file_extensions(self):
         """
-        Get list of file name extensions for images produced by this build
+        Get list of file name extensions for images produced by this build;
+        note that this is the actual list of extensions stored on Target objects
+        for this build, and not the value of IMAGE_FSTYPES.
         """
         extensions = []
 
@@ -457,6 +459,15 @@ class Build(models.Model):
         extensions.sort()
 
         return ', '.join(extensions)
+
+    def get_image_fstypes(self):
+        """
+        Get the IMAGE_FSTYPES variable value for this build as a de-duplicated
+        list of image file suffixes.
+        """
+        image_fstypes = Variable.objects.get(
+            build=self, variable_name='IMAGE_FSTYPES').variable_value
+        return list(set(re.split(r' {1,}', image_fstypes)))
 
     def get_sorted_target_list(self):
         tgts = Target.objects.filter(build_id = self.id).order_by( 'target' );
@@ -611,6 +622,114 @@ class Target(models.Model):
 
     def __unicode__(self):
         return self.target
+
+    def get_similar_targets(self):
+        """
+        Get targets for the same machine, task and target name
+        (e.g. 'core-image-minimal') from a successful build for this project
+        (but excluding this target).
+
+        Note that we look for targets built by this project because projects
+        can have different configurations from each other, and put their
+        artifacts in different directories.
+        """
+        query = ~Q(pk=self.pk) & \
+            Q(target=self.target) & \
+            Q(build__machine=self.build.machine) & \
+            Q(build__outcome=Build.SUCCEEDED) & \
+            Q(build__project=self.build.project)
+
+        return Target.objects.filter(query)
+
+    def get_similar_target_with_image_files(self):
+        """
+        Get the most recent similar target with Target_Image_Files associated
+        with it, for the purpose of cloning those files onto this target.
+        """
+        similar_target = None
+
+        candidates = self.get_similar_targets()
+        if candidates.count() < 1:
+            return similar_target
+
+        task_subquery = Q(task=self.task)
+
+        # we can look for a 'build' task if this task is a 'populate_sdk_ext'
+        # task, as it will have created images; and vice versa; note that
+        # 'build' targets can have their task set to '';
+        # also note that 'populate_sdk' does not produce image files
+        image_tasks = [
+            '', # aka 'build'
+            'build',
+            'populate_sdk_ext'
+        ]
+        if self.task in image_tasks:
+            task_subquery = Q(task__in=image_tasks)
+
+        query = task_subquery & Q(num_files__gt=0)
+
+        # annotate with the count of files, to exclude any targets which
+        # don't have associated files
+        candidates = candidates.annotate(
+            num_files=Count('target_image_file'))
+
+        candidates = candidates.filter(query)
+
+        if candidates.count() > 0:
+            candidates.order_by('build__completed_on')
+            similar_target = candidates.last()
+
+        return similar_target
+
+    def clone_artifacts_from(self, target):
+        """
+        Make clones of the BuildArtifacts, Target_Image_Files and
+        TargetArtifactFile objects associated with Target target, then
+        associate them with this target.
+
+        Note that for Target_Image_Files, we only want files from the previous
+        build whose suffix matches one of the suffixes defined in this
+        target's build's IMAGE_FSTYPES configuration variable. This prevents the
+        Target_Image_File object for an ext4 image being associated with a
+        target for a project which didn't produce an ext4 image (for example).
+
+        Also sets the license_manifest_path of this target to the same path
+        as that of target being cloned from, as the license manifest path is
+        also a build artifact but is treated differently.
+        """
+
+        image_fstypes = self.build.get_image_fstypes()
+
+        # filter out any image files whose suffixes aren't in the
+        # IMAGE_FSTYPES suffixes variable for this target's build
+        image_files = [target_image_file \
+            for target_image_file in target.target_image_file_set.all() \
+            if target_image_file.suffix in image_fstypes]
+
+        for image_file in image_files:
+            image_file.pk = None
+            image_file.target = self
+            image_file.save()
+
+        artifact_files = target.targetartifactfile_set.all()
+        for artifact_file in artifact_files:
+            artifact_file.pk = None
+            artifact_file.target = self
+            artifact_file.save()
+
+        self.license_manifest_path = target.license_manifest_path
+        self.save()
+
+# an Artifact is anything that results from a target being built, and may
+# be of interest to the user, and is not an image file
+class TargetArtifactFile(models.Model):
+    target = models.ForeignKey(Target)
+    file_name = models.FilePathField()
+    file_size = models.IntegerField()
+
+    @property
+    def basename(self):
+        return os.path.basename(self.file_name)
 
 class Target_Image_File(models.Model):
     # valid suffixes for image files produced by a build

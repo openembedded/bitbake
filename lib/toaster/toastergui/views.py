@@ -31,6 +31,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from orm.models import Build, Target, Task, Layer, Layer_Version, Recipe, LogMessage, Variable
 from orm.models import Task_Dependency, Recipe_Dependency, Package, Package_File, Package_Dependency
 from orm.models import Target_Installed_Package, Target_File, Target_Image_File, BuildArtifact, CustomImagePackage
+from orm.models import TargetArtifactFile
 from orm.models import BitbakeVersion, CustomImageRecipe
 from bldcontrol import bbcontroller
 from django.views.decorators.cache import cache_control
@@ -509,6 +510,8 @@ def builddashboard( request, build_id ):
             targetHasNoImages = True
         elem[ 'imageFiles' ] = imageFiles
         elem[ 'targetHasNoImages' ] = targetHasNoImages
+        elem['target_artifacts'] = t.targetartifactfile_set.all()
+
         targets.append( elem )
 
     ##
@@ -2293,6 +2296,10 @@ if True:
 
         elif artifact_type == "buildartifact":
             file_name = BuildArtifact.objects.get(build = build, pk = artifact_id).file_name
+
+        elif artifact_type == "targetartifactfile":
+            target = TargetArtifactFile.objects.get(pk=artifact_id)
+            file_name = target.file_name
 
         elif artifact_type == "licensemanifest":
             file_name = Target.objects.get(build = build, pk = artifact_id).license_manifest_path
