@@ -33,7 +33,7 @@
 
         $("#build-menu li a").each(function(){
           /* Set the page active state in the Build menu */
-          var currentUrl = window.location.href.split('?')[0]; 
+          var currentUrl = window.location.href.split('?')[0];
           if (currentUrl === $(this).prop("href")){
             $(this).parent().addClass("active");
           } else {
@@ -62,11 +62,13 @@
           {% endif %} >
           <a  href="{% url 'builddashboard' build.pk %}">Build summary</a>
         </li>
-        {% if build.target_set.all.0.is_image and build.outcome == 0 %}
+        {% if build.has_images and build.outcome == build.SUCCEEDED %}
           <li class="nav-header">Images</li>
           {% block nav-target %}
             {% for t in build.get_sorted_target_list %}
-            <li id="menu-{{t.target}}"><a href="{% url 'target' build.pk t.pk %}">{{t.target}}</a><li>
+              {% if t.has_images %}
+                <li id="menu-{{t.target}}"><a href="{% url 'target' build.pk t.pk %}">{{t.target}}</a><li>
+              {% endif %}
             {% endfor %}
           {% endblock %}
         {% endif %}

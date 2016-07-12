@@ -471,19 +471,14 @@ def builddashboard( request, build_id ):
     recipeCount = Recipe.objects.filter( layer_version__id__in = layerVersionId ).count( );
     tgts = Target.objects.filter( build_id = build_id ).order_by( 'target' );
 
-    ##
     # set up custom target list with computed package and image data
-    #
-
     targets = [ ]
     ntargets = 0
-    hasImages = False
+
     targetHasNoImages = False
     for t in tgts:
         elem = { }
         elem[ 'target' ] = t
-        if t.is_image:
-            hasImages = True
         npkg = 0
         pkgsz = 0
         package = None
@@ -533,7 +528,7 @@ def builddashboard( request, build_id ):
     context = {
             'build'           : build,
             'project'         : build.project,
-            'hasImages'       : hasImages,
+            'hasImages'       : build.has_images(),
             'ntargets'        : ntargets,
             'targets'         : targets,
             'recipecount'     : recipeCount,
