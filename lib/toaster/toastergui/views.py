@@ -472,46 +472,57 @@ def builddashboard( request, build_id ):
     tgts = Target.objects.filter( build_id = build_id ).order_by( 'target' );
 
     # set up custom target list with computed package and image data
-    targets = [ ]
+    targets = []
     ntargets = 0
 
-    targetHasNoImages = False
+    # True if at least one target for this build has an SDK artifact
+    # or image file
+    has_artifacts = False
+
     for t in tgts:
-        elem = { }
-        elem[ 'target' ] = t
+        elem = {}
+        elem['target'] = t
+
+        target_has_images = False
+        image_files = []
+
         npkg = 0
         pkgsz = 0
         package = None
         for package in Package.objects.filter(id__in = [x.package_id for x in t.target_installed_package_set.all()]):
             pkgsz = pkgsz + package.size
-            if ( package.installed_name ):
+            if package.installed_name:
                 npkg = npkg + 1
-        elem[ 'npkg' ] = npkg
-        elem[ 'pkgsz' ] = pkgsz
-        ti = Target_Image_File.objects.filter( target_id = t.id )
-        imageFiles = [ ]
+        elem['npkg'] = npkg
+        elem['pkgsz'] = pkgsz
+        ti = Target_Image_File.objects.filter(target_id = t.id)
         for i in ti:
-            ndx = i.file_name.rfind( '/' )
-            if ( ndx < 0 ):
+            ndx = i.file_name.rfind('/')
+            if ndx < 0:
                 ndx = 0;
-            f = i.file_name[ ndx + 1: ]
-            imageFiles.append({
+            f = i.file_name[ndx + 1:]
+            image_files.append({
                 'id': i.id,
                 'path': f,
                 'size': i.file_size,
                 'suffix': i.suffix
             })
-        if t.is_image and (len(imageFiles) <= 0 or len(t.license_manifest_path) <= 0):
-            targetHasNoImages = True
-        elem[ 'imageFiles' ] = imageFiles
-        elem[ 'targetHasNoImages' ] = targetHasNoImages
+        if len(image_files) > 0:
+            target_has_images = True
+        elem['targetHasImages'] = target_has_images
+
+        elem['imageFiles'] = image_files
         elem['target_kernel_artifacts'] = t.targetkernelfile_set.all()
 
         target_sdk_files = t.targetsdkfile_set.all()
-        elem['target_sdk_artifacts_count'] = target_sdk_files.count()
+        target_sdk_artifacts_count = target_sdk_files.count()
+        elem['target_sdk_artifacts_count'] = target_sdk_artifacts_count
         elem['target_sdk_artifacts'] = target_sdk_files
 
-        targets.append( elem )
+        if target_has_images or target_sdk_artifacts_count > 0:
+            has_artifacts = True
+
+        targets.append(elem)
 
     ##
     # how many packages in this build - ignore anonymous ones
@@ -528,7 +539,7 @@ def builddashboard( request, build_id ):
     context = {
             'build'           : build,
             'project'         : build.project,
-            'hasImages'       : build.has_images(),
+            'hasArtifacts'    : has_artifacts,
             'ntargets'        : ntargets,
             'targets'         : targets,
             'recipecount'     : recipeCount,

@@ -69,11 +69,11 @@
 
 {%if build.outcome == build.SUCCEEDED%}
 <!-- built images -->
-{% if hasImages %}
-    <h2>Images</h2>
+  {% if hasArtifacts %}
+    <h2>Build artifacts</h2>
     {% for target in targets %}
         {% if target.target.is_image %}
-    <div class="well well-transparent dashboard-section">
+    <div class="well well-transparent dashboard-section" data-artifacts-for-target="{{target.target.pk}}">
         <h3><a href="{% url 'target' build.pk target.target.pk %}">{{target.target.target}}</a></h3>
         <dl class="dl-horizontal">
             <dt>Packages included</dt>
@@ -81,26 +81,7 @@
             <dt>Total package size</dt>
             <dd>{{target.pkgsz|filtered_filesizeformat}}</dd>
         </dl>
-        {% if target.targetHasNoImages %}
-            <div class="row">
-              <div class="col-md-7">
-                <div class="alert alert-info">
-                  <p>
-                  <strong>This build did not create any image files</strong>
-                  </p>
-                  <p>
-                  This is probably because valid image and license manifest
-                  files from a previous build already exist in your
-                  <code>build/tmp/deploy</code>
-                  directory. You can
-                  also <a href="{% url 'target' build.pk target.target.pk %}">view the
-                    license manifest information</a> in Toaster.
-                  </p>
-                </div>
-              </div>
-            </div>
-        {% endif %}
-        {% if not target.targetHasNoImages %}
+        {% if target.targetHasImages %}
           <dl class="dl-horizontal">
             <dt>
               Manifests
@@ -163,7 +144,7 @@
     </div>
         {% endif %}
     {% endfor %}
-{% endif %}
+  {% endif %}
 
 {%else%}
 <!-- error dump -->
