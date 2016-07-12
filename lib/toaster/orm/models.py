@@ -440,51 +440,21 @@ class Build(models.Model):
         """
         Get list of file name extensions for images produced by this build
         """
-        targets = Target.objects.filter(build_id = self.id)
         extensions = []
 
-        # pattern to match against file path for building extension string
-        pattern = re.compile('\.([^\.]+?)$')
-
+        targets = Target.objects.filter(build_id = self.id)
         for target in targets:
             if (not target.is_image):
                 continue
 
-            target_image_files = Target_Image_File.objects.filter(target_id = target.id)
+            target_image_files = Target_Image_File.objects.filter(
+                target_id=target.id)
 
             for target_image_file in target_image_files:
-                file_name = os.path.basename(target_image_file.file_name)
-                suffix = ''
+                extensions.append(target_image_file.suffix)
 
-                continue_matching = True
-
-                # incrementally extract the suffix from the file path,
-                # checking it against the list of valid suffixes at each
-                # step; if the path is stripped of all potential suffix
-                # parts without matching a valid suffix, this returns all
-                # characters after the first '.' in the file name
-                while continue_matching:
-                    matches = pattern.search(file_name)
-
-                    if None == matches:
-                        continue_matching = False
-                        suffix = re.sub('^\.', '', suffix)
-                        continue
-                    else:
-                        suffix = matches.group(1) + suffix
-
-                    if suffix in Target_Image_File.SUFFIXES:
-                        continue_matching = False
-                        continue
-                    else:
-                        # reduce the file name and try to find the next
-                        # segment from the path which might be part
-                        # of the suffix
-                        file_name = re.sub('.' + matches.group(1), '', file_name)
-                        suffix = '.' + suffix
-
-                if not suffix in extensions:
-                    extensions.append(suffix)
+        extensions = list(set(extensions))
+        extensions.sort()
 
         return ', '.join(extensions)
 
@@ -658,6 +628,10 @@ class Target_Image_File(models.Model):
 
     @property
     def suffix(self):
+        for suffix in Target_Image_File.SUFFIXES:
+            if self.file_name.endswith(suffix):
+                return suffix
+
         filename, suffix = os.path.splitext(self.file_name)
         suffix = suffix.lstrip('.')
         return suffix
