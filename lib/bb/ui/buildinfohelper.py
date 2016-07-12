@@ -875,6 +875,11 @@ class BuildInfoHelper(object):
         Keeps in memory all data that needs matching before writing it to the database
     """
 
+    # tasks which produce image files; note we include '', as we set
+    # the task for a target to '' (i.e. 'build') if no target is
+    # explicitly defined
+    IMAGE_GENERATING_TASKS = ['', 'build', 'image', 'populate_sdk_ext']
+
     # pylint: disable=protected-access
     # the code will look into the protected variables of the event; no easy way around this
     # pylint: disable=bad-continuation
@@ -1235,11 +1240,16 @@ class BuildInfoHelper(object):
                     logger.warning("KeyError in save_target_package_information"
                                    "%s ", e)
 
-                try:
-                    self.orm_wrapper.save_target_file_information(self.internal_state['build'], target, filedata)
-                except KeyError as e:
-                    logger.warning("KeyError in save_target_file_information"
-                                   "%s ", e)
+                # only try to find files in the image if the task for this
+                # target is one which produces image files; otherwise, the old
+                # list of files in the files-in-image.txt file will be
+                # appended to the target even if it didn't produce any images
+                if target.task in BuildInfoHelper.IMAGE_GENERATING_TASKS:
+                    try:
+                        self.orm_wrapper.save_target_file_information(self.internal_state['build'], target, filedata)
+                    except KeyError as e:
+                        logger.warning("KeyError in save_target_file_information"
+                                       "%s ", e)
 
 
 
