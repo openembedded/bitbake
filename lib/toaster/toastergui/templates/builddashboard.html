@@ -90,6 +90,12 @@
             <dd>
               <a href="{% url 'build_artifact' build.pk 'licensemanifest' target.target.pk %}">License manifest</a>
             </dd>
+
+            {% if target.target.package_manifest_path %}
+              <dd>
+                <a href="{% url 'build_artifact' build.pk 'packagemanifest' target.target.pk %}">Package manifest</a>
+              </dd>
+            {% endif %}
           </dl>
 
           <dl class="dl-horizontal">

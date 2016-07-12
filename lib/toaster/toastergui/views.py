@@ -2315,6 +2315,9 @@ if True:
         elif artifact_type == "licensemanifest":
             file_name = Target.objects.get(build = build, pk = artifact_id).license_manifest_path
 
+        elif artifact_type == "packagemanifest":
+            file_name = Target.objects.get(build = build, pk = artifact_id).package_manifest_path
+
         elif artifact_type == "tasklogfile":
             file_name = Task.objects.get(build = build, pk = artifact_id).logfile
 

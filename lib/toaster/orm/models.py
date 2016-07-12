@@ -622,6 +622,7 @@ class Target(models.Model):
     is_image = models.BooleanField(default = False)
     image_size = models.IntegerField(default=0)
     license_manifest_path = models.CharField(max_length=500, null=True)
+    package_manifest_path = models.CharField(max_length=500, null=True)
 
     def package_count(self):
         return Target_Installed_Package.objects.filter(target_id__exact=self.id).count()
@@ -729,9 +730,9 @@ class Target(models.Model):
         Target_Image_File object for an ext4 image being associated with a
         target for a project which didn't produce an ext4 image (for example).
 
-        Also sets the license_manifest_path of this target to the same path
-        as that of target being cloned from, as the license manifest path is
-        also a build artifact but is treated differently.
+        Also sets the license_manifest_path and package_manifest_path
+        of this target to the same path as that of target being cloned from, as
+        the manifests are also build artifacts but are treated differently.
         """
 
         image_fstypes = self.build.get_image_fstypes()
@@ -754,6 +755,7 @@ class Target(models.Model):
             kernel_file.save()
 
         self.license_manifest_path = target.license_manifest_path
+        self.package_manifest_path = target.package_manifest_path
         self.save()
 
     def clone_sdk_artifacts_from(self, target):

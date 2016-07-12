@@ -256,6 +256,10 @@ class ORMWrapper(object):
         target.license_manifest_path = license_manifest_path
         target.save()
 
+    def update_target_set_package_manifest(self, target, package_manifest_path):
+        target.package_manifest_path = package_manifest_path
+        target.save()
+
     def update_task_object(self, build, task_name, recipe_name, task_stats):
         """
         Find the task for build which matches the recipe and task name
@@ -1597,7 +1601,7 @@ class BuildInfoHelper(object):
         machine = self.server.runCommand(['getVariable', 'MACHINE'])[0]
         image_name = self.server.runCommand(['getVariable', 'IMAGE_NAME'])[0]
 
-        # location of the image_license.manifest files for this build;
+        # location of the manifest files for this build;
         # note that this file is only produced if an image is produced
         license_directory = \
             self.server.runCommand(['getVariable', 'LICENSE_DIRECTORY'])[0]
@@ -1636,6 +1640,11 @@ class BuildInfoHelper(object):
                 real_image_name,
                 'image_license.manifest')
 
+            image_package_manifest_path = os.path.join(
+                license_directory,
+                real_image_name,
+                'image_license.manifest')
+
             # if image_license.manifest exists, we can read the names of bzImage
             # and modules files for this build from it, then look for them
             # in the DEPLOY_DIR_IMAGE; note that this file is only produced
@@ -1657,11 +1666,20 @@ class BuildInfoHelper(object):
 
                 # store the license manifest path on the target
                 # (this file is also created any time an image file is created)
-                license_path = os.path.join(license_directory,
+                license_manifest_path = os.path.join(license_directory,
                     real_image_name, 'license.manifest')
 
                 self.orm_wrapper.update_target_set_license_manifest(
-                    image_target, license_path)
+                    image_target, license_manifest_path)
+
+                # store the package manifest path on the target (this file
+                # is created any time an image file is created)
+                package_manifest_path = os.path.join(deploy_dir_image,
+                    real_image_name + '.rootfs.manifest')
+
+                if os.path.exists(package_manifest_path):
+                    self.orm_wrapper.update_target_set_package_manifest(
+                        image_target, package_manifest_path)
 
             # scan the directory for image files relating to this build
             # (via real_image_name); note that we don't have to set
