@@ -63,7 +63,7 @@
           <a  href="{% url 'builddashboard' build.pk %}">Build summary</a>
         </li>
         {% if build.has_images and build.outcome == build.SUCCEEDED %}
-          <li class="nav-header">Images</li>
+          <li class="nav-header" data-menu-heading="images">Images</li>
           {% block nav-target %}
             {% for t in build.get_sorted_target_list %}
               {% if t.has_images %}

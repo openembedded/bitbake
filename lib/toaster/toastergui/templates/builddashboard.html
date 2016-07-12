@@ -70,7 +70,7 @@
 {%if build.outcome == build.SUCCEEDED%}
 <!-- built images -->
   {% if hasArtifacts %}
-    <h2>Build artifacts</h2>
+    <h2 data-heading="build-artifacts">Build artifacts</h2>
     {% for target in targets %}
         {% if target.target.is_image %}
     <div class="well well-transparent dashboard-section" data-artifacts-for-target="{{target.target.pk}}">
@@ -88,12 +88,12 @@
             </dt>
 
             <dd>
-              <a href="{% url 'build_artifact' build.pk 'licensemanifest' target.target.pk %}">License manifest</a>
+              <a data-link="license-manifest" href="{% url 'build_artifact' build.pk 'licensemanifest' target.target.pk %}">License manifest</a>
             </dd>
 
             {% if target.target.package_manifest_path %}
               <dd>
-                <a href="{% url 'build_artifact' build.pk 'packagemanifest' target.target.pk %}">Package manifest</a>
+                <a data-link="package-manifest" href="{% url 'build_artifact' build.pk 'packagemanifest' target.target.pk %}">Package manifest</a>
               </dd>
             {% endif %}
           </dl>
@@ -104,7 +104,7 @@
                 Image files
             </dt>
             <dd>
-                <ul class="list-unstyled">
+                <ul class="list-unstyled" data-links="image-artifacts">
                     {% for i in target.imageFiles|dictsort:"suffix" %}
                         <li>
                             <a href="{% url 'build_artifact' build.pk 'imagefile' i.id %}">
@@ -119,7 +119,7 @@
                 Kernel artifacts
             </dt>
             <dd>
-                <ul class="list-unstyled">
+                <ul class="list-unstyled" data-links="kernel-artifacts">
                     {% for artifact in target.target_kernel_artifacts|dictsort:"basename" %}
                         <li>
                             <a href="{% url 'build_artifact' build.id 'targetkernelartifact' artifact.id %}">{{artifact.basename}}</a>
@@ -136,7 +136,7 @@
               SDK artifacts
             </dt>
             <dd>
-              <ul class="list-unstyled">
+              <ul class="list-unstyled" data-links="sdk-artifacts">
                 {% for artifact in target.target_sdk_artifacts|dictsort:"basename" %}
                 <li>
                   <a href="{% url 'build_artifact' build.id 'targetsdkartifact' artifact.id %}">{{artifact.basename}}</a>
