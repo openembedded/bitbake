@@ -117,7 +117,7 @@
         {% endwith %}
 
           <!-- new custom image from image recipe in this build -->
-          {% if build.has_image_targets %}
+          {% if build.has_image_recipes %}
             <button class="btn btn-default btn-block navbar-btn" data-role="new-custom-image-trigger">New custom image</button>
             {% include 'newcustomimage_modal.html' %}
             <script>

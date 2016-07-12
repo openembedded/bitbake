@@ -449,18 +449,13 @@ class Build(models.Model):
                 break
         return has_images
 
-    def has_image_targets(self):
+    def has_image_recipes(self):
         """
         Returns True if a build has any targets which were built from
         image recipes.
         """
-        targets = Target.objects.filter(build_id=self.id)
-        has_image_targets = False
-        for target in targets:
-            if target.is_image:
-                has_image_targets = True
-                break
-        return has_image_targets
+        image_recipes = self.get_image_recipes()
+        return len(image_recipes) > 0
 
     def get_image_file_extensions(self):
         """
