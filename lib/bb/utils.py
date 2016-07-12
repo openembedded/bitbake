@@ -1444,9 +1444,8 @@ def set_process_name(name):
     # This is nice to have for debugging, not essential
     try:
         libc = cdll.LoadLibrary('libc.so.6')
-        buff = create_string_buffer(len(name)+1)
-        buff.value = name
-        libc.prctl(15, byref(buff), 0, 0, 0)
+        buf = create_string_buffer(bytes(name, 'utf-8'))
+        libc.prctl(15, byref(buf), 0, 0, 0)
     except:
         pass
 
