@@ -363,6 +363,8 @@ def main(server, eventHandler, params):
                     errors += 1
                     errorcode = 1
                     logger.error("Command execution failed: %s", event.error)
+                elif isinstance(event, bb.event.BuildCompleted):
+                    buildinfohelper.scan_build_artifacts()
 
                 # turn off logging to the current build log
                 _close_build_log(build_log)
@@ -410,12 +412,8 @@ def main(server, eventHandler, params):
                     buildinfohelper.store_target_package_data(event)
                 elif event.type == "MissedSstate":
                     buildinfohelper.store_missed_state_tasks(event)
-                elif event.type == "ImageFileSize":
-                    buildinfohelper.update_target_image_file(event)
                 elif event.type == "ArtifactFileSize":
                     buildinfohelper.update_artifact_image_file(event)
-                elif event.type == "LicenseManifestPath":
-                    buildinfohelper.store_license_manifest_path(event)
                 elif event.type == "SetBRBE":
                     buildinfohelper.brbe = buildinfohelper._get_data_from_event(event)
                 elif event.type == "OSErrorException":
