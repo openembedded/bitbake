@@ -628,6 +628,17 @@ class Build(models.Model):
         return self.outcome == Build.IN_PROGRESS and \
             self.recipes_parsed < self.recipes_to_parse
 
+    def is_starting(self):
+        """
+        True if the build has no completed tasks yet and is still just starting
+        tasks.
+
+        Note that the mechanism for testing whether a Task is "done" is whether
+        its order field is set, as per the completeper() method.
+        """
+        return self.outcome == Build.IN_PROGRESS and \
+            self.task_build.filter(order__isnull=False).count() == 0
+
     def get_state(self):
         """
         Get the state of the build; one of 'Succeeded', 'Failed', 'In Progress',
@@ -643,6 +654,8 @@ class Build(models.Model):
             return 'Queued'
         elif self.is_parsing():
             return 'Parsing'
+        elif self.is_starting():
+            return 'Starting'
         else:
             return self.get_outcome_text()
 

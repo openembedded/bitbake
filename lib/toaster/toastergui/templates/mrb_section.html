@@ -71,6 +71,8 @@
     <%include tmpl='#succeeded-or-failed-build-template'/%>
   <%else state == 'Cancelling'%>
     <%include tmpl='#cancelling-build-template'/%>
+  <%else state == 'Starting'%>
+    <%include tmpl='#starting-template'/%>
   <%else state == 'In Progress'%>
     <%include tmpl='#in-progress-build-template'/%>
   <%else state == 'Cancelled'%>
@@ -81,8 +83,9 @@
 <!-- queued build -->
 <script id="queued-build-template" type="text/x-jsrender">
   <div class="col-md-5">
-    <span class="glyphicon glyphicon-question-sign get-help get-help-blue" title="This build is waiting for
-the build directory to become available"></span>
+    <span class="glyphicon glyphicon-question-sign get-help get-help-blue"
+          title="This build is waiting for the build directory to become available">
+    </span>
 
     Build queued
   </div>
@@ -108,7 +111,8 @@ the build directory to become available"></span>
 
   <div class="col-md-4 progress-info">
     <!-- parse completion percentage -->
-    <span class="glyphicon glyphicon-question-sign get-help get-help-blue" title="BitBake is parsing the layers required for your build"></span>
+    <span class="glyphicon glyphicon-question-sign get-help get-help-blue" title="BitBake is parsing the layers required for your build">
+    </span>
 
     Parsing <span id="recipes-parsed-percentage-<%:id%>"><%:recipes_parsed_percentage%></span>% complete
 
@@ -116,7 +120,23 @@ the build directory to become available"></span>
   </div>
 </script>
 
-<!-- in progress build -->
+<!-- in progress build; tasks still starting -->
+<script id="starting-template" type="text/x-jsrender">
+  <div class="col-md-5">
+    <span class="glyphicon glyphicon-question-sign get-help get-help-blue"
+          title="This build is waiting for tasks to start">
+    </span>
+
+    Tasks starting...
+  </div>
+
+  <div class="col-md-4">
+    <!-- cancel button -->
+    <%include tmpl='#cancel-template'/%>
+  </div>
+</script>
+
+<!-- in progress build; at least one task finished -->
 <script id="in-progress-build-template" type="text/x-jsrender">
   <!-- progress bar and task completion percentage -->
   <div data-role="build-status" class="col-md-4 col-md-offset-1 progress-info">
