@@ -201,6 +201,10 @@ class ORMWrapper(object):
 
     @staticmethod
     def get_or_create_targets(target_info):
+        """
+        NB get_or_create() is used here because for Toaster-triggered builds,
+        we already created the targets when the build was triggered.
+        """
         result = []
         for target in target_info['targets']:
             task = ''
@@ -210,13 +214,10 @@ class ORMWrapper(object):
                 task = task[3:]
             if task == 'build':
                 task = ''
-            obj, created = Target.objects.get_or_create(build=target_info['build'],
-                                                        target=target)
-            if created:
-                obj.is_image = False
-                if task:
-                    obj.task = task
-                obj.save()
+
+            obj, _ = Target.objects.get_or_create(build=target_info['build'],
+                                                  target=target,
+                                                  task=task)
             result.append(obj)
         return result
 
