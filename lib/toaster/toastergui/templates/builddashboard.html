@@ -80,29 +80,30 @@
             <dd><a href="{% url 'target' build.pk target.target.pk %}">{{target.npkg}}</a></dd>
             <dt>Total package size</dt>
             <dd>{{target.pkgsz|filtered_filesizeformat}}</dd>
-                        {% if target.targetHasNoImages %}
-                </dl>
-                <div class="row">
-                  <div class="col-md-7">
-                    <div class="alert alert-info">
-                      <p>
-                      <strong>This build did not create any image files</strong>
-                      </p>
-                      <p>
-                      This is probably because valid image and license manifest
-                      files from a previous build already exist in your
-                      <code>build/tmp/deploy</code>
-                      directory. You can
-                      also <a href="{% url 'target' build.pk target.target.pk %}">view the
-                        license manifest information</a> in Toaster.
-                      </p>
-                    </div>
-                  </div>
+        </dl>
+        {% if target.targetHasNoImages %}
+            <div class="row">
+              <div class="col-md-7">
+                <div class="alert alert-info">
+                  <p>
+                  <strong>This build did not create any image files</strong>
+                  </p>
+                  <p>
+                  This is probably because valid image and license manifest
+                  files from a previous build already exist in your
+                  <code>build/tmp/deploy</code>
+                  directory. You can
+                  also <a href="{% url 'target' build.pk target.target.pk %}">view the
+                    license manifest information</a> in Toaster.
+                  </p>
                 </div>
-        {% else %}
+              </div>
+            </div>
+        {% endif %}
+        {% if not target.targetHasNoImages %}
+          <dl class="dl-horizontal">
             <dt>
                 <span class="glyphicon glyphicon-question-sign get-help" title="The location in disk of the license manifest, a document listing all packages installed in your image and their licenses"></span>
-
                 License manifest
             </dt>
             <dd>
@@ -129,15 +130,32 @@
             </dt>
             <dd>
                 <ul class="list-unstyled">
-                    {% for artifact in target.target_artifacts|dictsort:"basename" %}
+                    {% for artifact in target.target_kernel_artifacts|dictsort:"basename" %}
                         <li>
-                            <a href="{% url 'build_artifact' build.id 'targetartifactfile' artifact.id %}">{{artifact.basename}}</a>
+                            <a href="{% url 'build_artifact' build.id 'targetkernelartifact' artifact.id %}">{{artifact.basename}}</a>
                             ({{artifact.file_size|filtered_filesizeformat}})
                         </li>
                     {% endfor %}
                   </ul>
             </dd>
-        </dl>
+          </dl>
+        {% endif %}
+        {% if target.target_sdk_artifacts_count > 0 %}
+          <dl class="dl-horizontal">
+            <dt>
+              SDK artifacts
+            </dt>
+            <dd>
+              <ul class="list-unstyled">
+                {% for artifact in target.target_sdk_artifacts|dictsort:"basename" %}
+                <li>
+                  <a href="{% url 'build_artifact' build.id 'targetsdkartifact' artifact.id %}">{{artifact.basename}}</a>
+                  ({{artifact.file_size|filtered_filesizeformat}})
+                </li>
+                {% endfor %}
+              </ul>
+            </dd>
+          </dl>
         {% endif %}
     </div>
         {% endif %}

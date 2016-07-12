@@ -37,7 +37,7 @@ os.environ["DJANGO_SETTINGS_MODULE"] =\
 django.setup()
 
 from orm.models import Build, Task, Recipe, Layer_Version, Layer, Target, LogMessage, HelpText
-from orm.models import Target_Image_File, BuildArtifact, TargetArtifactFile
+from orm.models import Target_Image_File, TargetKernelFile, TargetSDKFile
 from orm.models import Variable, VariableHistory
 from orm.models import Package, Package_File, Target_Installed_Package, Target_File
 from orm.models import Task_Dependency, Package_Dependency
@@ -127,6 +127,15 @@ class ORMWrapper(object):
         name ('core-image-minimal' etc.) and machine.
         """
         return target.get_similar_target_with_image_files()
+
+    def get_similar_target_with_sdk_files(self, target):
+        return target.get_similar_target_with_sdk_files()
+
+    def clone_image_artifacts(self, target_from, target_to):
+        target_to.clone_image_artifacts_from(target_from)
+
+    def clone_sdk_artifacts(self, target_from, target_to):
+        target_to.clone_sdk_artifacts_from(target_from)
 
     def _timestamp_to_datetime(self, secs):
         """
@@ -682,35 +691,22 @@ class ORMWrapper(object):
             logger.warning("buildinfohelper: target_package_info could not identify recipes: \n%s", errormsg)
 
     def save_target_image_file_information(self, target_obj, file_name, file_size):
-        Target_Image_File.objects.create( target = target_obj,
-                            file_name = file_name,
-                            file_size = file_size)
-
-    def save_target_artifact_file(self, target_obj, file_name, file_size):
-        """
-        Save artifact file information for a Target target_obj.
-
-        Note that this doesn't include SDK artifacts, only images and
-        related files (e.g. bzImage).
-        """
-        TargetArtifactFile.objects.create(target=target_obj,
+        Target_Image_File.objects.create(target=target_obj,
             file_name=file_name, file_size=file_size)
 
-    def save_artifact_information(self, build_obj, file_name, file_size):
+    def save_target_kernel_file(self, target_obj, file_name, file_size):
         """
-        TODO this is currently used to save SDK artifacts to the database,
-        but will be replaced in future once SDK artifacts are associated with
-        Target objects (as they eventually should be)
+        Save kernel file (bzImage, modules*) information for a Target target_obj.
         """
-        # do not update artifacts found in other builds
-        if BuildArtifact.objects.filter(file_name = file_name).count() > 0:
-            return
+        TargetKernelFile.objects.create(target=target_obj,
+            file_name=file_name, file_size=file_size)
 
-        # do not update artifact if already a target artifact file for that path
-        if TargetArtifactFile.objects.filter(file_name = file_name).count() > 0:
-            return
-
-        BuildArtifact.objects.create(build=build_obj, file_name=file_name,
+    def save_target_sdk_file(self, target_obj, file_name, file_size):
+        """
+        Save SDK artifacts to the database, associating them with a
+        Target object.
+        """
+        TargetSDKFile.objects.create(target=target_obj, file_name=file_name,
             file_size=file_size)
 
     def create_logmessage(self, log_information):
@@ -1084,11 +1080,6 @@ class BuildInfoHelper(object):
         self.orm_wrapper.save_build_variables(build_obj, data)
 
         return self.brbe
-
-    def update_artifact_image_file(self, event):
-        evdata = BuildInfoHelper._get_data_from_event(event)
-        for artifact_path in evdata.keys():
-            self.orm_wrapper.save_artifact_information(self.internal_state['build'], artifact_path, evdata[artifact_path])
 
     def update_build_information(self, event, errors, warnings, taskfailures):
         if 'build' in self.internal_state:
@@ -1568,9 +1559,9 @@ class BuildInfoHelper(object):
 
         return image_files
 
-    def scan_build_artifacts(self):
+    def scan_image_artifacts(self):
         """
-        Scan for build artifacts in DEPLOY_DIR_IMAGE and associate them
+        Scan for built image artifacts in DEPLOY_DIR_IMAGE and associate them
         with a Target object in self.internal_state['targets'].
 
         We have two situations to handle:
@@ -1615,7 +1606,7 @@ class BuildInfoHelper(object):
         # filter out anything which isn't an image target
         image_targets = [target for target in targets if target.is_image]
 
-        for target in image_targets:
+        for image_target in image_targets:
             # this is set to True if we find at least one file relating to
             # this target; if this remains False after the scan, we copy the
             # files from the most-recent Target with the same target + machine
@@ -1627,7 +1618,7 @@ class BuildInfoHelper(object):
             # 'defaultpkgname-<MACHINE>-<BUILDNAME>';
             # we need to change it to
             # <TARGET>-<MACHINE>-<BUILDNAME>
-            real_image_name = re.sub(r'^defaultpkgname', target.target,
+            real_image_name = re.sub(r'^defaultpkgname', image_target.target,
                 image_name)
 
             image_license_manifest_path = os.path.join(
@@ -1651,7 +1642,7 @@ class BuildInfoHelper(object):
 
                     # note that the artifact will only be saved against this
                     # build if it hasn't been already
-                    self.orm_wrapper.save_target_artifact_file(target,
+                    self.orm_wrapper.save_target_kernel_file(image_target,
                         artifact_path, artifact_size)
 
                 # store the license manifest path on the target
@@ -1659,8 +1650,8 @@ class BuildInfoHelper(object):
                 license_path = os.path.join(license_directory,
                     real_image_name, 'license.manifest')
 
-                self.orm_wrapper.update_target_set_license_manifest(target,
-                    license_path)
+                self.orm_wrapper.update_target_set_license_manifest(
+                    image_target, license_path)
 
             # scan the directory for image files relating to this build
             # (via real_image_name); note that we don't have to set
@@ -1675,7 +1666,7 @@ class BuildInfoHelper(object):
 
             for image_file in image_files:
                 self.orm_wrapper.save_target_image_file_information(
-                    target, image_file['path'], image_file['size'])
+                    image_target, image_file['path'], image_file['size'])
 
             if not has_files:
                 # copy image files and build artifacts from the
@@ -1683,13 +1674,115 @@ class BuildInfoHelper(object):
                 # same target + machine as this Target; also copy the license
                 # manifest path, as that is not treated as an artifact and needs
                 # to be set separately
-                most_recent = \
-                    self.orm_wrapper.get_similar_target_with_image_files(target)
+                similar_target = \
+                    self.orm_wrapper.get_similar_target_with_image_files(
+                        image_target)
 
-                if most_recent:
+                if similar_target:
                     logger.info('image artifacts for target %s cloned from ' \
-                        'target %s' % (target.pk, most_recent.pk))
-                    target.clone_artifacts_from(most_recent)
+                        'target %s' % (image_target.pk, similar_target.pk))
+                    self.orm_wrapper.clone_image_artifacts(similar_target,
+                        image_target)
+
+    def _get_sdk_targets(self):
+        """
+        Return targets which could generate SDK artifacts, i.e.
+        "do_populate_sdk" and "do_populate_sdk_ext".
+        """
+        return [target for target in self.internal_state['targets'] \
+            if target.task in ['populate_sdk', 'populate_sdk_ext']]
+
+    def scan_sdk_artifacts(self, event):
+        """
+        Note that we have to intercept an SDKArtifactInfo event from
+        toaster.bbclass (via toasterui) to get hold of the SDK variables we
+        need to be able to scan for files accurately: this is because
+        variables like TOOLCHAIN_OUTPUTNAME have reset to None by the time
+        BuildCompleted is fired by bitbake, so we have to get those values
+        while the build is still in progress.
+
+        For populate_sdk_ext, this runs twice, with two different
+        TOOLCHAIN_OUTPUTNAME settings, each of which will capture some of the
+        files in the SDK output directory.
+        """
+        sdk_vars = BuildInfoHelper._get_data_from_event(event)
+        toolchain_outputname = sdk_vars['TOOLCHAIN_OUTPUTNAME']
+
+        # targets which might have created SDK artifacts
+        sdk_targets = self._get_sdk_targets()
+
+        # location of SDK artifacts
+        tmpdir = self.server.runCommand(['getVariable', 'TMPDIR'])[0]
+        sdk_dir = os.path.join(tmpdir, 'deploy', 'sdk')
+
+        # all files in the SDK directory
+        artifacts = []
+        for dir_path, _, filenames in os.walk(sdk_dir):
+            for filename in filenames:
+                full_path = os.path.join(dir_path, filename)
+                if not os.path.islink(full_path):
+                    artifacts.append(full_path)
+
+        for sdk_target in sdk_targets:
+            # find files in the SDK directory which haven't already been
+            # recorded against a Target and whose basename matches
+            # TOOLCHAIN_OUTPUTNAME
+            for artifact_path in artifacts:
+                basename = os.path.basename(artifact_path)
+
+                toolchain_match = basename.startswith(toolchain_outputname)
+
+                # files which match the name of the target which produced them;
+                # for example,
+                # poky-glibc-x86_64-core-image-sato-i586-toolchain-ext-2.1+snapshot.sh
+                target_match = re.search(sdk_target.target, basename)
+
+                # targets which produce "*-nativesdk-*" files
+                is_ext_sdk_target = sdk_target.task in \
+                    ['do_populate_sdk_ext', 'populate_sdk_ext']
+
+                # SDK files which don't match the target name, i.e.
+                # x86_64-nativesdk-libc.*
+                # poky-glibc-x86_64-buildtools-tarball-i586-buildtools-nativesdk-standalone-2.1+snapshot*
+                is_ext_sdk_file = re.search('-nativesdk-', basename)
+
+                file_from_target = (toolchain_match and target_match) or \
+                    (is_ext_sdk_target and is_ext_sdk_file)
+
+                if file_from_target:
+                    # don't record the file if it's already been added to this
+                    # target
+                    matching_files = TargetSDKFile.objects.filter(
+                        target=sdk_target, file_name=artifact_path)
+
+                    if matching_files.count() == 0:
+                        artifact_size = os.stat(artifact_path).st_size
+
+                        self.orm_wrapper.save_target_sdk_file(
+                            sdk_target, artifact_path, artifact_size)
+
+    def clone_required_sdk_artifacts(self):
+        """
+        If an SDK target doesn't have any SDK artifacts, this means that
+        the postfuncs of populate_sdk or populate_sdk_ext didn't fire, which
+        in turn means that the targets of this build didn't generate any new
+        artifacts.
+
+        In this case, clone SDK artifacts for targets in the current build
+        from existing targets for this build.
+        """
+        sdk_targets = self._get_sdk_targets()
+        for sdk_target in sdk_targets:
+            # only clone for SDK targets which have no TargetSDKFiles yet
+            if sdk_target.targetsdkfile_set.all().count() == 0:
+                similar_target = \
+                    self.orm_wrapper.get_similar_target_with_sdk_files(
+                        sdk_target)
+                if similar_target:
+                    logger.info('SDK artifacts for target %s cloned from ' \
+                        'target %s' % (sdk_target.pk, similar_target.pk))
+                    self.orm_wrapper.clone_sdk_artifacts(similar_target,
+                        sdk_target)
 
     def close(self, errorcode):
         if self.brbe is not None:
