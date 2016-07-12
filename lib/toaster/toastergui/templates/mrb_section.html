@@ -59,25 +59,27 @@
         <%:targets_abbreviated%>
       </span>
     <%else%>
-      ...targets not yet available...
+      Fetching recipe names...
     <%/if%>
   </div>
 
-  <%if state == 'Parsing'%>
-    <%include tmpl='#parsing-recipes-build-template'/%>
-  <%else state == 'Queued'%>
-    <%include tmpl='#queued-build-template'/%>
-  <%else state == 'Succeeded' || state == 'Failed'%>
-    <%include tmpl='#succeeded-or-failed-build-template'/%>
-  <%else state == 'Cancelling'%>
-    <%include tmpl='#cancelling-build-template'/%>
-  <%else state == 'Starting'%>
-    <%include tmpl='#starting-template'/%>
-  <%else state == 'In Progress'%>
-    <%include tmpl='#in-progress-build-template'/%>
-  <%else state == 'Cancelled'%>
-    <%include tmpl='#cancelled-build-template'/%>
-  <%/if%>
+  <div data-build-state="<%:state%>">
+    <%if state == 'Parsing'%>
+      <%include tmpl='#parsing-recipes-build-template'/%>
+    <%else state == 'Queued'%>
+      <%include tmpl='#queued-build-template'/%>
+    <%else state == 'Succeeded' || state == 'Failed'%>
+      <%include tmpl='#succeeded-or-failed-build-template'/%>
+    <%else state == 'Cancelling'%>
+      <%include tmpl='#cancelling-build-template'/%>
+    <%else state == 'Starting'%>
+      <%include tmpl='#starting-template'/%>
+    <%else state == 'In Progress'%>
+      <%include tmpl='#in-progress-build-template'/%>
+    <%else state == 'Cancelled'%>
+      <%include tmpl='#cancelled-build-template'/%>
+    <%/if%>
+  </div>
 </script>
 
 <!-- queued build -->
@@ -111,7 +113,8 @@
 
   <div class="col-md-4 progress-info">
     <!-- parse completion percentage -->
-    <span class="glyphicon glyphicon-question-sign get-help get-help-blue" title="BitBake is parsing the layers required for your build">
+    <span class="glyphicon glyphicon-question-sign get-help get-help-blue"
+          title="BitBake is parsing the layers required for your build">
     </span>
 
     Parsing <span id="recipes-parsed-percentage-<%:id%>"><%:recipes_parsed_percentage%></span>% complete
@@ -178,7 +181,7 @@
     <%if errors%>
       <span class="glyphicon glyphicon-minus-sign"></span>
       <a href="<%:dashboard_errors_url%>" class="alert-link">
-        <%:errors%> error<%:errors_pluralize%>
+        <%:errors%> error<%:errors_pluralise%>
       </a>
     <%/if%>
   </div>
@@ -186,9 +189,9 @@
   <!-- warnings -->
   <div class="col-md-2">
     <%if warnings%>
-      <span class="glyphicon glyphicon-minus-sign"></span>
-      <a href="<%:dashboard_warnings_url%>" class="alert-link">
-        <%:warnings%> warning<%:warnings_pluralize%>
+      <span class="glyphicon glyphicon-warning-sign build-warnings"></span>
+      <a href="<%:dashboard_warnings_url%>" class="alert-link build-warnings">
+        <%:warnings%> warning<%:warnings_pluralise%>
       </a>
     <%/if%>
   </div>
@@ -219,7 +222,7 @@
 <script id="rebuild-template" type="text/x-jsrender">
   <%if is_default_project_build%>
     <!-- no rebuild info icon -->
-    <span class="pull-right glyphicon glyphicon-question-sign get-help <%if state == 'Success'%>get-help-green<%else state == 'Failed'%>get-help-red<%else%>get-help-blue<%/if%>"
+    <span class="pull-right glyphicon glyphicon-question-sign get-help <%if state == 'Succeeded'%>get-help-green<%else state == 'Failed'%>get-help-red<%else%>get-help-blue<%/if%>"
     title="Builds in this project cannot be started from Toaster: they are started from the command line">
     </span>
   <%else%>
