@@ -1670,6 +1670,40 @@
                 task.
                 And, the <filename>do_build</filename> depends on the completion
                 of the <filename>printdate</filename> task.
+                <note>
+                    Recipes are built by having their
+                    <filename>do_build</filename> (not to be confused with
+                    <filename>do_compile</filename>) tasks executed.
+                    For a task to run when a recipe is built, the task must
+                    therefore be a direct or indirect dependency of
+                    <filename>do_build</filename>.
+                    For illustration, here are some examples:
+                    <itemizedlist>
+                        <listitem><para>
+                            The directive
+                            <filename>addtask mytask before do_build</filename>
+                            causes <filename>mytask</filename> to run when the
+                            recipe is built.
+                            In this example, <filename>mytask</filename> is run
+                            at an unspecified time relative to other tasks within
+                            the recipe, since "after" is not used.
+                            </para></listitem>
+                        <listitem><para>
+                            The directive
+                            <filename>addtask mytask after do_configure</filename>
+                            by itself does not cause <filename>mytask</filename>
+                            to run when the recipe is built.
+                            The task can still be run manually using the following:
+                            <literallayout class='monospaced'>
+     $ bitbake <replaceable>recipe</replaceable> -c mytask
+                            </literallayout>
+                            <filename>mytask</filename> could also be declared as
+                            a dependency of some other task.
+                            Regardless, the task is run after
+                            <filename>do_configure</filename>.
+                            </para></listitem>
+                    </itemizedlist>
+                </note>
             </para>
         </section>
 
