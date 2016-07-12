@@ -48,6 +48,10 @@ class TestBuildDashboardPage(SeleniumTestCase):
                                            started_on=now,
                                            completed_on=now)
 
+        self.build3 = Build.objects.create(project=project,
+                                           started_on=now,
+                                           completed_on=now)
+
         # exception
         msg1 = 'an exception was thrown'
         self.exception_message = LogMessage.objects.create(
@@ -70,6 +74,11 @@ class TestBuildDashboardPage(SeleniumTestCase):
         layer_version = Layer_Version.objects.create(
             layer=layer, build=self.build1
         )
+
+        # non-image recipes related to a build, for testing the new custom
+        # image button
+        layer_version2 = Layer_Version.objects.create(layer=layer,
+            build=self.build3)
 
         # image recipes
         self.image_recipe1 = Recipe.objects.create(
@@ -248,3 +257,14 @@ class TestBuildDashboardPage(SeleniumTestCase):
         ]
 
         self._check_labels_in_modal(modal, expected_recipes)
+
+    def test_new_custom_image_button_no_image(self):
+        """
+        Check that a build which builds non-image recipes doesn't show
+        the new custom image button on the dashboard.
+        """
+        self._get_build_dashboard(self.build3)
+        selector = '[data-role="new-custom-image-trigger"]'
+        self.assertFalse(self.element_exists(selector),
+            'new custom image button should not show for builds which ' \
+            'don\'t have any image recipes')
