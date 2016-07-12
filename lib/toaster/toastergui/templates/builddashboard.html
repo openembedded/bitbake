@@ -1,8 +1,9 @@
 {% extends "basebuildpage.html" %}
 {% load humanize %}
 {% load projecttags %}
+{% load field_values_filter %}
 
-{% block title %} {{build.target_set.all|dictsort:"target"|join:", "}} {{build.machine}} - {{build.project.name}} - Toaster {% endblock %}
+{% block title %} {{build.get_sorted_target_list|field_values:"target"|join:", "}} {{build.machine}} - {{build.project.name}} - Toaster {% endblock %}
 {% block parentbreadcrumb %}
 {% if build.get_sorted_target_list.count > 0 %}
   {{build.get_sorted_target_list.0.target}}
@@ -15,7 +16,7 @@
 <!-- page title -->
 <div class="col-md-10">
  <div class="page-header build-data">
-     <h1>{{build.target_set.all|dictsort:"target"|join:", "}} {{build.machine}}</h1>
+     <h1>{{build.get_sorted_target_list|field_values:"target"|join:", "}} {{build.machine}}</h1>
  </div>
 
 <!-- build result bar -->
@@ -113,7 +114,7 @@
             </dt>
             <dd>
                 <ul class="list-unstyled">
-                    {% for i in target.imageFiles %}
+                    {% for i in target.imageFiles|dictsort:"suffix" %}
                         <li>
                             <a href="{% url 'build_artifact' build.pk 'imagefile' i.id %}">
                                 {{i.suffix}}
@@ -261,7 +262,7 @@
         if (location.href.search('#warnings') > -1) {
             $('#warning-info').addClass('in');
         }
-	
+
 	//show warnings section when requested from the build outcome
 	$(".show-warnings").click(function() {
 	    $('#warning-info').addClass('in');
