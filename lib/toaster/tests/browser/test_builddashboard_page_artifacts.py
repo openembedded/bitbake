@@ -24,8 +24,9 @@ from django.utils import timezone
 
 from tests.browser.selenium_helpers import SeleniumTestCase
 
-from orm.models import Project, Release, BitbakeVersion, Build, Target
+from orm.models import Project, Release, BitbakeVersion, Build, Target, Package
 from orm.models import Target_Image_File, TargetSDKFile, TargetKernelFile
+from orm.models import Target_Installed_Package
 
 class TestBuildDashboardPageArtifacts(SeleniumTestCase):
     """ Tests for artifacts on the build dashboard /build/X """
@@ -86,6 +87,8 @@ class TestBuildDashboardPageArtifacts(SeleniumTestCase):
         """
         If a build produced SDK artifacts, they should be shown, but the section
         for image files and the images menu option should be hidden.
+
+        The packages count and size should also be hidden.
         """
         now = timezone.now()
         build = Build.objects.create(project=self.project,
@@ -120,11 +123,28 @@ class TestBuildDashboardPageArtifacts(SeleniumTestCase):
         self.assertEqual(len(sdk_artifact_links), 2,
             'should be links to 2 SDK artifacts')
 
+        # package count and size should not be visible, no link on
+        # target name
+        selector = '[data-value="target-package-count"]'
+        self.assertFalse(self.element_exists(selector),
+            'package count should not be shown for non-image builds')
+
+        selector = '[data-value="target-package-size"]'
+        self.assertFalse(self.element_exists(selector),
+            'package size should not be shown for non-image builds')
+
+        selector = '[data-link="target-packages"]'
+        self.assertFalse(self.element_exists(selector),
+            'link to target packages should not be on target heading')
+
     def test_image_artifacts(self):
         """
         If a build produced image files, kernel artifacts, and manifests,
         they should all be shown, as well as the image link in the left-hand
         menu.
+
+        The packages count and size should be shown, with a link to the
+        package display page.
         """
         now = timezone.now()
         build = Build.objects.create(project=self.project,
@@ -144,6 +164,11 @@ class TestBuildDashboardPageArtifacts(SeleniumTestCase):
 
         kernel_file2 = TargetKernelFile.objects.create(target=target,
             file_name='/home/foo/bzImage', file_size=2000)
+
+        package = Package.objects.create(build=build, name='foo', size=1024,
+            installed_name='foo1')
+        installed_package = Target_Installed_Package.objects.create(
+            target=target, package=package)
 
         self._get_build_dashboard(build)
 
@@ -175,3 +200,18 @@ class TestBuildDashboardPageArtifacts(SeleniumTestCase):
         selector = 'a[data-link="package-manifest"]'
         self.assertTrue(self.element_exists(selector),
             'should be a link to the package manifest (selector %s)' % selector)
+
+        # check package count and size, link on target name
+        selector = '[data-value="target-package-count"]'
+        element = self.find(selector)
+        self.assertEquals(element.text, '1',
+            'package count should be shown for image builds')
+
+        selector = '[data-value="target-package-size"]'
+        element = self.find(selector)
+        self.assertEquals(element.text, '1.0 KB',
+            'package size should be shown for image builds')
+
+        selector = '[data-link="target-packages"]'
+        self.assertTrue(self.element_exists(selector),
+            'link to target packages should be on target heading')

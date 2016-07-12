@@ -74,13 +74,28 @@
     {% for target in targets %}
         {% if target.target.is_image %}
     <div class="well well-transparent dashboard-section" data-artifacts-for-target="{{target.target.pk}}">
-        <h3><a href="{% url 'target' build.pk target.target.pk %}">{{target.target.target}}</a></h3>
-        <dl class="dl-horizontal">
-            <dt>Packages included</dt>
-            <dd><a href="{% url 'target' build.pk target.target.pk %}">{{target.npkg}}</a></dd>
-            <dt>Total package size</dt>
-            <dd>{{target.pkgsz|filtered_filesizeformat}}</dd>
-        </dl>
+        {% if target.npkg > 0 %}
+            <h3>
+                <a href="{% url 'target' build.pk target.target.pk %}" data-link="target-packages">
+                  {{target.target.target}}
+                </a>
+            </h3>
+            <dl class="dl-horizontal">
+                <dt>Packages included</dt>
+                <dd>
+                    <a href="{% url 'target' build.pk target.target.pk %}">
+                        <span data-value="target-package-count">{{target.npkg}}</span>
+                    </a>
+                </dd>
+                <dt>Total package size</dt>
+                <dd>
+                    <span data-value="target-package-size">{{target.pkgsz|filtered_filesizeformat}}</span>
+                </dd>
+            </dl>
+        {% else %}
+            <h3>{{target.target.target}}</h3>
+        {% endif %}
+
         {% if target.targetHasImages %}
           <dl class="dl-horizontal">
             <dt>
