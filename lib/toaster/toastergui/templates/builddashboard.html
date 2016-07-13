@@ -38,8 +38,15 @@
 			{% endif %}
 			<span class="pull-right">
 				Build time:
-				<a class="alert-link" href="{% url 'buildtime' build.pk %}">{{ build.timespent_seconds|sectohms }}</a>
-			</span>
+			  <span data-build-field="buildtime">
+          {% if build.outcome == build.SUCCEEDED %}
+            <a href="{% url 'buildtime' build.pk %}">{{ build.timespent_seconds|sectohms }}</a>
+          {% else %}
+            {{ build.timespent_seconds|sectohms }}
+          {% endif %}
+        </span>
+      </span>
+
 		{%endif%}
 </div>
 

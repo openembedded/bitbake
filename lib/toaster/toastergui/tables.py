@@ -1197,9 +1197,13 @@ class BuildsTable(ToasterTable):
 
         time_template = '''
         {% load projecttags %}
-        <a href="{% url "buildtime" data.id %}">
+        {% if data.outcome == extra.Build.SUCCEEDED %}
+            <a href="{% url "buildtime" data.id %}">
+                {{data.timespent_seconds | sectohms}}
+            </a>
+        {% else %}
             {{data.timespent_seconds | sectohms}}
-        </a>
+        {% endif %}
         '''
 
         image_files_template = '''

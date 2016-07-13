@@ -198,7 +198,15 @@
 
   <!-- build time -->
   <div class="col-md-3">
-    Build time: <a class="alert-link" href="<%:buildtime_url%>"><%:buildtime%></a>
+    Build time:
+
+    <span data-role="data-recent-build-buildtime-field">
+      <%if state == 'Succeeded'%>
+        <a class="alert-link" href="<%:buildtime_url%>"><%:buildtime%></a>
+      <%else%>
+        <%:buildtime%>
+      <%/if%>
+    </span>
 
     <!-- rebuild button -->
     <%include tmpl='#rebuild-template'/%>
