@@ -436,6 +436,21 @@ class Build(models.Model):
 
         return recent_builds
 
+    def started(self):
+        """
+        As build variables are only added for a build when its BuildStarted event
+        is received, a build with no build variables is counted as
+        "in preparation" and not properly started yet. This method
+        will return False if a build has no build variables (it never properly
+        started), or True otherwise.
+
+        Note that this is a temporary workaround for the fact that we don't
+        have a fine-grained state variable on a build which would allow us
+        to record "in progress" (BuildStarted received) vs. "in preparation".
+        """
+        variables = Variable.objects.filter(build=self)
+        return len(variables) > 0
+
     def completeper(self):
         tf = Task.objects.filter(build = self)
         tfc = tf.count()
