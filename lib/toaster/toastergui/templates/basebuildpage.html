@@ -52,104 +52,106 @@
   </div>
 </div>
 
-  <div class="row">
-    <!-- begin left sidebar container -->
-    <div id="nav" class="col-md-2">
-      <ul class="nav nav-pills nav-stacked" id="build-menu">
-        <li
-          {% if request.resolver_match.url_name == 'builddashboard'  %}
-            class="active"
-          {% endif %} >
-          <a  href="{% url 'builddashboard' build.pk %}">Build summary</a>
-        </li>
-        {% if build.has_images and build.outcome == build.SUCCEEDED %}
-          <li class="nav-header" data-menu-heading="images">Images</li>
-          {% block nav-target %}
-            {% for t in build.get_sorted_target_list %}
-              {% if t.has_images %}
-                <li id="menu-{{t.target}}"><a href="{% url 'target' build.pk t.pk %}">{{t.target}}</a><li>
-              {% endif %}
-            {% endfor %}
-          {% endblock %}
-        {% endif %}
-        <li class="nav-header">Build</li>
-          <li id="menu-configuration"><a href="{% url 'configuration' build.pk %}">Configuration</a></li>
-          <li><a href="{% url 'tasks' build.pk %}">Tasks</a></li>
-          <li><a href="{% url 'recipes' build.pk %}">Recipes</a></li>
-          <li><a href="{% url 'packages' build.pk %}">Packages</a></li>
-          <li class="nav-header">Performance</li>
-          <li><a href="{% url 'buildtime' build.pk %}">Time</a></li>
-          <li><a href="{% url 'cputime' build.pk %}">CPU usage</a></li>
-          <li><a href="{% url 'diskio' build.pk %}">Disk I/O</a></li>
+  <!-- begin left sidebar container for builds which started properly -->
+  {% if build.started %}
+    <div class="row">
+      <div id="nav" class="col-md-2">
+        <ul class="nav nav-pills nav-stacked" id="build-menu">
+          <li
+            {% if request.resolver_match.url_name == 'builddashboard'  %}
+              class="active"
+            {% endif %} >
+            <a  href="{% url 'builddashboard' build.pk %}">Build summary</a>
+          </li>
+          {% if build.has_images and build.outcome == build.SUCCEEDED %}
+            <li class="nav-header" data-menu-heading="images">Images</li>
+            {% block nav-target %}
+              {% for t in build.get_sorted_target_list %}
+                {% if t.has_images %}
+                  <li id="menu-{{t.target}}"><a href="{% url 'target' build.pk t.pk %}">{{t.target}}</a><li>
+                {% endif %}
+              {% endfor %}
+            {% endblock %}
+          {% endif %}
+          <li class="nav-header">Build</li>
+            <li id="menu-configuration"><a href="{% url 'configuration' build.pk %}">Configuration</a></li>
+            <li><a href="{% url 'tasks' build.pk %}">Tasks</a></li>
+            <li><a href="{% url 'recipes' build.pk %}">Recipes</a></li>
+            <li><a href="{% url 'packages' build.pk %}">Packages</a></li>
+            <li class="nav-header">Performance</li>
+            <li><a href="{% url 'buildtime' build.pk %}">Time</a></li>
+            <li><a href="{% url 'cputime' build.pk %}">CPU usage</a></li>
+            <li><a href="{% url 'diskio' build.pk %}">Disk I/O</a></li>
 
-	<li class="nav-header">Actions</li>
-       	<a class="btn btn-default btn-block navbar-btn" href="{% url 'build_artifact' build.id 'cookerlog' build.id %}">Download build log</a>
+	  <li class="nav-header">Actions</li>
+         	<a class="btn btn-default btn-block navbar-btn" href="{% url 'build_artifact' build.id 'cookerlog' build.id %}">Download build log</a>
 
-        {% with build.get_custom_image_recipes as custom_image_recipes %}
-          {% if custom_image_recipes.count > 0 %}
-            <!-- edit custom image built during this build -->
-              <button class="btn btn-default btn-block navbar-btn" data-role="edit-custom-image-trigger">Edit custom image</button>
-              {% include 'editcustomimage_modal.html' %}
+          {% with build.get_custom_image_recipes as custom_image_recipes %}
+            {% if custom_image_recipes.count > 0 %}
+              <!-- edit custom image built during this build -->
+                <button class="btn btn-default btn-block navbar-btn" data-role="edit-custom-image-trigger">Edit custom image</button>
+                {% include 'editcustomimage_modal.html' %}
+                <script>
+                  var editableCustomImageRecipes = {{ custom_image_recipes | objects_to_dictionaries:"id,name" | json }};
+
+                  $(document).ready(function () {
+                    var editCustomImageTrigger = $('[data-role="edit-custom-image-trigger"]');
+                    var editCustomImageModal = $('#edit-custom-image-modal');
+
+                    // edit custom image which was built during this build
+                    editCustomImageTrigger.click(function () {
+                      // single editable custom image: redirect to the edit page
+                      // for that image
+                      if (editableCustomImageRecipes.length === 1) {
+                        var url = '{% url "customrecipe" build.project.id custom_image_recipes.first.id %}';
+                        document.location.href = url;
+                      }
+                      // multiple editable custom images: show modal to select
+                      // one of them for editing
+                      else {
+                        editCustomImageModal.modal('show');
+                      }
+                    });
+                  });
+                </script>
+            {% endif %}
+          {% endwith %}
+
+            <!-- new custom image from image recipe in this build -->
+            {% if build.has_image_recipes %}
+              <button class="btn btn-default btn-block navbar-btn" data-role="new-custom-image-trigger">New custom image</button>
+              {% include 'newcustomimage_modal.html' %}
               <script>
-                var editableCustomImageRecipes = {{ custom_image_recipes | objects_to_dictionaries:"id,name" | json }};
+                // imageRecipes includes both custom image recipes and built-in
+                // image recipes, any of which can be used as the basis for a
+                // new custom image
+                var imageRecipes = {{ build.get_image_recipes | objects_to_dictionaries:"id,name" | json }};
 
                 $(document).ready(function () {
-                  var editCustomImageTrigger = $('[data-role="edit-custom-image-trigger"]');
-                  var editCustomImageModal = $('#edit-custom-image-modal');
+                  var newCustomImageModal = $('#new-custom-image-modal');
+                  var newCustomImageTrigger = $('[data-role="new-custom-image-trigger"]');
 
-                  // edit custom image which was built during this build
-                  editCustomImageTrigger.click(function () {
-                    // single editable custom image: redirect to the edit page
-                    // for that image
-                    if (editableCustomImageRecipes.length === 1) {
-                      var url = '{% url "customrecipe" build.project.id custom_image_recipes.first.id %}';
-                      document.location.href = url;
+                  // show create new custom image modal to select an image built
+                  // during this build as the basis for the custom recipe
+                  newCustomImageTrigger.click(function () {
+                    if (!imageRecipes.length) {
+                      return;
                     }
-                    // multiple editable custom images: show modal to select
-                    // one of them for editing
-                    else {
-                      editCustomImageModal.modal('show');
-                    }
+
+                    newCustomImageModalSetRecipes(imageRecipes);
+                    newCustomImageModal.modal('show');
                   });
                 });
               </script>
-          {% endif %}
-        {% endwith %}
+            {% endif %}
+        </ul>
+      </div>
+      <!-- end left sidebar container -->
+    {% endif %}
 
-          <!-- new custom image from image recipe in this build -->
-          {% if build.has_image_recipes %}
-            <button class="btn btn-default btn-block navbar-btn" data-role="new-custom-image-trigger">New custom image</button>
-            {% include 'newcustomimage_modal.html' %}
-            <script>
-              // imageRecipes includes both custom image recipes and built-in
-              // image recipes, any of which can be used as the basis for a
-              // new custom image
-              var imageRecipes = {{ build.get_image_recipes | objects_to_dictionaries:"id,name" | json }};
-
-              $(document).ready(function () {
-                var newCustomImageModal = $('#new-custom-image-modal');
-                var newCustomImageTrigger = $('[data-role="new-custom-image-trigger"]');
-
-                // show create new custom image modal to select an image built
-                // during this build as the basis for the custom recipe
-                newCustomImageTrigger.click(function () {
-                  if (!imageRecipes.length) {
-                    return;
-                  }
-
-                  newCustomImageModalSetRecipes(imageRecipes);
-                  newCustomImageModal.modal('show');
-                });
-              });
-            </script>
-          {% endif %}
-      </ul>
-
+    <!-- right container; need class="row" for builds without left-hand menu -->
+    <div{% if not build.started %} class="row"{% endif %}>
+      {% block buildinfomain %}{% endblock %}
     </div>
-    <!-- end left sidebar container -->
-
-    <!-- begin right container -->
-    {% block buildinfomain %}{% endblock %}
-    <!-- end right container -->
   </div>
 {% endblock %}
