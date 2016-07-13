@@ -26,7 +26,7 @@ from tests.browser.selenium_helpers import SeleniumTestCase
 
 from orm.models import Project, Release, BitbakeVersion, Build, Target, Package
 from orm.models import Target_Image_File, TargetSDKFile, TargetKernelFile
-from orm.models import Target_Installed_Package
+from orm.models import Target_Installed_Package, Variable
 
 class TestBuildDashboardPageArtifacts(SeleniumTestCase):
     """ Tests for artifacts on the build dashboard /build/X """
@@ -150,6 +150,11 @@ class TestBuildDashboardPageArtifacts(SeleniumTestCase):
         build = Build.objects.create(project=self.project,
             started_on=now, completed_on=timezone.now(),
             outcome=Build.SUCCEEDED)
+
+        # add a variable to the build so that it counts as "started"
+        Variable.objects.create(build=build,
+                                variable_name='Christopher',
+                                variable_value='Lee')
 
         target = Target.objects.create(is_image=True, build=build,
             task='', target='core-image-minimal',
