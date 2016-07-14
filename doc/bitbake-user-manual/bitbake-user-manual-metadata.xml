@@ -1686,7 +1686,7 @@
                             recipe is built.
                             In this example, <filename>mytask</filename> is run
                             at an unspecified time relative to other tasks within
-                            the recipe, since "after" is not used.
+                            the recipe, since <filename>after</filename> is not used.
                             </para></listitem>
                         <listitem><para>
                             The directive
@@ -1770,6 +1770,19 @@
                 the dependencies of those tasks.
                 Iterative passes continue until all dependencies are discovered
                 and added.
+            </para>
+
+            <para>
+                The "recrdeptask" flag is most commonly used in high-level
+                recipes that need to wait for some task to finish "globally".
+                For example, <filename>image.bbclass</filename> has the following:
+                <literallayout class='monospaced'>
+     do_rootfs[recrdeptask] += "do_packagedata"
+                </literallayout>
+                This statement says that the <filename>do_packagedata</filename>
+                task of all recipes reachable (by way of dependencies) from the
+                image recipe must run before the <filename>do_rootfs</filename>
+                task can run.
             </para>
 
             <para>
