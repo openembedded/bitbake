@@ -992,19 +992,21 @@
                         mechanism generates recipe variants by rewriting
                         variable values and applying overrides such as
                         <filename>_class-native</filename>.
-                        For example, to generate a native version of a recipe
-                        named "foo", a
+                        For example, to generate a native version of a recipe,
+                        a
                         <link linkend='var-DEPENDS'><filename>DEPENDS</filename></link>
                         on "foo" is rewritten to a <filename>DEPENDS</filename>
                         on "foo-native".
                         </para>
 
                         <para>
-                        No reparsing, which adds some limitations, of the
-                        recipe is done for each variant.
-                        For example, it is not possible to "include" a
-                        different file depending on the variant, since
-                        "include's" are processed when the recipe is parsed.
+                        Even when using <filename>BBCLASSEXTEND</filename>, the
+                        recipe is only parsed once.
+                        Parsing once adds some limitations.
+                        For example, it is not possible to
+                        include a different file depending on the variant,
+                        since <filename>include</filename> statements are
+                        processed when the recipe is parsed.
                         </para>
                     </note>
                 </para>
