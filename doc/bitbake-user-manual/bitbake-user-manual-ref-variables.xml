@@ -52,7 +52,7 @@
        <link linkend='var-MIRRORS'>M</link>
 <!--               <link linkend='var-glossary-n'>N</link> -->
        <link linkend='var-OVERRIDES'>O</link>
-       <link linkend='var-PACKAGES'>P</link>
+       <link linkend='var-P4DIR'>P</link>
 <!--       <link linkend='var-QMAKE_PROFILES'>Q</link> -->
        <link linkend='var-RDEPENDS'>R</link>
        <link linkend='var-SECTION'>S</link>
@@ -1768,6 +1768,15 @@
     </glossdiv>
 
     <glossdiv id='var-glossary-p'><title>P</title>
+
+        <glossentry id='var-P4DIR'><glossterm>P4DIR</glossterm>
+            <glossdef>
+                <para>
+                    The directory in which a local copy of a Perforce depot
+                    is stored when it is fetched.
+                </para>
+            </glossdef>
+        </glossentry>
 
         <glossentry id='var-PACKAGES'><glossterm>PACKAGES</glossterm>
             <glossdef>
