@@ -1219,8 +1219,8 @@ class RunQueue:
                 pass
             self.state = runQueueComplete
             raise
-        except:
-            logger.error("An uncaught exception occured in runqueue, please see the failure below:")
+        except Exception as err:
+            logger.exception("An uncaught exception occurred in runqueue")
             try:
                 self.teardown_workers()
             except:
