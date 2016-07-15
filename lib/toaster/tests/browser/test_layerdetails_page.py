@@ -113,8 +113,8 @@ class TestLayerDetailsPage(SeleniumTestCase):
         new_values = ["%s-edited" % old_val
                       for old_val in self.initial_values]
 
-        for inputs in self.find_all("dd input[type=text]") + \
-                self.find_all("dd textarea"):
+        for inputs in self.find_all('dd input[type="text"]') + \
+                self.find_all('dd textarea'):
             # ignore the tt inputs (twitter typeahead input)
             if "tt-" in inputs.get_attribute("class"):
                 continue
@@ -122,8 +122,8 @@ class TestLayerDetailsPage(SeleniumTestCase):
             value = inputs.get_attribute("value")
 
             self.assertTrue(value in new_values,
-                            "Expecting any of \"%s\"but got \"%s\"" %
-                            (self.initial_values, value))
+                            "Expecting any of \"%s\" but got \"%s\"" %
+                            (new_values, value))
 
     def test_delete_layer(self):
         """ Delete the layer """
