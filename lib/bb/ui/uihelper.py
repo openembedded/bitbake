@@ -54,9 +54,10 @@ class BBUIHelper:
             self.tasknumber_total = event.stats.total
             self.needUpdate = True
         if isinstance(event, bb.build.TaskProgress):
-            self.running_tasks[event.pid]['progress'] = event.progress
-            self.running_tasks[event.pid]['rate'] = event.rate
-            self.needUpdate = True
+            if event.pid > 0:
+                self.running_tasks[event.pid]['progress'] = event.progress
+                self.running_tasks[event.pid]['rate'] = event.rate
+                self.needUpdate = True
 
     def getTasks(self):
         self.needUpdate = False
