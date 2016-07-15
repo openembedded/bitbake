@@ -250,6 +250,18 @@ code { color: #333; background-color: transparent; }
 /* Style the special no results message in the custom image details page */
 [id^="no-results-special-"] > .alert-warning > ol { margin-top: 10px; }
 
+/* style the loading spinner in the new custom image dialog */
+#create-new-custom-image-btn [data-role="loading-state"] {
+  padding-left: 16px;
+}
+
+/* icon has to be absolutely positioned, otherwise the spin animation doesn't work */
+#create-new-custom-image-btn [data-role="loading-state"] .icon-spinner {
+  position: absolute;
+  left: 26px;
+  bottom: 26px;
+}
+
 /* Style the content of modal dialogs */
 .modal-footer { text-align: left; }
 .date-filter-controls { margin-top: 10px; }

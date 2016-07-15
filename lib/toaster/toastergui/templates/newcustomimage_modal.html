@@ -48,7 +48,12 @@
       </div>
 
       <div class="modal-footer">
-        <button id="create-new-custom-image-btn" class="btn btn-primary btn-lg" data-original-title="" title="" disabled>Create custom image</button>
+        <button id="create-new-custom-image-btn" class="btn btn-primary btn-large" disabled>
+          <span data-role="submit-state">Create custom image</span>
+          <span data-role="loading-state" style="display:none">
+            <i class="fa-pulse icon-spinner"></i>&nbsp;Creating custom image...
+          </span>
+        </button>
       </div>
     </div>
   </div>
