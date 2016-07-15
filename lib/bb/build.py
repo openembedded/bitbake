@@ -377,8 +377,11 @@ exit $ret
     def readfifo(data):
         lines = data.split(b'\0')
         for line in lines:
+            # Just skip empty commands
+            if not line:
+                continue
             splitval = line.split(b' ', 1)
-            cmd = splitval[0]
+            cmd = splitval[0].decode("utf-8")
             if len(splitval) > 1:
                 value = splitval[1].decode("utf-8")
             else:
@@ -402,7 +405,8 @@ exit $ret
                 level = int(splitval[0])
                 value = splitval[1]
                 bb.debug(level, value)
-
+            else:
+                bb.warn("Unrecognised command '%s' on FIFO" % cmd)
     tempdir = d.getVar('T', True)
     fifopath = os.path.join(tempdir, 'fifo.%s' % os.getpid())
     if os.path.exists(fifopath):
