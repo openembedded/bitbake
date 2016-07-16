@@ -1017,7 +1017,7 @@
             <glossdef>
                 <para>
                     Sets the BitBake debug output level to a specific value
-                    as incremented by the <filename>-d</filename> command line
+                    as incremented by the <filename>-D</filename> command line
                     option.
                     <note>
                         You must set this variable in the external environment
