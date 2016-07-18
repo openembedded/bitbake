@@ -375,6 +375,12 @@ def _print_exception(t, value, tb, realfile, text, context):
             level = level + 1
 
         error.append("Exception: %s" % ''.join(exception))
+
+        # If the exception is from spwaning a task, let's be helpful and display
+        # the output (which hopefully includes stderr).
+        if isinstance(value, subprocess.CalledProcessError):
+            error.append("Subprocess output:")
+            error.append(value.output.decode("utf-8", errors="ignore"))
     finally:
         logger.error("\n".join(error))
 
