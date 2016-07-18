@@ -303,8 +303,10 @@ class BitBakeConfigParameters(cookerdata.ConfigParameters):
 
         # if BBSERVER says to autodetect, let's do that
         if options.remote_server:
-            [host, port] = options.remote_server.split(":", 2)
-            port = int(port)
+            port = -1
+            if options.remote_server != 'autostart':
+                host, port = options.remote_server.split(":", 2)
+                port = int(port)
             # use automatic port if port set to -1, means read it from
             # the bitbake.lock file; this is a bit tricky, but we always expect
             # to be in the base of the build directory if we need to have a
@@ -321,17 +323,18 @@ class BitBakeConfigParameters(cookerdata.ConfigParameters):
                     lf.close()
                     options.remote_server = remotedef
                 except Exception as e:
-                    raise BBMainException("Failed to read bitbake.lock (%s), invalid port" % str(e))
+                    if options.remote_server != 'autostart':
+                        raise BBMainException("Failed to read bitbake.lock (%s), invalid port" % str(e))
 
         return options, targets[1:]
 
 
 def start_server(servermodule, configParams, configuration, features):
     server = servermodule.BitBakeServer()
-    single_use = not configParams.server_only
+    single_use = not configParams.server_only and os.getenv('BBSERVER') != 'autostart'
     if configParams.bind:
         (host, port) = configParams.bind.split(':')
-        server.initServer((host, int(port)), single_use)
+        server.initServer((host, int(port)), single_use=single_use)
         configuration.interface = [server.serverImpl.host, server.serverImpl.port]
     else:
         server.initServer(single_use=single_use)
@@ -445,6 +448,14 @@ def bitbake_main(configParams, configuration):
         server = start_server(servermodule, configParams, configuration, featureset)
         bb.event.ui_queue = []
     else:
+        if os.getenv('BBSERVER') == 'autostart':
+            if configParams.remote_server == 'autostart' or \
+               not servermodule.check_connection(configParams.remote_server, timeout=2):
+                configParams.bind = 'localhost:0'
+                srv = start_server(servermodule, configParams, configuration, featureset)
+                configParams.remote_server = '%s:%d' % tuple(configuration.interface)
+                bb.event.ui_queue = []
+
         # we start a stub server that is actually a XMLRPClient that connects to a real server
         server = servermodule.BitBakeXMLRPCClient(configParams.observe_only,
                                                   configParams.xmlrpctoken)
