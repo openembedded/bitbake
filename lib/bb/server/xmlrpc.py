@@ -85,6 +85,23 @@ def _create_server(host, port, timeout = 60):
     s = xmlrpc.client.ServerProxy("http://%s:%d/" % (host, port), transport=t, allow_none=True, use_builtin_types=True)
     return s, t
 
+def check_connection(remote, timeout):
+    try:
+        host, port = remote.split(":")
+        port = int(port)
+    except Exception as e:
+        bb.warn("Failed to read remote definition (%s)" % str(e))
+        raise e
+
+    server, _transport = _create_server(host, port, timeout)
+    try:
+        ret, err =  server.runCommand(['getVariable', 'TOPDIR'])
+        if err or not ret:
+            return False
+    except ConnectionError:
+        return False
+    return True
+
 class BitBakeServerCommands():
 
     def __init__(self, server):
