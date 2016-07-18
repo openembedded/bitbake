@@ -599,7 +599,6 @@ def filter_environment(good_vars):
             continue
 
         removed_vars[key] = os.environ[key]
-        os.unsetenv(key)
         del os.environ[key]
 
     # If we spawn a python process, we need to have a UTF-8 locale, else python's file
