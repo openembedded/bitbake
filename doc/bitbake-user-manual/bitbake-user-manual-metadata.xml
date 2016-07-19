@@ -1780,7 +1780,8 @@
      do_rootfs[recrdeptask] += "do_packagedata"
                 </literallayout>
                 This statement says that the <filename>do_packagedata</filename>
-                task of all recipes reachable (by way of dependencies) from the
+                task of the current recipe and all recipes reachable
+                (by way of dependencies) from the
                 image recipe must run before the <filename>do_rootfs</filename>
                 task can run.
             </para>
