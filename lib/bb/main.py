@@ -247,6 +247,9 @@ class BitBakeConfigParameters(cookerdata.ConfigParameters):
                           help="Run bitbake without a UI, only starting a server "
                                "(cooker) process.")
 
+        parser.add_option("", "--foreground", action="store_true",
+                          help="Run bitbake server in foreground.")
+
         parser.add_option("-B", "--bind", action="store", dest="bind", default=False,
                           help="The name/address for the bitbake server to bind to.")
 
@@ -357,7 +360,8 @@ def start_server(servermodule, configParams, configuration, features):
             if isinstance(event, logging.LogRecord):
                 logger.handle(event)
         raise
-    server.detach()
+    if not configParams.foreground:
+        server.detach()
     cooker.lock.close()
     return server
 
@@ -397,6 +401,10 @@ def bitbake_main(configParams, configuration):
             raise BBMainException("FATAL: The '--server-only' option conflicts with %s.\n" %
                                   ("the BBSERVER environment variable" if "BBSERVER" in os.environ \
                                    else "the '--remote-server' option"))
+
+    elif configParams.foreground:
+        raise BBMainException("FATAL: The '--foreground' option can only be used "
+                              "with --server-only.\n")
 
     if configParams.bind and configParams.servertype != "xmlrpc":
         raise BBMainException("FATAL: If '-B' or '--bind' is defined, we must "
@@ -495,6 +503,8 @@ def bitbake_main(configParams, configuration):
     else:
         print("Bitbake server address: %s, server port: %s" % (server.serverImpl.host,
                                                                server.serverImpl.port))
+        if configParams.foreground:
+            server.serverImpl.serve_forever()
         return 0
 
     return 1
