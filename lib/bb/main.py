@@ -253,6 +253,10 @@ class BitBakeConfigParameters(cookerdata.ConfigParameters):
         parser.add_option("-B", "--bind", action="store", dest="bind", default=False,
                           help="The name/address for the bitbake server to bind to.")
 
+        parser.add_option("-T", "--idle-timeout", type=int,
+                          default=int(os.environ.get("BBTIMEOUT", "0")),
+                          help="Set timeout to unload bitbake server due to inactivity")
+
         parser.add_option("", "--no-setscene", action="store_true",
                           dest="nosetscene", default=False,
                           help="Do not run any setscene tasks. sstate will be ignored and "
@@ -337,7 +341,8 @@ def start_server(servermodule, configParams, configuration, features):
     single_use = not configParams.server_only and os.getenv('BBSERVER') != 'autostart'
     if configParams.bind:
         (host, port) = configParams.bind.split(':')
-        server.initServer((host, int(port)), single_use=single_use)
+        server.initServer((host, int(port)), single_use=single_use,
+                          idle_timeout=configParams.idle_timeout)
         configuration.interface = [server.serverImpl.host, server.serverImpl.port]
     else:
         server.initServer(single_use=single_use)

@@ -205,7 +205,7 @@ class XMLRPCServer(SimpleXMLRPCServer, BaseImplServer):
     # remove this when you're done with debugging
     # allow_reuse_address = True
 
-    def __init__(self, interface, single_use=False):
+    def __init__(self, interface, single_use=False, idle_timeout=0):
         """
         Constructor
         """
@@ -223,6 +223,10 @@ class XMLRPCServer(SimpleXMLRPCServer, BaseImplServer):
         self.commands = BitBakeServerCommands(self)
         self.autoregister_all_functions(self.commands, "")
         self.interface = interface
+        self.time = time.time()
+        self.idle_timeout = idle_timeout
+        if idle_timeout:
+            self.register_idle_function(self.handle_idle_timeout, self)
 
     def addcooker(self, cooker):
         BaseImplServer.addcooker(self, cooker)
@@ -238,6 +242,12 @@ class XMLRPCServer(SimpleXMLRPCServer, BaseImplServer):
             if name.startswith(prefix):
                 self.register_function(method, name[len(prefix):])
 
+    def handle_idle_timeout(self, server, data, abort):
+        if not abort:
+            if time.time() - server.time > server.idle_timeout:
+                server.quit = True
+                print("Server idle timeout expired")
+        return []
 
     def serve_forever(self):
         # Start the actual XMLRPC server
@@ -280,6 +290,8 @@ class XMLRPCServer(SimpleXMLRPCServer, BaseImplServer):
             try:
                 fd_sets = select.select(fds, [], [], socktimeout)
                 if fd_sets[0] and self in fd_sets[0]:
+                    if self.idle_timeout:
+                        self.time = time.time()
                     self._handle_request_noblock()
             except IOError:
                 # we ignore interrupted calls
@@ -351,9 +363,10 @@ class BitBakeXMLRPCServerConnection(BitBakeBaseServerConnection):
             pass
 
 class BitBakeServer(BitBakeBaseServer):
-    def initServer(self, interface = ("localhost", 0), single_use = False):
+    def initServer(self, interface = ("localhost", 0),
+                   single_use = False, idle_timeout=0):
         self.interface = interface
-        self.serverImpl = XMLRPCServer(interface, single_use)
+        self.serverImpl = XMLRPCServer(interface, single_use, idle_timeout)
 
     def detach(self):
         daemonize.createDaemon(self.serverImpl.serve_forever, "bitbake-cookerdaemon.log")
