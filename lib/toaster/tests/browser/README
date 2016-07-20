@@ -13,7 +13,7 @@ a Selenium test report with a version-specific format.
 To run tests against Chrome:
 
 * Download chromedriver for your host OS from
-  https://code.google.com/p/chromedriver/downloads/list
+  https://sites.google.com/a/chromium.org/chromedriver/downloads
 * On *nix systems, put chromedriver on PATH
 * On Windows, put chromedriver.exe in the same directory as chrome.exe
 
