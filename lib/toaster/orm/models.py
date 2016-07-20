@@ -1353,6 +1353,7 @@ class Layer(models.Model):
     name = models.CharField(max_length=100)
     layer_index_url = models.URLField()
     vcs_url = GitURLField(default=None, null=True)
+    local_source_dir = models.TextField(null = True, default = None)
     vcs_web_url = models.URLField(null=True, default=None)
     vcs_web_tree_base_url = models.URLField(null=True, default=None)
     vcs_web_file_base_url = models.URLField(null=True, default=None)
