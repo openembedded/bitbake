@@ -744,7 +744,7 @@ class BBCooker:
             for dep in rq.rqdata.runtaskentries[tid].depends:
                 depfn = bb.runqueue.fn_from_tid(dep)
                 deppn = self.recipecache.pkg_fn[depfn]
-                dotname = "%s.%s" % (pn, bb.runqueue.taskname_from_tid(dep))
+                dotname = "%s.%s" % (pn, bb.runqueue.taskname_from_tid(tid))
                 if not dotname in depend_tree["tdepends"]:
                     depend_tree["tdepends"][dotname] = []
                 depend_tree["tdepends"][dotname].append("%s.%s" % (deppn, bb.runqueue.taskname_from_tid(dep)))
