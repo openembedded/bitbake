@@ -295,13 +295,15 @@ class BuiltRecipesTable(BuildTablesMixin):
         {% endif %}{% endwith %}{% endwith %}
         '''
 
-        self.add_column(title="Name",
+        self.add_column(title="Recipe",
                         field_name="name",
                         static_data_name='name',
                         orderable=True,
+                        hideable=False,
                         static_data_template=recipe_name_tmpl)
 
         self.add_column(title="Version",
+                        hideable=False,
                         field_name="version")
 
         self.add_column(title="Dependencies",
