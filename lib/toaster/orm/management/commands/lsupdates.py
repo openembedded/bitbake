@@ -25,6 +25,8 @@ from orm.models import LayerSource, Layer, Release, Layer_Version
 from orm.models import LayerVersionDependency, Machine, Recipe
 
 import os
+import sys
+
 import json
 import logging
 logger = logging.getLogger("toaster")
@@ -35,6 +37,18 @@ DEFAULT_LAYERINDEX_SERVER = "http://layers.openembedded.org/layerindex/api/"
 class Command(NoArgsCommand):
     args = ""
     help = "Updates locally cached information from a layerindex server"
+
+    def mini_progress(self, what, i, total):
+        i = i + 1
+        pec = (float(i)/float(total))*100
+
+        sys.stdout.write("\rUpdating %s %d%%" %
+                         (what,
+                          pec))
+        sys.stdout.flush()
+        if int(pec) is 100:
+            sys.stdout.write("\n")
+            sys.stdout.flush()
 
     def update(self):
         """
@@ -85,7 +99,8 @@ class Command(NoArgsCommand):
         if len(whitelist_branch_names) == 0:
             raise Exception("Failed to make list of branches to fetch")
 
-        logger.debug("Fetching branches")
+        logger.info("Fetching metadata releases for %s",
+                    " ".join(whitelist_branch_names))
 
         # keep a track of the id mappings so that layer_versions can be created
         # for these layers later on
@@ -96,10 +111,10 @@ class Command(NoArgsCommand):
         #                                   "?filter=name:%s"
         #                                   % "OR".join(whitelist_branch_names))
 
-        # update layers
         layers_info = _get_json_response(apilinks['layerItems'])
 
-        for li in layers_info:
+        total = len(layers_info)
+        for i, li in enumerate(layers_info):
             # Special case for the openembedded-core layer
             if li['name'] == oe_core_layer:
                 try:
@@ -113,25 +128,34 @@ class Command(NoArgsCommand):
                     oe_core_l.description = li['description']
                     oe_core_l.save()
                     li_layer_id_to_toaster_layer_id[li['id']] = oe_core_l.pk
+                    self.mini_progress("layers", i, total)
                     continue
 
                 except Layer.DoesNotExist:
                     pass
 
-            l, created = Layer.objects.get_or_create(name=li['name'])
-            l.up_date = li['updated']
-            l.vcs_url = li['vcs_url']
-            l.vcs_web_url = li['vcs_web_url']
-            l.vcs_web_tree_base_url = li['vcs_web_tree_base_url']
-            l.vcs_web_file_base_url = li['vcs_web_file_base_url']
-            l.summary = li['summary']
-            l.description = li['description']
-            l.save()
+            try:
+                l, created = Layer.objects.get_or_create(name=li['name'],
+                                                         vcs_url=li['vcs_url'])
+                l.up_date = li['updated']
+                l.vcs_url = li['vcs_url']
+                l.vcs_web_url = li['vcs_web_url']
+                l.vcs_web_tree_base_url = li['vcs_web_tree_base_url']
+                l.vcs_web_file_base_url = li['vcs_web_file_base_url']
+                l.summary = li['summary']
+                l.description = li['description']
+                l.save()
+            except Layer.MultipleObjectsReturned:
+                logger.info("Skipped %s as we found multiple layers and "
+                            "don't know which to update" %
+                            li['name'])
 
             li_layer_id_to_toaster_layer_id[li['id']] = l.pk
 
-        # update layerbranches/layer_versions
-        logger.debug("Fetching layer information")
+            self.mini_progress("layers", i, total)
+
+        # update layer_versions
+        logger.info("Fetching layer versions")
         layerbranches_info = _get_json_response(
             apilinks['layerBranches'] + "?filter=branch__name:%s" %
             "OR".join(whitelist_branch_names))
@@ -140,7 +164,8 @@ class Command(NoArgsCommand):
         # layer_version toaster object id
         li_layer_branch_id_to_toaster_lv_id = {}
 
-        for lbi in layerbranches_info:
+        total = len(layerbranches_info)
+        for i, lbi in enumerate(layerbranches_info):
 
             try:
                 lv, created = Layer_Version.objects.get_or_create(
@@ -149,8 +174,9 @@ class Command(NoArgsCommand):
                         pk=li_layer_id_to_toaster_layer_id[lbi['layer']])
                 )
             except KeyError:
-                print("No such layerindex layer referenced by layerbranch %d" %
-                      lbi['layer'])
+                logger.warning(
+                    "No such layerindex layer referenced by layerbranch %d" %
+                    lbi['layer'])
                 continue
 
             lv.up_date = lbi['updated']
@@ -160,7 +186,9 @@ class Command(NoArgsCommand):
 
             li_layer_branch_id_to_toaster_lv_id[lbi['id']] =\
                 lv.pk
+            self.mini_progress("layer versions", i, total)
 
+        logger.info("Fetching layer version dependencies")
         # update layer dependencies
         layerdependencies_info = _get_json_response(
             apilinks['layerDependencies'] +
@@ -190,19 +218,22 @@ class Command(NoArgsCommand):
                                "up_id:%s lv:%s" %
                                (self, ldi['dependency'], lv))
 
-        for lv in dependlist:
+        total = len(dependlist)
+        for i, lv in enumerate(dependlist):
             LayerVersionDependency.objects.filter(layer_version=lv).delete()
             for lvd in dependlist[lv]:
                 LayerVersionDependency.objects.get_or_create(layer_version=lv,
                                                              depends_on=lvd)
+            self.mini_progress("Layer version dependencies", i, total)
 
         # update machines
-        logger.debug("Fetching machine information")
+        logger.info("Fetching machine information")
         machines_info = _get_json_response(
             apilinks['machines'] + "?filter=layerbranch__branch__name:%s" %
             "OR".join(whitelist_branch_names))
 
-        for mi in machines_info:
+        total = len(machines_info)
+        for i, mi in enumerate(machines_info):
             mo, created = Machine.objects.get_or_create(
                 name=mi['name'],
                 layer_version=Layer_Version.objects.get(
@@ -211,14 +242,16 @@ class Command(NoArgsCommand):
             mo.name = mi['name']
             mo.description = mi['description']
             mo.save()
+            self.mini_progress("machines", i, total)
 
         # update recipes; paginate by layer version / layer branch
-        logger.debug("Fetching target information")
+        logger.info("Fetching recipe information")
         recipes_info = _get_json_response(
             apilinks['recipes'] + "?filter=layerbranch__branch__name:%s" %
             "OR".join(whitelist_branch_names))
 
-        for ri in recipes_info:
+        total = len(recipes_info)
+        for i, ri in enumerate(recipes_info):
             try:
                 lv_id = li_layer_branch_id_to_toaster_lv_id[ri['layerbranch']]
                 lv = Layer_Version.objects.get(pk=lv_id)
@@ -245,7 +278,9 @@ class Command(NoArgsCommand):
                     ro.is_image = "-image-" in ri['pn']
                 ro.save()
             except Exception as e:
-                logger.debug("Failed saving recipe %s", e)
+                logger.warning("Failed saving recipe %s", e)
+
+            self.mini_progress("recipes", i, total)
 
     def handle_noargs(self, **options):
             self.update()
