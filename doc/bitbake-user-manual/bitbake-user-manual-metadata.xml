@@ -278,6 +278,60 @@
                 "789 123456" and <filename>FOO2</filename> becomes
                 "ghi abcdef".
             </para>
+
+            <para>
+                Like <filename>_append</filename> and
+                <filename>_prepend</filename>, <filename>_remove</filename>
+                is deferred until after parsing completes.
+            </para>
+        </section>
+
+        <section id='override-style-operation-advantages'>
+            <title>Override Style Operation Advantages</title>
+
+            <para>
+                An advantage of the override style operations
+                "_append", "_prepend", and "_remove" as compared to the
+                "+=" and "=+" operators is that the override style
+                operators provide guaranteed operations.
+                For example, consider a class iilename>foo.bbclass</filename>
+                that needs to add the value "val" to the variable
+                <filename>FOO</filename>, and a recipe that uses
+                <filename>foo.bbclass</filename> as follows:
+                <literallayout class='monospaced'>
+     inherit foo
+
+     FOO = "initial"
+                </literallayout>
+                If <filename>foo.bbclass</filename> uses the "+=" operator,
+                as follows, then the final value of <filename>FOO</filename>
+                will be "initial", which is not what is desired:
+                <literallayout class='monospaced'>
+     FOO += "val"
+                </literallayout>
+                If, on the other hand, <filename>foo.bbclass</filename>
+                uses the "_append" operator, then the final value of
+                <filename>FOO</filename> will be "initial val", as intended:
+                <literallayout class='monospaced'>
+     FOO_append = " val"
+                </literallayout>
+                <note>
+                    It is never necessary to use "+=" together with "_append".
+                    The following sequence of assignments appepnds "barbaz" to
+                    <filename>FOO</filename>:
+                    <literallayout class='monospaced'>
+     FOO_append = "bar"
+     FOO_append = "baz"
+                    </literallayout>
+                    The only effect of changing the second assignment in the
+                    previous example is to add a space before "baz" in the
+                    appended value (due to how the "+=" operator works.
+                </note>
+                Another advantage of the override style operations is that
+                you can combine them with other overrides as described in the
+                "<link linkend='conditional-syntax-overrides'>Conditional Syntax (Overrides)</link>"
+                section.
+            </para>
         </section>
 
         <section id='variable-flag-syntax'>
@@ -564,13 +618,13 @@
      OVERRIDES = "foo"
      A = "Y"
      A_foo_append = "Z"
-     A_foo_append += "X"
+     A_foo_append = "X"
                 </literallayout>
                 For this case, before any overrides are resolved,
                 <filename>A</filename> is set to "Y" using an immediate assignment.
                 After this immediate assignment, <filename>A_foo</filename> is set
                 to "Z", and then further appended with
-                "X" leaving the variable set to "Z X".
+                "X" leaving the variable set to "ZX".
                 Finally, applying the override for "foo" results in the conditional
                 variable <filename>A</filename> becoming "Z X" (i.e.
                 <filename>A</filename> is replaced with <filename>A_foo</filename>).
