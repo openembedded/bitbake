@@ -280,8 +280,7 @@
             </para>
 
             <para>
-                Like <filename>_append</filename> and
-                <filename>_prepend</filename>, <filename>_remove</filename>
+                Like "_append" and "_prepend", "_remove"
                 is deferred until after parsing completes.
             </para>
         </section>
@@ -294,7 +293,7 @@
                 "_append", "_prepend", and "_remove" as compared to the
                 "+=" and "=+" operators is that the override style
                 operators provide guaranteed operations.
-                For example, consider a class iilename>foo.bbclass</filename>
+                For example, consider a class <filename>foo.bbclass</filename>
                 that needs to add the value "val" to the variable
                 <filename>FOO</filename>, and a recipe that uses
                 <filename>foo.bbclass</filename> as follows:
@@ -350,8 +349,7 @@
                 You can define, append, and prepend values to variable flags.
                 All the standard syntax operations previously mentioned work
                 for variable flags except for override style syntax
-                (i.e. <filename>_prepend</filename>, <filename>_append</filename>,
-                and <filename>_remove</filename>).
+                (i.e. "_prepend", "_append", and "_remove").
             </para>
 
             <para>
@@ -645,7 +643,7 @@
                 Initially, <filename>A</filename> is set to "1 45" because
                 of the three statements that use immediate operators.
                 After these assignments are made, BitBake applies the
-                <filename>_append</filename> operations.
+                "_append" operations.
                 Those operations result in <filename>A</filename> becoming "1 4523".
             </para>
         </section>
