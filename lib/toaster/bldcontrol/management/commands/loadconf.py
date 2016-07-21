@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand, CommandError
 from orm.models import LayerSource, ToasterSetting, Branch, Layer, Layer_Version
-from orm.models import BitbakeVersion, Release, ReleaseDefaultLayer, ReleaseLayerSourcePriority
+from orm.models import BitbakeVersion, Release, ReleaseDefaultLayer
 from django.db import IntegrityError
 import os
 
@@ -42,7 +42,7 @@ class Command(BaseCommand):
         data = json.loads(open(filepath, "r").read())
 
         # verify config file validity before updating settings
-        for i in ['bitbake', 'releases', 'defaultrelease', 'config', 'layersources']:
+        for i in ['bitbake', 'releases', 'defaultrelease', 'config']:
             assert i in data
 
         def _read_git_url_from_local_repository(address):
@@ -81,65 +81,6 @@ class Command(BaseCommand):
             bvo.dirpath = bvi['dirpath']
             bvo.save()
 
-        # set the layer sources
-        for lsi in data['layersources']:
-            assert 'sourcetype' in lsi
-            assert 'apiurl' in lsi
-            assert 'name' in lsi
-            assert 'branches' in lsi
-
-
-            if _get_id_for_sourcetype(lsi['sourcetype']) == LayerSource.TYPE_LAYERINDEX or lsi['apiurl'].startswith("/"):
-                apiurl = lsi['apiurl']
-            else:
-                apiurl = _reduce_canon_path(os.path.join(DN(os.path.abspath(filepath)), lsi['apiurl']))
-
-            assert ((_get_id_for_sourcetype(lsi['sourcetype']) == LayerSource.TYPE_LAYERINDEX) or apiurl.startswith("/")), (lsi['sourcetype'],apiurl)
-
-            try:
-                ls, created = LayerSource.objects.get_or_create(sourcetype = _get_id_for_sourcetype(lsi['sourcetype']), apiurl = apiurl)
-                ls.name = lsi['name']
-                ls.save()
-            except IntegrityError as e:
-                logger.warning("IntegrityError %s \nWhile setting name %s for layer source %s " % (e, lsi['name'], ls))
-
-
-            layerbranches = []
-            for branchname in lsi['branches']:
-                bo, created = Branch.objects.get_or_create(layer_source = ls, name = branchname)
-                layerbranches.append(bo)
-
-            if 'layers' in lsi:
-                for layerinfo in lsi['layers']:
-                    lo, created = Layer.objects.get_or_create(layer_source = ls, name = layerinfo['name'])
-                    if layerinfo['local_path'].startswith("/"):
-                        lo.local_path = layerinfo['local_path']
-                    else:
-                        lo.local_path = _reduce_canon_path(os.path.join(ls.apiurl, layerinfo['local_path']))
-
-                    if not os.path.exists(lo.local_path):
-                        logger.error("Local layer path %s must exists. Are you trying to import a layer that does not exist ? Check your local toasterconf.json" % lo.local_path)
-
-                    if layerinfo['vcs_url'].startswith("remote:"):
-                        lo.vcs_url = _read_git_url_from_local_repository(layerinfo['vcs_url'])
-                        if lo.vcs_url is None:
-                            logger.error("The toaster config file references the local git repo, but Toaster cannot detect it.\nYour local configuration for layer %s is invalid. Make sure that the toasterconf.json file is correct." % layerinfo['name'])
-
-                    if lo.vcs_url is None:
-                        lo.vcs_url = layerinfo['vcs_url']
-
-                    if 'layer_index_url' in layerinfo:
-                        lo.layer_index_url = layerinfo['layer_index_url']
-                    lo.save()
-
-                    for branch in layerbranches:
-                        lvo, created = Layer_Version.objects.get_or_create(layer_source = ls,
-                                up_branch = branch,
-                                commit = branch.name,
-                                layer = lo)
-                        lvo.dirpath = layerinfo['dirpath']
-                        lvo.save()
-        # set releases
         for ri in data['releases']:
             bvo = BitbakeVersion.objects.get(name = ri['bitbake'])
             assert bvo is not None
@@ -148,12 +89,6 @@ class Command(BaseCommand):
             ro.description = ri['description']
             ro.helptext = ri['helptext']
             ro.save()
-
-            # save layer source priority for release
-            for ls_name in ri['layersourcepriority'].keys():
-                rlspo, created = ReleaseLayerSourcePriority.objects.get_or_create(release = ro, layer_source = LayerSource.objects.get(name=ls_name))
-                rlspo.priority = ri['layersourcepriority'][ls_name]
-                rlspo.save()
 
             for dli in ri['defaultlayers']:
                 # find layers with the same name
