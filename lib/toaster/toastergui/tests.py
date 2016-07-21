@@ -28,7 +28,7 @@ from django.utils import timezone
 from django.db.models import Q
 
 from orm.models import Project, Release, BitbakeVersion, Package, LogMessage
-from orm.models import ReleaseLayerSourcePriority, LayerSource, Layer, Build
+from orm.models import LayerSource, Layer, Build
 from orm.models import Layer_Version, Recipe, Machine, ProjectLayer, Target
 from orm.models import CustomImageRecipe, ProjectVariable
 from orm.models import Branch, CustomImagePackage
@@ -149,7 +149,6 @@ class ViewTests(TestCase):
 
     def test_xhr_import_layer(self):
         """Test xhr_importlayer API"""
-        LayerSource.objects.create(sourcetype=LayerSource.TYPE_IMPORTED)
         #Test for importing an already existing layer
         args = {'vcs_url' : "git://git.example.com/test",
                 'name' : "base-layer",

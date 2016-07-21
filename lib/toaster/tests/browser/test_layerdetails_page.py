@@ -63,7 +63,7 @@ class TestLayerDetailsPage(SeleniumTestCase):
 
         self.imported_layer_version = Layer_Version.objects.create(
             layer=imported_layer,
-            layer_source=layer_source,
+            layer_source=LayerSource.TYPE_IMPORTED,
             branch=gitrev,
             commit=gitrev,
             dirpath=subdir,

@@ -9,24 +9,6 @@ from .checksettings import DN
 import logging
 logger = logging.getLogger("toaster")
 
-def _reduce_canon_path(path):
-    components = []
-    for c in path.split("/"):
-        if c == "..":
-            del components[-1]
-        elif c == ".":
-            pass
-        else:
-            components.append(c)
-    if len(components) < 2:
-        components.append('')
-    return "/".join(components)
-
-def _get_id_for_sourcetype(s):
-    for i in LayerSource.SOURCE_TYPE:
-        if s == i[1]:
-            return i[0]
-    raise Exception("Could not find definition for sourcetype '%s'. Valid source types are %s" % (str(s), ', '.join(map(lambda x: "'%s'" % x[1], LayerSource.SOURCE_TYPE ))))
 
 class Command(BaseCommand):
     help = "Loads a toasterconf.json file in the database"
