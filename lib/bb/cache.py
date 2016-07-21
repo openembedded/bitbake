@@ -395,6 +395,7 @@ class Cache(object):
     @classmethod
     def parse(cls, filename, appends, configdata, caches_array):
         """Parse the specified filename, returning the recipe information"""
+        logger.debug(1, "Parsing %s", filename)
         infos = []
         datastores = cls.load_bbfile(filename, appends, configdata)
         depends = []
@@ -432,7 +433,6 @@ class Cache(object):
                 virtualfn = self.realfn2virtual(filename, variant)
                 infos.append((virtualfn, self.depends_cache[virtualfn]))
         else:
-            logger.debug(1, "Parsing %s", filename)
             return self.parse(filename, appends, configdata, self.caches_array)
 
         return cached, infos
