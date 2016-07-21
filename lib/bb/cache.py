@@ -556,6 +556,9 @@ class Cache(object):
             if virtualfn not in self.depends_cache:
                 logger.debug(2, "Cache: %s is not cached", virtualfn)
                 invalid = True
+            elif len(self.depends_cache[virtualfn]) != len(self.caches_array):
+                logger.debug(2, "Cache: Extra caches missing for %s?" % virtualfn)
+                invalid = True
 
         # If any one of the variants is not present, mark as invalid for all
         if invalid:
