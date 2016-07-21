@@ -25,8 +25,10 @@
 {%if task.task_executed %}
     {# executed tasks outcome #}
     {% if task.logfile %}
-            <a class="btn btn-default btn-lg" href="{% url 'build_artifact' build.id
-                "tasklogfile" task.pk %}">Download task log</a>
+            <a class="btn btn-default btn-lg"
+               href="{% url 'build_artifact' build.id 'tasklogfile' task.pk %}">
+              Download task log
+            </a>
     {% endif %}
         {# show stack trace for failed task #}
         {% if task.outcome == task.OUTCOME_FAILED and log_head %}
@@ -156,8 +158,10 @@ this prebuilt task is reusing"></span></a>
     {%elif task.outcome == task.OUTCOME_CACHED%}
             {% for t in task.get_related_setscene %}
                 {% if forloop.last %}
-                    <a class="btn btn-default btn-lg" href="{% url
-                        'build_artifact' build.id "tasklogfile" t.pk %}">Download task log</a>
+                    <a class="btn btn-default btn-lg"
+                       href="{% url 'build_artifact' build.id "tasklogfile" t.pk %}">
+                      Download task log
+                    </a>
                 {% endif %}
             {% endfor %}
 
