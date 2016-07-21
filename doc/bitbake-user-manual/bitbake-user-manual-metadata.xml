@@ -323,8 +323,9 @@
      FOO_append = "baz"
                     </literallayout>
                     The only effect of changing the second assignment in the
-                    previous example is to add a space before "baz" in the
-                    appended value (due to how the "+=" operator works.
+                    previous example to use ":=" would be to add a space before
+                    "baz" in the appended value (due to how the "+=" operator
+                    works).
                 </note>
                 Another advantage of the override style operations is that
                 you can combine them with other overrides as described in the
@@ -639,7 +640,7 @@
                 to "Z", and then further appended with
                 "X" leaving the variable set to "ZX".
                 Finally, applying the override for "foo" results in the conditional
-                variable <filename>A</filename> becoming "Z X" (i.e.
+                variable <filename>A</filename> becoming "ZX" (i.e.
                 <filename>A</filename> is replaced with <filename>A_foo</filename>).
             </para>
 
