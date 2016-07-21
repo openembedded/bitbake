@@ -431,17 +431,20 @@ class BuildTasksTable(BuildTablesMixin):
         self.add_column(title="Order",
                         static_data_name="order",
                         static_data_template='{{data.order}}',
+                        hideable=False,
                         orderable=True)
 
         self.add_column(title="Task",
                         static_data_name="task_name",
                         static_data_template=task_link_tmpl(
                             "{{data.task_name}}"),
+                        hideable=False,
                         orderable=True)
 
         self.add_column(title="Recipe",
                         static_data_name='recipe__name',
                         static_data_template=recipe_name_tmpl,
+                        hideable=False,
                         orderable=True)
 
         self.add_column(title="Recipe version",
