@@ -36,7 +36,7 @@
     </ul>
 
     {# If this is not an imported layer then hide the edit ui #}
-    {% if not layerversion.layer_source_id or layerversion.layer_source.sourcetype != layerversion.layer_source.TYPE_IMPORTED %}
+    {% if layerversion.layer_source != layer_source.TYPE_IMPORTED %}
     <style scoped>
     .glyphicon-edit {
       display:none;
@@ -69,8 +69,9 @@
           inCurrentPrj : false,
           {% endif %}
           layerdetailurl : "{% url 'layerdetails' project.id layerversion.id  %}",
-          sourceId: {{layerversion.layer_source_id|json}},
-        }
+          layer_source: {{layerversion.layer_source|json}},
+        },
+        layerSourceTypes: {{layer_source|json}},
       };
 
       try {
@@ -89,7 +90,6 @@
         {% endif %}>({{layerversion.get_vcs_reference|truncatechars:13}})</small>
       </h1>
     </div>
-
     <div class="row">
       <!-- container for tabs -->
       <div class="col-md-8 tabbable">
@@ -277,15 +277,15 @@
             <span class="glyphicon glyphicon-edit"></span>
             <span class="glyphicon glyphicon-trash delete-current-value" data-toggle="tooltip" title="Delete"></span>
             </dd>
-            {% if layerversion.layer.up_id %}
+            {% if layerversion.layer_source == layer_source.TYPE_LAYERINDEX  %}
             <dt>Layer index</dt>
             <dd>
-            <a href="http://layers.openembedded.org/layerindex/branch/{{layerversion.up_branch.name}}/layer/{{layerversion.layer.name}}">layer index link</a>
-
+            <a href="http://layers.openembedded.org/layerindex/branch/{{layerversion.release.name}}/layer/{{layerversion.layer.name}}">Layer index {{layerversion.layer.name}}</a>
             </dd>
             {% endif %}
           </dl>
-          {% if layerversion.layer_source_id and layerversion.layer_source.sourcetype == layerversion.layer_source.TYPE_IMPORTED %}
+          {# Only show delete link for imported layers #}
+          {% if layerversion.layer_source == layer_source.TYPE_IMPORTED %}
           <i class="icon-trash text-danger"></i>
           <a href="#delete-layer-modal"  role="button" class="text-danger" data-toggle="modal" data-target="#delete-layer-modal">Delete {{layerversion.layer.name}}</a>
           {% endif %}

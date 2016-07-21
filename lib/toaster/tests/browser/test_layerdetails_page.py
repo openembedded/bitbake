@@ -49,9 +49,6 @@ class TestLayerDetailsPage(SeleniumTestCase):
         # project to add new custom images to
         self.project = Project.objects.create(name='foo', release=release)
 
-        layer_source = LayerSource.objects.create(
-            sourcetype=LayerSource.TYPE_IMPORTED)
-
         name = "meta-imported"
         vcs_url = "git://example.com/meta-imported"
         subdir = "/layer"

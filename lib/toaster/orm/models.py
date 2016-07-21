@@ -1287,6 +1287,14 @@ class LayerSource(object):
         (TYPE_BUILD, "build"),
     )
 
+    def types_dict():
+        """ Turn the TYPES enums into a simple dictionary """
+        dictionary = {}
+        for key in LayerSource.__dict__:
+            if "TYPE" in key:
+                dictionary[key] = getattr(LayerSource, key)
+        return dictionary
+
 
 class Layer(models.Model):
 

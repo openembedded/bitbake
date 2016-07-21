@@ -147,7 +147,7 @@ class XhrLayer(View):
             layer_version = Layer_Version.objects.get(
                 id=kwargs['layerversion_id'],
                 project=kwargs['pid'],
-                layer_source__sourcetype=LayerSource.TYPE_IMPORTED)
+                layer_source=LayerSource.TYPE_IMPORTED)
 
         except Layer_Version.DoesNotExist:
             return error_response("Cannot find imported layer to update")
@@ -159,8 +159,6 @@ class XhrLayer(View):
         if "commit" in request.POST:
             layer_version.commit = request.POST["commit"]
             layer_version.branch = request.POST["commit"]
-        if "up_branch" in request.POST:
-            layer_version.up_branch_id = int(request.POST["up_branch"])
         if "summary" in request.POST:
             layer_version.layer.summary = request.POST["summary"]
         if "description" in request.POST:
@@ -193,7 +191,7 @@ class XhrLayer(View):
             layer_version = Layer_Version.objects.get(
                 id=kwargs['layerversion_id'],
                 project=kwargs['pid'],
-                layer_source__sourcetype=LayerSource.TYPE_IMPORTED)
+                layer_source=LayerSource.TYPE_IMPORTED)
         except Layer_Version.DoesNotExist:
             return error_response("Cannot find imported layer to delete")
 

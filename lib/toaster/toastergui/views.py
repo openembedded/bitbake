@@ -1452,9 +1452,8 @@ if True:
         layers = [{"id": x.layercommit.pk, "orderid": x.pk, "name" : x.layercommit.layer.name,
                    "vcs_url": x.layercommit.layer.vcs_url, "vcs_reference" : x.layercommit.get_vcs_reference(),
                    "url": x.layercommit.layer.layer_index_url, "layerdetailurl": x.layercommit.get_detailspage_url(prj.pk),
-                   # This branch name is actually the release
                    "branch" : {"name" : x.layercommit.get_vcs_reference(),
-                               "layersource" : x.layercommit.up_branch.layer_source.name if x.layercommit.up_branch != None else None}
+                               "layersource" : x.layercommit.layer_source }
                    } for x in prj.projectlayer_set.all().order_by("id")]
 
         context = {
@@ -1670,10 +1669,7 @@ if True:
 
         # We need to know what release the current project is so that we
         # can set the imported layer's up_branch_id
-        prj_branch_name = Release.objects.get(pk=prj.release_id).branch_name
-        up_branch, branch_created = Branch.objects.get_or_create(name=prj_branch_name, layer_source_id=LayerSource.TYPE_IMPORTED)
 
-        layer_source = LayerSource.objects.get(sourcetype=LayerSource.TYPE_IMPORTED)
         try:
             layer, layer_created = Layer.objects.get_or_create(name=post_data['name'])
         except MultipleObjectsReturned:
@@ -1681,7 +1677,6 @@ if True:
 
         if layer:
             if layer_created:
-                layer.layer_source = layer_source
                 layer.vcs_url = post_data['vcs_url']
                 layer.up_date = timezone.now()
                 layer.save()
@@ -1692,12 +1687,24 @@ if True:
                 if layer.vcs_url != post_data['vcs_url']:
                     return HttpResponse(jsonfilter({"error": "hint-layer-exists-with-different-url" , "current_url" : layer.vcs_url, "current_id": layer.id }), content_type = "application/json")
 
-
-            layer_version, version_created = Layer_Version.objects.get_or_create(layer_source=layer_source, layer=layer, project=prj, up_branch_id=up_branch.id,branch=post_data['git_ref'],  commit=post_data['git_ref'], dirpath=post_data['dir_path'])
+            layer_version, version_created = \
+                Layer_Version.objects.get_or_create(
+                        layer_source=LayerSource.TYPE_IMPORTED,
+                        layer=layer, project=prj,
+                        release=prj.release,
+                        branch=post_data['git_ref'],
+                        commit=post_data['git_ref'],
+                        dirpath=post_data['dir_path'])
 
             if layer_version:
                 if not version_created:
-                    return HttpResponse(jsonfilter({"error": "hint-layer-version-exists", "existing_layer_version": layer_version.id }), content_type = "application/json")
+                    return HttpResponse(jsonfilter({"error":
+                                                    "hint-layer-version-exists",
+                                                    "existing_layer_version":
+                                                    layer_version.id }),
+                                        content_type = "application/json")
+
+                layer_version.layer_source = LayerSource.TYPE_IMPORTED
 
                 layer_version.up_date = timezone.now()
                 layer_version.save()
@@ -2179,20 +2186,33 @@ if True:
         }
         return render(request, template, context)
 
+    # TODO merge with api pseudo api here is used for deps modal
     @_template_renderer('layerdetails.html')
     def layerdetails(request, pid, layerid):
         project = Project.objects.get(pk=pid)
         layer_version = Layer_Version.objects.get(pk=layerid)
 
-        context = {'project' : project,
-            'layerversion' : layer_version,
-            'layerdeps' : {"list": [{"id": dep.id,
-                "name": dep.layer.name,
-                "layerdetailurl": reverse('layerdetails', args=(pid, dep.pk)),
-                "vcs_url": dep.layer.vcs_url,
-                "vcs_reference": dep.get_vcs_reference()} \
-                for dep in layer_version.get_alldeps(project.id)]},
-            'projectlayers': [player.layercommit.id for player in ProjectLayer.objects.filter(project=project)]
+        project_layers = ProjectLayer.objects.filter(
+            project=project).values_list("layercommit_id",
+                                         flat=True)
+
+        context = {
+            'project': project,
+            'layer_source': LayerSource.types_dict(),
+            'layerversion': layer_version,
+            'layerdeps': {
+                "list": [
+                    {
+                        "id": dep.id,
+                        "name": dep.layer.name,
+                        "layerdetailurl": reverse('layerdetails',
+                                                  args=(pid, dep.pk)),
+                        "vcs_url": dep.layer.vcs_url,
+                        "vcs_reference": dep.get_vcs_reference()
+                    }
+                    for dep in layer_version.get_alldeps(project.id)]
+            },
+            'projectlayers': list(project_layers)
         }
 
         return context
