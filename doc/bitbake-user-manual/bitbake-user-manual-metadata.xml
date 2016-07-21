@@ -50,22 +50,41 @@
             <title>Variable Expansion</title>
 
             <para>
-                BitBake supports variables referencing one another's
-                contents using a syntax that is similar to shell scripting.
-                Following is an example that results in <filename>A</filename>
-                containing "aval" and <filename>B</filename> evaluating to
-                "preavalpost" based on that current value of
-                <filename>A</filename>.
+                Variables can reference the contents of other variables
+                using a syntax that is similar to variable expansion in
+                Bourne shells.
+                The following assignments
+                result in A containing "aval" and B evaluating to "preavalpost".
                 <literallayout class='monospaced'>
      A = "aval"
      B = "pre${A}post"
                 </literallayout>
-                You should realize that whenever <filename>B</filename> is
-                referenced, its evaluation will depend on the state of
-                <filename>A</filename> at that time.
-                Thus, later evaluations of <filename>B</filename> in the
-                previous example could result in different values
-                depending on the value of <filename>A</filename>.
+                <note>
+                    Unlike in Bourne shells, the curly braces are mandatory:
+                    Only <filename>${FOO}</filename> and not
+                    <filename>$FOO</filename> is recognized as an expansion of
+                    <filename>FOO</filename>.
+                </note>
+                The "=" operator does not immediately expand variable
+                references in the right-hand side.
+                Instead, expansion is deferred until the variable assigned to
+                is actually used.
+                The result depends on the current values of the referenced
+                variables.
+                The following example should clarify this behavior:
+                <literallayout class='monospaced'>
+     A = "${B} baz"
+     B = "${C} bar"
+     C = "foo"
+     *At this point, ${A} equals "foo bar baz"*
+     C = "qux"
+     *At this point, ${A} equals "qux bar baz"*
+     B = "norf"
+     *At this point, ${A} equals "norf baz"*
+                </literallayout>
+                Contrast this behavior with the
+                <link linkend='immediate-variable-expansion'>immediate variable expansion</link>
+                operator (i.e. ":=").
             </para>
         </section>
 
