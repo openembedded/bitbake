@@ -1,5 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <django-objects version="1.0">
+   <object pk="1" model="orm.bitbakeversion">
+      <field type="CharField" name="name">v2.3</field>
+      <field type="GitURLField" name="giturl">git://git.openembedded.org/bitbake</field>
+      <field type="CharField" name="dirpath">b</field>
+      <field type="CharField" name="branch">a</field>
+  </object>
+  <object pk="1" model="orm.release">
+     <field type="CharField" name="name">master</field>
+     <field type="CharField" name="description">master project</field>
+     <field to="orm.bitbake_version" name="bitbake_version">1</field>
+  </object>
   <object pk="1" model="orm.project">
     <field type="CharField" name="name">a test project</field>
     <field type="CharField" name="short_description"></field>
@@ -332,10 +343,6 @@
     <field type="CharField" name="branch_name">master</field>
     <field type="TextField" name="helptext"><None></None></field>
   </object>
-  <object pk="1" model="orm.branch">
-    <field type="CharField" name="name">master</field>
-    <field type="CharField" name="short_description"></field>
-  </object>
   <object pk="1" model="orm.layer">
     <field type="DateTimeField" name="up_date"><None></None></field>
     <field type="CharField" name="name">a layer</field>
@@ -351,7 +358,7 @@
     <field to="orm.build" name="build" rel="ManyToOneRel">1</field>
     <field to="orm.layer" name="layer" rel="ManyToOneRel">1</field>
     <field type="DateTimeField" name="up_date"><None></None></field>
-    <field to="orm.branch" name="up_branch" rel="ManyToOneRel">1</field>
+    <field to="orm.release" name="release" rel="ManyToOneRel">1</field>
     <field type="CharField" name="branch">master</field>
     <field type="CharField" name="commit">abcdef123</field>
     <field type="CharField" name="dirpath">/tmp/</field>
@@ -363,7 +370,7 @@
     <field to="orm.build" name="build" rel="ManyToOneRel"><None></None></field>
     <field to="orm.layer" name="layer" rel="ManyToOneRel">2</field>
     <field type="DateTimeField" name="up_date"><None></None></field>
-    <field to="orm.branch" name="up_branch" rel="ManyToOneRel">1</field>
+    <field to="orm.release" name="release" rel="ManyToOneRel">1</field>
     <field type="CharField" name="branch">testing-branch</field>
     <field type="CharField" name="commit">9876fedcba</field>
     <field type="CharField" name="dirpath"><None></None></field>
@@ -375,7 +382,7 @@
     <field to="orm.build" name="build" rel="ManyToOneRel">1</field>
     <field to="orm.layer" name="layer" rel="ManyToOneRel">2</field>
     <field type="DateTimeField" name="up_date"><None></None></field>
-    <field to="orm.branch" name="up_branch" rel="ManyToOneRel">1</field>
+    <field to="orm.release" name="release" rel="ManyToOneRel">1</field>
     <field type="CharField" name="branch">testing-branch</field>
     <field type="CharField" name="commit">9876fedcba</field>
     <field type="CharField" name="dirpath"><None></None></field>

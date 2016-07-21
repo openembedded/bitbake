@@ -102,14 +102,24 @@ class Command(NoArgsCommand):
         logger.info("Fetching metadata releases for %s",
                     " ".join(whitelist_branch_names))
 
-        # keep a track of the id mappings so that layer_versions can be created
-        # for these layers later on
+        branches_info = _get_json_response(apilinks['branches'] +
+                                           "?filter=name:%s"
+                                           % "OR".join(whitelist_branch_names))
+
+        # Map the layer index branches to toaster releases
+        li_branch_id_to_toaster_release = {}
+
+        total = len(branches_info)
+        for i, branch in enumerate(branches_info):
+            li_branch_id_to_toaster_release[branch['id']] = \
+                    Release.objects.get(name=branch['name'])
+            self.mini_progress("Releases", i, total)
+
+        # keep a track of the layerindex (li) id mappings so that
+        # layer_versions can be created for these layers later on
         li_layer_id_to_toaster_layer_id = {}
 
-        # We may need this? TODO
-        #branches_info = _get_json_response(apilinks['branches'] +
-        #                                   "?filter=name:%s"
-        #                                   % "OR".join(whitelist_branch_names))
+        logger.info("Fetching layers")
 
         layers_info = _get_json_response(apilinks['layerItems'])
 
@@ -179,6 +189,7 @@ class Command(NoArgsCommand):
                     lbi['layer'])
                 continue
 
+            lv.release = li_branch_id_to_toaster_release[lbi['branch']]
             lv.up_date = lbi['updated']
             lv.commit = lbi['actual_branch']
             lv.dirpath = lbi['vcs_subdir']

@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand, CommandError
-from orm.models import LayerSource, ToasterSetting, Branch, Layer, Layer_Version
+from orm.models import LayerSource, ToasterSetting, Layer, Layer_Version
 from orm.models import BitbakeVersion, Release, ReleaseDefaultLayer
 from django.db import IntegrityError
 import os

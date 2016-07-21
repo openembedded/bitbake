@@ -144,7 +144,7 @@ class ProjectManager(models.Manager):
         for rdl in release.releasedefaultlayer_set.all():
             lv = Layer_Version.objects.filter(
                 layer__name=rdl.layer_name,
-                up_branch__name=release.branch_name).first()
+                release=release).first()
 
             if lv:
                 ProjectLayer.objects.create(project=prj,
@@ -280,7 +280,7 @@ class Project(models.Model):
         # guard on release, as it can be null
         if self.release:
             queryset = Layer_Version.objects.filter(
-                (Q(up_branch__name=self.release.branch_name) &
+                (Q(release=self.release) &
                  Q(build=None) &
                  Q(project=None)) |
                  Q(project=self))
@@ -1257,22 +1257,6 @@ class ReleaseDefaultLayer(models.Model):
     layer_name = models.CharField(max_length=100, default="")
 
 
-# Branch class is synced with layerindex.Branch, branches can only come
-# from remote layer indexes
-class Branch(models.Model):
-    # id of branch in the layerindex
-    up_date = models.DateTimeField(null=True, default=None)
-
-    name = models.CharField(max_length=50)
-    short_description = models.CharField(max_length=50, blank=True)
-
-    class Meta:
-        verbose_name_plural = "Branches"
-
-    def __unicode__(self):
-        return self.name
-
-
 class LayerSource(object):
     """ Where the layer metadata came from """
     TYPE_LOCAL = 0
@@ -1321,7 +1305,7 @@ class Layer_Version(models.Model):
     """
     search_allowed_fields = ["layer__name", "layer__summary",
                              "layer__description", "layer__vcs_url",
-                             "dirpath", "up_branch__name", "commit", "branch"]
+                             "dirpath", "release__name", "commit", "branch"]
 
     build = models.ForeignKey(Build, related_name='layer_version_build',
                               default=None, null=True)
@@ -1333,8 +1317,8 @@ class Layer_Version(models.Model):
 
     up_date = models.DateTimeField(null=True, default=timezone.now)
 
-    # layerindex specific field
-    up_branch = models.ForeignKey(Branch, null=True, default=None)
+    # To which metadata release does this layer version belong to
+    release = models.ForeignKey(Release, null=True, default=None)
 
     branch = models.CharField(max_length=80)
     commit = models.CharField(max_length=100)
@@ -1368,7 +1352,7 @@ class Layer_Version(models.Model):
                     extra_path = self.dirpath
             else:
                 extra_path = path
-            branchname = self.up_branch.name
+            branchname = self.release.name
             url = base_url.replace('%branch%', branchname)
 
             # If there's a % in the path (e.g. a wildcard bbappend) we need to encode it
@@ -1404,8 +1388,8 @@ class Layer_Version(models.Model):
     def get_vcs_reference(self):
         if self.branch is not None and len(self.branch) > 0:
             return self.branch
-        if self.up_branch is not None:
-            return self.up_branch.name
+        if self.release is not None:
+            return self.release.name
         if self.commit is not None and len(self.commit) > 0:
             return self.commit
         return 'N/A'

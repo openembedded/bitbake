@@ -393,7 +393,7 @@ class ORMWrapper(object):
             layer_copy, c = Layer_Version.objects.get_or_create(
                 build=build_obj,
                 layer=layer_obj.layer,
-                up_branch=layer_obj.up_branch,
+                release=layer_obj.release,
                 branch=layer_version_information['branch'],
                 commit=layer_version_information['commit'],
                 local_path=layer_version_information['local_path'],
@@ -625,8 +625,8 @@ class ORMWrapper(object):
                         Recipe,
                         name=built_recipe.name,
                         layer_version__build=None,
-                        layer_version__up_branch=
-                        built_recipe.layer_version.up_branch,
+                        layer_version__release=
+                        built_recipe.layer_version.release,
                         file_path=built_recipe.file_path,
                         version=built_recipe.version
                     )

@@ -31,7 +31,7 @@ from orm.models import Project, Release, BitbakeVersion, Package, LogMessage
 from orm.models import LayerSource, Layer, Build
 from orm.models import Layer_Version, Recipe, Machine, ProjectLayer, Target
 from orm.models import CustomImageRecipe, ProjectVariable
-from orm.models import Branch, CustomImagePackage
+from orm.models import CustomImagePackage
 
 import toastermain
 import inspect
