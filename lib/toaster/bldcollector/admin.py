@@ -1,14 +1,11 @@
 from django.contrib import admin
 from django.contrib.admin.filters import RelatedFieldListFilter
-from orm.models import BitbakeVersion, Release, LayerSource, ToasterSetting
+from orm.models import BitbakeVersion, Release, ToasterSetting
 from django.forms.widgets import Textarea
 from django import forms
 import django.db.models as models
 
 from django.contrib.admin import widgets, helpers
-
-class LayerSourceAdmin(admin.ModelAdmin):
-    pass
 
 class BitbakeVersionAdmin(admin.ModelAdmin):
 
@@ -27,7 +24,6 @@ class ReleaseAdmin(admin.ModelAdmin):
 class ToasterSettingAdmin(admin.ModelAdmin):
     pass
 
-admin.site.register(LayerSource, LayerSourceAdmin)
 admin.site.register(BitbakeVersion, BitbakeVersionAdmin)
 admin.site.register(Release, ReleaseAdmin)
 admin.site.register(ToasterSetting, ToasterSettingAdmin)
