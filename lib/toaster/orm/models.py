@@ -1252,6 +1252,9 @@ class Release(models.Model):
     def __unicode__(self):
         return "%s (%s)" % (self.name, self.branch_name)
 
+    def __str__(self):
+        return self.name
+
 class ReleaseDefaultLayer(models.Model):
     release = models.ForeignKey(Release)
     layer_name = models.CharField(max_length=100, default="")
@@ -1418,6 +1421,14 @@ class Layer_Version(models.Model):
 
     def __unicode__(self):
         return ("id %d belongs to layer: %s" % (self.pk, self.layer.name))
+
+    def __str__(self):
+        if self.release:
+            release = self.release.name
+        else:
+            release = "No release set"
+
+        return "%d %s (%s)" % (self.pk, self.layer.name, release)
 
 
 class LayerVersionDependency(models.Model):
