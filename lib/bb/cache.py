@@ -328,6 +328,13 @@ class Cache(object):
                         value = pickled.load()
                     except Exception:
                         break
+                    if not isinstance(key, str):
+                        bb.warn("%s from extras cache is not a string?" % key)
+                        break
+                    if not isinstance(value, RecipeInfoCommon):
+                        bb.warn("%s from extras cache is not a RecipeInfoCommon class?" % value)
+                        break
+
                     if key in self.depends_cache:
                         self.depends_cache[key].append(value)
                     else:
