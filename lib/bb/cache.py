@@ -290,25 +290,6 @@ class Cache(object):
             logger.info("Out of date cache found, rebuilding...")
 
     def load_cachefile(self):
-        # Firstly, using core cache file information for
-        # valid checking
-        with open(self.cachefile, "rb") as cachefile:
-            pickled = pickle.Unpickler(cachefile)
-            try:
-                cache_ver = pickled.load()
-                bitbake_ver = pickled.load()
-            except Exception:
-                logger.info('Invalid cache, rebuilding...')
-                return
-
-            if cache_ver != __cache_version__:
-                logger.info('Cache version mismatch, rebuilding...')
-                return
-            elif bitbake_ver != bb.__version__:
-                logger.info('Bitbake version mismatch, rebuilding...')
-                return
-
-
         cachesize = 0
         previous_progress = 0
         previous_percent = 0
@@ -326,7 +307,24 @@ class Cache(object):
             if type(cache_class) is type and issubclass(cache_class, RecipeInfoCommon):
                 cachefile = getCacheFile(self.cachedir, cache_class.cachefile, self.data_hash)
                 with open(cachefile, "rb") as cachefile:
-                    pickled = pickle.Unpickler(cachefile)                    
+                    pickled = pickle.Unpickler(cachefile)
+                    # Check cache version information
+                    try:
+                        cache_ver = pickled.load()
+                        bitbake_ver = pickled.load()
+                    except Exception:
+                        logger.info('Invalid cache, rebuilding...')
+                        return
+
+                    if cache_ver != __cache_version__:
+                        logger.info('Cache version mismatch, rebuilding...')
+                        return
+                    elif bitbake_ver != bb.__version__:
+                         logger.info('Bitbake version mismatch, rebuilding...')
+                         return
+
+                    # Load the rest of the cache file
+                    current_progress = 0
                     while cachefile:
                         try:
                             key = pickled.load()
@@ -608,9 +606,8 @@ class Cache(object):
                 cachefile = getCacheFile(self.cachedir, cache_class.cachefile, self.data_hash)
                 file_dict[cache_class_name] = open(cachefile, "wb")
                 pickler_dict[cache_class_name] =  pickle.Pickler(file_dict[cache_class_name], pickle.HIGHEST_PROTOCOL)
-                   
-        pickler_dict['CoreRecipeInfo'].dump(__cache_version__)
-        pickler_dict['CoreRecipeInfo'].dump(bb.__version__)
+                pickler_dict[cache_class_name].dump(__cache_version__)
+                pickler_dict[cache_class_name].dump(bb.__version__)
 
         try:
             for key, info_array in self.depends_cache.items():
