@@ -601,26 +601,19 @@ class Cache(object):
             logger.debug(2, "Cache is clean, not saving.")
             return
 
-        file_dict = {}
-        pickler_dict = {}
         for cache_class in self.caches_array:
             cache_class_name = cache_class.__name__
             cachefile = getCacheFile(self.cachedir, cache_class.cachefile, self.data_hash)
-            file_dict[cache_class_name] = open(cachefile, "wb")
-            pickler_dict[cache_class_name] =  pickle.Pickler(file_dict[cache_class_name], pickle.HIGHEST_PROTOCOL)
-            pickler_dict[cache_class_name].dump(__cache_version__)
-            pickler_dict[cache_class_name].dump(bb.__version__)
+            with open(cachefile, "wb") as f:
+                p = pickle.Pickler(f, pickle.HIGHEST_PROTOCOL)
+                p.dump(__cache_version__)
+                p.dump(bb.__version__)
 
-        try:
-            for key, info_array in self.depends_cache.items():
-                for info in info_array:
-                    cache_class_name = info.__class__.__name__
-                    pickler_dict[cache_class_name].dump(key)
-                    pickler_dict[cache_class_name].dump(info)
-        finally:
-            for cache_class in self.caches_array:
-                cache_class_name = cache_class.__name__
-                file_dict[cache_class_name].close()
+                for key, info_array in self.depends_cache.items():
+                    for info in info_array:
+                        if isinstance(info, RecipeInfoCommon) and info.__class__.__name__ == cache_class_name:
+                            p.dump(key)
+                            p.dump(info)
 
         del self.depends_cache
 
