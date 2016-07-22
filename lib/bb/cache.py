@@ -280,10 +280,9 @@ class Cache(object):
         cache_ok = True
         if self.caches_array:
             for cache_class in self.caches_array:
-                if type(cache_class) is type and issubclass(cache_class, RecipeInfoCommon):
-                    cachefile = getCacheFile(self.cachedir, cache_class.cachefile, self.data_hash)
-                    cache_ok = cache_ok and os.path.exists(cachefile)
-                    cache_class.init_cacheData(self)
+                cachefile = getCacheFile(self.cachedir, cache_class.cachefile, self.data_hash)
+                cache_ok = cache_ok and os.path.exists(cachefile)
+                cache_class.init_cacheData(self)
         if cache_ok:
             self.load_cachefile()
         elif os.path.isfile(self.cachefile):
@@ -296,54 +295,52 @@ class Cache(object):
 
         # Calculate the correct cachesize of all those cache files
         for cache_class in self.caches_array:
-            if type(cache_class) is type and issubclass(cache_class, RecipeInfoCommon):
-                cachefile = getCacheFile(self.cachedir, cache_class.cachefile, self.data_hash)
-                with open(cachefile, "rb") as cachefile:
-                    cachesize += os.fstat(cachefile.fileno()).st_size
+            cachefile = getCacheFile(self.cachedir, cache_class.cachefile, self.data_hash)
+            with open(cachefile, "rb") as cachefile:
+                cachesize += os.fstat(cachefile.fileno()).st_size
 
         bb.event.fire(bb.event.CacheLoadStarted(cachesize), self.data)
         
         for cache_class in self.caches_array:
-            if type(cache_class) is type and issubclass(cache_class, RecipeInfoCommon):
-                cachefile = getCacheFile(self.cachedir, cache_class.cachefile, self.data_hash)
-                with open(cachefile, "rb") as cachefile:
-                    pickled = pickle.Unpickler(cachefile)
-                    # Check cache version information
+            cachefile = getCacheFile(self.cachedir, cache_class.cachefile, self.data_hash)
+            with open(cachefile, "rb") as cachefile:
+                pickled = pickle.Unpickler(cachefile)
+                # Check cache version information
+                try:
+                    cache_ver = pickled.load()
+                    bitbake_ver = pickled.load()
+                except Exception:
+                    logger.info('Invalid cache, rebuilding...')
+                    return
+
+                if cache_ver != __cache_version__:
+                    logger.info('Cache version mismatch, rebuilding...')
+                    return
+                elif bitbake_ver != bb.__version__:
+                     logger.info('Bitbake version mismatch, rebuilding...')
+                     return
+
+                # Load the rest of the cache file
+                current_progress = 0
+                while cachefile:
                     try:
-                        cache_ver = pickled.load()
-                        bitbake_ver = pickled.load()
+                        key = pickled.load()
+                        value = pickled.load()
                     except Exception:
-                        logger.info('Invalid cache, rebuilding...')
-                        return
+                        break
+                    if key in self.depends_cache:
+                        self.depends_cache[key].append(value)
+                    else:
+                        self.depends_cache[key] = [value]
+                    # only fire events on even percentage boundaries
+                    current_progress = cachefile.tell() + previous_progress
+                    current_percent = 100 * current_progress / cachesize
+                    if current_percent > previous_percent:
+                        previous_percent = current_percent
+                        bb.event.fire(bb.event.CacheLoadProgress(current_progress, cachesize),
+                                      self.data)
 
-                    if cache_ver != __cache_version__:
-                        logger.info('Cache version mismatch, rebuilding...')
-                        return
-                    elif bitbake_ver != bb.__version__:
-                         logger.info('Bitbake version mismatch, rebuilding...')
-                         return
-
-                    # Load the rest of the cache file
-                    current_progress = 0
-                    while cachefile:
-                        try:
-                            key = pickled.load()
-                            value = pickled.load()
-                        except Exception:
-                            break
-                        if key in self.depends_cache:
-                            self.depends_cache[key].append(value)
-                        else:
-                            self.depends_cache[key] = [value]
-                        # only fire events on even percentage boundaries
-                        current_progress = cachefile.tell() + previous_progress
-                        current_percent = 100 * current_progress / cachesize
-                        if current_percent > previous_percent:
-                            previous_percent = current_percent
-                            bb.event.fire(bb.event.CacheLoadProgress(current_progress, cachesize),
-                                          self.data)
-
-                    previous_progress += current_progress
+                previous_progress += current_progress
 
         # Note: depends cache number is corresponding to the parsing file numbers.
         # The same file has several caches, still regarded as one item in the cache
@@ -407,9 +404,8 @@ class Cache(object):
 
             info_array = []
             for cache_class in caches_array:
-                if type(cache_class) is type and issubclass(cache_class, RecipeInfoCommon):
-                    info = cache_class(filename, data)
-                    info_array.append(info)
+                info = cache_class(filename, data)
+                info_array.append(info)
             infos.append((virtualfn, info_array))
 
         return infos
@@ -601,26 +597,23 @@ class Cache(object):
         file_dict = {}
         pickler_dict = {}
         for cache_class in self.caches_array:
-            if type(cache_class) is type and issubclass(cache_class, RecipeInfoCommon):
-                cache_class_name = cache_class.__name__
-                cachefile = getCacheFile(self.cachedir, cache_class.cachefile, self.data_hash)
-                file_dict[cache_class_name] = open(cachefile, "wb")
-                pickler_dict[cache_class_name] =  pickle.Pickler(file_dict[cache_class_name], pickle.HIGHEST_PROTOCOL)
-                pickler_dict[cache_class_name].dump(__cache_version__)
-                pickler_dict[cache_class_name].dump(bb.__version__)
+            cache_class_name = cache_class.__name__
+            cachefile = getCacheFile(self.cachedir, cache_class.cachefile, self.data_hash)
+            file_dict[cache_class_name] = open(cachefile, "wb")
+            pickler_dict[cache_class_name] =  pickle.Pickler(file_dict[cache_class_name], pickle.HIGHEST_PROTOCOL)
+            pickler_dict[cache_class_name].dump(__cache_version__)
+            pickler_dict[cache_class_name].dump(bb.__version__)
 
         try:
             for key, info_array in self.depends_cache.items():
                 for info in info_array:
-                    if isinstance(info, RecipeInfoCommon):
-                        cache_class_name = info.__class__.__name__
-                        pickler_dict[cache_class_name].dump(key)
-                        pickler_dict[cache_class_name].dump(info)
+                    cache_class_name = info.__class__.__name__
+                    pickler_dict[cache_class_name].dump(key)
+                    pickler_dict[cache_class_name].dump(info)
         finally:
             for cache_class in self.caches_array:
-                if type(cache_class) is type and issubclass(cache_class, RecipeInfoCommon):
-                    cache_class_name = cache_class.__name__
-                    file_dict[cache_class_name].close()
+                cache_class_name = cache_class.__name__
+                file_dict[cache_class_name].close()
 
         del self.depends_cache
 
@@ -652,8 +645,7 @@ class Cache(object):
 
         info_array = []
         for cache_class in self.caches_array:
-            if type(cache_class) is type and issubclass(cache_class, RecipeInfoCommon):
-                info_array.append(cache_class(realfn, data))
+            info_array.append(cache_class(realfn, data))
         self.add_info(file_name, info_array, cacheData, parsed)
 
     @staticmethod
@@ -721,8 +713,9 @@ class CacheData(object):
     def __init__(self, caches_array):
         self.caches_array = caches_array
         for cache_class in self.caches_array:
-            if type(cache_class) is type and issubclass(cache_class, RecipeInfoCommon):
-                cache_class.init_cacheData(self)        
+            if not issubclass(cache_class, RecipeInfoCommon):
+                bb.error("Extra cache data class %s should subclass RecipeInfoCommon class" % cache_class)
+            cache_class.init_cacheData(self)
 
         # Direct cache variables
         self.task_queues = {}
