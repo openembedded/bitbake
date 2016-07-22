@@ -234,10 +234,13 @@ class MultiStageProcessProgressReporter(MultiStageProgressReporter):
     """
     def __init__(self, d, processname, stage_weights, debug=False):
         self._processname = processname
+        self._started = False
         MultiStageProgressReporter.__init__(self, d, stage_weights, debug)
 
     def start(self):
-        bb.event.fire(bb.event.ProcessStarted(self._processname, 100), self._data)
+        if not self._started:
+            bb.event.fire(bb.event.ProcessStarted(self._processname, 100), self._data)
+            self._started = True
 
     def _fire_progress(self, taskprogress):
         if taskprogress == 0:
