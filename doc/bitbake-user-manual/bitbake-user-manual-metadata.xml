@@ -86,6 +86,17 @@
                 <link linkend='immediate-variable-expansion'>immediate variable expansion</link>
                 operator (i.e. ":=").
             </para>
+
+            <para>
+                If the variable expansion syntax is used on a variable that
+                does not exist, the string is kept as is.
+                For example, given the following assignment,
+                <filename>BAR</filename> expands to the literal string
+                "${FOO}" as long as <filename>FOO</filename> does not exist.
+                <literallayout class='monospaced'>
+     BAR = "${FOO}"
+                </literallayout>
+            </para>
         </section>
 
         <section id='setting-a-default-value'>
