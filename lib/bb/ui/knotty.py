@@ -40,9 +40,9 @@ logger = logging.getLogger("BitBake")
 interactive = sys.stdout.isatty()
 
 class BBProgress(progressbar.ProgressBar):
-    def __init__(self, msg, maxval, widgets=None):
+    def __init__(self, msg, maxval, widgets=None, extrapos=-1):
         self.msg = msg
-        self.extrapos = -1
+        self.extrapos = extrapos
         if not widgets:
             widgets = [progressbar.Percentage(), ' ', progressbar.Bar(), ' ',
             progressbar.ETA()]
@@ -69,15 +69,16 @@ class BBProgress(progressbar.ProgressBar):
         self.widgets[0] = msg
 
     def setextra(self, extra):
-        if extra:
-            extrastr = str(extra)
-            if extrastr[0] != ' ':
-                extrastr = ' ' + extrastr
-            if extrastr[-1] != ' ':
-                extrastr += ' '
-        else:
-            extrastr = ' '
-        self.widgets[self.extrapos] = extrastr
+        if self.extrapos > -1:
+            if extra:
+                extrastr = str(extra)
+                if extrastr[0] != ' ':
+                    extrastr = ' ' + extrastr
+                if extrastr[-1] != ' ':
+                    extrastr += ' '
+            else:
+                extrastr = ' '
+            self.widgets[self.extrapos] = extrastr
 
     def _need_update(self):
         # We always want the bar to print when update() is called
@@ -241,7 +242,7 @@ class TerminalFilter(object):
                 start_time = activetasks[t].get("starttime", None)
                 if not pbar or pbar.bouncing != (progress < 0):
                     if progress < 0:
-                        pbar = BBProgress("0: %s (pid %s) " % (activetasks[t]["title"], t), 100, widgets=[progressbar.BouncingSlider()])
+                        pbar = BBProgress("0: %s (pid %s) " % (activetasks[t]["title"], t), 100, widgets=[progressbar.BouncingSlider(), ''], extrapos=2)
                         pbar.bouncing = True
                     else:
                         pbar = BBProgress("0: %s (pid %s) " % (activetasks[t]["title"], t), 100)
