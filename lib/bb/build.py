@@ -385,39 +385,44 @@ exit $ret
         else:
             bb.warn('%s: invalid task progress varflag value "%s", ignoring' % (func, progress))
 
+    fifobuffer = bytearray()
     def readfifo(data):
-        lines = data.split(b'\0')
-        for line in lines:
-            # Just skip empty commands
-            if not line:
-                continue
-            splitval = line.split(b' ', 1)
-            cmd = splitval[0].decode("utf-8")
-            if len(splitval) > 1:
-                value = splitval[1].decode("utf-8")
+        nonlocal fifobuffer
+        fifobuffer.extend(data)
+        while fifobuffer:
+            message, token, nextmsg = fifobuffer.partition(b"\00")
+            if token:
+                splitval = message.split(b' ', 1)
+                cmd = splitval[0].decode("utf-8")
+                if len(splitval) > 1:
+                    value = splitval[1].decode("utf-8")
+                else:
+                    value = ''
+                if cmd == 'bbplain':
+                    bb.plain(value)
+                elif cmd == 'bbnote':
+                    bb.note(value)
+                elif cmd == 'bbwarn':
+                    bb.warn(value)
+                elif cmd == 'bberror':
+                    bb.error(value)
+                elif cmd == 'bbfatal':
+                    # The caller will call exit themselves, so bb.error() is
+                    # what we want here rather than bb.fatal()
+                    bb.error(value)
+                elif cmd == 'bbfatal_log':
+                    bb.error(value, forcelog=True)
+                elif cmd == 'bbdebug':
+                    splitval = value.split(' ', 1)
+                    level = int(splitval[0])
+                    value = splitval[1]
+                    bb.debug(level, value)
+                else:
+                    bb.warn("Unrecognised command '%s' on FIFO" % cmd)
+                fifobuffer = nextmsg
             else:
-                value = ''
-            if cmd == 'bbplain':
-                bb.plain(value)
-            elif cmd == 'bbnote':
-                bb.note(value)
-            elif cmd == 'bbwarn':
-                bb.warn(value)
-            elif cmd == 'bberror':
-                bb.error(value)
-            elif cmd == 'bbfatal':
-                # The caller will call exit themselves, so bb.error() is
-                # what we want here rather than bb.fatal()
-                bb.error(value)
-            elif cmd == 'bbfatal_log':
-                bb.error(value, forcelog=True)
-            elif cmd == 'bbdebug':
-                splitval = value.split(' ', 1)
-                level = int(splitval[0])
-                value = splitval[1]
-                bb.debug(level, value)
-            else:
-                bb.warn("Unrecognised command '%s' on FIFO" % cmd)
+                break
+
     tempdir = d.getVar('T', True)
     fifopath = os.path.join(tempdir, 'fifo.%s' % os.getpid())
     if os.path.exists(fifopath):
