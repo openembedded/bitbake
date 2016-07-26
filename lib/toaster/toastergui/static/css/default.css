@@ -196,17 +196,22 @@ h2 { margin-bottom: 25px; }
 .tt-suggestion:active { background-color: #f5f5f5; cursor: pointer; }
 
 /* Style the import layer form controls*/
-legend { border: none; }
+legend { border: none; margin-top: 20px; }
+.radioLegend { margin-bottom: 0; }
 #layer-name-ctrl { margin-top: 20px; }
 #import-layer-name,
 #layer-subdir { width: 20%; }
 #layer-git-repo-url { width: 40%; }
 #layer-git-ref { width: 32%; }
+#local-dir-path { width: 45%; }
 #layer-dependency { width: 16em; }
+#layer-deps-list { margin-top: 0; }
 #form-actions { margin-bottom: 30px; }
 #duplicate-layer-info dl { margin-top: 10px; }
 #duplicate-layer-info dd { margin-bottom: 10px; }
 .help-inline { color: #737373; margin-left: 10px; }
+.radio-help { width: 50%; margin-left: 20px; }
+#repo-select div:nth-of-type(2) { margin-top: 15px; }
 
 /* Give some padding to the in-cell tooltips we use for notifications in tables */
 td > .tooltip-inner,
