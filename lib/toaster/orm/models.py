@@ -21,7 +21,7 @@
 
 from __future__ import unicode_literals
 
-from django.db import models, IntegrityError
+from django.db import models, IntegrityError, DataError
 from django.db.models import F, Q, Sum, Count
 from django.utils import timezone
 from django.utils.encoding import force_bytes
@@ -78,7 +78,7 @@ if 'sqlite' in settings.DATABASES['default']['ENGINE']:
         try:
             obj = self.create(**params)
             return obj, True
-        except IntegrityError:
+        except (IntegrityError, DataError):
             exc_info = sys.exc_info()
             try:
                 return self.get(**lookup), False
