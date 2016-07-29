@@ -133,19 +133,33 @@
                     {% endcomment %}
                 {% endif %}
             </dd>
-            {% if package.recipe.layer_version.branch %}
             <dt>
                 Layer branch
                 <span class="glyphicon glyphicon-question-sign get-help" title="The Git branch of the layer providing the recipe that builds this package"></span>
+                {%if package.recipe.layer_version.layer.local_source_dir %}
+		<dd>
+		<span class="text-muted">Not applicable</span>
+		<span class="glyphicon glyphicon-question-sign get-help" title="The source code of {{package.recipe.layer_version.layer.name}} is not in a Git repository, so there is no branch associated with it"></span>
+		</dd>
+		{% endif %}
             </dt>
+	    {% if not package.recipe.layer_version.layer.local_source_dir %}
             <dd>{{package.recipe.layer_version.branch}}</dd>
-            {% endif %}
+	    {% endif %}
             <dt>
                 Layer commit
                 <span class="glyphicon glyphicon-question-sign get-help" title="The Git commit of the layer providing the recipe that builds this package"></span>
+                {%if package.recipe.layer_version.layer.local_source_dir %}
+		<dd>
+		<span class="text-muted">Not applicable</span>
+		<span class="glyphicon glyphicon-question-sign get-help" title="The source code of {{package.recipe.layer_version.layer.name}} is not in a Git repository, so there is no commit associated with it"></span>
+		</dd>
+		{% endif %}
             </dt>
 
+	    {% if not package.recipe.layer_version.layer.local_source_dir %}
             <dd class="iscommit">{{package.recipe.layer_version.commit}}</dd>
+	    {% endif %}
 
         </dl>
       <div> <!-- end well -->
