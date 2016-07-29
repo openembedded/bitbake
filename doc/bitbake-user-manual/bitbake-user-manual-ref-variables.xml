@@ -1976,6 +1976,27 @@
                     The <filename>PROVIDES</filename> statement results in
                     the "libav" recipe also being known as "libpostproc".
                 </para>
+
+                <para>
+                    In addition to providing recipes under alternate names,
+                    the <filename>PROVIDES</filename> mechanism is also used
+                    to implement virtual targets.
+                    A virtual target is a name that corresponds to some
+                    particular functionality (e.g. a Linux kernel).
+                    Recipes that provide the functionality in question list the
+                    virtual target in <filename>PROVIDES</filename>.
+                    Recipes that depend on the functionality in question can
+                    include the virtual target in
+                    <link linkend='var-DEPENDS'><filename>DEPENDS</filename></link>
+                    to leave the choice of provider open.
+                </para>
+
+                <para>
+                    Conventionally, virtual targets have names on the form
+                    "virtual/function" (e.g. "virtual/kernel").
+                    The slash is simply part of the name and has no
+                    syntactical significance.
+                </para>
             </glossdef>
         </glossentry>
 
