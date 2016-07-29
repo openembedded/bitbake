@@ -822,11 +822,21 @@ def _find_task_dep(task_object):
 def _find_task_revdep(task_object):
     tdeps = Task_Dependency.objects.filter(depends_on=task_object).filter(task__order__gt=0)
     tdeps = tdeps.exclude(task__outcome = Task.OUTCOME_NA).select_related("task", "task__recipe", "task__build")
+
+    # exclude self-dependencies to prevent infinite dependency loop
+    # in generateCoveredList2()
+    tdeps = tdeps.exclude(task=task_object)
+
     return [tdep.task for tdep in tdeps]
 
 def _find_task_revdep_list(tasklist):
     tdeps = Task_Dependency.objects.filter(depends_on__in=tasklist).filter(task__order__gt=0)
     tdeps = tdeps.exclude(task__outcome=Task.OUTCOME_NA).select_related("task", "task__recipe", "task__build")
+
+    # exclude self-dependencies to prevent infinite dependency loop
+    # in generateCoveredList2()
+    tdeps = tdeps.exclude(task=F('depends_on'))
+
     return [tdep.task for tdep in tdeps]
 
 def _find_task_provider(task_object):
