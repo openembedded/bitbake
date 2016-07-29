@@ -69,21 +69,37 @@
                     Recipe file
                 </dt>
                 <dd><code>{{object.file_path}} {% if object.pathflags %}<i>({{object.pathflags}})</i>{% endif %}</code></dd>
-                {% if layer_version.branch %}
                 <dt>
                     <span class="glyphicon glyphicon-question-sign get-help"
                         title="The Git branch of the layer providing the
                     recipe"></span>
                     Layer branch
                 </dt>
+                {% if layer_version.layer.local_source_dir %}
+                <dd>
+		  <span class="text-muted">Not applicable</span>
+		  <span class="glyphicon glyphicon-question-sign get-help" title="The source
+                  code of {{layer_version.layer.name}} is not in a git repository
+                  so there is no branch associated with it"></span>
+                </dd>
+                {% else %}
                 <dd>{{layer_version.branch}}</dd>
-                {% endif %}
+		{% endif %}
                 <dt>
                     <span class="glyphicon glyphicon-question-sign get-help" title="The Git
                         commit of the layer providing the recipe"></span>
                     Layer commit
                 </dt>
+                {% if layer_version.layer.local_source_dir %}
+		<dd>
+		  <span class="text-muted">Not applicable</span>
+		  <span class="glyphicon glyphicon-question-sign get-help" title="The source
+                  code of {{layer_version.layer.name}} is not in a git repository
+                  so there is no commit associated with it"></span>
+		</dd>
+                {% else %}
                 <dd class="iscommit">{{layer_version.commit}}</dd>
+		{% endif %}
                 {% if object.provides_set.all %}
                 <dt>
                     <span class="glyphicon glyphicon-question-sign get-help"
