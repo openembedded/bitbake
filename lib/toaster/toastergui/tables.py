@@ -114,8 +114,12 @@ class LayersTable(ToasterTable):
 
         git_url_template = '''
         <a href="{% url 'layerdetails' extra.pid data.id %}">
+        {% if data.layer.local_source_dir %}
+          <code>{{data.layer.local_source_dir}}</code>
+        {% else %}
           <code>{{data.layer.vcs_url}}</code>
         </a>
+        {% endif %}
         {% if data.get_vcs_link_url %}
         <a target="_blank" href="{{ data.get_vcs_link_url }}">
            <span class="glyphicon glyphicon-new-window"></span>
@@ -123,16 +127,21 @@ class LayersTable(ToasterTable):
         {% endif %}
         '''
 
-        self.add_column(title="Git repository URL",
-                        help_text="The Git repository for the layer source code",
+        self.add_column(title="Layer source code location",
+                        help_text="A Git repository or an absolute path to a directory",
                         hidden=True,
                         static_data_name="layer__vcs_url",
                         static_data_template=git_url_template)
 
         git_dir_template = '''
+        {% if data.layer.local_source_dir %}
+        <span class="text-muted">Not applicable</span>
+        <span class="glyphicon glyphicon-question-sign get-help" data-original-title="" title="The source code of {{data.layer.name}} is not in a Git repository, so there is no subdirectory associated with it"> </span>
+        {% else %}
         <a href="{% url 'layerdetails' extra.pid data.id %}">
          <code>{{data.dirpath}}</code>
         </a>
+        {% endif %}
         {% if data.dirpath and data.get_vcs_dirpath_link_url %}
         <a target="_blank" href="{{ data.get_vcs_dirpath_link_url }}">
           <span class="glyphicon glyphicon-new-window"></span>
@@ -146,9 +155,14 @@ class LayersTable(ToasterTable):
                         static_data_template=git_dir_template)
 
         revision_template =  '''
+        {% if data.layer.local_source_dir %}
+        <span class="text-muted">Not applicable</span>
+        <span class="glyphicon glyphicon-question-sign get-help" data-original-title="" title="The source code of {{data.layer.name}} is not in a Git repository, so there is no revision associated with it"> </span>
+        {% else %}
         {% with vcs_ref=data.get_vcs_reference %}
         {% include 'snippets/gitrev_popover.html' %}
         {% endwith %}
+        {% endif %}
         '''
 
         self.add_column(title="Git revision",
@@ -413,9 +427,19 @@ class RecipesTable(ToasterTable):
                         orderable=True,
                         field_name="license")
 
+        revision_link_template = '''
+        {% if data.layer_version.layer.local_source_dir %}
+        <span class="text-muted">Not applicable</span>
+        <span class="glyphicon glyphicon-question-sign get-help" data-original-title="" title="The source code of {{data.layer_version.layer.name}} is not in a Git repository, so there is no revision associated with it"> </span>
+        {% else %}
+        {{data.layer_version.get_vcs_reference}}
+        {% endif %}
+        '''
+
         self.add_column(title="Git revision",
                         hidden=True,
-                        field_name="layer_version__get_vcs_reference")
+                        static_data_name="layer_version__get_vcs_reference",
+                        static_data_template=revision_link_template)
 
 
 class LayerRecipesTable(RecipesTable):
