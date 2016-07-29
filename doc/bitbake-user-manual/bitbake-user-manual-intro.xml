@@ -648,7 +648,7 @@
                     recipe and <filename>taskB</filename> for the second
                     recipe:
                     <literallayout class='monospaced'>
-     $ bitbake myfirstrecipe recipe:do_taskA mysecondrecipe recipe:do_taskB
+     $ bitbake myfirstrecipe:do_taskA mysecondrecipe:do_taskB
                     </literallayout>
                 </para>
             </section>
