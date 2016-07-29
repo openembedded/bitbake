@@ -664,7 +664,7 @@ def verify_donestamp(ud, d, origud=None):
         # as an upgrade path from the previous done stamp file format.
         if checksums != precomputed_checksums:
             with open(ud.donestamp, "wb") as cachefile:
-                p = pickle.Pickler(cachefile, pickle.HIGHEST_PROTOCOL)
+                p = pickle.Pickler(cachefile, 2)
                 p.dump(checksums)
         return True
     except ChecksumError as e:
@@ -698,7 +698,7 @@ def update_stamp(ud, d):
             checksums = verify_checksum(ud, d)
             # Store the checksums for later re-verification against the recipe
             with open(ud.donestamp, "wb") as cachefile:
-                p = pickle.Pickler(cachefile, pickle.HIGHEST_PROTOCOL)
+                p = pickle.Pickler(cachefile, 2)
                 p.dump(checksums)
         except ChecksumError as e:
             # Checksums failed to verify, trigger re-download and remove the
