@@ -109,15 +109,31 @@ class BuiltPackagesTableBase(tables.PackagesTable):
                         hidden=True,
                         orderable=True)
 
+        layer_branch_template = '''
+        {%if not data.recipe.layer_version.layer.local_source_dir %}
+        <span class="text-muted">{{data.recipe.layer_version.branch}}</span>
+        {% else %}
+        <span class="text-muted">Not applicable</span>
+        <span class="glyphicon glyphicon-question-sign get-help" data-original-title="" title="The source code of {{data.recipe.layer_version.layer.name}} is not in a Git repository, so there is no branch associated with it"> </span>
+        {% endif %}
+        '''
+
         self.add_column(title="Layer branch",
                         field_name="recipe__layer_version__branch",
                         hidden=True,
+                        static_data_name="recipe__layer_version__branch",
+                        static_data_template=layer_branch_template,
                         orderable=True)
 
         git_rev_template = '''
+        {% if not data.recipe.layer_version.layer.local_source_dir %}
         {% with vcs_ref=data.recipe.layer_version.commit %}
         {% include 'snippets/gitrev_popover.html' %}
         {% endwith %}
+        {% else %}
+        <span class="text-muted">Not applicable</span>
+        <span class="glyphicon glyphicon-question-sign get-help" data-original-title="" title="The source code of {{data.recipe.layer_version.layer.name}} is not in a Git repository, so there is no revision associated with it"> </span>
+        {% endif %}
         '''
 
         self.add_column(title="Layer commit",
@@ -250,10 +266,24 @@ class BuiltRecipesTable(BuildTablesMixin):
             '{% if data.pathflags %}<i>({{data.pathflags}})</i>'\
             '{% endif %}'
 
+        git_branch_template = '''
+        {% if data.layer_version.layer.local_source_dir %}
+        <span class="text-muted">Not applicable</span>
+        <span class="glyphicon glyphicon-question-sign get-help" data-original-title="" title="The source code of {{data.layer_version.layer.name}} is not in a Git repository, so there is no branch associated with it"> </span>
+        {% else %}
+        <span>{{data.layer_version.branch}}</span>
+        {% endif %}
+        '''
+
         git_rev_template = '''
+        {% if data.layer_version.layer.local_source_dir %}
+        <span class="text-muted">Not applicable</span>
+        <span class="glyphicon glyphicon-question-sign get-help" data-original-title="" title="The source code of {{data.layer_version.layer.name}} is not in a Git repository, so there is no commit associated with it"> </span>
+        {% else %}
         {% with vcs_ref=data.layer_version.commit %}
         {% include 'snippets/gitrev_popover.html' %}
         {% endwith %}
+        {% endif %}
         '''
 
         depends_on_tmpl = '''
@@ -342,6 +372,8 @@ class BuiltRecipesTable(BuildTablesMixin):
 
         self.add_column(title="Layer branch",
                         field_name="layer_version__branch",
+                        static_data_name="layer_version__branch",
+                        static_data_template=git_branch_template,
                         orderable=True,
                         hidden=True)
 
