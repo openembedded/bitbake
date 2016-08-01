@@ -101,7 +101,6 @@ stop_system()
     fi
     webserverKillAll
     # unset exported variables
-    unset TOASTER_CONF
     unset TOASTER_DIR
     unset BITBAKE_UI
     unset BBBASEDIR
@@ -154,21 +153,7 @@ if [ -n "$TEMPLATECONF" ]; then
         if [ -d "$OEROOT/$TEMPLATECONF" ]; then
             TEMPLATECONF="$OEROOT/$TEMPLATECONF"
         fi
-        if [ ! -d "$TEMPLATECONF" ]; then
-            echo >&2 "Error: '$TEMPLATECONF' must be a directory containing toasterconf.json"
-            return 1
-        fi
     fi
-fi
-
-if [ "$TOASTER_CONF" = "" ]; then
-    TOASTER_CONF="$TEMPLATECONF/toasterconf.json"
-    export TOASTER_CONF=$(python3 -c "import os; print(os.path.realpath('$TOASTER_CONF'))")
-fi
-
-if [ ! -f $TOASTER_CONF ]; then
-    echo "$TOASTER_CONF configuration file not found. Set TOASTER_CONF to specify file or fix .templateconf"
-    return 1
 fi
 
 # this defines the dir toaster will use for
