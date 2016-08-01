@@ -29,9 +29,31 @@ import sys
 
 import json
 import logging
+import threading
+import time
 logger = logging.getLogger("toaster")
 
 DEFAULT_LAYERINDEX_SERVER = "http://layers.openembedded.org/layerindex/api/"
+
+
+class Spinner(threading.Thread):
+    """ A simple progress spinner to indicate download/parsing is happening"""
+    def __init__(self, *args, **kwargs):
+        super(Spinner, self).__init__(*args, **kwargs)
+        self.setDaemon(True)
+        self.signal = True
+
+    def run(self):
+        os.system('setterm -cursor off')
+        while self.signal:
+            for char in ["/", "-", "\\", "|"]:
+                sys.stdout.write("\r" + char)
+                sys.stdout.flush()
+                time.sleep(0.25)
+        os.system('setterm -cursor on')
+
+    def stop(self):
+        self.signal = False
 
 
 class Command(NoArgsCommand):
@@ -55,6 +77,7 @@ class Command(NoArgsCommand):
             Fetches layer, recipe and machine information from a layerindex
             server
         """
+        os.system('setterm -cursor off')
 
         self.apiurl = DEFAULT_LAYERINDEX_SERVER
 
@@ -70,6 +93,9 @@ class Command(NoArgsCommand):
         oe_core_layer = 'openembedded-core'
 
         def _get_json_response(apiurl=DEFAULT_LAYERINDEX_SERVER):
+            http_progress = Spinner()
+            http_progress.start()
+
             _parsedurl = urlparse(apiurl)
             path = _parsedurl.path
 
@@ -79,7 +105,10 @@ class Command(NoArgsCommand):
             except URLError as e:
                 raise Exception("Failed to read %s: %s" % (path, e.reason))
 
-            return json.loads(res.read().decode('utf-8'))
+            parsed = json.loads(res.read().decode('utf-8'))
+
+            http_progress.stop()
+            return parsed
 
         # verify we can get the basic api
         try:
@@ -293,5 +322,7 @@ class Command(NoArgsCommand):
 
             self.mini_progress("recipes", i, total)
 
+        os.system('setterm -cursor on')
+
     def handle_noargs(self, **options):
-            self.update()
+        self.update()
