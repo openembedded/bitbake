@@ -334,7 +334,7 @@
      FOO_append = "baz"
                     </literallayout>
                     The only effect of changing the second assignment in the
-                    previous example to use ":=" would be to add a space before
+                    previous example to use "+=" would be to add a space before
                     "baz" in the appended value (due to how the "+=" operator
                     works).
                 </note>
