@@ -59,7 +59,8 @@ webserverStartAll()
         echo "Failed migrations, aborting system start" 1>&2
         return $retval
     fi
-
+    # Make sure that checksettings can pick up any value for TEMPLATECONF
+    export TEMPLATECONF
     $MANAGE checksettings --traceback || retval=1
 
     if [ $retval -eq 1 ]; then

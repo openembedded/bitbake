@@ -1,10 +1,15 @@
 from django.core.management.base import NoArgsCommand, CommandError
 from django.db import transaction
+
+from django.core.management import call_command
 from bldcontrol.bbcontroller import getBuildEnvironmentController, ShellCmdException
 from bldcontrol.models import BuildRequest, BuildEnvironment, BRError
-from orm.models import ToasterSetting, Build
+from orm.models import ToasterSetting, Build, Layer
+
 import os
 import traceback
+import warnings
+
 
 def DN(path):
     if path is None:
@@ -94,30 +99,58 @@ class Command(NoArgsCommand):
                     print("\n -- Validation: The build directory must to be set to an absolute path.")
                     is_changed = _update_builddir()
 
-
                 if is_changed:
                     print("\nBuild configuration saved")
                     be.save()
                     return True
 
-
                 if be.needs_import:
                     try:
-                        config_file = os.environ.get('TOASTER_CONF')
-                        print("\nImporting file: %s" % config_file)
-                        from .loadconf import Command as LoadConfigCommand
+                        print("Loading default settings")
+                        call_command("loaddata", "settings")
+                        template_conf = os.environ.get("TEMPLATECONF", "")
 
-                        LoadConfigCommand()._import_layer_config(config_file)
+                        if "poky" in template_conf:
+                            print("Loading poky configuration")
+                            call_command("loaddata", "poky")
+                        else:
+                            print("Loading OE-Core configuration")
+                            call_command("loaddata", "oe-core")
+                            if template_conf:
+                                oe_core_path = os.realpath(template_conf +
+                                                           "/../")
+                            else:
+                                print("TEMPLATECONF not found. You may have to"
+                                      " manually configure layer paths")
+                                oe_core_path = input("Please enter the path of"
+                                                     " your openembedded-core "
+                                                     "layer: ")
+                            # Update the layer instances of openemebedded-core
+                            for layer in Layer.objects.filter(
+                                    name="openembedded-core"):
+                                layer.local_source_dir = oe_core_path
+                                layer.save()
+
+                        # Import the custom fixture if it's present
+                        with warnings.catch_warnings():
+                            warnings.filterwarnings(
+                                action="ignore",
+                                message="^.*No fixture named.*$")
+                            print("Importing custom settings if present")
+                            call_command("loaddata", "custom")
+
                         # we run lsupdates after config update
-                        print("\nLayer configuration imported. Updating information from the layer sources, please wait.\nYou can re-update any time later by running bitbake/lib/toaster/manage.py lsupdates")
-                        from django.core.management import call_command
+                        print("\nFetching information from the layer index, "
+                              "please wait.\nYou can re-update any time later "
+                              "by running bitbake/lib/toaster/manage.py "
+                              "lsupdates\n")
                         call_command("lsupdates")
 
                         # we don't look for any other config files
                         return is_changed
                     except Exception as e:
-                        print("Failure while trying to import the toaster config file %s: %s" %\
-                            (config_file, e))
+                        print("Failure while trying to setup toaster: %s"
+                              % e)
                         traceback.print_exc()
 
                 return is_changed
