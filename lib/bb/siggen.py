@@ -293,11 +293,11 @@ class SignatureGeneratorBasic(SignatureGenerator):
 
         computed_basehash = calc_basehash(data)
         if computed_basehash != self.basehash[k]:
-            bb.error("Basehash mismatch %s verses %s for %s" % (computed_basehash, self.basehash[k], k))
+            bb.error("Basehash mismatch %s versus %s for %s" % (computed_basehash, self.basehash[k], k))
         if runtime and k in self.taskhash:
             computed_taskhash = calc_taskhash(data)
             if computed_taskhash != self.taskhash[k]:
-                bb.error("Taskhash mismatch %s verses %s for %s" % (computed_taskhash, self.taskhash[k], k))
+                bb.error("Taskhash mismatch %s versus %s for %s" % (computed_taskhash, self.taskhash[k], k))
 
 
     def dump_sigs(self, dataCache, options):
