@@ -203,6 +203,10 @@ for param in $*; do
                 ADDR_PORT="localhost:$PORT"
             fi
     ;;
+    --help)
+            echo "$HELP"
+            return 0
+    ;;
     *)
             echo "$HELP"
             return 1
