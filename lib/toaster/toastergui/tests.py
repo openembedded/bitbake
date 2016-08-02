@@ -154,6 +154,7 @@ class ViewTests(TestCase):
                 'name' : "base-layer",
                 'git_ref': "c12b9596afd236116b25ce26dbe0d793de9dc7ce",
                 'project_id': self.project.id,
+                'local_source_dir': "",
                 'dir_path' : "/path/in/repository"}
         response = self.client.post(reverse('xhr_importlayer'), args)
         data = json.loads(response.content.decode('utf-8'))
