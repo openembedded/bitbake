@@ -1394,7 +1394,10 @@
             functionality of the task:
             <itemizedlist>
                 <listitem><para><emphasis>cleandirs:</emphasis>
-                    Empty directories that should created before the task runs.
+                    Empty directories that should be created before the
+                    task runs.
+                    Directories that already exist are removed and recreated
+                    to empty them.
                     </para></listitem>
                 <listitem><para><emphasis>depends:</emphasis>
                     Controls inter-task dependencies.
@@ -1414,8 +1417,9 @@
                     </para></listitem>
                 <listitem><para><emphasis>dirs:</emphasis>
                     Directories that should be created before the task runs.
-                    The last directory listed will be used as the work directory
-                    for the task.
+                    Directories that already exist are left as is.
+                    The last directory listed is used as the
+                    current working directory for the task.
                     </para></listitem>
                 <listitem><para><emphasis>lockfiles:</emphasis>
                      Specifies one or more lockfiles to lock while the task
