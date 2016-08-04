@@ -372,9 +372,9 @@
      FOO[a] += "456"
                 </literallayout>
                 The variable <filename>FOO</filename> has two flags:
-                <filename>a</filename> and <filename>b</filename>.
+                <filename>[a]</filename> and <filename>[b]</filename>.
                 The flags are immediately set to "abc" and "123", respectively.
-                The <filename>a</filename> flag becomes "abc 456".
+                The <filename>[a]</filename> flag becomes "abc 456".
             </para>
 
             <para>
@@ -1270,7 +1270,7 @@
 
             <para>
                 If you want dependencies such as these to remain intact, use
-                the <filename>noexec</filename> varflag to disable the task
+                the <filename>[noexec]</filename> varflag to disable the task
                 instead of using the <filename>deltask</filename> command to
                 delete it:
                 <literallayout class='monospaced'>
@@ -1393,13 +1393,13 @@
             Tasks support a number of these flags which control various
             functionality of the task:
             <itemizedlist>
-                <listitem><para><emphasis>cleandirs:</emphasis>
+                <listitem><para><emphasis><filename>[cleandirs]</filename>:</emphasis>
                     Empty directories that should be created before the
                     task runs.
                     Directories that already exist are removed and recreated
                     to empty them.
                     </para></listitem>
-                <listitem><para><emphasis>depends:</emphasis>
+                <listitem><para><emphasis><filename>[depends]</filename>:</emphasis>
                     Controls inter-task dependencies.
                     See the
                     <link linkend='var-DEPENDS'><filename>DEPENDS</filename></link>
@@ -1407,7 +1407,7 @@
                     "<link linkend='inter-task-dependencies'>Inter-Task Dependencies</link>"
                     section for more information.
                     </para></listitem>
-                <listitem><para><emphasis>deptask:</emphasis>
+                <listitem><para><emphasis><filename>[deptask]</filename>:</emphasis>
                     Controls task build-time dependencies.
                     See the
                     <link linkend='var-DEPENDS'><filename>DEPENDS</filename></link>
@@ -1415,13 +1415,13 @@
                     "<link linkend='build-dependencies'>Build Dependencies</link>"
                     section for more information.
                     </para></listitem>
-                <listitem><para><emphasis>dirs:</emphasis>
+                <listitem><para><emphasis><filename>[dirs]</filename>:</emphasis>
                     Directories that should be created before the task runs.
                     Directories that already exist are left as is.
                     The last directory listed is used as the
                     current working directory for the task.
                     </para></listitem>
-                <listitem><para><emphasis>lockfiles:</emphasis>
+                <listitem><para><emphasis><filename>[lockfiles]</filename>:</emphasis>
                      Specifies one or more lockfiles to lock while the task
                      executes.
                      Only one task may hold a lockfile, and any task that
@@ -1430,23 +1430,23 @@
                      You can use this variable flag to accomplish mutual
                      exclusion.
                     </para></listitem>
-                <listitem><para><emphasis>noexec:</emphasis>
+                <listitem><para><emphasis><filename>[noexec]</filename>:</emphasis>
                     Marks the tasks as being empty and no execution required.
-                    The <filename>noexec</filename> flag can be used to set up
+                    The <filename>[noexec]</filename> flag can be used to set up
                     tasks as dependency placeholders, or to disable tasks defined
                     elsewhere that are not needed in a particular recipe.
                     </para></listitem>
-                <listitem><para><emphasis>nostamp:</emphasis>
+                <listitem><para><emphasis><filename>[nostamp]</filename>:</emphasis>
                     Tells BitBake to not generate a stamp file for a task,
                     which implies the task should always be executed.
                     </para></listitem>
-                <listitem><para><emphasis>postfuncs:</emphasis>
+                <listitem><para><emphasis><filename>[postfuncs]</filename>:</emphasis>
                     List of functions to call after the completion of the task.
                     </para></listitem>
-                <listitem><para><emphasis>prefuncs:</emphasis>
+                <listitem><para><emphasis><filename>[prefuncs]</filename>:</emphasis>
                     List of functions to call before the task executes.
                     </para></listitem>
-                <listitem><para><emphasis>rdepends:</emphasis>
+                <listitem><para><emphasis><filename>[rdepends]</filename>:</emphasis>
                     Controls inter-task runtime dependencies.
                     See the
                     <link linkend='var-RDEPENDS'><filename>RDEPENDS</filename></link>
@@ -1456,7 +1456,7 @@
                     "<link linkend='inter-task-dependencies'>Inter-Task Dependencies</link>"
                     section for more information.
                     </para></listitem>
-                <listitem><para><emphasis>rdeptask:</emphasis>
+                <listitem><para><emphasis><filename>[rdeptask]</filename>:</emphasis>
                     Controls task runtime dependencies.
                     See the
                     <link linkend='var-RDEPENDS'><filename>RDEPENDS</filename></link>
@@ -1466,12 +1466,12 @@
                     "<link linkend='runtime-dependencies'>Runtime Dependencies</link>"
                     section for more information.
                     </para></listitem>
-                <listitem><para><emphasis>recideptask:</emphasis>
+                <listitem><para><emphasis><filename>[recideptask]</filename>:</emphasis>
                     When set in conjunction with
                     <filename>recrdeptask</filename>, specifies a task that
                     should be inspected for additional dependencies.
                     </para></listitem>
-                <listitem><para><emphasis>recrdeptask:</emphasis>
+                <listitem><para><emphasis><filename>[recrdeptask]</filename>:</emphasis>
                     Controls task recursive runtime dependencies.
                     See the
                     <link linkend='var-RDEPENDS'><filename>RDEPENDS</filename></link>
@@ -1481,12 +1481,12 @@
                     "<link linkend='recursive-dependencies'>Recursive Dependencies</link>"
                     section for more information.
                     </para></listitem>
-                <listitem><para><emphasis>stamp-extra-info:</emphasis>
+                <listitem><para><emphasis><filename>[stamp-extra-info]</filename>:</emphasis>
                     Extra stamp information to append to the task's stamp.
                     As an example, OpenEmbedded uses this flag to allow
                     machine-specific tasks.
                     </para></listitem>
-                <listitem><para><emphasis>umask:</emphasis>
+                <listitem><para><emphasis><filename>[umask]</filename>:</emphasis>
                     The umask to run the task under.
                     </para></listitem>
             </itemizedlist>
@@ -1499,7 +1499,7 @@
             "<link linkend='checksums'>Checksums (Signatures)</link>"
             section.
             <itemizedlist>
-                <listitem><para><emphasis>vardeps:</emphasis>
+                <listitem><para><emphasis><filename>[vardeps]</filename>:</emphasis>
                     Specifies a space-separated list of additional
                     variables to add to a variable's dependencies
                     for the purposes of calculating its signature.
@@ -1508,17 +1508,17 @@
                     does not allow BitBake to automatically determine
                     that the variable is referred to.
                     </para></listitem>
-                <listitem><para><emphasis>vardepsexclude:</emphasis>
+                <listitem><para><emphasis><filename>[vardepsexclude]</filename>:</emphasis>
                     Specifies a space-separated list of variables
                     that should be excluded from a variable's dependencies
                     for the purposes of calculating its signature.
                     </para></listitem>
-                <listitem><para><emphasis>vardepvalue:</emphasis>
+                <listitem><para><emphasis><filename>[vardepvalue]</filename>:</emphasis>
                     If set, instructs BitBake to ignore the actual
                     value of the variable and instead use the specified
                     value when calculating the variable's signature.
                     </para></listitem>
-                <listitem><para><emphasis>vardepvalueexclude:</emphasis>
+                <listitem><para><emphasis><filename>[vardepvalueexclude]</filename>:</emphasis>
                     Specifies a pipe-separated list of strings to exclude
                     from the variable's value when calculating the
                     variable's signature.
@@ -1816,7 +1816,8 @@
                 BitBake uses the
                 <link linkend='var-DEPENDS'><filename>DEPENDS</filename></link>
                 variable to manage build time dependencies.
-                The "deptask" varflag for tasks signifies the task of each
+                The <filename>[deptask]</filename> varflag for tasks
+                signifies the task of each
                 item listed in <filename>DEPENDS</filename> that must
                 complete before that task can be executed.
                 Here is an example:
@@ -1845,7 +1846,8 @@
                 packages.
                 Each of those packages can have <filename>RDEPENDS</filename> and
                 <filename>RRECOMMENDS</filename> runtime dependencies.
-                The "rdeptask" flag for tasks is used to signify the task of each
+                The <filename>[rdeptask]</filename> flag for tasks is used to
+                signify the task of each
                 item runtime dependency which must have completed before that
                 task can be executed.
                 <literallayout class='monospaced'>
@@ -1861,7 +1863,7 @@
             <title>Recursive Dependencies</title>
 
             <para>
-                BitBake uses the "recrdeptask" flag to manage
+                BitBake uses the <filename>[recrdeptask]</filename> flag to manage
                 recursive task dependencies.
                 BitBake looks through the build-time and runtime
                 dependencies of the current recipe, looks through
@@ -1875,7 +1877,8 @@
             </para>
 
             <para>
-                The "recrdeptask" flag is most commonly used in high-level
+                The <filename>[recrdeptask]</filename> flag is most commonly
+                used in high-level
                 recipes that need to wait for some task to finish "globally".
                 For example, <filename>image.bbclass</filename> has the following:
                 <literallayout class='monospaced'>
@@ -1905,7 +1908,8 @@
             <title>Inter-Task Dependencies</title>
 
             <para>
-                BitBake uses the "depends" flag in a more generic form
+                BitBake uses the <filename>[depends]</filename>
+                flag in a more generic form
                 to manage inter-task dependencies.
                 This more generic form allows for inter-dependency
                 checks for specific tasks rather than checks for
@@ -1921,7 +1925,8 @@
             </para>
 
             <para>
-                The "rdepends" flag works in a similar way but takes targets
+                The <filename>[rdepends]</filename> flag works in a similar
+                way but takes targets
                 in the runtime namespace instead of the build-time dependency
                 namespace.
             </para>
