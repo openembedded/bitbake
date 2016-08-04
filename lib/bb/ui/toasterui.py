@@ -237,14 +237,19 @@ def main(server, eventHandler, params):
                 if not (build_log and build_log_file_path):
                     build_log, build_log_file_path = _open_build_log(log_dir)
 
-                buildinfohelper.store_started_build(build_log_file_path)
+                buildinfohelper.store_started_build()
+                buildinfohelper.save_build_log_file_path(build_log_file_path)
                 buildinfohelper.set_recipes_to_parse(event.total)
                 continue
 
             # create a build object in buildinfohelper from either BuildInit
             # (if available) or BuildStarted (for jethro and previous versions)
             if isinstance(event, (bb.event.BuildStarted, bb.event.BuildInit)):
-                buildinfohelper.save_build_name_and_targets(event)
+                if not (build_log and build_log_file_path):
+                    build_log, build_log_file_path = _open_build_log(log_dir)
+
+                buildinfohelper.save_build_targets(event)
+                buildinfohelper.save_build_log_file_path(build_log_file_path)
 
                 # get additional data from BuildStarted
                 if isinstance(event, bb.event.BuildStarted):

@@ -150,14 +150,7 @@ class ORMWrapper(object):
     # pylint: disable=bad-continuation
     # we do not follow the python conventions for continuation indentation due to long lines here
 
-    def create_build_object(self, build_info, brbe):
-        assert 'machine' in build_info
-        assert 'distro' in build_info
-        assert 'distro_version' in build_info
-        assert 'started_on' in build_info
-        assert 'cooker_log_path' in build_info
-        assert 'bitbake_version' in build_info
-
+    def get_or_create_build_object(self, brbe):
         prj = None
         buildrequest = None
         if brbe is not None:
@@ -172,26 +165,18 @@ class ORMWrapper(object):
             logger.debug(1, "buildinfohelper: project is not specified, defaulting to %s" % prj)
 
         if buildrequest is not None:
+            # reuse existing Build object
             build = buildrequest.build
-            logger.info("Updating existing build, with %s", build_info)
             build.project = prj
-            build.machine = build_info['machine']
-            build.distro = build_info['distro']
-            build.distro_version = build_info['distro_version']
-            build.cooker_log_path = build_info['cooker_log_path']
-            build.bitbake_version = build_info['bitbake_version']
             build.save()
-
         else:
+            # create new Build object
+            now = timezone.now()
             build = Build.objects.create(
                 project=prj,
-                machine=build_info['machine'],
-                distro=build_info['distro'],
-                distro_version=build_info['distro_version'],
-                started_on=build_info['started_on'],
-                completed_on=build_info['started_on'],
-                cooker_log_path=build_info['cooker_log_path'],
-                bitbake_version=build_info['bitbake_version'])
+                started_on=now,
+                completed_on=now,
+                build_name='')
 
         logger.debug(1, "buildinfohelper: build is created %s" % build)
 
@@ -201,8 +186,9 @@ class ORMWrapper(object):
 
         return build
 
-    def update_build_name(self, build, build_name):
-        build.build_name = build_name
+    def update_build(self, build, data_dict):
+        for key in data_dict:
+            setattr(build, key, data_dict[key])
         build.save()
 
     @staticmethod
@@ -227,7 +213,7 @@ class ORMWrapper(object):
             result.append(obj)
         return result
 
-    def update_build_object(self, build, errors, warnings, taskfailures):
+    def update_build_stats_and_outcome(self, build, errors, warnings, taskfailures):
         assert isinstance(build,Build)
         assert isinstance(errors, int)
         assert isinstance(warnings, int)
@@ -912,20 +898,55 @@ class BuildInfoHelper(object):
     ###################
     ## methods to convert event/external info into objects that the ORM layer uses
 
+    def _ensure_build(self):
+        """
+        Ensure the current build object exists and is up to date with
+        data on the bitbake server
+        """
+        if not 'build' in self.internal_state or not self.internal_state['build']:
+            # create the Build object
+            self.internal_state['build'] = \
+                self.orm_wrapper.get_or_create_build_object(self.brbe)
 
-    def _get_build_information(self, build_log_path):
+        build = self.internal_state['build']
+
+        # update missing fields on the Build object with found data
         build_info = {}
-        build_info['machine'] = self.server.runCommand(["getVariable", "MACHINE"])[0]
-        build_info['distro'] = self.server.runCommand(["getVariable", "DISTRO"])[0]
-        build_info['distro_version'] = self.server.runCommand(["getVariable", "DISTRO_VERSION"])[0]
-        build_info['started_on'] = timezone.now()
-        build_info['completed_on'] = timezone.now()
-        build_info['cooker_log_path'] = build_log_path
-        build_info['bitbake_version'] = self.server.runCommand(["getVariable", "BB_VERSION"])[0]
-        return build_info
+
+        # set to True if at least one field is going to be set
+        changed = False
+
+        if not build.build_name:
+            build_name = self.server.runCommand(["getVariable", "BUILDNAME"])[0]
+
+            # only reset the build name if the one on the server is actually
+            # a valid value for the build_name field
+            if build_name != None:
+                build_info['build_name'] = build_name
+                changed = True
+
+        if not build.machine:
+            build_info['machine'] = self.server.runCommand(["getVariable", "MACHINE"])[0]
+            changed = True
+
+        if not build.distro:
+            build_info['distro'] = self.server.runCommand(["getVariable", "DISTRO"])[0]
+            changed = True
+
+        if not build.distro_version:
+            build_info['distro_version'] = self.server.runCommand(["getVariable", "DISTRO_VERSION"])[0]
+            changed = True
+
+        if not build.bitbake_version:
+            build_info['bitbake_version'] = self.server.runCommand(["getVariable", "BB_VERSION"])[0]
+            changed = True
+
+        if changed:
+            self.orm_wrapper.update_build(self.internal_state['build'], build_info)
 
     def _get_task_information(self, event, recipe):
         assert 'taskname' in vars(event)
+        self._ensure_build()
 
         task_information = {}
         task_information['build'] = self.internal_state['build']
@@ -940,8 +961,9 @@ class BuildInfoHelper(object):
         return task_information
 
     def _get_layer_version_for_path(self, path):
+        self._ensure_build()
+
         assert path.startswith("/")
-        assert 'build' in self.internal_state
 
         def _slkey_interactive(layer_version):
             assert isinstance(layer_version, Layer_Version)
@@ -985,6 +1007,8 @@ class BuildInfoHelper(object):
         return recipe_info
 
     def _get_path_information(self, task_object):
+        self._ensure_build()
+
         assert isinstance(task_object, Task)
         build_stats_format = "{tmpdir}/buildstats/{buildname}/{package}/"
         build_stats_path = []
@@ -1027,17 +1051,18 @@ class BuildInfoHelper(object):
             except NotExisting as nee:
                 logger.warning("buildinfohelper: cannot identify layer exception:%s ", nee)
 
-    def store_started_build(self, build_log_path):
-        build_information = self._get_build_information(build_log_path)
-        self.internal_state['build'] = \
-            self.orm_wrapper.create_build_object(build_information, self.brbe)
+    def store_started_build(self):
+        self._ensure_build()
 
-    def save_build_name_and_targets(self, event):
-        # NB the BUILDNAME variable isn't set until BuildInit (or
-        # BuildStarted for older bitbakes)
-        build_name = self.server.runCommand(["getVariable", "BUILDNAME"])[0]
-        self.orm_wrapper.update_build_name(self.internal_state['build'],
-            build_name)
+    def save_build_log_file_path(self, build_log_path):
+        self._ensure_build()
+
+        if not self.internal_state['build'].cooker_log_path:
+            data_dict = {'cooker_log_path': build_log_path}
+            self.orm_wrapper.update_build(self.internal_state['build'], data_dict)
+
+    def save_build_targets(self, event):
+        self._ensure_build()
 
         # create target information
         assert '_pkgs' in vars(event)
@@ -1048,6 +1073,8 @@ class BuildInfoHelper(object):
         self.internal_state['targets'] = self.orm_wrapper.get_or_create_targets(target_information)
 
     def save_build_layers_and_variables(self):
+        self._ensure_build()
+
         build_obj = self.internal_state['build']
 
         # save layer version information for this build
@@ -1094,9 +1121,9 @@ class BuildInfoHelper(object):
         Set the number of recipes which need to be parsed for this build.
         This is set the first time ParseStarted is received by toasterui.
         """
-        if self.internal_state['build']:
-            self.internal_state['build'].recipes_to_parse = num_recipes
-            self.internal_state['build'].save()
+        self._ensure_build()
+        self.internal_state['build'].recipes_to_parse = num_recipes
+        self.internal_state['build'].save()
 
     def set_recipes_parsed(self, num_recipes):
         """
@@ -1104,10 +1131,10 @@ class BuildInfoHelper(object):
         each time a ParseProgress or ParseCompleted event is received by
         toasterui.
         """
-        if self.internal_state['build']:
-            if num_recipes <= self.internal_state['build'].recipes_to_parse:
-                self.internal_state['build'].recipes_parsed = num_recipes
-                self.internal_state['build'].save()
+        self._ensure_build()
+        if num_recipes <= self.internal_state['build'].recipes_to_parse:
+            self.internal_state['build'].recipes_parsed = num_recipes
+            self.internal_state['build'].save()
 
     def update_target_image_file(self, event):
         evdata = BuildInfoHelper._get_data_from_event(event)
@@ -1120,13 +1147,17 @@ class BuildInfoHelper(object):
                         self.orm_wrapper.save_target_image_file_information(t, output, evdata[output])
 
     def update_artifact_image_file(self, event):
+        self._ensure_build()
         evdata = BuildInfoHelper._get_data_from_event(event)
         for artifact_path in evdata.keys():
-            self.orm_wrapper.save_artifact_information(self.internal_state['build'], artifact_path, evdata[artifact_path])
+            self.orm_wrapper.save_artifact_information(
+                self.internal_state['build'], artifact_path,
+                evdata[artifact_path])
 
     def update_build_information(self, event, errors, warnings, taskfailures):
-        if 'build' in self.internal_state:
-            self.orm_wrapper.update_build_object(self.internal_state['build'], errors, warnings, taskfailures)
+        self._ensure_build()
+        self.orm_wrapper.update_build_stats_and_outcome(
+            self.internal_state['build'], errors, warnings, taskfailures)
 
     def store_started_task(self, event):
         assert isinstance(event, (bb.runqueue.sceneQueueTaskStarted, bb.runqueue.runQueueTaskStarted, bb.runqueue.runQueueTaskSkipped))
@@ -1169,6 +1200,7 @@ class BuildInfoHelper(object):
 
 
     def store_tasks_stats(self, event):
+        self._ensure_build()
         task_data = BuildInfoHelper._get_data_from_event(event)
 
         for (task_file, task_name, task_stats, recipe_name) in task_data:
@@ -1264,6 +1296,8 @@ class BuildInfoHelper(object):
 
 
     def store_target_package_data(self, event):
+        self._ensure_build()
+
         # for all image targets
         for target in self.internal_state['targets']:
             if target.is_image:
@@ -1297,10 +1331,9 @@ class BuildInfoHelper(object):
         note that this only gets called for command line builds which are
         interrupted, so it doesn't touch any BuildRequest objects
         """
-        build = self.internal_state['build']
-        if build:
-            build.outcome = Build.CANCELLED
-            build.save()
+        self._ensure_build()
+        self.internal_state['build'].outcome = Build.CANCELLED
+        self.internal_state['build'].save()
 
     def store_dependency_information(self, event):
         assert '_depgraph' in vars(event)
@@ -1446,6 +1479,8 @@ class BuildInfoHelper(object):
 
 
     def store_build_package_information(self, event):
+        self._ensure_build()
+
         package_info = BuildInfoHelper._get_data_from_event(event)
         self.orm_wrapper.save_build_package_information(
             self.internal_state['build'],
@@ -1461,6 +1496,10 @@ class BuildInfoHelper(object):
 
     def _store_build_done(self, errorcode):
         logger.info("Build exited with errorcode %d", errorcode)
+
+        if not self.brbe:
+            return
+
         br_id, be_id = self.brbe.split(":")
         be = BuildEnvironment.objects.get(pk = be_id)
         be.lock = BuildEnvironment.LOCK_LOCK
@@ -1482,7 +1521,6 @@ class BuildInfoHelper(object):
             br.state = BuildRequest.REQ_FAILED
         br.save()
 
-
     def store_log_error(self, text):
         mockevent = MockEvent()
         mockevent.levelno = formatter.ERROR
@@ -1501,24 +1539,22 @@ class BuildInfoHelper(object):
 
 
     def store_log_event(self, event):
+        self._ensure_build()
+
         if event.levelno < formatter.WARNING:
             return
 
         if 'args' in vars(event):
             event.msg = event.msg % event.args
 
-        if not 'build' in self.internal_state:
-            if self.brbe is None:
-                if not 'backlog' in self.internal_state:
-                    self.internal_state['backlog'] = []
-                self.internal_state['backlog'].append(event)
-                return
-            else:   # we're under Toaster control, the build is already created
-                br, _ = self.brbe.split(":")
-                buildrequest = BuildRequest.objects.get(pk = br)
-                self.internal_state['build'] = buildrequest.build
+        # early return for CLI builds
+        if self.brbe is None:
+            if not 'backlog' in self.internal_state:
+                self.internal_state['backlog'] = []
+            self.internal_state['backlog'].append(event)
+            return
 
-        if 'build' in self.internal_state and 'backlog' in self.internal_state:
+        if 'backlog' in self.internal_state:
             # if we have a backlog of events, do our best to save them here
             if len(self.internal_state['backlog']):
                 tempevent = self.internal_state['backlog'].pop()
@@ -1847,18 +1883,12 @@ class BuildInfoHelper(object):
                         sdk_target)
 
     def close(self, errorcode):
-        if self.brbe is not None:
-            self._store_build_done(errorcode)
+        self._store_build_done(errorcode)
 
         if 'backlog' in self.internal_state:
-            if 'build' in self.internal_state:
-                # we save missed events in the database for the current build
-                tempevent = self.internal_state['backlog'].pop()
-                self.store_log_event(tempevent)
-            else:
-                # we have no build, and we still have events; something amazingly wrong happend
-                for event in self.internal_state['backlog']:
-                    logger.error("UNSAVED log: %s", event.msg)
+            # we save missed events in the database for the current build
+            tempevent = self.internal_state['backlog'].pop()
+            self.store_log_event(tempevent)
 
         if not connection.features.autocommits_when_autocommit_is_off:
             transaction.set_autocommit(True)
@@ -1867,3 +1897,7 @@ class BuildInfoHelper(object):
         # being incorrectly attached to the previous Toaster-triggered build;
         # see https://bugzilla.yoctoproject.org/show_bug.cgi?id=9021
         self.brbe = None
+
+        # unset the internal Build object to prevent it being reused for the
+        # next build
+        self.internal_state['build'] = None
