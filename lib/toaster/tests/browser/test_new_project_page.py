@@ -22,6 +22,7 @@
 from django.core.urlresolvers import reverse
 from tests.browser.selenium_helpers import SeleniumTestCase
 from selenium.webdriver.support.ui import Select
+from selenium.common.exceptions import InvalidElementStateException
 
 from orm.models import Project, Release, BitbakeVersion
 
@@ -102,7 +103,10 @@ class TestNewProjectPage(SeleniumTestCase):
 
         # Try and click it anyway, if it submits we'll have a new project in
         # the db and assert then
-        self.click("#create-project-button")
+        try:
+            self.click("#create-project-button")
+        except InvalidElementStateException:
+            pass
 
         self.assertTrue(
             (Project.objects.filter(name=project_name).count() == 1),
