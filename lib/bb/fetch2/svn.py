@@ -150,7 +150,7 @@ class Svn(FetchMethod):
         if scmdata == "keep":
             tar_flags = ""
         else:
-            tar_flags = "--exclude '.svn'"
+            tar_flags = "--exclude='.svn'"
 
         os.chdir(ud.pkgdir)
         # tar them up to a defined filename

@@ -83,7 +83,7 @@ class Repo(FetchMethod):
         if scmdata == "keep":
             tar_flags = ""
         else:
-            tar_flags = "--exclude '.repo' --exclude '.git'"
+            tar_flags = "--exclude='.repo' --exclude='.git'"
 
         # Create a cache
         runfetchcmd("tar %s -czf %s %s" % (tar_flags, ud.localpath, os.path.join(".", "*") ), d)

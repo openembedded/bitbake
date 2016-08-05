@@ -106,7 +106,7 @@ class Bzr(FetchMethod):
         if scmdata == "keep":
             tar_flags = ""
         else:
-            tar_flags = "--exclude '.bzr' --exclude '.bzrtags'"
+            tar_flags = "--exclude='.bzr' --exclude='.bzrtags'"
 
         # tar them up to a defined filename
         runfetchcmd("tar %s -czf %s %s" % (tar_flags, ud.localpath, os.path.basename(ud.pkgdir)), d, cleanup = [ud.localpath])

@@ -147,7 +147,7 @@ class Cvs(FetchMethod):
         if scmdata == "keep":
             tar_flags = ""
         else:
-            tar_flags = "--exclude 'CVS'"
+            tar_flags = "--exclude='CVS'"
 
         # tar them up to a defined filename
         if 'fullpath' in ud.parm:
