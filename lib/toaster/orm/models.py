@@ -346,7 +346,15 @@ class Project(models.Model):
             for l in self.projectlayer_set.all().order_by("pk"):
                 commit = l.layercommit.get_vcs_reference()
                 print("ii Building layer ", l.layercommit.layer.name, " at vcs point ", commit)
-                BRLayer.objects.create(req = br, name = l.layercommit.layer.name, giturl = l.layercommit.layer.vcs_url, commit = commit, dirpath = l.layercommit.dirpath, layer_version=l.layercommit)
+                BRLayer.objects.create(
+                    req=br,
+                    name=l.layercommit.layer.name,
+                    giturl=l.layercommit.layer.vcs_url,
+                    commit=commit,
+                    dirpath=l.layercommit.dirpath,
+                    layer_version=l.layercommit,
+                    local_source_dir=l.layercommit.layer.local_source_dir
+                )
 
             br.state = BuildRequest.REQ_QUEUED
             now = timezone.now()

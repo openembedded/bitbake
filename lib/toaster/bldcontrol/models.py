@@ -130,6 +130,7 @@ class BRLayer(models.Model):
     req         = models.ForeignKey(BuildRequest)
     name        = models.CharField(max_length = 100)
     giturl      = models.CharField(max_length = 254)
+    local_source_dir = models.CharField(max_length=254, null=True)
     commit      = models.CharField(max_length = 254)
     dirpath     = models.CharField(max_length = 254)
     layer_version = models.ForeignKey(Layer_Version, null=True)
