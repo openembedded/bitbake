@@ -557,6 +557,34 @@
      KERNEL_FEATURES_append_qemux86-64=" cfg/sound.scc cfg/paravirt_kvm.scc"
                         </literallayout>
                         </para></listitem>
+                    <listitem><para><emphasis>Setting a Variable for a Single Task:</emphasis>
+                        BitBake supports setting a variable just for the
+                        duration of a single task.
+                        Here is an example:
+                        <literallayout class='monospaced'>
+     FOO_task-configure = "val 1"
+     FOO_task-compile = "val 2"
+                        </literallayout>
+                        In the previous example, <filename>FOO</filename>
+                        has the value "val 1" while the
+                        <filename>do_configure</filename> task is executed,
+                        and the value "val 2" while the
+                        <filename>do_compile</filename> task is executed.
+                        </para>
+
+                        <para>Internally, this is implemented by prepending
+                        the task (e.g. "task-compile:") to the value of
+                        <link linkend='var-OVERRIDES'><filename>OVERRIDES</filename></link>
+                        for the local datastore of the <filename>do_compile</filename>
+                        task.</para>
+
+                        <para>You can also use this syntax with other combinations
+                        (e.g. "<filename>_prepend</filename>") as shown in the
+                        following example:
+                        <literallayout class='monospaced'>
+     EXTRA_OEMAKE_prepend_task-compile = "${PARALLEL_MAKE} "
+                        </literallayout>
+                        </para></listitem>
                 </itemizedlist>
             </para>
         </section>
