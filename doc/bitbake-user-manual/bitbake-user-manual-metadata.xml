@@ -428,6 +428,10 @@
      FOO := "${@foo()}"
                     </literallayout>
                 </note>
+                For a different way to set variables with Python code during
+                parsing, see the
+                "<link linkend='anonymous-python-functions'>Anonymous Python Functions</link>"
+                section.
             </para>
         </section>
 
@@ -1063,32 +1067,81 @@
             <title>Anonymous Python Functions</title>
 
             <para>
-                Sometimes it is useful to run some code during
-                parsing to set variables or to perform other operations
-                programmatically.
-                To do this, you can define an anonymous Python function.
-                Here is an example that conditionally sets a
-                variable based on the value of another variable:
-                <literallayout class='monospaced'>
-     python __anonymous () {
-         if d.getVar('SOMEVAR', True) == 'value':
-             d.setVar('ANOTHERVAR', 'value2')
-     }
-                </literallayout>
-                The "__anonymous" function name is optional, so the
-                following example is functionally equivalent to the above:
+                Sometimes it is useful to set variables or perform
+                other operations programmatically during parsing.
+                To do this, you can define special Python functions,
+                called anonymous Python functions, that run at the
+                end of parsing.
+                For example, the following conditionally sets a variable
+                based on the value of  another variable:
                 <literallayout class='monospaced'>
      python () {
          if d.getVar('SOMEVAR', True) == 'value':
              d.setVar('ANOTHERVAR', 'value2')
      }
                 </literallayout>
-                Because unlike other Python functions anonymous
-                Python functions are executed during parsing, the
-                "d" variable within an anonymous Python function represents
-                the datastore for the entire recipe.
-                Consequently, you can set variable values here and
-                those values can be picked up by other functions.
+                An equivalent way to mark a function as an anonymous
+                function is to give it the name "__anonymous", rather
+                than no name.
+            </para>
+
+            <para>
+                Anonymous Python functions always run at the end
+                of parsing, regardless of where they are defined.
+                If a recipe contains many anonymous functions, they
+                run in the same order as they are defined within the
+                recipe.
+                As an example, consider the following snippet:
+                <literallayout class='monospaced'>
+     python () {
+         d.setVar('FOO', 'foo 2')
+     }
+
+     FOO = "foo 1"
+
+     python () {
+         d.appendVar('BAR', ' bar 2')
+     }
+
+     BAR = "bar 1"
+                </literallayout>
+                The previous example is conceptually equivalent to the
+                following snippet:
+                <literallayout class='monospaced'>
+     FOO = "foo 1"
+     BAR = "bar 1"
+     FOO = "foo 2"
+     BAR += "bar 2"
+                </literallayout>
+                <filename>FOO</filename> ends up with the value "foo 2",
+                and <filename>BAR</filename> with the value "bar 1 bar 2".
+                Just as in the second snippet, the values set for the
+                variables within the anonymous functions become available
+                to tasks, which always run after parsing.
+            </para>
+
+            <para>
+                Overrides and override-style operators such as
+                "<filename>_append</filename>" are applied before
+                anonymous functions run.
+                In the following example, <filename>FOO</filename> ends
+                up with the value "foo from anonymous":
+                <literallayout class='monospaced'>
+     FOO = "foo"
+     FOO_append = " from outside"
+
+     python () {
+         d.setVar("FOO", "foo from anonymous")
+     }
+                </literallayout>
+                For methods you can use with anonymous Python functions,
+                see the
+                "<link linkend='accessing-datastore-variables-using-python'>Accessing Datastore Variables Using Python</link>"
+                section.
+                For a different method to run Python code during parsing,
+                see the
+                "<link linkend='inline-python-variable-expansion'>Inline Python Variable Expansion</link>"
+                section.
             </para>
         </section>
 
