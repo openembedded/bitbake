@@ -419,13 +419,24 @@ class ORMWrapper(object):
         assert 'name' in layer_information
         assert 'layer_index_url' in layer_information
 
+        # From command line builds we have no brbe as the request is directly
+        # from bitbake
         if brbe is None:
-            layer_object, _ = Layer.objects.get_or_create(
-                                name=layer_information['name'],
-                                layer_index_url=layer_information['layer_index_url'])
+            # If we don't have git commit sha then we're using a non-git
+            # layer so set the layer_source_dir to identify it as such
+            if not layer_information['version']['commit']:
+                local_source_dir = layer_information["local_path"]
+            else:
+                local_source_dir = None
+
+            layer_object, _ = \
+                Layer.objects.get_or_create(
+                    name=layer_information['name'],
+                    local_source_dir=local_source_dir,
+                    layer_index_url=layer_information['layer_index_url'])
+
             return layer_object
         else:
-            # we are under managed mode; we must match the layer used in the Project Layer
             br_id, be_id = brbe.split(":")
 
             # find layer by checkout path;
@@ -449,6 +460,11 @@ class ORMWrapper(object):
                   # That created this build request.
                     if brl.layer_version:
                         return brl.layer_version
+
+                # This might be a local layer (i.e. no git info) so try
+                # matching local_source_dir
+                if brl.local_source_dir and brl.local_source_dir == layer_information["local_path"]:
+                    return brl.layer_version
 
                     # we matched the BRLayer, but we need the layer_version that generated this BR; reverse of the Project.schedule_build()
                     #logger.debug(1, "Matched %s to BRlayer %s" % (pformat(layer_information["local_path"]), localdirname))
@@ -973,6 +989,9 @@ class BuildInfoHelper(object):
         for lvo in sorted(self.orm_wrapper.layer_version_objects, reverse=True, key=_slkey_interactive):
             # we can match to the recipe file path
             if path.startswith(lvo.local_path):
+                return lvo
+            if lvo.layer.local_source_dir and \
+               path.startswith(lvo.layer.local_source_dir):
                 return lvo
 
         #if we get here, we didn't read layers correctly; dump whatever information we have on the error log
