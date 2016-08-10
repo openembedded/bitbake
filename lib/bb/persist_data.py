@@ -131,14 +131,14 @@ class SQLTable(collections.MutableMapping):
         return [row[1] for row in data]
 
     def values(self):
-        return list(self.values())
+        return list(self.itervalues())
 
     def itervalues(self):
         data = self._execute("SELECT value FROM %s;" % self.table)
         return (row[0] for row in data)
 
     def items(self):
-        return list(self.items())
+        return list(self.iteritems())
 
     def iteritems(self):
         return self._execute("SELECT * FROM %s;" % self.table)
