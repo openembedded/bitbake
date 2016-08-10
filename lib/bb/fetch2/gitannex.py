@@ -66,7 +66,7 @@ class GitANNEX(Git):
 
         os.chdir(ud.destdir)
         try:
-            runfetchcmd("%s annex sync" % (ud.basecmd), d)
+            runfetchcmd("%s annex init" % (ud.basecmd), d)
         except bb.fetch.FetchError:
             pass
 
