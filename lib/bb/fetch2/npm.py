@@ -113,16 +113,13 @@ class Npm(FetchMethod):
             bb.fatal("NPM package %s downloaded not a tarball!" % file)
 
         # Change to subdir before executing command
-        save_cwd = os.getcwd()
         if not os.path.exists(destdir):
             os.makedirs(destdir)
-        os.chdir(destdir)
         path = d.getVar('PATH', True)
         if path:
             cmd = "PATH=\"%s\" %s" % (path, cmd)
-        bb.note("Unpacking %s to %s/" % (file, os.getcwd()))
-        ret = subprocess.call(cmd, preexec_fn=subprocess_setup, shell=True)
-        os.chdir(save_cwd)
+        bb.note("Unpacking %s to %s/" % (file, destdir))
+        ret = subprocess.call(cmd, preexec_fn=subprocess_setup, shell=True, cwd=destdir)
 
         if ret != 0:
             raise UnpackError("Unpack command %s failed with return value %s" % (cmd, ret), ud.url)
@@ -239,10 +236,7 @@ class Npm(FetchMethod):
         if not os.listdir(ud.pkgdatadir) and os.path.exists(ud.fullmirror):
             dest = d.getVar("DL_DIR", True)
             bb.utils.mkdirhier(dest)
-            save_cwd = os.getcwd()
-            os.chdir(dest)
-            runfetchcmd("tar -xJf %s" % (ud.fullmirror), d)
-            os.chdir(save_cwd)
+            runfetchcmd("tar -xJf %s" % (ud.fullmirror), d, workdir=dest)
             return
 
         shwrf = d.getVar('NPM_SHRINKWRAP', True)
@@ -275,10 +269,8 @@ class Npm(FetchMethod):
             if os.path.islink(ud.fullmirror):
                 os.unlink(ud.fullmirror)
 
-            save_cwd = os.getcwd()
-            os.chdir(d.getVar("DL_DIR", True))
+            dldir = d.getVar("DL_DIR", True)
             logger.info("Creating tarball of npm data")
-            runfetchcmd("tar -cJf %s npm/%s npm/%s" % (ud.fullmirror, ud.bbnpmmanifest, ud.pkgname), d)
-            runfetchcmd("touch %s.done" % (ud.fullmirror), d)
-            os.chdir(save_cwd)
-
+            runfetchcmd("tar -cJf %s npm/%s npm/%s" % (ud.fullmirror, ud.bbnpmmanifest, ud.pkgname), d,
+                        workdir=dldir)
+            runfetchcmd("touch %s.done" % (ud.fullmirror), d, workdir=dldir)

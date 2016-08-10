@@ -168,15 +168,13 @@ class Perforce(FetchMethod):
 
         bb.utils.remove(ud.pkgdir, True)
         bb.utils.mkdirhier(ud.pkgdir)
-        os.chdir(ud.pkgdir)
 
         for afile in filelist:
             p4fetchcmd = self._buildp4command(ud, d, 'print', afile)
             bb.fetch2.check_network_access(d, p4fetchcmd)
-            runfetchcmd(p4fetchcmd, d)
+            runfetchcmd(p4fetchcmd, d, workdir=ud.pkgdir)
 
-        os.chdir(ud.pkgdir)
-        runfetchcmd('tar -czf %s p4' % (ud.localpath), d, cleanup = [ud.localpath])
+        runfetchcmd('tar -czf %s p4' % (ud.localpath), d, cleanup=[ud.localpath], workdir=ud.pkgdir)
 
     def clean(self, ud, d):
         """ Cleanup p4 specific files and dirs"""

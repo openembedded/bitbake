@@ -779,7 +779,7 @@ def localpath(url, d):
     fetcher = bb.fetch2.Fetch([url], d)
     return fetcher.localpath(url)
 
-def runfetchcmd(cmd, d, quiet=False, cleanup=None, log=None):
+def runfetchcmd(cmd, d, quiet=False, cleanup=None, log=None, workdir=None):
     """
     Run cmd returning the command output
     Raise an error if interrupted or cmd fails
@@ -821,7 +821,7 @@ def runfetchcmd(cmd, d, quiet=False, cleanup=None, log=None):
     error_message = ""
 
     try:
-        (output, errors) = bb.process.run(cmd, log=log, shell=True, stderr=subprocess.PIPE)
+        (output, errors) = bb.process.run(cmd, log=log, shell=True, stderr=subprocess.PIPE, cwd=workdir)
         success = True
     except bb.process.NotFoundError as e:
         error_message = "Fetch command %s" % (e.command)
@@ -1436,17 +1436,11 @@ class FetchMethod(object):
         if not cmd:
             return
 
-        # Change to unpackdir before executing command
-        save_cwd = os.getcwd();
-        os.chdir(unpackdir)
-
         path = data.getVar('PATH', True)
         if path:
             cmd = "PATH=\"%s\" %s" % (path, cmd)
-        bb.note("Unpacking %s to %s/" % (file, os.getcwd()))
-        ret = subprocess.call(cmd, preexec_fn=subprocess_setup, shell=True)
-
-        os.chdir(save_cwd)
+        bb.note("Unpacking %s to %s/" % (file, unpackdir))
+        ret = subprocess.call(cmd, preexec_fn=subprocess_setup, shell=True, cwd=unpackdir)
 
         if ret != 0:
             raise UnpackError("Unpack command %s failed with return value %s" % (cmd, ret), urldata.url)
@@ -1559,6 +1553,8 @@ class Fetch(object):
         network = self.d.getVar("BB_NO_NETWORK", True)
         premirroronly = (self.d.getVar("BB_FETCH_PREMIRRORONLY", True) == "1")
 
+        save_cwd = os.getcwd()
+
         for u in urls:
             ud = self.ud[u]
             ud.setup_localpath(self.d)
@@ -1633,6 +1629,7 @@ class Fetch(object):
                 raise
 
             finally:
+                os.chdir(save_cwd)
                 if ud.lockfile:
                     bb.utils.unlockfile(lf)
 
@@ -1640,6 +1637,8 @@ class Fetch(object):
         """
         Check all urls exist upstream
         """
+
+        save_cwd = os.getcwd()
 
         if not urls:
             urls = self.urls
@@ -1663,6 +1662,8 @@ class Fetch(object):
 
             if not ret:
                 raise FetchError("URL %s doesn't work" % u, u)
+
+        os.chdir(save_cwd)
 
     def unpack(self, root, urls=None):
         """
