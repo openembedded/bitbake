@@ -363,10 +363,12 @@ def clean_basepaths_list(a):
 def compare_sigfiles(a, b, recursecb = None):
     output = []
 
-    p1 = pickle.Unpickler(open(a, "rb"))
-    a_data = p1.load()
-    p2 = pickle.Unpickler(open(b, "rb"))
-    b_data = p2.load()
+    with open(a, 'rb') as f:
+        p1 = pickle.Unpickler(ff)
+        a_data = p1.load()
+    with open(b, 'rb') as f:
+        p2 = pickle.Unpickler(f)
+        b_data = p2.load()
 
     def dict_diff(a, b, whitelist=set()):
         sa = set(a.keys())
@@ -563,8 +565,9 @@ def calc_taskhash(sigdata):
 def dump_sigfile(a):
     output = []
 
-    p1 = pickle.Unpickler(open(a, "rb"))
-    a_data = p1.load()
+    with open(a, 'rb') as f:
+        p1 = pickle.Unpickler(f)
+        a_data = p1.load()
 
     output.append("basewhitelist: %s" % (a_data['basewhitelist']))
 
