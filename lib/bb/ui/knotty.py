@@ -260,13 +260,16 @@ class TerminalFilter(object):
                 content = "No currently running tasks (%s of %s)" % (self.helper.tasknumber_current, self.helper.tasknumber_total)
             else:
                 content = "Currently %2s running tasks (%s of %s)" % (len(activetasks), self.helper.tasknumber_current, self.helper.tasknumber_total)
-            maxtask = self.helper.tasknumber_total + 1
+            maxtask = self.helper.tasknumber_total
             if not self.main_progress or self.main_progress.maxval != maxtask:
                 widgets = [' ', progressbar.Percentage(), ' ', progressbar.Bar()]
                 self.main_progress = BBProgress("Running tasks", maxtask, widgets=widgets)
                 self.main_progress.start(False)
             self.main_progress.setmessage(content)
-            self.main_progress.update(self.helper.tasknumber_current)
+            progress = self.helper.tasknumber_current - 1
+            if progress < 0:
+                progress = 0
+            self.main_progress.update(progress)
             print('')
         lines = 1 + int(len(content) / (self.columns + 1))
         if not self.quiet:
