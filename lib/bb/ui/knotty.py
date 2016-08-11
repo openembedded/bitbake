@@ -256,7 +256,9 @@ class TerminalFilter(object):
             content = "Waiting for %s running tasks to finish:" % len(activetasks)
             print(content)
         else:
-            if not len(activetasks):
+            if self.quiet:
+                content = "Running tasks (%s of %s)" % (self.helper.tasknumber_current, self.helper.tasknumber_total)
+            elif not len(activetasks):
                 content = "No currently running tasks (%s of %s)" % (self.helper.tasknumber_current, self.helper.tasknumber_total)
             else:
                 content = "Currently %2s running tasks (%s of %s)" % (len(activetasks), self.helper.tasknumber_current, self.helper.tasknumber_total)
