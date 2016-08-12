@@ -1848,44 +1848,48 @@
                 <literallayout class='monospaced'>
      addtask printdate after do_fetch before do_build
                 </literallayout>
-                In this example, the <filename>printdate</filename> task is
-                depends on the completion of the <filename>do_fetch</filename>
+                In this example, the <filename>do_printdate</filename>
+                task depends on the completion of the
+                <filename>do_fetch</filename> task, and the
+                <filename>do_build</filename> task depends on the
+                completion of the <filename>do_printdate</filename>
                 task.
-                And, the <filename>do_build</filename> depends on the completion
-                of the <filename>printdate</filename> task.
-                <note>
-                    Recipes are built by having their
-                    <filename>do_build</filename> (not to be confused with
-                    <filename>do_compile</filename>) tasks executed.
-                    For a task to run when a recipe is built, the task must
-                    therefore be a direct or indirect dependency of
-                    <filename>do_build</filename>.
-                    For illustration, here are some examples:
+                <note><para>
+                    For a task to run, it must be a direct or indirect
+                    dependency of some other task that is scheduled to
+                    run.</para>
+
+                    <para>For illustration, here are some examples:
                     <itemizedlist>
                         <listitem><para>
                             The directive
-                            <filename>addtask mytask before do_build</filename>
-                            causes <filename>mytask</filename> to run when the
-                            recipe is built.
-                            In this example, <filename>mytask</filename> is run
-                            at an unspecified time relative to other tasks within
-                            the recipe, since <filename>after</filename> is not used.
+                            <filename>addtask mytask before do_configure</filename>
+                            causes <filename>do_mytask</filename> to run before
+                            <filename>do_configure</filename> runs.
+                            Be aware that <filename>do_mytask</filename> still only
+                            runs if its <link linkend='checksums'>input checksum</link>
+                            has changed since the last time it was run.
+                            Changes to the input checksum of
+                            <filename>do_mytask</filename> also indirectly cause
+                            <filename>do_configure</filename> to run.
                             </para></listitem>
                         <listitem><para>
                             The directive
                             <filename>addtask mytask after do_configure</filename>
-                            by itself does not cause <filename>mytask</filename>
-                            to run when the recipe is built.
-                            The task can still be run manually using the following:
+                            by itself never causes <filename>do_mytask</filename>
+                            to run.
+                            <filename>do_mytask</filename> can still be run manually
+                            as follows:
                             <literallayout class='monospaced'>
      $ bitbake <replaceable>recipe</replaceable> -c mytask
                             </literallayout>
-                            <filename>mytask</filename> could also be declared as
-                            a dependency of some other task.
-                            Regardless, the task is run after
+                            Declaring <filename>do_mytask</filename> as a dependency
+                            of some other task that is scheduled to run also causes
+                            it to run.
+                            Regardless, the task runs after
                             <filename>do_configure</filename>.
                             </para></listitem>
-                    </itemizedlist>
+                    </itemizedlist></para>
                 </note>
             </para>
         </section>
