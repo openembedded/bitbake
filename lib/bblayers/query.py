@@ -170,7 +170,7 @@ skipped recipes will also be listed, with a " (skipped)" suffix.
 
             if len(allproviders[p]) > 1 or not show_multi_provider_only:
                 pref = preferred_versions[p]
-                realfn = bb.cache.Cache.virtualfn2realfn(pref[1])
+                realfn = bb.cache.virtualfn2realfn(pref[1])
                 preffile = realfn[0]
 
                 # We only display once per recipe, we should prefer non extended versions of the
@@ -200,7 +200,7 @@ skipped recipes will also be listed, with a " (skipped)" suffix.
                     same_ver = True
                     provs = []
                     for prov in allproviders[p]:
-                        provfile = bb.cache.Cache.virtualfn2realfn(prov[1])[0]
+                        provfile = bb.cache.virtualfn2realfn(prov[1])[0]
                         provlayer = self.get_file_layer(provfile)
                         provs.append((provfile, provlayer, prov[0]))
                         if provlayer != preflayer:
@@ -297,7 +297,7 @@ Lists recipes with the bbappends that apply to them as subitems.
     def get_appends_for_files(self, filenames):
         appended, notappended = [], []
         for filename in filenames:
-            _, cls = bb.cache.Cache.virtualfn2realfn(filename)
+            _, cls = bb.cache.virtualfn2realfn(filename)
             if cls:
                 continue
 
@@ -328,7 +328,7 @@ NOTE: .bbappend files can impact the dependencies.
 
         # The bb's DEPENDS and RDEPENDS
         for f in pkg_fn:
-            f = bb.cache.Cache.virtualfn2realfn(f)[0]
+            f = bb.cache.virtualfn2realfn(f)[0]
             # Get the layername that the file is in
             layername = self.get_file_layer(f)
 
@@ -471,7 +471,7 @@ NOTE: .bbappend files can impact the dependencies.
 
     def check_cross_depends(self, keyword, layername, f, needed_file, show_filenames, ignore_layers):
         """Print the DEPENDS/RDEPENDS file that crosses a layer boundary"""
-        best_realfn = bb.cache.Cache.virtualfn2realfn(needed_file)[0]
+        best_realfn = bb.cache.virtualfn2realfn(needed_file)[0]
         needed_layername = self.get_file_layer(best_realfn)
         if needed_layername != layername and not needed_layername in ignore_layers:
             if not show_filenames:

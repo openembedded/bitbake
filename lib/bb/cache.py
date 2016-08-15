@@ -244,7 +244,26 @@ class CoreRecipeInfo(RecipeInfoCommon):
         cachedata.fakerootdirs[fn] = self.fakerootdirs
         cachedata.extradepsfunc[fn] = self.extradepsfunc
 
+def virtualfn2realfn(virtualfn):
+    """
+    Convert a virtual file name to a real one + the associated subclass keyword
+    """
 
+    fn = virtualfn
+    cls = ""
+    if virtualfn.startswith('virtual:'):
+        elems = virtualfn.split(':')
+        cls = ":".join(elems[1:-1])
+        fn = elems[-1]
+    return (fn, cls)
+
+def realfn2virtual(realfn, cls):
+    """
+    Convert a real filename + the associated subclass keyword to a virtual filename
+    """
+    if cls == "":
+        return realfn
+    return "virtual:" + cls + ":" + realfn
 
 class Cache(object):
     """
@@ -355,30 +374,6 @@ class Cache(object):
                                                   len(self.depends_cache)),
                       self.data)
 
-    
-    @staticmethod
-    def virtualfn2realfn(virtualfn):
-        """
-        Convert a virtual file name to a real one + the associated subclass keyword
-        """
-
-        fn = virtualfn
-        cls = ""
-        if virtualfn.startswith('virtual:'):
-            elems = virtualfn.split(':')
-            cls = ":".join(elems[1:-1])
-            fn = elems[-1]
-        return (fn, cls)
-
-    @staticmethod
-    def realfn2virtual(realfn, cls):
-        """
-        Convert a real filename + the associated subclass keyword to a virtual filename
-        """
-        if cls == "":
-            return realfn
-        return "virtual:" + cls + ":" + realfn
-
     @classmethod
     def loadDataFull(cls, virtualfn, appends, cfgData):
         """
@@ -386,7 +381,7 @@ class Cache(object):
         To do this, we need to parse the file.
         """
 
-        (fn, virtual) = cls.virtualfn2realfn(virtualfn)
+        (fn, virtual) = virtualfn2realfn(virtualfn)
 
         logger.debug(1, "Parsing %s (full)", fn)
 
@@ -406,7 +401,7 @@ class Cache(object):
         for variant, data in sorted(datastores.items(),
                                     key=lambda i: i[0],
                                     reverse=True):
-            virtualfn = cls.realfn2virtual(filename, variant)
+            virtualfn = realfn2virtual(filename, variant)
             variants.append(variant)
             depends = depends + (data.getVar("__depends", False) or [])
             if depends and not variant:
@@ -435,7 +430,7 @@ class Cache(object):
             # info_array item is a list of [CoreRecipeInfo, XXXRecipeInfo]
             info_array = self.depends_cache[filename]
             for variant in info_array[0].variants:
-                virtualfn = self.realfn2virtual(filename, variant)
+                virtualfn = realfn2virtual(filename, variant)
                 infos.append((virtualfn, self.depends_cache[virtualfn]))
         else:
             return self.parse(filename, appends, configdata, self.caches_array)
@@ -556,7 +551,7 @@ class Cache(object):
 
         invalid = False
         for cls in info_array[0].variants:
-            virtualfn = self.realfn2virtual(fn, cls)
+            virtualfn = realfn2virtual(fn, cls)
             self.clean.add(virtualfn)
             if virtualfn not in self.depends_cache:
                 logger.debug(2, "Cache: %s is not cached", virtualfn)
@@ -568,7 +563,7 @@ class Cache(object):
         # If any one of the variants is not present, mark as invalid for all
         if invalid:
             for cls in info_array[0].variants:
-                virtualfn = self.realfn2virtual(fn, cls)
+                virtualfn = realfn2virtual(fn, cls)
                 if virtualfn in self.clean:
                     logger.debug(2, "Cache: Removing %s from cache", virtualfn)
                     self.clean.remove(virtualfn)
@@ -645,7 +640,7 @@ class Cache(object):
         Save data we need into the cache
         """
 
-        realfn = self.virtualfn2realfn(file_name)[0]
+        realfn = virtualfn2realfn(file_name)[0]
 
         info_array = []
         for cache_class in self.caches_array:

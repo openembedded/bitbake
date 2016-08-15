@@ -601,9 +601,9 @@ class BBCooker:
             # this showEnvironment() code path doesn't use the cache
             self.parseConfiguration()
 
-            fn, cls = bb.cache.Cache.virtualfn2realfn(buildfile)
+            fn, cls = bb.cache.virtualfn2realfn(buildfile)
             fn = self.matchFile(fn)
-            fn = bb.cache.Cache.realfn2virtual(fn, cls)
+            fn = bb.cache.realfn2virtual(fn, cls)
         elif len(pkgs_to_build) == 1:
             ignore = self.expanded_data.getVar("ASSUME_PROVIDED", True) or ""
             if pkgs_to_build[0] in set(ignore.split()):
@@ -1249,7 +1249,7 @@ class BBCooker:
         if (task == None):
             task = self.configuration.cmd
 
-        fn, cls = bb.cache.Cache.virtualfn2realfn(buildfile)
+        fn, cls = bb.cache.virtualfn2realfn(buildfile)
         fn = self.matchFile(fn)
 
         self.buildSetVars()
@@ -1259,7 +1259,7 @@ class BBCooker:
                                      self.caches_array)
         infos = dict(infos)
 
-        fn = bb.cache.Cache.realfn2virtual(fn, cls)
+        fn = bb.cache.realfn2virtual(fn, cls)
         try:
             info_array = infos[fn]
         except KeyError:
@@ -1822,7 +1822,7 @@ class CookerCollectFiles(object):
         # Calculate priorities for each file
         matched = set()
         for p in pkgfns:
-            realfn, cls = bb.cache.Cache.virtualfn2realfn(p)
+            realfn, cls = bb.cache.virtualfn2realfn(p)
             priorities[p] = self.calc_bbfile_priority(realfn, matched)
 
         # Don't show the warning if the BBFILE_PATTERN did match .bbappend files
