@@ -469,9 +469,5 @@ def multi_finalize(fn, d):
             except bb.parse.SkipRecipe as e:
                 datastores[variant].setVar("__SKIPPED", e.args[0])
 
-    if len(datastores) > 1:
-        variants = filter(None, datastores.keys())
-        safe_d.setVar("__VARIANTS", " ".join(variants))
-
     datastores[""] = d
     return datastores

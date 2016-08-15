@@ -401,14 +401,18 @@ class Cache(object):
         infos = []
         datastores = cls.load_bbfile(filename, appends, configdata)
         depends = []
+        variants = []
+        # Process the "real" fn last so we can store variants list
         for variant, data in sorted(datastores.items(),
                                     key=lambda i: i[0],
                                     reverse=True):
             virtualfn = cls.realfn2virtual(filename, variant)
+            variants.append(variant)
             depends = depends + (data.getVar("__depends", False) or [])
             if depends and not variant:
                 data.setVar("__depends", depends)
-
+            if virtualfn == filename:
+                data.setVar("__VARIANTS", " ".join(variants))
             info_array = []
             for cache_class in caches_array:
                 info = cache_class(filename, data)
