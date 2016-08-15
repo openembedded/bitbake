@@ -165,6 +165,12 @@ class Command(NoArgsCommand):
                     # layerindex
                     oe_core_l.summary = li['summary']
                     oe_core_l.description = li['description']
+                    oe_core_l.vcs_web_url = li['vcs_web_url']
+                    oe_core_l.vcs_web_tree_base_url = \
+                        li['vcs_web_tree_base_url']
+                    oe_core_l.vcs_web_file_base_url = \
+                        li['vcs_web_file_base_url']
+
                     oe_core_l.save()
                     li_layer_id_to_toaster_layer_id[li['id']] = oe_core_l.pk
                     self.mini_progress("layers", i, total)
