@@ -1974,6 +1974,7 @@ class CookerParser(object):
         self.cooker = cooker
         self.cfgdata = cooker.data
         self.cfghash = cooker.data_hash
+        self.cfgbuilder = cooker.databuilder
 
         # Accounting statistics
         self.parsed = 0
@@ -1988,7 +1989,7 @@ class CookerParser(object):
         self.current = 0
         self.process_names = []
 
-        self.bb_cache = bb.cache.Cache(self.cfgdata, self.cfghash, cooker.caches_array)
+        self.bb_cache = bb.cache.Cache(self.cfgbuilder, self.cfghash, cooker.caches_array)
         self.fromcache = []
         self.willparse = []
         for filename in self.filelist:

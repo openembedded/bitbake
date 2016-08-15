@@ -270,7 +270,9 @@ class Cache(object):
     BitBake Cache implementation
     """
 
-    def __init__(self, data, data_hash, caches_array):
+    def __init__(self, databuilder, data_hash, caches_array):
+        data = databuilder.data
+
         # Pass caches_array information into Cache Constructor
         # It will be used later for deciding whether we 
         # need extra cache file dump/load support 
@@ -279,7 +281,6 @@ class Cache(object):
         self.clean = set()
         self.checked = set()
         self.depends_cache = {}
-        self.data = None
         self.data_fn = None
         self.cacheclean = True
         self.data_hash = data_hash
