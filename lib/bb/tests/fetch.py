@@ -768,7 +768,6 @@ class FetchLatestVersionTest(FetcherTest):
 
 class FetchCheckStatusTest(FetcherTest):
     test_wget_uris = ["http://www.cups.org/software/1.7.2/cups-1.7.2-source.tar.bz2",
-                      "http://www.cups.org/software/ipptool/ipptool-20130731-linux-ubuntu-i686.tar.gz",
                       "http://www.cups.org/",
                       "http://downloads.yoctoproject.org/releases/sato/sato-engine-0.1.tar.gz",
                       "http://downloads.yoctoproject.org/releases/sato/sato-engine-0.2.tar.gz",
