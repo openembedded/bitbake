@@ -258,7 +258,7 @@ class CookerDataBuilder(object):
 
     def parseBaseConfiguration(self):
         try:
-            self.parseConfigurationFiles(self.prefiles, self.postfiles)
+            self.parseConfigurationFiles()
         except SyntaxError:
             raise bb.BBHandledException
         except bb.data_smart.ExpansionError as e:
@@ -271,8 +271,10 @@ class CookerDataBuilder(object):
     def _findLayerConf(self, data):
         return findConfigFile("bblayers.conf", data)
 
-    def parseConfigurationFiles(self, prefiles, postfiles):
+    def parseConfigurationFiles(self):
         data = self.data
+        prefiles = self.prefiles
+        postfiles = self.postfiles
         bb.parse.init_parser(data)
 
         # Parse files for loading *before* bitbake.conf and any includes
@@ -343,7 +345,7 @@ class CookerDataBuilder(object):
 
         if data.getVar("BB_INVALIDCONF", False) is True:
             data.setVar("BB_INVALIDCONF", False)
-            self.parseConfigurationFiles(self.prefiles, self.postfiles)
+            self.parseConfigurationFiles()
             return
 
         bb.parse.init_parser(data)
