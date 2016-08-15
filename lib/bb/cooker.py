@@ -617,7 +617,8 @@ class BBCooker:
 
         if fn:
             try:
-                envdata = bb.cache.Cache.loadDataFull(fn, self.collection.get_file_appends(fn), self.data)
+                bb_cache = bb.cache.Cache(self.databuilder, self.data_hash, self.caches_array)
+                envdata = bb_cache.loadDataFull(fn, self.collection.get_file_appends(fn))
             except Exception as e:
                 parselog.exception("Unable to read %s", fn)
                 raise
@@ -1254,9 +1255,9 @@ class BBCooker:
 
         self.buildSetVars()
 
-        infos = bb.cache.Cache.parse(fn, self.collection.get_file_appends(fn), \
-                                     self.data,
-                                     self.caches_array)
+        bb_cache = bb.cache.Cache(self.databuilder, self.data_hash, self.caches_array)
+
+        infos = bb_cache.parse(fn, self.collection.get_file_appends(fn))
         infos = dict(infos)
 
         fn = bb.cache.realfn2virtual(fn, cls)
@@ -1943,7 +1944,7 @@ class Parser(multiprocessing.Process):
             except queue.Full:
                 pending.append(result)
 
-    def parse(self, filename, appends, caches_array):
+    def parse(self, filename, appends):
         try:
             # Record the filename we're parsing into any events generated
             def parse_filter(self, record):
@@ -1956,7 +1957,7 @@ class Parser(multiprocessing.Process):
             bb.event.set_class_handlers(self.handlers.copy())
             bb.event.LogHandler.filter = parse_filter
 
-            return True, bb.cache.Cache.parse(filename, appends, self.cfg, caches_array)
+            return True, self.bb_cache.parse(filename, appends)
         except Exception as exc:
             tb = sys.exc_info()[2]
             exc.recipe = filename
@@ -1995,7 +1996,7 @@ class CookerParser(object):
         for filename in self.filelist:
             appends = self.cooker.collection.get_file_appends(filename)
             if not self.bb_cache.cacheValid(filename, appends):
-                self.willparse.append((filename, appends, cooker.caches_array))
+                self.willparse.append((filename, appends))
             else:
                 self.fromcache.append((filename, appends))
         self.toparse = self.total - len(self.fromcache)
@@ -2013,7 +2014,7 @@ class CookerParser(object):
         if self.toparse:
             bb.event.fire(bb.event.ParseStarted(self.toparse), self.cfgdata)
             def init():
-                Parser.cfg = self.cfgdata
+                Parser.bb_cache = self.bb_cache
                 bb.utils.set_process_name(multiprocessing.current_process().name)
                 multiprocessing.util.Finalize(None, bb.codeparser.parser_cache_save, exitpriority=1)
                 multiprocessing.util.Finalize(None, bb.fetch.fetcher_parse_save, exitpriority=1)
@@ -2084,7 +2085,7 @@ class CookerParser(object):
 
     def load_cached(self):
         for filename, appends in self.fromcache:
-            cached, infos = self.bb_cache.load(filename, appends, self.cfgdata)
+            cached, infos = self.bb_cache.load(filename, appends)
             yield not cached, infos
 
     def parse_generator(self):
@@ -2168,8 +2169,6 @@ class CookerParser(object):
         return True
 
     def reparse(self, filename):
-        infos = self.bb_cache.parse(filename,
-                                    self.cooker.collection.get_file_appends(filename),
-                                    self.cfgdata, self.cooker.caches_array)
+        infos = self.bb_cache.parse(filename, self.cooker.collection.get_file_appends(filename))
         for vfn, info_array in infos:
             self.cooker.recipecache.add_from_recipeinfo(vfn, info_array)

@@ -271,35 +271,44 @@ class NoCache(object):
         self.databuilder = databuilder
         self.data = databuilder.data
 
-    @classmethod
-    def loadDataFull(cls, virtualfn, appends, cfgData):
+    def loadDataFull(self, virtualfn, appends):
         """
         Return a complete set of data for fn.
         To do this, we need to parse the file.
         """
-
+        logger.debug(1, "Parsing %s (full)" % virtualfn)
         (fn, virtual) = virtualfn2realfn(virtualfn)
-
-        logger.debug(1, "Parsing %s (full)", fn)
-
-        cfgData.setVar("__ONLYFINALISE", virtual or "default")
-        bb_data = cls.load_bbfile(fn, appends, cfgData)
+        bb_data = self.load_bbfile(virtualfn, appends, virtonly=True)
         return bb_data[virtual]
 
-    @staticmethod
-    def load_bbfile(bbfile, appends, config):
+    def load_bbfile(self, bbfile, appends, virtonly = False):
         """
         Load and parse one .bb build file
         Return the data and whether parsing resulted in the file being skipped
         """
+
+        if virtonly:
+            (bbfile, virtual) = virtualfn2realfn(bbfile)
+            bb_data = self.data.createCopy()
+            bb_data.setVar("__BBMULTICONFIG", mc) 
+            bb_data.setVar("__ONLYFINALISE", virtual or "default")
+            datastores = self._load_bbfile(bb_data, bbfile, appends)
+            return datastores
+
+        bb_data = self.data.createCopy()
+        datastores = self._load_bbfile(bb_data, bbfile, appends)
+
+        return datastores
+
+    def _load_bbfile(self, bb_data, bbfile, appends):
         chdir_back = False
 
         # expand tmpdir to include this topdir
-        config.setVar('TMPDIR', config.getVar('TMPDIR', True) or "")
+        bb_data.setVar('TMPDIR', bb_data.getVar('TMPDIR', True) or "")
         bbfile_loc = os.path.abspath(os.path.dirname(bbfile))
         oldpath = os.path.abspath(os.getcwd())
         bb.parse.cached_mtime_noerror(bbfile_loc)
-        bb_data = config.createCopy()
+
         # The ConfHandler first looks if there is a TOPDIR and if not
         # then it would call getcwd().
         # Previously, we chdir()ed to bbfile_loc, called the handler
@@ -431,12 +440,11 @@ class Cache(NoCache):
                                                   len(self.depends_cache)),
                       self.data)
 
-    @classmethod
-    def parse(cls, filename, appends, configdata, caches_array):
+    def parse(self, filename, appends):
         """Parse the specified filename, returning the recipe information"""
         logger.debug(1, "Parsing %s", filename)
         infos = []
-        datastores = cls.load_bbfile(filename, appends, configdata)
+        datastores = self.load_bbfile(filename, appends)
         depends = []
         variants = []
         # Process the "real" fn last so we can store variants list
@@ -451,14 +459,14 @@ class Cache(NoCache):
             if virtualfn == filename:
                 data.setVar("__VARIANTS", " ".join(variants))
             info_array = []
-            for cache_class in caches_array:
+            for cache_class in self.caches_array:
                 info = cache_class(filename, data)
                 info_array.append(info)
             infos.append((virtualfn, info_array))
 
         return infos
 
-    def load(self, filename, appends, configdata):
+    def load(self, filename, appends):
         """Obtain the recipe information for the specified filename,
         using cached values if available, otherwise parsing.
 
@@ -479,13 +487,13 @@ class Cache(NoCache):
 
         return cached, infos
 
-    def loadData(self, fn, appends, cfgData, cacheData):
+    def loadData(self, fn, appends, cacheData):
         """Load the recipe info for the specified filename,
         parsing and adding to the cache if necessary, and adding
         the recipe information to the supplied CacheData instance."""
         skipped, virtuals = 0, 0
 
-        cached, infos = self.load(fn, appends, cfgData)
+        cached, infos = self.load(fn, appends)
         for virtualfn, info_array in infos:
             if info_array[0].skipped:
                 logger.debug(1, "Skipping %s: %s", virtualfn, info_array[0].skipreason)
