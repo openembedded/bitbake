@@ -173,7 +173,7 @@ build results (as the layer priority order has effectively changed).
         # have come from)
         first_regex = None
         layerdir = layers[0]
-        for layername, pattern, regex, _ in self.tinfoil.cooker.recipecache.bbfile_config_priorities:
+        for layername, pattern, regex, _ in self.tinfoil.cooker.bbfile_config_priorities:
             if regex.match(os.path.join(layerdir, 'test')):
                 first_regex = regex
                 break

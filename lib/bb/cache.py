@@ -248,6 +248,11 @@ def virtualfn2realfn(virtualfn):
     """
     Convert a virtual file name to a real one + the associated subclass keyword
     """
+    mc = ""
+    if virtualfn.startswith('multiconfig:'):
+        elems = virtualfn.split(':')
+        mc = elems[1]
+        virtualfn = ":".join(elems[2:])
 
     fn = virtualfn
     cls = ""
@@ -255,15 +260,32 @@ def virtualfn2realfn(virtualfn):
         elems = virtualfn.split(':')
         cls = ":".join(elems[1:-1])
         fn = elems[-1]
-    return (fn, cls)
 
-def realfn2virtual(realfn, cls):
+    return (fn, cls, mc)
+
+def realfn2virtual(realfn, cls, mc):
     """
     Convert a real filename + the associated subclass keyword to a virtual filename
     """
-    if cls == "":
+    if cls:
+        realfn = "virtual:" + cls + ":" + realfn
+    if mc:
+        realfn = "multiconfig:" + mc + ":" + realfn
+    return realfn
+
+def variant2virtual(realfn, variant):
+    """
+    Convert a real filename + the associated subclass keyword to a virtual filename
+    """
+    if variant == "":
         return realfn
-    return "virtual:" + cls + ":" + realfn
+    if variant.startswith("multiconfig:"):
+        elems = variant.split(":")
+        if elems[2]:
+            return "multiconfig:" + elems[1] + ":virtual:" + ":".join(elems[2:]) + ":" + realfn
+        return "multiconfig:" + elems[1] + ":" + realfn
+    return "virtual:" + variant + ":" + realfn
+
 
 class NoCache(object):
 
@@ -277,7 +299,7 @@ class NoCache(object):
         To do this, we need to parse the file.
         """
         logger.debug(1, "Parsing %s (full)" % virtualfn)
-        (fn, virtual) = virtualfn2realfn(virtualfn)
+        (fn, virtual, mc) = virtualfn2realfn(virtualfn)
         bb_data = self.load_bbfile(virtualfn, appends, virtonly=True)
         return bb_data[virtual]
 
@@ -288,8 +310,8 @@ class NoCache(object):
         """
 
         if virtonly:
-            (bbfile, virtual) = virtualfn2realfn(bbfile)
-            bb_data = self.data.createCopy()
+            (bbfile, virtual, mc) = virtualfn2realfn(bbfile)
+            bb_data = self.databuilder.mcdata[mc].createCopy()
             bb_data.setVar("__BBMULTICONFIG", mc) 
             bb_data.setVar("__ONLYFINALISE", virtual or "default")
             datastores = self._load_bbfile(bb_data, bbfile, appends)
@@ -297,6 +319,15 @@ class NoCache(object):
 
         bb_data = self.data.createCopy()
         datastores = self._load_bbfile(bb_data, bbfile, appends)
+
+        for mc in self.databuilder.mcdata:
+            if not mc:
+                continue
+            bb_data = self.databuilder.mcdata[mc].createCopy()
+            bb_data.setVar("__BBMULTICONFIG", mc) 
+            newstores = self._load_bbfile(bb_data, bbfile, appends)
+            for ns in newstores:
+                datastores["multiconfig:%s:%s" % (mc, ns)] = newstores[ns]
 
         return datastores
 
@@ -451,7 +482,7 @@ class Cache(NoCache):
         for variant, data in sorted(datastores.items(),
                                     key=lambda i: i[0],
                                     reverse=True):
-            virtualfn = realfn2virtual(filename, variant)
+            virtualfn = variant2virtual(filename, variant)
             variants.append(variant)
             depends = depends + (data.getVar("__depends", False) or [])
             if depends and not variant:
@@ -480,7 +511,7 @@ class Cache(NoCache):
             # info_array item is a list of [CoreRecipeInfo, XXXRecipeInfo]
             info_array = self.depends_cache[filename]
             for variant in info_array[0].variants:
-                virtualfn = realfn2virtual(filename, variant)
+                virtualfn = variant2virtual(filename, variant)
                 infos.append((virtualfn, self.depends_cache[virtualfn]))
         else:
             return self.parse(filename, appends, configdata, self.caches_array)
@@ -601,7 +632,7 @@ class Cache(NoCache):
 
         invalid = False
         for cls in info_array[0].variants:
-            virtualfn = realfn2virtual(fn, cls)
+            virtualfn = variant2virtual(fn, cls)
             self.clean.add(virtualfn)
             if virtualfn not in self.depends_cache:
                 logger.debug(2, "Cache: %s is not cached", virtualfn)
@@ -613,7 +644,7 @@ class Cache(NoCache):
         # If any one of the variants is not present, mark as invalid for all
         if invalid:
             for cls in info_array[0].variants:
-                virtualfn = realfn2virtual(fn, cls)
+                virtualfn = variant2virtual(fn, cls)
                 if virtualfn in self.clean:
                     logger.debug(2, "Cache: Removing %s from cache", virtualfn)
                     self.clean.remove(virtualfn)

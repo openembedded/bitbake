@@ -23,7 +23,7 @@ class QueryPlugin(LayerPlugin):
         """show current configured layers."""
         logger.plain("%s  %s  %s" % ("layer".ljust(20), "path".ljust(40), "priority"))
         logger.plain('=' * 74)
-        for layer, _, regex, pri in self.tinfoil.cooker.recipecache.bbfile_config_priorities:
+        for layer, _, regex, pri in self.tinfoil.cooker.bbfile_config_priorities:
             layerdir = self.bbfile_collections.get(layer, None)
             layername = self.get_layer_name(layerdir)
             logger.plain("%s  %s  %d" % (layername.ljust(20), layerdir.ljust(40), pri))
@@ -121,9 +121,9 @@ skipped recipes will also be listed, with a " (skipped)" suffix.
                     logger.error('No class named %s found in BBPATH', classfile)
                     sys.exit(1)
 
-        pkg_pn = self.tinfoil.cooker.recipecache.pkg_pn
-        (latest_versions, preferred_versions) = bb.providers.findProviders(self.tinfoil.config_data, self.tinfoil.cooker.recipecache, pkg_pn)
-        allproviders = bb.providers.allProviders(self.tinfoil.cooker.recipecache)
+        pkg_pn = self.tinfoil.cooker.recipecaches[''].pkg_pn
+        (latest_versions, preferred_versions) = bb.providers.findProviders(self.tinfoil.config_data, self.tinfoil.cooker.recipecaches[''], pkg_pn)
+        allproviders = bb.providers.allProviders(self.tinfoil.cooker.recipecaches[''])
 
         # Ensure we list skipped recipes
         # We are largely guessing about PN, PV and the preferred version here,
@@ -176,7 +176,7 @@ skipped recipes will also be listed, with a " (skipped)" suffix.
                 # We only display once per recipe, we should prefer non extended versions of the
                 # recipe if present (so e.g. in OpenEmbedded, openssl rather than nativesdk-openssl
                 # which would otherwise sort first).
-                if realfn[1] and realfn[0] in self.tinfoil.cooker.recipecache.pkg_fn:
+                if realfn[1] and realfn[0] in self.tinfoil.cooker.recipecaches[''].pkg_fn:
                     continue
 
                 if inherits:
@@ -297,7 +297,7 @@ Lists recipes with the bbappends that apply to them as subitems.
     def get_appends_for_files(self, filenames):
         appended, notappended = [], []
         for filename in filenames:
-            _, cls = bb.cache.virtualfn2realfn(filename)
+            _, cls, _ = bb.cache.virtualfn2realfn(filename)
             if cls:
                 continue
 

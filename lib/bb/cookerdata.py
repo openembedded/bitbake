@@ -237,9 +237,9 @@ class CookerDataBuilder(object):
 
         bb.utils.set_context(bb.utils.clean_context())
         bb.event.set_class_handlers(bb.event.clean_class_handlers())
-        self.data = bb.data.init()
+        self.basedata = bb.data.init()
         if self.tracking:
-            self.data.enableTracking()
+            self.basedata.enableTracking()
 
         # Keep a datastore of the initial environment variables and their
         # values from when BitBake was launched to enable child processes
@@ -250,15 +250,40 @@ class CookerDataBuilder(object):
             self.savedenv.setVar(k, cookercfg.env[k])
 
         filtered_keys = bb.utils.approved_variables()
-        bb.data.inheritFromOS(self.data, self.savedenv, filtered_keys)
-        self.data.setVar("BB_ORIGENV", self.savedenv)
+        bb.data.inheritFromOS(self.basedata, self.savedenv, filtered_keys)
+        self.basedata.setVar("BB_ORIGENV", self.savedenv)
         
         if worker:
-            self.data.setVar("BB_WORKERCONTEXT", "1")
+            self.basedata.setVar("BB_WORKERCONTEXT", "1")
+
+        self.data = self.basedata
+        self.mcdata = {}
 
     def parseBaseConfiguration(self):
         try:
-            self.parseConfigurationFiles()
+            bb.parse.init_parser(self.basedata)
+            self.data = self.parseConfigurationFiles(self.prefiles, self.postfiles)
+
+            if self.data.getVar("BB_WORKERCONTEXT", False) is None:
+                bb.fetch.fetcher_init(self.data)
+            bb.codeparser.parser_cache_init(self.data)
+
+            bb.event.fire(bb.event.ConfigParsed(), self.data)
+
+            if self.data.getVar("BB_INVALIDCONF", False) is True:
+                self.data.setVar("BB_INVALIDCONF", False)
+                self.data = self.parseConfigurationFiles(self.prefiles, self.postfiles)
+
+            bb.parse.init_parser(self.data)
+            self.data_hash = self.data.get_hash()
+            self.mcdata[''] = self.data
+
+            multiconfig = (self.data.getVar("BBMULTICONFIG", True) or "").split()
+            for config in multiconfig:
+                mcdata = self.parseConfigurationFiles(['conf/multiconfig/%s.conf' % config] + self.prefiles, self.postfiles)
+                bb.event.fire(bb.event.ConfigParsed(), mcdata)
+                self.mcdata[config] = mcdata
+
         except SyntaxError:
             raise bb.BBHandledException
         except bb.data_smart.ExpansionError as e:
@@ -271,11 +296,8 @@ class CookerDataBuilder(object):
     def _findLayerConf(self, data):
         return findConfigFile("bblayers.conf", data)
 
-    def parseConfigurationFiles(self):
-        data = self.data
-        prefiles = self.prefiles
-        postfiles = self.postfiles
-        bb.parse.init_parser(data)
+    def parseConfigurationFiles(self, prefiles, postfiles):
+        data = bb.data.createCopy(self.basedata)
 
         # Parse files for loading *before* bitbake.conf and any includes
         for f in prefiles:
@@ -338,20 +360,7 @@ class CookerDataBuilder(object):
             handlerln = int(data.getVarFlag(var, "lineno", False))
             bb.event.register(var, data.getVar(var, False),  (data.getVarFlag(var, "eventmask", True) or "").split(), handlerfn, handlerln)
 
-        if data.getVar("BB_WORKERCONTEXT", False) is None:
-            bb.fetch.fetcher_init(data)
-        bb.codeparser.parser_cache_init(data)
-        bb.event.fire(bb.event.ConfigParsed(), data)
-
-        if data.getVar("BB_INVALIDCONF", False) is True:
-            data.setVar("BB_INVALIDCONF", False)
-            self.parseConfigurationFiles()
-            return
-
-        bb.parse.init_parser(data)
         data.setVar('BBINCLUDED',bb.parse.get_file_depends(data))
-        self.data = data
-        self.data_hash = data.get_hash()
 
-
+        return data
 

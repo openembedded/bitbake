@@ -195,7 +195,8 @@ def fork_off_task(cfg, data, databuilder, workerdata, fn, task, taskname, append
 
             try:
                 bb_cache = bb.cache.NoCache(databuilder)
-                the_data = databuilder.data
+                (realfn, virtual, mc) = bb.cache.virtualfn2realfn(fn)
+                the_data = databuilder.mcdata[mc]
                 the_data.setVar("BB_WORKERCONTEXT", "1")
                 the_data.setVar("BB_TASKDEPDATA", taskdepdata)
                 the_data.setVar("BUILDNAME", workerdata["buildname"])
@@ -374,7 +375,8 @@ class BitbakeWorker(object):
         bb.msg.loggerDefaultVerbose = self.workerdata["logdefaultverbose"]
         bb.msg.loggerVerboseLogs = self.workerdata["logdefaultverboselogs"]
         bb.msg.loggerDefaultDomains = self.workerdata["logdefaultdomain"]
-        self.data.setVar("PRSERV_HOST", self.workerdata["prhost"])
+        for mc in self.databuilder.mcdata:
+            self.databuilder.mcdata[mc].setVar("PRSERV_HOST", self.workerdata["prhost"])
 
     def handle_ping(self, _):
         workerlog_write("Handling ping\n")
