@@ -435,6 +435,23 @@
             </para>
         </section>
 
+        <section id='unsetting-variables'>
+            <title>Unseting variables</title>
+
+            <para>
+                It is possible to completely remove a variable or a variable flag 
+                from BitBake's internal data dictionary by using the "unset" keyword.
+                Here is an example:
+                <literallayout class='monospaced'>
+        unset DATE
+        unset do_fetch[noexec]
+                </literallayout>
+                These two statements remove the <filename>DATE</filename> and the 
+                <filename>do_fetch[noexec]</filename> flag.
+            </para>
+
+        </section>
+
         <section id='providing-pathnames'>
             <title>Providing Pathnames</title>
 

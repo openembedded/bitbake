@@ -57,6 +57,8 @@ __config_regexp__  = re.compile( r"""
 __include_regexp__ = re.compile( r"include\s+(.+)" )
 __require_regexp__ = re.compile( r"require\s+(.+)" )
 __export_regexp__ = re.compile( r"export\s+([a-zA-Z0-9\-_+.${}/]+)$" )
+__unset_regexp__ = re.compile( r"unset\s+([a-zA-Z0-9\-_+.${}/]+)$" )
+__unset_flag_regexp__ = re.compile( r"unset\s+([a-zA-Z0-9\-_+.${}/]+)\[([a-zA-Z0-9\-_+.${}/]+)\]$" )
 
 def init(data):
     topdir = data.getVar('TOPDIR', False)
@@ -183,6 +185,16 @@ def feeder(lineno, s, fn, statements):
     m = __export_regexp__.match(s)
     if m:
         ast.handleExport(statements, fn, lineno, m)
+        return
+
+    m = __unset_regexp__.match(s)
+    if m:
+        ast.handleUnset(statements, fn, lineno, m)
+        return
+
+    m = __unset_flag_regexp__.match(s)
+    if m:
+        ast.handleUnsetFlag(statements, fn, lineno, m)
         return
 
     raise ParseError("unparsed line: '%s'" % s, fn, lineno);

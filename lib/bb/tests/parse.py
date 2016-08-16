@@ -68,6 +68,23 @@ C = "3"
         with self.assertRaises(bb.parse.ParseError):
             d = bb.parse.handle(f.name, self.d)['']
 
+    unsettest = """
+A = "1"
+B = "2"
+B[flag] = "3"
+
+unset A
+unset B[flag]
+"""
+
+    def test_parse_unset(self):
+        f = self.parsehelper(self.unsettest)
+        d = bb.parse.handle(f.name, self.d)['']
+        self.assertEqual(d.getVar("A", True), None)
+        self.assertEqual(d.getVarFlag("A","flag", True), None)
+        self.assertEqual(d.getVar("B", True), "2")
+        
+
     overridetest = """
 RRECOMMENDS_${PN} = "a"
 RRECOMMENDS_${PN}_libc = "b"

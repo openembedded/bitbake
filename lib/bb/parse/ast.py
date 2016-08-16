@@ -69,6 +69,33 @@ class ExportNode(AstNode):
     def eval(self, data):
         data.setVarFlag(self.var, "export", 1, op = 'exported')
 
+class UnsetNode(AstNode):
+    def __init__(self, filename, lineno, var):
+        AstNode.__init__(self, filename, lineno)
+        self.var = var
+
+    def eval(self, data):
+        loginfo = {
+            'variable': self.var,
+            'file': self.filename,
+            'line': self.lineno,
+        }
+        data.delVar(self.var,**loginfo)
+
+class UnsetFlagNode(AstNode):
+    def __init__(self, filename, lineno, var, flag):
+        AstNode.__init__(self, filename, lineno)
+        self.var = var
+        self.flag = flag
+
+    def eval(self, data):
+        loginfo = {
+            'variable': self.var,
+            'file': self.filename,
+            'line': self.lineno,
+        }
+        data.delVarFlag(self.var, self.flag, **loginfo)
+
 class DataNode(AstNode):
     """
     Various data related updates. For the sake of sanity
@@ -269,6 +296,12 @@ def handleInclude(statements, filename, lineno, m, force):
 
 def handleExport(statements, filename, lineno, m):
     statements.append(ExportNode(filename, lineno, m.group(1)))
+
+def handleUnset(statements, filename, lineno, m):
+    statements.append(UnsetNode(filename, lineno, m.group(1)))
+
+def handleUnsetFlag(statements, filename, lineno, m):
+    statements.append(UnsetFlagNode(filename, lineno, m.group(1), m.group(2)))
 
 def handleData(statements, filename, lineno, groupd):
     statements.append(DataNode(filename, lineno, groupd))
