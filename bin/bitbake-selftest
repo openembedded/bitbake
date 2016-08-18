@@ -37,6 +37,24 @@ for t in tests:
     __import__(t)
 
 
+# Set-up logging
+class StdoutStreamHandler(logging.StreamHandler):
+    """Special handler so that unittest is able to capture stdout"""
+    def __init__(self):
+        # Override __init__() because we don't want to set self.stream here
+        logging.Handler.__init__(self)
+
+    @property
+    def stream(self):
+        # We want to dynamically write wherever sys.stdout is pointing to
+        return sys.stdout
+
+
+handler = StdoutStreamHandler()
+bb.logger.addHandler(handler)
+bb.logger.setLevel(logging.DEBUG)
+
+
 ENV_HELP = """\
 Environment variables:
   BB_SKIP_NETTESTS      set to 'yes' in order to skip tests using network
@@ -51,4 +69,4 @@ class main(unittest.main):
 
 
 if __name__ == '__main__':
-        main(defaultTest=tests)
+        main(defaultTest=tests, buffer=True)
