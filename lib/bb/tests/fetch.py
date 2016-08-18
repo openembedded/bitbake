@@ -588,6 +588,36 @@ class FetcherNetworkTest(FetcherTest):
             url1 = url2 = "git://git.openembedded.org/bitbake;rev=270a05b0b4ba0959fe0624d2a4885d7b70426da5;tag=270a05b0b4ba0959fe0624d2a4885d7b70426da5"
             self.assertRaises(bb.fetch.FetchError, self.gitfetcher, url1, url2)
 
+        def test_gitfetch_localusehead(self):
+            # Create dummy local Git repo
+            src_dir = tempfile.mkdtemp(dir=self.tempdir,
+                                       prefix='gitfetch_localusehead_')
+            src_dir = os.path.abspath(src_dir)
+            bb.process.run("git init", cwd=src_dir)
+            bb.process.run("git commit --allow-empty -m'Dummy commit'",
+                           cwd=src_dir)
+            # Use other branch than master
+            bb.process.run("git checkout -b my-devel", cwd=src_dir)
+            bb.process.run("git commit --allow-empty -m'Dummy commit 2'",
+                           cwd=src_dir)
+            stdout = bb.process.run("git rev-parse HEAD", cwd=src_dir)
+            orig_rev = stdout[0].strip()
+
+            # Fetch and check revision
+            self.d.setVar("SRCREV", "AUTOINC")
+            url = "git://" + src_dir + ";protocol=file;usehead=1"
+            fetcher = bb.fetch.Fetch([url], self.d)
+            fetcher.download()
+            fetcher.unpack(self.unpackdir)
+            stdout = bb.process.run("git rev-parse HEAD",
+                                    cwd=os.path.join(self.unpackdir, 'git'))
+            unpack_rev = stdout[0].strip()
+            self.assertEqual(orig_rev, unpack_rev)
+
+        def test_gitfetch_remoteusehead(self):
+            url = "git://git.openembedded.org/bitbake;usehead=1"
+            self.assertRaises(bb.fetch.ParameterError, self.gitfetcher, url, url)
+
         def test_gitfetch_premirror(self):
             url1 = "git://git.openembedded.org/bitbake"
             url2 = "git://someserver.org/bitbake"
