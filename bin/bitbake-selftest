@@ -37,5 +37,17 @@ for t in tests:
     __import__(t)
 
 
+ENV_HELP = """\
+Environment variables:
+  BB_SKIP_NETTESTS      set to 'yes' in order to skip tests using network
+                        connection
+"""
+
+class main(unittest.main):
+    def _print_help(self, *args, **kwargs):
+        super(main, self)._print_help(*args, **kwargs)
+        print(ENV_HELP)
+
+
 if __name__ == '__main__':
-        unittest.main(defaultTest=tests)
+        main(defaultTest=tests)
