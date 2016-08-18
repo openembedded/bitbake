@@ -358,8 +358,8 @@ def main(server, eventHandler, params):
             if isinstance(event, bb.runqueue.runQueueTaskFailed):
                 buildinfohelper.update_and_store_task(event)
                 taskfailures.append(event.taskstring)
-                logger.error("Task %s (%s) failed with exit code '%s'",
-                             event.taskid, event.taskstring, event.exitcode)
+                logger.error("Task (%s) failed with exit code '%s'",
+                             event.taskstring, event.exitcode)
                 continue
 
             if isinstance(event, (bb.runqueue.sceneQueueTaskCompleted, bb.runqueue.sceneQueueTaskFailed)):

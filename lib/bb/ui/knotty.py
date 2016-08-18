@@ -588,23 +588,23 @@ def main(server, eventHandler, params, tf = TerminalFilter):
                     tasktype = 'noexec task'
                 else:
                     tasktype = 'task'
-                logger.info("Running %s %s of %s (ID: %s, %s)",
+                logger.info("Running %s %d of %d (%s)",
                             tasktype,
                             event.stats.completed + event.stats.active +
                                 event.stats.failed + 1,
-                            event.stats.total, event.taskid, event.taskstring)
+                            event.stats.total, event.taskstring)
                 continue
 
             if isinstance(event, bb.runqueue.runQueueTaskFailed):
                 return_value = 1
                 taskfailures.append(event.taskstring)
-                logger.error("Task %s (%s) failed with exit code '%s'",
-                             event.taskid, event.taskstring, event.exitcode)
+                logger.error("Task (%s) failed with exit code '%s'",
+                             event.taskstring, event.exitcode)
                 continue
 
             if isinstance(event, bb.runqueue.sceneQueueTaskFailed):
-                logger.warning("Setscene task %s (%s) failed with exit code '%s' - real task will be run instead",
-                               event.taskid, event.taskstring, event.exitcode)
+                logger.warning("Setscene task (%s) failed with exit code '%s' - real task will be run instead",
+                               event.taskstring, event.exitcode)
                 continue
 
             if isinstance(event, bb.event.DepTreeGenerated):
