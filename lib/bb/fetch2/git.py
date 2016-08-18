@@ -49,6 +49,10 @@ Supported SRC_URI options are:
    referring to commit which is valid in tag instead of branch.
    The default is "0", set nobranch=1 if needed.
 
+- usehead
+   For local git:// urls to use the current branch HEAD as the revsion for use with
+   AUTOREV. Implies nobranch.
+
 """
 
 #Copyright (C) 2005 Richard Purdie
@@ -153,6 +157,13 @@ class Git(FetchMethod):
 
         ud.nobranch = ud.parm.get("nobranch","0") == "1"
 
+        # usehead implies nobranch
+        ud.usehead = ud.parm.get("usehead","0") == "1"
+        if ud.usehead:
+            if ud.proto != "file":
+                 raise bb.fetch2.ParameterError("The usehead option is only for use with local ('protocol=file') git repositories", ud.url)
+            ud.nobranch = 1
+
         # bareclone implies nocheckout
         ud.bareclone = ud.parm.get("bareclone","0") == "1"
         if ud.bareclone:
@@ -167,6 +178,9 @@ class Git(FetchMethod):
             branch = branches[ud.names.index(name)]
             ud.branches[name] = branch
             ud.unresolvedrev[name] = branch
+
+        if ud.usehead:
+            ud.unresolvedrev['default'] = 'HEAD'
 
         ud.basecmd = data.getVar("FETCHCMD_git", d, True) or "git -c core.fsyncobjectfiles=0"
 
@@ -387,7 +401,7 @@ class Git(FetchMethod):
         """
         output = self._lsremote(ud, d, "")
         # Tags of the form ^{} may not work, need to fallback to other form
-        if ud.unresolvedrev[name][:5] == "refs/":
+        if ud.unresolvedrev[name][:5] == "refs/" or ud.usehead:
             head = ud.unresolvedrev[name]
             tag = ud.unresolvedrev[name]
         else:
