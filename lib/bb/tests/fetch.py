@@ -360,7 +360,10 @@ class FetcherTest(unittest.TestCase):
 
     def tearDown(self):
         os.chdir(self.origdir)
-        bb.utils.prunedir(self.tempdir)
+        if os.environ.get("BB_TMPDIR_NOCLEAN") == "yes":
+            print("Not cleaning up %s. Please remove manually." % self.tempdir)
+        else:
+            bb.utils.prunedir(self.tempdir)
 
 class MirrorUriTest(FetcherTest):
 
