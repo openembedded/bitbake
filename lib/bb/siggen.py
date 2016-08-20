@@ -367,7 +367,7 @@ def compare_sigfiles(a, b, recursecb = None):
     output = []
 
     with open(a, 'rb') as f:
-        p1 = pickle.Unpickler(ff)
+        p1 = pickle.Unpickler(f)
         a_data = p1.load()
     with open(b, 'rb') as f:
         p2 = pickle.Unpickler(f)
