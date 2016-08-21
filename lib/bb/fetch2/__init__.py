@@ -935,8 +935,6 @@ def try_mirror_url(fetch, origud, ud, ld, check = False):
                 return found
             return False
 
-        os.chdir(ld.getVar("DL_DIR", True))
-
         if not verify_donestamp(ud, ld, origud) or ud.method.need_update(ud, ld):
             ud.method.download(ud, ld)
             if hasattr(ud.method,"build_mirror_data"):
@@ -1553,8 +1551,6 @@ class Fetch(object):
         network = self.d.getVar("BB_NO_NETWORK", True)
         premirroronly = (self.d.getVar("BB_FETCH_PREMIRRORONLY", True) == "1")
 
-        save_cwd = os.getcwd()
-
         for u in urls:
             ud = self.ud[u]
             ud.setup_localpath(self.d)
@@ -1576,8 +1572,6 @@ class Fetch(object):
 
                 if premirroronly:
                     self.d.setVar("BB_NO_NETWORK", "1")
-
-                os.chdir(self.d.getVar("DL_DIR", True))
 
                 firsterr = None
                 verified_stamp = verify_donestamp(ud, self.d)
@@ -1629,7 +1623,6 @@ class Fetch(object):
                 raise
 
             finally:
-                os.chdir(save_cwd)
                 if ud.lockfile:
                     bb.utils.unlockfile(lf)
 
@@ -1637,8 +1630,6 @@ class Fetch(object):
         """
         Check all urls exist upstream
         """
-
-        save_cwd = os.getcwd()
 
         if not urls:
             urls = self.urls
@@ -1662,8 +1653,6 @@ class Fetch(object):
 
             if not ret:
                 raise FetchError("URL %s doesn't work" % u, u)
-
-        os.chdir(save_cwd)
 
     def unpack(self, root, urls=None):
         """
