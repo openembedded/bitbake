@@ -151,11 +151,17 @@ class LocalhostBEController(BuildEnvironmentController):
             localdirname = os.path.join(self.be.sourcedir, self.getGitCloneDirectory(giturl, commit))
             logger.debug("localhostbecontroller: giturl %s:%s checking out in current directory %s" % (giturl, commit, localdirname))
 
-            # make sure our directory is a git repository
+            # see if our directory is a git repository
             if os.path.exists(localdirname):
-                localremotes = self._shellcmd("git remote -v", localdirname)
-                if not giturl in localremotes:
-                    raise BuildSetupException("Existing git repository at %s, but with different remotes ('%s', expected '%s'). Toaster will not continue out of fear of damaging something." % (localdirname, ", ".join(localremotes.split("\n")), giturl))
+                try:
+                    localremotes = self._shellcmd("git remote -v",
+                                                  localdirname)
+                    if not giturl in localremotes:
+                        raise BuildSetupException("Existing git repository at %s, but with different remotes ('%s', expected '%s'). Toaster will not continue out of fear of damaging something." % (localdirname, ", ".join(localremotes.split("\n")), giturl))
+                except ShellCmdException:
+                    # our localdirname might not be a git repository
+                    #- that's fine
+                    pass
             else:
                 if giturl in cached_layers:
                     logger.debug("localhostbecontroller git-copying %s to %s" % (cached_layers[giturl], localdirname))
