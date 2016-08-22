@@ -82,15 +82,17 @@ class TestLayerDetailsPage(SeleniumTestCase):
         self.get(self.url)
 
         self.click("#add-remove-layer-btn")
+        self.click("#edit-layer-source")
+        self.click("#repo")
+
+        self.wait_until_visible("#layer-git-repo-url")
 
         # Open every edit box
         for btn in self.find_all("dd .glyphicon-edit"):
             btn.click()
 
-        self.wait_until_visible("dd input")
-
         # Edit each value
-        for inputs in self.find_all("dd input[type=text]") + \
+        for inputs in self.find_all("#layer-git input[type=text]") + \
                 self.find_all("dd textarea"):
             # ignore the tt inputs (twitter typeahead input)
             if "tt-" in inputs.get_attribute("class"):
@@ -104,8 +106,12 @@ class TestLayerDetailsPage(SeleniumTestCase):
 
             inputs.send_keys("-edited")
 
+        # Save the new values
         for save_btn in self.find_all(".change-btn"):
             save_btn.click()
+
+        self.click("#save-changes-for-switch")
+        self.wait_until_visible("#edit-layer-source")
 
         # Refresh the page to see if the new values are returned
         self.get(self.url)
@@ -113,7 +119,7 @@ class TestLayerDetailsPage(SeleniumTestCase):
         new_values = ["%s-edited" % old_val
                       for old_val in self.initial_values]
 
-        for inputs in self.find_all('dd input[type="text"]') + \
+        for inputs in self.find_all('#layer-git input[type="text"]') + \
                 self.find_all('dd textarea'):
             # ignore the tt inputs (twitter typeahead input)
             if "tt-" in inputs.get_attribute("class"):
@@ -124,6 +130,24 @@ class TestLayerDetailsPage(SeleniumTestCase):
             self.assertTrue(value in new_values,
                             "Expecting any of \"%s\" but got \"%s\"" %
                             (new_values, value))
+
+        # Now convert it to a local layer
+        self.click("#edit-layer-source")
+        self.click("#dir")
+        dir_input = self.wait_until_visible("#layer-dir-path-in-details")
+
+        new_dir = "/home/test/my-meta-dir"
+        dir_input.send_keys(new_dir)
+
+        self.click("#save-changes-for-switch")
+        self.wait_until_visible("#edit-layer-source")
+
+        # Refresh the page to see if the new values are returned
+        self.get(self.url)
+        dir_input = self.find("#layer-dir-path-in-details")
+        self.assertTrue(new_dir in dir_input.get_attribute("value"),
+                        "Expected %s in the dir value for layer directory" %
+                        new_dir)
 
     def test_delete_layer(self):
         """ Delete the layer """
