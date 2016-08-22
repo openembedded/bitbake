@@ -103,7 +103,6 @@
           <span id="alert-msg"></span>
         </div>
 
-        <span class="button-place">
         {% if layerversion.id not in projectlayers %}
          <button id="add-remove-layer-btn" data-directive="add" class="btn btn-default btn-lg btn-block">
            <span class="glyphicon glyphicon-plus"></span>
@@ -115,7 +114,6 @@
            Remove the {{layerversion.layer.name}} layer from your project
          </button>
          {% endif %}
-       </span>
 
         <ul class="nav nav-tabs">
           <li class="active">
@@ -159,7 +157,7 @@
                 </div>
               </form>
               </dd>
-	      {% if layerversion.dirpath %}
+             {% if layerversion.dirpath %}
               <dt>
               <span class="glyphicon glyphicon-question-sign get-help" title="Subdirectory within the repository where the layer is located, if not in the root (usually only used if the repository contains more than one layer)"></span>
               Repository subdirectory
@@ -176,7 +174,7 @@
                 </div>
               </form>
               </dd>
-	      {% endif %}
+              {% endif %}
               <dt>
               <span class="glyphicon glyphicon-question-sign get-help" title="The Git branch, tag or commit"></span>
               Git revision
@@ -221,7 +219,7 @@
                    Git repository URL
                    <span class="glyphicon glyphicon-question-sign get-help" title="Fetch/clone URL of the repository. Currently, Toaster only supports Git repositories." ></span>
                  </label>
-                 <input type="text" id="layer-git-repo-url" class="form-control">
+                 <input type="text" id="layer-git-repo-url" class="form-control" value="{{layerversion.layer.vcs_url|default_if_none:''}}">
                </div>
                <div class="form-group">
                  <label for="layer-subdir">
@@ -229,13 +227,13 @@
                    <span class="text-muted">(optional)</span>
                    <span class="glyphicon glyphicon-question-sign get-help" title="Subdirectory within the repository where the layer is located, if not in the root (usually only used if the repository contains more than one layer)"></span>
                  </label>
-                 <input type="text" class="form-control" id="layer-subdir">
+                 <input type="text" class="form-control" id="layer-subdir" value="{{layerversion.dirpath|default_if_none:''}}">
                </div>
                <div class="form-group" id="layer-revision-ctrl">
                  <label for="layer-git-ref">Git revision
                    <span class="glyphicon glyphicon-question-sign get-help" title="You can provide a Git branch, a tag or a commit SHA as the revision"></span>
                  </label>
-                 <input type="text" class="form-control" id="layer-git-ref">
+                 <input type="text" class="form-control" id="layer-git-ref" value="{{layerversion.get_vcs_reference|default_if_none:''}}">
                  <span class="help-inline" style="display:none;" id="invalid-layer-revision-hint"></span>
                </div>
              </fieldset>
@@ -256,31 +254,28 @@
              </div>
            </form>
 
-              <dt>
-              <span class="glyphicon glyphicon-question-sign get-help" title="Other layers this layer depends upon"></span>
-              Layer dependencies
-              </dt>
-              <dd>
-              <ul class="list-unstyled current-value" id="layer-deps-list">
-                {% for ld in layerversion.dependencies.all %}
-                <li data-layer-id="{{ld.depends_on.id}}">
-                  <a data-toggle="tooltip" title="{{ld.depends_on.layer.vcs_url}} | {{ld.depends_on.get_vcs_reference}}" href="{% url 'layerdetails' project.id ld.depends_on.id %}">{{ld.depends_on.layer.name}}</a>
-                  <span class="glyphicon glyphicon-trash " data-toggle="tooltip" title="Delete"></span>
-                </li>
-                {% endfor %}
-              </ul>
-              <form class="form-inline add-deps">
-                <div class="form-group">
-                  <input class="form-control" type="text" autocomplete="off" data-minLength="1" data-autocomplete="off"  placeholder="Type a layer name" id="layer-dep-input">
-                </div>
-                <a class="btn btn-default" id="add-layer-dependency-btn" disabled="disabled">
-                  Add layer
-                </a>
-                <span class="help-block add-deps">You can only add layers Toaster knows about</span>
-              </form>
-              </dd>
-            </dl>
-          </div>
+           <h3 class="top-air">Layer dependencies
+             <span class="glyphicon glyphicon-question-sign get-help" title="Other layers this layer depends upon"></span>
+           </h3>
+
+           <ul class="list-unstyled current-value" id="layer-deps-list">
+             {% for ld in layerversion.dependencies.all %}
+             <li data-layer-id="{{ld.depends_on.id}}">
+             <a data-toggle="tooltip" title="{{ld.depends_on.layer.vcs_url}} | {{ld.depends_on.get_vcs_reference}}" href="{% url 'layerdetails' project.id ld.depends_on.id %}">{{ld.depends_on.layer.name}}</a>
+             <span class="glyphicon glyphicon-trash " data-toggle="tooltip" title="Delete"></span>
+             </li>
+             {% endfor %}
+           </ul>
+           <form class="form-inline add-deps">
+             <div class="form-group">
+               <input class="form-control" type="text" autocomplete="off" data-minLength="1" data-autocomplete="off"  placeholder="Type a layer name" id="layer-dep-input">
+             </div>
+             <a class="btn btn-default" id="add-layer-dependency-btn" disabled="disabled">
+               Add layer
+             </a>
+             <span class="help-block add-deps">You can only add layers Toaster knows about</span>
+           </form>
+         </div>
           <!-- end layerdetails tab -->
           <!-- targets tab -->
           <div id="recipes" class="tab-pane">

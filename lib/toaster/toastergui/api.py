@@ -135,7 +135,8 @@ class XhrLayer(View):
           Method: POST
 
           Args:
-              vcs_url, dirpath, commit, up_branch, summary, description, local_source_dir
+              vcs_url, dirpath, commit, up_branch, summary, description,
+              local_source_dir
 
               add_dep = append a layerversion_id as a dependency
               rm_dep = remove a layerversion_id as a depedency
@@ -167,7 +168,8 @@ class XhrLayer(View):
         if "description" in request.POST:
             layer_version.layer.description = request.POST["description"]
         if "local_source_dir" in request.POST:
-            layer_version.layer.local_source_dir = request.POST["local_source_dir"]
+            layer_version.layer.local_source_dir = \
+                request.POST["local_source_dir"]
 
         if "add_dep" in request.POST:
             lvd = LayerVersionDependency(

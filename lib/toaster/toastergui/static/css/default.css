@@ -316,6 +316,8 @@ h2.panel-title { font-size: 30px; }
 /* Make the help in tables insivisble until you hover over the right cell */
 .hover-help { visibility: hidden; }
 
+#add-remove-layer-btn { margin-bottom: 20px; }
+
 /* Blue hightlight animation for tasks and directory structure tables */
 .highlight { -webkit-animation: target-fade 15s 1; -moz-animation: target-fade 15s 1; animation: target-fade 15s 1; }
 @-webkit-keyframes target-fade { 0% { background-color: #D9EDF7; } 25% { background-color: #D9EDF7; } 100% { background-color: white; } }
