@@ -828,7 +828,7 @@
             itself.
             The simplest parameter to pass is "none", which causes a
             set of signature information to be written out into
-            <filename>STAMP_DIR</filename>
+            <filename>STAMPS_DIR</filename>
             corresponding to the targets specified.
             The other currently available parameter is "printdiff",
             which causes BitBake to try to establish the closest
