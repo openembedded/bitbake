@@ -126,13 +126,14 @@ class BuildRequest(models.Model):
 # These tables specify the settings for running an actual build.
 # They MUST be kept in sync with the tables in orm.models.Project*
 
+
 class BRLayer(models.Model):
-    req         = models.ForeignKey(BuildRequest)
-    name        = models.CharField(max_length = 100)
-    giturl      = models.CharField(max_length = 254)
+    req = models.ForeignKey(BuildRequest)
+    name = models.CharField(max_length=100)
+    giturl = models.CharField(max_length=254, null=True)
     local_source_dir = models.CharField(max_length=254, null=True)
-    commit      = models.CharField(max_length = 254)
-    dirpath     = models.CharField(max_length = 254)
+    commit = models.CharField(max_length=254, null=True)
+    dirpath = models.CharField(max_length=254, null=True)
     layer_version = models.ForeignKey(Layer_Version, null=True)
 
 class BRBitbake(models.Model):
