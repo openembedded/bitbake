@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <django-objects version="1.0">
+  <!-- Set the project default value for DISTRO -->
+  <object model="orm.toastersetting" pk="1">
+    <field type="CharField" name="name">DEFCONF_DISTRO</field>
+    <field type="CharField" name="value">poky</field>
+  </object>
+
   <!-- Bitbake versions which correspond to the metadata release -->
   <object model="orm.bitbakeversion" pk="1">
     <field type="CharField" name="name">master</field>

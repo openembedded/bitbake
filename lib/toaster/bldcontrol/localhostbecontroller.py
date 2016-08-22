@@ -98,8 +98,12 @@ class LocalhostBEController(BuildEnvironmentController):
         # 1. get a list of repos with branches, and map dirpaths for each layer
         gitrepos = {}
 
-        gitrepos[(bitbake.giturl, bitbake.commit)] = []
-        gitrepos[(bitbake.giturl, bitbake.commit)].append( ("bitbake", bitbake.dirpath) )
+        # if we're using a remotely fetched version of bitbake add its git
+        # details to the list of repos to clone
+        if bitbake.giturl and bitbake.commit:
+            gitrepos[(bitbake.giturl, bitbake.commit)] = []
+            gitrepos[(bitbake.giturl, bitbake.commit)].append(
+                ("bitbake", bitbake.dirpath))
 
         for layer in layers:
             # We don't need to git clone the layer for the CustomImageRecipe
@@ -141,8 +145,6 @@ class LocalhostBEController(BuildEnvironmentController):
             pass
 
         logger.info("Using pre-checked out source for layer %s", cached_layers)
-
-
 
         # 3. checkout the repositories
         for giturl, commit in gitrepos.keys():

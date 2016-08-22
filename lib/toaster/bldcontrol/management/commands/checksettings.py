@@ -84,8 +84,9 @@ class Command(NoArgsCommand):
                             print("Loading OE-Core configuration")
                             call_command("loaddata", "oe-core")
                             if template_conf:
-                                oe_core_path = os.realpath(template_conf +
-                                                           "/../")
+                                oe_core_path = os.path.realpath(
+                                    template_conf +
+                                    "/../")
                             else:
                                 print("TEMPLATECONF not found. You may have to"
                                       " manually configure layer paths")
@@ -94,8 +95,9 @@ class Command(NoArgsCommand):
                                                      "layer: ")
                             # Update the layer instances of openemebedded-core
                             for layer in Layer.objects.filter(
-                                    name="openembedded-core"):
-                                layer.local_source_dir = oe_core_path
+                                    name="openembedded-core",
+                                    local_source_dir="OE-CORE-LAYER-DIR"):
+                                layer.local_path = oe_core_path
                                 layer.save()
 
                         # Import the custom fixture if it's present
