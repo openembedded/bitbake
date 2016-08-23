@@ -1616,7 +1616,10 @@ class BuildInfoHelper(object):
                 if line.startswith('FILES'):
                     files_str = line.split(':')[1].strip()
                     files_str = re.sub(r' {2,}', ' ', files_str)
-                    files = files_str.split(' ')
+
+                    # ignore lines like "FILES:" with no filenames
+                    if files_str:
+                        files += files_str.split(' ')
         return files
 
     def _endswith(self, str_to_test, endings):
@@ -1734,9 +1737,9 @@ class BuildInfoHelper(object):
                 real_image_name,
                 'image_license.manifest')
 
-            # if image_license.manifest exists, we can read the names of bzImage
-            # and modules files for this build from it, then look for them
-            # in the DEPLOY_DIR_IMAGE; note that this file is only produced
+            # if image_license.manifest exists, we can read the names of
+            # bzImage, modules etc. files for this build from it, then look for
+            # them in the DEPLOY_DIR_IMAGE; note that this file is only produced
             # if an image file was produced
             if os.path.isfile(image_license_manifest_path):
                 has_files = True
