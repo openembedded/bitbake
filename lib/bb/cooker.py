@@ -30,7 +30,7 @@ import logging
 import multiprocessing
 import sre_constants
 import threading
-from io import StringIO
+from io import StringIO, UnsupportedOperation
 from contextlib import closing
 from functools import wraps
 from collections import defaultdict, namedtuple
@@ -230,14 +230,17 @@ class BBCooker:
             pass
 
         # TOSTOP must not be set or our children will hang when they output
-        fd = sys.stdout.fileno()
-        if os.isatty(fd):
-            import termios
-            tcattr = termios.tcgetattr(fd)
-            if tcattr[3] & termios.TOSTOP:
-                buildlog.info("The terminal had the TOSTOP bit set, clearing...")
-                tcattr[3] = tcattr[3] & ~termios.TOSTOP
-                termios.tcsetattr(fd, termios.TCSANOW, tcattr)
+        try:
+            fd = sys.stdout.fileno()
+            if os.isatty(fd):
+                import termios
+                tcattr = termios.tcgetattr(fd)
+                if tcattr[3] & termios.TOSTOP:
+                    buildlog.info("The terminal had the TOSTOP bit set, clearing...")
+                    tcattr[3] = tcattr[3] & ~termios.TOSTOP
+                    termios.tcsetattr(fd, termios.TCSANOW, tcattr)
+        except UnsupportedOperation:
+            pass
 
         self.command = bb.command.Command(self)
         self.state = state.initial
