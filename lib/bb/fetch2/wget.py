@@ -108,6 +108,10 @@ class Wget(FetchMethod):
             bb.utils.mkdirhier(os.path.dirname(dldir + os.sep + ud.localfile))
             fetchcmd += " -O " + dldir + os.sep + ud.localfile
 
+        if ud.user:
+            up = ud.user.split(":")
+            fetchcmd += " --user=%s --password=%s --auth-no-challenge" % (up[0],up[1])
+
         uri = ud.url.split(";")[0]
         if os.path.exists(ud.localpath):
             # file exists, but we didnt complete it.. trying again..
@@ -300,6 +304,13 @@ class Wget(FetchMethod):
             uri = ud.url.split(";")[0]
             r = urllib.request.Request(uri)
             r.get_method = lambda: "HEAD"
+
+            if ud.user:
+                import base64
+                encodeuser = base64.b64encode(ud.user.encode('utf-8')).decode("utf-8")
+                authheader =  "Basic %s" % encodeuser
+                r.add_header("Authorization", authheader)
+
             opener.open(r)
         except urllib.error.URLError as e:
             if try_again:
