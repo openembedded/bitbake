@@ -344,6 +344,8 @@ def finalize(fn, d, variant = None):
     for var in d.getVar('__BBHANDLERS', False) or []:
         # try to add the handler
         handlerfn = d.getVarFlag(var, "filename", False)
+        if not handlerfn:
+            bb.fatal("Undefined event handler function '%s'" % var)
         handlerln = int(d.getVarFlag(var, "lineno", False))
         bb.event.register(var, d.getVar(var, False), (d.getVarFlag(var, "eventmask", True) or "").split(), handlerfn, handlerln)
 

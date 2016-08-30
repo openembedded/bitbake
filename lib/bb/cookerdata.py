@@ -357,6 +357,9 @@ class CookerDataBuilder(object):
         # We register any handlers we've found so far here...
         for var in data.getVar('__BBHANDLERS', False) or []:
             handlerfn = data.getVarFlag(var, "filename", False)
+            if not handlerfn:
+                parselog.critical("Undefined event handler function '%s'" % var)
+                sys.exit(1)
             handlerln = int(data.getVarFlag(var, "lineno", False))
             bb.event.register(var, data.getVar(var, False),  (data.getVarFlag(var, "eventmask", True) or "").split(), handlerfn, handlerln)
 
