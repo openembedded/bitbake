@@ -2168,7 +2168,7 @@ if True:
             if 'configvarAdd' in request.POST:
                 t=request.POST['configvarAdd'].strip()
                 if ":" in t:
-                    variable, value = t.split(":")
+                    variable, value = t.split(":", 1)
                 else:
                     variable = t
                     value = ""
@@ -2178,7 +2178,7 @@ if True:
             if 'configvarChange' in request.POST:
                 t=request.POST['configvarChange'].strip()
                 if ":" in t:
-                    variable, value = t.split(":")
+                    variable, value = t.split(":", 1)
                 else:
                     variable = t
                     value = ""
