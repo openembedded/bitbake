@@ -286,6 +286,42 @@ def variant2virtual(realfn, variant):
         return "multiconfig:" + elems[1] + ":" + realfn
     return "virtual:" + variant + ":" + realfn
 
+def parse_recipe(bb_data, bbfile, appends, mc=''):
+    """
+    Parse a recipe
+    """
+
+    chdir_back = False
+
+    bb_data.setVar("__BBMULTICONFIG", mc)
+
+    # expand tmpdir to include this topdir
+    bb_data.setVar('TMPDIR', bb_data.getVar('TMPDIR', True) or "")
+    bbfile_loc = os.path.abspath(os.path.dirname(bbfile))
+    oldpath = os.path.abspath(os.getcwd())
+    bb.parse.cached_mtime_noerror(bbfile_loc)
+
+    # The ConfHandler first looks if there is a TOPDIR and if not
+    # then it would call getcwd().
+    # Previously, we chdir()ed to bbfile_loc, called the handler
+    # and finally chdir()ed back, a couple of thousand times. We now
+    # just fill in TOPDIR to point to bbfile_loc if there is no TOPDIR yet.
+    if not bb_data.getVar('TOPDIR', False):
+        chdir_back = True
+        bb_data.setVar('TOPDIR', bbfile_loc)
+    try:
+        if appends:
+            bb_data.setVar('__BBAPPEND', " ".join(appends))
+        bb_data = bb.parse.handle(bbfile, bb_data)
+        if chdir_back:
+            os.chdir(oldpath)
+        return bb_data
+    except:
+        if chdir_back:
+            os.chdir(oldpath)
+        raise
+
+
 
 class NoCache(object):
 
@@ -312,53 +348,22 @@ class NoCache(object):
         if virtonly:
             (bbfile, virtual, mc) = virtualfn2realfn(bbfile)
             bb_data = self.databuilder.mcdata[mc].createCopy()
-            bb_data.setVar("__BBMULTICONFIG", mc) 
             bb_data.setVar("__ONLYFINALISE", virtual or "default")
-            datastores = self._load_bbfile(bb_data, bbfile, appends)
+            datastores = parse_recipe(bb_data, bbfile, appends, mc)
             return datastores
 
         bb_data = self.data.createCopy()
-        datastores = self._load_bbfile(bb_data, bbfile, appends)
+        datastores = parse_recipe(bb_data, bbfile, appends)
 
         for mc in self.databuilder.mcdata:
             if not mc:
                 continue
             bb_data = self.databuilder.mcdata[mc].createCopy()
-            bb_data.setVar("__BBMULTICONFIG", mc) 
-            newstores = self._load_bbfile(bb_data, bbfile, appends)
+            newstores = parse_recipe(bb_data, bbfile, appends, mc)
             for ns in newstores:
                 datastores["multiconfig:%s:%s" % (mc, ns)] = newstores[ns]
 
         return datastores
-
-    def _load_bbfile(self, bb_data, bbfile, appends):
-        chdir_back = False
-
-        # expand tmpdir to include this topdir
-        bb_data.setVar('TMPDIR', bb_data.getVar('TMPDIR', True) or "")
-        bbfile_loc = os.path.abspath(os.path.dirname(bbfile))
-        oldpath = os.path.abspath(os.getcwd())
-        bb.parse.cached_mtime_noerror(bbfile_loc)
-
-        # The ConfHandler first looks if there is a TOPDIR and if not
-        # then it would call getcwd().
-        # Previously, we chdir()ed to bbfile_loc, called the handler
-        # and finally chdir()ed back, a couple of thousand times. We now
-        # just fill in TOPDIR to point to bbfile_loc if there is no TOPDIR yet.
-        if not bb_data.getVar('TOPDIR', False):
-            chdir_back = True
-            bb_data.setVar('TOPDIR', bbfile_loc)
-        try:
-            if appends:
-                bb_data.setVar('__BBAPPEND', " ".join(appends))
-            bb_data = bb.parse.handle(bbfile, bb_data)
-            if chdir_back:
-                os.chdir(oldpath)
-            return bb_data
-        except:
-            if chdir_back:
-                os.chdir(oldpath)
-            raise
 
 class Cache(NoCache):
     """
