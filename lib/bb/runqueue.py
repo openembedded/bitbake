@@ -137,7 +137,7 @@ class RunQueueScheduler(object):
         for tid in self.rqdata.runtaskentries:
             (mc, fn, taskname) = split_tid(tid)
             taskfn = taskfn_fromtid(tid)
-            self.stamps[tid] = bb.build.stampfile(taskname, self.rqdata.dataCaches[mc], taskfn)
+            self.stamps[tid] = bb.build.stampfile(taskname, self.rqdata.dataCaches[mc], taskfn, noextra=True)
             if tid in self.rq.runq_buildable:
                 self.buildable.append(tid)
 
@@ -1805,7 +1805,7 @@ class RunQueueExecuteTasks(RunQueueExecute):
                 self.rq.worker[mc].process.stdin.write(b"<runtask>" + pickle.dumps((taskfn, task, taskname, False, self.cooker.collection.get_file_appends(taskfn), taskdepdata)) + b"</runtask>")
                 self.rq.worker[mc].process.stdin.flush()
 
-            self.build_stamps[task] = bb.build.stampfile(taskname, self.rqdata.dataCaches[mc], taskfn)
+            self.build_stamps[task] = bb.build.stampfile(taskname, self.rqdata.dataCaches[mc], taskfn, noextra=True)
             self.build_stamps2.append(self.build_stamps[task])
             self.runq_running.add(task)
             self.stats.taskActive()

@@ -633,7 +633,7 @@ def exec_task(fn, task, d, profile = False):
             event.fire(failedevent, d)
         return 1
 
-def stamp_internal(taskname, d, file_name, baseonly=False):
+def stamp_internal(taskname, d, file_name, baseonly=False, noextra=False):
     """
     Internal stamp helper function
     Makes sure the stamp directory exists
@@ -656,6 +656,8 @@ def stamp_internal(taskname, d, file_name, baseonly=False):
 
     if baseonly:
         return stamp
+    if noextra:
+        extrainfo = ""
 
     if not stamp:
         return
@@ -751,12 +753,12 @@ def write_taint(task, d, file_name = None):
     with open(taintfn, 'w') as taintf:
         taintf.write(str(uuid.uuid4()))
 
-def stampfile(taskname, d, file_name = None):
+def stampfile(taskname, d, file_name = None, noextra=False):
     """
     Return the stamp for a given task
     (d can be a data dict or dataCache)
     """
-    return stamp_internal(taskname, d, file_name)
+    return stamp_internal(taskname, d, file_name, noextra=noextra)
 
 def add_tasks(tasklist, d):
     task_deps = d.getVar('_task_deps', False)
