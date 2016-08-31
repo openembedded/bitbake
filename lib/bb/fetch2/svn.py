@@ -141,7 +141,7 @@ class Svn(FetchMethod):
             bb.utils.mkdirhier(ud.pkgdir)
             logger.debug(1, "Running %s", svnfetchcmd)
             bb.fetch2.check_network_access(d, svnfetchcmd, ud.url)
-            runfetchcmd(svnfetchcmd, d, ud.pkgdir)
+            runfetchcmd(svnfetchcmd, d, workdir=ud.pkgdir)
 
         scmdata = ud.parm.get("scmdata", "")
         if scmdata == "keep":
