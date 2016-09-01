@@ -476,6 +476,53 @@
         </section>
     </section>
 
+    <section id='exporting-variables-to-the-environment'>
+        <title>Exporting Variables to the Environment</title>
+
+        <para>
+            You can export variables to the environment of running
+            tasks by using the <filename>export</filename> keyword.
+            For example, in the following example, the
+            <filename>do_foo</filename> task prints "value from
+            the environment" when run:
+            <literallayout class='monospaced'>
+     export ENV_VARIABLE
+     ENV_VARIABLE = "value from the environment"
+
+     do_foo() {
+         bbplain "$ENV_VARIABLE"
+     }
+            </literallayout>
+            <note>
+                BitBake does not expand <filename>$ENV_VARIABLE</filename>
+                in this case because it lacks the obligatory
+                <filename>{}</filename>.
+                Rather, <filename>$ENV_VARIABLE</filename> is expanded
+                by the shell.
+            </note>
+            It does not matter whether
+            <filename>export ENV_VARIABLE</filename> appears before or
+            after assignments to <filename>ENV_VARIABLE</filename>.
+        </para>
+
+        <para>
+            It is also possible to combine <filename>export</filename>
+            with setting a value for the variable.
+            Here is an example:
+            <literallayout class='monospaced'>
+     export ENV_VARIABLE = "<replaceable>variable-value</replaceable>"
+            </literallayout>
+            In the output of <filename>bitbake -e</filename>, variables
+            that are exported to the environment are preceded by "export".
+        </para>
+
+        <para>
+            Among the variables commonly exported to the environment
+            are <filename>CC</filename> and <filename>CFLAGS</filename>,
+            which are picked up by many build systems.
+        </para>
+    </section>
+
     <section id='conditional-syntax-overrides'>
         <title>Conditional Syntax (Overrides)</title>
 
