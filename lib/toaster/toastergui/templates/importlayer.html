@@ -113,16 +113,18 @@
           <span class="glyphicon glyphicon-question-sign get-help" title="You can provide a Git branch, a tag or a commit SHA as the revision"></span>
         </label>
         <input type="text" class="form-control" id="layer-git-ref" required>
-        <span class="help-inline" style="diaply:none;" id="invalid-layer-revision-hint"></span>
+        <span class="help-inline" style="display:none;" id="invalid-layer-revision-hint"></span>
       </div>
     </fieldset>
 
     <fieldset class="fields-apart-from-layer-name" id="local-dir" style="display:none;">
       <legend>Layer directory information</legend>
-	<label for="local-dir-path" class="control-label">Enter the absolute path to the layer directory</label>
-	<input type="text" class="form-control" id="local-dir-path" required/>
-	<p class="help-block" id="hintError-dir-path-starts-with-slash" style="display:none;">The absolute path must start with "/".</p>
-	<p class="help-block" id="hintError-dir-path" style="display:none;">The directory path cannot include spaces or any of these characters: . \ ? % * : | " " &lt; &gt;</p>
+      <div class="form-group">
+        <label for="local-dir-path" class="control-label">Enter the absolute path to the layer directory</label>
+        <input type="text" class="form-control" id="local-dir-path" required/>
+        <p class="help-block" id="hintError-dir-path-starts-with-slash" style="display:none;">The absolute path must start with "/".</p>
+        <p class="help-block" id="hintError-dir-path" style="display:none;">The directory path cannot include spaces or any of these characters: . \ ? % * : | " " &lt; &gt;</p>
+      </div>
     </fieldset>
 
     <fieldset class="fields-apart-from-layer-name">

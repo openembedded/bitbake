@@ -203,6 +203,7 @@ h2 { margin-bottom: 25px; }
 
 /* Style the import layer form controls*/
 legend { border: none; }
+fieldset.fields-apart-from-layer-name { margin-top: 20px; }
 .radioLegend { margin-bottom: 0; }
 #layer-name-ctrl { margin-top: 20px; }
 #import-layer-name,
