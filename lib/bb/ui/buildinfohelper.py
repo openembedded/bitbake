@@ -1127,7 +1127,8 @@ class BuildInfoHelper(object):
                         abs_file_name = vh['file']
                         for pp in path_prefixes:
                             if abs_file_name.startswith(pp + "/"):
-                                vh['file']=abs_file_name[len(pp + "/"):]
+                                # preserve layer name in relative path
+                                vh['file']=abs_file_name[pp.rfind("/")+1:]
                                 break
 
         # save the variables
