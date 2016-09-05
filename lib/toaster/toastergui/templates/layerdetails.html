@@ -258,7 +258,7 @@
              <span class="glyphicon glyphicon-question-sign get-help" title="Other layers this layer depends upon"></span>
            </h3>
 
-           <ul class="list-unstyled current-value" id="layer-deps-list">
+           <ul class="list-unstyled current-value lead" id="layer-deps-list">
              {% for ld in layerversion.dependencies.all %}
              <li data-layer-id="{{ld.depends_on.id}}">
              <a data-toggle="tooltip" title="{{ld.depends_on.layer.vcs_url}} | {{ld.depends_on.get_vcs_reference}}" href="{% url 'layerdetails' project.id ld.depends_on.id %}">{{ld.depends_on.layer.name}}</a>
