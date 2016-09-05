@@ -1081,7 +1081,7 @@ def edit_metadata(meta_lines, variables, varfunc, match_overrides=False):
                 newlines: list of lines up to this point. You can use
                     this to prepend lines before this variable setting
                     if you wish.
-            and should return a three-element tuple:
+            and should return a four-element tuple:
                 newvalue: new value to substitute in, or None to drop
                     the variable setting entirely. (If the removal
                     results in two consecutive blank lines, one of the
@@ -1095,6 +1095,8 @@ def edit_metadata(meta_lines, variables, varfunc, match_overrides=False):
                     multi-line value to continue on the same line as
                     the assignment, False to indent before the first
                     element.
+            To clarify, if you wish not to change the value, then you
+            would return like this: return origvalue, None, 0, True
         match_overrides: True to match items with _overrides on the end,
             False otherwise
     Returns a tuple:
