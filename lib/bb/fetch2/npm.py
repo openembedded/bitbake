@@ -138,7 +138,12 @@ class Npm(FetchMethod):
             workobj = json.load(datafile)
         dldir = "%s/%s" % (os.path.dirname(ud.localpath), ud.pkgname)
 
-        self._unpackdep(ud, ud.pkgname, workobj,  "%s/npmpkg" % destdir, dldir, d)
+        if 'subdir' in ud.parm:
+            unpackdir = '%s/%s' % (destdir, ud.parm.get('subdir'))
+        else:
+            unpackdir = '%s/npmpkg' % destdir
+
+        self._unpackdep(ud, ud.pkgname, workobj, unpackdir, dldir, d)
 
     def _parse_view(self, output):
         '''
