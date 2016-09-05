@@ -251,16 +251,16 @@ function validate_new_variable() {
     }
   }
 
-  var bad_chars  = /[^a-zA-Z0-9\-_]/.test(variable);
+  var bad_chars  = /[^a-zA-Z0-9\-_/]/.test(variable);
   var has_spaces = (0 <= variable.indexOf(" "));
   var only_spaces = (0 < variable.length) && (0 == variable.trim().length);
 
   if (only_spaces) {
     error_msg = "A valid variable name cannot include spaces";
   } else if (bad_chars && has_spaces) {
-    error_msg = "A valid variable name can only include letters, numbers, underscores, dashes, and cannot include spaces";
+    error_msg = "A valid variable name can only include letters, numbers and the special characters <code> _ - /</code>. Variable names cannot include spaces";
   } else if (bad_chars) {
-    error_msg = "A valid variable name can only include letters, numbers, underscores, and dashes";
+    error_msg = "A valid variable name can only include letters, numbers and the special characters <code>_ - /</code>";
   }
 
   if ("" != error_msg) {

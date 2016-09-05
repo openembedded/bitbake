@@ -182,6 +182,7 @@ dd.variable-list form { margin-top: 10px; }
 .scrolling.has-error { border-color: #a94442; }
 .help-block.text-danger { color: #a94442; }
 .tooltip-inner code { color: #fff; }
+.text-danger > code { color: #a94442; }
 dd.variable-list .glyphicon-question-sign { font-size: 14px; }
 dd.variable-list .glyphicon-edit { font-size: 16px; }
 dt .glyphicon-trash { margin-left: 5px; font-size: 16px; }
