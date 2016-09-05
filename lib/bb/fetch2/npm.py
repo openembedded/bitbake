@@ -88,7 +88,7 @@ class Npm(FetchMethod):
         ud.localpath = d.expand("${DL_DIR}/npm/%s" % ud.bbnpmmanifest)
 
         self.basecmd = d.getVar("FETCHCMD_wget", True) or "/usr/bin/env wget -O -t 2 -T 30 -nv --passive-ftp --no-check-certificate "
-        self.basecmd += " --directory-prefix=%s " % prefixdir
+        ud.prefixdir = prefixdir
 
         ud.write_tarballs = ((data.getVar("BB_GENERATE_MIRROR_TARBALLS", d, True) or "0") != "0")
         ud.mirrortarball = 'npm_%s-%s.tar.xz' % (ud.pkgname, ud.version)
@@ -182,7 +182,7 @@ class Npm(FetchMethod):
         outputurl = pdata['dist']['tarball']
         data[pkg] = {}
         data[pkg]['tgz'] = os.path.basename(outputurl)
-        self._runwget(ud, d, "%s %s" % (self.basecmd, outputurl), False)
+        self._runwget(ud, d, "%s --directory-prefix=%s %s" % (self.basecmd, ud.prefixdir, outputurl), False)
 
         dependencies = pdata.get('dependencies', {})
         optionalDependencies = pdata.get('optionalDependencies', {})
@@ -209,7 +209,7 @@ class Npm(FetchMethod):
             outputurl = runfetchcmd(fetchcmd, d, True)
         else:
             outputurl = data['resolved']
-        self._runwget(ud, d, "%s %s" % (self.basecmd, outputurl), False)
+        self._runwget(ud, d, "%s --directory-prefix=%s %s" % (self.basecmd, ud.prefixdir, outputurl), False)
         manifest[pkg] = {}
         manifest[pkg]['tgz'] = os.path.basename(outputurl).rstrip()
         manifest[pkg]['deps'] = {}
