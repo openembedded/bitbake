@@ -141,7 +141,7 @@ class EventWriter:
         else:
             # init on bb.event.BuildStarted
             name = "%s.%s" % (event.__module__, event.__class__.__name__)
-            if name == "bb.event.BuildStarted":
+            if name in ("bb.event.BuildStarted", "bb.cooker.CookerExit"):
                 with open(self.eventfile, "w") as f:
                     f.write("%s\n" % json.dumps({ "allvariables" : self.cooker.getAllKeysWithFlags(["doc", "func"])}))
 
