@@ -130,8 +130,8 @@
 
           <!-- layer details pane -->
           <div id="information" class="tab-pane active">
-           {% if layerversion.layer.local_source_dir %}
            <h3>Layer source code location</h3>
+           {% if layerversion.layer.local_source_dir %}
            <dl class="dl-horizontal" id="directory-info">
              <dt>
                Path to the layer directory
@@ -200,8 +200,7 @@
                    <input type="radio" name="source-location" id="repo" value="repo">
                    In a <strong>Git repository</strong>
                  </label>
-                 <p class="help-block" style="margin-left:20px;width:70%;">To build the layer Toaster must be able to access the Git repository, otherwise builds will fail. Toaster will\
-                   fetch and checkout your chosen Git revision every time you start a build.</p>
+                 <p class="help-block" style="margin-left:20px;width:70%;">To build the layer Toaster must be able to access the Git repository, otherwise builds will fail. Toaster will fetch and checkout your chosen Git revision every time you start a build.</p>
                </div>
                <div class="radio" style="margin-top:15px;">
                  <label>
