@@ -95,10 +95,6 @@ stop_system()
     # prevent reentry
     if [ $INSTOPSYSTEM -eq 1 ]; then return; fi
     INSTOPSYSTEM=1
-    if [ -f ${BUILDDIR}/.toasterui.pid ]; then
-        kill `cat ${BUILDDIR}/.toasterui.pid` 2>/dev/null
-        rm ${BUILDDIR}/.toasterui.pid
-    fi
     webserverKillAll
     # unset exported variables
     unset TOASTER_DIR
