@@ -249,14 +249,6 @@ case $CMD in
             fi
         fi
 
-        # kill Toaster web server if it's alive
-        if [ -e $BUILDDIR/.toastermain.pid ] && kill -0 `cat $BUILDDIR/.toastermain.pid`; then
-            echo "Warning: bitbake appears to be dead, but the Toaster web server is running." 1>&2
-            echo " Something fishy is going on." 1>&2
-            echo "Cleaning up the web server to start from a clean slate."
-            webserverKillAll
-        fi
-
         # Create configuration file
         conf=${BUILDDIR}/conf/local.conf
         line='INHERIT+="toaster buildhistory"'
