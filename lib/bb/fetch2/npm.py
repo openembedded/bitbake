@@ -204,8 +204,15 @@ class Npm(FetchMethod):
         for dep, version in depsfound.items():
             self._getdependencies(dep, data[pkg]['deps'], version, d, ud)
 
-    def _getshrinkeddependencies(self, pkg, data, version, d, ud, lockdown, manifest):
+    def _getshrinkeddependencies(self, pkg, data, version, d, ud, lockdown, manifest, toplevel=True):
         logger.debug(2, "NPM shrinkwrap file is %s" % data)
+        if toplevel:
+            name = data.get('name', None)
+            if name and name != pkg:
+                for obj in data.get('dependencies', []):
+                    if obj == pkg:
+                        self._getshrinkeddependencies(obj, data['dependencies'][obj], data['dependencies'][obj]['version'], d, ud, lockdown, manifest, False)
+                        return
         outputurl = "invalid"
         if ('resolved' not in data) or (not data['resolved'].startswith('http')):
             # will be the case for ${PN}
@@ -231,7 +238,7 @@ class Npm(FetchMethod):
         if 'dependencies' in data:
             for obj in data['dependencies']:
                 logger.debug(2, "Found dep is %s" % str(obj))
-                self._getshrinkeddependencies(obj, data['dependencies'][obj], data['dependencies'][obj]['version'], d, ud, lockdown, manifest[pkg]['deps'])
+                self._getshrinkeddependencies(obj, data['dependencies'][obj], data['dependencies'][obj]['version'], d, ud, lockdown, manifest[pkg]['deps'], False)
 
     def download(self, ud, d):
         """Fetch url"""
