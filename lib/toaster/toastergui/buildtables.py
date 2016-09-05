@@ -482,7 +482,8 @@ class BuildTasksTable(BuildTablesMixin):
                         orderable=True)
 
         self.add_column(title="Recipe version",
-                        field_name='recipe__version')
+                        field_name='recipe__version',
+                        hidden=True)
 
         self.add_column(title="Executed",
                         static_data_name="task_executed",
