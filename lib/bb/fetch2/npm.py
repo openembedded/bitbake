@@ -102,7 +102,8 @@ class Npm(FetchMethod):
     def _runwget(self, ud, d, command, quiet):
         logger.debug(2, "Fetching %s using command '%s'" % (ud.url, command))
         bb.fetch2.check_network_access(d, command)
-        runfetchcmd(command, d, quiet)
+        dldir = d.getVar("DL_DIR", True)
+        runfetchcmd(command, d, quiet, workdir=dldir)
 
     def _unpackdep(self, ud, pkg, data, destdir, dldir, d):
         file = data[pkg]['tgz']
