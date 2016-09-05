@@ -33,9 +33,6 @@ webserverKillAll()
             while kill -0 $pid 2>/dev/null; do
                 kill -SIGTERM -$pid 2>/dev/null
                 sleep 1
-                # Kill processes if they are still running - may happen
-                # in interactive shells
-                ps fux | grep "python.*manage.py runserver" | awk '{print $2}' | xargs kill
             done
             rm  ${pidfile}
         fi
