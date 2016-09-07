@@ -1228,7 +1228,7 @@
                 </literallayout>
                 For methods you can use with anonymous Python functions,
                 see the
-                "<link linkend='accessing-datastore-variables-using-python'>Accessing Datastore Variables Using Python</link>"
+                "<link linkend='functions-you-can-call-from-within-python'>Functions You Can Call From Within Python</link>"
                 section.
                 For a different method to run Python code during parsing,
                 see the
@@ -2082,102 +2082,130 @@
         </section>
     </section>
 
-    <section id='accessing-datastore-variables-using-python'>
-        <title>Accessing Datastore Variables Using Python</title>
+    <section id='functions-you-can-call-from-within-python'>
+        <title>Functions You Can Call From Within Python</title>
 
         <para>
-            It is often necessary to access variables in the
-            BitBake datastore using Python functions.
-            The Bitbake datastore has an API that allows you this
-            access.
-            Here is a list of available operations:
+            BitBake provides many functions you can call from
+            within Python functions.
+            This section lists the most commonly used functions,
+            and mentions where to find others.
         </para>
 
-        <para>
-            <informaltable frame='none'>
-                <tgroup cols='2' align='left' colsep='1' rowsep='1'>
-                    <colspec colname='c1' colwidth='1*'/>
-                    <colspec colname='c2' colwidth='1*'/>
-                    <thead>
-                        <row>
-                            <entry align="left"><emphasis>Operation</emphasis></entry>
-                            <entry align="left"><emphasis>Description</emphasis></entry>
-                        </row>
-                    </thead>
-                    <tbody>
-                        <row>
-                            <entry align="left"><filename>d.getVar("X", expand)</filename></entry>
-                            <entry align="left">Returns the value of variable "X".
-                            Using "expand=True" expands the value.</entry>
-                        </row>
-                        <row>
-                            <entry align="left"><filename>d.setVar("X", "value")</filename></entry>
-                            <entry align="left">Sets the variable "X" to "value".</entry>
-                        </row>
-                        <row>
-                            <entry align="left"><filename>d.appendVar("X", "value")</filename></entry>
-                            <entry align="left">Adds "value" to the end of the variable "X".</entry>
-                        </row>
-                        <row>
-                            <entry align="left"><filename>d.prependVar("X", "value")</filename></entry>
-                            <entry align="left">Adds "value" to the start of the variable "X".</entry>
-                        </row>
-                        <row>
-                            <entry align="left"><filename>d.delVar("X")</filename></entry>
-                            <entry align="left">Deletes the variable "X" from the datastore.</entry>
-                        </row>
-                        <row>
-                            <entry align="left"><filename>d.renameVar("X", "Y")</filename></entry>
-                            <entry align="left">Renames the variable "X" to "Y".</entry>
-                        </row>
-                        <row>
-                            <entry align="left"><filename>d.getVarFlag("X", flag, expand)</filename></entry>
-                            <entry align="left">Returns the value of variable "X".
+        <section id='functions-for-accessing-datastore-variables'>
+            <title>Functions for Accessing Datastore Variables</title>
+
+            <para>
+                It is often necessary to access variables in the
+                BitBake datastore using Python functions.
+                The Bitbake datastore has an API that allows you this
+                access.
+                Here is a list of available operations:
+            </para>
+
+            <para>
+                <informaltable frame='none'>
+                    <tgroup cols='2' align='left' colsep='1' rowsep='1'>
+                        <colspec colname='c1' colwidth='1*'/>
+                        <colspec colname='c2' colwidth='1*'/>
+                        <thead>
+                            <row>
+                                <entry align="left"><emphasis>Operation</emphasis></entry>
+                                <entry align="left"><emphasis>Description</emphasis></entry>
+                            </row>
+                        </thead>
+                        <tbody>
+                            <row>
+                                <entry align="left"><filename>d.getVar("X", expand)</filename></entry>
+                                <entry align="left">Returns the value of variable "X".
                                 Using "expand=True" expands the value.</entry>
-                        </row>
-                        <row>
-                            <entry align="left"><filename>d.setVarFlag("X", flag, "value")</filename></entry>
-                            <entry align="left">Sets the named flag for variable "X" to "value".</entry>
-                        </row>
-                        <row>
-                            <entry align="left"><filename>d.appendVarFlag("X", flag, "value")</filename></entry>
-                            <entry align="left">Appends "value" to the named flag on the
-                            variable "X".</entry>
-                        </row>
-                        <row>
-                            <entry align="left"><filename>d.prependVarFlag("X", flag, "value")</filename></entry>
-                            <entry align="left">Prepends "value" to the named flag on
-                               the variable "X".</entry>
-                        </row>
-                        <row>
-                            <entry align="left"><filename>d.delVarFlag("X", flag)</filename></entry>
-                            <entry align="left">Deletes the named flag on the variable
-                                "X" from the datastore.</entry>
-                        </row>
-                        <row>
-                            <entry align="left"><filename>d.setVarFlags("X", flagsdict)</filename></entry>
-                            <entry align="left">Sets the flags specified in
-                                the <filename>flagsdict()</filename> parameter.
-                                <filename>setVarFlags</filename> does not clear previous flags.
-                                Think of this operation as <filename>addVarFlags</filename>.</entry>
-                        </row>
-                        <row>
-                            <entry align="left"><filename>d.getVarFlags("X")</filename></entry>
-                            <entry align="left">Returns a <filename>flagsdict</filename> of the flags for
-                                the variable "X".</entry>
-                        </row>
-                        <row>
-                            <entry align="left"><filename>d.delVarFlags("X")</filename></entry>
-                            <entry align="left">Deletes all the flags for the variable "X".</entry>
-                        </row>
-                        <row>
-                            <entry align="left"><filename>d.expand(expression)</filename></entry>
-                            <entry align="left">Expands variable references in the specified string expression.</entry>
-                        </row>
-                    </tbody>
-                </tgroup>
-            </informaltable>
-        </para>
+                            </row>
+                            <row>
+                                <entry align="left"><filename>d.setVar("X", "value")</filename></entry>
+                                <entry align="left">Sets the variable "X" to "value".</entry>
+                            </row>
+                            <row>
+                                <entry align="left"><filename>d.appendVar("X", "value")</filename></entry>
+                                <entry align="left">Adds "value" to the end of the variable "X".</entry>
+                            </row>
+                            <row>
+                                <entry align="left"><filename>d.prependVar("X", "value")</filename></entry>
+                                <entry align="left">Adds "value" to the start of the variable "X".</entry>
+                            </row>
+                            <row>
+                                <entry align="left"><filename>d.delVar("X")</filename></entry>
+                                <entry align="left">Deletes the variable "X" from the datastore.</entry>
+                            </row>
+                            <row>
+                                <entry align="left"><filename>d.renameVar("X", "Y")</filename></entry>
+                                <entry align="left">Renames the variable "X" to "Y".</entry>
+                            </row>
+                            <row>
+                                <entry align="left"><filename>d.getVarFlag("X", flag, expand)</filename></entry>
+                                <entry align="left">Returns the value of variable "X".
+                                    Using "expand=True" expands the value.</entry>
+                            </row>
+                            <row>
+                                <entry align="left"><filename>d.setVarFlag("X", flag, "value")</filename></entry>
+                                <entry align="left">Sets the named flag for variable "X" to "value".</entry>
+                            </row>
+                            <row>
+                                <entry align="left"><filename>d.appendVarFlag("X", flag, "value")</filename></entry>
+                                <entry align="left">Appends "value" to the named flag on the
+                                variable "X".</entry>
+                            </row>
+                            <row>
+                                <entry align="left"><filename>d.prependVarFlag("X", flag, "value")</filename></entry>
+                                <entry align="left">Prepends "value" to the named flag on
+                                   the variable "X".</entry>
+                            </row>
+                            <row>
+                                <entry align="left"><filename>d.delVarFlag("X", flag)</filename></entry>
+                                <entry align="left">Deletes the named flag on the variable
+                                    "X" from the datastore.</entry>
+                            </row>
+                            <row>
+                                <entry align="left"><filename>d.setVarFlags("X", flagsdict)</filename></entry>
+                                <entry align="left">Sets the flags specified in
+                                    the <filename>flagsdict()</filename> parameter.
+                                    <filename>setVarFlags</filename> does not clear previous flags.
+                                    Think of this operation as <filename>addVarFlags</filename>.</entry>
+                            </row>
+                            <row>
+                                <entry align="left"><filename>d.getVarFlags("X")</filename></entry>
+                                <entry align="left">Returns a <filename>flagsdict</filename> of the flags for
+                                    the variable "X".</entry>
+                            </row>
+                            <row>
+                                <entry align="left"><filename>d.delVarFlags("X")</filename></entry>
+                                <entry align="left">Deletes all the flags for the variable "X".</entry>
+                            </row>
+                            <row>
+                                <entry align="left"><filename>d.expand(expression)</filename></entry>
+                                <entry align="left">Expands variable references in the specified string expression.</entry>
+                            </row>
+                        </tbody>
+                    </tgroup>
+                </informaltable>
+            </para>
+        </section>
+
+        <section id='other-functions'>
+            <title>Other Functions</title>
+
+            <para>
+                You can find many other functions that can be called
+                from Python by looking at the source code of the
+                <filename>bb</filename> module, which is in
+                <filename>bitbake/lib/bb</filename>.
+                For example,
+                <filename>bitbake/lib/bb/utils.py</filename> includes
+                the commonly used functions
+                <filename>bb.utils.contains()</filename> and
+                <filename>bb.utils.mkdirhier()</filename>, which come
+                with docstrings.
+            </para>
+        </section>
     </section>
 
     <section id='task-checksums-and-setscene'>
