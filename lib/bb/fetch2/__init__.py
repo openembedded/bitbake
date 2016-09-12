@@ -761,6 +761,7 @@ def get_srcrev(d, method_name='sortable_revision'):
     if not format:
         raise FetchError("The SRCREV_FORMAT variable must be set when multiple SCMs are used.")
 
+    name_to_rev = {}
     seenautoinc = False
     for scm in scms:
         ud = urldata[scm]
@@ -769,7 +770,16 @@ def get_srcrev(d, method_name='sortable_revision'):
             seenautoinc = seenautoinc or autoinc
             if len(rev) > 10:
                 rev = rev[:10]
-            format = format.replace(name, rev)
+            name_to_rev[name] = rev
+    # Replace names by revisions in the SRCREV_FORMAT string. The approach used
+    # here can handle names being prefixes of other names and names appearing
+    # as substrings in revisions (in which case the name should not be
+    # expanded). The '|' regular expression operator tries matches from left to
+    # right, so we need to sort the names with the longest ones first.
+    names_descending_len = sorted(name_to_rev, key=len, reverse=True)
+    name_to_rev_re = "|".join(re.escape(name) for name in names_descending_len)
+    format = re.sub(name_to_rev_re, lambda match: name_to_rev[match.group(0)], format)
+
     if seenautoinc:
        format = "AUTOINC+" + format
 
