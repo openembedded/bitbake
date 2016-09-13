@@ -165,7 +165,9 @@ class Npm(FetchMethod):
             pdata = json.loads('\n'.join(datalines))
         return pdata
 
-    def _getdependencies(self, pkg, data, version, d, ud, optional=False):
+    def _getdependencies(self, pkg, data, version, d, ud, optional=False, fetchedlist=None):
+        if fetchedlist is None:
+            fetchedlist = []
         pkgfullname = pkg
         if version != '*' and not '/' in version:
             pkgfullname += "@'%s'" % version
@@ -187,7 +189,9 @@ class Npm(FetchMethod):
         outputurl = pdata['dist']['tarball']
         data[pkg] = {}
         data[pkg]['tgz'] = os.path.basename(outputurl)
-        self._runwget(ud, d, "%s --directory-prefix=%s %s" % (self.basecmd, ud.prefixdir, outputurl), False)
+        if not outputurl in fetchedlist:
+            self._runwget(ud, d, "%s --directory-prefix=%s %s" % (self.basecmd, ud.prefixdir, outputurl), False)
+            fetchedlist.append(outputurl)
 
         dependencies = pdata.get('dependencies', {})
         optionalDependencies = pdata.get('optionalDependencies', {})
@@ -200,9 +204,9 @@ class Npm(FetchMethod):
             else:
                 depsfound[dep] = dependencies[dep]
         for dep, version in optdepsfound.items():
-            self._getdependencies(dep, data[pkg]['deps'], version, d, ud, optional=True)
+            self._getdependencies(dep, data[pkg]['deps'], version, d, ud, optional=True, fetchedlist=fetchedlist)
         for dep, version in depsfound.items():
-            self._getdependencies(dep, data[pkg]['deps'], version, d, ud)
+            self._getdependencies(dep, data[pkg]['deps'], version, d, ud, fetchedlist=fetchedlist)
 
     def _getshrinkeddependencies(self, pkg, data, version, d, ud, lockdown, manifest, toplevel=True):
         logger.debug(2, "NPM shrinkwrap file is %s" % data)
