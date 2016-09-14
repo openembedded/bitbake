@@ -1147,6 +1147,8 @@ class BBCooker:
             collection_list = collections.split()
             min_prio = 0
             for c in collection_list:
+                bb.debug(1,'Processing %s in collection list' % (c))
+
                 # Get collection priority if defined explicitly
                 priority = self.data.getVar("BBFILE_PRIORITY_%s" % c, True)
                 if priority:
@@ -1165,10 +1167,10 @@ class BBCooker:
                 deps = self.data.getVar("LAYERDEPENDS_%s" % c, True)
                 if deps:
                     try:
-                        deplist = bb.utils.explode_dep_versions2(deps)
+                        depDict = bb.utils.explode_dep_versions2(deps)
                     except bb.utils.VersionStringException as vse:
                         bb.fatal('Error parsing LAYERDEPENDS_%s: %s' % (c, str(vse)))
-                    for dep, oplist in list(deplist.items()):
+                    for dep, oplist in list(depDict.items()):
                         if dep in collection_list:
                             for opstr in oplist:
                                 layerver = self.data.getVar("LAYERVERSION_%s" % dep, True)
@@ -1187,9 +1189,38 @@ class BBCooker:
                         else:
                             parselog.error("Layer '%s' depends on layer '%s', but this layer is not enabled in your configuration", c, dep)
                             errors = True
-                    collection_depends[c] = deplist.keys()
+                    collection_depends[c] = list(depDict.keys())
                 else:
                     collection_depends[c] = []
+
+                # Check recommends and store information for priority calculation
+                recs = self.data.getVar("LAYERRECOMMENDS_%s" % c, True)
+                if recs:
+                    try:
+                        recDict = bb.utils.explode_dep_versions2(recs)
+                    except bb.utils.VersionStringException as vse:
+                        bb.fatal('Error parsing LAYERRECOMMENDS_%s: %s' % (c, str(vse)))
+                    for rec, oplist in list(recDict.items()):
+                        if rec in collection_list:
+                            if oplist:
+                                opstr = oplist[0]
+                                layerver = self.data.getVar("LAYERVERSION_%s" % rec, True)
+                                if layerver:
+                                    (op, recver) = opstr.split()
+                                    try:
+                                        res = bb.utils.vercmp_string_op(layerver, recver, op)
+                                    except bb.utils.VersionStringException as vse:
+                                        bb.fatal('Error parsing LAYERRECOMMENDS_%s: %s' % (c, str(vse)))
+                                    if not res:
+                                        parselog.debug(3,"Layer '%s' recommends version %s of layer '%s', but version %s is currently enabled in your configuration. Check that you are using the correct matching versions/branches of these two layers.", c, opstr, rec, layerver)
+                                        continue
+                                else:
+                                    parselog.debug(3,"Layer '%s' recommends version %s of layer '%s', which exists in your configuration but does not specify a version. Check that you are using the correct matching versions/branches of these two layers.", c, opstr, rec)
+                                    continue
+                            parselog.debug(3,"Layer '%s' recommends layer '%s', so we are adding it", c, rec)
+                            collection_depends[c].append(rec)
+                        else:
+                            parselog.debug(3,"Layer '%s' recommends layer '%s', but this layer is not enabled in your configuration", c, rec)
 
             # Recursively work out collection priorities based on dependencies
             def calc_layer_priority(collection):
