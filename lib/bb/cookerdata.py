@@ -270,9 +270,16 @@ class CookerDataBuilder(object):
 
             bb.event.fire(bb.event.ConfigParsed(), self.data)
 
-            if self.data.getVar("BB_INVALIDCONF", False) is True:
+            reparse_cnt = 0
+            while self.data.getVar("BB_INVALIDCONF", False) is True:
+                if reparse_cnt > 20:
+                    logger.error("Configuration has been re-parsed over 20 times, "
+                                 "breaking out of the loop...")
+                    raise Exception("Too deep config re-parse loop. Check locations where "
+                                    "BB_INVALIDCONF is being set (ConfigParsed event handlers)")
                 self.data.setVar("BB_INVALIDCONF", False)
                 self.data = self.parseConfigurationFiles(self.prefiles, self.postfiles)
+                reparse_cnt += 1
                 bb.event.fire(bb.event.ConfigParsed(), self.data)
 
             bb.parse.init_parser(self.data)
