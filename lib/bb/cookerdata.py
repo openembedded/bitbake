@@ -273,6 +273,7 @@ class CookerDataBuilder(object):
             if self.data.getVar("BB_INVALIDCONF", False) is True:
                 self.data.setVar("BB_INVALIDCONF", False)
                 self.data = self.parseConfigurationFiles(self.prefiles, self.postfiles)
+                bb.event.fire(bb.event.ConfigParsed(), self.data)
 
             bb.parse.init_parser(self.data)
             self.data_hash = self.data.get_hash()
