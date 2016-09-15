@@ -1421,7 +1421,8 @@ class BBCooker:
         if not task.startswith("do_"):
             task = "do_%s" % task
 
-        packages = ["%s:%s" % (target, task) for target in targets]
+        packages = [target if ':' in target else '%s:%s' % (target, task) for target in targets]
+
         bb.event.fire(bb.event.BuildInit(packages), self.expanded_data)
 
         taskdata, runlist = self.buildTaskData(targets, task, self.configuration.abort)
