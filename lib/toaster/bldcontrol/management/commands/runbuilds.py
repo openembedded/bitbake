@@ -175,6 +175,8 @@ class Command(NoArgsCommand):
             logger.warn("runbuilds: schedule exception %s" % str(e))
 
     def handle_noargs(self, **options):
+        self.runbuild()
+
         signal.signal(signal.SIGUSR1, lambda sig, frame: None)
 
         while True:
