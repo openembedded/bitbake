@@ -1,17 +1,14 @@
-from django.core.management.base import NoArgsCommand, CommandError
+from django.core.management.base import NoArgsCommand
 from django.db import transaction
 from django.db.models import Q
 
 from bldcontrol.bbcontroller import getBuildEnvironmentController
-from bldcontrol.bbcontroller import ShellCmdException, BuildSetupException
 from bldcontrol.models import BuildRequest, BuildEnvironment
 from bldcontrol.models import BRError, BRVariable
 
-from orm.models import Build, ToasterSetting, LogMessage, Target
+from orm.models import Build, LogMessage, Target
 
-import os
 import logging
-import sys
 import traceback
 import signal
 
