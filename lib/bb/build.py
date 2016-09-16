@@ -575,6 +575,9 @@ def _exec_task(fn, task, d, quieterr):
             logger.error(str(exc))
             event.fire(TaskFailed(task, logfn, localdata, errprinted), localdata)
         return 1
+    except bb.BBHandledException:
+        event.fire(TaskFailed(task, logfn, localdata, True), localdata)
+        return 1
     finally:
         sys.stdout.flush()
         sys.stderr.flush()
