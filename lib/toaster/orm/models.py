@@ -33,9 +33,10 @@ from django.conf import settings
 import django.db.models.signals
 
 import sys
-import os.path
+import os
 import re
 import itertools
+from signal import SIGUSR1
 
 import logging
 logger = logging.getLogger("toaster")
@@ -1735,6 +1736,11 @@ def invalidate_cache(**kwargs):
       cache.clear()
     except Exception as e:
       logger.warning("Problem with cache backend: Failed to clear cache: %s" % e)
+
+def signal_runbuilds():
+    """Send SIGUSR1 to runbuilds process"""
+    with open(os.path.join(os.getenv('BUILDDIR'), '.runbuilds.pid')) as pidf:
+        os.kill(int(pidf.read()), SIGUSR1)
 
 django.db.models.signals.post_save.connect(invalidate_cache)
 django.db.models.signals.post_delete.connect(invalidate_cache)
