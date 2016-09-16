@@ -43,6 +43,7 @@ from orm.models import Package, Package_File, Target_Installed_Package, Target_F
 from orm.models import Task_Dependency, Package_Dependency
 from orm.models import Recipe_Dependency, Provides
 from orm.models import Project, CustomImagePackage, CustomImageRecipe
+from orm.models import signal_runbuilds
 
 from bldcontrol.models import BuildEnvironment, BuildRequest
 
@@ -234,6 +235,7 @@ class ORMWrapper(object):
         build.completed_on = timezone.now()
         build.outcome = outcome
         build.save()
+        signal_runbuilds()
 
     def update_target_set_license_manifest(self, target, license_manifest_path):
         target.license_manifest_path = license_manifest_path
@@ -1354,6 +1356,7 @@ class BuildInfoHelper(object):
         self._ensure_build()
         self.internal_state['build'].outcome = Build.CANCELLED
         self.internal_state['build'].save()
+        signal_runbuilds()
 
     def store_dependency_information(self, event):
         assert '_depgraph' in vars(event)
@@ -1540,6 +1543,7 @@ class BuildInfoHelper(object):
         else:
             br.state = BuildRequest.REQ_FAILED
         br.save()
+        signal_runbuilds()
 
     def store_log_error(self, text):
         mockevent = MockEvent()

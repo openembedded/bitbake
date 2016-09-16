@@ -377,6 +377,8 @@ class Project(models.Model):
             except ProjectVariable.DoesNotExist:
                 pass
             br.save()
+            signal_runbuilds()
+
         except Exception:
             # revert the build request creation since we're not done cleanly
             br.delete()
