@@ -11,9 +11,9 @@ from orm.models import Build, ToasterSetting, LogMessage, Target
 
 import os
 import logging
-import time
 import sys
 import traceback
+import signal
 
 logger = logging.getLogger("toaster")
 
@@ -175,6 +175,8 @@ class Command(NoArgsCommand):
             logger.warn("runbuilds: schedule exception %s" % str(e))
 
     def handle_noargs(self, **options):
+        signal.signal(signal.SIGUSR1, lambda sig, frame: None)
+
         while True:
+            signal.pause()
             self.runbuild()
-            time.sleep(1)
