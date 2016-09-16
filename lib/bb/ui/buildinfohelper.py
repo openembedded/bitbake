@@ -1524,9 +1524,7 @@ class BuildInfoHelper(object):
             return
 
         br_id, be_id = self.brbe.split(":")
-        be = BuildEnvironment.objects.get(pk = be_id)
-        be.lock = BuildEnvironment.LOCK_LOCK
-        be.save()
+
         br = BuildRequest.objects.get(pk = br_id)
 
         # if we're 'done' because we got cancelled update the build outcome
@@ -1543,6 +1541,10 @@ class BuildInfoHelper(object):
         else:
             br.state = BuildRequest.REQ_FAILED
         br.save()
+
+        be = BuildEnvironment.objects.get(pk = be_id)
+        be.lock = BuildEnvironment.LOCK_FREE
+        be.save()
         signal_runbuilds()
 
     def store_log_error(self, text):
