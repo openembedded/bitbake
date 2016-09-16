@@ -156,7 +156,7 @@ class LocalhostBEController(BuildEnvironmentController):
                 try:
                     localremotes = self._shellcmd("git remote -v",
                                                   localdirname)
-                    if not giturl in localremotes:
+                    if not giturl in localremotes and commit != 'HEAD':
                         raise BuildSetupException("Existing git repository at %s, but with different remotes ('%s', expected '%s'). Toaster will not continue out of fear of damaging something." % (localdirname, ", ".join(localremotes.split("\n")), giturl))
                 except ShellCmdException:
                     # our localdirname might not be a git repository
