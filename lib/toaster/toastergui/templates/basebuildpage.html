@@ -38,10 +38,13 @@
             $(this).parent().addClass("active");
           } else {
             /* Special case the configvar as this is part of configuration
-             * page but is a separate url
+             * page but is a separate url, and the direct links to errors
+             * and warnings, which are part of the build dashboard
              */
             if (window.location.pathname === configVarUrl){
               $("#menu-configuration").addClass("active");
+            } else if (currentUrl.indexOf('error') > 1 || currentUrl.indexOf('warning') > 1){
+              $("#menu-dashboard").addClass("active");
             } else {
               $(this).parent().removeClass("active");
             }
@@ -57,7 +60,7 @@
     <div class="row">
       <div id="nav" class="col-md-2">
         <ul class="nav nav-pills nav-stacked" id="build-menu">
-          <li
+          <li id="menu-dashboard"
             {% if request.resolver_match.url_name == 'builddashboard'  %}
               class="active"
             {% endif %} >
