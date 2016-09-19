@@ -176,8 +176,6 @@
         <a href="{% url 'projectbuilds' project.id%}">{{last_build.completed_on|date:"d/m/y H:i"}}</a>
         </dd>
         {% endif %}
-        <dt>Layer</dt>
-        <dd><a href="{% url 'layerdetails' project.id recipe.layer_version.pk %}">{{recipe.layer_version.layer.name}}</a></dd>
         <dt>Based on</dt>
         <dd><a href="{% url 'recipedetails' project.id recipe.base_recipe.pk %}">{{recipe.base_recipe.name}}</a></dd>
         {% if recipe.get_last_successful_built_target %}
