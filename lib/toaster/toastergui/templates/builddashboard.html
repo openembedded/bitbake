@@ -235,7 +235,7 @@
                           </a>
 
                   {% elif exectask.count > 1%}
-                      <a class="text-danger" href="{% url "tasks" build.id %}?filter=outcome%3A4">{{exectask.count}}</a>
+                      <a class="text-danger" href="{% url "tasks" build.id %}?limit=25&amp;page=1&amp;orderby=order&amp;filter=task_outcome:failed&amp;default_orderby=order&amp;filter_value=on&amp;">{{exectask.count}}</a>
                   {% endif %}
                   </dd>
               {% endif %}
@@ -244,12 +244,12 @@
               Tasks executed
               <span class="glyphicon glyphicon-question-sign get-help" title="'Executed' tasks are those that need to be run in order to generate the task output"></span>
           </dt>
-          <dd><a href="{% url 'tasks' build.pk %}?filter=task_executed%3A1&amp;count=25&amp;search=&amp;page=1&amp;orderby=order%3A%2B">{% query build.task_build task_executed=1 order__gt=0 as exectask%}{{exectask.count}}</a></dd>
+          <dd><a href="{% url 'tasks' build.pk %}?limit=25&amp;page=1&amp;orderby=order&amp;filter=execution_outcome:executed&amp;default_orderby=order&amp;filter_value=on&amp;">{% query build.task_build task_executed=1 order__gt=0 as exectask%}{{exectask.count}}</a></dd>
           <dt>
               Tasks not executed
               <span class="glyphicon glyphicon-question-sign get-help" title="'Not executed' tasks don't need to run because their outcome is provided by another task"></span>
           </dt>
-          <dd><a href="{% url 'tasks' build.pk %}?filter=task_executed%3A0&amp;count=25&amp;search=&amp;page=1&amp;orderby=order%3A%2B">{% query build.task_build task_executed=0 order__gt=0 as noexectask%}{{noexectask.count}}</a></dd>
+          <dd><a href="{% url 'tasks' build.pk %}?limit=25&amp;page=1&amp;orderby=order&amp;filter=execution_outcome:not_executed&amp;default_orderby=order&amp;filter_value=on&amp;">{% query build.task_build task_executed=0 order__gt=0 as noexectask%}{{noexectask.count}}</a></dd>
           <dt>
               Reuse
               <span class="glyphicon glyphicon-question-sign get-help" title="The percentage of 'not executed' tasks over the total number of tasks, which is a measure of the efficiency of your build"></span>
