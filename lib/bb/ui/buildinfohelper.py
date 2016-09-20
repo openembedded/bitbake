@@ -451,7 +451,11 @@ class ORMWrapper(object):
             # note that this is different
             buildrequest = BuildRequest.objects.get(pk = br_id)
             for brl in buildrequest.brlayer_set.all():
-                localdirname = os.path.join(bc.getGitCloneDirectory(brl.giturl, brl.commit), brl.dirpath)
+                if brl.local_source_dir:
+                    localdirname = os.path.join(brl.local_source_dir,
+                                                brl.dirpath)
+                else:
+                    localdirname = os.path.join(bc.getGitCloneDirectory(brl.giturl, brl.commit), brl.dirpath)
                 # we get a relative path, unless running in HEAD mode where the path is absolute
                 if not localdirname.startswith("/"):
                     localdirname = os.path.join(bc.be.sourcedir, localdirname)
@@ -980,8 +984,6 @@ class BuildInfoHelper(object):
 
     def _get_layer_version_for_path(self, path):
         self._ensure_build()
-
-        assert path.startswith("/")
 
         def _slkey_interactive(layer_version):
             assert isinstance(layer_version, Layer_Version)
