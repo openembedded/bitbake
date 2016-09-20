@@ -1555,6 +1555,8 @@ class RunQueueExecuteTasks(RunQueueExecute):
                 logger.debug(1, 'Considering %s: %s' % (tid, str(self.rqdata.runtaskentries[tid].revdeps)))
 
                 if len(self.rqdata.runtaskentries[tid].revdeps) > 0 and self.rqdata.runtaskentries[tid].revdeps.issubset(self.rq.scenequeue_covered):
+                    if tid in self.rq.scenequeue_notcovered:
+                        continue
                     found = True
                     self.rq.scenequeue_covered.add(tid)
 
@@ -2229,11 +2231,8 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
         #        revdeps = self.sq_revdeps[tid]
         #        bb.warn("Found we didn't run %s %s %s" % (tid, buildable, str(revdeps)))
 
-        # Convert scenequeue_covered task numbers into full taskgraph ids
-        oldcovered = self.scenequeue_covered
-        self.rq.scenequeue_covered = set()
-        for task in oldcovered:
-            self.rq.scenequeue_covered.add(task)
+        self.rq.scenequeue_covered = self.scenequeue_covered
+        self.rq.scenequeue_notcovered = self.scenequeue_notcovered
 
         logger.debug(1, 'We can skip tasks %s', sorted(self.rq.scenequeue_covered))
 
