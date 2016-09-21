@@ -402,7 +402,7 @@ def getRuntimeProviders(dataCache, rdepend):
     return rproviders
 
 
-def buildWorldTargetList(dataCache):
+def buildWorldTargetList(dataCache, task=None):
     """
     Build package list for "bitbake world"
     """
@@ -413,6 +413,9 @@ def buildWorldTargetList(dataCache):
     for f in dataCache.possible_world:
         terminal = True
         pn = dataCache.pkg_fn[f]
+        if task and task not in dataCache.task_deps[f]['tasks']:
+            logger.debug(2, "World build skipping %s as task %s doesn't exist", f, task)
+            terminal = False
 
         for p in dataCache.pn_provides[pn]:
             if p.startswith('virtual/'):

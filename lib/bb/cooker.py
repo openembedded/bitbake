@@ -658,7 +658,7 @@ class BBCooker:
         if task is None:
             task = self.configuration.cmd
 
-        fulltargetlist = self.checkPackages(pkgs_to_build)
+        fulltargetlist = self.checkPackages(pkgs_to_build, task)
         taskdata = {}
         localdata = {}
 
@@ -1618,7 +1618,7 @@ class BBCooker:
 
         return True
 
-    def checkPackages(self, pkgs_to_build):
+    def checkPackages(self, pkgs_to_build, task=None):
 
         # Return a copy, don't modify the original
         pkgs_to_build = pkgs_to_build[:]
@@ -1634,7 +1634,7 @@ class BBCooker:
         if 'world' in pkgs_to_build:
             pkgs_to_build.remove('world')
             for mc in self.multiconfigs:
-                bb.providers.buildWorldTargetList(self.recipecaches[mc])
+                bb.providers.buildWorldTargetList(self.recipecaches[mc], task)
                 for t in self.recipecaches[mc].world_target:
                     if mc:
                         t = "multiconfig:" + mc + ":" + t
