@@ -277,6 +277,15 @@
                     override syntax.
                 </note>
             </para>
+
+            <para>
+                It is also possible to append and prepend to shell
+                functions and BitBake-style Python functions.
+                See the
+                "<link linkend='shell-functions'>Shell Functions</link>" and
+                "<link linkend='bitbake-style-python-functions'>BitBake Style Python Functions</link>
+                sections for examples.
+            </para>
         </section>
 
         <section id='removing-override-style-syntax'>
@@ -1090,6 +1099,56 @@
                 such as <filename>dash</filename>.
                 You should not use Bash-specific script (bashisms).
             </para>
+
+            <para>
+                Overrides and override-style operators like
+                <filename>_append</filename> and
+                <filename>_prepend</filename> can also be applied to
+                shell functions.
+                Most commonly, this application would be used in a
+                <filename>.bbappend</filename> file to modify functions in
+                the main recipe.
+                It can also be used to modify functions inherited from
+                classes.
+            </para>
+
+            <para>
+                As an example, consider the following:
+                <literallayout class='monospaced'>
+     do_foo() {
+         bbplain first
+         fn
+     }
+
+     fn_prepend() {
+         bbplain second
+     }
+
+     fn() {
+         bbplain third
+     }
+
+     do_foo_append() {
+         bbplain fourth
+     }
+                </literallayout>
+                The output from <filename>do_foo</filename>
+                results in the following:
+                <literallayout class='monospaced'>
+     recipename do_foo: first
+     recipename do_foo: second
+     recipename do_foo: third
+     recipename do_foo: fourth
+                </literallayout>
+                <note>
+                    Overrides and override-style operators can
+                    be applied to any shell function, not just
+                    <link linkend='tasks'>tasks</link>.
+                </note>
+                You can use the <filename>bitbake -e</filename>&nbsp;<replaceable>recipename</replaceable>
+                command to view the final assembled function
+                after all overrides have been applied.
+            </para>
         </section>
 
         <section id='bitbake-style-python-functions'>
@@ -1114,19 +1173,51 @@
                 Also in these types of functions, the datastore ("d")
                 is a global variable and is always automatically
                 available.
-           </para>
+                <note>
+                    Variable expressions (e.g. <filename>${X}</filename>)
+                    are no longer expanded within Python functions.
+                    This behavior is intentional in order to allow you
+                    to freely set variable values to expandable expressions
+                    without having them expanded prematurely.
+                    If you do wish to expand a variable within a Python
+                    function, use <filename>d.getVar("X", True)</filename>.
+                    Or, for more complicated expressions, use
+                    <filename>d.expand()</filename>.
+                </note>
+            </para>
 
-           <note>
-                Variable expressions (e.g. <filename>${X}</filename>) are no
-                longer expanded within Python functions.
-                This behavior is intentional in order to allow you to freely
-                set variable values to expandable expressions without having
-                them expanded prematurely.
-                If you do wish to expand a variable within a Python function,
-                use <filename>d.getVar("X", True)</filename>.
-                Or, for more complicated expressions, use
-                <filename>d.expand()</filename>.
-           </note>
+            <para>
+                Similar to shell functions, you can also apply overrides
+                and override-style operators to BitBake-style Python
+                functions.
+            </para>
+
+            <para>
+                As an example, consider the following:
+                <literallayout class='monospaced'>
+     python do_foo_prepend() {
+         bb.plain("first")
+     }
+
+     python do_foo() {
+         bb.plain("second")
+     }
+
+     python do_foo_append() {
+         bb.plain("third")
+     }
+                </literallayout>
+                The output from <filename>do_foo</filename> results
+                in the following:
+                <literallayout class='monospaced'>
+     recipename do_foo: first
+     recipename do_foo: second
+     recipename do_foo: third
+                </literallayout>
+                You can use the <filename>bitbake -e</filename>&nbsp;<replaceable>recipename</replaceable>
+                command to view the final assembled function
+                after all overrides have been applied.
+            </para>
         </section>
 
         <section id='python-functions'>
