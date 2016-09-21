@@ -44,6 +44,21 @@
      VARIABLE = " "
                 </literallayout>
             </para>
+
+            <para>
+                You can use single quotes instead of double quotes
+                when setting a variable's value.
+                Doing so allows you to use values that contain the double
+                character:
+                <literallayout class='monospaced'>
+     VARIABLE = 'I have a " in my value'
+                </literallayout>
+                <note>
+                    Unlike in Bourne shells, single quotes work identically
+                    to double quotes in all other ways.
+                    They do not suppress variable expansions.
+                </note>
+            </para>
         </section>
 
         <section id='variable-expansion'>
