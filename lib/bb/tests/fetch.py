@@ -508,6 +508,15 @@ class FetcherLocalTest(FetcherTest):
         tree = self.fetchUnpack(['file://dir/subdir/e;subdir=bar'])
         self.assertEqual(tree, ['bar/dir/subdir/e'])
 
+    def test_local_absolutedir(self):
+        # Unpacking to an absolute path that is a subdirectory of the root
+        # should work
+        tree = self.fetchUnpack(['file://a;subdir=%s' % os.path.join(self.unpackdir, 'bar')])
+
+        # Unpacking to an absolute path outside of the root should fail
+        with self.assertRaises(bb.fetch2.UnpackError):
+            self.fetchUnpack(['file://a;subdir=/bin/sh'])
+
 class FetcherNetworkTest(FetcherTest):
 
     if os.environ.get("BB_SKIP_NETTESTS") == "yes":

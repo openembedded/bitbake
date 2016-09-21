@@ -1420,7 +1420,13 @@ class FetchMethod(object):
 
         # If 'subdir' param exists, create a dir and use it as destination for unpack cmd
         if 'subdir' in urldata.parm:
-            unpackdir = '%s/%s' % (rootdir, urldata.parm.get('subdir'))
+            subdir = urldata.parm.get('subdir')
+            if os.path.isabs(subdir):
+                if not os.path.realpath(subdir).startswith(os.path.realpath(rootdir)):
+                    raise UnpackError("subdir argument isn't a subdirectory of unpack root %s" % rootdir, urldata.url)
+                unpackdir = subdir
+            else:
+                unpackdir = os.path.join(rootdir, subdir)
             bb.utils.mkdirhier(unpackdir)
         else:
             unpackdir = rootdir
