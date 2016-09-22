@@ -49,7 +49,7 @@
                 You can use single quotes instead of double quotes
                 when setting a variable's value.
                 Doing so allows you to use values that contain the double
-                character:
+                quote character:
                 <literallayout class='monospaced'>
      VARIABLE = 'I have a " in my value'
                 </literallayout>
