@@ -170,6 +170,7 @@ class TerminalFilter(object):
         self.interactive = sys.stdout.isatty()
         self.footer_present = False
         self.lastpids = []
+        self.lasttime = None
         self.quiet = quiet
 
         if not self.interactive:
@@ -226,6 +227,10 @@ class TerminalFilter(object):
         activetasks = self.helper.running_tasks
         failedtasks = self.helper.failed_tasks
         runningpids = self.helper.running_pids
+        currenttime = time.time()
+        if not self.lasttime or (currenttime - self.lasttime > 5):
+            self.helper.needUpdate = True
+            self.lasttime = currenttime
         if self.footer_present and not self.helper.needUpdate:
             return
         self.helper.needUpdate = False
@@ -250,7 +255,11 @@ class TerminalFilter(object):
                     activetasks[t]["progressbar"] = pbar
                 tasks.append((pbar, progress, rate, start_time))
             else:
-                tasks.append("%s (pid %s)" % (activetasks[t]["title"], t))
+                start_time = activetasks[t].get("starttime", None)
+                if start_time:
+                    tasks.append("%s - %ds (pid %s)" % (activetasks[t]["title"], currenttime - start_time, t))
+                else:
+                    tasks.append("%s (pid %s)" % (activetasks[t]["title"], t))
 
         if self.main.shutdown:
             content = "Waiting for %s running tasks to finish:" % len(activetasks)
