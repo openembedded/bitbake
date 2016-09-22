@@ -1132,8 +1132,8 @@
          bbplain fourth
      }
                 </literallayout>
-                The output from <filename>do_foo</filename>
-                results in the following:
+                Running <filename>do_foo</filename>
+                prints the following:
                 <literallayout class='monospaced'>
      recipename do_foo: first
      recipename do_foo: second
@@ -1207,8 +1207,8 @@
          bb.plain("third")
      }
                 </literallayout>
-                The output from <filename>do_foo</filename> results
-                in the following:
+                Running <filename>do_foo</filename> prints
+                the following:
                 <literallayout class='monospaced'>
      recipename do_foo: first
      recipename do_foo: second
