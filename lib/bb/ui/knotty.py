@@ -280,7 +280,7 @@ class TerminalFilter(object):
             progress = self.helper.tasknumber_current - 1
             if progress < 0:
                 progress = 0
-            self.main_progress.update(progress)
+            content = self.main_progress.update(progress)
             print('')
         lines = 1 + int(len(content) / (self.columns + 1))
         if not self.quiet:
@@ -294,11 +294,10 @@ class TerminalFilter(object):
                     pbar.setmessage('%s:%s' % (tasknum, pbar.msg.split(':', 1)[1]))
                     if progress > -1:
                         pbar.setextra(rate)
-                        output = pbar.update(progress)
+                        content = pbar.update(progress)
                     else:
-                        output = pbar.update(1)
-                    if not output or (len(output) <= pbar.term_width):
-                        print('')
+                        content = pbar.update(1)
+                    print('')
                 else:
                     content = "%s: %s" % (tasknum, task)
                     print(content)
