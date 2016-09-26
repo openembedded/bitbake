@@ -832,3 +832,33 @@ class XhrProject(View):
             "error": "ok",
             "gotoUrl": reverse("all-projects", args=[])
         })
+
+
+class XhrBuild(View):
+    """ Delete a build object
+
+    Entry point: /xhr_build/<build_id>
+    """
+    def delete(self, request, *args, **kwargs):
+        """
+          Delete build data
+
+          Args:
+              build_id = build_id
+
+          Returns:
+              {"error": "ok"}
+            or
+              {"error": <error message>}
+        """
+        try:
+            build = Build.objects.get(pk=kwargs['build_id'])
+            project = build.project
+            build.delete()
+        except Build.DoesNotExist:
+            return error_response("Build %s does not exist" %
+                                  kwargs['build_id'])
+        return JsonResponse({
+            "error": "ok",
+            "gotoUrl": reverse("projectbuilds", args=(project.pk,))
+        })
