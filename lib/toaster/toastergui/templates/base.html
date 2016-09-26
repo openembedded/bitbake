@@ -44,6 +44,7 @@
         {% if project.id %}
         projectId : {{project.id}},
         projectPageUrl : {% url 'project' project.id as purl %}{{purl|json}},
+        xhrProjectUrl : {% url 'xhr_project' project.id as pxurl %}{{pxurl|json}},
         projectName : {{project.name|json}},
         recipesTypeAheadUrl: {% url 'xhr_recipestypeahead' project.id as paturl%}{{paturl|json}},
         layersTypeAheadUrl: {% url 'xhr_layerstypeahead' project.id as paturl%}{{paturl|json}},

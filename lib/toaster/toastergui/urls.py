@@ -220,6 +220,10 @@ urlpatterns = patterns('toastergui.views',
             api.XhrBuildRequest.as_view(),
             name='xhr_buildrequest'),
 
+        url(r'xhr_project/(?P<project_id>\d+)$',
+            api.XhrProject.as_view(),
+            name='xhr_project'),
+
         url(r'^mostrecentbuilds$', api.MostRecentBuildsView.as_view(),
             name='most_recent_builds'),
 

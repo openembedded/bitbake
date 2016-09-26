@@ -20,11 +20,13 @@
 
 import re
 import logging
+from collections import Counter
 
 from orm.models import Project, ProjectTarget, Build, Layer_Version
 from orm.models import LayerVersionDependency, LayerSource, ProjectLayer
 from orm.models import Recipe, CustomImageRecipe, CustomImagePackage
 from orm.models import Layer, Target, Package, Package_Dependency
+from orm.models import ProjectVariable
 from bldcontrol.models import BuildRequest
 from bldcontrol import bbcontroller
 
@@ -772,3 +774,162 @@ class XhrCustomRecipePackages(View):
         except CustomImageRecipe.DoesNotExist:
             return error_response("Tried to remove package that wasn't"
                                   " present")
+
+
+class XhrProject(View):
+    """ Create, delete or edit a project
+
+    Entry point: /xhr_project/<project_id>
+    """
+    def post(self, request, *args, **kwargs):
+        """
+          Edit project control
+
+          Args:
+              layerAdd = layer_version_id layer_version_id ...
+              layerDel = layer_version_id layer_version_id ...
+              projectName = new_project_name
+              machineName = new_machine_name
+
+          Returns:
+              {"error": "ok"}
+            or
+              {"error": <error message>}
+        """
+        try:
+            prj = Project.objects.get(pk=kwargs['project_id'])
+        except Project.DoesNotExist:
+            return error_response("No such project")
+
+        # Add layers
+        if 'layerAdd' in request.POST and len(request.POST['layerAdd']) > 0:
+            for layer_version_id in request.POST['layerAdd'].split(','):
+                try:
+                    lv = Layer_Version.objects.get(pk=int(layer_version_id))
+                    ProjectLayer.objects.get_or_create(project=prj,
+                                                       layercommit=lv)
+                except Layer_Version.DoesNotExist:
+                    return error_response("Layer version %s asked to add "
+                                          "doesn't exist" % layer_version_id)
+
+        # Remove layers
+        if 'layerDel' in request.POST and len(request.POST['layerDel']) > 0:
+            layer_version_ids = request.POST['layerDel'].split(',')
+            ProjectLayer.objects.filter(
+                project=prj,
+                layercommit_id__in=layer_version_ids).delete()
+
+        # Project name change
+        if 'projectName' in request.POST:
+            prj.name = request.POST['projectName']
+            prj.save()
+
+        # Machine name change
+        if 'machineName' in request.POST:
+            machinevar = prj.projectvariable_set.get(name="MACHINE")
+            machinevar.value = request.POST['machineName']
+            machinevar.save()
+
+        return JsonResponse({"error": "ok"})
+
+    def get(self, request, *args, **kwargs):
+        """
+        Returns:
+            json object representing the current project
+        or:
+            {"error": <error message>}
+        """
+
+        try:
+            project = Project.objects.get(pk=kwargs['project_id'])
+        except Project.DoesNotExist:
+            return error_response("Project %s does not exist" %
+                                  kwargs['project_id'])
+
+        # Create the frequently built targets list
+
+        freqtargets = Counter(Target.objects.filter(
+            Q(build__project=project),
+            ~Q(build__outcome=Build.IN_PROGRESS)
+        ).order_by("target").values_list("target", flat=True))
+
+        freqtargets = freqtargets.most_common(5)
+
+        # We now have the targets in order of frequency but if there are two
+        # with the same frequency then we need to make sure those are in
+        # alphabetical order without losing the frequency ordering
+
+        tmp = []
+        switch = None
+        for i, freqtartget in enumerate(freqtargets):
+            target, count = freqtartget
+            try:
+                target_next, count_next = freqtargets[i+1]
+                if count == count_next and target > target_next:
+                    switch = target
+                    continue
+            except IndexError:
+                pass
+
+            tmp.append(target)
+
+            if switch:
+                tmp.append(switch)
+                switch = None
+
+        freqtargets = tmp
+
+        layers = []
+        for layer in project.projectlayer_set.all():
+            layers.append({
+                "id": layer.layercommit.pk,
+                "name": layer.layercommit.layer.name,
+                "vcs_url": layer.layercommit.layer.vcs_url,
+                "local_source_dir": layer.layercommit.layer.local_source_dir,
+                "vcs_reference": layer.layercommit.get_vcs_reference(),
+                "url": layer.layercommit.layer.layer_index_url,
+                "layerdetailurl": layer.layercommit.get_detailspage_url(
+                    project.pk),
+                "layersource": layer.layercommit.layer_source
+            })
+
+        data = {
+            "name": project.name,
+            "layers": layers,
+            "freqtargets": freqtargets,
+        }
+
+        if project.release is not None:
+            data['release'] = {
+                "id": project.release.pk,
+                "name": project.release.name,
+                "description": project.release.description
+            }
+
+        try:
+            data["machine"] = {"name":
+                               project.projectvariable_set.get(
+                                   name="MACHINE").value}
+        except ProjectVariable.DoesNotExist:
+            data["machine"] = None
+        try:
+            data["distro"] = project.projectvariable_set.get(
+                name="DISTRO").value
+        except ProjectVariable.DoesNotExist:
+            data["distro"] = "-- not set yet"
+
+        data['error'] = "ok"
+
+        return JsonResponse(data)
+
+    def put(self, request, *args, **kwargs):
+        # TODO create new project api
+        return HttpResponse()
+
+    def delete(self, request, *args, **kwargs):
+        try:
+            Project.objects.get(kwargs['project_id']).delete()
+        except Project.DoesNotExist:
+            return error_response("Project %s does not exist" %
+                                  kwargs['project_id'])
+        return JsonResponse({"error": "ok"})
