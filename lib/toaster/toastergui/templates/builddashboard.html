@@ -34,7 +34,7 @@
 				<a href="#warnings" class="show-warnings"> {{build.warnings.count}} warning{{build.warnings.count|pluralize}}</a>
 			{% endif %}
 			{% if build.cooker_log_path %}
-			<a class="alert-link pull-right log" href="{% url 'build_artifact' build.id "cookerlog" build.id %}">Download build log</a>
+			<a class="pull-right log" href="{% url 'build_artifact' build.id "cookerlog" build.id %}">Download build log</a>
 			{% endif %}
 			<span class="pull-right">
 				Build time:

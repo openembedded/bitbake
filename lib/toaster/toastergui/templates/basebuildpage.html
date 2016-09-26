@@ -3,7 +3,87 @@
 {% load project_url_tag %}
 {% load objects_to_dictionaries_filter %}
 {% load humanize %}
+{% load field_values_filter %}
 {% block pagecontent %}
+
+ <script>
+  var configVarUrl = "{% url 'configvars' build.id %}";
+
+  $(document).ready(function(){
+
+    $("#delete-build-confirm").click(function(){
+      libtoaster.disableAjaxLoadingTimer();
+      $(this).find('[data-role="submit-state"]').hide();
+      $(this).find('[data-role="loading-state"]').show();
+      $(this).attr("disabled", "disabled");
+
+      /* Make the modal non cancelable while delete is in progress */
+      $('#delete-build-modal button[data-dismiss="modal"]').hide();
+
+      $.ajax({
+          type: 'DELETE',
+          url: "{% url 'xhr_build' build.id %}",
+          headers: { 'X-CSRFToken' : $.cookie('csrftoken')},
+          success: function (data) {
+            if (data.error !== "ok") {
+              console.warn(data.error);
+            } else {
+             window.location.replace(data.gotoUrl);
+            }
+          },
+          error: function (data) {
+            console.warn(data);
+        }
+      });
+    });
+
+
+    $('#breadcrumb > li').append('<span class="divider">&rarr;</span>');
+    $('#breadcrumb > li:last').addClass("active");
+    $('#breadcrumb > li:last > span').remove();
+
+    $("#build-menu li a").each(function(){
+      /* Set the page active state in the Build menu */
+      var currentUrl = window.location.href.split('?')[0];
+      if (currentUrl === $(this).prop("href")){
+        $(this).parent().addClass("active");
+      } else {
+      /* Special case the configvar as this is part of configuration
+       * page but is a separate url
+       */
+      if (window.location.pathname === configVarUrl){
+          $("#menu-configuration").addClass("active");
+        } else {
+          $(this).parent().removeClass("active");
+        }
+      }
+    });
+  });
+ </script>
+
+
+
+<div class="modal fade" tabindex="-1" role="dialog" id="delete-build-modal" style="display: none;" data-backdrop="static" data-keyboard="false">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-body">
+        <p>Are you sure you want to delete the build <strong>{{build.get_sorted_target_list|field_values:"target"|join:", "}} {{build.machine}}</strong> completed on <strong>{{build.completed_on|date:"d/m/y H:i"}}</strong>?</p>
+      </div>
+      <div class="modal-footer">
+        <button id="delete-build-confirm" class="btn btn-primary btn-large">
+          <span data-role="submit-state">Delete build</span>
+          <span data-role="loading-state" style="display:none">
+            <span class="fa-pulse">
+              <i class="icon-spinner"></i>
+            </span>
+              &nbsp;Deleting build...
+          </span>
+        </button>
+        <button type="button" class="btn btn-link" data-dismiss="modal">Cancel</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div> <!-- / modal -->
 
 <div class="row">
   <!-- breadcrumbs -->
@@ -22,36 +102,6 @@
       </li>
       {% block localbreadcrumb %}{% endblock %}
     </ul>
-    <script>
-
-      var configVarUrl = "{% url 'configvars' build.id %}";
-
-      $(document).ready(function(){
-        $('#breadcrumb > li').append('<span class="divider">&rarr;</span>');
-        $('#breadcrumb > li:last').addClass("active");
-        $('#breadcrumb > li:last > span').remove();
-
-        $("#build-menu li a").each(function(){
-          /* Set the page active state in the Build menu */
-          var currentUrl = window.location.href.split('?')[0];
-          if (currentUrl === $(this).prop("href")){
-            $(this).parent().addClass("active");
-          } else {
-            /* Special case the configvar as this is part of configuration
-             * page but is a separate url, and the direct links to errors
-             * and warnings, which are part of the build dashboard
-             */
-            if (window.location.pathname === configVarUrl){
-              $("#menu-configuration").addClass("active");
-            } else if (currentUrl.indexOf('error') > 1 || currentUrl.indexOf('warning') > 1){
-              $("#menu-dashboard").addClass("active");
-            } else {
-              $(this).parent().removeClass("active");
-            }
-          }
-        });
-      });
-    </script>
   </div>
 </div>
 
@@ -86,13 +136,22 @@
             <li><a href="{% url 'cputime' build.pk %}">CPU usage</a></li>
             <li><a href="{% url 'diskio' build.pk %}">Disk I/O</a></li>
 
-	  <li class="nav-header">Actions</li>
-         	<a class="btn btn-default btn-block navbar-btn" href="{% url 'build_artifact' build.id 'cookerlog' build.id %}">Download build log</a>
+          <li class="nav-header">Actions</li>
+          <li>
+            <a href="{% url 'build_artifact' build.id 'cookerlog' build.id %}">
+              <span class="glyphicon glyphicon-download-alt"></span>
+            Download build log
+            </a>
+          </li>
 
           {% with build.get_custom_image_recipes as custom_image_recipes %}
             {% if custom_image_recipes.count > 0 %}
               <!-- edit custom image built during this build -->
-                <button class="btn btn-default btn-block navbar-btn" data-role="edit-custom-image-trigger">Edit custom image</button>
+              <li>
+                <a href="#" data-role="edit-custom-image-trigger">
+                  <span class="glyphicon glyphicon-edit"></span>
+                  Edit custom image
+                </a>
                 {% include 'editcustomimage_modal.html' %}
                 <script>
                   var editableCustomImageRecipes = {{ custom_image_recipes | objects_to_dictionaries:"id,name" | json }};
@@ -117,12 +176,17 @@
                     });
                   });
                 </script>
+              </li>
             {% endif %}
           {% endwith %}
 
             <!-- new custom image from image recipe in this build -->
             {% if build.has_image_recipes %}
-              <button class="btn btn-default btn-block navbar-btn" data-role="new-custom-image-trigger">New custom image</button>
+            <li>
+              <a href="#"  data-role="new-custom-image-trigger">
+                <span class="glyphicon glyphicon-plus"></span>
+                New custom image
+              </a>
               {% include 'newcustomimage_modal.html' %}
               <script>
                 // imageRecipes includes both custom image recipes and built-in
@@ -147,6 +211,12 @@
                 });
               </script>
             {% endif %}
+
+            <li>
+            <a href="#delete-build-modal" id="delete-build" data-toggle="modal" data-target="#delete-build-modal" class="text-danger">
+              <span class="glyphicon glyphicon-trash"></span>
+              Delete build
+            </a>
         </ul>
       </div>
       <!-- end left sidebar container -->
