@@ -393,7 +393,7 @@ class XhrCustomRecipeId(View):
         """ Get Custom Image recipe or return an error response"""
         try:
             custom_recipe = \
-                    CustomImageRecipe.objects.get(pk=recipe_id)
+                CustomImageRecipe.objects.get(pk=recipe_id)
             return custom_recipe, None
 
         except CustomImageRecipe.DoesNotExist:
@@ -418,8 +418,12 @@ class XhrCustomRecipeId(View):
         if error:
             return error
 
+        project = custom_recipe.project
+
         custom_recipe.delete()
-        return JsonResponse({"error": "ok"})
+        return JsonResponse({"error": "ok",
+                             "gotoUrl": reverse("projectcustomimages",
+                                                args=(project.pk,))})
 
 
 class XhrCustomRecipePackages(View):
@@ -820,8 +824,11 @@ class XhrProject(View):
 
     def delete(self, request, *args, **kwargs):
         try:
-            Project.objects.get(kwargs['project_id']).delete()
+            Project.objects.get(pk=kwargs['project_id']).delete()
         except Project.DoesNotExist:
             return error_response("Project %s does not exist" %
                                   kwargs['project_id'])
-        return JsonResponse({"error": "ok"})
+        return JsonResponse({
+            "error": "ok",
+            "gotoUrl": reverse("all-projects", args=[])
+        })

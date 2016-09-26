@@ -34,6 +34,12 @@ $(document).ready(function(){
       <li><a href="{% url 'projectlayers' project.id %}">Layers</a></li>
       <li class="nav-header">Extra configuration</li>
       <li><a href="{% url 'projectconf' project.id %}">BitBake variables</a></li>
+
+      <li class="nav-header">Actions</li>
+      <li>
+        <a href="#delete-project-modal" role="button" class="text-danger" data-toggle="modal" data-target="#delete-project-modal">
+          <i class="icon-trash text-danger"></i> Delete project</a>
+      </li>
     </ul>
   </div>
   <div class="col-md-10">

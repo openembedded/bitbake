@@ -24,30 +24,37 @@
   });
 </script>
 
-{% comment %}
-<!-- Comment out the ability to change the project release, until we decide what to do this functionality -->
-<div id="change-release-modal" class="modal hide fade in" tabindex="-1" role="dialog" aria-labelledby="change-release-modal" aria-hidden="false">
+<div id="delete-project-modal" class="modal fade" tabindex="-1" role="dialog" data-backdrop="static" data-keyboard="false">
   <div class="modal-dialog">
     <div class="modal-content">
-
       <div class="modal-header">
-	<button type="button" class="close" data-dismiss="modal" aria-hidden="true">x</button>
-	<h3>Changing Yocto Project release to <span class="proposed-release-change-name"></span></h3>
+        <h4>Are you sure you want to delete this project?</h4>
       </div>
       <div class="modal-body">
-	<p>The following added layers do not exist for <span class="proposed-release-change-name"></span>: </p>
-	<ul id="layers-to-remove-list">
-	</ul>
-	<p>If you change the Yocto Project release to <span class="proposed-release-change-name"></span>, the above layers will be deleted from your added layers.</p>
+        <p>Deleting the <strong class="project-name"></strong> project will remove forever:</p>
+        <ul>
+          <li>Its configuration information</li>
+          <li>Its imported layers</li>
+          <li>Its custom images</li>
+          <li>All its build information</li>
+        </ul>
       </div>
       <div class="modal-footer">
-	<button id="change-release-and-rm-layers" data-dismiss="modal" type="submit" class="btn btn-primary">Change release and delete layers</button>
-	<button class="btn" data-dismiss="modal" aria-hidden="true">Cancel</button>
+        <button type="button" class="btn btn-primary" id="delete-project-confirmed">
+          <span data-role="submit-state">Delete project</span>
+          <span data-role="loading-state" style="display:none">
+            <span class="fa-pulse">
+            <i class="fa-pulse icon-spinner"></i>
+          </span>
+            &nbsp;Deleting project...
+          </span>
+        </button>
+        <button type="button" class="btn btn-link" data-dismiss="modal">Cancel</button>
       </div>
     </div><!-- /.modal-content -->
   </div><!-- /.modal-dialog -->
-</div><!-- /.modal -->
-{% endcomment %}
+</div>
+
 
 <div class="row" id="project-page" style="display:none">
   <div class="col-md-6">
