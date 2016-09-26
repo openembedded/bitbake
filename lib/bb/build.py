@@ -261,9 +261,14 @@ def exec_func(func, d, dirs = None, pythonexception=False):
         else:
             exec_func_shell(func, d, runfile, cwd=adir)
 
-    if oldcwd and os.getcwd() != oldcwd:
+    try:
+        curcwd = os.getcwd()
+    except:
+        curcwd = None
+
+    if oldcwd and curcwd != oldcwd:
         try:
-            bb.warn("Task %s changed cwd to %s" % (func, os.getcwd()))
+            bb.warn("Task %s changed cwd to %s" % (func, curcwd))
             os.chdir(oldcwd)
         except:
             pass
