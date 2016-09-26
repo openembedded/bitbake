@@ -28,6 +28,7 @@
         includedPackagesCount: {{recipe.includes_set.count}},
         baseRecipeId: {{recipe.base_recipe.pk}},
         xhrPackageListUrl: "{% url 'xhr_customrecipe_packages' recipe.pk %}",
+        xhrCustomRecipeUrl: "{% url 'xhr_customrecipe_id' recipe.pk %}",
       }
     };
 
@@ -39,6 +40,32 @@
     }
   });
 </script>
+
+<!-- Delete recipe modal -->
+<div id="delete-recipe-modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="false">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-body">
+        <p>Are you sure you want to delete the <strong>{{recipe.name}}</strong>
+         custom image?</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" id="delete-custom-recipe-confirmed">
+          <span data-role="submit-state">Delete custom image</span>
+          <span data-role="loading-state" style="display:none">
+            <span class="fa-pulse">
+            <i class="fa-pulse icon-spinner"></i>
+          </span>
+            &nbsp;Deleting custom image...
+          </span>
+        </button>
+        <button type="button" class="btn btn-link" data-dismiss="modal">Cancel</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+<!-- end delete recipe modal -->
+
 <!-- package dependencies modal -->
 <div id="package-deps-modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="false">
   <div class="modal-dialog">
@@ -229,10 +256,10 @@
         <span class="glyphicon glyphicon-question-sign get-help" title="All custom images have their license set to MIT. This is because the license applies only to the recipe (.bb) file, and not to the image itself. To see which licenses apply to the image you must check the license manifest generated with each build"></i>
         </dd>
       </dl>
-      <!--
-        <i class="icon-trash no-tooltip"></i>
-        <a href="#" class="error" id="delete">Delete custom image</a>
-      -->
+      <i class="icon-trash text-danger"></i>
+      <a href="#delete-recipe-modal" data-target="#delete-recipe-modal" data-toggle="modal" class="text-danger" id="delete-recipe">
+        Delete custom image
+      </a>
     </div>
   </div>
 </div>
