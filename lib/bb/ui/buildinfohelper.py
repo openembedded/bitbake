@@ -1758,6 +1758,9 @@ class BuildInfoHelper(object):
 
                 for basename in basenames:
                     artifact_path = os.path.join(deploy_dir_image, basename)
+                    if not os.path.exists(artifact_path):
+                        logger.warning("artifact %s doesn't exist, skipping" % artifact_path)
+                        continue
                     artifact_size = os.stat(artifact_path).st_size
 
                     # note that the artifact will only be saved against this
