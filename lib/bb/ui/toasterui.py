@@ -450,9 +450,12 @@ def main(server, eventHandler, params):
             return_value += 1
 
         except EnvironmentError as ioerror:
-            # ignore interrupted io
-            if ioerror.args[0] == 4:
-                pass
+            logger.warning("EnvironmentError: %s" % ioerror)
+            # ignore interrupted io system calls
+            if ioerror.args[0] == 4: # errno 4 is EINTR
+                logger.warning("Skipped EINTR: %s" % ioerror)
+            else:
+                raise
         except KeyboardInterrupt:
             if params.observe_only:
                 print("\nKeyboard Interrupt, exiting observer...")
