@@ -129,7 +129,7 @@ fi
 
 export BBBASEDIR=`dirname $TOASTER`/..
 MANAGE="python3 $BBBASEDIR/lib/toaster/manage.py"
-OEROOT=`dirname $TOASTER`/../..
+OE_ROOT=`dirname $TOASTER`/../..
 
 # this is the configuraton file we are using for toaster
 # we are using the same logic that oe-setup-builddir uses
@@ -139,15 +139,17 @@ OEROOT=`dirname $TOASTER`/../..
 # in the local layers that currently make using an arbitrary
 # toasterconf.json difficult.
 
-. $OEROOT/.templateconf
+. $OE_ROOT/.templateconf
 if [ -n "$TEMPLATECONF" ]; then
     if [ ! -d "$TEMPLATECONF" ]; then
         # Allow TEMPLATECONF=meta-xyz/conf as a shortcut
-        if [ -d "$OEROOT/$TEMPLATECONF" ]; then
-            TEMPLATECONF="$OEROOT/$TEMPLATECONF"
+        if [ -d "$OE_ROOT/$TEMPLATECONF" ]; then
+            TEMPLATECONF="$OE_ROOT/$TEMPLATECONF"
         fi
     fi
 fi
+
+unset OE_ROOT
 
 # this defines the dir toaster will use for
 # 1) clones of layers (in _toaster_clones )
