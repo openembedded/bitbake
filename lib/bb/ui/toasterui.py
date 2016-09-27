@@ -438,7 +438,7 @@ def main(server, eventHandler, params):
                 elif event.type == "OSErrorException":
                     logger.error(event)
                 else:
-                    logger.error("Unprocessed MetadataEvent %s ", str(event))
+                    logger.error("Unprocessed MetadataEvent %s", event.type)
                 continue
 
             if isinstance(event, bb.cooker.CookerExit):
