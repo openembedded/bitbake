@@ -1800,6 +1800,7 @@ class RunQueueExecuteTasks(RunQueueExecute):
                     except OSError as exc:
                         logger.critical("Failed to spawn fakeroot worker to run %s: %s" % (task, str(exc)))
                         self.rq.state = runQueueFailed
+                        self.stats.taskFailed()
                         return True
                 self.rq.fakeworker[mc].process.stdin.write(b"<runtask>" + pickle.dumps((taskfn, task, taskname, False, self.cooker.collection.get_file_appends(fn), taskdepdata)) + b"</runtask>")
                 self.rq.fakeworker[mc].process.stdin.flush()
