@@ -283,7 +283,7 @@
                 functions and BitBake-style Python functions.
                 See the
                 "<link linkend='shell-functions'>Shell Functions</link>" and
-                "<link linkend='bitbake-style-python-functions'>BitBake Style Python Functions</link>
+                "<link linkend='bitbake-style-python-functions'>BitBake-Style Python Functions</link>
                 sections for examples.
             </para>
         </section>
@@ -1060,7 +1060,7 @@
                     directly as functions, tasks, or both.
                     They can also be called by other shell functions.
                     </para></listitem>
-                <listitem><para><emphasis>BitBake Style Python Functions:</emphasis>
+                <listitem><para><emphasis>BitBake-Style Python Functions:</emphasis>
                     Functions written in Python and executed by BitBake or other
                     Python functions using <filename>bb.build.exec_func()</filename>.
                     </para></listitem>
@@ -1152,7 +1152,7 @@
         </section>
 
         <section id='bitbake-style-python-functions'>
-            <title>BitBake Style Python Functions</title>
+            <title>BitBake-Style Python Functions</title>
 
             <para>
                 These functions are written in Python and executed by
@@ -1258,6 +1258,99 @@
                         You do not need to import them.
                         </para></listitem>
                 </itemizedlist>
+            </para>
+        </section>
+
+        <section id='bitbake-style-python-functions-versus-python-functions'>
+            <title>Bitbake-Style Python Functions Versus Python Functions</title>
+
+            <para>
+                Following are some important differences between
+                BitBake-style Python functions and regular Python
+                functions defined with "def":
+                <itemizedlist>
+                    <listitem><para>
+                        Only BitBake-style Python functions can be
+                        <link linkend='tasks'>tasks</link>.
+                        </para></listitem>
+                    <listitem><para>
+                        Overrides and override-style operators can only
+                        be applied to BitBake-style Python functions.
+                        </para></listitem>
+                    <listitem><para>
+                        Only regular Python functions can take arguments
+                        and return values.
+                        </para></listitem>
+                    <listitem><para>
+                        <link linkend='variable-flags'>Variable flags</link>
+                        such as <filename>[dirs]</filename>,
+                        <filename>[cleandirs]</filename>, and
+                        <filename>[lockfiles]</filename> can be used
+                        on BitBake-style Python functions, but not on
+                        regular Python functions.
+                        </para></listitem>
+                    <listitem><para>
+                        BitBake-style Python functions generate a separate
+                        <filename>${</filename><link linkend='var-T'><filename>T</filename></link><filename>}/run.</filename><replaceable>function-name</replaceable><filename>.</filename><replaceable>pid</replaceable>
+                        script that is executed to run the function, and also
+                        generate a log file in
+                        <filename>${T}/log.</filename><replaceable>function-name</replaceable><filename>.</filename><replaceable>pid</replaceable>
+                        if they are executed as tasks.</para>
+
+                        <para>
+                        Regular Python functions execute "inline" and do not
+                        generate any files in <filename>${T}</filename>.
+                        </para></listitem>
+                    <listitem><para>
+                        Regular Python functions are called with the usual
+                        Python syntax.
+                        BitBake-style Python functions are usually tasks and
+                        are called directly by BitBake, but can also be called
+                        manually from Python code by using the
+                        <filename>bb.build.exec_func()</filename> function.
+                        Here is an example:
+                        <literallayout class='monospaced'>
+     bb.build.exec_func("my_bitbake_style_function", d)
+                        </literallayout>
+                        <note>
+                            <filename>bb.build.exec_func()</filename> can also
+                            be used to run shell functions from Python code.
+                            If you want to run a shell function before a Python
+                            function within the same task, then you can use a
+                            parent helper Python function that starts by running
+                            the shell function with
+                            <filename>bb.build.exec_func()</filename> and then
+                            runs the Python code.
+                        </note></para>
+
+                        <para>To detect errors from functions executed with
+                        <filename>bb.build.exec_func()</filename>, you
+                        can catch the <filename>bb.build.FuncFailed</filename>
+                        exception.
+                        <note>
+                            Functions in metadata (recipes and classes) should
+                            not themselves raise
+                            <filename>bb.build.FuncFailed</filename>.
+                            Rather, <filename>bb.build.FuncFailed</filename>
+                            should be viewed as a general indicator that the
+                            called function failed by raising an exception.
+                            For example, an exception raised by
+                            <filename>bb.fatal()</filename> will be caught inside
+                            <filename>bb.build.exec_func()</filename>, and a
+                            <filename>bb.build.FuncFailed</filename> will be raised
+                            in response.
+                        </note>
+                        </para></listitem>
+                </itemizedlist>
+            </para>
+
+            <para>
+                Due to their simplicity, you should prefer regular Python functions
+                over BitBake-style Python functions unless you need a feature specific
+                to BitBake-style Python functions.
+                Regular Python functions in metadata are a more recent invention than
+                BitBake-style Python functions, and older code tends to use
+                <filename>bb.build.exec_func()</filename> more often.
             </para>
         </section>
 
