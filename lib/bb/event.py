@@ -29,6 +29,8 @@ import logging
 import atexit
 import traceback
 import ast
+import threading
+
 import bb.utils
 import bb.compat
 import bb.exceptions
@@ -68,11 +70,21 @@ _event_handler_map = {}
 _catchall_handlers = {}
 _eventfilter = None
 _uiready = False
+_thread_lock = threading.Lock()
+_thread_lock_enabled = False
 
 if hasattr(__builtins__, '__setitem__'):
     builtins = __builtins__
 else:
     builtins = __builtins__.__dict__
+
+def enable_threadlock():
+    global _thread_lock_enabled
+    _thread_lock_enabled = True
+
+def disable_threadlock():
+    global _thread_lock_enabled
+    _thread_lock_enabled = False
 
 def execute_handler(name, handler, event, d):
     event.data = d
@@ -146,10 +158,16 @@ def print_ui_queue():
                 logger.handle(event)
 
 def fire_ui_handlers(event, d):
+    global _thread_lock
+    global _thread_lock_enabled
+
     if not _uiready:
         # No UI handlers registered yet, queue up the messages
         ui_queue.append(event)
         return
+
+    if _thread_lock_enabled:
+        _thread_lock.acquire()
 
     errors = []
     for h in _ui_handlers:
@@ -168,6 +186,9 @@ def fire_ui_handlers(event, d):
             errors.append(h)
     for h in errors:
         del _ui_handlers[h]
+
+    if _thread_lock_enabled:
+        _thread_lock.release()
 
 def fire(event, d):
     """Fire off an Event"""
