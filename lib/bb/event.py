@@ -143,16 +143,16 @@ def print_ui_queue():
             if isinstance(event, logging.LogRecord):
                 if event.levelno > logging.DEBUG:
                     if event.levelno >= logging.WARNING:
-                        logger.handlers = [stderr]
+                        logger.addHandler(stderr)
                     else:
-                        logger.handlers = [stdout]
+                        logger.addHandler(stdout)
                     logger.handle(event)
                     msgprint = True
         if msgprint:
             return
 
         # Nope, so just print all of the messages we have (including debug messages)
-        logger.handlers = [stdout]
+        logger.addHandler(stdout)
         for event in ui_queue:
             if isinstance(event, logging.LogRecord):
                 logger.handle(event)
