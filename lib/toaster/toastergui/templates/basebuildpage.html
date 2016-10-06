@@ -28,6 +28,8 @@
             if (data.error !== "ok") {
               console.warn(data.error);
             } else {
+              libtoaster.setNotification("build-deleted",
+                $("#deleted-build-message").html());
              window.location.replace(data.gotoUrl);
             }
           },
@@ -61,7 +63,9 @@
   });
  </script>
 
-
+<span style="display:none" id="deleted-build-message">
+  You have deleted 1 build: <strong>{{build.get_sorted_target_list|field_values:"target"|join:", "}} {{build.machine}}</strong> completed on <strong>{{build.completed_on|date:"d/m/y H:i"}}</strong>
+</span>
 
 <div class="modal fade" tabindex="-1" role="dialog" id="delete-build-modal" style="display: none;" data-backdrop="static" data-keyboard="false">
   <div class="modal-dialog">
