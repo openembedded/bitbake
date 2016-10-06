@@ -1565,15 +1565,11 @@ class BuildInfoHelper(object):
         mockevent.lineno = -1
         self.store_log_event(mockevent)
 
-
     def store_log_event(self, event):
         self._ensure_build()
 
         if event.levelno < formatter.WARNING:
             return
-
-        if 'args' in vars(event):
-            event.msg = event.msg % event.args
 
         # early return for CLI builds
         if self.brbe is None:
@@ -1586,7 +1582,8 @@ class BuildInfoHelper(object):
             # if we have a backlog of events, do our best to save them here
             if len(self.internal_state['backlog']):
                 tempevent = self.internal_state['backlog'].pop()
-                logger.debug(1, "buildinfohelper: Saving stored event %s " % tempevent)
+                logger.debug(1, "buildinfohelper: Saving stored event %s "
+                             % tempevent)
                 self.store_log_event(tempevent)
             else:
                 logger.info("buildinfohelper: All events saved")
@@ -1605,7 +1602,7 @@ class BuildInfoHelper(object):
         else:
             log_information['level'] = LogMessage.INFO
 
-        log_information['message'] = event.msg
+        log_information['message'] = event.getMessage()
         log_information['pathname'] = event.pathname
         log_information['lineno'] = event.lineno
         logger.info("Logging error 2: %s", log_information)
