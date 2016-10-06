@@ -42,7 +42,6 @@ class Command(NoArgsCommand):
                     return True
 
                 if len(be.sourcedir) == 0:
-                    print("\n -- Validation: The layers checkout directory must be set.")
                     is_changed = _update_sourcedir()
 
                 if not be.sourcedir.startswith("/"):
@@ -59,7 +58,6 @@ class Command(NoArgsCommand):
                     return True
 
                 if len(be.builddir) == 0:
-                    print("\n -- Validation: The build directory must be set.")
                     is_changed = _update_builddir()
 
                 if not be.builddir.startswith("/"):
