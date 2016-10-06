@@ -49,6 +49,28 @@ class XhrBuildRequest(View):
     def get(self, request, *args, **kwargs):
         return HttpResponse()
 
+    @staticmethod
+    def cancel_build(br):
+        """Cancel a build request"""
+        try:
+            bbctrl = bbcontroller.BitbakeController(br.environment)
+            bbctrl.forceShutDown()
+        except:
+            # We catch a bunch of exceptions here because
+            # this is where the server has not had time to start up
+            # and the build request or build is in transit between
+            # processes.
+            # We can safely just set the build as cancelled
+            # already as it never got started
+            build = br.build
+            build.outcome = Build.CANCELLED
+            build.save()
+
+        # We now hand over to the buildinfohelper to update the
+        # build state once we've finished cancelling
+        br.state = BuildRequest.REQ_CANCELLING
+        br.save()
+
     def post(self, request, *args, **kwargs):
         """
           Build control
@@ -74,26 +96,7 @@ class XhrBuildRequest(View):
             for i in request.POST['buildCancel'].strip().split(" "):
                 try:
                     br = BuildRequest.objects.get(project=project, pk=i)
-
-                    try:
-                        bbctrl = bbcontroller.BitbakeController(br.environment)
-                        bbctrl.forceShutDown()
-                    except:
-                        # We catch a bunch of exceptions here because
-                        # this is where the server has not had time to start up
-                        # and the build request or build is in transit between
-                        # processes.
-                        # We can safely just set the build as cancelled
-                        # already as it never got started
-                        build = br.build
-                        build.outcome = Build.CANCELLED
-                        build.save()
-
-                    # We now hand over to the buildinfohelper to update the
-                    # build state once we've finished cancelling
-                    br.state = BuildRequest.REQ_CANCELLING
-                    br.save()
-
+                    self.cancel_build(br)
                 except BuildRequest.DoesNotExist:
                     return error_response('No such build request id %s' % i)
 
@@ -823,11 +826,21 @@ class XhrProject(View):
         return HttpResponse()
 
     def delete(self, request, *args, **kwargs):
+        """Delete a project. Cancels any builds in progress"""
         try:
-            Project.objects.get(pk=kwargs['project_id']).delete()
+            project = Project.objects.get(pk=kwargs['project_id'])
+            # Cancel any builds in progress
+            for br in BuildRequest.objects.filter(
+                    project=project,
+                    state=BuildRequest.REQ_INPROGRESS):
+                XhrBuildRequest.cancel_build(br)
+
+            project.delete()
+
         except Project.DoesNotExist:
             return error_response("Project %s does not exist" %
                                   kwargs['project_id'])
+
         return JsonResponse({
             "error": "ok",
             "gotoUrl": reverse("all-projects", args=[])
