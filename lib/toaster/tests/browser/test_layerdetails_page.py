@@ -91,6 +91,10 @@ class TestLayerDetailsPage(SeleniumTestCase):
         for btn in self.find_all("dd .glyphicon-edit"):
             btn.click()
 
+        # Wait for the inputs to become visible
+        self.wait_until_visible("#layer-git input[type=text]")
+        self.wait_until_visible("dd textarea")
+
         # Edit each value
         for inputs in self.find_all("#layer-git input[type=text]") + \
                 self.find_all("dd textarea"):

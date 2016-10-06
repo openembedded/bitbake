@@ -248,7 +248,13 @@ class ViewTests(TestCase):
         url = reverse('xhr_customrecipe_id', args=(recipe.id,))
         response = self.client.delete(url)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(json.loads(response.content.decode('utf-8')), {"error": "ok"})
+
+        gotoUrl = reverse('projectcustomimages', args=(self.project.pk,))
+
+        self.assertEqual(json.loads(response.content.decode('utf-8')),
+                         {"error": "ok",
+                          "gotoUrl": gotoUrl})
+
         # try to delete not-existent recipe
         url = reverse('xhr_customrecipe_id', args=(recipe.id,))
         response = self.client.delete(url)
