@@ -32,6 +32,7 @@ import fcntl
 import struct
 import copy
 import atexit
+
 from bb.ui import uihelper
 
 featureSet = [bb.cooker.CookerFeatures.SEND_SANITYEVENTS]
@@ -40,7 +41,7 @@ logger = logging.getLogger("BitBake")
 interactive = sys.stdout.isatty()
 
 class BBProgress(progressbar.ProgressBar):
-    def __init__(self, msg, maxval, widgets=None, extrapos=-1):
+    def __init__(self, msg, maxval, widgets=None, extrapos=-1, resize_handler=None):
         self.msg = msg
         self.extrapos = extrapos
         if not widgets:
@@ -48,10 +49,10 @@ class BBProgress(progressbar.ProgressBar):
             progressbar.ETA()]
             self.extrapos = 4
 
-        try:
+        if resize_handler:
+            self._resize_default = resize_handler
+        else:
             self._resize_default = signal.getsignal(signal.SIGWINCH)
-        except:
-            self._resize_default = None
         progressbar.ProgressBar.__init__(self, maxval, [self.msg + ": "] + widgets, fd=sys.stdout)
 
     def _handle_resize(self, signum=None, frame=None):
@@ -247,10 +248,10 @@ class TerminalFilter(object):
                 start_time = activetasks[t].get("starttime", None)
                 if not pbar or pbar.bouncing != (progress < 0):
                     if progress < 0:
-                        pbar = BBProgress("0: %s (pid %s) " % (activetasks[t]["title"], t), 100, widgets=[progressbar.BouncingSlider(), ''], extrapos=2)
+                        pbar = BBProgress("0: %s (pid %s) " % (activetasks[t]["title"], t), 100, widgets=[progressbar.BouncingSlider(), ''], extrapos=2, resize_handler=self.sigwinch_handle)
                         pbar.bouncing = True
                     else:
-                        pbar = BBProgress("0: %s (pid %s) " % (activetasks[t]["title"], t), 100, widgets=[progressbar.Percentage(), ' ', progressbar.Bar(), ''], extrapos=4)
+                        pbar = BBProgress("0: %s (pid %s) " % (activetasks[t]["title"], t), 100, widgets=[progressbar.Percentage(), ' ', progressbar.Bar(), ''], extrapos=4, resize_handler=self.sigwinch_handle)
                         pbar.bouncing = False
                     activetasks[t]["progressbar"] = pbar
                 tasks.append((pbar, progress, rate, start_time))
@@ -274,7 +275,7 @@ class TerminalFilter(object):
             maxtask = self.helper.tasknumber_total
             if not self.main_progress or self.main_progress.maxval != maxtask:
                 widgets = [' ', progressbar.Percentage(), ' ', progressbar.Bar()]
-                self.main_progress = BBProgress("Running tasks", maxtask, widgets=widgets)
+                self.main_progress = BBProgress("Running tasks", maxtask, widgets=widgets, resize_handler=self.sigwinch_handle)
                 self.main_progress.start(False)
             self.main_progress.setmessage(content)
             progress = self.helper.tasknumber_current - 1
