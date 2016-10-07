@@ -2365,16 +2365,11 @@ class runQueuePipe():
         self.rqexec = rqexec
 
     def read(self):
-        for w in [self.rq.worker, self.rq.fakeworker]:
-            for mc in w:
-                w[mc].process.poll()
-                if w[mc].process.returncode is not None and not self.rq.teardown:
-                    name = None
-                    if w in self.rq.worker:
-                        name = "Worker"
-                    elif w in self.rq.fakeworker:
-                        name = "Fakeroot"
-                    bb.error("%s process (%s) exited unexpectedly (%s), shutting down..." % (name, w.pid, str(w.returncode)))
+        for workers, name in [(self.rq.worker, "Worker"), (self.rq.fakeworker, "Fakeroot")]:
+            for worker in workers.values():
+                worker.process.poll()
+                if worker.process.returncode is not None and not self.rq.teardown:
+                    bb.error("%s process (%s) exited unexpectedly (%s), shutting down..." % (name, worker.process.pid, str(worker.process.returncode)))
                     self.rq.finish_runqueue(True)
 
         start = len(self.queue)
