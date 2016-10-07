@@ -748,8 +748,7 @@ class BBCooker:
                     depend_tree['providermap'][name] = (pn, version)
 
         for tid in rq.rqdata.runtaskentries:
-            (mc, fn, taskname) = bb.runqueue.split_tid(tid)
-            taskfn = bb.runqueue.taskfn_fromtid(tid)
+            (mc, fn, taskname, taskfn) = bb.runqueue.split_tid_mcfn(tid)
             pn = self.recipecaches[mc].pkg_fn[taskfn]
             pn = self.add_mc_prefix(mc, pn)
             version  = "%s:%s-%s" % self.recipecaches[mc].pkg_pepvpr[taskfn]
@@ -772,8 +771,7 @@ class BBCooker:
 
 
             for dep in rq.rqdata.runtaskentries[tid].depends:
-                (depmc, depfn, deptaskname) = bb.runqueue.split_tid(dep)
-                deptaskfn = bb.runqueue.taskfn_fromtid(dep)
+                (depmc, depfn, deptaskname, deptaskfn) = bb.runqueue.split_tid_mcfn(dep)
                 deppn = self.recipecaches[mc].pkg_fn[deptaskfn]
                 dotname = "%s.%s" % (pn, bb.runqueue.taskname_from_tid(tid))
                 if not dotname in depend_tree["tdepends"]:
@@ -843,8 +841,7 @@ class BBCooker:
                 tids.append(tid)
 
         for tid in tids:
-            (mc, fn, taskname) = bb.runqueue.split_tid(tid)
-            taskfn = bb.runqueue.taskfn_fromtid(tid)
+            (mc, fn, taskname, taskfn) = bb.runqueue.split_tid_mcfn(tid)
 
             pn = self.recipecaches[mc].pkg_fn[taskfn]
             pn = self.add_mc_prefix(mc, pn)
