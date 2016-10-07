@@ -402,6 +402,13 @@ def bitbake_main(configParams, configuration):
         if not configParams.bind:
             raise BBMainException("FATAL: The '--server-only' option requires a name/address "
                                   "to bind to with the -B option.\n")
+        else:
+            try:
+                #Checking that the port is a number
+                int(configParams.bind.split(":")[1])
+            except (ValueError,IndexError):
+                raise BBMainException(
+                        "FATAL: Malformed host:port bind parameter")
         if configParams.remote_server:
             raise BBMainException("FATAL: The '--server-only' option conflicts with %s.\n" %
                                   ("the BBSERVER environment variable" if "BBSERVER" in os.environ \
