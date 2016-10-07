@@ -75,7 +75,7 @@ class LocalhostBEController(BuildEnvironmentController):
     def getGitCloneDirectory(self, url, branch):
         """Construct unique clone directory name out of url and branch."""
         if branch != "HEAD":
-            return "_toaster_clones/_%s_%s" % (re.sub('[:/@%]', '_', url), branch)
+            return "_toaster_clones/_%s_%s" % (re.sub('[:/@+%]', '_', url), branch)
 
         # word of attention; this is a localhost-specific issue; only on the localhost we expect to have "HEAD" releases
         # which _ALWAYS_ means the current poky checkout
