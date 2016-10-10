@@ -1531,37 +1531,29 @@
         <title>Tasks</title>
 
         <para>
-            Tasks are BitBake execution units that originate as
-            functions and make up the steps that BitBake needs to run
-            for given recipe.
-            Tasks are only supported in recipe (<filename>.bb</filename>
-            or <filename>.inc</filename>) and class
-            (<filename>.bbclass</filename>) files.
-            By convention, task names begin with the string "do_".
-        </para>
-
-        <para>
-            Here is an example of a task that prints out the date:
-            <literallayout class='monospaced'>
-     python do_printdate () {
-         import time
-         print time.strftime('%Y%m%d', time.gmtime())
-     }
-     addtask printdate after do_fetch before do_build
-            </literallayout>
+            Tasks are BitBake execution units that make up the
+            steps that BitBake can run for a given recipe.
+            Tasks are only supported in recipes and classes
+            (i.e. in <filename>.bb</filename> files and files
+            included or inherited from <filename>.bb</filename>
+            files).
+            By convention, tasks have names that start with "do_".
         </para>
 
         <section id='promoting-a-function-to-a-task'>
             <title>Promoting a Function to a Task</title>
 
             <para>
-                Any function can be promoted to a task by applying the
+                Tasks are either
+                <link linkend='shell-functions'>shell functions</link> or
+                <link linkend='bitbake-style-python-functions'>BitBake-style Python functions</link>
+                that have been promoted to tasks by using the
                 <filename>addtask</filename> command.
-                The <filename>addtask</filename> command also describes
-                inter-task dependencies.
-                Here is the function from the previous section but with the
-                <filename>addtask</filename> command promoting it to a task
-                and defining some dependencies:
+                The <filename>addtask</filename> command can also
+                optionally describe dependencies between the
+                task and other tasks.
+                Here is an example that shows how to define a task
+                and to declare some dependencies:
                 <literallayout class='monospaced'>
      python do_printdate () {
          import time
@@ -1569,15 +1561,81 @@
      }
      addtask printdate after do_fetch before do_build
                 </literallayout>
-                In the example, the function is defined and then promoted
-                as a task.
-                The <filename>do_printdate</filename> task becomes a dependency of
-                the <filename>do_build</filename> task, which is the default
-                task.
-                And, the <filename>do_printdate</filename> task is dependent upon
-                the <filename>do_fetch</filename> task.
-                Execution of the <filename>do_build</filename> task results
-                in the <filename>do_printdate</filename> task running first.
+                The first argument to <filename>addtask</filename>
+                is the name of the function to promote to
+                a task.
+                If the name does not start with "do_", "do_" is
+                implicitly added, which enforces the convention that
+                all task names start with "do_".
+            </para>
+
+            <para>
+                In the previous example, the
+                <filename>do_printdate</filename> task becomes a
+                dependency of the <filename>do_build</filename>
+                task, which is the default task (i.e. the task run by
+                the <filename>bitbake</filename> command unless
+                another task is specified explicitly).
+                Additionally, the <filename>do_printdate</filename>
+                task becomes dependent upon the
+                <filename>do_fetch</filename> task.
+                Running the <filename>do_build</filename> task
+                results in the <filename>do_printdate</filename>
+                task running first.
+                <note>
+                    If you try out the previous example, you might see
+                    the <filename>do_printdate</filename> task is only run
+                    the first time you build the recipe with
+                    the <filename>bitbake</filename> command.
+                    This is because BitBake considers the task "up-to-date"
+                    after that initial run.
+                    If you want to force the task to always be rerun for
+                    experimentation purposes, you can make BitBake always
+                    consider the task "out-of-date" by using the
+                    <filename>[</filename><link linkend='variable-flags'><filename>nostamp</filename></link><filename>]</filename>
+                    variable flag, as follows:
+                    <literallayout class='monospaced'>
+     do_printdate[nostamp] = "1"
+                    </literallayout>
+                    You can also explicitly run the task and provide the
+                    <filename>-f</filename> option as follows:
+                    <literallayout class='monospaced'>
+     $ bitbake <replaceable>recipe</replaceable> -c printdate -f
+                    </literallayout>
+                    When manually selecting a task to run with the
+                    <filename>bitbake</filename>&nbsp;<replaceable>recipe</replaceable>&nbsp;<filename>-c</filename>&nbsp;<replaceable>task</replaceable>
+                    command, you can omit the "do_" prefix as part of the
+                    task name.
+                </note>
+            </para>
+
+            <para>
+                You might wonder about the practical effects of using
+                <filename>addtask</filename> without specifying any
+                dependencies as is done in the following example:
+                <literallayout class='monospaced'>
+     addtask printdate
+                </literallayout>
+                In this example, assuming dependencies have not been
+                added through some other means, the only way to run
+                the task is by explicitly selecting it with the
+                <filename>bitbake</filename>&nbsp;<replaceable>recipe</replaceable>&nbsp;<filename>-c printdate</filename>.
+                You can use the
+                <filename>do_listtasks</filename> task to list all tasks
+                defined in a recipe as shown in the following example:
+                <literallayout class='monospaced'>
+     $ bitbake <replaceable>recipe</replaceable> -c listtasks
+                </literallayout>
+                For more information on task dependencies, see the
+                "<link linkend='dependencies'>Dependencies</link>"
+                section.
+            </para>
+
+            <para>
+                See the
+                "<link linkend='variable-flags'>Variable Flags</link>"
+                section for information on variable flags you can use with
+                tasks.
             </para>
         </section>
 
