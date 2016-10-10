@@ -2317,7 +2317,8 @@
                             <row>
                                 <entry align="left"><filename>d.getVar("X", expand)</filename></entry>
                                 <entry align="left">Returns the value of variable "X".
-                                Using "expand=True" expands the value.</entry>
+                                    Using "expand=True" expands the value.
+                                    Returns "None" if the variable "X" does not exist.</entry>
                             </row>
                             <row>
                                 <entry align="left"><filename>d.setVar("X", "value")</filename></entry>
@@ -2325,24 +2326,32 @@
                             </row>
                             <row>
                                 <entry align="left"><filename>d.appendVar("X", "value")</filename></entry>
-                                <entry align="left">Adds "value" to the end of the variable "X".</entry>
+                                <entry align="left">Adds "value" to the end of the variable "X".
+                                    Acts like <filename>d.setVar("X", "value")</filename>
+                                    if the variable "X" does not exist.</entry>
                             </row>
                             <row>
                                 <entry align="left"><filename>d.prependVar("X", "value")</filename></entry>
-                                <entry align="left">Adds "value" to the start of the variable "X".</entry>
+                                <entry align="left">Adds "value" to the start of the variable "X".
+                                    Acts like <filename>d.setVar("X", "value")</filename>
+                                    if the variable "X" does not exist.</entry>
                             </row>
                             <row>
                                 <entry align="left"><filename>d.delVar("X")</filename></entry>
-                                <entry align="left">Deletes the variable "X" from the datastore.</entry>
+                                <entry align="left">Deletes the variable "X" from the datastore.
+                                    Does nothing if the variable "X" does not exist.</entry>
                             </row>
                             <row>
                                 <entry align="left"><filename>d.renameVar("X", "Y")</filename></entry>
-                                <entry align="left">Renames the variable "X" to "Y".</entry>
+                                <entry align="left">Renames the variable "X" to "Y".
+                                    Does nothing if the variable "X" does not exist.</entry>
                             </row>
                             <row>
                                 <entry align="left"><filename>d.getVarFlag("X", flag, expand)</filename></entry>
                                 <entry align="left">Returns the value of variable "X".
-                                    Using "expand=True" expands the value.</entry>
+                                    Using "expand=True" expands the value.
+                                    Returns "None" if either the variable "X" or the named flag
+                                    does not exist.</entry>
                             </row>
                             <row>
                                 <entry align="left"><filename>d.setVarFlag("X", flag, "value")</filename></entry>
@@ -2351,12 +2360,16 @@
                             <row>
                                 <entry align="left"><filename>d.appendVarFlag("X", flag, "value")</filename></entry>
                                 <entry align="left">Appends "value" to the named flag on the
-                                variable "X".</entry>
+                                    variable "X".
+                                    Acts like <filename>d.setVarFlag("X", flag, "value")</filename>
+                                    if the named flag does not exist.</entry>
                             </row>
                             <row>
                                 <entry align="left"><filename>d.prependVarFlag("X", flag, "value")</filename></entry>
                                 <entry align="left">Prepends "value" to the named flag on
-                                   the variable "X".</entry>
+                                    the variable "X".
+                                    Acts like <filename>d.setVarFlag("X", flag, "value")</filename>
+                                    if the named flag does not exist.</entry>
                             </row>
                             <row>
                                 <entry align="left"><filename>d.delVarFlag("X", flag)</filename></entry>
@@ -2372,16 +2385,23 @@
                             </row>
                             <row>
                                 <entry align="left"><filename>d.getVarFlags("X")</filename></entry>
-                                <entry align="left">Returns a <filename>flagsdict</filename> of the flags for
-                                    the variable "X".</entry>
+                                <entry align="left">Returns a <filename>flagsdict</filename>
+                                    of the flags for the variable "X".
+                                    Returns "None" if the variable "X" does not exist.</entry>
                             </row>
                             <row>
                                 <entry align="left"><filename>d.delVarFlags("X")</filename></entry>
-                                <entry align="left">Deletes all the flags for the variable "X".</entry>
+                                <entry align="left">Deletes all the flags for the variable "X".
+                                    Does nothing if the variable "X" does not exist.</entry>
                             </row>
                             <row>
                                 <entry align="left"><filename>d.expand(expression)</filename></entry>
-                                <entry align="left">Expands variable references in the specified string expression.</entry>
+                                <entry align="left">Expands variable references in the specified
+                                    string expression.
+                                    References to variables that do not exist are left as is.
+                                    For example, <filename>d.expand("foo ${X}")</filename>
+                                    expands to the literal string "foo ${X}" if the
+                                    variable "X" does not exist.</entry>
                             </row>
                         </tbody>
                     </tgroup>
