@@ -301,6 +301,30 @@ def main(server, eventHandler, params):
             if isinstance(event, bb.command.CommandCompleted):
                 continue
 
+            if isinstance(event, bb.event.NoProvider):
+                if event._runtime:
+                    r = "R"
+                else:
+                    r = ""
+
+                extra = ''
+                if not event._reasons:
+                    if event._close_matches:
+                        extra = ". Close matches:\n  %s" % '\n  '.join(event._close_matches)
+
+                if event._dependees:
+                    print("Nothing %sPROVIDES '%s' (but %s %sDEPENDS on or otherwise requires it)%s" % r, event._item, ", ".join(event._dependees), r, extra)
+                else:
+                    print("Nothing %sPROVIDES '%s'%s" % (r, event._item, extra))
+                if event._reasons:
+                    for reason in event._reasons:
+                        print(reason)
+
+                _, error = server.runCommand(["stateShutdown"])
+                if error:
+                    print('Unable to cleanly shutdown: %s' % error)
+                break
+
             if isinstance(event, bb.command.CommandFailed):
                 print("Command execution failed: %s" % event.error)
                 return event.exitcode
