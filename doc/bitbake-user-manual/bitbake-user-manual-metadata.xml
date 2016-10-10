@@ -1833,14 +1833,23 @@
                      exclusion.
                     </para></listitem>
                 <listitem><para><emphasis><filename>[noexec]</filename>:</emphasis>
-                    Marks the tasks as being empty and no execution required.
-                    The <filename>[noexec]</filename> flag can be used to set up
+                    When set to "1", marks the task as being empty, with
+                    no execution required.
+                    You can use the <filename>[noexec]</filename> flag to set up
                     tasks as dependency placeholders, or to disable tasks defined
                     elsewhere that are not needed in a particular recipe.
                     </para></listitem>
                 <listitem><para><emphasis><filename>[nostamp]</filename>:</emphasis>
-                    Tells BitBake to not generate a stamp file for a task,
-                    which implies the task should always be executed.
+                    When set to "1", tells BitBake to not generate a stamp
+                    file for a task, which implies the task should always
+                    be executed.
+                    <note><title>Caution</title>
+                        Any task that depends (possibly indirectly) on a
+                        <filename>[nostamp]</filename> task will always be
+                        executed as well.
+                        This can cause unnecessary rebuilding if you are
+                        not careful.
+                    </note>
                     </para></listitem>
                 <listitem><para><emphasis><filename>[postfuncs]</filename>:</emphasis>
                     List of functions to call after the completion of the task.
