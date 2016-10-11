@@ -21,7 +21,7 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-__version__ = "1.31.2"
+__version__ = "1.32.0"
 
 import sys
 if sys.version_info < (3, 4, 0):
