@@ -1553,7 +1553,7 @@
                 optionally describe dependencies between the
                 task and other tasks.
                 Here is an example that shows how to define a task
-                and to declare some dependencies:
+                and declare some dependencies:
                 <literallayout class='monospaced'>
      python do_printdate () {
          import time
@@ -1583,7 +1583,7 @@
                 results in the <filename>do_printdate</filename>
                 task running first.
                 <note>
-                    If you try out the previous example, you might see
+                    If you try out the previous example, you might see that
                     the <filename>do_printdate</filename> task is only run
                     the first time you build the recipe with
                     the <filename>bitbake</filename> command.
@@ -1618,7 +1618,7 @@
                 </literallayout>
                 In this example, assuming dependencies have not been
                 added through some other means, the only way to run
-                the task is by explicitly selecting it with the
+                the task is by explicitly selecting it with
                 <filename>bitbake</filename>&nbsp;<replaceable>recipe</replaceable>&nbsp;<filename>-c printdate</filename>.
                 You can use the
                 <filename>do_listtasks</filename> task to list all tasks
