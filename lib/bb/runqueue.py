@@ -265,6 +265,7 @@ class RunQueueData:
         self.stampwhitelist = cfgData.getVar("BB_STAMP_WHITELIST", True) or ""
         self.multi_provider_whitelist = (cfgData.getVar("MULTI_PROVIDER_WHITELIST", True) or "").split()
         self.setscenewhitelist = get_setscene_enforce_whitelist(cfgData)
+        self.setscenewhitelist_checked = False
         self.init_progress_reporter = bb.progress.DummyMultiStageProcessProgressReporter()
 
         self.reset()
@@ -1701,7 +1702,9 @@ class RunQueueExecuteTasks(RunQueueExecute):
         Run the tasks in a queue prepared by rqdata.prepare()
         """
 
-        if self.rqdata.setscenewhitelist:
+        if self.rqdata.setscenewhitelist and not self.rqdata.setscenewhitelist_checked:
+            self.rqdata.setscenewhitelist_checked = True
+
             # Check tasks that are going to run against the whitelist
             def check_norun_task(tid, showerror=False):
                 (mc, fn, taskname, _) = split_tid_mcfn(tid)
