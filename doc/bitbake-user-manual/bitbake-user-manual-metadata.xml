@@ -2532,7 +2532,7 @@
                     the "setscene" part of the task's execution in order
                     to validate the list of task hashes.
                     </para></listitem>
-                <listitem><para><filename>BB_SETSCENE_VERIFY_FUNCTION</filename>
+                <listitem><para><filename>BB_SETSCENE_VERIFY_FUNCTION2</filename>
                     Specifies a function to call that verifies the list of
                     planned task execution before the main task execution
                     happens.

@@ -716,7 +716,7 @@
             </glossdef>
         </glossentry>
 
-        <glossentry id='var-BB_SETSCENE_VERIFY_FUNCTION'><glossterm>BB_SETSCENE_VERIFY_FUNCTION</glossterm>
+        <glossentry id='var-BB_SETSCENE_VERIFY_FUNCTION2'><glossterm>BB_SETSCENE_VERIFY_FUNCTION2</glossterm>
             <glossdef>
                 <para>
                     Specifies a function to call that verifies the list of

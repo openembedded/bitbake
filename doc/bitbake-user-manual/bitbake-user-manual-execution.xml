@@ -916,7 +916,7 @@
         <para>
             Finally, after all the setscene tasks have executed, BitBake calls the
             function listed in
-            <link linkend='var-BB_SETSCENE_VERIFY_FUNCTION'><filename>BB_SETSCENE_VERIFY_FUNCTION</filename></link>
+            <link linkend='var-BB_SETSCENE_VERIFY_FUNCTION2'><filename>BB_SETSCENE_VERIFY_FUNCTION2</filename></link>
             with the list of tasks BitBake thinks has been "covered".
             The metadata can then ensure that this list is correct and can
             inform BitBake that it wants specific tasks to be run regardless
