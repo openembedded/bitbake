@@ -61,6 +61,48 @@
             </para>
         </section>
 
+        <section id='line-joining'>
+            <title>Line Joining</title>
+
+            <para>
+                Outside of
+                <link linkend='functions'>functions</link>, BitBake joins
+                any line ending in a backslash character ("\")
+                with the following line before parsing statements.
+                The most common use for the "\" character is to split variable
+                assignments over multiple lines, as in the following example:
+                <literallayout class='monospaced'>
+     FOO = "bar \
+            baz \
+            qaz"
+                </literallayout>
+                Both the "\" character and the newline character
+                that follow it are removed when joining lines.
+                Thus, no newline characters end up in the value of
+                <filename>FOO</filename>.
+            </para>
+
+            <para>
+                Consider this additional example where the two
+                assignments both assign "barbaz" to
+                <filename>FOO</filename>:
+                <literallayout class='monospaced'>
+     FOO = "barbaz"
+
+     FOO = "bar\
+     baz"
+                </literallayout>
+                <note>
+                    BitBake does not interpret escape sequences like
+                    "\n" in variable values.
+                    For these to have an effect, the value must be passed
+                    to some utility that interprets escape sequences,
+                    such as <filename>printf</filename> or
+                    <filename>echo -n</filename>.
+                </note>
+            </para>
+        </section>
+
         <section id='variable-expansion'>
             <title>Variable Expansion</title>
 
