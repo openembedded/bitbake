@@ -1240,6 +1240,10 @@ class BBCooker:
                     parselog.error("BBFILE_PATTERN_%s not defined" % c)
                     errors = True
                     continue
+                elif regex == "":
+                    parselog.debug(1, "BBFILE_PATTERN_%s is empty" % c)
+                    errors = False
+                    continue
                 try:
                     cre = re.compile(regex)
                 except re.error:
