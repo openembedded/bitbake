@@ -1741,8 +1741,12 @@ def invalidate_cache(**kwargs):
 
 def signal_runbuilds():
     """Send SIGUSR1 to runbuilds process"""
-    with open(os.path.join(os.getenv('BUILDDIR'), '.runbuilds.pid')) as pidf:
-        os.kill(int(pidf.read()), SIGUSR1)
+    try:
+        with open(os.path.join(os.getenv('BUILDDIR'),
+                               '.runbuilds.pid')) as pidf:
+            os.kill(int(pidf.read()), SIGUSR1)
+    except FileNotFoundError:
+        logger.info("Stopping existing runbuilds: no current process found")
 
 django.db.models.signals.post_save.connect(invalidate_cache)
 django.db.models.signals.post_delete.connect(invalidate_cache)
