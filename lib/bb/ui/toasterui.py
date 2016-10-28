@@ -168,6 +168,9 @@ def main(server, eventHandler, params):
         logger.warning("buildhistory is not enabled. Please enable INHERIT += \"buildhistory\" to see image details.")
         build_history_enabled = False
 
+    if not "buildstats" in inheritlist.split(" "):
+        logger.warning("buildstats is not enabled. Please enable INHERIT += \"buildstats\" to generate build statistics.")
+
     if not params.observe_only:
         params.updateFromServer(server)
         params.updateToServer(server, os.environ.copy())
