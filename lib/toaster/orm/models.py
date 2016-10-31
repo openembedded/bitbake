@@ -1742,7 +1742,7 @@ def invalidate_cache(**kwargs):
 def signal_runbuilds():
     """Send SIGUSR1 to runbuilds process"""
     try:
-        with open(os.path.join(os.getenv('BUILDDIR'),
+        with open(os.path.join(os.getenv('BUILDDIR', '.'),
                                '.runbuilds.pid')) as pidf:
             os.kill(int(pidf.read()), SIGUSR1)
     except FileNotFoundError:
