@@ -34,7 +34,7 @@ from pathlib import Path
 
 from django.test import TestCase
 
-from orm.models import Target_Installed_Package
+from orm.models import Target_Installed_Package, Package, Build
 
 class EventReplay(TestCase):
     """Base class for eventreplay test cases"""
@@ -85,3 +85,13 @@ class CoreImageMinimalEventReplay(EventReplay):
                                     'update-alternatives-opkg',
                                     'update-rc.d', 'util-linux-libblkid',
                                     'util-linux-libuuid', 'v86d', 'zlib'])
+
+class ZlibEventReplay(EventReplay):
+    """Replay zlib events"""
+
+    def test_replay_zlib(self):
+        """Test if zlib build and package are in the database"""
+        self._replay("zlib.events")
+
+        self.assertEqual(Build.objects.last().target_set.last().target, "zlib")
+        self.assertTrue('zlib' in Package.objects.values_list('name', flat=True))
