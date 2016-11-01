@@ -11,6 +11,7 @@ import select
 import errno
 import signal
 import pickle
+import traceback
 from multiprocessing import Lock
 
 if sys.getfilesystemencoding() != "utf-8":
@@ -234,9 +235,9 @@ def fork_off_task(cfg, data, databuilder, workerdata, fn, task, taskname, append
                 if quieterrors:
                     the_data.setVarFlag(taskname, "quieterrors", "1")
 
-            except Exception as exc:
+            except Exception:
                 if not quieterrors:
-                    logger.critical(str(exc))
+                    logger.critical(traceback.format_exc())
                 os._exit(1)
             try:
                 if cfg.dry_run:
