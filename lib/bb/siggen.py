@@ -287,6 +287,15 @@ class SignatureGeneratorBasic(SignatureGenerator):
             if 'nostamp:' in self.taints[k]:
                 data['taint'] = self.taints[k]
 
+        computed_basehash = calc_basehash(data)
+        if computed_basehash != self.basehash[k]:
+            bb.error("Basehash mismatch %s versus %s for %s" % (computed_basehash, self.basehash[k], k))
+        if runtime and k in self.taskhash:
+            computed_taskhash = calc_taskhash(data)
+            if computed_taskhash != self.taskhash[k]:
+                bb.error("Taskhash mismatch %s versus %s for %s" % (computed_taskhash, self.taskhash[k], k))
+                sigfile = sigfile.replace(self.taskhash[k], computed_taskhash)
+
         fd, tmpfile = tempfile.mkstemp(dir=os.path.dirname(sigfile), prefix="sigtask.")
         try:
             with os.fdopen(fd, "wb") as stream:
@@ -300,15 +309,6 @@ class SignatureGeneratorBasic(SignatureGenerator):
             except OSError:
                 pass
             raise err
-
-        computed_basehash = calc_basehash(data)
-        if computed_basehash != self.basehash[k]:
-            bb.error("Basehash mismatch %s verses %s for %s" % (computed_basehash, self.basehash[k], k))
-        if k in self.taskhash:
-            computed_taskhash = calc_taskhash(data)
-            if computed_taskhash != self.taskhash[k]:
-                bb.error("Taskhash mismatch %s verses %s for %s" % (computed_taskhash, self.taskhash[k], k))
-
 
     def dump_sigs(self, dataCache, options):
         for fn in self.taskdeps:
