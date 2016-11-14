@@ -956,7 +956,6 @@ class DataSmart(MutableMapping):
 
         for key in ["__BBTASKS", "__BBANONFUNCS", "__BBHANDLERS"]:
             bb_list = d.getVar(key, False) or []
-            bb_list.sort()
             data.update({key:str(bb_list)})
 
             if key == "__BBANONFUNCS":
