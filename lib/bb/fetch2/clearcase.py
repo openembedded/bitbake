@@ -110,7 +110,7 @@ class ClearCase(FetchMethod):
 
         ud.basecmd = d.getVar("FETCHCMD_ccrc", True) or spawn.find_executable("cleartool") or spawn.find_executable("rcleartool")
 
-        if data.getVar("SRCREV", d, True) == "INVALID":
+        if d.getVar("SRCREV", True) == "INVALID":
           raise FetchError("Set a valid SRCREV for the clearcase fetcher in your recipe, e.g. SRCREV = \"/main/LATEST\" or any other label of your choice.")
 
         ud.label = d.getVar("SRCREV", False)
@@ -124,7 +124,7 @@ class ClearCase(FetchMethod):
 
         ud.viewname         = "%s-view%s" % (ud.identifier, d.getVar("DATETIME", d, True))
         ud.csname           = "%s-config-spec" % (ud.identifier)
-        ud.ccasedir         = os.path.join(data.getVar("DL_DIR", d, True), ud.type)
+        ud.ccasedir         = os.path.join(d.getVar("DL_DIR", True), ud.type)
         ud.viewdir          = os.path.join(ud.ccasedir, ud.viewname)
         ud.configspecfile   = os.path.join(ud.ccasedir, ud.csname)
         ud.localfile        = "%s.tar.gz" % (ud.identifier)
@@ -144,7 +144,7 @@ class ClearCase(FetchMethod):
         self.debug("configspecfile  = %s" % ud.configspecfile)
         self.debug("localfile       = %s" % ud.localfile)
 
-        ud.localfile = os.path.join(data.getVar("DL_DIR", d, True), ud.localfile)
+        ud.localfile = os.path.join(d.getVar("DL_DIR", True), ud.localfile)
 
     def _build_ccase_command(self, ud, command):
         """

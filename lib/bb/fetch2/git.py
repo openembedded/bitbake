@@ -182,9 +182,9 @@ class Git(FetchMethod):
         if ud.usehead:
             ud.unresolvedrev['default'] = 'HEAD'
 
-        ud.basecmd = data.getVar("FETCHCMD_git", d, True) or "git -c core.fsyncobjectfiles=0"
+        ud.basecmd = d.getVar("FETCHCMD_git", True) or "git -c core.fsyncobjectfiles=0"
 
-        ud.write_tarballs = ((data.getVar("BB_GENERATE_MIRROR_TARBALLS", d, True) or "0") != "0") or ud.rebaseable
+        ud.write_tarballs = ((d.getVar("BB_GENERATE_MIRROR_TARBALLS", True) or "0") != "0") or ud.rebaseable
 
         ud.setup_revisons(d)
 

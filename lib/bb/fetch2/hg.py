@@ -84,7 +84,7 @@ class Hg(FetchMethod):
         ud.pkgdir = os.path.join(hgdir, hgsrcname)
         ud.moddir = os.path.join(ud.pkgdir, ud.module)
         ud.localfile = ud.moddir
-        ud.basecmd = data.getVar("FETCHCMD_hg", d, True) or "/usr/bin/env hg"
+        ud.basecmd = d.getVar("FETCHCMD_hg", True) or "/usr/bin/env hg"
 
         ud.write_tarballs = d.getVar("BB_GENERATE_MIRROR_TARBALLS", True)
 

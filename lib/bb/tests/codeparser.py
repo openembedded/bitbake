@@ -68,7 +68,7 @@ class VariableReferenceTest(ReferenceTest):
 
     def test_python_reference(self):
         self.setEmptyVars(["BAR"])
-        self.parseExpression("${@bb.data.getVar('BAR', d, True) + 'foo'}")
+        self.parseExpression("${@d.getVar('BAR', True) + 'foo'}")
         self.assertReferences(set(["BAR"]))
 
 class ShellReferenceTest(ReferenceTest):
@@ -209,17 +209,17 @@ be. These unit tests are testing snippets."""
         return " " + value
 
     def test_getvar_reference(self):
-        self.parseExpression("bb.data.getVar('foo', d, True)")
+        self.parseExpression("d.getVar('foo', True)")
         self.assertReferences(set(["foo"]))
         self.assertExecs(set())
 
     def test_getvar_computed_reference(self):
-        self.parseExpression("bb.data.getVar('f' + 'o' + 'o', d, True)")
+        self.parseExpression("d.getVar('f' + 'o' + 'o', True)")
         self.assertReferences(set())
         self.assertExecs(set())
 
     def test_getvar_exec_reference(self):
-        self.parseExpression("eval('bb.data.getVar(\"foo\", d, True)')")
+        self.parseExpression("eval('d.getVar(\"foo\", True)')")
         self.assertReferences(set())
         self.assertExecs(set(["eval"]))
 
@@ -269,7 +269,7 @@ be. These unit tests are testing snippets."""
 class DependencyReferenceTest(ReferenceTest):
 
     pydata = """
-bb.data.getVar('somevar', d, True)
+d.getVar('somevar', True)
 def test(d):
     foo = 'bar %s' % 'foo'
 def test2(d):
@@ -285,9 +285,9 @@ def a():
 
 test(d)
 
-bb.data.expand(bb.data.getVar("something", False, d), d)
+bb.data.expand(d.getVar("something", False), d)
 bb.data.expand("${inexpand} somethingelse", d)
-bb.data.getVar(a(), d, False)
+d.getVar(a(), False)
 """
 
     def test_python(self):

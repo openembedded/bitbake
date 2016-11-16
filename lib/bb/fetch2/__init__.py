@@ -1282,7 +1282,7 @@ class FetchMethod(object):
         Can also setup variables in urldata for use in go (saving code duplication
         and duplicate code execution)
         """
-        return os.path.join(data.getVar("DL_DIR", d, True), urldata.localfile)
+        return os.path.join(d.getVar("DL_DIR", True), urldata.localfile)
 
     def supports_checksum(self, urldata):
         """

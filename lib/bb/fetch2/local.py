@@ -63,13 +63,13 @@ class Local(FetchMethod):
         newpath = path
         if path[0] == "/":
             return [path]
-        filespath = data.getVar('FILESPATH', d, True)
+        filespath = d.getVar('FILESPATH', True)
         if filespath:
             logger.debug(2, "Searching for %s in paths:\n    %s" % (path, "\n    ".join(filespath.split(":"))))
             newpath, hist = bb.utils.which(filespath, path, history=True)
             searched.extend(hist)
         if not newpath:
-            filesdir = data.getVar('FILESDIR', d, True)
+            filesdir = d.getVar('FILESDIR', True)
             if filesdir:
                 logger.debug(2, "Searching for %s in path: %s" % (path, filesdir))
                 newpath = os.path.join(filesdir, path)
@@ -100,10 +100,10 @@ class Local(FetchMethod):
         # no need to fetch local files, we'll deal with them in place.
         if self.supports_checksum(urldata) and not os.path.exists(urldata.localpath):
             locations = []
-            filespath = data.getVar('FILESPATH', d, True)
+            filespath = d.getVar('FILESPATH', True)
             if filespath:
                 locations = filespath.split(":")
-            filesdir = data.getVar('FILESDIR', d, True)
+            filesdir = d.getVar('FILESDIR', True)
             if filesdir:
                 locations.append(filesdir)
             locations.append(d.getVar("DL_DIR", True))

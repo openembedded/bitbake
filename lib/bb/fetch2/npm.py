@@ -90,7 +90,7 @@ class Npm(FetchMethod):
         self.basecmd = d.getVar("FETCHCMD_wget", True) or "/usr/bin/env wget -O -t 2 -T 30 -nv --passive-ftp --no-check-certificate "
         ud.prefixdir = prefixdir
 
-        ud.write_tarballs = ((data.getVar("BB_GENERATE_MIRROR_TARBALLS", d, True) or "0") != "0")
+        ud.write_tarballs = ((d.getVar("BB_GENERATE_MIRROR_TARBALLS", True) or "0") != "0")
         ud.mirrortarball = 'npm_%s-%s.tar.xz' % (ud.pkgname, ud.version)
         ud.fullmirror = os.path.join(d.getVar("DL_DIR", True), ud.mirrortarball)
 
