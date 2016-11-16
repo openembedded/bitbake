@@ -78,59 +78,6 @@ def initVar(var, d):
     """Non-destructive var init for data structure"""
     d.initVar(var)
 
-
-def setVar(var, value, d):
-    """Set a variable to a given value"""
-    d.setVar(var, value)
-
-
-def getVar(var, d, exp = False):
-    """Gets the value of a variable"""
-    return d.getVar(var, exp)
-
-
-def renameVar(key, newkey, d):
-    """Renames a variable from key to newkey"""
-    d.renameVar(key, newkey)
-
-def delVar(var, d):
-    """Removes a variable from the data set"""
-    d.delVar(var)
-
-def appendVar(var, value, d):
-    """Append additional value to a variable"""
-    d.appendVar(var, value)
-
-def setVarFlag(var, flag, flagvalue, d):
-    """Set a flag for a given variable to a given value"""
-    d.setVarFlag(var, flag, flagvalue)
-
-def getVarFlag(var, flag, d):
-    """Gets given flag from given var"""
-    return d.getVarFlag(var, flag, False)
-
-def delVarFlag(var, flag, d):
-    """Removes a given flag from the variable's flags"""
-    d.delVarFlag(var, flag)
-
-def setVarFlags(var, flags, d):
-    """Set the flags for a given variable
-
-    Note:
-        setVarFlags will not clear previous
-        flags. Think of this method as
-        addVarFlags
-    """
-    d.setVarFlags(var, flags)
-
-def getVarFlags(var, d):
-    """Gets a variable's flags"""
-    return d.getVarFlags(var)
-
-def delVarFlags(var, d):
-    """Removes a variable's flags"""
-    d.delVarFlags(var)
-
 def keys(d):
     """Return a list of keys in d"""
     return d.keys()
