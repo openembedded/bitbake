@@ -856,12 +856,15 @@ def runfetchcmd(cmd, d, quiet=False, cleanup=None, log=None, workdir=None):
 
     return output
 
-def check_network_access(d, info = "", url = None):
+def check_network_access(d, info, url):
     """
-    log remote network access, and error if BB_NO_NETWORK is set
+    log remote network access, and error if BB_NO_NETWORK is set or the given
+    URI is untrusted
     """
     if d.getVar("BB_NO_NETWORK") == "1":
         raise NetworkAccess(url, info)
+    elif not trusted_network(d, url):
+        raise UntrustedUrl(url, info)
     else:
         logger.debug(1, "Fetcher accessed the network with the command %s" % info)
 

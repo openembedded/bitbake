@@ -221,7 +221,7 @@ class Hg(FetchMethod):
         """
         Compute tip revision for the url
         """
-        bb.fetch2.check_network_access(d, self._buildhgcommand(ud, d, "info"))
+        bb.fetch2.check_network_access(d, self._buildhgcommand(ud, d, "info"), ud.url)
         output = runfetchcmd(self._buildhgcommand(ud, d, "info"), d)
         return output.strip()
 

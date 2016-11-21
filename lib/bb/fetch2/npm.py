@@ -101,7 +101,7 @@ class Npm(FetchMethod):
 
     def _runwget(self, ud, d, command, quiet):
         logger.debug(2, "Fetching %s using command '%s'" % (ud.url, command))
-        bb.fetch2.check_network_access(d, command)
+        bb.fetch2.check_network_access(d, command, ud.url)
         dldir = d.getVar("DL_DIR")
         runfetchcmd(command, d, quiet, workdir=dldir)
 

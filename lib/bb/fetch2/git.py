@@ -252,7 +252,7 @@ class Git(FetchMethod):
                 repourl = repourl[7:]
             clone_cmd = "LANG=C %s clone --bare --mirror %s %s --progress" % (ud.basecmd, repourl, ud.clonedir)
             if ud.proto.lower() != 'file':
-                bb.fetch2.check_network_access(d, clone_cmd)
+                bb.fetch2.check_network_access(d, clone_cmd, ud.url)
             progresshandler = GitProgressHandler(d)
             runfetchcmd(clone_cmd, d, log=progresshandler)
 
@@ -384,7 +384,7 @@ class Git(FetchMethod):
         cmd = "%s ls-remote %s %s" % \
               (ud.basecmd, repourl, search)
         if ud.proto.lower() != 'file':
-            bb.fetch2.check_network_access(d, cmd)
+            bb.fetch2.check_network_access(d, cmd, repourl)
         output = runfetchcmd(cmd, d, True)
         if not output:
             raise bb.fetch2.FetchError("The command %s gave empty output unexpectedly" % cmd, ud.url)

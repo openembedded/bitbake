@@ -173,7 +173,7 @@ class Svn(FetchMethod):
         """
         Return the latest upstream revision number
         """
-        bb.fetch2.check_network_access(d, self._buildsvncommand(ud, d, "log1"))
+        bb.fetch2.check_network_access(d, self._buildsvncommand(ud, d, "log1"), ud.url)
 
         output = runfetchcmd("LANG=C LC_ALL=C " + self._buildsvncommand(ud, d, "log1"), d, True)
 

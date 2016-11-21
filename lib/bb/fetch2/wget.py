@@ -95,7 +95,7 @@ class Wget(FetchMethod):
         progresshandler = WgetProgressHandler(d)
 
         logger.debug(2, "Fetching %s using command '%s'" % (ud.url, command))
-        bb.fetch2.check_network_access(d, command)
+        bb.fetch2.check_network_access(d, command, ud.url)
         runfetchcmd(command + ' --progress=dot -v', d, quiet, log=progresshandler)
 
     def download(self, ud, d):
