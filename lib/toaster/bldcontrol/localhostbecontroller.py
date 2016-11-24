@@ -286,19 +286,8 @@ class LocalhostBEController(BuildEnvironmentController):
                        self.be.sourcedir)
 
         # update bblayers.conf
-        bblconfpath = os.path.join(builddir, "conf/bblayers.conf")
-        conflines = open(bblconfpath, "r").readlines()
-        skip = False
+        bblconfpath = os.path.join(builddir, "conf/toaster-bblayers.conf")
         with open(bblconfpath, 'w') as bblayers:
-            for line in conflines:
-                if line.startswith("# line added by toaster"):
-                    skip = True
-                    continue
-                if skip:
-                    skip = False
-                else:
-                    bblayers.write(line)
-
             bblayers.write('# line added by toaster build control\n'
                            'BBLAYERS = "%s"' % ' '.join(layers))
 
@@ -311,9 +300,10 @@ class LocalhostBEController(BuildEnvironmentController):
 
         # run bitbake server from the clone
         bitbake = os.path.join(self.pokydirname, 'bitbake', 'bin', 'bitbake')
-        self._shellcmd('bash -c \"source %s %s; BITBAKE_UI="knotty" %s --read %s '
+        toasterlayers = os.path.join(builddir,"conf/toaster-bblayers.conf")
+        self._shellcmd('bash -c \"source %s %s; BITBAKE_UI="knotty" %s --read %s --read %s '
                        '--server-only -t xmlrpc -B 0.0.0.0:0\"' % (oe_init,
-                       builddir, bitbake, confpath), self.be.sourcedir)
+                       builddir, bitbake, confpath, toasterlayers), self.be.sourcedir)
 
         # read port number from bitbake.lock
         self.be.bbport = ""
