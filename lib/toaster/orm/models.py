@@ -1478,17 +1478,22 @@ class Layer_Version(models.Model):
 
     def get_alldeps(self, project_id):
         """Get full list of unique layer dependencies."""
-        def gen_layerdeps(lver, project):
+        def gen_layerdeps(lver, project, depth):
+            if depth == 0:
+                return
             for ldep in lver.dependencies.all():
                 yield ldep.depends_on
                 # get next level of deps recursively calling gen_layerdeps
-                for subdep in gen_layerdeps(ldep.depends_on, project):
+                for subdep in gen_layerdeps(ldep.depends_on, project, depth-1):
                     yield subdep
 
         project = Project.objects.get(pk=project_id)
         result = []
-        projectlvers = [player.layercommit for player in project.projectlayer_set.all()]
-        for dep in gen_layerdeps(self, project):
+        projectlvers = [player.layercommit for player in
+                        project.projectlayer_set.all()]
+        # protect against infinite layer dependency loops
+        maxdepth = 20
+        for dep in gen_layerdeps(self, project, maxdepth):
             # filter out duplicates and layers already belonging to the project
             if dep not in result + projectlvers:
                 result.append(dep)
