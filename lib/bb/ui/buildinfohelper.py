@@ -965,9 +965,10 @@ class BuildInfoHelper(object):
         return task_information
 
     def _get_layer_version_for_dependency(self, pathRE):
-        """ Returns the layer in the toaster db that has a full regex match to the pathRE.
-        pathRE - the layer path passed as a regex in the event. It is created in
-          cooker.py as a collection for the layer priorities.
+        """ Returns the layer in the toaster db that has a full regex
+        match to the pathRE. pathRE - the layer path passed as a regex in the
+        event. It is created in cooker.py as a collection for the layer
+        priorities.
         """
         self._ensure_build()
 
@@ -975,19 +976,26 @@ class BuildInfoHelper(object):
             assert isinstance(layer_version, Layer_Version)
             return len(layer_version.local_path)
 
-        # we don't care if we match the trailing slashes
-        p = re.compile(re.sub("/[^/]*?$","",pathRE))
-        # Heuristics: we always match recipe to the deepest layer path in the discovered layers
-        for lvo in sorted(self.orm_wrapper.layer_version_objects, reverse=True, key=_sort_longest_path):
-            if p.fullmatch(lvo.local_path):
+        # Our paths don't append a trailing slash
+        if pathRE.endswith("/"):
+            pathRE = pathRE[:-1]
+
+        p = re.compile(pathRE)
+        # Heuristics: we always match recipe to the deepest layer path in
+        # the discovered layers
+        for lvo in sorted(self.orm_wrapper.layer_version_objects,
+                          reverse=True, key=_sort_longest_path):
+            if p.fullmatch(os.path.abspath(lvo.local_path)):
                 return lvo
             if lvo.layer.local_source_dir:
-                if p.fullmatch(lvo.layer.local_source_dir):
+                if p.fullmatch(os.path.abspath(lvo.layer.local_source_dir)):
                     return lvo
-        #if we get here, we didn't read layers correctly; dump whatever information we have on the error log
-        logger.warning("Could not match layer dependency for path %s : %s", path, self.orm_wrapper.layer_version_objects)
 
-
+        # if we get here, we didn't read layers correctly;
+        # dump whatever information we have on the error log
+        logger.warning("Could not match layer dependency for path %s : %s",
+                       pathRE,
+                       self.orm_wrapper.layer_version_objects)
 
     def _get_layer_version_for_path(self, path):
         self._ensure_build()
