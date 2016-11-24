@@ -38,6 +38,7 @@ import re
 import itertools
 from signal import SIGUSR1
 
+
 import logging
 logger = logging.getLogger("toaster")
 
@@ -178,24 +179,27 @@ class ProjectManager(models.Manager):
         else:
             return projects[0]
 
+
 class Project(models.Model):
-    search_allowed_fields = ['name', 'short_description', 'release__name', 'release__branch_name']
+    search_allowed_fields = ['name', 'short_description', 'release__name',
+                             'release__branch_name']
     name = models.CharField(max_length=100)
     short_description = models.CharField(max_length=50, blank=True)
     bitbake_version = models.ForeignKey('BitbakeVersion', null=True)
-    release     = models.ForeignKey("Release", null=True)
-    created     = models.DateTimeField(auto_now_add = True)
-    updated     = models.DateTimeField(auto_now = True)
+    release = models.ForeignKey("Release", null=True)
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
     # This is a horrible hack; since Toaster has no "User" model available when
     # running in interactive mode, we can't reference the field here directly
-    # Instead, we keep a possible null reference to the User id, as not to force
+    # Instead, we keep a possible null reference to the User id,
+    # as not to force
     # hard links to possibly missing models
-    user_id     = models.IntegerField(null = True)
-    objects     = ProjectManager()
+    user_id = models.IntegerField(null=True)
+    objects = ProjectManager()
 
     # set to True for the project which is the default container
     # for builds initiated by the command line etc.
-    is_default  = models.BooleanField(default = False)
+    is_default= models.BooleanField(default=False)
 
     def __unicode__(self):
         return "%s (Release %s, BBV %s)" % (self.name, self.release, self.bitbake_version)
