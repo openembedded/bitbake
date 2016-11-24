@@ -228,13 +228,22 @@ class LocalhostBEController(BuildEnvironmentController):
             br_layer_base_recipe = layers.get(
                 layer_version=customrecipe.base_recipe.layer_version)
 
-            br_layer_base_dirpath = \
-                    os.path.join(self.be.sourcedir,
-                                 self.getGitCloneDirectory(
-                                     br_layer_base_recipe.giturl,
-                                     br_layer_base_recipe.commit),
-                                 customrecipe.base_recipe.layer_version.dirpath
-                                )
+            # If the layer is one that we've cloned we know where it lives
+            if br_layer_base_recipe.giturl and br_layer_base_recipe.commit:
+                layer_path = self.getGitCloneDirectory(
+                    br_layer_base_recipe.giturl,
+                    br_layer_base_recipe.commit)
+            # Otherwise it's a local layer
+            elif br_layer_base_recipe.local_source_dir:
+                layer_path = br_layer_base_recipe.local_source_dir
+            else:
+                logger.error("Unable to workout the dir path for the custom"
+                             " image recipe")
+
+            br_layer_base_dirpath = os.path.join(
+                self.be.sourcedir,
+                layer_path,
+                customrecipe.base_recipe.layer_version.dirpath)
 
             customrecipe.base_recipe.layer_version.dirpath = \
                          br_layer_base_dirpath
@@ -249,6 +258,8 @@ class LocalhostBEController(BuildEnvironmentController):
 
             # Update the layer and recipe objects
             customrecipe.layer_version.dirpath = layerpath
+            customrecipe.layer_version.layer.local_source_dir = layerpath
+            customrecipe.layer_version.layer.save()
             customrecipe.layer_version.save()
 
             customrecipe.file_path = recipe_path

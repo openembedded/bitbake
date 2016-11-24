@@ -1636,7 +1636,8 @@ class CustomImageRecipe(Recipe):
         if base_recipe_path:
             base_recipe = open(base_recipe_path, 'r').read()
         else:
-            raise IOError("Based on recipe file not found")
+            raise IOError("Based on recipe file not found: %s" %
+                          base_recipe_path)
 
         # Add a special case for when the recipe we have based a custom image
         # recipe on requires another recipe.

@@ -42,7 +42,7 @@ from orm.models import Variable, VariableHistory
 from orm.models import Package, Package_File, Target_Installed_Package, Target_File
 from orm.models import Task_Dependency, Package_Dependency
 from orm.models import Recipe_Dependency, Provides
-from orm.models import Project, CustomImagePackage, CustomImageRecipe
+from orm.models import Project, CustomImagePackage
 from orm.models import signal_runbuilds
 
 from bldcontrol.models import BuildEnvironment, BuildRequest
@@ -361,11 +361,6 @@ class ORMWrapper(object):
 
     def get_update_layer_version_object(self, build_obj, layer_obj, layer_version_information):
         if isinstance(layer_obj, Layer_Version):
-            # Special case the toaster-custom-images layer which is created
-            # on the fly so don't update the values which may cause the layer
-            # to be duplicated on a future get_or_create
-            if layer_obj.layer.name == CustomImageRecipe.LAYER_NAME:
-                return layer_obj
             # We already found our layer version for this build so just
             # update it with the new build information
             logger.debug("We found our layer from toaster")

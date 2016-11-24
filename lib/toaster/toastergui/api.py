@@ -291,10 +291,13 @@ class XhrCustomRecipe(View):
                 return error_response("recipe-already-exists")
 
             # create layer 'Custom layer' and verion if needed
-            layer = Layer.objects.get_or_create(
+            layer, l_created = Layer.objects.get_or_create(
                 name=CustomImageRecipe.LAYER_NAME,
-                summary="Layer for custom recipes",
-                vcs_url="file:///toaster_created_layer")[0]
+                summary="Layer for custom recipes")
+
+            if l_created:
+                layer.local_source_dir = "toaster_created_layer"
+                layer.save()
 
             # Check if we have a layer version already
             # We don't use get_or_create here because the dirpath will change
@@ -303,9 +306,10 @@ class XhrCustomRecipe(View):
                                                 Q(layer=layer) &
                                                 Q(build=None)).last()
             if lver is None:
-                lver, created = Layer_Version.objects.get_or_create(
+                lver, lv_created = Layer_Version.objects.get_or_create(
                     project=params['project'],
                     layer=layer,
+                    layer_source=LayerSource.TYPE_LOCAL,
                     dirpath="toaster_created_layer")
 
             # Add a dependency on our layer to the base recipe's layer
@@ -319,7 +323,7 @@ class XhrCustomRecipe(View):
                                                optional=False)
 
             # Create the actual recipe
-            recipe, created = CustomImageRecipe.objects.get_or_create(
+            recipe, r_created = CustomImageRecipe.objects.get_or_create(
                 name=request.POST["name"],
                 base_recipe=params["base"],
                 project=params["project"],
@@ -329,7 +333,7 @@ class XhrCustomRecipe(View):
             # If we created the object then setup these fields. They may get
             # overwritten later on and cause the get_or_create to create a
             # duplicate if they've changed.
-            if created:
+            if r_created:
                 recipe.file_path = request.POST["name"]
                 recipe.license = "MIT"
                 recipe.version = "0.1"
