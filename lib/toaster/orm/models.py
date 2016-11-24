@@ -337,20 +337,45 @@ class Project(models.Model):
 
         return queryset
 
-
     def schedule_build(self):
-        from bldcontrol.models import BuildRequest, BRTarget, BRLayer, BRVariable, BRBitbake
-        br = BuildRequest.objects.create(project = self)
-        try:
 
-            BRBitbake.objects.create(req = br,
-                giturl = self.bitbake_version.giturl,
-                commit = self.bitbake_version.branch,
-                dirpath = self.bitbake_version.dirpath)
+        from bldcontrol.models import BuildRequest, BRTarget, BRLayer
+        from bldcontrol.models import BRBitbake, BRVariable
+
+        try:
+            now = timezone.now()
+            build = Build.objects.create(project=self,
+                                         completed_on=now,
+                                         started_on=now)
+
+            br = BuildRequest.objects.create(project=self,
+                                             state=BuildRequest.REQ_QUEUED,
+                                             build=build)
+            BRBitbake.objects.create(req=br,
+                                     giturl=self.bitbake_version.giturl,
+                                     commit=self.bitbake_version.branch,
+                                     dirpath=self.bitbake_version.dirpath)
+
+            for t in self.projecttarget_set.all():
+                BRTarget.objects.create(req=br, target=t.target, task=t.task)
+                Target.objects.create(build=br.build, target=t.target,
+                                      task=t.task)
+                # If we're about to build a custom image recipe make sure
+                # that layer is currently in the project before we create the
+                # BRLayer objects
+                customrecipe = CustomImageRecipe.objects.filter(
+                    name=t.target,
+                    project=self).first()
+                if customrecipe:
+                    ProjectLayer.objects.get_or_create(
+                        project=self,
+                        layercommit=customrecipe.layer_version,
+                        optional=False)
 
             for l in self.projectlayer_set.all().order_by("pk"):
                 commit = l.layercommit.get_vcs_reference()
-                print("ii Building layer ", l.layercommit.layer.name, " at vcs point ", commit)
+                logger.debug("Adding layer to build %s" %
+                             l.layercommit.layer.name)
                 BRLayer.objects.create(
                     req=br,
                     name=l.layercommit.layer.name,
@@ -361,25 +386,16 @@ class Project(models.Model):
                     local_source_dir=l.layercommit.layer.local_source_dir
                 )
 
-            br.state = BuildRequest.REQ_QUEUED
-            now = timezone.now()
-            br.build = Build.objects.create(project = self,
-                                completed_on=now,
-                                started_on=now,
-                                )
-            for t in self.projecttarget_set.all():
-                BRTarget.objects.create(req = br, target = t.target, task = t.task)
-                Target.objects.create(build = br.build, target = t.target, task = t.task)
-
             for v in self.projectvariable_set.all():
-                BRVariable.objects.create(req = br, name = v.name, value = v.value)
-
+                BRVariable.objects.create(req=br, name=v.name, value=v.value)
 
             try:
-                br.build.machine = self.projectvariable_set.get(name = 'MACHINE').value
+                br.build.machine = self.projectvariable_set.get(
+                    name='MACHINE').value
                 br.build.save()
             except ProjectVariable.DoesNotExist:
                 pass
+
             br.save()
             signal_runbuilds()
 
