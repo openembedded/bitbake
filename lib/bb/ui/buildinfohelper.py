@@ -381,8 +381,8 @@ class ORMWrapper(object):
                 local_path=layer_version_information['local_path'],
             )
 
-            logger.info("created new historical layer version %d",
-                        layer_copy.pk)
+            logger.debug("Created new layer version %s for build history",
+                         layer_copy.layer.name)
 
             self.layer_version_built.append(layer_copy)
 
