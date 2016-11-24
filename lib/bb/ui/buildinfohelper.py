@@ -46,6 +46,8 @@ from orm.models import Project, CustomImagePackage
 from orm.models import signal_runbuilds
 
 from bldcontrol.models import BuildEnvironment, BuildRequest
+from bldcontrol.models import BRLayer
+from bldcontrol import bbcontroller
 
 from bb.msg import BBLogFormatter as formatter
 from django.db import models
@@ -436,48 +438,33 @@ class ORMWrapper(object):
         else:
             br_id, be_id = brbe.split(":")
 
-            # find layer by checkout path;
-            from bldcontrol import bbcontroller
-            bc = bbcontroller.getBuildEnvironmentController(pk = be_id)
+            # Find the layer version by matching the layer event information
+            # against the metadata we have in Toaster
 
-            # we might have a race condition here, as the project layers may change between the build trigger and the actual build execution
-            # but we can only match on the layer name, so the worst thing can happen is a mis-identification of the layer, not a total failure
+            try:
+                br_layer = BRLayer.objects.get(req=br_id,
+                                               name=layer_information['name'])
+                return br_layer.layer_version
+            except (BRLayer.MultipleObjectsReturned, BRLayer.DoesNotExist):
+                # There are multiple of the same layer name or the name
+                # hasn't been determined by the toaster.bbclass layer
+                # so let's filter by the local_path
+                bc = bbcontroller.getBuildEnvironmentController(pk=be_id)
+                for br_layer in BRLayer.objects.filter(req=br_id):
+                    if br_layer.giturl and \
+                       layer_information['local_path'].endswith(
+                           bc.getGitCloneDirectory(br_layer.giturl,
+                                                   br_layer.commit)):
+                            return br_layer.layer_version
 
-            # note that this is different
-            buildrequest = BuildRequest.objects.get(pk = br_id)
-            for brl in buildrequest.brlayer_set.all():
-                if brl.local_source_dir:
-                    localdirname = os.path.join(brl.local_source_dir,
-                                                brl.dirpath)
-                else:
-                    localdirname = os.path.join(bc.getGitCloneDirectory(brl.giturl, brl.commit), brl.dirpath)
-                # we get a relative path, unless running in HEAD mode where the path is absolute
-                if not localdirname.startswith("/"):
-                    localdirname = os.path.join(bc.be.sourcedir, localdirname)
-                #logger.debug(1, "Localdirname %s lcal_path %s" % (localdirname, layer_information['local_path']))
-                if localdirname.startswith(layer_information['local_path']):
-                  # If the build request came from toaster this field
-                  # should contain the information from the layer_version
-                  # That created this build request.
-                    if brl.layer_version:
-                        return brl.layer_version
+                    if br_layer.local_source_dir == \
+                            layer_information['local_path']:
+                        return br_layer.layer_version
 
-                # This might be a local layer (i.e. no git info) so try
-                # matching local_source_dir
-                if brl.local_source_dir and brl.local_source_dir == layer_information["local_path"]:
-                    return brl.layer_version
-
-                    # we matched the BRLayer, but we need the layer_version that generated this BR; reverse of the Project.schedule_build()
-                    #logger.debug(1, "Matched %s to BRlayer %s" % (pformat(layer_information["local_path"]), localdirname))
-
-                    for pl in buildrequest.project.projectlayer_set.filter(layercommit__layer__name = brl.name):
-                        if pl.layercommit.layer.vcs_url == brl.giturl :
-                            layer = pl.layercommit.layer
-                            layer.save()
-                            return layer
-
-            raise NotExisting("Unidentified layer %s" % pformat(layer_information))
-
+        # We've reached the end of our search and couldn't find the layer
+        # we can continue but some data may be missing
+        raise NotExisting("Unidentified layer %s" %
+                          pformat(layer_information))
 
     def save_target_file_information(self, build_obj, target_obj, filedata):
         assert isinstance(build_obj, Build)
