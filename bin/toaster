@@ -254,7 +254,7 @@ case $CMD in
             return 4
         fi
         export BITBAKE_UI='toasterui'
-        $MANAGE runbuilds & echo $! >${BUILDDIR}/.runbuilds.pid
+        $MANAGE runbuilds &
         # set fail safe stop system on terminal exit
         trap stop_system SIGHUP
         echo "Successful ${CMD}."

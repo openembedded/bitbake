@@ -90,7 +90,6 @@ class Command(NoArgsCommand):
             from urlparse import urlparse
 
         proxy_settings = os.environ.get("http_proxy", None)
-        oe_core_layer = 'openembedded-core'
 
         def _get_json_response(apiurl=DEFAULT_LAYERINDEX_SERVER):
             http_progress = Spinner()
