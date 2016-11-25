@@ -377,7 +377,7 @@ exit $ret
     else:
         logfile = sys.stdout
 
-    progress = d.getVarFlag(func, 'progress', True)
+    progress = d.getVarFlag(func, 'progress')
     if progress:
         if progress == 'percent':
             # Use default regex
@@ -669,7 +669,7 @@ def stamp_internal(taskname, d, file_name, baseonly=False, noextra=False):
     else:
         stamp = d.getVar('STAMP')
         file_name = d.getVar('BB_FILENAME')
-        extrainfo = d.getVarFlag(taskflagname, 'stamp-extra-info', True) or ""
+        extrainfo = d.getVarFlag(taskflagname, 'stamp-extra-info') or ""
 
     if baseonly:
         return stamp
@@ -705,7 +705,7 @@ def stamp_cleanmask_internal(taskname, d, file_name):
     else:
         stamp = d.getVar('STAMPCLEAN')
         file_name = d.getVar('BB_FILENAME')
-        extrainfo = d.getVarFlag(taskflagname, 'stamp-extra-info', True) or ""
+        extrainfo = d.getVarFlag(taskflagname, 'stamp-extra-info') or ""
 
     if not stamp:
         return []

@@ -226,7 +226,7 @@ def emit_func(func, o=sys.__stdout__, d = init()):
     o.write('\n')
     emit_var(func, o, d, False) and o.write('\n')
     newdeps = bb.codeparser.ShellParser(func, logger).parse_shell(d.getVar(func))
-    newdeps |= set((d.getVarFlag(func, "vardeps", True) or "").split())
+    newdeps |= set((d.getVarFlag(func, "vardeps") or "").split())
     seen = set()
     while newdeps:
         deps = newdeps
@@ -236,7 +236,7 @@ def emit_func(func, o=sys.__stdout__, d = init()):
             if d.getVarFlag(dep, "func", False) and not d.getVarFlag(dep, "python", False):
                emit_var(dep, o, d, False) and o.write('\n')
                newdeps |=  bb.codeparser.ShellParser(dep, logger).parse_shell(d.getVar(dep))
-               newdeps |= set((d.getVarFlag(dep, "vardeps", True) or "").split())
+               newdeps |= set((d.getVarFlag(dep, "vardeps") or "").split())
         newdeps -= seen
 
 _functionfmt = """
@@ -259,7 +259,7 @@ def emit_func_python(func, o=sys.__stdout__, d = init()):
     pp = bb.codeparser.PythonParser(func, logger)
     pp.parse_python(d.getVar(func, False))
     newdeps = pp.execs
-    newdeps |= set((d.getVarFlag(func, "vardeps", True) or "").split())
+    newdeps |= set((d.getVarFlag(func, "vardeps") or "").split())
     seen = set()
     while newdeps:
         deps = newdeps
@@ -271,7 +271,7 @@ def emit_func_python(func, o=sys.__stdout__, d = init()):
                pp = bb.codeparser.PythonParser(dep, logger)
                pp.parse_python(d.getVar(dep, False))
                newdeps |= pp.execs
-               newdeps |= set((d.getVarFlag(dep, "vardeps", True) or "").split())
+               newdeps |= set((d.getVarFlag(dep, "vardeps") or "").split())
         newdeps -= seen
 
 def update_data(d):

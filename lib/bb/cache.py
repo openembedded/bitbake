@@ -71,7 +71,7 @@ class RecipeInfoCommon(object):
 
     @classmethod
     def flaglist(cls, flag, varlist, metadata, squash=False):
-        out_dict = dict((var, metadata.getVarFlag(var, flag, True))
+        out_dict = dict((var, metadata.getVarFlag(var, flag))
                     for var in varlist)
         if squash:
             return dict((k,v) for (k,v) in out_dict.items() if v)

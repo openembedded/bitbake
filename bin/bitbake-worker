@@ -243,7 +243,7 @@ def fork_off_task(cfg, data, databuilder, workerdata, fn, task, taskname, append
                     the_data.setVar(e, fakeenv[e])
                     the_data.setVarFlag(e, 'export', "1")
 
-                task_exports = the_data.getVarFlag(taskname, 'exports', True)
+                task_exports = the_data.getVarFlag(taskname, 'exports')
                 if task_exports:
                     for e in task_exports.split():
                         the_data.setVarFlag(e, 'export', '1')

@@ -108,7 +108,7 @@ class VariableParse:
                 varparse = self.d.expand_cache[key]
                 var = varparse.value
             else:
-                var = self.d.getVarFlag(key, "_content", True)
+                var = self.d.getVarFlag(key, "_content")
             self.references.add(key)
             if var is not None:
                 return var
@@ -122,7 +122,7 @@ class VariableParse:
             parser = bb.codeparser.PythonParser(self.varname, logger)
             parser.parse_python(code)
             if self.varname:
-                vardeps = self.d.getVarFlag(self.varname, "vardeps", True)
+                vardeps = self.d.getVarFlag(self.varname, "vardeps")
                 if vardeps is None:
                     parser.log.flush()
             else:
