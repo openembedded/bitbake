@@ -89,7 +89,7 @@ def main():
     tinfoil = tinfoil_init(False)
     try:
         for path in ([topdir] +
-                    tinfoil.config_data.getVar('BBPATH', True).split(':')):
+                    tinfoil.config_data.getVar('BBPATH').split(':')):
             pluginpath = os.path.join(path, 'lib', 'bblayers')
             bb.utils.load_plugins(logger, plugins, pluginpath)
 

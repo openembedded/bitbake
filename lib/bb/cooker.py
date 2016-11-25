@@ -323,7 +323,7 @@ class BBCooker:
         # Need to preserve BB_CONSOLELOG over resets
         consolelog = None
         if hasattr(self, "data"):
-            consolelog = self.data.getVar("BB_CONSOLELOG", True)
+            consolelog = self.data.getVar("BB_CONSOLELOG")
 
         if CookerFeatures.BASEDATASTORE_TRACKING in self.featureset:
             self.enableDataTracking()
@@ -518,7 +518,7 @@ class BBCooker:
             bb.msg.loggerVerboseLogs = True
 
         # Change nice level if we're asked to
-        nice = self.data.getVar("BB_NICE_LEVEL", True)
+        nice = self.data.getVar("BB_NICE_LEVEL")
         if nice:
             curnice = os.nice(0)
             nice = int(nice) - curnice
@@ -531,7 +531,7 @@ class BBCooker:
         for mc in self.multiconfigs:
             self.recipecaches[mc] = bb.cache.CacheData(self.caches_array)
 
-        self.handleCollections(self.data.getVar("BBFILE_COLLECTIONS", True))
+        self.handleCollections(self.data.getVar("BBFILE_COLLECTIONS"))
 
     def updateConfigOpts(self, options, environment):
         clean = True
@@ -611,7 +611,7 @@ class BBCooker:
             fn = self.matchFile(fn)
             fn = bb.cache.realfn2virtual(fn, cls, mc)
         elif len(pkgs_to_build) == 1:
-            ignore = self.expanded_data.getVar("ASSUME_PROVIDED", True) or ""
+            ignore = self.expanded_data.getVar("ASSUME_PROVIDED") or ""
             if pkgs_to_build[0] in set(ignore.split()):
                 bb.fatal("%s is in ASSUME_PROVIDED" % pkgs_to_build[0])
 
@@ -995,7 +995,7 @@ class BBCooker:
             bb.data.expandKeys(localdata)
 
             # Handle PREFERRED_PROVIDERS
-            for p in (localdata.getVar('PREFERRED_PROVIDERS', True) or "").split():
+            for p in (localdata.getVar('PREFERRED_PROVIDERS') or "").split():
                 try:
                     (providee, provider) = p.split(':')
                 except:
@@ -1006,7 +1006,7 @@ class BBCooker:
                 self.recipecaches[mc].preferred[providee] = provider
 
     def findCoreBaseFiles(self, subdir, configfile):
-        corebase = self.data.getVar('COREBASE', True) or ""
+        corebase = self.data.getVar('COREBASE') or ""
         paths = []
         for root, dirs, files in os.walk(corebase + '/' + subdir):
             for d in dirs:
@@ -1056,7 +1056,7 @@ class BBCooker:
         """
 
         matches = []
-        bbpaths = self.data.getVar('BBPATH', True).split(':')
+        bbpaths = self.data.getVar('BBPATH').split(':')
         for path in bbpaths:
             dirpath = os.path.join(path, directory)
             if os.path.exists(dirpath):
@@ -1078,7 +1078,7 @@ class BBCooker:
 
         data = self.data
         # iterate configs
-        bbpaths = data.getVar('BBPATH', True).split(':')
+        bbpaths = data.getVar('BBPATH').split(':')
         for path in bbpaths:
             confpath = os.path.join(path, "conf", var)
             if os.path.exists(confpath):
@@ -1147,7 +1147,7 @@ class BBCooker:
                 bb.debug(1,'Processing %s in collection list' % (c))
 
                 # Get collection priority if defined explicitly
-                priority = self.data.getVar("BBFILE_PRIORITY_%s" % c, True)
+                priority = self.data.getVar("BBFILE_PRIORITY_%s" % c)
                 if priority:
                     try:
                         prio = int(priority)
@@ -1161,7 +1161,7 @@ class BBCooker:
                     collection_priorities[c] = None
 
                 # Check dependencies and store information for priority calculation
-                deps = self.data.getVar("LAYERDEPENDS_%s" % c, True)
+                deps = self.data.getVar("LAYERDEPENDS_%s" % c)
                 if deps:
                     try:
                         depDict = bb.utils.explode_dep_versions2(deps)
@@ -1170,7 +1170,7 @@ class BBCooker:
                     for dep, oplist in list(depDict.items()):
                         if dep in collection_list:
                             for opstr in oplist:
-                                layerver = self.data.getVar("LAYERVERSION_%s" % dep, True)
+                                layerver = self.data.getVar("LAYERVERSION_%s" % dep)
                                 (op, depver) = opstr.split()
                                 if layerver:
                                     try:
@@ -1191,7 +1191,7 @@ class BBCooker:
                     collection_depends[c] = []
 
                 # Check recommends and store information for priority calculation
-                recs = self.data.getVar("LAYERRECOMMENDS_%s" % c, True)
+                recs = self.data.getVar("LAYERRECOMMENDS_%s" % c)
                 if recs:
                     try:
                         recDict = bb.utils.explode_dep_versions2(recs)
@@ -1201,7 +1201,7 @@ class BBCooker:
                         if rec in collection_list:
                             if oplist:
                                 opstr = oplist[0]
-                                layerver = self.data.getVar("LAYERVERSION_%s" % rec, True)
+                                layerver = self.data.getVar("LAYERVERSION_%s" % rec)
                                 if layerver:
                                     (op, recver) = opstr.split()
                                     try:
@@ -1235,7 +1235,7 @@ class BBCooker:
             # Calculate all layer priorities using calc_layer_priority and store in bbfile_config_priorities
             for c in collection_list:
                 calc_layer_priority(c)
-                regex = self.data.getVar("BBFILE_PATTERN_%s" % c, True)
+                regex = self.data.getVar("BBFILE_PATTERN_%s" % c)
                 if regex == None:
                     parselog.error("BBFILE_PATTERN_%s not defined" % c)
                     errors = True
@@ -1367,7 +1367,7 @@ class BBCooker:
         taskdata[mc] = bb.taskdata.TaskData(self.configuration.abort)
         taskdata[mc].add_provider(self.data, self.recipecaches[mc], item)
 
-        buildname = self.data.getVar("BUILDNAME", True)
+        buildname = self.data.getVar("BUILDNAME")
         bb.event.fire(bb.event.BuildStarted(buildname, [item]), self.expanded_data)
 
         # Execute the runqueue
@@ -1586,7 +1586,7 @@ class BBCooker:
                 bb.event.fire(bb.event.SanityCheck(False), self.data)
 
             for mc in self.multiconfigs:
-                ignore = self.databuilder.mcdata[mc].getVar("ASSUME_PROVIDED", True) or ""
+                ignore = self.databuilder.mcdata[mc].getVar("ASSUME_PROVIDED") or ""
                 self.recipecaches[mc].ignored_dependencies = set(ignore.split())
 
                 for dep in self.configuration.extra_assume_provided:
@@ -1627,7 +1627,7 @@ class BBCooker:
         if len(pkgs_to_build) == 0:
             raise NothingToBuild
 
-        ignore = (self.expanded_data.getVar("ASSUME_PROVIDED", True) or "").split()
+        ignore = (self.expanded_data.getVar("ASSUME_PROVIDED") or "").split()
         for pkg in pkgs_to_build:
             if pkg in ignore:
                 parselog.warning("Explicit target \"%s\" is in ASSUME_PROVIDED, ignoring" % pkg)
@@ -1797,7 +1797,7 @@ class CookerCollectFiles(object):
 
         collectlog.debug(1, "collecting .bb files")
 
-        files = (config.getVar( "BBFILES", True) or "").split()
+        files = (config.getVar( "BBFILES") or "").split()
         config.setVar("BBFILES", " ".join(files))
 
         # Sort files by priority
@@ -1827,7 +1827,7 @@ class CookerCollectFiles(object):
                     if g not in newfiles:
                         newfiles.append(g)
 
-        bbmask = config.getVar('BBMASK', True)
+        bbmask = config.getVar('BBMASK')
 
         if bbmask:
             # First validate the individual regular expressions and ignore any
@@ -1923,7 +1923,7 @@ class CookerCollectFiles(object):
 
         for collection, pattern, regex, _ in self.bbfile_config_priorities:
             if regex in unmatched:
-                if d.getVar('BBFILE_PATTERN_IGNORE_EMPTY_%s' % collection, True) != '1':
+                if d.getVar('BBFILE_PATTERN_IGNORE_EMPTY_%s' % collection) != '1':
                     collectlog.warning("No bb files matched BBFILE_PATTERN_%s '%s'" % (collection, pattern))
 
         return priorities
@@ -2080,7 +2080,7 @@ class CookerParser(object):
         self.toparse = self.total - len(self.fromcache)
         self.progress_chunk = int(max(self.toparse / 100, 1))
 
-        self.num_processes = min(int(self.cfgdata.getVar("BB_NUMBER_PARSE_THREADS", True) or
+        self.num_processes = min(int(self.cfgdata.getVar("BB_NUMBER_PARSE_THREADS") or
                                  multiprocessing.cpu_count()), len(self.willparse))
 
         self.start()

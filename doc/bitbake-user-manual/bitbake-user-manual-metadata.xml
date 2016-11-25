@@ -1165,7 +1165,7 @@
                 <literallayout class='monospaced'>
      python some_python_function () {
          d.setVar("TEXT", "Hello World")
-         print d.getVar("TEXT", True)
+         print d.getVar("TEXT")
      }
                 </literallayout>
                 Because the Python "bb" and "os" modules are already
@@ -1180,7 +1180,7 @@
                     to freely set variable values to expandable expressions
                     without having them expanded prematurely.
                     If you do wish to expand a variable within a Python
-                    function, use <filename>d.getVar("X", True)</filename>.
+                    function, use <filename>d.getVar("X")</filename>.
                     Or, for more complicated expressions, use
                     <filename>d.expand()</filename>.
                 </note>
@@ -1232,7 +1232,7 @@
                 Here is an example:
                 <literallayout class='monospaced'>
      def get_depends(d):
-         if d.getVar('SOMECONDITION', True):
+         if d.getVar('SOMECONDITION'):
              return "dependencywithcond"
          else:
              return "dependency"
@@ -1367,7 +1367,7 @@
                 based on the value of  another variable:
                 <literallayout class='monospaced'>
      python () {
-         if d.getVar('SOMEVAR', True) == 'value':
+         if d.getVar('SOMEVAR') == 'value':
              d.setVar('ANOTHERVAR', 'value2')
      }
                 </literallayout>

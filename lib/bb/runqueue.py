@@ -262,8 +262,8 @@ class RunQueueData:
         self.rq = rq
         self.warn_multi_bb = False
 
-        self.stampwhitelist = cfgData.getVar("BB_STAMP_WHITELIST", True) or ""
-        self.multi_provider_whitelist = (cfgData.getVar("MULTI_PROVIDER_WHITELIST", True) or "").split()
+        self.stampwhitelist = cfgData.getVar("BB_STAMP_WHITELIST") or ""
+        self.multi_provider_whitelist = (cfgData.getVar("MULTI_PROVIDER_WHITELIST") or "").split()
         self.setscenewhitelist = get_setscene_enforce_whitelist(cfgData)
         self.setscenewhitelist_checked = False
         self.init_progress_reporter = bb.progress.DummyMultiStageProcessProgressReporter()
@@ -976,10 +976,10 @@ class RunQueue:
         self.cfgData = cfgData
         self.rqdata = RunQueueData(self, cooker, cfgData, dataCaches, taskData, targets)
 
-        self.stamppolicy = cfgData.getVar("BB_STAMP_POLICY", True) or "perfile"
-        self.hashvalidate = cfgData.getVar("BB_HASHCHECK_FUNCTION", True) or None
-        self.setsceneverify = cfgData.getVar("BB_SETSCENE_VERIFY_FUNCTION2", True) or None
-        self.depvalidate = cfgData.getVar("BB_SETSCENE_DEPVALID", True) or None
+        self.stamppolicy = cfgData.getVar("BB_STAMP_POLICY") or "perfile"
+        self.hashvalidate = cfgData.getVar("BB_HASHCHECK_FUNCTION") or None
+        self.setsceneverify = cfgData.getVar("BB_SETSCENE_VERIFY_FUNCTION2") or None
+        self.depvalidate = cfgData.getVar("BB_SETSCENE_DEPVALID") or None
 
         self.state = runQueuePrepare
 
@@ -997,8 +997,8 @@ class RunQueue:
             magic = "decafbadbad"
         if fakeroot:
             magic = magic + "beef"
-            fakerootcmd = self.cfgData.getVar("FAKEROOTCMD", True)
-            fakerootenv = (self.cfgData.getVar("FAKEROOTBASEENV", True) or "").split()
+            fakerootcmd = self.cfgData.getVar("FAKEROOTCMD")
+            fakerootenv = (self.cfgData.getVar("FAKEROOTBASEENV") or "").split()
             env = os.environ.copy()
             for key, value in (var.split('=') for var in fakerootenv):
                 env[key] = value
@@ -1024,9 +1024,9 @@ class RunQueue:
             "logdefaultverboselogs" : bb.msg.loggerVerboseLogs,
             "logdefaultdomain" : bb.msg.loggerDefaultDomains,
             "prhost" : self.cooker.prhost,
-            "buildname" : self.cfgData.getVar("BUILDNAME", True),
-            "date" : self.cfgData.getVar("DATE", True),
-            "time" : self.cfgData.getVar("TIME", True),
+            "buildname" : self.cfgData.getVar("BUILDNAME"),
+            "date" : self.cfgData.getVar("DATE"),
+            "time" : self.cfgData.getVar("TIME"),
         }
 
         worker.stdin.write(b"<cookerconfig>" + pickle.dumps(self.cooker.configuration) + b"</cookerconfig>")
@@ -1427,8 +1427,8 @@ class RunQueueExecute:
         self.cfgData = rq.cfgData
         self.rqdata = rq.rqdata
 
-        self.number_tasks = int(self.cfgData.getVar("BB_NUMBER_THREADS", True) or 1)
-        self.scheduler = self.cfgData.getVar("BB_SCHEDULER", True) or "speed"
+        self.number_tasks = int(self.cfgData.getVar("BB_NUMBER_THREADS") or 1)
+        self.scheduler = self.cfgData.getVar("BB_SCHEDULER") or "speed"
 
         self.runq_buildable = set()
         self.runq_running = set()
@@ -1630,7 +1630,7 @@ class RunQueueExecuteTasks(RunQueueExecute):
                              if type(obj) is type and
                                 issubclass(obj, RunQueueScheduler))
 
-        user_schedulers = self.cfgData.getVar("BB_SCHEDULERS", True)
+        user_schedulers = self.cfgData.getVar("BB_SCHEDULERS")
         if user_schedulers:
             for sched in user_schedulers.split():
                 if not "." in sched:
@@ -2402,9 +2402,9 @@ class runQueuePipe():
         self.input.close()
 
 def get_setscene_enforce_whitelist(d):
-    if d.getVar('BB_SETSCENE_ENFORCE', True) != '1':
+    if d.getVar('BB_SETSCENE_ENFORCE') != '1':
         return None
-    whitelist = (d.getVar("BB_SETSCENE_ENFORCE_WHITELIST", True) or "").split()
+    whitelist = (d.getVar("BB_SETSCENE_ENFORCE_WHITELIST") or "").split()
     outlist = []
     for item in whitelist[:]:
         if item.startswith('%:'):

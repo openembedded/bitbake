@@ -62,7 +62,7 @@ are overlayed will also be listed, with a " (skipped)" suffix.
         # factor - however, each layer.conf is free to either prepend or append to
         # BBPATH (or indeed do crazy stuff with it). Thus the order in BBPATH might
         # not be exactly the order present in bblayers.conf either.
-        bbpath = str(self.tinfoil.config_data.getVar('BBPATH', True))
+        bbpath = str(self.tinfoil.config_data.getVar('BBPATH'))
         overlayed_class_found = False
         for (classfile, classdirs) in classes.items():
             if len(classdirs) > 1:
@@ -114,7 +114,7 @@ skipped recipes will also be listed, with a " (skipped)" suffix.
 
     def list_recipes(self, title, pnspec, show_overlayed_only, show_same_ver_only, show_filenames, show_multi_provider_only, inherits):
         if inherits:
-            bbpath = str(self.tinfoil.config_data.getVar('BBPATH', True))
+            bbpath = str(self.tinfoil.config_data.getVar('BBPATH'))
             for classname in inherits:
                 classfile = 'classes/%s.bbclass' % classname
                 if not bb.utils.which(bbpath, classfile, history=False):
@@ -158,7 +158,7 @@ skipped recipes will also be listed, with a " (skipped)" suffix.
                     logger.plain("%s:", pn)
                 logger.plain("  %s %s%s", layer.ljust(20), ver, skipped)
 
-        global_inherit = (self.tinfoil.config_data.getVar('INHERIT', True) or "").split()
+        global_inherit = (self.tinfoil.config_data.getVar('INHERIT') or "").split()
         cls_re = re.compile('classes/')
 
         preffiles = []
@@ -319,12 +319,12 @@ NOTE: .bbappend files can impact the dependencies.
         ignore_layers = (args.ignore or '').split(',')
 
         pkg_fn = self.tinfoil.cooker_data.pkg_fn
-        bbpath = str(self.tinfoil.config_data.getVar('BBPATH', True))
+        bbpath = str(self.tinfoil.config_data.getVar('BBPATH'))
         self.require_re = re.compile(r"require\s+(.+)")
         self.include_re = re.compile(r"include\s+(.+)")
         self.inherit_re = re.compile(r"inherit\s+(.+)")
 
-        global_inherit = (self.tinfoil.config_data.getVar('INHERIT', True) or "").split()
+        global_inherit = (self.tinfoil.config_data.getVar('INHERIT') or "").split()
 
         # The bb's DEPENDS and RDEPENDS
         for f in pkg_fn:

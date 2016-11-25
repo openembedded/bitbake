@@ -88,7 +88,7 @@ class Wget(FetchMethod):
         if not ud.localfile:
             ud.localfile = data.expand(urllib.parse.unquote(ud.host + ud.path).replace("/", "."), d)
 
-        self.basecmd = d.getVar("FETCHCMD_wget", True) or "/usr/bin/env wget -t 2 -T 30 --passive-ftp --no-check-certificate"
+        self.basecmd = d.getVar("FETCHCMD_wget") or "/usr/bin/env wget -t 2 -T 30 --passive-ftp --no-check-certificate"
 
     def _runwget(self, ud, d, command, quiet):
 
@@ -104,7 +104,7 @@ class Wget(FetchMethod):
         fetchcmd = self.basecmd
 
         if 'downloadfilename' in ud.parm:
-            dldir = d.getVar("DL_DIR", True)
+            dldir = d.getVar("DL_DIR")
             bb.utils.mkdirhier(os.path.dirname(dldir + os.sep + ud.localfile))
             fetchcmd += " -O " + dldir + os.sep + ud.localfile
 
@@ -543,7 +543,7 @@ class Wget(FetchMethod):
         self.suffix_regex_comp = re.compile(psuffix_regex)
 
         # compile regex, can be specific by package or generic regex
-        pn_regex = d.getVar('UPSTREAM_CHECK_REGEX', True)
+        pn_regex = d.getVar('UPSTREAM_CHECK_REGEX')
         if pn_regex:
             package_custom_regex_comp = re.compile(pn_regex)
         else:
@@ -564,7 +564,7 @@ class Wget(FetchMethod):
         sanity check to ensure same name and type.
         """
         package = ud.path.split("/")[-1]
-        current_version = ['', d.getVar('PV', True), '']
+        current_version = ['', d.getVar('PV'), '']
 
         """possible to have no version in pkg name, such as spectrum-fw"""
         if not re.search("\d+", package):
@@ -579,7 +579,7 @@ class Wget(FetchMethod):
         bb.debug(3, "latest_versionstring, regex: %s" % (package_regex.pattern))
 
         uri = ""
-        regex_uri = d.getVar("UPSTREAM_CHECK_URI", True)
+        regex_uri = d.getVar("UPSTREAM_CHECK_URI")
         if not regex_uri:
             path = ud.path.split(package)[0]
 
@@ -588,7 +588,7 @@ class Wget(FetchMethod):
             dirver_regex = re.compile("(?P<dirver>[^/]*(\d+\.)*\d+([-_]r\d+)*)/")
             m = dirver_regex.search(path)
             if m:
-                pn = d.getVar('PN', True)
+                pn = d.getVar('PN')
                 dirver = m.group('dirver')
 
                 dirver_pn_regex = re.compile("%s\d?" % (re.escape(pn)))

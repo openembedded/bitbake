@@ -56,12 +56,12 @@ class Repo(FetchMethod):
     def download(self, ud, d):
         """Fetch url"""
 
-        if os.access(os.path.join(d.getVar("DL_DIR", True), ud.localfile), os.R_OK):
+        if os.access(os.path.join(d.getVar("DL_DIR"), ud.localfile), os.R_OK):
             logger.debug(1, "%s already exists (or was stashed). Skipping repo init / sync.", ud.localpath)
             return
 
         gitsrcname = "%s%s" % (ud.host, ud.path.replace("/", "."))
-        repodir = d.getVar("REPODIR", True) or os.path.join(d.getVar("DL_DIR", True), "repo")
+        repodir = d.getVar("REPODIR") or os.path.join(d.getVar("DL_DIR"), "repo")
         codir = os.path.join(repodir, gitsrcname, ud.manifest)
 
         if ud.user:

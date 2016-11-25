@@ -146,7 +146,7 @@ class DataContext(dict):
         self['d'] = metadata
 
     def __missing__(self, key):
-        value = self.metadata.getVar(key, True)
+        value = self.metadata.getVar(key)
         if value is None or self.metadata.getVarFlag(key, 'func', False):
             raise KeyError(key)
         else:
@@ -318,7 +318,7 @@ class VariableHistory(object):
         the files in which they were added.
         """
         history = self.variable(var)
-        finalitems = (d.getVar(var, True) or '').split()
+        finalitems = (d.getVar(var) or '').split()
         filemap = {}
         isset = False
         for event in history:
@@ -426,11 +426,11 @@ class DataSmart(MutableMapping):
             # Can end up here recursively so setup dummy values
             self.overrides = []
             self.overridesset = set()
-            self.overrides = (self.getVar("OVERRIDES", True) or "").split(":") or []
+            self.overrides = (self.getVar("OVERRIDES") or "").split(":") or []
             self.overridesset = set(self.overrides)
             self.inoverride = False
             self.expand_cache = {}
-            newoverrides = (self.getVar("OVERRIDES", True) or "").split(":") or []
+            newoverrides = (self.getVar("OVERRIDES") or "").split(":") or []
             if newoverrides == self.overrides:
                 break
             self.overrides = newoverrides
@@ -541,7 +541,7 @@ class DataSmart(MutableMapping):
             nextnew = set()
             self.overridevars.update(new)
             for i in new:
-                vardata = self.expandWithRefs(self.getVar(i, True), i)
+                vardata = self.expandWithRefs(self.getVar(i), i)
                 nextnew.update(vardata.references)
                 nextnew.update(vardata.contains.keys())
             new = nextnew
@@ -937,7 +937,7 @@ class DataSmart(MutableMapping):
         bb.data.expandKeys(d)
         bb.data.update_data(d)
 
-        config_whitelist = set((d.getVar("BB_HASHCONFIG_WHITELIST", True) or "").split())
+        config_whitelist = set((d.getVar("BB_HASHCONFIG_WHITELIST") or "").split())
         keys = set(key for key in iter(d) if not key.startswith("__"))
         for key in keys:
             if key in config_whitelist:

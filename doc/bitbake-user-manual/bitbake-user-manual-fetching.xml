@@ -38,7 +38,7 @@
             The code to execute the first part of this process, a fetch,
             looks something like the following:
             <literallayout class='monospaced'>
-     src_uri = (d.getVar('SRC_URI', True) or "").split()
+     src_uri = (d.getVar('SRC_URI') or "").split()
      fetcher = bb.fetch2.Fetch(src_uri, d)
      fetcher.download()
             </literallayout>
@@ -52,7 +52,7 @@
         <para>
             The instantiation of the fetch class is usually followed by:
             <literallayout class='monospaced'>
-     rootdir = l.getVar('WORKDIR', True)
+     rootdir = l.getVar('WORKDIR')
      fetcher.unpack(rootdir)
             </literallayout>
             This code unpacks the downloaded files to the

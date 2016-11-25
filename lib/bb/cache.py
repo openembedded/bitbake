@@ -296,7 +296,7 @@ def parse_recipe(bb_data, bbfile, appends, mc=''):
     bb_data.setVar("__BBMULTICONFIG", mc)
 
     # expand tmpdir to include this topdir
-    bb_data.setVar('TMPDIR', bb_data.getVar('TMPDIR', True) or "")
+    bb_data.setVar('TMPDIR', bb_data.getVar('TMPDIR') or "")
     bbfile_loc = os.path.abspath(os.path.dirname(bbfile))
     oldpath = os.path.abspath(os.getcwd())
     bb.parse.cached_mtime_noerror(bbfile_loc)
@@ -378,7 +378,7 @@ class Cache(NoCache):
         # It will be used later for deciding whether we 
         # need extra cache file dump/load support 
         self.caches_array = caches_array
-        self.cachedir = data.getVar("CACHE", True)
+        self.cachedir = data.getVar("CACHE")
         self.clean = set()
         self.checked = set()
         self.depends_cache = {}
@@ -792,8 +792,8 @@ class MultiProcessCache(object):
         self.cachedata_extras = self.create_cachedata()
 
     def init_cache(self, d, cache_file_name=None):
-        cachedir = (d.getVar("PERSISTENT_DIR", True) or
-                    d.getVar("CACHE", True))
+        cachedir = (d.getVar("PERSISTENT_DIR") or
+                    d.getVar("CACHE"))
         if cachedir in [None, '']:
             return
         bb.utils.mkdirhier(cachedir)

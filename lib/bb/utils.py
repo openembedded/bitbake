@@ -665,7 +665,7 @@ def build_environment(d):
     for var in bb.data.keys(d):
         export = d.getVarFlag(var, "export", False)
         if export:
-            os.environ[var] = d.getVar(var, True) or ""
+            os.environ[var] = d.getVar(var) or ""
 
 def _check_unsafe_delete_path(path):
     """
@@ -953,7 +953,7 @@ def contains(variable, checkvalues, truevalue, falsevalue, d):
     Arguments:
 
     variable -- the variable name. This will be fetched and expanded (using
-    d.getVar(variable, True)) and then split into a set().
+    d.getVar(variable)) and then split into a set().
 
     checkvalues -- if this is a string it is split on whitespace into a set(),
     otherwise coerced directly into a set().
@@ -966,7 +966,7 @@ def contains(variable, checkvalues, truevalue, falsevalue, d):
     d -- the data store.
     """
 
-    val = d.getVar(variable, True)
+    val = d.getVar(variable)
     if not val:
         return falsevalue
     val = set(val.split())
@@ -979,7 +979,7 @@ def contains(variable, checkvalues, truevalue, falsevalue, d):
     return falsevalue
 
 def contains_any(variable, checkvalues, truevalue, falsevalue, d):
-    val = d.getVar(variable, True)
+    val = d.getVar(variable)
     if not val:
         return falsevalue
     val = set(val.split())
@@ -1378,10 +1378,10 @@ def edit_bblayers_conf(bblayers_conf, add, remove):
 
 def get_file_layer(filename, d):
     """Determine the collection (as defined by a layer's layer.conf file) containing the specified file"""
-    collections = (d.getVar('BBFILE_COLLECTIONS', True) or '').split()
+    collections = (d.getVar('BBFILE_COLLECTIONS') or '').split()
     collection_res = {}
     for collection in collections:
-        collection_res[collection] = d.getVar('BBFILE_PATTERN_%s' % collection, True) or ''
+        collection_res[collection] = d.getVar('BBFILE_PATTERN_%s' % collection) or ''
 
     def path_to_layer(path):
         # Use longest path so we handle nested layers
@@ -1394,7 +1394,7 @@ def get_file_layer(filename, d):
         return match
 
     result = None
-    bbfiles = (d.getVar('BBFILES', True) or '').split()
+    bbfiles = (d.getVar('BBFILES') or '').split()
     bbfilesmatch = False
     for bbfilesentry in bbfiles:
         if fnmatch.fnmatch(filename, bbfilesentry):
@@ -1471,7 +1471,7 @@ def export_proxies(d):
         if v in os.environ.keys():
             exported = True
         else:
-            v_proxy = d.getVar(v, True)
+            v_proxy = d.getVar(v)
             if v_proxy is not None:
                 os.environ[v] = v_proxy
                 exported = True

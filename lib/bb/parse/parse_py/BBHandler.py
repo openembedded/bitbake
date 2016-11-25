@@ -66,7 +66,7 @@ def inherit(files, fn, lineno, d):
             file = os.path.join('classes', '%s.bbclass' % file)
 
         if not os.path.isabs(file):
-            bbpath = d.getVar("BBPATH", True)
+            bbpath = d.getVar("BBPATH")
             abs_fn, attempts = bb.utils.which(bbpath, file, history=True)
             for af in attempts:
                 if af != abs_fn:

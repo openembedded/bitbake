@@ -121,7 +121,7 @@ def inheritFromOS(d, savedenv, permitted):
     for s in savedenv.keys():
         if s in permitted:
             try:
-                d.setVar(s, savedenv.getVar(s, True), op = 'from env')
+                d.setVar(s, savedenv.getVar(s), op = 'from env')
                 if s in exportlist:
                     d.setVarFlag(s, "export", True, op = 'auto env export')
             except TypeError:
@@ -141,7 +141,7 @@ def emit_var(var, o=sys.__stdout__, d = init(), all=False):
     try:
         if all:
             oval = d.getVar(var, False)
-        val = d.getVar(var, True)
+        val = d.getVar(var)
     except (KeyboardInterrupt, bb.build.FuncFailed):
         raise
     except Exception as exc:
@@ -208,9 +208,9 @@ def exported_vars(d):
     k = list(exported_keys(d))
     for key in k:
         try:
-            value = d.getVar(key, True)
+            value = d.getVar(key)
         except Exception as err:
-            bb.warn("%s: Unable to export ${%s}: %s" % (d.getVar("FILE", True), key, err))
+            bb.warn("%s: Unable to export ${%s}: %s" % (d.getVar("FILE"), key, err))
             continue
 
         if value is not None:
@@ -225,7 +225,7 @@ def emit_func(func, o=sys.__stdout__, d = init()):
 
     o.write('\n')
     emit_var(func, o, d, False) and o.write('\n')
-    newdeps = bb.codeparser.ShellParser(func, logger).parse_shell(d.getVar(func, True))
+    newdeps = bb.codeparser.ShellParser(func, logger).parse_shell(d.getVar(func))
     newdeps |= set((d.getVarFlag(func, "vardeps", True) or "").split())
     seen = set()
     while newdeps:
@@ -235,7 +235,7 @@ def emit_func(func, o=sys.__stdout__, d = init()):
         for dep in deps:
             if d.getVarFlag(dep, "func", False) and not d.getVarFlag(dep, "python", False):
                emit_var(dep, o, d, False) and o.write('\n')
-               newdeps |=  bb.codeparser.ShellParser(dep, logger).parse_shell(d.getVar(dep, True))
+               newdeps |=  bb.codeparser.ShellParser(dep, logger).parse_shell(d.getVar(dep))
                newdeps |= set((d.getVarFlag(dep, "vardeps", True) or "").split())
         newdeps -= seen
 
@@ -295,7 +295,7 @@ def build_dependencies(key, keys, shelldeps, varflagsexcl, d):
         def handle_contains(value, contains, d):
             newvalue = ""
             for k in sorted(contains):
-                l = (d.getVar(k, True) or "").split()
+                l = (d.getVar(k) or "").split()
                 for word in sorted(contains[k]):
                     if word in l:
                         newvalue += "\n%s{%s} = Set" %  (k, word)
@@ -313,7 +313,7 @@ def build_dependencies(key, keys, shelldeps, varflagsexcl, d):
             if varflags.get("python"):
                 parser = bb.codeparser.PythonParser(key, logger)
                 if value and "\t" in value:
-                    logger.warning("Variable %s contains tabs, please remove these (%s)" % (key, d.getVar("FILE", True)))
+                    logger.warning("Variable %s contains tabs, please remove these (%s)" % (key, d.getVar("FILE")))
                 parser.parse_python(value, filename=varflags.get("filename"), lineno=varflags.get("lineno"))
                 deps = deps | parser.references
                 deps = deps | (keys & parser.execs)
@@ -368,7 +368,7 @@ def generate_dependencies(d):
 
     keys = set(key for key in d if not key.startswith("__"))
     shelldeps = set(key for key in d.getVar("__exportlist", False) if d.getVarFlag(key, "export", False) and not d.getVarFlag(key, "unexport", False))
-    varflagsexcl = d.getVar('BB_SIGNATURE_EXCLUDE_FLAGS', True)
+    varflagsexcl = d.getVar('BB_SIGNATURE_EXCLUDE_FLAGS')
 
     deps = {}
     values = {}

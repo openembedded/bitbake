@@ -50,7 +50,7 @@ class Svn(FetchMethod):
         if not "module" in ud.parm:
             raise MissingParameterError('module', ud.url)
 
-        ud.basecmd = d.getVar('FETCHCMD_svn', True)
+        ud.basecmd = d.getVar('FETCHCMD_svn')
 
         ud.module = ud.parm["module"]
 

@@ -13,7 +13,7 @@ def init(d):
     siggens = [obj for obj in globals().values()
                       if type(obj) is type and issubclass(obj, SignatureGenerator)]
 
-    desired = d.getVar("BB_SIGNATURE_HANDLER", True) or "noop"
+    desired = d.getVar("BB_SIGNATURE_HANDLER") or "noop"
     for sg in siggens:
         if desired == sg.name:
             return sg(d)
@@ -82,10 +82,10 @@ class SignatureGeneratorBasic(SignatureGenerator):
         self.gendeps = {}
         self.lookupcache = {}
         self.pkgnameextract = re.compile("(?P<fn>.*)\..*")
-        self.basewhitelist = set((data.getVar("BB_HASHBASE_WHITELIST", True) or "").split())
+        self.basewhitelist = set((data.getVar("BB_HASHBASE_WHITELIST") or "").split())
         self.taskwhitelist = None
         self.init_rundepcheck(data)
-        checksum_cache_file = data.getVar("BB_HASH_CHECKSUM_CACHE_FILE", True)
+        checksum_cache_file = data.getVar("BB_HASH_CHECKSUM_CACHE_FILE")
         if checksum_cache_file:
             self.checksum_cache = FileChecksumCache()
             self.checksum_cache.init_cache(data, checksum_cache_file)
@@ -93,7 +93,7 @@ class SignatureGeneratorBasic(SignatureGenerator):
             self.checksum_cache = None
 
     def init_rundepcheck(self, data):
-        self.taskwhitelist = data.getVar("BB_HASHTASK_WHITELIST", True) or None
+        self.taskwhitelist = data.getVar("BB_HASHTASK_WHITELIST") or None
         if self.taskwhitelist:
             self.twl = re.compile(self.taskwhitelist)
         else:
@@ -160,7 +160,7 @@ class SignatureGeneratorBasic(SignatureGenerator):
 
         #Slow but can be useful for debugging mismatched basehashes
         #for task in self.taskdeps[fn]:
-        #    self.dump_sigtask(fn, task, d.getVar("STAMP", True), False)
+        #    self.dump_sigtask(fn, task, d.getVar("STAMP"), False)
 
         for task in taskdeps:
             d.setVar("BB_BASEHASH_task-%s" % task, self.basehash[fn + "." + task])
@@ -345,8 +345,8 @@ class SignatureGeneratorBasicHash(SignatureGeneratorBasic):
 
 def dump_this_task(outfile, d):
     import bb.parse
-    fn = d.getVar("BB_FILENAME", True)
-    task = "do_" + d.getVar("BB_CURRENTTASK", True)
+    fn = d.getVar("BB_FILENAME")
+    task = "do_" + d.getVar("BB_CURRENTTASK")
     referencestamp = bb.build.stamp_internal(task, d, None, True)
     bb.parse.siggen.dump_sigtask(fn, task, outfile, "customfile:" + referencestamp)
 

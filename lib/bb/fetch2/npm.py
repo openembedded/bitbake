@@ -87,12 +87,12 @@ class Npm(FetchMethod):
             bb.utils.mkdirhier(ud.pkgdatadir)
         ud.localpath = d.expand("${DL_DIR}/npm/%s" % ud.bbnpmmanifest)
 
-        self.basecmd = d.getVar("FETCHCMD_wget", True) or "/usr/bin/env wget -O -t 2 -T 30 -nv --passive-ftp --no-check-certificate "
+        self.basecmd = d.getVar("FETCHCMD_wget") or "/usr/bin/env wget -O -t 2 -T 30 -nv --passive-ftp --no-check-certificate "
         ud.prefixdir = prefixdir
 
-        ud.write_tarballs = ((d.getVar("BB_GENERATE_MIRROR_TARBALLS", True) or "0") != "0")
+        ud.write_tarballs = ((d.getVar("BB_GENERATE_MIRROR_TARBALLS") or "0") != "0")
         ud.mirrortarball = 'npm_%s-%s.tar.xz' % (ud.pkgname, ud.version)
-        ud.fullmirror = os.path.join(d.getVar("DL_DIR", True), ud.mirrortarball)
+        ud.fullmirror = os.path.join(d.getVar("DL_DIR"), ud.mirrortarball)
 
     def need_update(self, ud, d):
         if os.path.exists(ud.localpath):
@@ -102,7 +102,7 @@ class Npm(FetchMethod):
     def _runwget(self, ud, d, command, quiet):
         logger.debug(2, "Fetching %s using command '%s'" % (ud.url, command))
         bb.fetch2.check_network_access(d, command)
-        dldir = d.getVar("DL_DIR", True)
+        dldir = d.getVar("DL_DIR")
         runfetchcmd(command, d, quiet, workdir=dldir)
 
     def _unpackdep(self, ud, pkg, data, destdir, dldir, d):
@@ -116,7 +116,7 @@ class Npm(FetchMethod):
         # Change to subdir before executing command
         if not os.path.exists(destdir):
             os.makedirs(destdir)
-        path = d.getVar('PATH', True)
+        path = d.getVar('PATH')
         if path:
             cmd = "PATH=\"%s\" %s" % (path, cmd)
         bb.note("Unpacking %s to %s/" % (file, destdir))
@@ -132,7 +132,7 @@ class Npm(FetchMethod):
 
 
     def unpack(self, ud, destdir, d):
-        dldir = d.getVar("DL_DIR", True)
+        dldir = d.getVar("DL_DIR")
         depdumpfile = "%s-%s.deps.json" % (ud.pkgname, ud.version)
         with open("%s/npm/%s" % (dldir, depdumpfile)) as datafile:
             workobj = json.load(datafile)
@@ -251,12 +251,12 @@ class Npm(FetchMethod):
         lockdown = {}
 
         if not os.listdir(ud.pkgdatadir) and os.path.exists(ud.fullmirror):
-            dest = d.getVar("DL_DIR", True)
+            dest = d.getVar("DL_DIR")
             bb.utils.mkdirhier(dest)
             runfetchcmd("tar -xJf %s" % (ud.fullmirror), d, workdir=dest)
             return
 
-        shwrf = d.getVar('NPM_SHRINKWRAP', True)
+        shwrf = d.getVar('NPM_SHRINKWRAP')
         logger.debug(2, "NPM shrinkwrap file is %s" % shwrf)
         if shwrf:
             try:
@@ -266,7 +266,7 @@ class Npm(FetchMethod):
                 raise FetchError('Error loading NPM_SHRINKWRAP file "%s" for %s: %s' % (shwrf, ud.pkgname, str(e)))
         elif not ud.ignore_checksums:
             logger.warning('Missing shrinkwrap file in NPM_SHRINKWRAP for %s, this will lead to unreliable builds!' % ud.pkgname)
-        lckdf = d.getVar('NPM_LOCKDOWN', True)
+        lckdf = d.getVar('NPM_LOCKDOWN')
         logger.debug(2, "NPM lockdown file is %s" % lckdf)
         if lckdf:
             try:
@@ -292,7 +292,7 @@ class Npm(FetchMethod):
             if os.path.islink(ud.fullmirror):
                 os.unlink(ud.fullmirror)
 
-            dldir = d.getVar("DL_DIR", True)
+            dldir = d.getVar("DL_DIR")
             logger.info("Creating tarball of npm data")
             runfetchcmd("tar -cJf %s npm/%s npm/%s" % (ud.fullmirror, ud.bbnpmmanifest, ud.pkgname), d,
                         workdir=dldir)

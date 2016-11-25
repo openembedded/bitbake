@@ -420,7 +420,7 @@ class PRServiceConfigError(Exception):
 def auto_start(d):
     global singleton
 
-    host_params = list(filter(None, (d.getVar('PRSERV_HOST', True) or '').split(':')))
+    host_params = list(filter(None, (d.getVar('PRSERV_HOST') or '').split(':')))
     if not host_params:
         return None
 
@@ -431,7 +431,7 @@ def auto_start(d):
 
     if is_local_special(host_params[0], int(host_params[1])) and not singleton:
         import bb.utils
-        cachedir = (d.getVar("PERSISTENT_DIR", True) or d.getVar("CACHE", True))
+        cachedir = (d.getVar("PERSISTENT_DIR") or d.getVar("CACHE"))
         if not cachedir:
             logger.critical("Please set the 'PERSISTENT_DIR' or 'CACHE' variable")
             raise PRServiceConfigError

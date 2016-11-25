@@ -83,16 +83,16 @@ def include(parentfn, fn, lineno, data, error_out):
 
     if not os.path.isabs(fn):
         dname = os.path.dirname(parentfn)
-        bbpath = "%s:%s" % (dname, data.getVar("BBPATH", True))
+        bbpath = "%s:%s" % (dname, data.getVar("BBPATH"))
         abs_fn, attempts = bb.utils.which(bbpath, fn, history=True)
         if abs_fn and bb.parse.check_dependency(data, abs_fn):
-            logger.warning("Duplicate inclusion for %s in %s" % (abs_fn, data.getVar('FILE', True)))
+            logger.warning("Duplicate inclusion for %s in %s" % (abs_fn, data.getVar('FILE')))
         for af in attempts:
             bb.parse.mark_dependency(data, af)
         if abs_fn:
             fn = abs_fn
     elif bb.parse.check_dependency(data, fn):
-        logger.warning("Duplicate inclusion for %s in %s" % (fn, data.getVar('FILE', True)))
+        logger.warning("Duplicate inclusion for %s in %s" % (fn, data.getVar('FILE')))
 
     try:
         bb.parse.handle(fn, data, True)

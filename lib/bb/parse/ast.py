@@ -407,7 +407,7 @@ def _expand_versions(versions):
             versions = itertools.chain(newversions, versions)
 
 def multi_finalize(fn, d):
-    appends = (d.getVar("__BBAPPEND", True) or "").split()
+    appends = (d.getVar("__BBAPPEND") or "").split()
     for append in appends:
         logger.debug(1, "Appending .bbappend file %s to %s", append, fn)
         bb.parse.BBHandler.handle(append, d, True)
@@ -422,16 +422,16 @@ def multi_finalize(fn, d):
         d.setVar("__SKIPPED", e.args[0])
     datastores = {"": safe_d}
 
-    versions = (d.getVar("BBVERSIONS", True) or "").split()
+    versions = (d.getVar("BBVERSIONS") or "").split()
     if versions:
-        pv = orig_pv = d.getVar("PV", True)
+        pv = orig_pv = d.getVar("PV")
         baseversions = {}
 
         def verfunc(ver, d, pv_d = None):
             if pv_d is None:
                 pv_d = d
 
-            overrides = d.getVar("OVERRIDES", True).split(":")
+            overrides = d.getVar("OVERRIDES").split(":")
             pv_d.setVar("PV", ver)
             overrides.append(ver)
             bpv = baseversions.get(ver) or orig_pv
@@ -466,7 +466,7 @@ def multi_finalize(fn, d):
 
         _create_variants(datastores, versions, verfunc, onlyfinalise)
 
-    extended = d.getVar("BBCLASSEXTEND", True) or ""
+    extended = d.getVar("BBCLASSEXTEND") or ""
     if extended:
         # the following is to support bbextends with arguments, for e.g. multilib
         # an example is as follows:
@@ -484,7 +484,7 @@ def multi_finalize(fn, d):
             else:
                 extendedmap[ext] = ext
 
-        pn = d.getVar("PN", True)
+        pn = d.getVar("PN")
         def extendfunc(name, d):
             if name != extendedmap[name]:
                 d.setVar("BBEXTENDCURR", extendedmap[name])

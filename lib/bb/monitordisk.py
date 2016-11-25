@@ -141,7 +141,7 @@ def getInterval(configuration):
     spaceDefault = 50 * 1024 * 1024
     inodeDefault = 5 * 1024
 
-    interval = configuration.getVar("BB_DISKMON_WARNINTERVAL", True)
+    interval = configuration.getVar("BB_DISKMON_WARNINTERVAL")
     if not interval:
         return spaceDefault, inodeDefault
     else:
@@ -179,7 +179,7 @@ class diskMonitor:
         self.enableMonitor = False
         self.configuration = configuration
 
-        BBDirs = configuration.getVar("BB_DISKMON_DIRS", True) or None
+        BBDirs = configuration.getVar("BB_DISKMON_DIRS") or None
         if BBDirs:
             self.devDict = getDiskData(BBDirs, configuration)
             if self.devDict:
