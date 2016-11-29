@@ -205,6 +205,7 @@ class diskMonitor:
         """ Take action for the monitor """
 
         if self.enableMonitor:
+            diskUsage = {}
             for k, attributes in self.devDict.items():
                 path, action = k
                 dev, minSpace, minInode = attributes
@@ -213,6 +214,11 @@ class diskMonitor:
 
                 # The available free space, integer number
                 freeSpace = st.f_bavail * st.f_frsize
+
+                # Send all relevant information in the event.
+                freeSpaceRoot = st.f_bfree * st.f_frsize
+                totalSpace = st.f_blocks * st.f_frsize
+                diskUsage[dev] = bb.event.DiskUsageSample(freeSpace, freeSpaceRoot, totalSpace)
 
                 if minSpace and freeSpace < minSpace:
                     # Always show warning, the self.checked would always be False if the action is WARN
@@ -257,4 +263,6 @@ class diskMonitor:
                         self.checked[k] = True
                         rq.finish_runqueue(True)
                         bb.event.fire(bb.event.DiskFull(dev, 'inode', freeInode, path), self.configuration)
+
+            bb.event.fire(bb.event.MonitorDiskEvent(diskUsage), self.configuration)
         return

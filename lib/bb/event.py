@@ -451,6 +451,23 @@ class DiskFull(Event):
         self._free = freespace
         self._mountpoint = mountpoint
 
+class DiskUsageSample:
+    def __init__(self, available_bytes, free_bytes, total_bytes):
+        # Number of bytes available to non-root processes.
+        self.available_bytes = available_bytes
+        # Number of bytes available to root processes.
+        self.free_bytes = free_bytes
+        # Total capacity of the volume.
+        self.total_bytes = total_bytes
+
+class MonitorDiskEvent(Event):
+    """If BB_DISKMON_DIRS is set, then this event gets triggered each time disk space is checked.
+       Provides information about devices that are getting monitored."""
+    def __init__(self, disk_usage):
+        Event.__init__(self)
+        # hash of device root path -> DiskUsageSample
+        self.disk_usage = disk_usage
+
 class NoProvider(Event):
     """No Provider for an Event"""
 
