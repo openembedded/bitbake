@@ -647,6 +647,7 @@ def main(server, eventHandler, params, tf = TerminalFilter):
                                   bb.event.OperationCompleted,
                                   bb.event.OperationProgress,
                                   bb.event.DiskFull,
+                                  bb.event.HeartbeatEvent,
                                   bb.build.TaskProgress)):
                 continue
 

@@ -236,6 +236,9 @@ def main(server, eventHandler, params):
             # pylint: disable=protected-access
             # the code will look into the protected variables of the event; no easy way around this
 
+            if isinstance(event, bb.event.HeartbeatEvent):
+                continue
+
             if isinstance(event, bb.event.ParseStarted):
                 if not (build_log and build_log_file_path):
                     build_log, build_log_file_path = _open_build_log(log_dir)
