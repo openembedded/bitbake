@@ -129,7 +129,7 @@ def getDiskData(BBDirs, configuration):
             bb.utils.mkdirhier(path)
         dev = getMountedDev(path)
         # Use path/action as the key
-        devDict[os.path.join(path, action)] = [dev, minSpace, minInode]
+        devDict[(path, action)] = [dev, minSpace, minInode]
 
     return devDict
 
@@ -205,16 +205,13 @@ class diskMonitor:
         """ Take action for the monitor """
 
         if self.enableMonitor:
-            for k in self.devDict:
-                path = os.path.dirname(k)
-                action = os.path.basename(k)
-                dev = self.devDict[k][0]
-                minSpace = self.devDict[k][1]
-                minInode = self.devDict[k][2]
+            for k, attributes in self.devDict.items():
+                path, action = k
+                dev, minSpace, minInode = attributes
 
                 st = os.statvfs(path)
 
-                # The free space, float point number
+                # The available free space, integer number
                 freeSpace = st.f_bavail * st.f_frsize
 
                 if minSpace and freeSpace < minSpace:
@@ -235,7 +232,7 @@ class diskMonitor:
                         rq.finish_runqueue(True)
                         bb.event.fire(bb.event.DiskFull(dev, 'disk', freeSpace, path), self.configuration)
 
-                # The free inodes, float point number
+                # The free inodes, integer number
                 freeInode = st.f_favail
 
                 if minInode and freeInode < minInode:
