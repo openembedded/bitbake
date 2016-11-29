@@ -984,8 +984,14 @@ class RunQueue:
         self.state = runQueuePrepare
 
         # For disk space monitor
+        # Invoked at regular time intervals via the bitbake heartbeat event
+        # while the build is running. We generate a unique name for the handler
+        # here, just in case that there ever is more than one RunQueue instance,
+        # start the handler when reaching runQueueSceneRun, and stop it when
+        # done with the build.
         self.dm = monitordisk.diskMonitor(cfgData)
-
+        self.dm_event_handler_name = '_bb_diskmonitor_' + str(id(self))
+        self.dm_event_handler_registered = False
         self.rqexe = None
         self.worker = {}
         self.fakeworker = {}
@@ -1208,10 +1214,12 @@ class RunQueue:
                 self.rqdata.init_progress_reporter.next_stage()
                 self.rqexe = RunQueueExecuteScenequeue(self)
 
-        if self.state in [runQueueSceneRun, runQueueRunning, runQueueCleanUp]:
-            self.dm.check(self)
-
         if self.state is runQueueSceneRun:
+            if not self.dm_event_handler_registered:
+                 res = bb.event.register(self.dm_event_handler_name,
+                                         lambda x: self.dm.check(self) if self.state in [runQueueSceneRun, runQueueRunning, runQueueCleanUp] else False,
+                                         ('bb.event.HeartbeatEvent',))
+                 self.dm_event_handler_registered = True
             retval = self.rqexe.execute()
 
         if self.state is runQueueRunInit:
@@ -1230,7 +1238,13 @@ class RunQueue:
         if self.state is runQueueCleanUp:
             retval = self.rqexe.finish()
 
-        if (self.state is runQueueComplete or self.state is runQueueFailed) and self.rqexe:
+        build_done = self.state is runQueueComplete or self.state is runQueueFailed
+
+        if build_done and self.dm_event_handler_registered:
+            bb.event.remove(self.dm_event_handler_name, None)
+            self.dm_event_handler_registered = False
+
+        if build_done and self.rqexe:
             self.teardown_workers()
             if self.rqexe.stats.failed:
                 logger.info("Tasks Summary: Attempted %d tasks of which %d didn't need to be rerun and %d failed.", self.rqexe.stats.completed + self.rqexe.stats.failed, self.rqexe.stats.skipped, self.rqexe.stats.failed)
