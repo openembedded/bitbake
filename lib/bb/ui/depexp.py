@@ -313,7 +313,7 @@ def main(server, eventHandler, params):
                         extra = ". Close matches:\n  %s" % '\n  '.join(event._close_matches)
 
                 if event._dependees:
-                    print("Nothing %sPROVIDES '%s' (but %s %sDEPENDS on or otherwise requires it)%s" % r, event._item, ", ".join(event._dependees), r, extra)
+                    print("Nothing %sPROVIDES '%s' (but %s %sDEPENDS on or otherwise requires it)%s" % (r, event._item, ", ".join(event._dependees), r, extra))
                 else:
                     print("Nothing %sPROVIDES '%s'%s" % (r, event._item, extra))
                 if event._reasons:
