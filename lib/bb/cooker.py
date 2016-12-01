@@ -1488,7 +1488,7 @@ class BBCooker:
                 v = self.data.getVar(k, expand)
                 if not k.startswith("__") and not isinstance(v, bb.data_smart.DataSmart):
                     dump[k] = {
-    'v' : v ,
+    'v' : str(v) ,
     'history' : self.data.varhistory.variable(k),
                     }
                     for d in flaglist:
