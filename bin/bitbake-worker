@@ -95,6 +95,7 @@ def worker_flush(worker_queue):
             pass
         while (worker_queue_int or not worker_queue.empty()):
             try:
+                (_, ready, _) = select.select([], [worker_pipe], [], 1)
                 if not worker_queue.empty():
                     worker_queue_int = worker_queue_int + worker_queue.get()
                 written = os.write(worker_pipe, worker_queue_int)
@@ -369,9 +370,11 @@ class BitbakeWorker(object):
                 self.handle_item(b"quit", self.handle_quit)
 
             for pipe in self.build_pipes:
-                self.build_pipes[pipe].read()
+                if self.build_pipes[pipe].input in ready:
+                    self.build_pipes[pipe].read()
             if len(self.build_pids):
-                self.process_waitpid()
+                while self.process_waitpid():
+                    continue
 
 
     def handle_item(self, item, func):
@@ -426,9 +429,9 @@ class BitbakeWorker(object):
         try:
             pid, status = os.waitpid(-1, os.WNOHANG)
             if pid == 0 or os.WIFSTOPPED(status):
-                return None
+                return False
         except OSError:
-            return None
+            return False
 
         workerlog_write("Exit code of %s for pid %s\n" % (status, pid))
 
@@ -446,6 +449,8 @@ class BitbakeWorker(object):
         del self.build_pipes[pid]
 
         worker_fire_prepickled(b"<exitcode>" + pickle.dumps((task, status)) + b"</exitcode>")
+
+        return True
 
     def handle_finishnow(self, _):
         if self.build_pids:
