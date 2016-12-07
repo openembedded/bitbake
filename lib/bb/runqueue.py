@@ -2212,14 +2212,16 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
             startevent = sceneQueueTaskStarted(task, self.stats, self.rq)
             bb.event.fire(startevent, self.cfgData)
 
+            taskdepdata = self.build_taskdepdata(task)
+
             taskdep = self.rqdata.dataCaches[mc].task_deps[taskfn]
             if 'fakeroot' in taskdep and taskname in taskdep['fakeroot'] and not self.cooker.configuration.dry_run:
                 if not self.rq.fakeworker:
                     self.rq.start_fakeworker(self)
-                self.rq.fakeworker[mc].process.stdin.write(b"<runtask>" + pickle.dumps((taskfn, task, taskname, True, self.cooker.collection.get_file_appends(taskfn), None)) + b"</runtask>")
+                self.rq.fakeworker[mc].process.stdin.write(b"<runtask>" + pickle.dumps((taskfn, task, taskname, True, self.cooker.collection.get_file_appends(taskfn), taskdepdata)) + b"</runtask>")
                 self.rq.fakeworker[mc].process.stdin.flush()
             else:
-                self.rq.worker[mc].process.stdin.write(b"<runtask>" + pickle.dumps((taskfn, task, taskname, True, self.cooker.collection.get_file_appends(taskfn), None)) + b"</runtask>")
+                self.rq.worker[mc].process.stdin.write(b"<runtask>" + pickle.dumps((taskfn, task, taskname, True, self.cooker.collection.get_file_appends(taskfn), taskdepdata)) + b"</runtask>")
                 self.rq.worker[mc].process.stdin.flush()
 
             self.runq_running.add(task)
@@ -2251,6 +2253,44 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
 
     def runqueue_process_waitpid(self, task, status):
         RunQueueExecute.runqueue_process_waitpid(self, task, status)
+
+
+    def build_taskdepdata(self, task):
+        def getsetscenedeps(tid):
+            deps = set()
+            (mc, fn, taskname, _) = split_tid_mcfn(tid)
+            realtid = fn + ":" + taskname + "_setscene"
+            idepends = self.rqdata.taskData[mc].taskentries[realtid].idepends
+            for (depname, idependtask) in idepends:
+                if depname not in self.rqdata.taskData[mc].build_targets:
+                    continue
+
+                depfn = self.rqdata.taskData[mc].build_targets[depname][0]
+                if depfn is None:
+                     continue
+                deptid = depfn + ":" + idependtask.replace("_setscene", "")
+                deps.add(deptid)
+            return deps
+
+        taskdepdata = {}
+        next = getsetscenedeps(task)
+        next.add(task)
+        while next:
+            additional = []
+            for revdep in next:
+                (mc, fn, taskname, taskfn) = split_tid_mcfn(revdep)
+                pn = self.rqdata.dataCaches[mc].pkg_fn[taskfn]
+                deps = getsetscenedeps(revdep)
+                provides = self.rqdata.dataCaches[mc].fn_provides[taskfn]
+                taskhash = self.rqdata.runtaskentries[revdep].hash
+                taskdepdata[revdep] = [pn, taskname, fn, deps, provides, taskhash]
+                for revdep2 in deps:
+                    if revdep2 not in taskdepdata:
+                        additional.append(revdep2)
+            next = additional
+
+        #bb.note("Task %s: " % task + str(taskdepdata).replace("], ", "],\n"))
+        return taskdepdata
 
 class TaskFailure(Exception):
     """
