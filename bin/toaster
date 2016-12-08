@@ -111,7 +111,7 @@ verify_prereq() {
     if ! sed -n "$exp" $reqfile | python3 - ; then
         req=`grep ^Django $reqfile`
         echo "This program needs $req"
-        echo "Please install with pip install -r $reqfile"
+        echo "Please install with pip3 install -r $reqfile"
         return 2
     fi
 
