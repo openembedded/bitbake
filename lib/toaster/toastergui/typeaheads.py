@@ -23,6 +23,7 @@ from orm.models import Project
 from django.core.urlresolvers import reverse
 from django.core.cache import cache
 
+
 class LayersTypeAhead(ToasterTypeAhead):
     """ Typeahead for layers available and not added in the current project's
     configuration """
@@ -55,6 +56,8 @@ class LayersTypeAhead(ToasterTypeAhead):
                 'id': layer_version.pk,
                 'name': layer_version.layer.name,
                 'layerdetailurl': layer_version.get_detailspage_url(prj.pk),
+                'xhrLayerUrl': reverse('xhr_layer',
+                                       args=(prj.pk, layer_version.pk)),
                 'vcs_url': layer_version.layer.vcs_url,
                 'vcs_reference': vcs_reference,
                 'detail': detail,
