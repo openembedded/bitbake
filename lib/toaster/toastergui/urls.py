@@ -190,9 +190,11 @@ urlpatterns = patterns('toastergui.views',
         url(r'^xhr_configvaredit/(?P<pid>\d+)$', 'xhr_configvaredit',
             name='xhr_configvaredit'),
 
-        url(r'^xhr_importlayer/$', 'xhr_importlayer', name='xhr_importlayer'),
-
         url(r'^xhr_layer/(?P<pid>\d+)/(?P<layerversion_id>\d+)$',
+            api.XhrLayer.as_view(),
+            name='xhr_layer'),
+
+        url(r'^xhr_layer/(?P<pid>\d+)$',
             api.XhrLayer.as_view(),
             name='xhr_layer'),
 

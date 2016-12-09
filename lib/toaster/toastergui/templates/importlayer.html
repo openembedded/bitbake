@@ -13,7 +13,7 @@
   <script>
   $(document).ready(function (){
     var ctx = {
-      xhrImportLayerUrl : "{% url 'xhr_importlayer' %}",
+      xhrLayerUrl : "{% url 'xhr_layer' project.id %}",
     };
 
     try {
