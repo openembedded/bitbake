@@ -120,32 +120,6 @@ def objtojson(obj):
         raise TypeError("Unserializable object %s (%s) of type %s" % ( obj, dir(obj), type(obj)))
 
 
-def _template_renderer(template):
-    def func_wrapper(view):
-        def returned_wrapper(request, *args, **kwargs):
-            try:
-                context = view(request, *args, **kwargs)
-            except RedirectException as e:
-                return e.get_redirect_response()
-
-            if request.GET.get('format', None) == 'json':
-                # objects is a special keyword - it's a Page, but we need the actual objects here
-                # in XHR, the objects come in the "rows" property
-                if "objects" in context:
-                    context["rows"] = context["objects"].object_list
-                    del context["objects"]
-
-                # we're about to return; to keep up with the XHR API, we set the error to OK
-                context["error"] = "ok"
-
-                return HttpResponse(jsonfilter(context, default=objtojson ),
-                            content_type = "application/json; charset=utf-8")
-            else:
-                return render(request, template, context)
-        return returned_wrapper
-    return func_wrapper
-
-
 def _lv_to_dict(prj, x = None):
     if x is None:
         def wrapper(x):
@@ -1528,8 +1502,6 @@ if True:
         }
         return render(request, template, context)
 
-    # TODO merge with api pseudo api here is used for deps modal
-    @_template_renderer('layerdetails.html')
     def layerdetails(request, pid, layerid):
         project = Project.objects.get(pk=pid)
         layer_version = Layer_Version.objects.get(pk=layerid)
@@ -1557,7 +1529,7 @@ if True:
             'projectlayers': list(project_layers)
         }
 
-        return context
+        return render(request, 'layerdetails.html', context)
 
 
     def get_project_configvars_context():
@@ -1577,7 +1549,6 @@ if True:
 
         return(vars_managed,sorted(vars_fstypes),vars_blacklist)
 
-    @_template_renderer("projectconf.html")
     def projectconf(request, pid):
 
         try:
@@ -1648,7 +1619,7 @@ if True:
         except (ProjectVariable.DoesNotExist, BuildEnvironment.DoesNotExist):
             pass
 
-        return context
+        return render(request, "projectconf.html", context)
 
     def _file_names_for_artifact(build, artifact_type, artifact_id):
         """
