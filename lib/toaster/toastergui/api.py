@@ -139,8 +139,54 @@ class XhrBuildRequest(View):
 class XhrLayer(View):
     """ Delete, Get, Add and Update Layer information
 
-        Methods: POST DELETE PUT
+        Methods: GET POST DELETE PUT
     """
+
+    def get(self, request, *args, **kwargs):
+        """
+        Get layer information
+
+        Method: GET
+        Entry point: /xhr_layer/<project id>/<layerversion_id>
+        """
+
+        try:
+            layer_version = Layer_Version.objects.get(
+                pk=kwargs['layerversion_id'])
+
+            project = Project.objects.get(pk=kwargs['pid'])
+
+            project_layers = ProjectLayer.objects.filter(
+                project=project).values_list("layercommit_id",
+                                             flat=True)
+
+            ret = {
+                'error': 'ok',
+                'id': layer_version.pk,
+                'name': layer_version.layer.name,
+                'layerdetailurl':
+                layer_version.get_detailspage_url(project.pk),
+                'vcs_ref': layer_version.get_vcs_reference(),
+                'vcs_url': layer_version.layer.vcs_url,
+                'local_source_dir': layer_version.layer.local_source_dir,
+                'layerdeps': {
+                    "list": [
+                        {
+                            "id": dep.id,
+                            "name": dep.layer.name,
+                            "layerdetailurl":
+                            dep.get_detailspage_url(project.pk),
+                            "vcs_url": dep.layer.vcs_url,
+                            "vcs_reference": dep.get_vcs_reference()
+                        }
+                        for dep in layer_version.get_alldeps(project.id)]
+                },
+                'projectlayers': list(project_layers)
+            }
+
+            return JsonResponse(ret)
+        except Layer_Version.DoesNotExist:
+            error_response("No such layer")
 
     def post(self, request, *args, **kwargs):
         """
@@ -211,7 +257,7 @@ class XhrLayer(View):
         """ Add a new layer
 
         Method: PUT
-        Entry point: /xhr_layer/
+        Entry point: /xhr_layer/<project id>/
         Args:
             project_id, name,
             [vcs_url, dir_path, git_ref], [local_source_dir], [layer_deps
@@ -296,7 +342,7 @@ class XhrLayer(View):
         """ Delete an imported layer
 
         Method: DELETE
-        Entry point: /xhr_layer/<layerversion_id>
+        Entry point: /xhr_layer/<projed id>/<layerversion_id>
 
         """
         try:
@@ -888,6 +934,9 @@ class XhrProject(View):
                 "url": layer.layercommit.layer.layer_index_url,
                 "layerdetailurl": layer.layercommit.get_detailspage_url(
                     project.pk),
+                "xhrLayerUrl": reverse("xhr_layer",
+                                       args=(project.pk,
+                                             layer.layercommit.pk)),
                 "layersource": layer.layercommit.layer_source
             })
 
