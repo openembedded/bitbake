@@ -182,8 +182,9 @@ urlpatterns = patterns('toastergui.views',
             typeaheads.RecipesTypeAhead.as_view(), name='xhr_recipestypeahead'),
         url(r'^xhr_typeahead/projects$',
             typeaheads.ProjectsTypeAhead.as_view(), name='xhr_projectstypeahead'),
-
-
+        url(r'^xhr_typeahead/gitrev$',
+            typeaheads.GitRevisionTypeAhead.as_view(),
+            name='xhr_gitrevtypeahead'),
 
         url(r'^xhr_testreleasechange/(?P<pid>\d+)$', 'xhr_testreleasechange',
             name='xhr_testreleasechange'),

@@ -16,9 +16,12 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+import subprocess
+
 from toastergui.widgets import ToasterTypeAhead
 from orm.models import Project
 from django.core.urlresolvers import reverse
+from django.core.cache import cache
 
 class LayersTypeAhead(ToasterTypeAhead):
     """ Typeahead for layers available and not added in the current project's
@@ -145,5 +148,31 @@ class ProjectsTypeAhead(ToasterTypeAhead):
             }
 
             results.append(needed_fields)
+
+        return results
+
+
+class GitRevisionTypeAhead(ToasterTypeAhead):
+    def apply_search(self, search_term, prj, request):
+        results = []
+        git_url = request.GET.get('git_url')
+        ls_remote = cache.get(git_url)
+
+        if ls_remote is None:
+            ls_remote = subprocess.check_output(['git', 'ls-remote', git_url],
+                                                universal_newlines=True)
+            ls_remote = ls_remote.splitlines()
+            # Avoid fetching the list of git refs on each new input
+            cache.set(git_url, ls_remote, 120)
+
+        for rev in ls_remote:
+            git_rev = str(rev).split("/")[-1:][0]
+            # "HEAD" has a special meaning in Toaster...  YOCTO #9924
+            if "HEAD" in git_rev:
+                continue
+
+            if git_rev.startswith(search_term):
+                results.append({'name': git_rev,
+                                'detail': '[ %s ]' % str(rev)})
 
         return results
