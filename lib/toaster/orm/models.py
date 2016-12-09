@@ -1493,7 +1493,13 @@ class Layer_Version(models.Model):
             return self.commit
         return 'N/A'
 
-    def get_detailspage_url(self, project_id):
+    def get_detailspage_url(self, project_id=None):
+        """ returns the url to the layer details page uses own project
+        field if project_id is not specified """
+
+        if project_id is None:
+            project_id = self.project.pk
+
         return reverse('layerdetails', args=(project_id, self.pk))
 
     def get_alldeps(self, project_id):
