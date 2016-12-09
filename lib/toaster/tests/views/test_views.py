@@ -142,35 +142,36 @@ class ViewTests(TestCase):
             # from each of the urls
             self.assertTrue(results)
 
-    def test_xhr_import_layer(self):
-        """Test xhr_importlayer API"""
+    def test_xhr_add_layer(self):
+        """Test xhr_add API"""
         # Test for importing an already existing layer
-        args = {'vcs_url': "git://git.example.com/test",
-                'name': "base-layer",
-                'git_ref': "c12b9596afd236116b25ce26dbe0d793de9dc7ce",
-                'project_id': self.project.id,
-                'local_source_dir': "",
-                'dir_path': "/path/in/repository"}
-        response = self.client.post(reverse('xhr_importlayer'), args)
+        api_url = reverse('xhr_layer', args=(self.project.id,))
+
+        layer_data = {'vcs_url': "git://git.example.com/test",
+                      'name': "base-layer",
+                      'git_ref': "c12b9596afd236116b25ce26dbe0d793de9dc7ce",
+                      'project_id': self.project.id,
+                      'local_source_dir': "",
+                      'add_to_project': True,
+                      'dir_path': "/path/in/repository"}
+
+        layer_data_json = json.dumps(layer_data)
+
+        response = self.client.put(api_url, layer_data_json)
         data = json.loads(response.content.decode('utf-8'))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(data["error"], "ok")
 
-        # Test to verify import of a layer successful
-        args['name'] = "meta-oe"
-        response = self.client.post(reverse('xhr_importlayer'), args)
-        data = json.loads(response.content.decode('utf-8'))
-        self.assertTrue(data["error"], "ok")
-
-        # Test for html tag in the data
-        args['<'] = "testing html tag"
-        response = self.client.post(reverse('xhr_importlayer'), args)
-        data = json.loads(response.content.decode('utf-8'))
-        self.assertNotEqual(data["error"], "ok")
+        self.assertTrue(
+            layer_data['name'] in
+            self.project.get_all_compatible_layer_versions().values_list(
+                'layer__name',
+                flat=True),
+            "Could not find imported layer in project's all layers list"
+        )
 
         # Empty data passed
-        args = {}
-        response = self.client.post(reverse('xhr_importlayer'), args)
+        response = self.client.put(api_url, "{}")
         data = json.loads(response.content.decode('utf-8'))
         self.assertNotEqual(data["error"], "ok")
 
