@@ -562,6 +562,7 @@ def _exec_task(fn, task, d, quieterr):
 
     localdata.setVar('BB_LOGFILE', logfn)
     localdata.setVar('BB_RUNTASK', task)
+    localdata.setVar('BB_TASK_LOGGER', bblogger)
 
     flags = localdata.getVarFlags(task)
 

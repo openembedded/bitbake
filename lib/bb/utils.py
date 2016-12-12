@@ -1503,3 +1503,14 @@ def load_plugins(logger, plugins, pluginpath):
                 plugins.append(obj or plugin)
             else:
                 plugins.append(plugin)
+
+
+class LogCatcher(logging.Handler):
+    """Logging handler for collecting logged messages so you can check them later"""
+    def __init__(self):
+        self.messages = []
+        logging.Handler.__init__(self, logging.WARNING)
+    def emit(self, record):
+        self.messages.append(bb.build.logformatter.format(record))
+    def contains(self, message):
+        return (message in self.messages)
