@@ -583,13 +583,12 @@ class BBCooker:
 
     def showVersions(self):
 
-        pkg_pn = self.recipecaches[''].pkg_pn
-        (latest_versions, preferred_versions) = bb.providers.findProviders(self.data, self.recipecaches[''], pkg_pn)
+        (latest_versions, preferred_versions) = self.findProviders()
 
         logger.plain("%-35s %25s %25s", "Recipe Name", "Latest Version", "Preferred Version")
         logger.plain("%-35s %25s %25s\n", "===========", "==============", "=================")
 
-        for p in sorted(pkg_pn):
+        for p in sorted(self.recipecaches[''].pkg_pn):
             pref = preferred_versions[p]
             latest = latest_versions[p]
 
@@ -1083,6 +1082,20 @@ class BBCooker:
 
         if matches:
             bb.event.fire(bb.event.FilesMatchingFound(filepattern, matches), self.data)
+
+    def findProviders(self, mc=''):
+        return bb.providers.findProviders(self.data, self.recipecaches[mc], self.recipecaches[mc].pkg_pn)
+
+    def findBestProvider(self, pn, mc=''):
+        if pn in self.recipecaches[mc].providers:
+            filenames = self.recipecaches[mc].providers[pn]
+            eligible, foundUnique = bb.providers.filterProviders(filenames, pn, self.expanded_data, self.recipecaches[mc])
+            filename = eligible[0]
+            return None, None, None, filename
+        elif pn in self.recipecaches[mc].pkg_pn:
+            return bb.providers.findBestProvider(pn, self.data, self.recipecaches[mc], self.recipecaches[mc].pkg_pn)
+        else:
+            return None, None, None, None
 
     def findConfigFiles(self, varname):
         """

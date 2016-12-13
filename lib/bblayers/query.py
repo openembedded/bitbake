@@ -5,8 +5,6 @@ import sys
 import os
 import re
 
-import bb.cache
-import bb.providers
 import bb.utils
 
 from bblayers.common import LayerPlugin
@@ -122,15 +120,13 @@ skipped recipes will also be listed, with a " (skipped)" suffix.
                     sys.exit(1)
 
         pkg_pn = self.tinfoil.cooker.recipecaches[''].pkg_pn
-        (latest_versions, preferred_versions) = bb.providers.findProviders(self.tinfoil.config_data, self.tinfoil.cooker.recipecaches[''], pkg_pn)
-        allproviders = bb.providers.allProviders(self.tinfoil.cooker.recipecaches[''])
+        (latest_versions, preferred_versions) = self.tinfoil.find_providers()
+        allproviders = self.tinfoil.get_all_providers()
 
         # Ensure we list skipped recipes
         # We are largely guessing about PN, PV and the preferred version here,
         # but we have no choice since skipped recipes are not fully parsed
         skiplist = list(self.tinfoil.cooker.skiplist.keys())
-        skiplist.sort( key=lambda fileitem: self.tinfoil.cooker.collection.calc_bbfile_priority(fileitem) )
-        skiplist.reverse()
         for fn in skiplist:
             recipe_parts = os.path.splitext(os.path.basename(fn))[0].split('_')
             p = recipe_parts[0]
@@ -265,10 +261,7 @@ Lists recipes with the bbappends that apply to them as subitems.
     def show_appends_for_pn(self, pn):
         filenames = self.tinfoil.cooker_data.pkg_pn[pn]
 
-        best = bb.providers.findBestProvider(pn,
-                                             self.tinfoil.config_data,
-                                             self.tinfoil.cooker_data,
-                                             self.tinfoil.cooker_data.pkg_pn)
+        best = self.tinfoil.find_best_provider(pn)
         best_filename = os.path.basename(best[3])
 
         return self.show_appends_output(filenames, best_filename)
@@ -336,10 +329,7 @@ NOTE: .bbappend files can impact the dependencies.
             deps = self.tinfoil.cooker_data.deps[f]
             for pn in deps:
                 if pn in self.tinfoil.cooker_data.pkg_pn:
-                    best = bb.providers.findBestProvider(pn,
-                            self.tinfoil.config_data,
-                            self.tinfoil.cooker_data,
-                            self.tinfoil.cooker_data.pkg_pn)
+                    best = self.tinfoil.find_best_provider(pn)
                     self.check_cross_depends("DEPENDS", layername, f, best[3], args.filenames, ignore_layers)
 
             # The RDPENDS
@@ -352,14 +342,11 @@ NOTE: .bbappend files can impact the dependencies.
                     sorted_rdeps[k2] = 1
             all_rdeps = sorted_rdeps.keys()
             for rdep in all_rdeps:
-                all_p = bb.providers.getRuntimeProviders(self.tinfoil.cooker_data, rdep)
+                all_p, best = self.tinfoil.get_runtime_providers(rdep)
                 if all_p:
                     if f in all_p:
                         # The recipe provides this one itself, ignore
                         continue
-                    best = bb.providers.filterProvidersRunTime(all_p, rdep,
-                                    self.tinfoil.config_data,
-                                    self.tinfoil.cooker_data)[0][0]
                     self.check_cross_depends("RDEPENDS", layername, f, best, args.filenames, ignore_layers)
 
             # The RRECOMMENDS
@@ -372,14 +359,11 @@ NOTE: .bbappend files can impact the dependencies.
                     sorted_rrecs[k2] = 1
             all_rrecs = sorted_rrecs.keys()
             for rrec in all_rrecs:
-                all_p = bb.providers.getRuntimeProviders(self.tinfoil.cooker_data, rrec)
+                all_p, best = self.tinfoil.get_runtime_providers(rrec)
                 if all_p:
                     if f in all_p:
                         # The recipe provides this one itself, ignore
                         continue
-                    best = bb.providers.filterProvidersRunTime(all_p, rrec,
-                                    self.tinfoil.config_data,
-                                    self.tinfoil.cooker_data)[0][0]
                     self.check_cross_depends("RRECOMMENDS", layername, f, best, args.filenames, ignore_layers)
 
             # The inherit class

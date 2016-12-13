@@ -389,11 +389,7 @@ def bitbake_main(configParams, configuration):
     except:
         pass
 
-
     configuration.setConfigParameters(configParams)
-
-    ui_module = import_extension_module(bb.ui, configParams.ui, 'main')
-    servermodule = import_extension_module(bb.server, configParams.servertype, 'BitBakeServer')
 
     if configParams.server_only:
         if configParams.servertype != "xmlrpc":
@@ -442,66 +438,11 @@ def bitbake_main(configParams, configuration):
     bb.msg.init_msgconfig(configParams.verbose, configuration.debug,
                           configuration.debug_domains)
 
-    # Ensure logging messages get sent to the UI as events
-    handler = bb.event.LogHandler()
-    if not configParams.status_only:
-        # In status only mode there are no logs and no UI
-        logger.addHandler(handler)
-
-    # Clear away any spurious environment variables while we stoke up the cooker
-    cleanedvars = bb.utils.clean_environment()
-
-    featureset = []
-    if not configParams.server_only:
-        # Collect the feature set for the UI
-        featureset = getattr(ui_module, "featureSet", [])
-
-    if configParams.server_only:
-        for param in ('prefile', 'postfile'):
-            value = getattr(configParams, param)
-            if value:
-                setattr(configuration, "%s_server" % param, value)
-                param = "%s_server" % param
-
-    if not configParams.remote_server:
-        # we start a server with a given configuration
-        server = start_server(servermodule, configParams, configuration, featureset)
-        bb.event.ui_queue = []
-    else:
-        if os.getenv('BBSERVER') == 'autostart':
-            if configParams.remote_server == 'autostart' or \
-               not servermodule.check_connection(configParams.remote_server, timeout=2):
-                configParams.bind = 'localhost:0'
-                srv = start_server(servermodule, configParams, configuration, featureset)
-                configParams.remote_server = '%s:%d' % tuple(configuration.interface)
-                bb.event.ui_queue = []
-
-        # we start a stub server that is actually a XMLRPClient that connects to a real server
-        server = servermodule.BitBakeXMLRPCClient(configParams.observe_only,
-                                                  configParams.xmlrpctoken)
-        server.saveConnectionDetails(configParams.remote_server)
-
+    server, server_connection, ui_module = setup_bitbake(configParams, configuration)
+    if server_connection is None and configParams.kill_server:
+        return 0
 
     if not configParams.server_only:
-        try:
-            server_connection = server.establishConnection(featureset)
-        except Exception as e:
-            bb.fatal("Could not connect to server %s: %s" % (configParams.remote_server, str(e)))
-
-        if configParams.kill_server:
-            server_connection.connection.terminateServer()
-            bb.event.ui_queue = []
-            return 0
-
-        server_connection.setupEventQueue()
-
-        # Restore the environment in case the UI needs it
-        for k in cleanedvars:
-            os.environ[k] = cleanedvars[k]
-
-        logger.removeHandler(handler)
-
-
         if configParams.status_only:
             server_connection.terminate()
             return 0
@@ -520,3 +461,77 @@ def bitbake_main(configParams, configuration):
         return 0
 
     return 1
+
+def setup_bitbake(configParams, configuration, extrafeatures=None):
+    # Ensure logging messages get sent to the UI as events
+    handler = bb.event.LogHandler()
+    if not configParams.status_only:
+        # In status only mode there are no logs and no UI
+        logger.addHandler(handler)
+
+    # Clear away any spurious environment variables while we stoke up the cooker
+    cleanedvars = bb.utils.clean_environment()
+
+    if configParams.server_only:
+        featureset = []
+        ui_module = None
+    else:
+        ui_module = import_extension_module(bb.ui, configParams.ui, 'main')
+        # Collect the feature set for the UI
+        featureset = getattr(ui_module, "featureSet", [])
+
+    if configParams.server_only:
+        for param in ('prefile', 'postfile'):
+            value = getattr(configParams, param)
+            if value:
+                setattr(configuration, "%s_server" % param, value)
+                param = "%s_server" % param
+
+    if extrafeatures:
+        for feature in extrafeatures:
+            if not feature in featureset:
+                featureset.append(feature)
+
+    servermodule = import_extension_module(bb.server,
+                                            configParams.servertype,
+                                            'BitBakeServer')
+    if configParams.remote_server:
+        if os.getenv('BBSERVER') == 'autostart':
+            if configParams.remote_server == 'autostart' or \
+               not servermodule.check_connection(configParams.remote_server, timeout=2):
+                configParams.bind = 'localhost:0'
+                srv = start_server(servermodule, configParams, configuration, featureset)
+                configParams.remote_server = '%s:%d' % tuple(configuration.interface)
+                bb.event.ui_queue = []
+        # we start a stub server that is actually a XMLRPClient that connects to a real server
+        from bb.server.xmlrpc import BitBakeXMLRPCClient
+        server = servermodule.BitBakeXMLRPCClient(configParams.observe_only,
+                                                  configParams.xmlrpctoken)
+        server.saveConnectionDetails(configParams.remote_server)
+    else:
+        # we start a server with a given configuration
+        server = start_server(servermodule, configParams, configuration, featureset)
+        bb.event.ui_queue = []
+
+    if configParams.server_only:
+        server_connection = None
+    else:
+        try:
+            server_connection = server.establishConnection(featureset)
+        except Exception as e:
+            bb.fatal("Could not connect to server %s: %s" % (configParams.remote_server, str(e)))
+
+        if configParams.kill_server:
+            server_connection.connection.terminateServer()
+            bb.event.ui_queue = []
+            return None, None, None
+
+        server_connection.setupEventQueue()
+
+        # Restore the environment in case the UI needs it
+        for k in cleanedvars:
+            os.environ[k] = cleanedvars[k]
+
+        logger.removeHandler(handler)
+
+    return server, server_connection, ui_module
