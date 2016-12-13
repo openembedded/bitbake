@@ -136,7 +136,7 @@ def sigterm_handler(signum, frame):
     os.killpg(0, signal.SIGTERM)
     sys.exit()
 
-def fork_off_task(cfg, data, databuilder, workerdata, fn, task, taskname, appends, taskdepdata, quieterrors=False):
+def fork_off_task(cfg, data, databuilder, workerdata, fn, task, taskname, appends, taskdepdata, extraconfigdata, quieterrors=False):
     # We need to setup the environment BEFORE the fork, since
     # a fork() or exec*() activates PSEUDO...
 
@@ -223,6 +223,9 @@ def fork_off_task(cfg, data, databuilder, workerdata, fn, task, taskname, append
                 the_data.setVar("BUILDNAME", workerdata["buildname"])
                 the_data.setVar("DATE", workerdata["date"])
                 the_data.setVar("TIME", workerdata["time"])
+                for varname, value in extraconfigdata.items():
+                    the_data.setVar(varname, value)
+
                 bb.parse.siggen.set_taskdata(workerdata["sigdata"])
                 ret = 0
 
@@ -329,6 +332,7 @@ class BitbakeWorker(object):
         self.cookercfg = None
         self.databuilder = None
         self.data = None
+        self.extraconfigdata = None
         self.build_pids = {}
         self.build_pipes = {}
     
@@ -363,6 +367,7 @@ class BitbakeWorker(object):
                     pass
             if len(self.queue):
                 self.handle_item(b"cookerconfig", self.handle_cookercfg)
+                self.handle_item(b"extraconfigdata", self.handle_extraconfigdata)
                 self.handle_item(b"workerdata", self.handle_workerdata)
                 self.handle_item(b"runtask", self.handle_runtask)
                 self.handle_item(b"finishnow", self.handle_finishnow)
@@ -391,6 +396,9 @@ class BitbakeWorker(object):
         self.databuilder.parseBaseConfiguration()
         self.data = self.databuilder.data
 
+    def handle_extraconfigdata(self, data):
+        self.extraconfigdata = pickle.loads(data)
+
     def handle_workerdata(self, data):
         self.workerdata = pickle.loads(data)
         bb.msg.loggerDefaultDebugLevel = self.workerdata["logdefaultdebug"]
@@ -416,7 +424,7 @@ class BitbakeWorker(object):
         fn, task, taskname, quieterrors, appends, taskdepdata = pickle.loads(data)
         workerlog_write("Handling runtask %s %s %s\n" % (task, fn, taskname))
 
-        pid, pipein, pipeout = fork_off_task(self.cookercfg, self.data, self.databuilder, self.workerdata, fn, task, taskname, appends, taskdepdata, quieterrors)
+        pid, pipein, pipeout = fork_off_task(self.cookercfg, self.data, self.databuilder, self.workerdata, fn, task, taskname, appends, taskdepdata, self.extraconfigdata, quieterrors)
 
         self.build_pids[pid] = task
         self.build_pipes[pid] = runQueueWorkerPipe(pipein, pipeout)

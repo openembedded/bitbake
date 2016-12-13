@@ -358,6 +358,7 @@ class BBCooker:
         self.databuilder.parseBaseConfiguration()
         self.data = self.databuilder.data
         self.data_hash = self.databuilder.data_hash
+        self.extraconfigdata = {}
 
         if consolelog:
             self.data.setVar("BB_CONSOLELOG", consolelog)

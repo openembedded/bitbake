@@ -187,6 +187,7 @@ class CommandsSync:
         """
         varname = params[0]
         value = str(params[1])
+        command.cooker.extraconfigdata[varname] = value
         command.cooker.data.setVar(varname, value)
 
     def getSetVariable(self, command, params):
