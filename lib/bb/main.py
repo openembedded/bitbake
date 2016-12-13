@@ -179,8 +179,8 @@ class BitBakeConfigParameters(cookerdata.ConfigParameters):
         parser.add_option("-D", "--debug", action="count", dest="debug", default=0,
                           help="Increase the debug level. You can specify this more than once.")
 
-        parser.add_option("-q", "--quiet", action="store_true", dest="quiet", default=False,
-                          help="Output less log message data to the terminal.")
+        parser.add_option("-q", "--quiet", action="count", dest="quiet", default=0,
+                          help="Output less log message data to the terminal. You can specify this more than once.")
 
         parser.add_option("-n", "--dry-run", action="store_true", dest="dry_run", default=False,
                           help="Don't execute, just go through the motions.")

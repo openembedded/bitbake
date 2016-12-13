@@ -284,7 +284,7 @@ class TerminalFilter(object):
             content = self.main_progress.update(progress)
             print('')
         lines = 1 + int(len(content) / (self.columns + 1))
-        if not self.quiet:
+        if self.quiet == 0:
             for tasknum, task in enumerate(tasks[:(self.rows - 2)]):
                 if isinstance(task, tuple):
                     pbar, progress, rate, start_time = task
@@ -353,10 +353,13 @@ def main(server, eventHandler, params, tf = TerminalFilter):
     errconsole = logging.StreamHandler(sys.stderr)
     format_str = "%(levelname)s: %(message)s"
     format = bb.msg.BBLogFormatter(format_str)
-    if params.options.quiet:
-        bb.msg.addDefaultlogFilter(console, bb.msg.BBLogFilterStdOut, bb.msg.BBLogFormatter.WARNING)
+    if params.options.quiet == 0:
+        forcelevel = None
+    elif params.options.quiet > 2:
+        forcelevel = bb.msg.BBLogFormatter.ERROR
     else:
-        bb.msg.addDefaultlogFilter(console, bb.msg.BBLogFilterStdOut)
+        forcelevel = bb.msg.BBLogFormatter.WARNING
+    bb.msg.addDefaultlogFilter(console, bb.msg.BBLogFilterStdOut, forcelevel)
     bb.msg.addDefaultlogFilter(errconsole, bb.msg.BBLogFilterStdErr)
     console.setFormatter(format)
     errconsole.setFormatter(format)
@@ -506,35 +509,47 @@ def main(server, eventHandler, params, tf = TerminalFilter):
                 logger.info(event._message)
                 continue
             if isinstance(event, bb.event.ParseStarted):
+                if params.options.quiet > 1:
+                    continue
                 if event.total == 0:
                     continue
                 parseprogress = new_progress("Parsing recipes", event.total).start()
                 continue
             if isinstance(event, bb.event.ParseProgress):
+                if params.options.quiet > 1:
+                    continue
                 if parseprogress:
                     parseprogress.update(event.current)
                 else:
                     bb.warn("Got ParseProgress event for parsing that never started?")
                 continue
             if isinstance(event, bb.event.ParseCompleted):
+                if params.options.quiet > 1:
+                    continue
                 if not parseprogress:
                     continue
                 parseprogress.finish()
                 pasreprogress = None
-                if not params.options.quiet:
+                if params.options.quiet == 0:
                     print(("Parsing of %d .bb files complete (%d cached, %d parsed). %d targets, %d skipped, %d masked, %d errors."
                         % ( event.total, event.cached, event.parsed, event.virtuals, event.skipped, event.masked, event.errors)))
                 continue
 
             if isinstance(event, bb.event.CacheLoadStarted):
+                if params.options.quiet > 1:
+                    continue
                 cacheprogress = new_progress("Loading cache", event.total).start()
                 continue
             if isinstance(event, bb.event.CacheLoadProgress):
+                if params.options.quiet > 1:
+                    continue
                 cacheprogress.update(event.current)
                 continue
             if isinstance(event, bb.event.CacheLoadCompleted):
+                if params.options.quiet > 1:
+                    continue
                 cacheprogress.finish()
-                if not params.options.quiet:
+                if params.options.quiet == 0:
                     print("Loaded %d entries from dependency cache." % event.num_entries)
                 continue
 
@@ -620,16 +635,22 @@ def main(server, eventHandler, params, tf = TerminalFilter):
                 continue
 
             if isinstance(event, bb.event.ProcessStarted):
+                if params.options.quiet > 1:
+                    continue
                 parseprogress = new_progress(event.processname, event.total)
                 parseprogress.start(False)
                 continue
             if isinstance(event, bb.event.ProcessProgress):
+                if params.options.quiet > 1:
+                    continue
                 if parseprogress:
                     parseprogress.update(event.progress)
                 else:
                     bb.warn("Got ProcessProgress event for someting that never started?")
                 continue
             if isinstance(event, bb.event.ProcessFinished):
+                if params.options.quiet > 1:
+                    continue
                 if parseprogress:
                     parseprogress.finish()
                 parseprogress = None
@@ -701,7 +722,7 @@ def main(server, eventHandler, params, tf = TerminalFilter):
         if return_value and errors:
             summary += pluralise("\nSummary: There was %s ERROR message shown, returning a non-zero exit code.",
                                  "\nSummary: There were %s ERROR messages shown, returning a non-zero exit code.", errors)
-        if summary and not params.options.quiet:
+        if summary and params.options.quiet == 0:
             print(summary)
 
         if interrupted:
