@@ -101,6 +101,7 @@ class SignatureGeneratorBasic(SignatureGenerator):
 
     def _build_data(self, fn, d):
 
+        ignore_mismatch = ((d.getVar("BB_HASH_IGNORE_MISMATCH", True) or '') == '1')
         tasklist, gendeps, lookupcache = bb.data.generate_dependencies(d)
 
         taskdeps = {}
@@ -135,7 +136,7 @@ class SignatureGeneratorBasic(SignatureGenerator):
                     data = data + str(var)
             datahash = hashlib.md5(data.encode("utf-8")).hexdigest()
             k = fn + "." + task
-            if k in self.basehash and self.basehash[k] != datahash:
+            if not ignore_mismatch and k in self.basehash and self.basehash[k] != datahash:
                 bb.error("When reparsing %s, the basehash value changed from %s to %s. The metadata is not deterministic and this needs to be fixed." % (k, self.basehash[k], datahash))
             self.basehash[k] = datahash
             taskdeps[task] = alldeps
