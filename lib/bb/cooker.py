@@ -1725,6 +1725,13 @@ class BBCooker:
     def reset(self):
         self.initConfigurationData()
 
+    def clientComplete(self):
+        """Called when the client is done using the server"""
+        if self.configuration.server_only:
+            self.finishcommand()
+        else:
+            self.shutdown(True)
+
     def lockBitbake(self):
         if not hasattr(self, 'lock'):
             self.lock = None

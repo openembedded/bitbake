@@ -472,3 +472,11 @@ class CommandsAsync:
         command.finishAsyncCommand()
     resetCooker.needcache = False
 
+    def clientComplete(self, command, params):
+        """
+        Do the right thing when the controlling client exits
+        """
+        command.cooker.clientComplete()
+        command.finishAsyncCommand()
+    clientComplete.needcache = False
+

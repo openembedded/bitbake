@@ -146,6 +146,7 @@ class CookerConfiguration(object):
         self.tracking = False
         self.interface = []
         self.writeeventlog = False
+        self.server_only = False
 
         self.env = {}
 
