@@ -844,7 +844,7 @@ class DataSmart(MutableMapping):
         data = DataSmart()
         data.dict["_data"] = self.dict
         data.varhistory = self.varhistory.copy()
-        data.varhistory.datasmart = data
+        data.varhistory.dataroot = data
         data.inchistory = self.inchistory.copy()
 
         data._tracking = self._tracking
