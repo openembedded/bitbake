@@ -483,14 +483,13 @@ class CommandsSync:
     dataStoreConnectorGetVarHistory.readonly = True
 
     def dataStoreConnectorExpandPythonRef(self, command, params):
-        dsindex = params[0]
+        config_data_dict = params[0]
         varname = params[1]
         expr = params[2]
-        if dsindex:
-            datastore = self.dataStores[dsindex]
-        else:
-            datastore = command.cooker.data
-        varparse = bb.data_smart.VariableParse(varname, datastore)
+
+        config_data = command.remotedatastores.receive_datastore(config_data_dict)
+
+        varparse = bb.data_smart.VariableParse(varname, config_data)
         return varparse.python_sub(expr)
 
     def dataStoreConnectorRelease(self, command, params):

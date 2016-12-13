@@ -123,7 +123,7 @@ class VariableParse:
 
             if "_remote_data" in self.d:
                 connector = self.d["_remote_data"]
-                return connector.expandPythonRef(self.varname, code)
+                return connector.expandPythonRef(self.varname, code, self.d)
 
             codeobj = compile(code.strip(), self.varname or "<expansion>", "eval")
 

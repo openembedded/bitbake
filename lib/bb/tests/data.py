@@ -458,8 +458,11 @@ class Remote(unittest.TestCase):
                 return self.d.localkeys()
             def getVarHistory(self, name):
                 return self.d.varhistory.variable(name)
-            def expandPythonRef(self, varname, expr):
-                varparse = bb.data_smart.VariableParse(varname, self.d)
+            def expandPythonRef(self, varname, expr, d):
+                localdata = self.d.createCopy()
+                for key in d.localkeys():
+                    localdata.setVar(d.getVar(key))
+                varparse = bb.data_smart.VariableParse(varname, localdata)
                 return varparse.python_sub(expr)
             def setVar(self, name, value):
                 self.d.setVar(name, value)
@@ -483,3 +486,6 @@ class Remote(unittest.TestCase):
         # Test setVar on client side affects server
         d2.setVar('HELLO', 'other-world')
         self.assertEqual(d1.getVar('HELLO'), 'other-world')
+        # Test client side data is incorporated in python expansion (which is done on server)
+        d2.setVar('FOO', 'bar')
+        self.assertEqual(d2.expand('${@d.getVar("FOO")}'), 'bar')

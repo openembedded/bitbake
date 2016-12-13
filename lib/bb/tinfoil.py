@@ -29,6 +29,7 @@ import bb.providers
 import bb.taskdata
 import bb.utils
 import bb.command
+import bb.remotedata
 from bb.cookerdata import CookerConfiguration, ConfigParameters
 from bb.main import setup_bitbake, BitBakeConfigParameters, BBMainException
 import bb.fetch2
@@ -69,8 +70,9 @@ class TinfoilDataStoreConnector:
         return set(self.tinfoil.run_command('dataStoreConnectorGetKeys', self.dsindex))
     def getVarHistory(self, name):
         return self.tinfoil.run_command('dataStoreConnectorGetVarHistory', self.dsindex, name)
-    def expandPythonRef(self, varname, expr):
-        ret = self.tinfoil.run_command('dataStoreConnectorExpandPythonRef', self.dsindex, varname, expr)
+    def expandPythonRef(self, varname, expr, d):
+        ds = bb.remotedata.RemoteDatastores.transmit_datastore(d)
+        ret = self.tinfoil.run_command('dataStoreConnectorExpandPythonRef', ds, varname, expr)
         return ret
     def setVar(self, varname, value):
         if self.dsindex is None:
