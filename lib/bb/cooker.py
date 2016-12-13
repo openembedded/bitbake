@@ -1334,15 +1334,16 @@ class BBCooker:
             raise NoSpecificMatch
         return matches[0]
 
-    def buildFile(self, buildfile, task):
+    def buildFile(self, buildfile, task, hidewarning=False):
         """
         Build the file matching regexp buildfile
         """
         bb.event.fire(bb.event.BuildInit(), self.expanded_data)
 
-        # Too many people use -b because they think it's how you normally
-        # specify a target to be built, so show a warning
-        bb.warn("Buildfile specified, dependencies will not be handled. If this is not what you want, do not use -b / --buildfile.")
+        if not hidewarning:
+            # Too many people use -b because they think it's how you normally
+            # specify a target to be built, so show a warning
+            bb.warn("Buildfile specified, dependencies will not be handled. If this is not what you want, do not use -b / --buildfile.")
 
         # Parse the configuration here. We need to do it explicitly here since
         # buildFile() doesn't use the cache

@@ -549,8 +549,12 @@ class CommandsAsync:
         """
         bfile = params[0]
         task = params[1]
+        if len(params) > 2:
+            hidewarning = params[2]
+        else:
+            hidewarning = False
 
-        command.cooker.buildFile(bfile, task)
+        command.cooker.buildFile(bfile, task, hidewarning)
     buildFile.needcache = False
 
     def buildTargets(self, command, params):
