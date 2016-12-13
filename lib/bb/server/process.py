@@ -224,7 +224,6 @@ class BitBakeProcessServerConnection(BitBakeBaseServerConnection):
                 if isinstance(event, logging.LogRecord):
                     logger.handle(event)
 
-        signal.signal(signal.SIGINT, signal.SIG_IGN)
         self.procserver.stop()
 
         while self.procserver.is_alive():
