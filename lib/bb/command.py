@@ -493,6 +493,50 @@ class CommandsSync:
         varparse = bb.data_smart.VariableParse(varname, datastore)
         return varparse.python_sub(expr)
 
+    def dataStoreConnectorRelease(self, command, params):
+        dsindex = params[0]
+        if dsindex <= 0:
+            raise CommandError('dataStoreConnectorRelease: invalid index %d' % dsindex)
+        command.remotedatastores.release(dsindex)
+
+    def parseRecipeFile(self, command, params):
+        """
+        Parse the specified recipe file (with or without bbappends)
+        and return a datastore object representing the environment
+        for the recipe.
+        """
+        fn = params[0]
+        appends = params[1]
+        appendlist = params[2]
+        if len(params) > 3:
+            config_data_dict = params[3]
+            config_data = command.remotedatastores.receive_datastore(config_data_dict)
+        else:
+            config_data = None
+
+        if appends:
+            if appendlist is not None:
+                appendfiles = appendlist
+            else:
+                appendfiles = command.cooker.collection.get_file_appends(fn)
+        else:
+            appendfiles = []
+        # We are calling bb.cache locally here rather than on the server,
+        # but that's OK because it doesn't actually need anything from
+        # the server barring the global datastore (which we have a remote
+        # version of)
+        if config_data:
+            # We have to use a different function here if we're passing in a datastore
+            # NOTE: we took a copy above, so we don't do it here again
+            envdata = bb.cache.parse_recipe(config_data, fn, appendfiles)['']
+        else:
+            # Use the standard path
+            parser = bb.cache.NoCache(command.cooker.databuilder)
+            envdata = parser.loadDataFull(fn, appendfiles)
+        idx = command.remotedatastores.store(envdata)
+        return DataStoreConnectionHandle(idx)
+    parseRecipeFile.readonly = True
+
 class CommandsAsync:
     """
     A class of asynchronous commands

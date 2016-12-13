@@ -26,6 +26,7 @@ from collections import OrderedDict, defaultdict
 import bb.cache
 import bb.cooker
 import bb.providers
+import bb.taskdata
 import bb.utils
 import bb.command
 from bb.cookerdata import CookerConfiguration, ConfigParameters
@@ -90,7 +91,7 @@ class TinfoilCookerAdapter:
         def __init__(self, tinfoil):
             self.tinfoil = tinfoil
         def get_file_appends(self, fn):
-            return self.tinfoil.run_command('getFileAppends', fn)
+            return self.tinfoil.get_file_appends(fn)
         def __getattr__(self, name):
             if name == 'overlayed':
                 return self.tinfoil.get_overlayed_recipes()
@@ -305,6 +306,34 @@ class Tinfoil:
     def get_runtime_providers(self, rdep):
         return self.run_command('getRuntimeProviders', rdep)
 
+    def get_recipe_file(self, pn):
+        """
+        Get the file name for the specified recipe/target. Raises
+        bb.providers.NoProvider if there is no match or the recipe was
+        skipped.
+        """
+        best = self.find_best_provider(pn)
+        if not best:
+            skiplist = self.get_skipped_recipes()
+            taskdata = bb.taskdata.TaskData(None, skiplist=skiplist)
+            skipreasons = taskdata.get_reasons(pn)
+            if skipreasons:
+                raise bb.providers.NoProvider(skipreasons)
+            else:
+                raise bb.providers.NoProvider('Unable to find any recipe file matching %s' % pn)
+        return best[3]
+
+    def get_file_appends(self, fn):
+        return self.run_command('getFileAppends', fn)
+
+    def parse_recipe(self, pn):
+        """
+        Parse the specified recipe and return a datastore object
+        representing the environment for the recipe.
+        """
+        fn = self.get_recipe_file(pn)
+        return self.parse_recipe_file(fn)
+
     def parse_recipe_file(self, fn, appends=True, appendlist=None, config_data=None):
         """
         Parse the specified recipe file (with or without bbappends)
@@ -322,24 +351,15 @@ class Tinfoil:
         """
         if appends and appendlist == []:
             appends = False
-        if appends:
-            if appendlist:
-                appendfiles = appendlist
-            else:
-                if not hasattr(self.cooker, 'collection'):
-                    raise Exception('You must call tinfoil.prepare() with config_only=False in order to get bbappends')
-                appendfiles = self.cooker.collection.get_file_appends(fn)
-        else:
-            appendfiles = None
         if config_data:
-            # We have to use a different function here if we're passing in a datastore
-            localdata = bb.data.createCopy(config_data)
-            envdata = bb.cache.parse_recipe(localdata, fn, appendfiles)['']
+            dctr = bb.remotedata.RemoteDatastores.transmit_datastore(config_data)
+            dscon = self.run_command('parseRecipeFile', fn, appends, appendlist, dctr)
         else:
-            # Use the standard path
-            parser = bb.cache.NoCache(self.cooker.databuilder)
-            envdata = parser.loadDataFull(fn, appendfiles)
-        return envdata
+            dscon = self.run_command('parseRecipeFile', fn, appends, appendlist)
+        if dscon:
+            return self._reconvert_type(dscon, 'DataStoreConnectionHandle')
+        else:
+            return None
 
     def build_file(self, buildfile, task):
         """
