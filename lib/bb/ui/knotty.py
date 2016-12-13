@@ -312,7 +312,7 @@ class TerminalFilter(object):
             fd = sys.stdin.fileno()
             self.termios.tcsetattr(fd, self.termios.TCSADRAIN, self.stdinbackup)
 
-def _log_settings_from_server(server):
+def _log_settings_from_server(server, observe_only):
     # Get values of variables which control our output
     includelogs, error = server.runCommand(["getVariable", "BBINCLUDELOGS"])
     if error:
@@ -322,7 +322,11 @@ def _log_settings_from_server(server):
     if error:
         logger.error("Unable to get the value of BBINCLUDELOGS_LINES variable: %s" % error)
         raise BaseException(error)
-    consolelogfile, error = server.runCommand(["getSetVariable", "BB_CONSOLELOG"])
+    if observe_only:
+        cmd = 'getVariable'
+    else:
+        cmd = 'getSetVariable'
+    consolelogfile, error = server.runCommand([cmd, "BB_CONSOLELOG"])
     if error:
         logger.error("Unable to get the value of BB_CONSOLELOG variable: %s" % error)
         raise BaseException(error)
@@ -340,7 +344,7 @@ _evt_list = [ "bb.runqueue.runQueueExitWait", "bb.event.LogExecTTY", "logging.Lo
 
 def main(server, eventHandler, params, tf = TerminalFilter):
 
-    includelogs, loglines, consolelogfile = _log_settings_from_server(server)
+    includelogs, loglines, consolelogfile = _log_settings_from_server(server, params.observe_only)
 
     if sys.stdin.isatty() and sys.stdout.isatty():
         log_exec_tty = True
