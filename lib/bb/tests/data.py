@@ -446,6 +446,29 @@ class Contains(unittest.TestCase):
         self.assertFalse(bb.utils.contains_any("SOMEFLAG", "x y z", True, False, self.d))
 
 
+class Serialize(unittest.TestCase):
+
+    def test_serialize(self):
+        import tempfile
+        import pickle
+        d = bb.data.init()
+        d.enableTracking()
+        d.setVar('HELLO', 'world')
+        d.setVarFlag('HELLO', 'other', 'planet')
+        with tempfile.NamedTemporaryFile(delete=False) as tmpfile:
+            tmpfilename = tmpfile.name
+            pickle.dump(d, tmpfile)
+
+        with open(tmpfilename, 'rb') as f:
+            newd = pickle.load(f)
+
+        os.remove(tmpfilename)
+
+        self.assertEqual(d, newd)
+        self.assertEqual(newd.getVar('HELLO', True), 'world')
+        self.assertEqual(newd.getVarFlag('HELLO', 'other'), 'planet')
+
+
 class Remote(unittest.TestCase):
     def test_remote(self):
         class TestConnector:

@@ -230,6 +230,19 @@ class VariableHistory(object):
         new.variables = self.variables.copy()
         return new
 
+    def __getstate__(self):
+        vardict = {}
+        for k, v in self.variables.iteritems():
+            vardict[k] = v
+        return {'dataroot': self.dataroot,
+                'variables': vardict}
+
+    def __setstate__(self, state):
+        self.dataroot = state['dataroot']
+        self.variables = COWDictBase.copy()
+        for k, v in state['variables'].items():
+            self.variables[k] = v
+
     def record(self, *kwonly, **loginfo):
         if not self.dataroot._tracking:
             return
