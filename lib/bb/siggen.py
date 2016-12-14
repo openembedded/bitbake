@@ -101,7 +101,7 @@ class SignatureGeneratorBasic(SignatureGenerator):
 
     def _build_data(self, fn, d):
 
-        ignore_mismatch = ((d.getVar("BB_HASH_IGNORE_MISMATCH", True) or '') == '1')
+        ignore_mismatch = ((d.getVar("BB_HASH_IGNORE_MISMATCH") or '') == '1')
         tasklist, gendeps, lookupcache = bb.data.generate_dependencies(d)
 
         taskdeps = {}

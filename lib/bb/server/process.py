@@ -103,7 +103,7 @@ class ProcessServer(Process, BaseImplServer):
             self.event_queue.put(event)
         self.event_handle.value = bb.event.register_UIHhandler(self, True)
 
-        heartbeat_event = self.cooker.data.getVar('BB_HEARTBEAT_EVENT', True)
+        heartbeat_event = self.cooker.data.getVar('BB_HEARTBEAT_EVENT')
         if heartbeat_event:
             try:
                 self.heartbeat_seconds = float(heartbeat_event)

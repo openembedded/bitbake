@@ -465,7 +465,7 @@ class Serialize(unittest.TestCase):
         os.remove(tmpfilename)
 
         self.assertEqual(d, newd)
-        self.assertEqual(newd.getVar('HELLO', True), 'world')
+        self.assertEqual(newd.getVar('HELLO'), 'world')
         self.assertEqual(newd.getVarFlag('HELLO', 'other'), 'planet')
 
 
