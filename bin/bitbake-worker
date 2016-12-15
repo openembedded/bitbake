@@ -136,7 +136,7 @@ def sigterm_handler(signum, frame):
     os.killpg(0, signal.SIGTERM)
     sys.exit()
 
-def fork_off_task(cfg, data, databuilder, workerdata, fn, task, taskname, appends, taskdepdata, extraconfigdata, quieterrors=False):
+def fork_off_task(cfg, data, databuilder, workerdata, fn, task, taskname, appends, taskdepdata, extraconfigdata, quieterrors=False, dry_run_exec=False):
     # We need to setup the environment BEFORE the fork, since
     # a fork() or exec*() activates PSEUDO...
 
@@ -152,8 +152,10 @@ def fork_off_task(cfg, data, databuilder, workerdata, fn, task, taskname, append
         except TypeError:
              umask = taskdep['umask'][taskname]
 
+    dry_run = cfg.dry_run or dry_run_exec
+
     # We can't use the fakeroot environment in a dry run as it possibly hasn't been built
-    if 'fakeroot' in taskdep and taskname in taskdep['fakeroot'] and not cfg.dry_run:
+    if 'fakeroot' in taskdep and taskname in taskdep['fakeroot'] and not dry_run:
         envvars = (workerdata["fakerootenv"][fn] or "").split()
         for key, value in (var.split('=') for var in envvars):
             envbackup[key] = os.environ.get(key)
@@ -263,7 +265,7 @@ def fork_off_task(cfg, data, databuilder, workerdata, fn, task, taskname, append
                     logger.critical(traceback.format_exc())
                 os._exit(1)
             try:
-                if cfg.dry_run:
+                if dry_run:
                     return 0
                 return bb.build.exec_task(fn, taskname, the_data, cfg.profile)
             except:
@@ -421,10 +423,10 @@ class BitbakeWorker(object):
         sys.exit(0)
 
     def handle_runtask(self, data):
-        fn, task, taskname, quieterrors, appends, taskdepdata = pickle.loads(data)
+        fn, task, taskname, quieterrors, appends, taskdepdata, dry_run_exec = pickle.loads(data)
         workerlog_write("Handling runtask %s %s %s\n" % (task, fn, taskname))
 
-        pid, pipein, pipeout = fork_off_task(self.cookercfg, self.data, self.databuilder, self.workerdata, fn, task, taskname, appends, taskdepdata, self.extraconfigdata, quieterrors)
+        pid, pipein, pipeout = fork_off_task(self.cookercfg, self.data, self.databuilder, self.workerdata, fn, task, taskname, appends, taskdepdata, self.extraconfigdata, quieterrors, dry_run_exec)
 
         self.build_pids[pid] = task
         self.build_pipes[pid] = runQueueWorkerPipe(pipein, pipeout)
