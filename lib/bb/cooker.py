@@ -367,9 +367,7 @@ class BBCooker:
         # Copy of the data store which has been expanded.
         # Used for firing events and accessing variables where expansion needs to be accounted for
         #
-        self.expanded_data = bb.data.createCopy(self.data)
-        bb.data.update_data(self.expanded_data)
-        bb.parse.init_parser(self.expanded_data)
+        bb.parse.init_parser(self.data)
 
         if CookerFeatures.BASEDATASTORE_TRACKING in self.featureset:
             self.disableDataTracking()
@@ -619,7 +617,7 @@ class BBCooker:
             fn = self.matchFile(fn)
             fn = bb.cache.realfn2virtual(fn, cls, mc)
         elif len(pkgs_to_build) == 1:
-            ignore = self.expanded_data.getVar("ASSUME_PROVIDED") or ""
+            ignore = self.data.getVar("ASSUME_PROVIDED") or ""
             if pkgs_to_build[0] in set(ignore.split()):
                 bb.fatal("%s is in ASSUME_PROVIDED" % pkgs_to_build[0])
 
@@ -1090,7 +1088,7 @@ class BBCooker:
     def findBestProvider(self, pn, mc=''):
         if pn in self.recipecaches[mc].providers:
             filenames = self.recipecaches[mc].providers[pn]
-            eligible, foundUnique = bb.providers.filterProviders(filenames, pn, self.expanded_data, self.recipecaches[mc])
+            eligible, foundUnique = bb.providers.filterProviders(filenames, pn, self.data, self.recipecaches[mc])
             filename = eligible[0]
             return None, None, None, filename
         elif pn in self.recipecaches[mc].pkg_pn:
@@ -1304,7 +1302,7 @@ class BBCooker:
             bf = os.path.abspath(bf)
 
         self.collection = CookerCollectFiles(self.bbfile_config_priorities)
-        filelist, masked = self.collection.collect_bbfiles(self.data, self.expanded_data)
+        filelist, masked = self.collection.collect_bbfiles(self.data, self.data)
         try:
             os.stat(bf)
             bf = os.path.abspath(bf)
@@ -1339,7 +1337,7 @@ class BBCooker:
         """
         Build the file matching regexp buildfile
         """
-        bb.event.fire(bb.event.BuildInit(), self.expanded_data)
+        bb.event.fire(bb.event.BuildInit(), self.data)
 
         if not hidewarning:
             # Too many people use -b because they think it's how you normally
@@ -1399,7 +1397,7 @@ class BBCooker:
         taskdata[mc].add_provider(self.data, self.recipecaches[mc], item)
 
         buildname = self.data.getVar("BUILDNAME")
-        bb.event.fire(bb.event.BuildStarted(buildname, [item]), self.expanded_data)
+        bb.event.fire(bb.event.BuildStarted(buildname, [item]), self.data)
 
         # Execute the runqueue
         runlist = [[mc, item, task, fn]]
@@ -1429,7 +1427,7 @@ class BBCooker:
                 return False
 
             if not retval:
-                bb.event.fire(bb.event.BuildCompleted(len(rq.rqdata.runtaskentries), buildname, item, failures, interrupted), self.expanded_data)
+                bb.event.fire(bb.event.BuildCompleted(len(rq.rqdata.runtaskentries), buildname, item, failures, interrupted), self.data)
                 self.command.finishAsyncCommand(msg)
                 return False
             if retval is True:
@@ -1484,7 +1482,7 @@ class BBCooker:
 
         packages = [target if ':' in target else '%s:%s' % (target, task) for target in targets]
 
-        bb.event.fire(bb.event.BuildInit(packages), self.expanded_data)
+        bb.event.fire(bb.event.BuildInit(packages), self.data)
 
         taskdata, runlist = self.buildTaskData(targets, task, self.configuration.abort)
 
@@ -1622,7 +1620,7 @@ class BBCooker:
                     self.recipecaches[mc].ignored_dependencies.add(dep)
 
             self.collection = CookerCollectFiles(self.bbfile_config_priorities)
-            (filelist, masked) = self.collection.collect_bbfiles(self.data, self.expanded_data)
+            (filelist, masked) = self.collection.collect_bbfiles(self.data, self.data)
 
             self.parser = CookerParser(self, filelist, masked)
             self.parsecache_valid = True
@@ -1656,7 +1654,7 @@ class BBCooker:
         if len(pkgs_to_build) == 0:
             raise NothingToBuild
 
-        ignore = (self.expanded_data.getVar("ASSUME_PROVIDED") or "").split()
+        ignore = (self.data.getVar("ASSUME_PROVIDED") or "").split()
         for pkg in pkgs_to_build:
             if pkg in ignore:
                 parselog.warning("Explicit target \"%s\" is in ASSUME_PROVIDED, ignoring" % pkg)
@@ -1689,13 +1687,13 @@ class BBCooker:
         try:
             self.prhost = prserv.serv.auto_start(self.data)
         except prserv.serv.PRServiceConfigError:
-            bb.event.fire(CookerExit(), self.expanded_data)
+            bb.event.fire(CookerExit(), self.data)
             self.state = state.error
         return
 
     def post_serve(self):
         prserv.serv.auto_shutdown(self.data)
-        bb.event.fire(CookerExit(), self.expanded_data)
+        bb.event.fire(CookerExit(), self.data)
         lockfile = self.lock.name
         self.lock.close()
         self.lock = None
