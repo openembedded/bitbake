@@ -305,11 +305,23 @@ class Wget(FetchMethod):
             r = urllib.request.Request(uri)
             r.get_method = lambda: "HEAD"
 
-            if ud.user:
+            def add_basic_auth(login_str, request):
+                '''Adds Basic auth to http request, pass in login:password as string'''
                 import base64
-                encodeuser = base64.b64encode(ud.user.encode('utf-8')).decode("utf-8")
+                encodeuser = base64.b64encode(login_str.encode('utf-8')).decode("utf-8")
                 authheader =  "Basic %s" % encodeuser
                 r.add_header("Authorization", authheader)
+
+            if ud.user:
+                add_basic_auth(ud.user, r)
+
+            try:
+                import netrc, urllib.parse
+                n = netrc.netrc()
+                login, unused, password = n.authenticators(urllib.parse.urlparse(uri).hostname)
+                add_basic_auth("%s:%s" % (login, password), r)
+            except (ImportError, IOError, netrc.NetrcParseError):
+                 pass
 
             opener.open(r)
         except urllib.error.URLError as e:
