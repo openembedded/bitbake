@@ -92,6 +92,7 @@ class TaskBase(event.Event):
     def __init__(self, t, logfile, d):
         self._task = t
         self._package = d.getVar("PF")
+        self._mc = d.getVar("BB_CURRENT_MC")
         self.taskfile = d.getVar("FILE")
         self.taskname = self._task
         self.logfile = logfile
