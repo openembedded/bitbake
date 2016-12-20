@@ -352,9 +352,14 @@ def dump_this_task(outfile, d):
     bb.parse.siggen.dump_sigtask(fn, task, outfile, "customfile:" + referencestamp)
 
 def clean_basepath(a):
+    mc = None
+    if a.startswith("multiconfig:"):
+        _, mc, a = a.split(":", 2)
     b = a.rsplit("/", 2)[1] + a.rsplit("/", 2)[2]
     if a.startswith("virtual:"):
         b = b + ":" + a.rsplit(":", 1)[0]
+    if mc:
+        b = b + ":multiconfig:" + mc
     return b
 
 def clean_basepaths(a):
