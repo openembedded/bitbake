@@ -1004,8 +1004,9 @@ class RunQueue:
             magic = "decafbadbad"
         if fakeroot:
             magic = magic + "beef"
-            fakerootcmd = self.cfgData.getVar("FAKEROOTCMD")
-            fakerootenv = (self.cfgData.getVar("FAKEROOTBASEENV") or "").split()
+            mcdata = self.cooker.databuilder.mcdata[mc]
+            fakerootcmd = mcdata.getVar("FAKEROOTCMD")
+            fakerootenv = (mcdata.getVar("FAKEROOTBASEENV") or "").split()
             env = os.environ.copy()
             for key, value in (var.split('=') for var in fakerootenv):
                 env[key] = value
