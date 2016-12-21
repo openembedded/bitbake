@@ -1060,10 +1060,9 @@ class RunQueue:
         for mc in self.rqdata.dataCaches:
             self.worker[mc] = self._start_worker(mc)
 
-    def start_fakeworker(self, rqexec):
-        if not self.fakeworker:
-            for mc in self.rqdata.dataCaches:
-                self.fakeworker[mc] = self._start_worker(mc, True, rqexec)
+    def start_fakeworker(self, rqexec, mc):
+        if not mc in self.fakeworker:
+            self.fakeworker[mc] = self._start_worker(mc, True, rqexec)
 
     def teardown_workers(self):
         self.teardown = True
@@ -1788,9 +1787,9 @@ class RunQueueExecuteTasks(RunQueueExecute):
 
             taskdep = self.rqdata.dataCaches[mc].task_deps[taskfn]
             if 'fakeroot' in taskdep and taskname in taskdep['fakeroot'] and not self.cooker.configuration.dry_run:
-                if not self.rq.fakeworker:
+                if not mc in self.rq.fakeworker:
                     try:
-                        self.rq.start_fakeworker(self)
+                        self.rq.start_fakeworker(self, mc)
                     except OSError as exc:
                         logger.critical("Failed to spawn fakeroot worker to run %s: %s" % (task, str(exc)))
                         self.rq.state = runQueueFailed
@@ -2202,8 +2201,8 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
 
             taskdep = self.rqdata.dataCaches[mc].task_deps[taskfn]
             if 'fakeroot' in taskdep and taskname in taskdep['fakeroot'] and not self.cooker.configuration.dry_run:
-                if not self.rq.fakeworker:
-                    self.rq.start_fakeworker(self)
+                if not mc in self.rq.fakeworker:
+                    self.rq.start_fakeworker(self, mc)
                 self.rq.fakeworker[mc].process.stdin.write(b"<runtask>" + pickle.dumps((taskfn, task, taskname, True, self.cooker.collection.get_file_appends(taskfn), None)) + b"</runtask>")
                 self.rq.fakeworker[mc].process.stdin.flush()
             else:
