@@ -307,8 +307,8 @@ class SignatureGeneratorBasic(SignatureGenerator):
                 pass
             raise err
 
-    def dump_sigs(self, dataCaches, options):
-        for fn in self.taskdeps:
+    def dump_sigfn(self, fn, dataCaches, options):
+        if fn in self.taskdeps:
             for task in self.taskdeps[fn]:
                 tid = fn + ":" + task
                 (mc, _, _) = bb.runqueue.split_tid(tid)
