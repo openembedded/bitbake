@@ -1886,6 +1886,7 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
         sq_revdeps_new = {}
         sq_revdeps_squash = {}
         self.sq_harddeps = {}
+        self.stamps = {}
 
         # We need to construct a dependency graph for the setscene functions. Intermediate
         # dependencies between the setscene tasks only complicate the code. This code
@@ -1999,6 +2000,7 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
                 (mc, fn, taskname, taskfn) = split_tid_mcfn(tid)
                 realtid = tid + "_setscene"
                 idepends = self.rqdata.taskData[mc].taskentries[realtid].idepends
+                self.stamps[tid] = bb.build.stampfile(taskname + "_setscene", self.rqdata.dataCaches[mc], taskfn, noextra=True)
                 for (depname, idependtask) in idepends:
 
                     if depname not in self.rqdata.taskData[mc].build_targets:
@@ -2175,7 +2177,7 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
         if self.stats.active < self.number_tasks:
             # Find the next setscene to run
             for nexttask in self.rqdata.runq_setscene_tids:
-                if nexttask in self.runq_buildable and nexttask not in self.runq_running:
+                if nexttask in self.runq_buildable and nexttask not in self.runq_running and self.stamps[nexttask] not in self.build_stamps.values():
                     if nexttask in self.unskippable:
                         logger.debug(2, "Setscene task %s is unskippable" % nexttask)
                     if nexttask not in self.unskippable and len(self.sq_revdeps[nexttask]) > 0 and self.sq_revdeps[nexttask].issubset(self.scenequeue_covered) and self.check_dependencies(nexttask, self.sq_revdeps[nexttask], True):
@@ -2227,6 +2229,8 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
                 self.rq.worker[mc].process.stdin.write(b"<runtask>" + pickle.dumps((taskfn, task, taskname, True, self.cooker.collection.get_file_appends(taskfn), taskdepdata, False)) + b"</runtask>")
                 self.rq.worker[mc].process.stdin.flush()
 
+            self.build_stamps[task] = bb.build.stampfile(taskname, self.rqdata.dataCaches[mc], taskfn, noextra=True)
+            self.build_stamps2.append(self.build_stamps[task])
             self.runq_running.add(task)
             self.stats.taskActive()
             if self.stats.active < self.number_tasks:
