@@ -242,12 +242,25 @@ class PRServer(SimpleXMLRPCServer):
 
         sys.stdout.flush()
         sys.stderr.flush()
+
+        # We could be called from a python thread with io.StringIO as
+        # stdout/stderr or it could be 'real' unix fd forking where we need
+        # to physically close the fds to prevent the program launching us from
+        # potentially hanging on a pipe. Handle both cases.
         si = open('/dev/null', 'r')
+        try:
+            os.dup2(si.fileno(),sys.stdin.fileno())
+        except (AttributeError, io.UnsupportedOperation):
+            sys.stdin = si
         so = open(self.logfile, 'a+')
-        se = so
-        os.dup2(si.fileno(),sys.stdin.fileno())
-        os.dup2(so.fileno(),sys.stdout.fileno())
-        os.dup2(se.fileno(),sys.stderr.fileno())
+        try:
+            os.dup2(so.fileno(),sys.stdout.fileno())
+        except (AttributeError, io.UnsupportedOperation):
+            sys.stdout = so
+        try:
+            os.dup2(so.fileno(),sys.stderr.fileno())
+        except (AttributeError, io.UnsupportedOperation):
+            sys.stderr = so
 
         # Clear out all log handlers prior to the fork() to avoid calling
         # event handlers not part of the PRserver
