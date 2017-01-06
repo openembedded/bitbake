@@ -28,11 +28,7 @@ import sys
 import warnings
 from bb.compat import total_ordering
 from collections import Mapping
-
-try:
-    import sqlite3
-except ImportError:
-    from pysqlite2 import dbapi2 as sqlite3
+import sqlite3
 
 sqlversion = sqlite3.sqlite_version_info
 if sqlversion[0] < 3 or (sqlversion[0] == 3 and sqlversion[1] < 3):

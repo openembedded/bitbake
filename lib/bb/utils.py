@@ -523,12 +523,8 @@ def md5_file(filename):
     """
     Return the hex string representation of the MD5 checksum of filename.
     """
-    try:
-        import hashlib
-        m = hashlib.md5()
-    except ImportError:
-        import md5
-        m = md5.new()
+    import hashlib
+    m = hashlib.md5()
 
     with open(filename, "rb") as f:
         for line in f:
@@ -538,14 +534,9 @@ def md5_file(filename):
 def sha256_file(filename):
     """
     Return the hex string representation of the 256-bit SHA checksum of
-    filename.  On Python 2.4 this will return None, so callers will need to
-    handle that by either skipping SHA checks, or running a standalone sha256sum
-    binary.
+    filename.
     """
-    try:
-        import hashlib
-    except ImportError:
-        return None
+    import hashlib
 
     s = hashlib.sha256()
     with open(filename, "rb") as f:
@@ -557,10 +548,7 @@ def sha1_file(filename):
     """
     Return the hex string representation of the SHA1 checksum of the filename
     """
-    try:
-        import hashlib
-    except ImportError:
-        return None
+    import hashlib
 
     s = hashlib.sha1()
     with open(filename, "rb") as f:
