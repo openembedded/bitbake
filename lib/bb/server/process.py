@@ -233,6 +233,9 @@ class BitBakeProcessServerConnection(BitBakeBaseServerConnection):
         self.ui_channel.close()
         self.event_queue.close()
         self.event_queue.setexit()
+        # XXX: Call explicity close in _writer to avoid
+        # fd leakage because isn't called on Queue.close()
+        self.event_queue._writer.close()
 
 # Wrap Queue to provide API which isn't server implementation specific
 class ProcessEventQueue(multiprocessing.queues.Queue):
@@ -263,7 +266,6 @@ class ProcessEventQueue(multiprocessing.queues.Queue):
             if self.exit:
                 sys.exit(1)
             return None
-
 
 class BitBakeServer(BitBakeBaseServer):
     def initServer(self, single_use=True):
