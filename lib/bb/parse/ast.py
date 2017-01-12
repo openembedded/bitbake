@@ -358,6 +358,7 @@ def finalize(fn, d, variant = None):
     bb.data.update_data(d)
 
     tasklist = d.getVar('__BBTASKS', False) or []
+    bb.event.fire(bb.event.RecipeTaskPreProcess(fn, list(tasklist)), d)
     bb.build.add_tasks(tasklist, d)
 
     bb.parse.siggen.finalise(fn, d, variant)
