@@ -108,7 +108,7 @@ class GitSM(Git):
         os.rename(ud.clonedir, gitdir)
         runfetchcmd("sed " + gitdir + "/config -i -e 's/bare.*=.*true/bare = false/'", d)
         runfetchcmd(ud.basecmd + " reset --hard", d, workdir=tmpclonedir)
-        runfetchcmd(ud.basecmd + " checkout " + ud.revisions[ud.names[0]], d, workdir=tmpclonedir)
+        runfetchcmd(ud.basecmd + " checkout -f " + ud.revisions[ud.names[0]], d, workdir=tmpclonedir)
         runfetchcmd(ud.basecmd + " submodule update --init --recursive", d, workdir=tmpclonedir)
         self._set_relative_paths(tmpclonedir)
         runfetchcmd("sed " + gitdir + "/config -i -e 's/bare.*=.*false/bare = true/'", d, workdir=tmpclonedir)
