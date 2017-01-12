@@ -242,17 +242,22 @@ skipped recipes will also be listed, with a " (skipped)" suffix.
 
 Lists recipes with the bbappends that apply to them as subitems.
 """
-
-        logger.plain('=== Appended recipes ===')
+        if args.pnspec:
+            logger.plain('=== Matched appended recipes ===')
+        else:
+            logger.plain('=== Appended recipes ===')
 
         pnlist = list(self.tinfoil.cooker_data.pkg_pn.keys())
         pnlist.sort()
         appends = False
         for pn in pnlist:
+            if args.pnspec and pn != args.pnspec:
+                continue
+
             if self.show_appends_for_pn(pn):
                 appends = True
 
-        if self.show_appends_for_skipped():
+        if not args.pnspec and self.show_appends_for_skipped():
             appends = True
 
         if not appends:
@@ -477,7 +482,8 @@ NOTE: .bbappend files can impact the dependencies.
         parser_show_recipes.add_argument('-i', '--inherits', help='only list recipes that inherit the named class', metavar='CLASS', default='')
         parser_show_recipes.add_argument('pnspec', nargs='?', help='optional recipe name specification (wildcards allowed, enclose in quotes to avoid shell expansion)')
 
-        self.add_command(sp, 'show-appends', self.do_show_appends)
+        parser_show_appends = self.add_command(sp, 'show-appends', self.do_show_appends)
+        parser_show_appends.add_argument('pnspec', nargs='?', help='optional recipe name specification (wildcards allowed, enclose in quotes to avoid shell expansion)')
 
         parser_show_cross_depends = self.add_command(sp, 'show-cross-depends', self.do_show_cross_depends)
         parser_show_cross_depends.add_argument('-f', '--filenames', help='show full file path', action='store_true')
