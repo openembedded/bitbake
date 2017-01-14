@@ -222,6 +222,8 @@ def fork_off_task(cfg, data, databuilder, workerdata, fn, task, taskname, append
                 the_data = databuilder.mcdata[mc]
                 the_data.setVar("BB_WORKERCONTEXT", "1")
                 the_data.setVar("BB_TASKDEPDATA", taskdepdata)
+                if cfg.limited_deps:
+                    the_data.setVar("BB_LIMITEDDEPS", "1")
                 the_data.setVar("BUILDNAME", workerdata["buildname"])
                 the_data.setVar("DATE", workerdata["date"])
                 the_data.setVar("TIME", workerdata["time"])

@@ -1409,6 +1409,7 @@ class BBCooker:
         item = info_array[0].pn
         self.recipecaches[mc].ignored_dependencies = set()
         self.recipecaches[mc].bbfile_priority[fn] = 1
+        self.configuration.limited_deps = True
 
         # Remove external dependencies
         self.recipecaches[mc].task_deps[fn]['depends'] = {}
