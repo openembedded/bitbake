@@ -666,7 +666,37 @@ class BBCooker:
         if not task.startswith("do_"):
             task = "do_%s" % task
 
-        fulltargetlist = self.checkPackages(pkgs_to_build, task)
+        targetlist = self.checkPackages(pkgs_to_build, task)
+        fulltargetlist = []
+        defaulttask_implicit = ''
+        defaulttask_explicit = False
+        wildcard = False
+
+        # Wild card expansion:
+        # Replace string such as "multiconfig:*:bash"
+        # into "multiconfig:A:bash multiconfig:B:bash bash"
+        for k in targetlist:
+            if k.startswith("multiconfig:"):
+                if wildcard:
+                    bb.fatal('multiconfig conflict')
+                if k.split(":")[1] == "*":
+                    wildcard = True
+                    for mc in self.multiconfigs:
+                        if mc:
+                            fulltargetlist.append(k.replace('*', mc))
+                        # implicit default task
+                        else:
+                            defaulttask_implicit = k.split(":")[2]
+                else:
+                    fulltargetlist.append(k)
+            else:
+                defaulttask_explicit = True
+                fulltargetlist.append(k)
+
+        if not defaulttask_explicit and defaulttask_implicit != '':
+            fulltargetlist.append(defaulttask_implicit)
+
+        bb.debug(1,"Target list: %s" % (str(fulltargetlist)))
         taskdata = {}
         localdata = {}
 
