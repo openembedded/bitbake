@@ -1704,6 +1704,15 @@ class BBCooker:
             pkgs_to_build.remove('universe')
             for mc in self.multiconfigs:
                 for t in self.recipecaches[mc].universe_target:
+                    if task:
+                        foundtask = False
+                        for provider_fn in self.recipecaches[mc].providers[t]:
+                            if task in self.recipecaches[mc].task_deps[provider_fn]['tasks']:
+                                foundtask = True
+                                break
+                        if not foundtask:
+                            bb.debug(1, "Skipping %s for universe tasks as task %s doesn't exist" % (t, task))
+                            continue
                     if mc:
                         t = "multiconfig:" + mc + ":" + t
                     pkgs_to_build.append(t)
