@@ -567,6 +567,8 @@ class RunQueueData:
                 for (depname, idependtask) in irdepends:
                     if depname in taskData[mc].run_targets:
                         # Won't be in run_targets if ASSUME_PROVIDED
+                        if not taskData[mc].run_targets[depname]:
+                            continue
                         depdata = taskData[mc].run_targets[depname][0]
                         if depdata is not None:
                             t = depdata + ":" + idependtask
