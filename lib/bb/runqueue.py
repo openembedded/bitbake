@@ -184,6 +184,18 @@ class RunQueueScheduler(object):
     def newbuilable(self, task):
         self.buildable.append(task)
 
+    def describe_task(self, taskid):
+        result = 'ID %s' % taskid
+        if self.rev_prio_map:
+            result = result + (' pri %d' % self.rev_prio_map[taskid])
+        return result
+
+    def dump_prio(self, comment):
+        bb.debug(3, '%s (most important first):\n%s' %
+                 (comment,
+                  '\n'.join(['%d. %s' % (index + 1, self.describe_task(taskid)) for
+                             index, taskid in enumerate(self.prio_map)])))
+
 class RunQueueSchedulerSpeed(RunQueueScheduler):
     """
     A scheduler optimised for speed. The priority map is sorted by task weight,
@@ -213,35 +225,100 @@ class RunQueueSchedulerSpeed(RunQueueScheduler):
 
 class RunQueueSchedulerCompletion(RunQueueSchedulerSpeed):
     """
-    A scheduler optimised to complete .bb files are quickly as possible. The
+    A scheduler optimised to complete .bb files as quickly as possible. The
     priority map is sorted by task weight, but then reordered so once a given
-    .bb file starts to build, it's completed as quickly as possible. This works
-    well where disk space is at a premium and classes like OE's rm_work are in
-    force.
+    .bb file starts to build, it's completed as quickly as possible by
+    running all tasks related to the same .bb file one after the after.
+    This works well where disk space is at a premium and classes like OE's
+    rm_work are in force.
     """
     name = "completion"
 
     def __init__(self, runqueue, rqdata):
-        RunQueueSchedulerSpeed.__init__(self, runqueue, rqdata)
+        super(RunQueueSchedulerCompletion, self).__init__(runqueue, rqdata)
 
-        #FIXME - whilst this groups all fns together it does not reorder the
-        #fn groups optimally.
+        # Extract list of tasks for each recipe, with tasks sorted
+        # ascending from "must run first" (typically do_fetch) to
+        # "runs last" (do_build). The speed scheduler prioritizes
+        # tasks that must run first before the ones that run later;
+        # this is what we depend on here.
+        task_lists = {}
+        for taskid in self.prio_map:
+            fn, taskname = taskid.rsplit(':', 1)
+            task_lists.setdefault(fn, []).append(taskname)
 
-        basemap = copy.deepcopy(self.prio_map)
-        self.prio_map = []
-        while (len(basemap) > 0):
-            entry = basemap.pop(0)
-            self.prio_map.append(entry)
-            fn = fn_from_tid(entry)
-            todel = []
-            for entry in basemap:
-                entry_fn = fn_from_tid(entry)
-                if entry_fn == fn:
-                    todel.append(basemap.index(entry))
-                    self.prio_map.append(entry)
-            todel.reverse()
-            for idx in todel:
-                del basemap[idx]
+        # Now unify the different task lists. The strategy is that
+        # common tasks get skipped and new ones get inserted after the
+        # preceeding common one(s) as they are found. Because task
+        # lists should differ only by their number of tasks, but not
+        # the ordering of the common tasks, this should result in a
+        # deterministic result that is a superset of the individual
+        # task ordering.
+        all_tasks = []
+        for recipe, new_tasks in task_lists.items():
+            index = 0
+            old_task = all_tasks[index] if index < len(all_tasks) else None
+            for new_task in new_tasks:
+                if old_task == new_task:
+                    # Common task, skip it. This is the fast-path which
+                    # avoids a full search.
+                    index += 1
+                    old_task = all_tasks[index] if index < len(all_tasks) else None
+                else:
+                    try:
+                        index = all_tasks.index(new_task)
+                        # Already present, just not at the current
+                        # place. We re-synchronized by changing the
+                        # index so that it matches again. Now
+                        # move on to the next existing task.
+                        index += 1
+                        old_task = all_tasks[index] if index < len(all_tasks) else None
+                    except ValueError:
+                        # Not present. Insert before old_task, which
+                        # remains the same (but gets shifted back).
+                        all_tasks.insert(index, new_task)
+                        index += 1
+        bb.debug(3, 'merged task list: %s'  % all_tasks)
+
+        # Now reverse the order so that tasks that finish the work on one
+        # recipe are considered more imporant (= come first). The ordering
+        # is now so that do_build is most important.
+        all_tasks.reverse()
+
+        # Group tasks of the same kind before tasks of less important
+        # kinds at the head of the queue (because earlier = lower
+        # priority number = runs earlier), while preserving the
+        # ordering by recipe. If recipe foo is more important than
+        # bar, then the goal is to work on foo's do_populate_sysroot
+        # before bar's do_populate_sysroot and on the more important
+        # tasks of foo before any of the less important tasks in any
+        # other recipe (if those other recipes are more important than
+        # foo).
+        #
+        # All of this only applies when tasks are runable. Explicit
+        # dependencies still override this ordering by priority.
+        #
+        # Here's an example why this priority re-ordering helps with
+        # minimizing disk usage. Consider a recipe foo with a higher
+        # priority than bar where foo DEPENDS on bar. Then the
+        # implicit rule (from base.bbclass) is that foo's do_configure
+        # depends on bar's do_populate_sysroot. This ensures that
+        # bar's do_populate_sysroot gets done first. Normally the
+        # tasks from foo would continue to run once that is done, and
+        # bar only gets completed and cleaned up later. By ordering
+        # bar's task that depend on bar's do_populate_sysroot before foo's
+        # do_configure, that problem gets avoided.
+        task_index = 0
+        self.dump_prio('original priorities')
+        for task in all_tasks:
+            for index in range(task_index, self.numTasks):
+                taskid = self.prio_map[index]
+                taskname = taskid.rsplit(':', 1)[1]
+                if taskname == task:
+                    del self.prio_map[index]
+                    self.prio_map.insert(task_index, taskid)
+                    task_index += 1
+        self.dump_prio('completion priorities')
 
 class RunTaskEntry(object):
     def __init__(self):
