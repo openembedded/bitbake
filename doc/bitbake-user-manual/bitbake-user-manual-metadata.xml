@@ -2017,7 +2017,7 @@
             With the <filename>getName(e)</filename> method, you can get
             the name of the triggered event.
             The global datastore is available as "d".
-            In legacy code, you might see "e.data" used to get the datastore".
+            In legacy code, you might see "e.data" used to get the datastore.
             However, realize that "e.data" is deprecated and you should use
             "d" going forward.
         </para>
