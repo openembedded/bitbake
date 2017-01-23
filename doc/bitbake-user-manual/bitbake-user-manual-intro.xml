@@ -669,13 +669,18 @@
                     When you generate a dependency graph, BitBake writes three files
                     to the current working directory:
                     <itemizedlist>
-                        <listitem><para><emphasis><filename>recipe-depends.dot</filename>:</emphasis>
-                            Shows dependencies between recipes (a collapsed version of task-depends.dot).
+                        <listitem><para>
+                            <emphasis><filename>recipe-depends.dot</filename>:</emphasis>
+                            Shows dependencies between recipes (i.e. a collapsed version of
+                            <filename>task-depends.dot</filename>).
                             </para></listitem>
-                        <listitem><para><emphasis><filename>task-depends.dot</filename>:</emphasis>
-                            Shows dependencies between tasks. This matches bitbake's internal task execution list.
+                        <listitem><para>
+                            <emphasis><filename>task-depends.dot</filename>:</emphasis>
+                            Shows dependencies between tasks.
+                            These dependencies match BitBake's internal task execution list.
                             </para></listitem>
-                        <listitem><para><emphasis><filename>pn-buildlist</filename>:</emphasis>
+                        <listitem><para>
+                            <emphasis><filename>pn-buildlist</filename>:</emphasis>
                             Shows a simple list of targets that are to be built.
                             </para></listitem>
                     </itemizedlist>
