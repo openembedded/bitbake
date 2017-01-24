@@ -195,13 +195,13 @@ def exec_func(func, d, dirs = None, pythonexception=False):
         oldcwd = None
 
     flags = d.getVarFlags(func)
-    cleandirs = flags.get('cleandirs')
+    cleandirs = flags.get('cleandirs') if flags else None
     if cleandirs:
         for cdir in d.expand(cleandirs).split():
             bb.utils.remove(cdir, True)
             bb.utils.mkdirhier(cdir)
 
-    if dirs is None:
+    if flags and dirs is None:
         dirs = flags.get('dirs')
         if dirs:
             dirs = d.expand(dirs).split()
