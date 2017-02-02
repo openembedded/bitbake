@@ -31,15 +31,6 @@ sys.path[0:0] = [os.path.join(topdir, 'lib')]
 
 import bb.tinfoil
 
-
-def tinfoil_init(parserecipes):
-    import bb.tinfoil
-    tinfoil = bb.tinfoil.Tinfoil(tracking=True)
-    tinfoil.prepare(not parserecipes)
-    tinfoil.logger.setLevel(logger.getEffectiveLevel())
-    return tinfoil
-
-
 def logger_create(name, output=sys.stderr):
     logger = logging.getLogger(name)
     loggerhandler = logging.StreamHandler(output)
@@ -86,8 +77,10 @@ def main():
     logger_setup_color(logger, global_args.color)
 
     plugins = []
-    tinfoil = tinfoil_init(False)
+    tinfoil = bb.tinfoil.Tinfoil(tracking=True)
+    tinfoil.logger.setLevel(logger.getEffectiveLevel())
     try:
+        tinfoil.prepare(True)
         for path in ([topdir] +
                     tinfoil.config_data.getVar('BBPATH').split(':')):
             pluginpath = os.path.join(path, 'lib', 'bblayers')
