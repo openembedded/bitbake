@@ -1638,7 +1638,8 @@ class BBCooker:
         if self.state != state.parsing and not self.parsecache_valid:
             self.parseConfiguration ()
             if CookerFeatures.SEND_SANITYEVENTS in self.featureset:
-                bb.event.fire(bb.event.SanityCheck(False), self.data)
+                for mc in self.multiconfigs:
+                    bb.event.fire(bb.event.SanityCheck(False), self.databuilder.mcdata[mc])
 
             for mc in self.multiconfigs:
                 ignore = self.databuilder.mcdata[mc].getVar("ASSUME_PROVIDED") or ""
