@@ -878,3 +878,30 @@ def preceedtask(task, with_recrdeptasks, d):
         if recrdeptask:
             preceed.update(recrdeptask.split())
     return preceed
+
+def tasksbetween(task_start, task_end, d):
+    """
+    Return the list of tasks between two tasks in the current recipe,
+    where task_start is to start at and task_end is the task to end at
+    (and task_end has a dependency chain back to task_start).
+    """
+    outtasks = []
+    tasks = list(filter(lambda k: d.getVarFlag(k, "task"), d.keys()))
+    def follow_chain(task, endtask, chain=None):
+        if not chain:
+            chain = []
+        chain.append(task)
+        for othertask in tasks:
+            if othertask == task:
+                continue
+            if task == endtask:
+                for ctask in chain:
+                    if ctask not in outtasks:
+                        outtasks.append(ctask)
+            else:
+                deps = d.getVarFlag(othertask, 'deps', False)
+                if task in deps:
+                    follow_chain(othertask, endtask, chain)
+        chain.pop()
+    follow_chain(task_start, task_end)
+    return outtasks
