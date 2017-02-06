@@ -195,6 +195,7 @@ class Npm(FetchMethod):
 
         dependencies = pdata.get('dependencies', {})
         optionalDependencies = pdata.get('optionalDependencies', {})
+        dependencies.update(optionalDependencies)
         depsfound = {}
         optdepsfound = {}
         data[pkg]['deps'] = {}
