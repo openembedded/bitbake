@@ -182,7 +182,12 @@ class Npm(FetchMethod):
             if pkg_os:
                 if not isinstance(pkg_os, list):
                     pkg_os = [pkg_os]
-                if 'linux' not in pkg_os or '!linux' in pkg_os:
+                blacklist = False
+                for item in pkg_os:
+                    if item.startswith('!'):
+                        blacklist = True
+                        break
+                if (not blacklist and 'linux' not in pkg_os) or '!linux' in pkg_os:
                     logger.debug(2, "Skipping %s since it's incompatible with Linux" % pkg)
                     return
         #logger.debug(2, "Output URL is %s - %s - %s" % (ud.basepath, ud.basename, ud.localfile))
