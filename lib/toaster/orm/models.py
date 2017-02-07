@@ -902,7 +902,7 @@ class Target_Image_File(models.Model):
         'ext4.gz', 'ext3', 'ext3.gz', 'hdddirect', 'hddimg', 'iso', 'jffs2',
         'jffs2.sum', 'multiubi', 'qcow2', 'squashfs', 'squashfs-lzo',
         'squashfs-xz', 'tar', 'tar.bz2', 'tar.gz', 'tar.lz4', 'tar.xz', 'ubi',
-        'ubifs', 'vdi', 'vmdk', 'wic', 'wic.bz2', 'wic.gz', 'wic.lzma'
+        'ubifs', 'vdi', 'vmdk', 'wic', 'wic.bmap', 'wic.bz2', 'wic.gz', 'wic.lzma'
     }
 
     target = models.ForeignKey(Target)
