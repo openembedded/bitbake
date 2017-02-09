@@ -642,7 +642,6 @@ class BBCooker:
             logger.plain(env.getvalue())
 
         # emit variables and shell functions
-        data.update_data(envdata)
         with closing(StringIO()) as env:
             data.emit_env(env, envdata, True)
             logger.plain(env.getvalue())
@@ -703,7 +702,6 @@ class BBCooker:
         for mc in self.multiconfigs:
             taskdata[mc] = bb.taskdata.TaskData(abort, skiplist=self.skiplist, allowincomplete=allowincomplete)
             localdata[mc] = data.createCopy(self.databuilder.mcdata[mc])
-            bb.data.update_data(localdata[mc])
             bb.data.expandKeys(localdata[mc])
 
         current = 0
@@ -1035,7 +1033,6 @@ class BBCooker:
 
         for mc in self.multiconfigs:
             localdata = data.createCopy(self.databuilder.mcdata[mc])
-            bb.data.update_data(localdata)
             bb.data.expandKeys(localdata)
 
             # Handle PREFERRED_PROVIDERS

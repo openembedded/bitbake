@@ -48,7 +48,6 @@ def findProviders(cfgData, dataCache, pkg_pn = None):
 
     # Need to ensure data store is expanded
     localdata = data.createCopy(cfgData)
-    bb.data.update_data(localdata)
     bb.data.expandKeys(localdata)
 
     preferred_versions = {}

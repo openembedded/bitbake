@@ -976,7 +976,6 @@ class DataSmart(MutableMapping):
         data = {}
         d = self.createCopy()
         bb.data.expandKeys(d)
-        bb.data.update_data(d)
 
         config_whitelist = set((d.getVar("BB_HASHCONFIG_WHITELIST") or "").split())
         keys = set(key for key in iter(d) if not key.startswith("__"))

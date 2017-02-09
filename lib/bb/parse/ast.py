@@ -130,7 +130,6 @@ class DataNode(AstNode):
                 val = groupd["value"]
         elif "colon" in groupd and groupd["colon"] != None:
             e = data.createCopy()
-            bb.data.update_data(e)
             op = "immediate"
             val = e.expand(groupd["value"], key + "[:=]")
         elif "append" in groupd and groupd["append"] != None:
@@ -350,12 +349,10 @@ def finalize(fn, d, variant = None):
     bb.event.fire(bb.event.RecipePreFinalise(fn), d)
 
     bb.data.expandKeys(d)
-    bb.data.update_data(d)
     code = []
     for funcname in d.getVar("__BBANONFUNCS", False) or []:
         code.append("%s(d)" % funcname)
     bb.utils.better_exec("\n".join(code), {"d": d})
-    bb.data.update_data(d)
 
     tasklist = d.getVar('__BBTASKS', False) or []
     bb.event.fire(bb.event.RecipeTaskPreProcess(fn, list(tasklist)), d)
