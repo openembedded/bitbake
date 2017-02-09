@@ -211,6 +211,19 @@ class Tinfoil:
 
         self.ui_module = ui_module
 
+        # Ensure the path to bitbake's bin directory is in PATH so that things like
+        # bitbake-worker can be run (usually this is the case, but it doesn't have to be)
+        path = os.getenv('PATH').split(':')
+        bitbakebinpath = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'bin'))
+        for entry in path:
+            if entry.endswith(os.sep):
+                entry = entry[:-1]
+            if os.path.abspath(entry) == bitbakebinpath:
+                break
+        else:
+            path.insert(0, bitbakebinpath)
+            os.environ['PATH'] = ':'.join(path)
+
         if self.server_connection:
             _server_connections.append(self.server_connection)
             if config_only:
