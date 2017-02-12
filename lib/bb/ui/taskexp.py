@@ -78,7 +78,7 @@ class PackageReverseDepView(Gtk.TreeView):
 class DepExplorer(Gtk.Window):
     def __init__(self):
         Gtk.Window.__init__(self)
-        self.set_title("Dependency Explorer")
+        self.set_title("Task Dependency Explorer")
         self.set_default_size(500, 500)
         self.connect("delete-event", Gtk.main_quit)
 
@@ -106,30 +106,21 @@ class DepExplorer(Gtk.Window):
 
         box = Gtk.VBox(homogeneous=True, spacing=4)
 
-        # Runtime Depends
+        # Task Depends
         scrolled = Gtk.ScrolledWindow()
         scrolled.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
         scrolled.set_shadow_type(Gtk.ShadowType.IN)
-        self.rdep_treeview = PackageDepView(self.depends_model, TYPE_RDEP, "Runtime Depends")
-        self.rdep_treeview.connect("row-activated", self.on_package_activated, COL_DEP_PACKAGE)
-        scrolled.add(self.rdep_treeview)
-        box.add(scrolled)
-
-        # Build Depends
-        scrolled = Gtk.ScrolledWindow()
-        scrolled.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
-        scrolled.set_shadow_type(Gtk.ShadowType.IN)
-        self.dep_treeview = PackageDepView(self.depends_model, TYPE_DEP, "Build Depends")
+        self.dep_treeview = PackageDepView(self.depends_model, TYPE_DEP, "Dependencies")
         self.dep_treeview.connect("row-activated", self.on_package_activated, COL_DEP_PACKAGE)
         scrolled.add(self.dep_treeview)
         box.add(scrolled)
         pane.add2(box)
 
-        # Reverse Depends
+        # Reverse Task Depends
         scrolled = Gtk.ScrolledWindow()
         scrolled.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
         scrolled.set_shadow_type(Gtk.ShadowType.IN)
-        self.revdep_treeview = PackageReverseDepView(self.depends_model, "Reverse Depends")
+        self.revdep_treeview = PackageReverseDepView(self.depends_model, "Dependent Tasks")
         self.revdep_treeview.connect("row-activated", self.on_package_activated, COL_DEP_PARENT)
         scrolled.add(self.revdep_treeview)
         box.add(scrolled)
@@ -160,22 +151,15 @@ class DepExplorer(Gtk.Window):
             current_package = None
         else:
             current_package = model.get_value(it, COL_PKG_NAME)
-        self.rdep_treeview.set_current_package(current_package)
         self.dep_treeview.set_current_package(current_package)
         self.revdep_treeview.set_current_package(current_package)
 
 
     def parse(self, depgraph):
-        for package in depgraph["pn"]:
-            self.pkg_model.insert(0, (package,))
-
-        for package in depgraph["depends"]:
-            for depend in depgraph["depends"][package]:
-                self.depends_model.insert (0, (TYPE_DEP, package, depend))
-
-        for package in depgraph["rdepends-pn"]:
-            for rdepend in depgraph["rdepends-pn"][package]:
-                self.depends_model.insert (0, (TYPE_RDEP, package, rdepend))
+        for task in depgraph["tdepends"]:
+            self.pkg_model.insert(0, (task,))
+            for depend in depgraph["tdepends"][task]:
+                self.depends_model.insert (0, (TYPE_DEP, task, depend))
 
 
 class gtkthread(threading.Thread):
