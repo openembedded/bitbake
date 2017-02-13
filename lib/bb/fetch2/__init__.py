@@ -1247,7 +1247,7 @@ class FetchData(object):
         self.donestamp = basepath + '.done'
         self.lockfile = basepath + '.lock'
 
-    def setup_revisons(self, d):
+    def setup_revisions(self, d):
         self.revisions = {}
         for name in self.names:
             self.revisions[name] = srcrev_internal_helper(self, d, name)

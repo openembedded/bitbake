@@ -186,7 +186,7 @@ class Git(FetchMethod):
 
         ud.write_tarballs = ((d.getVar("BB_GENERATE_MIRROR_TARBALLS") or "0") != "0") or ud.rebaseable
 
-        ud.setup_revisons(d)
+        ud.setup_revisions(d)
 
         for name in ud.names:
             # Ensure anything that doesn't look like a sha256 checksum/revision is translated into one

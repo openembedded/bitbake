@@ -67,7 +67,7 @@ class Hg(FetchMethod):
         else:
             ud.proto = "hg"
 
-        ud.setup_revisons(d)
+        ud.setup_revisions(d)
 
         if 'rev' in ud.parm:
             ud.revision = ud.parm['rev']

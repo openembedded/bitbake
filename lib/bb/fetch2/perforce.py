@@ -87,7 +87,7 @@ class Perforce(FetchMethod):
         cleanedhost = ud.host.replace(':', '.')
         ud.pkgdir = os.path.join(ud.dldir, cleanedhost, cleanedpath)
 
-        ud.setup_revisons(d)
+        ud.setup_revisions(d)
 
         ud.localfile = data.expand('%s_%s_%s.tar.gz' % (cleanedhost, cleanedpath, ud.revision), d)
 
