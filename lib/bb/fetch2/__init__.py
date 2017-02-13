@@ -724,7 +724,7 @@ def get_autorev(d):
 
 def get_srcrev(d, method_name='sortable_revision'):
     """
-    Return the revsion string, usually for use in the version string (PV) of the current package
+    Return the revision string, usually for use in the version string (PV) of the current package
     Most packages usually only have one SCM so we just pass on the call.
     In the multi SCM case, we build a value based on SRCREV_FORMAT which must
     have been set.

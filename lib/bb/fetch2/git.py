@@ -50,7 +50,7 @@ Supported SRC_URI options are:
    The default is "0", set nobranch=1 if needed.
 
 - usehead
-   For local git:// urls to use the current branch HEAD as the revsion for use with
+   For local git:// urls to use the current branch HEAD as the revision for use with
    AUTOREV. Implies nobranch.
 
 """
