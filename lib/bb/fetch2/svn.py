@@ -79,9 +79,9 @@ class Svn(FetchMethod):
 
         proto = ud.parm.get('protocol', 'svn')
 
-        svn_rsh = None
-        if proto == "svn+ssh" and "rsh" in ud.parm:
-            svn_rsh = ud.parm["rsh"]
+        svn_ssh = None
+        if proto == "svn+ssh" and "ssh" in ud.parm:
+            svn_ssh = ud.parm["ssh"]
 
         svnroot = ud.host + ud.path
 
@@ -113,8 +113,8 @@ class Svn(FetchMethod):
             else:
                 raise FetchError("Invalid svn command %s" % command, ud.url)
 
-        if svn_rsh:
-            svncmd = "svn_RSH=\"%s\" %s" % (svn_rsh, svncmd)
+        if svn_ssh:
+            svncmd = "SVN_SSH=\"%s\" %s" % (svn_ssh, svncmd)
 
         return svncmd
 
