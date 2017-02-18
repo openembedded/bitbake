@@ -2010,6 +2010,8 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
         for tid in self.rqdata.runq_setscene_tids:
             #bb.warn("Added endpoint 2 %s" % (tid))
             for dep in self.rqdata.runtaskentries[tid].depends:
+                    if tid in sq_revdeps[dep]:
+                        sq_revdeps[dep].remove(tid)
                     if dep not in endpoints:
                         endpoints[dep] = set()
                     #bb.warn("  Added endpoint 3 %s" % (dep))
@@ -2029,12 +2031,13 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
                 if point in self.rqdata.runq_setscene_tids:
                     sq_revdeps_new[point] = tasks
                     tasks = set()
+                    continue
                 for dep in self.rqdata.runtaskentries[point].depends:
                     if point in sq_revdeps[dep]:
                         sq_revdeps[dep].remove(point)
                     if tasks:
                         sq_revdeps_new[dep] |= tasks
-                    if (len(sq_revdeps[dep]) == 0 or len(sq_revdeps_new[dep]) != 0) and dep not in self.rqdata.runq_setscene_tids:
+                    if len(sq_revdeps[dep]) == 0 and dep not in self.rqdata.runq_setscene_tids:
                         newendpoints[dep] = task
             if len(newendpoints) != 0:
                 process_endpoints(newendpoints)
