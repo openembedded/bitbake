@@ -385,7 +385,8 @@
                 The supported parameters are as follows:
                 <itemizedlist>
                     <listitem><para><emphasis>"method":</emphasis>
-                        The protocol over which to communicate with the CVS server.
+                        The protocol over which to communicate with the CVS
+                        server.
                         By default, this protocol is "pserver".
                         If "method" is set to "ext", BitBake examines the
                         "rsh" parameter and sets <filename>CVS_RSH</filename>.
@@ -469,24 +470,28 @@
                         You can think of this parameter as the top-level
                         directory of the repository data you want.
                         </para></listitem>
+                    <listitem><para><emphasis>"path_spec":</emphasis>
+                        A specific directory in which to checkout the
+                        specified svn module.
+                        </para></listitem>
                     <listitem><para><emphasis>"protocol":</emphasis>
                         The protocol to use, which defaults to "svn".
-                        Other options are "svn+ssh" and "rsh".
-                        For "rsh", the "rsh" parameter is also used.
+                        If "protocol" is set to "svn+ssh", the "ssh"
+                        parameter is also used.
                         </para></listitem>
                     <listitem><para><emphasis>"rev":</emphasis>
                         The revision of the source code to checkout.
-                        </para></listitem>
-                    <listitem><para><emphasis>"date":</emphasis>
-                        The date of the source code to checkout.
-                        Specific revisions are generally much safer to checkout
-                        rather than by date as they do not involve timezones
-                        (e.g. they are much more deterministic).
                         </para></listitem>
                     <listitem><para><emphasis>"scmdata":</emphasis>
                         Causes the “.svn” directories to be available during
                         compile-time when set to "keep".
                         By default, these directories are removed.
+                        </para></listitem>
+                    <listitem><para><emphasis>"ssh":</emphasis>
+                        An optional parameter used when "protocol" is set
+                        to "svn+ssh".
+                        You can use this parameter to specify the ssh
+                        program used by svn.
                         </para></listitem>
                     <listitem><para><emphasis>"transportuser":</emphasis>
                         When required, sets the username for the transport.
@@ -496,10 +501,11 @@
                         command.
                         </para></listitem>
                 </itemizedlist>
-                Following are two examples using svn:
+                Following are three examples using svn:
                 <literallayout class='monospaced'>
-     SRC_URI = "svn://svn.oe.handhelds.org/svn;module=vip;proto=http;rev=667"
-     SRC_URI = "svn://svn.oe.handhelds.org/svn/;module=opie;proto=svn+ssh;date=20060126"
+     SRC_URI = "svn://myrepos/proj1;module=vip;protocol=http;rev=667"
+     SRC_URI = "svn://myrepos/proj1;module=opie;protocol=svn+ssh"
+     SRC_URI = "svn://myrepos/proj1;module=trunk;protocol=http;path_spec=${MY_DIR}/proj1"
                 </literallayout>
             </para>
         </section>
