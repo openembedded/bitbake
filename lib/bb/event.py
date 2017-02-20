@@ -264,6 +264,11 @@ def register(name, handler, mask=None, filename=None, lineno=None):
 def remove(name, handler):
     """Remove an Event handler"""
     _handlers.pop(name)
+    if name in _catchall_handlers:
+        _catchall_handlers.pop(name)
+    for event in _event_handler_map.keys():
+        if name in _event_handler_map[event]:
+            _event_handler_map[event].pop(name)
 
 def get_handlers():
     return _handlers
@@ -762,4 +767,3 @@ class NetworkTestFailed(Event):
     """
     Event to indicate network test has failed
     """
-
