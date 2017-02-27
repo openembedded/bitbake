@@ -25,7 +25,6 @@ BitBake "Fetch" repo (git) implementation
 
 import os
 import bb
-from   bb    import data
 from   bb.fetch2 import FetchMethod
 from   bb.fetch2 import runfetchcmd
 

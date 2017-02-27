@@ -63,7 +63,7 @@ class Cvs(FetchMethod):
         if 'fullpath' in ud.parm:
             fullpath = '_fullpath'
 
-        ud.localfile = bb.data.expand('%s_%s_%s_%s%s%s.tar.gz' % (ud.module.replace('/', '.'), ud.host, ud.tag, ud.date, norecurse, fullpath), d)
+        ud.localfile = d.expand('%s_%s_%s_%s%s%s.tar.gz' % (ud.module.replace('/', '.'), ud.host, ud.tag, ud.date, norecurse, fullpath))
 
     def need_update(self, ud, d):
         if (ud.date == "now"):

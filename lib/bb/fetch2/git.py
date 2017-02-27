@@ -76,7 +76,6 @@ import re
 import bb
 import errno
 import bb.progress
-from   bb    import data
 from   bb.fetch2 import FetchMethod
 from   bb.fetch2 import runfetchcmd
 from   bb.fetch2 import logger

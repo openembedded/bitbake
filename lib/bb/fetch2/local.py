@@ -29,7 +29,6 @@ import os
 import urllib.request, urllib.parse, urllib.error
 import bb
 import bb.utils
-from   bb import data
 from   bb.fetch2 import FetchMethod, FetchError
 from   bb.fetch2 import logger
 

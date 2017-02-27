@@ -28,7 +28,6 @@ import sys
 import logging
 import bb
 import re
-from   bb import data
 from   bb.fetch2 import FetchMethod
 from   bb.fetch2 import FetchError
 from   bb.fetch2 import MissingParameterError
@@ -61,7 +60,7 @@ class Svn(FetchMethod):
 
         # Create paths to svn checkouts
         relpath = self._strip_leading_slashes(ud.path)
-        ud.pkgdir = os.path.join(data.expand('${SVNDIR}', d), ud.host, relpath)
+        ud.pkgdir = os.path.join(d.expand('${SVNDIR}'), ud.host, relpath)
         ud.moddir = os.path.join(ud.pkgdir, ud.module)
 
         ud.setup_revisions(d)
@@ -69,7 +68,7 @@ class Svn(FetchMethod):
         if 'rev' in ud.parm:
             ud.revision = ud.parm['rev']
 
-        ud.localfile = data.expand('%s_%s_%s_%s_.tar.gz' % (ud.module.replace('/', '.'), ud.host, ud.path.replace('/', '.'), ud.revision), d)
+        ud.localfile = d.expand('%s_%s_%s_%s_.tar.gz' % (ud.module.replace('/', '.'), ud.host, ud.path.replace('/', '.'), ud.revision))
 
     def _buildsvncommand(self, ud, d, command):
         """

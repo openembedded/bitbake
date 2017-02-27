@@ -43,7 +43,6 @@ IETF secsh internet draft:
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 import re, os
-from   bb import data
 from   bb.fetch2 import FetchMethod
 from   bb.fetch2 import FetchError
 from   bb.fetch2 import logger

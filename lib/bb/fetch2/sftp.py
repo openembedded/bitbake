@@ -62,11 +62,9 @@ SRC_URI = "sftp://user@host.example.com/dir/path.file.txt"
 import os
 import bb
 import urllib.request, urllib.parse, urllib.error
-from bb import data
 from bb.fetch2 import URI
 from bb.fetch2 import FetchMethod
 from bb.fetch2 import runfetchcmd
-
 
 class SFTP(FetchMethod):
     """Class to fetch urls via 'sftp'"""
