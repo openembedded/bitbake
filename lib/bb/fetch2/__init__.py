@@ -1200,13 +1200,13 @@ class FetchData(object):
             self.sha256_name = "sha256sum"
         if self.md5_name in self.parm:
             self.md5_expected = self.parm[self.md5_name]
-        elif self.type not in ["http", "https", "ftp", "ftps", "sftp"]:
+        elif self.type not in ["http", "https", "ftp", "ftps", "sftp", "s3"]:
             self.md5_expected = None
         else:
             self.md5_expected = d.getVarFlag("SRC_URI", self.md5_name)
         if self.sha256_name in self.parm:
             self.sha256_expected = self.parm[self.sha256_name]
-        elif self.type not in ["http", "https", "ftp", "ftps", "sftp"]:
+        elif self.type not in ["http", "https", "ftp", "ftps", "sftp", "s3"]:
             self.sha256_expected = None
         else:
             self.sha256_expected = d.getVarFlag("SRC_URI", self.sha256_name)
@@ -1791,6 +1791,7 @@ from . import svn
 from . import wget
 from . import ssh
 from . import sftp
+from . import s3
 from . import perforce
 from . import bzr
 from . import hg
@@ -1808,6 +1809,7 @@ methods.append(gitannex.GitANNEX())
 methods.append(cvs.Cvs())
 methods.append(ssh.SSH())
 methods.append(sftp.SFTP())
+methods.append(s3.S3())
 methods.append(perforce.Perforce())
 methods.append(bzr.Bzr())
 methods.append(hg.Hg())
