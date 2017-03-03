@@ -538,7 +538,11 @@ def fetcher_compare_revisions():
     return False
 
 def mirror_from_string(data):
-    return [ i.split() for i in (data or "").replace('\\n','\n').split('\n') if i ]
+    mirrors = (data or "").replace('\\n',' ').split()
+    # Split into pairs
+    if len(mirrors) % 2 != 0:
+        bb.warn('Invalid mirror data %s, should have paired members.' % data)
+    return list(zip(*[iter(mirrors)]*2))
 
 def verify_checksum(ud, d, precomputed={}):
     """
