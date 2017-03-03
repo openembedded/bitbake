@@ -1404,6 +1404,10 @@ class FetchMethod(object):
                 cmd = 'lzip -dc %s | tar x --no-same-owner -f -' % file
             elif file.endswith('.lz'):
                 cmd = 'lzip -dc %s > %s' % (file, efile)
+            elif file.endswith('.tar.7z'):
+                cmd = '7z x -so %s | tar x --no-same-owner -f -' % file
+            elif file.endswith('.7z'):
+                cmd = '7za x -y %s 1>/dev/null' % file
             elif file.endswith('.zip') or file.endswith('.jar'):
                 try:
                     dos = bb.utils.to_boolean(urldata.parm.get('dos'), False)
@@ -1435,10 +1439,6 @@ class FetchMethod(object):
                 else:
                     raise UnpackError("Unable to unpack deb/ipk package - could not list contents", urldata.url)
                 cmd = 'ar x %s %s && tar --no-same-owner -xpf %s && rm %s' % (file, datafile, datafile, datafile)
-            elif file.endswith('.tar.7z'):
-                cmd = '7z x -so %s | tar xf - ' % file
-            elif file.endswith('.7z'):
-                cmd = '7za x -y %s 1>/dev/null' % file
 
         # If 'subdir' param exists, create a dir and use it as destination for unpack cmd
         if 'subdir' in urldata.parm:
