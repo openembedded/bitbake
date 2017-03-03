@@ -25,7 +25,6 @@ import json
 import subprocess
 import signal
 import bb
-from   bb import data
 from   bb.fetch2 import FetchMethod
 from   bb.fetch2 import FetchError
 from   bb.fetch2 import ChecksumError

@@ -38,7 +38,6 @@ import pickle
 import errno
 import bb.persist_data, bb.utils
 import bb.checksum
-from bb import data
 import bb.process
 
 __version__ = "2"
@@ -1183,7 +1182,7 @@ class FetchData(object):
         self.mirrortarball = None
         self.basename = None
         self.basepath = None
-        (self.type, self.host, self.path, self.user, self.pswd, self.parm) = decodeurl(data.expand(url, d))
+        (self.type, self.host, self.path, self.user, self.pswd, self.parm) = decodeurl(d.expand(url))
         self.date = self.getSRCDate(d)
         self.url = url
         if not self.user and "user" in self.parm:
