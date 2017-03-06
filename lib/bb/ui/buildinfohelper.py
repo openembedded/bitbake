@@ -1258,6 +1258,14 @@ class BuildInfoHelper(object):
                 candidates = [x for x in self.internal_state['taskdata'].keys() if x.endswith(identifier)]
                 if len(candidates) == 1:
                     identifier = candidates[0]
+                elif len(candidates) > 1 and hasattr(event,'_package'):
+                    if 'native-' in event._package:
+                        identifier = 'native:' + identifier
+                    if 'nativesdk-' in event._package:
+                        identifier = 'nativesdk:' + identifier
+                    candidates = [x for x in self.internal_state['taskdata'].keys() if x.endswith(identifier)]
+                    if len(candidates) == 1:
+                        identifier = candidates[0]
 
         assert identifier in self.internal_state['taskdata']
         identifierlist = identifier.split(":")
