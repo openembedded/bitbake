@@ -803,6 +803,23 @@ class RunQueueData:
 
         self.init_progress_reporter.next_stage()
 
+        if self.cooker.configuration.runall is not None:
+            runall = "do_%s" % self.cooker.configuration.runall
+            runall_tids = { k: v for k, v in self.runtaskentries.items() if taskname_from_tid(k) == runall }
+
+            # re-run the mark_active and then drop unused tasks from new list
+            runq_build = {}
+            for tid in list(runall_tids):
+                mark_active(tid,1)
+
+            for tid in list(self.runtaskentries.keys()):
+                if tid not in runq_build:
+                    del self.runtaskentries[tid]
+                    delcount += 1
+
+            if len(self.runtaskentries) == 0:
+                bb.msg.fatal("RunQueue", "No remaining tasks to run run for build target %s with runall %s" % (target, runall))
+
         #
         # Step D - Sanity checks and computation
         #

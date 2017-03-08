@@ -287,6 +287,9 @@ class BitBakeConfigParameters(cookerdata.ConfigParameters):
                           help="Writes the event log of the build to a bitbake event json file. "
                                "Use '' (empty string) to assign the name automatically.")
 
+        parser.add_option("", "--runall", action="store", dest="runall",
+                          help="Run the specified task for all build targets and their dependencies.")
+
         options, targets = parser.parse_args(argv)
 
         if options.quiet and options.verbose:
