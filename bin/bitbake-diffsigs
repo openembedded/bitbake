@@ -94,6 +94,8 @@ def find_compare_task(bbhandler, pn, taskname):
             return recout
 
         # Recurse into signature comparison
+        logger.debug("Signature file (previous): %s" % latestfiles[0])
+        logger.debug("Signature file (latest): %s" % latestfiles[1])
         output = bb.siggen.compare_sigfiles(latestfiles[0], latestfiles[1], recursecb)
         if output:
             print('\n'.join(output))
@@ -108,11 +110,18 @@ parser = optparse.OptionParser(
   %prog sigdatafile1 sigdatafile2
   %prog sigdatafile1""")
 
+parser.add_option("-D", "--debug",
+        help = "enable debug",
+        action = "store_true", dest="debug", default = False)
+
 parser.add_option("-t", "--task",
         help = "find the signature data files for last two runs of the specified task and compare them",
         action="store", dest="taskargs", nargs=2, metavar='recipename taskname')
 
 options, args = parser.parse_args(sys.argv)
+
+if options.debug:
+    logger.setLevel(logging.DEBUG)
 
 if options.taskargs:
     with bb.tinfoil.Tinfoil() as tinfoil:
