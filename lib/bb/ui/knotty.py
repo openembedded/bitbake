@@ -75,10 +75,8 @@ class BBProgress(progressbar.ProgressBar):
                 extrastr = str(extra)
                 if extrastr[0] != ' ':
                     extrastr = ' ' + extrastr
-                if extrastr[-1] != ' ':
-                    extrastr += ' '
             else:
-                extrastr = ' '
+                extrastr = ''
             self.widgets[self.extrapos] = extrastr
 
     def _need_update(self):
