@@ -818,7 +818,7 @@ class RunQueueData:
                     delcount += 1
 
             if len(self.runtaskentries) == 0:
-                bb.msg.fatal("RunQueue", "No remaining tasks to run run for build target %s with runall %s" % (target, runall))
+                bb.msg.fatal("RunQueue", "No remaining tasks to run for build target %s with runall %s" % (target, runall))
 
         #
         # Step D - Sanity checks and computation
