@@ -97,7 +97,7 @@ class TaskData:
                     if dep:
                         parts = dep.split(":")
                         if len(parts) != 2:
-                            bb.msg.fatal("TaskData", "Error for %s, dependency %s does not contain exactly one ':' character.\n Task '%s' should be specified in the form 'packagename:task'" % (fn, dep, dep_name))
+                            bb.msg.fatal("TaskData", "Error for %s:%s[%s], dependency %s in '%s' does not contain exactly one ':' character.\n Task '%s' should be specified in the form 'packagename:task'" % (fn, task, dep_name, dep, task_deps[dep_name][task], dep_name))
                         ids.append((parts[0], parts[1]))
                         seen(parts[0])
                 depends.extend(ids)
