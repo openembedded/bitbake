@@ -220,7 +220,7 @@ def emit_func(func, o=sys.__stdout__, d = init()):
     """Emits all items in the data store in a format such that it can be sourced by a shell."""
 
     keys = (key for key in d.keys() if not key.startswith("__") and not d.getVarFlag(key, "func", False))
-    for key in keys:
+    for key in sorted(keys):
         emit_var(key, o, d, False)
 
     o.write('\n')
