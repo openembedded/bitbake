@@ -285,8 +285,8 @@ def a():
 
 test(d)
 
-bb.data.expand(d.getVar("something", False), d)
-bb.data.expand("${inexpand} somethingelse", d)
+d.expand(d.getVar("something", False))
+d.expand("${inexpand} somethingelse")
 d.getVar(a(), False)
 """
 
