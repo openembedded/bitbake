@@ -1,6 +1,6 @@
 # tinfoil: a simple wrapper around cooker for bitbake-based command-line utilities
 #
-# Copyright (C) 2012-2016 Intel Corporation
+# Copyright (C) 2012-2017 Intel Corporation
 # Copyright (C) 2011 Mentor Graphics Corporation
 #
 # This program is free software; you can redistribute it and/or modify
@@ -80,6 +80,34 @@ class TinfoilDataStoreConnector:
     def setVar(self, varname, value):
         if self.dsindex is None:
             self.tinfoil.run_command('setVariable', varname, value)
+        else:
+            # Not currently implemented - indicate that setting should
+            # be redirected to local side
+            return True
+    def setVarFlag(self, varname, flagname, value):
+        if self.dsindex is None:
+            self.tinfoil.run_command('dataStoreConnectorSetVarFlag', self.dsindex, varname, flagname, value)
+        else:
+            # Not currently implemented - indicate that setting should
+            # be redirected to local side
+            return True
+    def delVar(self, varname):
+        if self.dsindex is None:
+            self.tinfoil.run_command('dataStoreConnectorDelVar', self.dsindex, varname)
+        else:
+            # Not currently implemented - indicate that setting should
+            # be redirected to local side
+            return True
+    def delVarFlag(self, varname, flagname):
+        if self.dsindex is None:
+            self.tinfoil.run_command('dataStoreConnectorDelVar', self.dsindex, varname, flagname)
+        else:
+            # Not currently implemented - indicate that setting should
+            # be redirected to local side
+            return True
+    def renameVar(self, name, newname):
+        if self.dsindex is None:
+            self.tinfoil.run_command('dataStoreConnectorRenameVar', self.dsindex, name, newname)
         else:
             # Not currently implemented - indicate that setting should
             # be redirected to local side

@@ -505,6 +505,31 @@ class CommandsSync:
             raise CommandError('dataStoreConnectorRelease: invalid index %d' % dsindex)
         command.remotedatastores.release(dsindex)
 
+    def dataStoreConnectorSetVarFlag(self, command, params):
+        dsindex = params[0]
+        name = params[1]
+        flag = params[2]
+        value = params[3]
+        datastore = command.remotedatastores[dsindex]
+        datastore.setVarFlag(name, flag, value)
+
+    def dataStoreConnectorDelVar(self, command, params):
+        dsindex = params[0]
+        name = params[1]
+        datastore = command.remotedatastores[dsindex]
+        if len(params) > 2:
+            flag = params[2]
+            datastore.delVarFlag(name, flag)
+        else:
+            datastore.delVar(name)
+
+    def dataStoreConnectorRenameVar(self, command, params):
+        dsindex = params[0]
+        name = params[1]
+        newname = params[2]
+        datastore = command.remotedatastores[dsindex]
+        datastore.renameVar(name, newname)
+
     def parseRecipeFile(self, command, params):
         """
         Parse the specified recipe file (with or without bbappends)

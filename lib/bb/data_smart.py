@@ -609,6 +609,12 @@ class DataSmart(MutableMapping):
         """
         Rename the variable key to newkey
         """
+        if '_remote_data' in self.dict:
+            connector = self.dict["_remote_data"]["_content"]
+            res = connector.renameVar(key, newkey)
+            if not res:
+                return
+
         val = self.getVar(key, 0, parsing=True)
         if val is not None:
             loginfo['variable'] = newkey
@@ -652,6 +658,12 @@ class DataSmart(MutableMapping):
         self.setVar(var + "_prepend", value, ignore=True, parsing=True)
 
     def delVar(self, var, **loginfo):
+        if '_remote_data' in self.dict:
+            connector = self.dict["_remote_data"]["_content"]
+            res = connector.delVar(var)
+            if not res:
+                return
+
         loginfo['detail'] = ""
         loginfo['op'] = 'del'
         self.varhistory.record(**loginfo)
@@ -678,6 +690,12 @@ class DataSmart(MutableMapping):
                          override = None
 
     def setVarFlag(self, var, flag, value, **loginfo):
+        if '_remote_data' in self.dict:
+            connector = self.dict["_remote_data"]["_content"]
+            res = connector.setVarFlag(var, flag, value)
+            if not res:
+                return
+
         self.expand_cache = {}
         if 'op' not in loginfo:
             loginfo['op'] = "set"
@@ -796,6 +814,12 @@ class DataSmart(MutableMapping):
         return value
 
     def delVarFlag(self, var, flag, **loginfo):
+        if '_remote_data' in self.dict:
+            connector = self.dict["_remote_data"]["_content"]
+            res = connector.delVarFlag(var, flag)
+            if not res:
+                return
+
         self.expand_cache = {}
         local_var, _ = self._findVar(var)
         if not local_var:
@@ -938,7 +962,10 @@ class DataSmart(MutableMapping):
 
             if "_remote_data" in d:
                 connector = d["_remote_data"]["_content"]
-                klist |= connector.getKeys()
+                for key in connector.getKeys():
+                    if key in deleted:
+                        continue
+                    klist.add(key)
 
             return klist
 
