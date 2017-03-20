@@ -503,3 +503,7 @@ class Remote(unittest.TestCase):
         # Test client side data is incorporated in python expansion (which is done on server)
         d2.setVar('FOO', 'bar')
         self.assertEqual(d2.expand('${@d.getVar("FOO")}'), 'bar')
+        # Test overrides work
+        d1.setVar('FOO_test', 'baz')
+        d1.appendVar('OVERRIDES', ':test')
+        self.assertEqual(d2.getVar('FOO'), 'baz')

@@ -457,16 +457,22 @@ class CommandsSync:
         dsindex = params[0]
         name = params[1]
         datastore = command.remotedatastores[dsindex]
-        value = datastore._findVar(name)
+        value, overridedata = datastore._findVar(name)
 
         if value:
             content = value.get('_content', None)
             if isinstance(content, bb.data_smart.DataSmart):
                 # Value is a datastore (e.g. BB_ORIGENV) - need to handle this carefully
                 idx = command.remotedatastores.check_store(content, True)
-                return {'_content': DataStoreConnectionHandle(idx), '_connector_origtype': 'DataStoreConnectionHandle'}
+                return {'_content': DataStoreConnectionHandle(idx),
+                        '_connector_origtype': 'DataStoreConnectionHandle',
+                        '_connector_overrides': overridedata}
             elif isinstance(content, set):
-                return {'_content': list(content), '_connector_origtype': 'set'}
+                return {'_content': list(content),
+                        '_connector_origtype': 'set',
+                        '_connector_overrides': overridedata}
+            else:
+                value['_connector_overrides'] = overridedata
         return value
     dataStoreConnectorFindVar.readonly = True
 

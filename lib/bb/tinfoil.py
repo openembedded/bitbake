@@ -60,12 +60,15 @@ class TinfoilDataStoreConnector:
         self.dsindex = dsindex
     def getVar(self, name):
         value = self.tinfoil.run_command('dataStoreConnectorFindVar', self.dsindex, name)
+        overrides = None
         if isinstance(value, dict):
             if '_connector_origtype' in value:
                 value['_content'] = self.tinfoil._reconvert_type(value['_content'], value['_connector_origtype'])
                 del value['_connector_origtype']
-
-        return value
+            if '_connector_overrides' in value:
+                overrides = value['_connector_overrides']
+                del value['_connector_overrides']
+        return value, overrides
     def getKeys(self):
         return set(self.tinfoil.run_command('dataStoreConnectorGetKeys', self.dsindex))
     def getVarHistory(self, name):

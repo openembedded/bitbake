@@ -473,7 +473,7 @@ class DataSmart(MutableMapping):
         dest = self.dict
         while dest:
             if var in dest:
-                return dest[var]
+                return dest[var], self.overridedata.get(var, None)
 
             if "_remote_data" in dest:
                 connector = dest["_remote_data"]["_content"]
@@ -482,12 +482,13 @@ class DataSmart(MutableMapping):
             if "_data" not in dest:
                 break
             dest = dest["_data"]
+        return None, self.overridedata.get(var, None)
 
     def _makeShadowCopy(self, var):
         if var in self.dict:
             return
 
-        local_var = self._findVar(var)
+        local_var, _ = self._findVar(var)
 
         if local_var:
             self.dict[var] = copy.copy(local_var)
@@ -699,13 +700,13 @@ class DataSmart(MutableMapping):
             self.dict["__exportlist"]["_content"].add(var)
 
     def getVarFlag(self, var, flag, expand=True, noweakdefault=False, parsing=False):
-        local_var = self._findVar(var)
+        local_var, overridedata = self._findVar(var)
         value = None
-        if flag == "_content" and var in self.overridedata and not parsing:
+        if flag == "_content" and overridedata is not None and not parsing:
             match = False
             active = {}
             self.need_overrides()
-            for (r, o) in self.overridedata[var]:
+            for (r, o) in overridedata:
                 # What about double overrides both with "_" in the name?
                 if o in self.overridesset:
                     active[o] = r
@@ -796,7 +797,7 @@ class DataSmart(MutableMapping):
 
     def delVarFlag(self, var, flag, **loginfo):
         self.expand_cache = {}
-        local_var = self._findVar(var)
+        local_var, _ = self._findVar(var)
         if not local_var:
             return
         if not var in self.dict:
@@ -839,7 +840,7 @@ class DataSmart(MutableMapping):
             self.dict[var][i] = flags[i]
 
     def getVarFlags(self, var, expand = False, internalflags=False):
-        local_var = self._findVar(var)
+        local_var, _ = self._findVar(var)
         flags = {}
 
         if local_var:
