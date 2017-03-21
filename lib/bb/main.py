@@ -174,10 +174,21 @@ class BitBakeConfigParameters(cookerdata.ConfigParameters):
                           help="Read the specified file after bitbake.conf.")
 
         parser.add_option("-v", "--verbose", action="store_true", dest="verbose", default=False,
-                          help="Output more log message data to the terminal.")
+                          help="Enable tracing of shell tasks (with 'set -x'). "
+                               "Also print bb.note(...) messages to stdout (in "
+                               "addition to writing them to ${T}/log.do_<task>).")
 
         parser.add_option("-D", "--debug", action="count", dest="debug", default=0,
-                          help="Increase the debug level. You can specify this more than once.")
+                          help="Increase the debug level. You can specify this "
+                               "more than once. -D sets the debug level to 1, "
+                               "where only bb.debug(1, ...) messages are printed "
+                               "to stdout; -DD sets the debug level to 2, where "
+                               "both bb.debug(1, ...) and bb.debug(2, ...) "
+                               "messages are printed; etc. Without -D, no debug "
+                               "messages are printed. Note that -D only affects "
+                               "output to stdout. All debug messages are written "
+                               "to ${T}/log.do_taskname, regardless of the debug "
+                               "level.")
 
         parser.add_option("-q", "--quiet", action="count", dest="quiet", default=0,
                           help="Output less log message data to the terminal. You can specify this more than once.")

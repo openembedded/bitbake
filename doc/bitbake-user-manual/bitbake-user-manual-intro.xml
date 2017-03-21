@@ -504,9 +504,19 @@
                              Read the specified file before bitbake.conf.
        -R POSTFILE, --postread=POSTFILE
                              Read the specified file after bitbake.conf.
-       -v, --verbose         Output more log message data to the terminal.
-       -D, --debug           Increase the debug level. You can specify this more
-                             than once.
+       -v, --verbose         Enable tracing of shell tasks (with 'set -x').
+                             Also print bb.note(...) messages to stdout (in
+                             addition to writing them to ${T}/log.do_<task>).
+       -D, --debug           Increase the debug level. You can specify this
+                             more than once. -D sets the debug level to 1,
+                             where only bb.debug(1, ...) messages are printed
+                             to stdout; -DD sets the debug level to 2, where
+                             both bb.debug(1, ...) and bb.debug(2, ...)
+                             messages are printed; etc. Without -D, no debug
+                             messages are printed. Note that -D only affects
+                             output to stdout. All debug messages are written
+                             to ${T}/log.do_taskname, regardless of the debug
+                             level.
        -n, --dry-run         Don't execute, just go through the motions.
        -S SIGNATURE_HANDLER, --dump-signatures=SIGNATURE_HANDLER
                              Dump out the signature construction information, with
