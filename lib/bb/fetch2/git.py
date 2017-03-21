@@ -291,8 +291,8 @@ class Git(FetchMethod):
                 os.unlink(ud.fullmirror)
 
             logger.info("Creating tarball of git repository")
-            runfetchcmd("tar -czf %s %s" % (ud.fullmirror, os.path.join(".") ), d, workdir=ud.clonedir)
-            runfetchcmd("touch %s.done" % ud.fullmirror, d, workdir=ud.clonedir)
+            runfetchcmd("tar -czf %s ." % ud.fullmirror, d, workdir=ud.clonedir)
+            runfetchcmd("touch %s.done" % ud.fullmirror, d)
 
     def unpack(self, ud, destdir, d):
         """ unpack the downloaded src to destdir"""
