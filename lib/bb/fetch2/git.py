@@ -205,7 +205,7 @@ class Git(FetchMethod):
         if ud.rebaseable:
             for name in ud.names:
                 gitsrcname = gitsrcname + '_' + ud.revisions[name]
-        ud.mirrortarball = 'git2_%s.tar.gz' % (gitsrcname)
+        ud.mirrortarball = 'git2_%s.tar.gz' % gitsrcname
         ud.fullmirror = os.path.join(d.getVar("DL_DIR"), ud.mirrortarball)
         gitdir = d.getVar("GITDIR") or (d.getVar("DL_DIR") + "/git2/")
         ud.clonedir = os.path.join(gitdir, gitsrcname)
@@ -240,7 +240,7 @@ class Git(FetchMethod):
         # If the checkout doesn't exist and the mirror tarball does, extract it
         if not os.path.exists(ud.clonedir) and os.path.exists(ud.fullmirror):
             bb.utils.mkdirhier(ud.clonedir)
-            runfetchcmd("tar -xzf %s" % (ud.fullmirror), d, workdir=ud.clonedir)
+            runfetchcmd("tar -xzf %s" % ud.fullmirror, d, workdir=ud.clonedir)
 
         repourl = self._get_repo_url(ud)
 
@@ -292,14 +292,14 @@ class Git(FetchMethod):
 
             logger.info("Creating tarball of git repository")
             runfetchcmd("tar -czf %s %s" % (ud.fullmirror, os.path.join(".") ), d, workdir=ud.clonedir)
-            runfetchcmd("touch %s.done" % (ud.fullmirror), d, workdir=ud.clonedir)
+            runfetchcmd("touch %s.done" % ud.fullmirror, d, workdir=ud.clonedir)
 
     def unpack(self, ud, destdir, d):
         """ unpack the downloaded src to destdir"""
 
         subdir = ud.parm.get("subpath", "")
         if subdir != "":
-            readpathspec = ":%s" % (subdir)
+            readpathspec = ":%s" % subdir
             def_destsuffix = "%s/" % os.path.basename(subdir.rstrip('/'))
         else:
             readpathspec = ""
@@ -469,7 +469,7 @@ class Git(FetchMethod):
             if not os.path.exists(rev_file) or not os.path.getsize(rev_file):
                 from pipes import quote
                 commits = bb.fetch2.runfetchcmd(
-                        "git rev-list %s -- | wc -l" % (quote(rev)),
+                        "git rev-list %s -- | wc -l" % quote(rev),
                         d, quiet=True).strip().lstrip('0')
                 if commits:
                     open(rev_file, "w").write("%d\n" % int(commits))
