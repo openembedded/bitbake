@@ -484,5 +484,5 @@ class Git(FetchMethod):
         try:
             self._lsremote(ud, d, "")
             return True
-        except FetchError:
+        except bb.fetch2.FetchError:
             return False
