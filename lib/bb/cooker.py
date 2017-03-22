@@ -762,7 +762,7 @@ class BBCooker:
     @staticmethod
     def add_mc_prefix(mc, pn):
         if mc:
-            return "multiconfig:%s.%s" % (mc, pn)
+            return "multiconfig:%s:%s" % (mc, pn)
         return pn
 
     def buildDependTree(self, rq, taskdata):
