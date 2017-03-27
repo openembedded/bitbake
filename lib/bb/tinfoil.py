@@ -210,13 +210,17 @@ class TinfoilCookerAdapter:
 
 class Tinfoil:
 
-    def __init__(self, output=sys.stdout, tracking=False):
+    def __init__(self, output=sys.stdout, tracking=False, setup_logging=True):
         self.logger = logging.getLogger('BitBake')
         self.config_data = None
         self.cooker = None
         self.tracking = tracking
         self.ui_module = None
         self.server_connection = None
+        if setup_logging:
+            # This is the *client-side* logger, nothing to do with
+            # logging messages from the server
+            bb.msg.logger_create('BitBake', output)
 
     def __enter__(self):
         return self
