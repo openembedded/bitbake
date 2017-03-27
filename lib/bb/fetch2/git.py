@@ -379,14 +379,26 @@ class Git(FetchMethod):
         """
         Run git ls-remote with the specified search string
         """
-        repourl = self._get_repo_url(ud)
-        cmd = "%s ls-remote %s %s" % \
-              (ud.basecmd, repourl, search)
-        if ud.proto.lower() != 'file':
-            bb.fetch2.check_network_access(d, cmd, repourl)
-        output = runfetchcmd(cmd, d, True)
-        if not output:
-            raise bb.fetch2.FetchError("The command %s gave empty output unexpectedly" % cmd, ud.url)
+        # Prevent recursion e.g. in OE if SRCPV is in PV, PV is in WORKDIR,
+        # and WORKDIR is in PATH (as a result of RSS), our call to
+        # runfetchcmd() exports PATH so this function will get called again (!)
+        # In this scenario the return call of the function isn't actually
+        # important - WORKDIR isn't needed in PATH to call git ls-remote
+        # anyway.
+        if d.getVar('_BB_GIT_IN_LSREMOTE', False):
+            return ''
+        d.setVar('_BB_GIT_IN_LSREMOTE', '1')
+        try:
+            repourl = self._get_repo_url(ud)
+            cmd = "%s ls-remote %s %s" % \
+                (ud.basecmd, repourl, search)
+            if ud.proto.lower() != 'file':
+                bb.fetch2.check_network_access(d, cmd, repourl)
+            output = runfetchcmd(cmd, d, True)
+            if not output:
+                raise bb.fetch2.FetchError("The command %s gave empty output unexpectedly" % cmd, ud.url)
+        finally:
+            d.delVar('_BB_GIT_IN_LSREMOTE')
         return output
 
     def _latest_revision(self, ud, d, name):
