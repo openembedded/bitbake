@@ -30,19 +30,9 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(sys.argv[0])), '
 
 import bb.tinfoil
 import bb.siggen
+import bb.msg
 
-def logger_create(name, output=sys.stderr):
-    logger = logging.getLogger(name)
-    console = logging.StreamHandler(output)
-    format = bb.msg.BBLogFormatter("%(levelname)s: %(message)s")
-    if output.isatty():
-        format.enable_color()
-    console.setFormatter(format)
-    logger.addHandler(console)
-    logger.setLevel(logging.INFO)
-    return logger
-
-logger = logger_create('bitbake-diffsigs')
+logger = bb.msg.logger_create('bitbake-diffsigs')
 
 def find_compare_task(bbhandler, pn, taskname):
     """ Find the most recent signature files for the specified PN/task and compare them """
