@@ -912,7 +912,7 @@ def which(path, item, direction = 0, history = False):
     for p in paths:
         next = os.path.join(p, item)
         hist.append(next)
-        if os.path.exists(next):
+        if os.path.isfile(next):
             if not os.path.isabs(next):
                 next = os.path.abspath(next)
             if history:
