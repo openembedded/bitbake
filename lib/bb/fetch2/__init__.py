@@ -625,7 +625,7 @@ def verify_donestamp(ud, d, origud=None):
     Returns True, if the donestamp exists and is valid, False otherwise. When
     returning False, any existing done stamps are removed.
     """
-    if not ud.needdonestamp:
+    if not ud.needdonestamp or (origud and not origud.needdonestamp):
         return True
 
     if not os.path.exists(ud.donestamp):
