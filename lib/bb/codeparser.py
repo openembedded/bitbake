@@ -186,7 +186,8 @@ class BufferedLogger(Logger):
 
     def flush(self):
         for record in self.buffer:
-            self.target.handle(record)
+            if self.target.isEnabledFor(record.levelno):
+                self.target.handle(record)
         self.buffer = []
 
 class PythonParser():
