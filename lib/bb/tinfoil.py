@@ -363,7 +363,7 @@ class Tinfoil:
         skipped.
         """
         best = self.find_best_provider(pn)
-        if not best:
+        if not best or (len(best) > 3 and not best[3]):
             skiplist = self.get_skipped_recipes()
             taskdata = bb.taskdata.TaskData(None, skiplist=skiplist)
             skipreasons = taskdata.get_reasons(pn)
