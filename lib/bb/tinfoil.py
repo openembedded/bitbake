@@ -368,9 +368,9 @@ class Tinfoil:
             taskdata = bb.taskdata.TaskData(None, skiplist=skiplist)
             skipreasons = taskdata.get_reasons(pn)
             if skipreasons:
-                raise bb.providers.NoProvider(skipreasons)
+                raise bb.providers.NoProvider('%s is unavailable:\n  %s' % (pn, '  \n'.join(skipreasons)))
             else:
-                raise bb.providers.NoProvider('Unable to find any recipe file matching %s' % pn)
+                raise bb.providers.NoProvider('Unable to find any recipe file matching "%s"' % pn)
         return best[3]
 
     def get_file_appends(self, fn):
