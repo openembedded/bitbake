@@ -899,10 +899,19 @@ def copyfile(src, dest, newmtime = None, sstat = None):
         newmtime = sstat[stat.ST_MTIME]
     return newmtime
 
-def which(path, item, direction = 0, history = False):
+def which(path, item, direction = 0, history = False, executable=False):
     """
-    Locate a file in a PATH
+    Locate `item` in the list of paths `path` (colon separated string like $PATH).
+    If `direction` is non-zero then the list is reversed.
+    If `history` is True then the list of candidates also returned as result,history.
+    If `executable` is True then the candidate has to be an executable file,
+    otherwise the candidate simply has to exist.
     """
+
+    if executable:
+        is_candidate = lambda p: os.path.isfile(p) and os.access(p, os.X_OK)
+    else:
+        is_candidate = lambda p: os.path.exists(p)
 
     hist = []
     paths = (path or "").split(':')
@@ -912,7 +921,7 @@ def which(path, item, direction = 0, history = False):
     for p in paths:
         next = os.path.join(p, item)
         hist.append(next)
-        if os.path.exists(next):
+        if is_candidate(next):
             if not os.path.isabs(next):
                 next = os.path.abspath(next)
             if history:
