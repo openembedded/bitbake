@@ -55,13 +55,15 @@ class S3(FetchMethod):
 
         ud.localfile = d.expand(urllib.parse.unquote(ud.basename))
 
+        ud.basecmd = d.getVar("FETCHCMD_s3") or "/usr/bin/env aws s3"
+
     def download(self, ud, d):
         """
         Fetch urls
         Assumes localpath was called first
         """
 
-        cmd = 'aws s3 cp s3://%s%s %s' % (ud.host, ud.path, ud.localpath)
+        cmd = '%s cp s3://%s%s %s' % (ud.basecmd, ud.host, ud.path, ud.localpath)
         bb.fetch2.check_network_access(d, cmd, ud.url)
         runfetchcmd(cmd, d)
 
@@ -83,7 +85,7 @@ class S3(FetchMethod):
         Check the status of a URL
         """
 
-        cmd = 'aws s3 ls s3://%s%s' % (ud.host, ud.path)
+        cmd = '%s ls s3://%s%s' % (ud.basecmd, ud.host, ud.path)
         bb.fetch2.check_network_access(d, cmd, ud.url)
         output = runfetchcmd(cmd, d)
 
