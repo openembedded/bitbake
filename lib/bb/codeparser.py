@@ -1,3 +1,22 @@
+"""
+BitBake code parser
+
+Parses actual code (i.e. python and shell) for functions and in-line
+expressions. Used mainly to determine dependencies on other functions
+and variables within the BitBake metadata. Also provides a cache for
+this information in order to speed up processing.
+
+(Not to be confused with the code that parses the metadata itself,
+see lib/bb/parse/ for that).
+
+NOTE: if you change how the parsers gather information you will almost
+certainly need to increment CodeParserCache.CACHE_VERSION below so that
+any existing codeparser cache gets invalidated. Additionally you'll need
+to increment __cache_version__ in cache.py in order to ensure that old
+recipe caches don't trigger "Taskhash mismatch" errors.
+
+"""
+
 import ast
 import sys
 import codegen
@@ -117,6 +136,10 @@ class shellCacheLine(object):
 
 class CodeParserCache(MultiProcessCache):
     cache_file_name = "bb_codeparser.dat"
+    # NOTE: you must increment this if you change how the parsers gather information,
+    # so that an existing cache gets invalidated. Additionally you'll need
+    # to increment __cache_version__ in cache.py in order to ensure that old
+    # recipe caches don't trigger "Taskhash mismatch" errors.
     CACHE_VERSION = 9
 
     def __init__(self):
