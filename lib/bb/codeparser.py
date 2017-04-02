@@ -117,7 +117,7 @@ class shellCacheLine(object):
 
 class CodeParserCache(MultiProcessCache):
     cache_file_name = "bb_codeparser.dat"
-    CACHE_VERSION = 8
+    CACHE_VERSION = 9
 
     def __init__(self):
         MultiProcessCache.__init__(self)
@@ -193,7 +193,8 @@ class BufferedLogger(Logger):
 class PythonParser():
     getvars = (".getVar", ".appendVar", ".prependVar")
     getvarflags = (".getVarFlag", ".appendVarFlag", ".prependVarFlag")
-    containsfuncs = ("bb.utils.contains", "base_contains", "bb.utils.contains_any")
+    containsfuncs = ("bb.utils.contains", "base_contains")
+    containsanyfuncs = ("bb.utils.contains_any",  "bb.utils.filter")
     execfuncs = ("bb.build.exec_func", "bb.build.exec_task")
 
     def warn(self, func, arg):
@@ -212,13 +213,17 @@ class PythonParser():
 
     def visit_Call(self, node):
         name = self.called_node_name(node.func)
-        if name and (name.endswith(self.getvars) or name.endswith(self.getvarflags) or name in self.containsfuncs):
+        if name and (name.endswith(self.getvars) or name.endswith(self.getvarflags) or name in self.containsfuncs or name in self.containsanyfuncs):
             if isinstance(node.args[0], ast.Str):
                 varname = node.args[0].s
                 if name in self.containsfuncs and isinstance(node.args[1], ast.Str):
                     if varname not in self.contains:
                         self.contains[varname] = set()
                     self.contains[varname].add(node.args[1].s)
+                elif name in self.containsanyfuncs and isinstance(node.args[1], ast.Str):
+                    if varname not in self.contains:
+                        self.contains[varname] = set()
+                    self.contains[varname].update(node.args[1].s.split())
                 elif name.endswith(self.getvarflags):
                     if isinstance(node.args[1], ast.Str):
                         self.references.add('%s[%s]' % (varname, node.args[1].s))
