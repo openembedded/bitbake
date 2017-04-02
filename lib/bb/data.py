@@ -296,11 +296,13 @@ def build_dependencies(key, keys, shelldeps, varflagsexcl, d):
             newvalue = ""
             for k in sorted(contains):
                 l = (d.getVar(k) or "").split()
-                for word in sorted(contains[k]):
-                    if word in l:
-                        newvalue += "\n%s{%s} = Set" %  (k, word)
+                for item in sorted(contains[k]):
+                    for word in item.split():
+                        if not word in l:
+                            newvalue += "\n%s{%s} = Unset" % (k, item)
+                            break
                     else:
-                        newvalue += "\n%s{%s} = Unset" %  (k, word)
+                        newvalue += "\n%s{%s} = Set" % (k, item)
             if not newvalue:
                 return value
             if not value:
