@@ -506,7 +506,7 @@
                              Read the specified file after bitbake.conf.
        -v, --verbose         Enable tracing of shell tasks (with 'set -x').
                              Also print bb.note(...) messages to stdout (in
-                             addition to writing them to ${T}/log.do_<task>).
+                             addition to writing them to ${T}/log.do_&lt;task&gt;).
        -D, --debug           Increase the debug level. You can specify this
                              more than once. -D sets the debug level to 1,
                              where only bb.debug(1, ...) messages are printed
