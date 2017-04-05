@@ -268,15 +268,6 @@
                 <link linkend='var-FILESPATH'><filename>FILESPATH</filename></link>
                 variable is used in the same way
                 <filename>PATH</filename> is used to find executables.
-                Failing that,
-                <link linkend='var-FILESDIR'><filename>FILESDIR</filename></link>
-                is used to find the appropriate relative file.
-                <note>
-                    <filename>FILESDIR</filename> is deprecated and can
-                    be replaced with <filename>FILESPATH</filename>.
-                    Because <filename>FILESDIR</filename> is likely to be
-                    removed, you should not use this variable in any new code.
-                </note>
                 If the file cannot be found, it is assumed that it is available in
                 <link linkend='var-DL_DIR'><filename>DL_DIR</filename></link>
                 by the time the <filename>download()</filename> method is called.

@@ -67,12 +67,6 @@ class Local(FetchMethod):
             logger.debug(2, "Searching for %s in paths:\n    %s" % (path, "\n    ".join(filespath.split(":"))))
             newpath, hist = bb.utils.which(filespath, path, history=True)
             searched.extend(hist)
-        if not newpath:
-            filesdir = d.getVar('FILESDIR')
-            if filesdir:
-                logger.debug(2, "Searching for %s in path: %s" % (path, filesdir))
-                newpath = os.path.join(filesdir, path)
-                searched.append(newpath)
         if (not newpath or not os.path.exists(newpath)) and path.find("*") != -1:
             # For expressions using '*', best we can do is take the first directory in FILESPATH that exists
             newpath, hist = bb.utils.which(filespath, ".", history=True)
@@ -102,9 +96,6 @@ class Local(FetchMethod):
             filespath = d.getVar('FILESPATH')
             if filespath:
                 locations = filespath.split(":")
-            filesdir = d.getVar('FILESDIR')
-            if filesdir:
-                locations.append(filesdir)
             locations.append(d.getVar("DL_DIR"))
 
             msg = "Unable to find file " + urldata.url + " anywhere. The paths that were searched were:\n    " + "\n    ".join(locations)
