@@ -41,6 +41,61 @@ logger = logging.getLogger("toaster")
 # want to wrap everything in a database transaction as an external process
 # (bitbake needs access to the database)
 
+def load_build_environment():
+    call_command('loaddata', 'settings.xml', app_label="orm")
+    call_command('loaddata', 'poky.xml', app_label="orm")
+
+    current_builddir = os.environ.get("BUILDDIR")
+    if current_builddir:
+        BuildTest.BUILDDIR = current_builddir
+    else:
+        # Setup a builddir based on default layout
+        # bitbake inside openebedded-core
+        oe_init_build_env_path = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            os.pardir,
+            os.pardir,
+            os.pardir,
+            os.pardir,
+            os.pardir,
+            'oe-init-build-env'
+        )
+        if not os.path.exists(oe_init_build_env_path):
+            raise Exception("We had no BUILDDIR set and couldn't "
+                            "find oe-init-build-env to set this up "
+                            "ourselves please run oe-init-build-env "
+                            "before running these tests")
+
+        oe_init_build_env_path = os.path.realpath(oe_init_build_env_path)
+        cmd = "bash -c 'source oe-init-build-env %s'" % BuildTest.BUILDDIR
+        p = subprocess.Popen(
+            cmd,
+            cwd=os.path.dirname(oe_init_build_env_path),
+            shell=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE)
+
+        output, err = p.communicate()
+        p.wait()
+
+        logger.info("oe-init-build-env %s %s" % (output, err))
+
+        os.environ['BUILDDIR'] = BuildTest.BUILDDIR
+
+    # Setup the path to bitbake we know where to find this
+    bitbake_path = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)),
+        os.pardir,
+        os.pardir,
+        os.pardir,
+        os.pardir,
+        'bin',
+        'bitbake')
+    if not os.path.exists(bitbake_path):
+        raise Exception("Could not find bitbake at the expected path %s"
+                        % bitbake_path)
+
+    os.environ['BBBASEDIR'] = bitbake_path
 
 class BuildTest(unittest.TestCase):
 
@@ -59,60 +114,7 @@ class BuildTest(unittest.TestCase):
         if built:
             return built
 
-        call_command('loaddata', 'settings.xml', app_label="orm")
-        call_command('loaddata', 'poky.xml', app_label="orm")
-
-        current_builddir = os.environ.get("BUILDDIR")
-        if current_builddir:
-            BuildTest.BUILDDIR = current_builddir
-        else:
-            # Setup a builddir based on default layout
-            # bitbake inside openebedded-core
-            oe_init_build_env_path = os.path.join(
-                os.path.dirname(os.path.abspath(__file__)),
-                os.pardir,
-                os.pardir,
-                os.pardir,
-                os.pardir,
-                os.pardir,
-                'oe-init-build-env'
-            )
-            if not os.path.exists(oe_init_build_env_path):
-                raise Exception("We had no BUILDDIR set and couldn't "
-                                "find oe-init-build-env to set this up "
-                                "ourselves please run oe-init-build-env "
-                                "before running these tests")
-
-            oe_init_build_env_path = os.path.realpath(oe_init_build_env_path)
-            cmd = "bash -c 'source oe-init-build-env %s'" % BuildTest.BUILDDIR
-            p = subprocess.Popen(
-                cmd,
-                cwd=os.path.dirname(oe_init_build_env_path),
-                shell=True,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE)
-
-            output, err = p.communicate()
-            p.wait()
-
-            logger.info("oe-init-build-env %s %s" % (output, err))
-
-            os.environ['BUILDDIR'] = BuildTest.BUILDDIR
-
-        # Setup the path to bitbake we know where to find this
-        bitbake_path = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)),
-            os.pardir,
-            os.pardir,
-            os.pardir,
-            os.pardir,
-            'bin',
-            'bitbake')
-        if not os.path.exists(bitbake_path):
-            raise Exception("Could not find bitbake at the expected path %s"
-                            % bitbake_path)
-
-        os.environ['BBBASEDIR'] = bitbake_path
+        load_build_environment()
 
         BuildEnvironment.objects.get_or_create(
             betype=BuildEnvironment.TYPE_LOCAL,
