@@ -697,6 +697,9 @@ class RunQueueData:
                 seendeps.add(t)
                 newdeps.add(t)
                 for i in newdeps:
+                    if i not in self.runtaskentries:
+                        # Not all recipes might have the recrdeptask task as a task
+                        continue
                     task = self.runtaskentries[i].task
                     for n in self.runtaskentries[i].depends:
                         if n not in seendeps:
