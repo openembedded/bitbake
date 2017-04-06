@@ -375,7 +375,7 @@ def clean_basepaths_list(a):
         b.append(clean_basepath(x))
     return b
 
-def compare_sigfiles(a, b, recursecb = None):
+def compare_sigfiles(a, b, recursecb=None, collapsed=False):
     output = []
 
     with open(a, 'rb') as f:
@@ -443,7 +443,7 @@ def compare_sigfiles(a, b, recursecb = None):
     if a_data['taskdeps'] != b_data['taskdeps']:
         output.append("Task dependencies changed from:\n%s\nto:\n%s" % (sorted(a_data['taskdeps']), sorted(b_data['taskdeps'])))
 
-    if a_data['basehash'] != b_data['basehash']:
+    if a_data['basehash'] != b_data['basehash'] and not collapsed:
         output.append("basehash changed from %s to %s" % (a_data['basehash'], b_data['basehash']))
 
     changed, added, removed = dict_diff(a_data['gendeps'], b_data['gendeps'], a_data['basewhitelist'] & b_data['basewhitelist'])
@@ -495,24 +495,25 @@ def compare_sigfiles(a, b, recursecb = None):
     if not 'runtaskdeps' in b_data:
          b_data['runtaskdeps'] = {}
 
-    if len(a_data['runtaskdeps']) != len(b_data['runtaskdeps']):
-        changed = ["Number of task dependencies changed"]
-    else:
-        changed = []
-        for idx, task in enumerate(a_data['runtaskdeps']):
-            a = a_data['runtaskdeps'][idx]
-            b = b_data['runtaskdeps'][idx]
-            if a_data['runtaskhashes'][a] != b_data['runtaskhashes'][b]:
-                changed.append("%s with hash %s\n changed to\n%s with hash %s" % (a, a_data['runtaskhashes'][a], b, b_data['runtaskhashes'][b]))
-
-    if changed:
-        clean_a = clean_basepaths_list(a_data['runtaskdeps'])
-        clean_b = clean_basepaths_list(b_data['runtaskdeps'])
-        if clean_a != clean_b:
-            output.append("runtaskdeps changed from %s to %s" % (clean_a, clean_b))
+    if not collapsed:
+        if len(a_data['runtaskdeps']) != len(b_data['runtaskdeps']):
+            changed = ["Number of task dependencies changed"]
         else:
-            output.append("runtaskdeps changed:")
-        output.append("\n".join(changed))
+            changed = []
+            for idx, task in enumerate(a_data['runtaskdeps']):
+                a = a_data['runtaskdeps'][idx]
+                b = b_data['runtaskdeps'][idx]
+                if a_data['runtaskhashes'][a] != b_data['runtaskhashes'][b]:
+                    changed.append("%s with hash %s\n changed to\n%s with hash %s" % (a, a_data['runtaskhashes'][a], b, b_data['runtaskhashes'][b]))
+
+        if changed:
+            clean_a = clean_basepaths_list(a_data['runtaskdeps'])
+            clean_b = clean_basepaths_list(b_data['runtaskdeps'])
+            if clean_a != clean_b:
+                output.append("runtaskdeps changed from %s to %s" % (clean_a, clean_b))
+            else:
+                output.append("runtaskdeps changed:")
+            output.append("\n".join(changed))
 
     if 'runtaskhashes' in a_data and 'runtaskhashes' in b_data:
         a = a_data['runtaskhashes']
@@ -540,13 +541,17 @@ def compare_sigfiles(a, b, recursecb = None):
                     output.append("Dependency on task %s was removed with hash %s" % (clean_basepath(dep), a[dep]))
         if changed:
             for dep in changed:
-                output.append("Hash for dependent task %s changed from %s to %s" % (clean_basepath(dep), a[dep], b[dep]))
+                if not collapsed:
+                    output.append("Hash for dependent task %s changed from %s to %s" % (clean_basepath(dep), a[dep], b[dep]))
                 if callable(recursecb):
-                    # If a dependent hash changed, might as well print the line above and then defer to the changes in 
-                    # that hash since in all likelyhood, they're the same changes this task also saw.
                     recout = recursecb(dep, a[dep], b[dep])
                     if recout:
-                        output = [output[-1]] + recout
+                        if collapsed:
+                            output.extend(recout)
+                        else:
+                            # If a dependent hash changed, might as well print the line above and then defer to the changes in 
+                            # that hash since in all likelyhood, they're the same changes this task also saw.
+                            output = [output[-1]] + recout
 
     a_taint = a_data.get('taint', None)
     b_taint = b_data.get('taint', None)
