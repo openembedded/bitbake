@@ -84,9 +84,9 @@ def find_compare_task(bbhandler, pn, taskname):
             return recout
 
         # Recurse into signature comparison
-        logger.debug("Signature file (previous): %s" % latestfiles[0])
-        logger.debug("Signature file (latest): %s" % latestfiles[1])
-        output = bb.siggen.compare_sigfiles(latestfiles[0], latestfiles[1], recursecb)
+        logger.debug("Signature file (previous): %s" % latestfiles[-2])
+        logger.debug("Signature file (latest): %s" % latestfiles[-1])
+        output = bb.siggen.compare_sigfiles(latestfiles[-2], latestfiles[-1], recursecb)
         if output:
             print('\n'.join(output))
     sys.exit(0)
