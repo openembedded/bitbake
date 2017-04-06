@@ -355,7 +355,7 @@ def clean_basepath(a):
     mc = None
     if a.startswith("multiconfig:"):
         _, mc, a = a.split(":", 2)
-    b = a.rsplit("/", 2)[1] + a.rsplit("/", 2)[2]
+    b = a.rsplit("/", 2)[1] + '/' + a.rsplit("/", 2)[2]
     if a.startswith("virtual:"):
         b = b + ":" + a.rsplit(":", 1)[0]
     if mc:
