@@ -6,6 +6,7 @@ import tempfile
 import pickle
 import bb.data
 import difflib
+import simplediff
 from bb.checksum import FileChecksumCache
 
 logger = logging.getLogger('BitBake.SigGen')
@@ -352,6 +353,39 @@ def dump_this_task(outfile, d):
     referencestamp = bb.build.stamp_internal(task, d, None, True)
     bb.parse.siggen.dump_sigtask(fn, task, outfile, "customfile:" + referencestamp)
 
+def worddiff_str(oldstr, newstr):
+    diff = simplediff.diff(oldstr.split(' '), newstr.split(' '))
+    ret = []
+    for change, value in diff:
+        value = ' '.join(value)
+        if change == '=':
+            ret.append(value)
+        elif change == '+':
+            item = '{+%s+}' % value
+            ret.append(item)
+        elif change == '-':
+            item = '[-%s-]' % value
+            ret.append(item)
+    whitespace_note = ''
+    if oldstr != newstr and ' '.join(oldstr.split()) == ' '.join(newstr.split()):
+        whitespace_note = ' (whitespace changed)'
+    return '"%s"%s' % (' '.join(ret), whitespace_note)
+
+def list_inline_diff(oldlist, newlist):
+    diff = simplediff.diff(oldlist, newlist)
+    ret = []
+    for change, value in diff:
+        value = ' '.join(value)
+        if change == '=':
+            ret.append("'%s'" % value)
+        elif change == '+':
+            item = "+'%s'" % value
+            ret.append(item)
+        elif change == '-':
+            item = "-'%s'" % value
+            ret.append(item)
+    return '[%s]' % (', '.join(ret))
+
 def clean_basepath(a):
     mc = None
     if a.startswith("multiconfig:"):
@@ -471,6 +505,8 @@ def compare_sigfiles(a, b, recursecb=None, collapsed=False):
                 # the old/new filename (they are blank anyway in this case)
                 difflines = list(diff)[2:]
                 output.append("Variable %s value changed:\n%s" % (dep, '\n'.join(difflines)))
+            elif newval and oldval and (' ' in oldval or ' ' in newval):
+                output.append("Variable %s value changed:\n%s" % (dep, worddiff_str(oldval, newval)))
             else:
                 output.append("Variable %s value changed from '%s' to '%s'" % (dep, oldval, newval))
 
@@ -510,7 +546,7 @@ def compare_sigfiles(a, b, recursecb=None, collapsed=False):
             clean_a = clean_basepaths_list(a_data['runtaskdeps'])
             clean_b = clean_basepaths_list(b_data['runtaskdeps'])
             if clean_a != clean_b:
-                output.append("runtaskdeps changed from %s to %s" % (clean_a, clean_b))
+                output.append("runtaskdeps changed:\n%s" % list_inline_diff(clean_a, clean_b))
             else:
                 output.append("runtaskdeps changed:")
             output.append("\n".join(changed))
