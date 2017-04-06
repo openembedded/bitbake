@@ -506,9 +506,13 @@ def compare_sigfiles(a, b, recursecb = None):
                 changed.append("%s with hash %s\n changed to\n%s with hash %s" % (a, a_data['runtaskhashes'][a], b, b_data['runtaskhashes'][b]))
 
     if changed:
-        output.append("runtaskdeps changed from %s to %s" % (clean_basepaths_list(a_data['runtaskdeps']), clean_basepaths_list(b_data['runtaskdeps'])))
+        clean_a = clean_basepaths_list(a_data['runtaskdeps'])
+        clean_b = clean_basepaths_list(b_data['runtaskdeps'])
+        if clean_a != clean_b:
+            output.append("runtaskdeps changed from %s to %s" % (clean_a, clean_b))
+        else:
+            output.append("runtaskdeps changed:")
         output.append("\n".join(changed))
-
 
     if 'runtaskhashes' in a_data and 'runtaskhashes' in b_data:
         a = a_data['runtaskhashes']
