@@ -34,7 +34,7 @@ import bb.msg
 
 logger = bb.msg.logger_create('bitbake-diffsigs')
 
-def find_compare_task(bbhandler, pn, taskname, sig1=None, sig2=None):
+def find_compare_task(bbhandler, pn, taskname, sig1=None, sig2=None, color=False):
     """ Find the most recent signature files for the specified PN/task and compare them """
 
     if not hasattr(bb.siggen, 'find_siginfo'):
@@ -79,7 +79,7 @@ def find_compare_task(bbhandler, pn, taskname, sig1=None, sig2=None):
         elif not hash2 in hashfiles:
             recout.append("Unable to find matching sigdata for %s with hash %s" % (key, hash2))
         else:
-            out2 = bb.siggen.compare_sigfiles(hashfiles[hash1], hashfiles[hash2], recursecb)
+            out2 = bb.siggen.compare_sigfiles(hashfiles[hash1], hashfiles[hash2], recursecb, color=color)
             for change in out2:
                 for line in change.splitlines():
                     recout.append('  ' + line)
@@ -89,7 +89,7 @@ def find_compare_task(bbhandler, pn, taskname, sig1=None, sig2=None):
     # Recurse into signature comparison
     logger.debug("Signature file (previous): %s" % latestfiles[-2])
     logger.debug("Signature file (latest): %s" % latestfiles[-1])
-    output = bb.siggen.compare_sigfiles(latestfiles[-2], latestfiles[-1], recursecb)
+    output = bb.siggen.compare_sigfiles(latestfiles[-2], latestfiles[-1], recursecb, color=color)
     if output:
         print('\n'.join(output))
     sys.exit(0)
@@ -102,6 +102,10 @@ parser = argparse.ArgumentParser(
 parser.add_argument('-d', '--debug',
                     help='Enable debug output',
                     action='store_true')
+
+parser.add_argument('--color',
+        help='Colorize output (where %(metavar)s is %(choices)s)',
+        choices=['auto', 'always', 'never'], default='auto', metavar='color')
 
 parser.add_argument("-t", "--task",
         help="find the signature data files for last two runs of the specified task and compare them",
@@ -125,20 +129,22 @@ options = parser.parse_args()
 if options.debug:
     logger.setLevel(logging.DEBUG)
 
+color = (options.color == 'always' or (options.color == 'auto' and sys.stdout.isatty()))
+
 if options.taskargs:
     with bb.tinfoil.Tinfoil() as tinfoil:
         tinfoil.prepare(config_only=True)
         if options.sigargs:
-            find_compare_task(tinfoil, options.taskargs[0], options.taskargs[1], options.sigargs[0], options.sigargs[1])
+            find_compare_task(tinfoil, options.taskargs[0], options.taskargs[1], options.sigargs[0], options.sigargs[1], color=color)
         else:
-            find_compare_task(tinfoil, options.taskargs[0], options.taskargs[1])
+            find_compare_task(tinfoil, options.taskargs[0], options.taskargs[1], color=color)
 else:
     if options.sigargs:
         logger.error('-s/--signature can only be used together with -t/--task')
         sys.exit(1)
     try:
         if options.sigdatafile1 and options.sigdatafile2:
-            output = bb.siggen.compare_sigfiles(options.sigdatafile1, options.sigdatafile2)
+            output = bb.siggen.compare_sigfiles(options.sigdatafile1, options.sigdatafile2, color=color)
         elif options.sigdatafile1:
             output = bb.siggen.dump_sigfile(options.sigdatafile1)
     except IOError as e:
