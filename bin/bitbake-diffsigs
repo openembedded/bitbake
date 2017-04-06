@@ -75,11 +75,15 @@ def find_compare_task(bbhandler, pn, taskname):
             hashfiles = bb.siggen.find_siginfo(key, None, hashes, bbhandler.config_data)
 
             recout = []
-            if len(hashfiles) == 2:
+            if len(hashfiles) == 0:
+                recout.append("Unable to find matching sigdata for %s with hashes %s or %s" % (key, hash1, hash2))
+            elif not hash1 in hashfiles:
+                recout.append("Unable to find matching sigdata for %s with hash %s" % (key, hash1))
+            elif not hash2 in hashfiles:
+                recout.append("Unable to find matching sigdata for %s with hash %s" % (key, hash2))
+            else:
                 out2 = bb.siggen.compare_sigfiles(hashfiles[hash1], hashfiles[hash2], recursecb)
                 recout.extend(list('  ' + l for l in out2))
-            else:
-                recout.append("Unable to find matching sigdata for %s with hashes %s or %s" % (key, hash1, hash2))
 
             return recout
 
