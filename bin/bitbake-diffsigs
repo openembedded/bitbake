@@ -67,7 +67,9 @@ def find_compare_task(bbhandler, pn, taskname):
                 recout.append("Unable to find matching sigdata for %s with hash %s" % (key, hash2))
             else:
                 out2 = bb.siggen.compare_sigfiles(hashfiles[hash1], hashfiles[hash2], recursecb)
-                recout.extend(list('  ' + l for l in out2))
+                for change in out2:
+                    for line in change.splitlines():
+                        recout.append('  ' + line)
 
             return recout
 
