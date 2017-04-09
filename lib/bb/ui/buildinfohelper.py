@@ -1663,6 +1663,36 @@ class BuildInfoHelper(object):
                 break
         return endswith
 
+    def scan_task_artifacts(self, event):
+        """
+        The 'TaskArtifacts' event passes the manifest file content for the
+        tasks 'do_deploy', 'do_image_complete', 'do_populate_sdk', and
+        'do_populate_sdk_ext'. The first two will be implemented later.
+        """
+        task_vars = BuildInfoHelper._get_data_from_event(event)
+        task_name = task_vars['task'][task_vars['task'].find(':')+1:]
+        task_artifacts = task_vars['artifacts']
+
+        if task_name in ['do_populate_sdk', 'do_populate_sdk_ext']:
+            targets = [target for target in self.internal_state['targets'] \
+                if target.task == task_name[3:]]
+            if not targets:
+                logger.warning("scan_task_artifacts: SDK targets not found: %s\n", task_name)
+                return
+            for artifact_path in task_artifacts:
+                if not os.path.isfile(artifact_path):
+                    logger.warning("scan_task_artifacts: artifact file not found: %s\n", artifact_path)
+                    continue
+                for target in targets:
+                    # don't record the file if it's already been added
+                    # to this target
+                    matching_files = TargetSDKFile.objects.filter(
+                        target=target, file_name=artifact_path)
+                    if matching_files.count() == 0:
+                        artifact_size = os.stat(artifact_path).st_size
+                        self.orm_wrapper.save_target_sdk_file(
+                            target, artifact_path, artifact_size)
+
     def _get_image_files(self, deploy_dir_image, image_name, image_file_extensions):
         """
         Find files in deploy_dir_image whose basename starts with the

@@ -438,9 +438,7 @@ def main(server, eventHandler, params):
                 elif event.type == "SetBRBE":
                     buildinfohelper.brbe = buildinfohelper._get_data_from_event(event)
                 elif event.type == "TaskArtifacts":
-                    # not implemented yet
-                    # see https://bugzilla.yoctoproject.org/show_bug.cgi?id=10283 for details
-                    pass
+                    buildinfohelper.scan_task_artifacts(event)
                 elif event.type == "OSErrorException":
                     logger.error(event)
                 else:
