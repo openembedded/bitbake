@@ -147,6 +147,10 @@ else:
             output = bb.siggen.compare_sigfiles(options.sigdatafile1, options.sigdatafile2, color=color)
         elif options.sigdatafile1:
             output = bb.siggen.dump_sigfile(options.sigdatafile1)
+        else:
+            logger.error('Must specify signature file(s) or -t/--task')
+            parser.print_help()
+            sys.exit(1)
     except IOError as e:
         logger.error(str(e))
         sys.exit(1)
