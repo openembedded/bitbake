@@ -141,6 +141,12 @@ class Command:
         self.currentAsyncCommand = None
         self.cooker.finishcommand()
 
+def split_mc_pn(pn):
+    if pn.startswith("multiconfig:"):
+        _, mc, pn = pn.split(":", 2)
+        return (mc, pn)
+    return ('', pn)
+
 class CommandsSync:
     """
     A class of synchronous commands
@@ -425,8 +431,8 @@ class CommandsSync:
     findProviders.readonly = True
 
     def findBestProvider(self, command, params):
-        pn = params[0]
-        return command.cooker.findBestProvider(pn)
+        (mc, pn) = split_mc_pn(params[0])
+        return command.cooker.findBestProvider(pn, mc)
     findBestProvider.readonly = True
 
     def allProviders(self, command, params):
