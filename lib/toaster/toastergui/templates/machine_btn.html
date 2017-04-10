@@ -7,8 +7,8 @@
 <a class="btn btn-default btn-block layerbtn
 layer-add-{{data.layer_version.id}}" data-layer='{ "id":
    {{data.layer_version.id}}, "name":  "{{data.layer_version.layer.name}}",
-   "layerdetailurl": "{%url 'layerdetails' extra.pid data.layer_version.id %},
-   "xhrLayerUrl": "{% url "xhr_layer" extra.pid data.pk %}",
+   "layerdetailurl": "{%url 'layerdetails' extra.pid data.layer_version.id %}",
+   "xhrLayerUrl": "{% url "xhr_layer" extra.pid data.layer_version.id %}"
    }' data-directive="add"
     {% if data.layer_version.pk in extra.current_layers %}
     style="display:none;"
