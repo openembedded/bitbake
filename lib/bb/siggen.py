@@ -157,6 +157,8 @@ class SignatureGeneratorBasic(SignatureGenerator):
 
         try:
             taskdeps = self._build_data(fn, d)
+        except bb.parse.SkipRecipe:
+            raise
         except:
             bb.warn("Error during finalise of %s" % fn)
             raise

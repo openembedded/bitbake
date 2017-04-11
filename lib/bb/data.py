@@ -359,6 +359,8 @@ def build_dependencies(key, keys, shelldeps, varflagsexcl, d):
 
         deps |= set((vardeps or "").split())
         deps -= set(varflags.get("vardepsexclude", "").split())
+    except bb.parse.SkipRecipe:
+        raise
     except Exception as e:
         bb.warn("Exception during build_dependencies for %s" % key)
         raise
