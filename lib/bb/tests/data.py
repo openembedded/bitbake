@@ -283,6 +283,12 @@ class TestConcatOverride(unittest.TestCase):
         self.d.setVar("TEST_remove", "val")
         self.assertEqual(self.d.getVar("TEST"), "bar")
 
+    def test_remove_cleared(self):
+        self.d.setVar("TEST", "${VAL} ${BAR}")
+        self.d.setVar("TEST_remove", "val")
+        self.d.setVar("TEST", "${VAL} ${BAR}")
+        self.assertEqual(self.d.getVar("TEST"), "val bar")
+
     # Ensure the value is unchanged if we have an inactive remove override
     # (including that whitespace is preserved)
     def test_remove_inactive_override(self):
