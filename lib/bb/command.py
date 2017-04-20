@@ -479,6 +479,9 @@ class CommandsSync:
                         '_connector_overrides': overridedata}
             else:
                 value['_connector_overrides'] = overridedata
+        else:
+            value = {}
+            value['_connector_overrides'] = overridedata
         return value
     dataStoreConnectorFindVar.readonly = True
 
