@@ -1172,12 +1172,14 @@ class BBCooker:
         """
         Setup any variables needed before starting a build
         """
-        t = time.gmtime() 
-        if not self.data.getVar("BUILDNAME", False):
-            self.data.setVar("BUILDNAME", "${DATE}${TIME}")
-        self.data.setVar("BUILDSTART", time.strftime('%m/%d/%Y %H:%M:%S', t))
-        self.data.setVar("DATE", time.strftime('%Y%m%d', t))
-        self.data.setVar("TIME", time.strftime('%H%M%S', t))
+        t = time.gmtime()
+        for mc in self.databuilder.mcdata:
+            ds = self.databuilder.mcdata[mc]
+            if not ds.getVar("BUILDNAME", False):
+                ds.setVar("BUILDNAME", "${DATE}${TIME}")
+            ds.setVar("BUILDSTART", time.strftime('%m/%d/%Y %H:%M:%S', t))
+            ds.setVar("DATE", time.strftime('%Y%m%d', t))
+            ds.setVar("TIME", time.strftime('%H%M%S', t))
 
     def reset_mtime_caches(self):
         """
@@ -1292,10 +1294,10 @@ class BBCooker:
         # Setup taskdata structure
         taskdata = {}
         taskdata[mc] = bb.taskdata.TaskData(self.configuration.abort)
-        taskdata[mc].add_provider(self.data, self.recipecaches[mc], item)
+        taskdata[mc].add_provider(self.databuilder.mcdata[mc], self.recipecaches[mc], item)
 
-        buildname = self.data.getVar("BUILDNAME")
-        bb.event.fire(bb.event.BuildStarted(buildname, [item]), self.data)
+        buildname = self.databuilder.mcdata[mc].getVar("BUILDNAME")
+        bb.event.fire(bb.event.BuildStarted(buildname, [item]), self.databuilder.mcdata[mc])
 
         # Execute the runqueue
         runlist = [[mc, item, task, fn]]
@@ -1325,7 +1327,7 @@ class BBCooker:
                 return False
 
             if not retval:
-                bb.event.fire(bb.event.BuildCompleted(len(rq.rqdata.runtaskentries), buildname, item, failures, interrupted), self.data)
+                bb.event.fire(bb.event.BuildCompleted(len(rq.rqdata.runtaskentries), buildname, item, failures, interrupted), self.databuilder.mcdata[mc])
                 self.command.finishAsyncCommand(msg)
                 return False
             if retval is True:
@@ -1362,7 +1364,8 @@ class BBCooker:
 
             if not retval:
                 try:
-                    bb.event.fire(bb.event.BuildCompleted(len(rq.rqdata.runtaskentries), buildname, targets, failures, interrupted), self.data)
+                    for mc in self.multiconfigs:
+                        bb.event.fire(bb.event.BuildCompleted(len(rq.rqdata.runtaskentries), buildname, targets, failures, interrupted), self.databuilder.mcdata[mc])
                 finally:
                     self.command.finishAsyncCommand(msg)
                 return False
@@ -1395,7 +1398,8 @@ class BBCooker:
                 ntargets.append("multiconfig:%s:%s:%s" % (target[0], target[1], target[2]))
             ntargets.append("%s:%s" % (target[1], target[2]))
 
-        bb.event.fire(bb.event.BuildStarted(buildname, ntargets), self.data)
+        for mc in self.multiconfigs:
+            bb.event.fire(bb.event.BuildStarted(buildname, ntargets), self.databuilder.mcdata[mc])
 
         rq = bb.runqueue.RunQueue(self, self.data, self.recipecaches, taskdata, runlist)
         if 'universe' in targets:
