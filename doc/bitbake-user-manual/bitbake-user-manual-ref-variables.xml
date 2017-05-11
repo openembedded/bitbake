@@ -1596,9 +1596,19 @@
         <glossentry id='var-INHERIT'><glossterm>INHERIT</glossterm>
             <glossdef>
                 <para>
-                    Causes the named class to be inherited at
-                    this point during parsing.
-                    The variable is only valid in configuration files.
+                    Causes the named class or classes to be inherited globally.
+                    Anonymous functions in the class or classes
+                    are not executed for the
+                    base configuration and in each individual recipe.
+                    The OpenEmbedded build system ignores changes to
+                    <filename>INHERIT</filename> in individual recipes.
+                </para>
+
+                <para>
+                    For more information on <filename>INHERIT</filename>, see
+                    the
+                    "<link linkend="inherit-configuration-directive"><filename>INHERIT</filename> Configuration Directive</link>"
+                    section.
                 </para>
             </glossdef>
         </glossentry>

@@ -1072,7 +1072,8 @@
                 <note>
                     Because <filename>.conf</filename> files are parsed
                     first during BitBake's execution, using
-                    <filename>INHERIT</filename> to inherit a class effectively
+                    <link linkend='var-INHERIT'><filename>INHERIT</filename></link>
+                    to inherit a class effectively
                     inherits the class globally (i.e. for all recipes).
                 </note>
                 If you want to use the directive to inherit
