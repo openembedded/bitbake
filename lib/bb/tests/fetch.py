@@ -1259,6 +1259,33 @@ class GitShallowTest(FetcherTest):
         self.add_empty_file('c')
         self.add_empty_file('d')
         self.git('checkout master', cwd=self.srcdir)
+        self.git('tag v0.0 a_branch', cwd=self.srcdir)
+        self.add_empty_file('e')
+        self.git('merge --no-ff --no-edit a_branch', cwd=self.srcdir)
+        self.add_empty_file('f')
+        self.assertRevCount(7, cwd=self.srcdir)
+
+        uri = self.d.getVar('SRC_URI', True).split()[0]
+        uri = '%s;branch=master,a_branch;name=master,a_branch' % uri
+
+        self.d.setVar('BB_GIT_SHALLOW_DEPTH', '0')
+        self.d.setVar('BB_GIT_SHALLOW_REVS', 'v0.0')
+        self.d.setVar('SRCREV_master', '${AUTOREV}')
+        self.d.setVar('SRCREV_a_branch', '${AUTOREV}')
+
+        self.fetch_shallow(uri)
+
+        self.assertRevCount(5)
+        self.assertRefs(['master', 'origin/master', 'origin/a_branch'])
+
+    def test_shallow_multi_one_uri_depths(self):
+        # Create initial git repo
+        self.add_empty_file('a')
+        self.add_empty_file('b')
+        self.git('checkout -b a_branch', cwd=self.srcdir)
+        self.add_empty_file('c')
+        self.add_empty_file('d')
+        self.git('checkout master', cwd=self.srcdir)
         self.add_empty_file('e')
         self.git('merge --no-ff --no-edit a_branch', cwd=self.srcdir)
         self.add_empty_file('f')
@@ -1375,6 +1402,38 @@ class GitShallowTest(FetcherTest):
         self.d.setVar('BB_GIT_SHALLOW_EXTRA_REFS', 'refs/tags/*')
         self.fetch()
 
+    def test_shallow_remove_revs(self):
+        # Create initial git repo
+        self.add_empty_file('a')
+        self.add_empty_file('b')
+        self.git('checkout -b a_branch', cwd=self.srcdir)
+        self.add_empty_file('c')
+        self.add_empty_file('d')
+        self.git('checkout master', cwd=self.srcdir)
+        self.git('tag v0.0 a_branch', cwd=self.srcdir)
+        self.add_empty_file('e')
+        self.git('merge --no-ff --no-edit a_branch', cwd=self.srcdir)
+        self.git('branch -d a_branch', cwd=self.srcdir)
+        self.add_empty_file('f')
+        self.assertRevCount(7, cwd=self.srcdir)
+
+        self.d.setVar('BB_GIT_SHALLOW_DEPTH', '0')
+        self.d.setVar('BB_GIT_SHALLOW_REVS', 'v0.0')
+
+        self.fetch_shallow()
+
+        self.assertRevCount(5)
+
+    def test_shallow_invalid_revs(self):
+        self.add_empty_file('a')
+        self.add_empty_file('b')
+
+        self.d.setVar('BB_GIT_SHALLOW_DEPTH', '0')
+        self.d.setVar('BB_GIT_SHALLOW_REVS', 'v0.0')
+
+        with self.assertRaises(bb.fetch2.FetchError):
+            self.fetch()
+
     if os.environ.get("BB_SKIP_NETTESTS") == "yes":
         print("Unset BB_SKIP_NETTESTS to run network tests")
     else:
@@ -1383,11 +1442,16 @@ class GitShallowTest(FetcherTest):
             self.git('config core.bare true', cwd=self.srcdir)
             self.git('fetch --tags', cwd=self.srcdir)
 
-            self.d.setVar('BB_GIT_SHALLOW_DEPTH', '100')
+            self.d.setVar('BB_GIT_SHALLOW_DEPTH', '0')
+            # Note that the 1.10.0 tag is annotated, so this also tests
+            # reference of an annotated vs unannotated tag
+            self.d.setVar('BB_GIT_SHALLOW_REVS', '1.10.0')
 
             self.fetch_shallow()
 
+            # Confirm that the history of 1.10.0 was removed
             orig_revs = len(self.git('rev-list master', cwd=self.srcdir).splitlines())
             revs = len(self.git('rev-list master').splitlines())
             self.assertNotEqual(orig_revs, revs)
             self.assertRefs(['master', 'origin/master'])
+            self.assertRevCount(orig_revs - 1758)

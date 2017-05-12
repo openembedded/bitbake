@@ -196,6 +196,8 @@ class Git(FetchMethod):
             depth_default = 1
         ud.shallow_depths = collections.defaultdict(lambda: depth_default)
 
+        revs_default = d.getVar("BB_GIT_SHALLOW_REVS", True)
+        ud.shallow_revs = []
         ud.branches = {}
         for pos, name in enumerate(ud.names):
             branch = branches[pos]
@@ -213,7 +215,14 @@ class Git(FetchMethod):
                         raise bb.fetch2.FetchError("Invalid depth for BB_GIT_SHALLOW_DEPTH_%s: %s" % (name, shallow_depth))
                     ud.shallow_depths[name] = shallow_depth
 
+            revs = d.getVar("BB_GIT_SHALLOW_REVS_%s" % name)
+            if revs is not None:
+                ud.shallow_revs.extend(revs.split())
+            elif revs_default is not None:
+                ud.shallow_revs.extend(revs_default.split())
+
         if (ud.shallow and
+                not ud.shallow_revs and
                 all(ud.shallow_depths[n] == 0 for n in ud.names)):
             # Shallow disabled for this URL
             ud.shallow = False
@@ -260,6 +269,9 @@ class Git(FetchMethod):
             tarballname = gitsrcname
             if ud.bareclone:
                 tarballname = "%s_bare" % tarballname
+
+            if ud.shallow_revs:
+                tarballname = "%s_%s" % (tarballname, "_".join(sorted(ud.shallow_revs)))
 
             for name, revision in sorted(ud.revisions.items()):
                 tarballname = "%s_%s" % (tarballname, ud.revisions[name][:7])
@@ -413,7 +425,11 @@ class Git(FetchMethod):
             runfetchcmd("%s update-ref %s %s" % (ud.basecmd, ref, revision), d, workdir=dest)
 
         # Map srcrev+depths to revisions
-        shallow_revisions = runfetchcmd("%s rev-parse %s" % (ud.basecmd, " ".join(to_parse)), d, workdir=dest).splitlines()
+        parsed_depths = runfetchcmd("%s rev-parse %s" % (ud.basecmd, " ".join(to_parse)), d, workdir=dest)
+
+        # Resolve specified revisions
+        parsed_revs = runfetchcmd("%s rev-parse %s" % (ud.basecmd, " ".join('"%s^{}"' % r for r in ud.shallow_revs)), d, workdir=dest)
+        shallow_revisions = parsed_depths.splitlines() + parsed_revs.splitlines()
 
         # Apply extra ref wildcards
         all_refs = runfetchcmd('%s for-each-ref "--format=%%(refname)"' % ud.basecmd,
