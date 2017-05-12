@@ -205,8 +205,9 @@ class Git(FetchMethod):
         if ud.rebaseable:
             for name in ud.names:
                 gitsrcname = gitsrcname + '_' + ud.revisions[name]
-        ud.mirrortarball = 'git2_%s.tar.gz' % gitsrcname
-        ud.fullmirror = os.path.join(d.getVar("DL_DIR"), ud.mirrortarball)
+        mirrortarball = 'git2_%s.tar.gz' % gitsrcname
+        ud.fullmirror = os.path.join(d.getVar("DL_DIR"), mirrortarball)
+        ud.mirrortarballs = [mirrortarball]
         gitdir = d.getVar("GITDIR") or (d.getVar("DL_DIR") + "/git2/")
         ud.clonedir = os.path.join(gitdir, gitsrcname)
 

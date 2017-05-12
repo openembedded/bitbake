@@ -91,9 +91,10 @@ class Npm(FetchMethod):
         ud.prefixdir = prefixdir
 
         ud.write_tarballs = ((d.getVar("BB_GENERATE_MIRROR_TARBALLS") or "0") != "0")
-        ud.mirrortarball = 'npm_%s-%s.tar.xz' % (ud.pkgname, ud.version)
-        ud.mirrortarball = ud.mirrortarball.replace('/', '-')
-        ud.fullmirror = os.path.join(d.getVar("DL_DIR"), ud.mirrortarball)
+        mirrortarball = 'npm_%s-%s.tar.xz' % (ud.pkgname, ud.version)
+        mirrortarball = ud.mirrortarball.replace('/', '-')
+        ud.fullmirror = os.path.join(d.getVar("DL_DIR"), mirrortarball)
+        ud.mirrortarballs = [mirrortarball]
 
     def need_update(self, ud, d):
         if os.path.exists(ud.localpath):
