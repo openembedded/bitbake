@@ -1293,6 +1293,48 @@ class GitShallowTest(FetcherTest):
         with self.assertRaises(bb.fetch2.FetchError):
             self.fetch()
 
+    def test_shallow_extra_refs(self):
+        self.add_empty_file('a')
+        self.add_empty_file('b')
+        self.git('branch a_branch', cwd=self.srcdir)
+        self.assertRefs(['master', 'a_branch'], cwd=self.srcdir)
+        self.assertRevCount(2, cwd=self.srcdir)
+
+        self.d.setVar('BB_GIT_SHALLOW_EXTRA_REFS', 'refs/heads/a_branch')
+        self.fetch_shallow()
+
+        self.assertRefs(['master', 'origin/master', 'origin/a_branch'])
+        self.assertRevCount(1)
+
+    def test_shallow_extra_refs_wildcard(self):
+        self.add_empty_file('a')
+        self.add_empty_file('b')
+        self.git('branch a_branch', cwd=self.srcdir)
+        self.git('tag v1.0', cwd=self.srcdir)
+        self.assertRefs(['master', 'a_branch', 'v1.0'], cwd=self.srcdir)
+        self.assertRevCount(2, cwd=self.srcdir)
+
+        self.d.setVar('BB_GIT_SHALLOW_EXTRA_REFS', 'refs/tags/*')
+        self.fetch_shallow()
+
+        self.assertRefs(['master', 'origin/master', 'v1.0'])
+        self.assertRevCount(1)
+
+    def test_shallow_missing_extra_refs(self):
+        self.add_empty_file('a')
+        self.add_empty_file('b')
+
+        self.d.setVar('BB_GIT_SHALLOW_EXTRA_REFS', 'refs/heads/foo')
+        with self.assertRaises(bb.fetch2.FetchError):
+            self.fetch()
+
+    def test_shallow_missing_extra_refs_wildcard(self):
+        self.add_empty_file('a')
+        self.add_empty_file('b')
+
+        self.d.setVar('BB_GIT_SHALLOW_EXTRA_REFS', 'refs/tags/*')
+        self.fetch()
+
     if os.environ.get("BB_SKIP_NETTESTS") == "yes":
         print("Unset BB_SKIP_NETTESTS to run network tests")
     else:

@@ -72,6 +72,7 @@ Supported SRC_URI options are:
 
 import collections
 import errno
+import fnmatch
 import os
 import re
 import subprocess
@@ -180,6 +181,7 @@ class Git(FetchMethod):
             ud.cloneflags += " --mirror"
 
         ud.shallow = d.getVar("BB_GIT_SHALLOW") == "1"
+        ud.shallow_extra_refs = (d.getVar("BB_GIT_SHALLOW_EXTRA_REFS") or "").split()
 
         depth_default = d.getVar("BB_GIT_SHALLOW_DEPTH")
         if depth_default is not None:
@@ -265,8 +267,13 @@ class Git(FetchMethod):
                 if depth:
                     tarballname = "%s-%s" % (tarballname, depth)
 
+            shallow_refs = []
             if not ud.nobranch:
-                tarballname = "%s_%s" % (tarballname, "_".join(sorted(ud.branches.values())).replace('/', '.'))
+                shallow_refs.extend(ud.branches.values())
+            if ud.shallow_extra_refs:
+                shallow_refs.extend(r.replace('refs/heads/', '').replace('*', 'ALL') for r in ud.shallow_extra_refs)
+            if shallow_refs:
+                tarballname = "%s_%s" % (tarballname, "_".join(sorted(shallow_refs)).replace('/', '.'))
 
             fetcher = self.__class__.__name__.lower()
             ud.shallowtarball = '%sshallow_%s.tar.gz' % (fetcher, tarballname)
@@ -407,6 +414,19 @@ class Git(FetchMethod):
 
         # Map srcrev+depths to revisions
         shallow_revisions = runfetchcmd("%s rev-parse %s" % (ud.basecmd, " ".join(to_parse)), d, workdir=dest).splitlines()
+
+        # Apply extra ref wildcards
+        all_refs = runfetchcmd('%s for-each-ref "--format=%%(refname)"' % ud.basecmd,
+                               d, workdir=dest).splitlines()
+        for r in ud.shallow_extra_refs:
+            if not ud.bareclone:
+                r = r.replace('refs/heads/', 'refs/remotes/origin/')
+
+            if '*' in r:
+                matches = filter(lambda a: fnmatch.fnmatchcase(a, r), all_refs)
+                shallow_branches.extend(matches)
+            else:
+                shallow_branches.append(r)
 
         # Make the repository shallow
         shallow_cmd = ['git', 'make-shallow', '-s']
