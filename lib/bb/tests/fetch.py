@@ -1122,6 +1122,27 @@ class GitShallowTest(FetcherTest):
         self.fetch_shallow(disabled=True)
         self.assertRevCount(2)
 
+    def test_shallow_depth_default_override(self):
+        self.add_empty_file('a')
+        self.add_empty_file('b')
+        self.assertRevCount(2, cwd=self.srcdir)
+
+        self.d.setVar('BB_GIT_SHALLOW_DEPTH', '2')
+        self.d.setVar('BB_GIT_SHALLOW_DEPTH_default', '1')
+        self.fetch_shallow()
+        self.assertRevCount(1)
+
+    def test_shallow_depth_default_override_disable(self):
+        self.add_empty_file('a')
+        self.add_empty_file('b')
+        self.add_empty_file('c')
+        self.assertRevCount(3, cwd=self.srcdir)
+
+        self.d.setVar('BB_GIT_SHALLOW_DEPTH', '0')
+        self.d.setVar('BB_GIT_SHALLOW_DEPTH_default', '2')
+        self.fetch_shallow()
+        self.assertRevCount(2)
+
     def test_current_shallow_out_of_date_clone(self):
         # Create initial git repo
         self.add_empty_file('a')
@@ -1206,13 +1227,15 @@ class GitShallowTest(FetcherTest):
         uri = self.d.getVar('SRC_URI', True).split()[0]
         uri = '%s;branch=master,a_branch;name=master,a_branch' % uri
 
-        self.d.setVar('BB_GIT_SHALLOW_DEPTH', '2')
+        self.d.setVar('BB_GIT_SHALLOW_DEPTH', '0')
+        self.d.setVar('BB_GIT_SHALLOW_DEPTH_master', '3')
+        self.d.setVar('BB_GIT_SHALLOW_DEPTH_a_branch', '1')
         self.d.setVar('SRCREV_master', '${AUTOREV}')
         self.d.setVar('SRCREV_a_branch', '${AUTOREV}')
 
         self.fetch_shallow(uri)
 
-        self.assertRevCount(3, ['--all'])
+        self.assertRevCount(4, ['--all'])
         self.assertRefs(['master', 'origin/master', 'origin/a_branch'])
 
     def test_shallow_clone_preferred_over_shallow(self):
@@ -1259,6 +1282,14 @@ class GitShallowTest(FetcherTest):
         self.add_empty_file('b')
 
         self.d.setVar('BB_GIT_SHALLOW_DEPTH', '-12')
+        with self.assertRaises(bb.fetch2.FetchError):
+            self.fetch()
+
+    def test_shallow_invalid_depth_default(self):
+        self.add_empty_file('a')
+        self.add_empty_file('b')
+
+        self.d.setVar('BB_GIT_SHALLOW_DEPTH_default', '-12')
         with self.assertRaises(bb.fetch2.FetchError):
             self.fetch()
 

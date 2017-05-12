@@ -70,6 +70,7 @@ Supported SRC_URI options are:
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+import collections
 import errno
 import os
 import re
@@ -178,11 +179,42 @@ class Git(FetchMethod):
         if ud.bareclone:
             ud.cloneflags += " --mirror"
 
+        ud.shallow = d.getVar("BB_GIT_SHALLOW") == "1"
+
+        depth_default = d.getVar("BB_GIT_SHALLOW_DEPTH")
+        if depth_default is not None:
+            try:
+                depth_default = int(depth_default or 0)
+            except ValueError:
+                raise bb.fetch2.FetchError("Invalid depth for BB_GIT_SHALLOW_DEPTH: %s" % depth_default)
+            else:
+                if depth_default < 0:
+                    raise bb.fetch2.FetchError("Invalid depth for BB_GIT_SHALLOW_DEPTH: %s" % depth_default)
+        else:
+            depth_default = 1
+        ud.shallow_depths = collections.defaultdict(lambda: depth_default)
+
         ud.branches = {}
         for pos, name in enumerate(ud.names):
             branch = branches[pos]
             ud.branches[name] = branch
             ud.unresolvedrev[name] = branch
+
+            shallow_depth = d.getVar("BB_GIT_SHALLOW_DEPTH_%s" % name)
+            if shallow_depth is not None:
+                try:
+                    shallow_depth = int(shallow_depth or 0)
+                except ValueError:
+                    raise bb.fetch2.FetchError("Invalid depth for BB_GIT_SHALLOW_DEPTH_%s: %s" % (name, shallow_depth))
+                else:
+                    if shallow_depth < 0:
+                        raise bb.fetch2.FetchError("Invalid depth for BB_GIT_SHALLOW_DEPTH_%s: %s" % (name, shallow_depth))
+                    ud.shallow_depths[name] = shallow_depth
+
+        if (ud.shallow and
+                all(ud.shallow_depths[n] == 0 for n in ud.names)):
+            # Shallow disabled for this URL
+            ud.shallow = False
 
         if ud.usehead:
             ud.unresolvedrev['default'] = 'HEAD'
@@ -222,23 +254,6 @@ class Git(FetchMethod):
         mirrortarball = 'git2_%s.tar.gz' % gitsrcname
         ud.fullmirror = os.path.join(dl_dir, mirrortarball)
         ud.mirrortarballs = [mirrortarball]
-
-        ud.shallow = d.getVar("BB_GIT_SHALLOW") == "1"
-        if ud.shallow:
-            ud.shallow_depth = d.getVar("BB_GIT_SHALLOW_DEPTH")
-            if ud.shallow_depth is not None:
-                try:
-                    ud.shallow_depth = int(ud.shallow_depth or 0)
-                except ValueError:
-                    raise bb.fetch2.FetchError("Invalid depth for BB_GIT_SHALLOW_DEPTH: %s" % ud.shallow_depth)
-                else:
-                    if not ud.shallow_depth:
-                        ud.shallow = False
-                    elif ud.shallow_depth < 0:
-                        raise bb.fetch2.FetchError("Invalid depth for BB_GIT_SHALLOW_DEPTH: %s" % ud.shallow_depth)
-            else:
-                ud.shallow_depth = 1
-
         if ud.shallow:
             tarballname = gitsrcname
             if ud.bareclone:
@@ -246,10 +261,12 @@ class Git(FetchMethod):
 
             for name, revision in sorted(ud.revisions.items()):
                 tarballname = "%s_%s" % (tarballname, ud.revisions[name][:7])
-                if not ud.nobranch:
-                    tarballname = "%s-%s" % (tarballname, ud.branches[name])
+                depth = ud.shallow_depths[name]
+                if depth:
+                    tarballname = "%s-%s" % (tarballname, depth)
 
-            tarballname = "%s-%s" % (tarballname, ud.shallow_depth)
+            if not ud.nobranch:
+                tarballname = "%s_%s" % (tarballname, "_".join(sorted(ud.branches.values())).replace('/', '.'))
 
             fetcher = self.__class__.__name__.lower()
             ud.shallowtarball = '%sshallow_%s.tar.gz' % (fetcher, tarballname)
@@ -370,7 +387,9 @@ class Git(FetchMethod):
         to_parse, shallow_branches = [], []
         for name in ud.names:
             revision = ud.revisions[name]
-            to_parse.append('%s~%d^{}' % (revision, ud.shallow_depth - 1))
+            depth = ud.shallow_depths[name]
+            if depth:
+                to_parse.append('%s~%d^{}' % (revision, depth - 1))
 
             # For nobranch, we need a ref, otherwise the commits will be
             # removed, and for non-nobranch, we truncate the branch to our
