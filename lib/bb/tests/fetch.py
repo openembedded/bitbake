@@ -1027,12 +1027,14 @@ class GitShallowTest(FetcherTest):
             cwd = self.gitdir
         return bb.process.run(cmd, cwd=cwd)[0]
 
-    def add_empty_file(self, path, msg=None):
+    def add_empty_file(self, path, cwd=None, msg=None):
         if msg is None:
             msg = path
-        open(os.path.join(self.srcdir, path), 'w').close()
-        self.git(['add', path], self.srcdir)
-        self.git(['commit', '-m', msg, path], self.srcdir)
+        if cwd is None:
+            cwd = self.srcdir
+        open(os.path.join(cwd, path), 'w').close()
+        self.git(['add', path], cwd)
+        self.git(['commit', '-m', msg, path], cwd)
 
     def fetch(self, uri=None):
         if uri is None:
@@ -1210,6 +1212,27 @@ class GitShallowTest(FetcherTest):
 
         self.assertRefs(['master', 'origin/master'])
         self.assertRevCount(1)
+
+    def test_shallow_submodules(self):
+        self.add_empty_file('a')
+        self.add_empty_file('b')
+
+        smdir = os.path.join(self.tempdir, 'gitsubmodule')
+        bb.utils.mkdirhier(smdir)
+        self.git('init', cwd=smdir)
+        self.add_empty_file('asub', cwd=smdir)
+
+        self.git('submodule init', cwd=self.srcdir)
+        self.git('submodule add file://%s' % smdir, cwd=self.srcdir)
+        self.git('submodule update', cwd=self.srcdir)
+        self.git('commit -m submodule -a', cwd=self.srcdir)
+
+        uri = 'gitsm://%s;protocol=file;subdir=${S}' % self.srcdir
+        fetcher, ud = self.fetch_shallow(uri)
+
+        self.assertRevCount(1)
+        assert './.git/modules/' in bb.process.run('tar -tzf %s' % os.path.join(self.dldir, ud.mirrortarballs[0]))[0]
+        assert os.listdir(os.path.join(self.gitdir, 'gitsubmodule'))
 
     def test_shallow_multi_one_uri(self):
         # Create initial git repo
