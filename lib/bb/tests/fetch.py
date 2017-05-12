@@ -1234,6 +1234,23 @@ class GitShallowTest(FetcherTest):
         assert './.git/modules/' in bb.process.run('tar -tzf %s' % os.path.join(self.dldir, ud.mirrortarballs[0]))[0]
         assert os.listdir(os.path.join(self.gitdir, 'gitsubmodule'))
 
+    if any(os.path.exists(os.path.join(p, 'git-annex')) for p in os.environ.get('PATH').split(':')):
+        def test_shallow_annex(self):
+            self.add_empty_file('a')
+            self.add_empty_file('b')
+            self.git('annex init', cwd=self.srcdir)
+            open(os.path.join(self.srcdir, 'c'), 'w').close()
+            self.git('annex add c', cwd=self.srcdir)
+            self.git('commit -m annex-c -a', cwd=self.srcdir)
+            bb.process.run('chmod u+w -R %s' % os.path.join(self.srcdir, '.git', 'annex'))
+
+            uri = 'gitannex://%s;protocol=file;subdir=${S}' % self.srcdir
+            fetcher, ud = self.fetch_shallow(uri)
+
+            self.assertRevCount(1)
+            assert './.git/annex/' in bb.process.run('tar -tzf %s' % os.path.join(self.dldir, ud.mirrortarballs[0]))[0]
+            assert os.path.exists(os.path.join(self.gitdir, 'c'))
+
     def test_shallow_multi_one_uri(self):
         # Create initial git repo
         self.add_empty_file('a')
