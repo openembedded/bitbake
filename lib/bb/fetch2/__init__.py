@@ -1130,7 +1130,7 @@ def srcrev_internal_helper(ud, d, name):
         if srcrev == "INVALID" or not srcrev:
             return parmrev
         if srcrev != parmrev:
-            raise FetchError("Conflicting revisions (%s from SRCREV and %s from the url) found, please spcify one valid value" % (srcrev, parmrev))
+            raise FetchError("Conflicting revisions (%s from SRCREV and %s from the url) found, please specify one valid value" % (srcrev, parmrev))
         return parmrev
 
     if srcrev == "INVALID" or not srcrev:
