@@ -228,11 +228,14 @@ class Tinfoil:
     def __exit__(self, type, value, traceback):
         self.shutdown()
 
-    def prepare(self, config_only=False, config_params=None, quiet=0):
+    def prepare(self, config_only=False, config_params=None, quiet=0, extra_features=None):
         if self.tracking:
             extrafeatures = [bb.cooker.CookerFeatures.BASEDATASTORE_TRACKING]
         else:
             extrafeatures = []
+
+        if extra_features:
+            extrafeatures += extra_features
 
         if not config_params:
             config_params = TinfoilConfigParameters(config_only=config_only, quiet=quiet)
