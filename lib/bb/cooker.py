@@ -905,13 +905,13 @@ class BBCooker:
                 seen_fns.append(taskfn)
 
                 depend_tree["depends"][pn] = []
-                for item in taskdata[mc].depids[taskfn]:
+                for dep in taskdata[mc].depids[taskfn]:
                     pn_provider = ""
                     if dep in taskdata[mc].build_targets and taskdata[mc].build_targets[dep]:
                         fn_provider = taskdata[mc].build_targets[dep][0]
                         pn_provider = self.recipecaches[mc].pkg_fn[fn_provider]
                     else:
-                        pn_provider = item
+                        pn_provider = dep
                     pn_provider = self.add_mc_prefix(mc, pn_provider)
                     depend_tree["depends"][pn].append(pn_provider)
 
