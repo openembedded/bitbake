@@ -680,7 +680,7 @@ def remove(path, recurse=False):
             if _check_unsafe_delete_path(path):
                 raise Exception('bb.utils.remove: called with dangerous path "%s" and recurse=True, refusing to delete!' % path)
         # shutil.rmtree(name) would be ideal but its too slow
-        subprocess.call(['rm', '-rf'] + glob.glob(path))
+        subprocess.check_call(['rm', '-rf'] + glob.glob(path))
         return
     for name in glob.glob(path):
         try:
