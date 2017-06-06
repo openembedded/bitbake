@@ -2030,7 +2030,7 @@
             before any tasks are executed so would be in the global
             configuration datastore namespace.
             No recipe-specific metadata exists in that namespace.
-            The "BuildStarted" and "buildCompleted" events also run in
+            The "BuildStarted" and "BuildCompleted" events also run in
             the main cooker/server process rather than any worker context.
             Thus, any changes made to the datastore would be seen by other
             cooker/server events within the current build but not seen
