@@ -81,6 +81,10 @@ def include(parentfn, fn, lineno, data, error_out):
     fn = data.expand(fn)
     parentfn = data.expand(parentfn)
 
+    if not fn:
+        # "include" or "require" without parameter is fine, just return.
+        return
+
     if not os.path.isabs(fn):
         dname = os.path.dirname(parentfn)
         bbpath = "%s:%s" % (dname, data.getVar("BBPATH"))
