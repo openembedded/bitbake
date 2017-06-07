@@ -365,8 +365,9 @@ def main(server, eventHandler, params, tf = TerminalFilter):
     bb.msg.addDefaultlogFilter(errconsole, bb.msg.BBLogFilterStdErr)
     console.setFormatter(format)
     errconsole.setFormatter(format)
-    logger.addHandler(console)
-    logger.addHandler(errconsole)
+    if not bb.msg.has_console_handler(logger):
+        logger.addHandler(console)
+        logger.addHandler(errconsole)
 
     bb.utils.set_process_name("KnottyUI")
 
