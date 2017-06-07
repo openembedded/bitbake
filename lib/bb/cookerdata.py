@@ -360,6 +360,13 @@ class CookerDataBuilder(object):
             if invalid:
                 bb.fatal("BBFILES_DYNAMIC entries must be of the form <collection name>:<filename pattern>, not:\n    %s" % "\n    ".join(invalid))
 
+            layerseries = set((data.getVar("LAYERSERIES_CORENAMES") or "").split())
+            for c in collections:
+                compat = set((data.getVar("LAYERSERIES_COMPAT_%s" % c) or "").split())
+                if compat and not (compat & layerseries):
+                    bb.fatal("Layer %s is not compatible with the core layer which only supports these series: %s (layer is compatible with %s)"
+                              % (c, " ".join(layerseries), " ".join(compat)))
+
         if not data.getVar("BBPATH"):
             msg = "The BBPATH variable is not set"
             if not layerconf:
