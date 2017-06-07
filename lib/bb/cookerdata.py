@@ -346,6 +346,20 @@ class CookerDataBuilder(object):
             data.delVar('LAYERDIR_RE')
             data.delVar('LAYERDIR')
 
+            bbfiles_dynamic = (data.getVar('BBFILES_DYNAMIC') or "").split()
+            collections = (data.getVar('BBFILE_COLLECTIONS') or "").split()
+            invalid = []
+            for entry in bbfiles_dynamic:
+                parts = entry.split(":", 1)
+                if len(parts) != 2:
+                    invalid.append(entry)
+                    continue
+                l, f = parts
+                if l in collections:
+                    data.appendVar("BBFILES", " " + f)
+            if invalid:
+                bb.fatal("BBFILES_DYNAMIC entries must be of the form <collection name>:<filename pattern>, not:\n    %s" % "\n    ".join(invalid))
+
         if not data.getVar("BBPATH"):
             msg = "The BBPATH variable is not set"
             if not layerconf:
