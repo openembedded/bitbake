@@ -233,59 +233,10 @@ class CommandsSync:
         command.cooker.configuration.postfile = postfiles
     setPrePostConfFiles.needconfig = False
 
-    def getCpuCount(self, command, params):
-        """
-        Get the CPU count on the bitbake server
-        """
-        return bb.utils.cpu_count()
-    getCpuCount.readonly = True
-    getCpuCount.needconfig = False
-
     def matchFile(self, command, params):
         fMatch = params[0]
         return command.cooker.matchFile(fMatch)
     matchFile.needconfig = False
-
-    def generateNewImage(self, command, params):
-        image = params[0]
-        base_image = params[1]
-        package_queue = params[2]
-        timestamp = params[3]
-        description = params[4]
-        return command.cooker.generateNewImage(image, base_image,
-                        package_queue, timestamp, description)
-
-    def ensureDir(self, command, params):
-        directory = params[0]
-        bb.utils.mkdirhier(directory)
-    ensureDir.needconfig = False
-
-    def setVarFile(self, command, params):
-        """
-        Save a variable in a file; used for saving in a configuration file
-        """
-        var = params[0]
-        val = params[1]
-        default_file = params[2]
-        op = params[3]
-        command.cooker.modifyConfigurationVar(var, val, default_file, op)
-    setVarFile.needconfig = False
-
-    def removeVarFile(self, command, params):
-        """
-        Remove a variable declaration from a file
-        """
-        var = params[0]
-        command.cooker.removeConfigurationVar(var)
-    removeVarFile.needconfig = False
-
-    def createConfigFile(self, command, params):
-        """
-        Create an extra configuration file
-        """
-        name = params[0]
-        command.cooker.createConfigFile(name)
-    createConfigFile.needconfig = False
 
     def setEventMask(self, command, params):
         handlerNum = params[0]
@@ -645,17 +596,6 @@ class CommandsAsync:
         command.cooker.generateTargetsTree(klass, pkg_list)
         command.finishAsyncCommand()
     generateTargetsTree.needcache = True
-
-    def findCoreBaseFiles(self, command, params):
-        """
-        Find certain files in COREBASE directory. i.e. Layers
-        """
-        subdir = params[0]
-        filename = params[1]
-
-        command.cooker.findCoreBaseFiles(subdir, filename)
-        command.finishAsyncCommand()
-    findCoreBaseFiles.needcache = False
 
     def findConfigFiles(self, command, params):
         """
