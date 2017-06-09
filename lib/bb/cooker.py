@@ -213,9 +213,6 @@ class BBCooker:
 
         self.configuration.server_register_idlecallback(_process_inotify_updates, [self.confignotifier, self.notifier])
 
-        self.baseconfig_valid = True
-        self.parsecache_valid = False
-
         # Take a lock so only one copy of bitbake can run against a given build
         # directory at a time
         if not self.lockBitbake():
@@ -375,6 +372,8 @@ class BBCooker:
         self.data.renameVar("__depends", "__base_depends")
         self.add_filewatch(self.data.getVar("__base_depends", False), self.configwatcher)
 
+        self.baseconfig_valid = True
+        self.parsecache_valid = False
 
     def enableDataTracking(self):
         self.configuration.tracking = True
@@ -568,7 +567,6 @@ class BBCooker:
                 clean = False
         if not clean:
             logger.debug(1, "Base environment change, triggering reparse")
-            self.baseconfig_valid = False        
             self.reset()
 
     def runCommands(self, server, data, abort):
@@ -1623,8 +1621,6 @@ class BBCooker:
         if not self.baseconfig_valid:
             logger.debug(1, "Reloading base configuration data")
             self.initConfigurationData()
-            self.baseconfig_valid = True
-            self.parsecache_valid = False
 
     # This is called for all async commands when self.state != running
     def updateCache(self):
