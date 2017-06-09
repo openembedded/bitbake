@@ -79,7 +79,7 @@ class ConfigParameters(object):
                   "prefile", "postfile"]:
             options[o] = getattr(self.options, o)
 
-        ret, error = server.runCommand(["updateConfig", options, environment])
+        ret, error = server.runCommand(["updateConfig", options, environment, sys.argv])
         if error:
                 raise Exception("Unable to update the server configuration with local parameters: %s" % error)
 
