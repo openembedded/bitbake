@@ -73,15 +73,15 @@ class ConfigParameters(object):
 
     def updateToServer(self, server, environment):
         options = {}
-        for o in ["abort", "tryaltconfigs", "force", "invalidate_stamp", 
-                  "verbose", "debug", "dry_run", "dump_signatures", 
+        for o in ["abort", "tryaltconfigs", "force", "invalidate_stamp",
+                  "verbose", "debug", "dry_run", "dump_signatures",
                   "debug_domains", "extra_assume_provided", "profile",
                   "prefile", "postfile", "tracking"]:
             options[o] = getattr(self.options, o)
 
         ret, error = server.runCommand(["updateConfig", options, environment, sys.argv])
         if error:
-                raise Exception("Unable to update the server configuration with local parameters: %s" % error)
+            raise Exception("Unable to update the server configuration with local parameters: %s" % error)
 
     def parseActions(self):
         # Parse any commandline into actions
@@ -173,7 +173,7 @@ class CookerConfiguration(object):
 
     def __setstate__(self,state):
         for k in state:
-            setattr(self, k, state[k]) 
+            setattr(self, k, state[k])
 
 
 def catch_parse_error(func):
@@ -255,7 +255,7 @@ class CookerDataBuilder(object):
         filtered_keys = bb.utils.approved_variables()
         bb.data.inheritFromOS(self.basedata, self.savedenv, filtered_keys)
         self.basedata.setVar("BB_ORIGENV", self.savedenv)
-        
+
         if worker:
             self.basedata.setVar("BB_WORKERCONTEXT", "1")
 
