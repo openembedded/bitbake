@@ -1313,6 +1313,18 @@ class BBCooker:
         self.data.setVar("DATE", time.strftime('%Y%m%d', t))
         self.data.setVar("TIME", time.strftime('%H%M%S', t))
 
+    def reset_mtime_caches(self):
+        """
+        Reset mtime caches - this is particularly important when memory resident as something
+        which is cached is not unlikely to have changed since the last invocation (e.g. a
+        file associated with a recipe might have been modified by the user).
+        """
+        build.reset_cache()
+        bb.fetch._checksum_cache.mtime_cache.clear()
+        siggen_cache = getattr(bb.parse.siggen, 'checksum_cache', None)
+        if siggen_cache:
+            bb.parse.siggen.checksum_cache.mtime_cache.clear()
+
     def matchFiles(self, bf):
         """
         Find the .bb files which match the expression in 'buildfile'.
@@ -1490,7 +1502,7 @@ class BBCooker:
                 return True
             return retval
 
-        build.reset_cache()
+        self.reset_mtime_caches()
         self.buildSetVars()
 
         # If we are told to do the None task then query the default task
