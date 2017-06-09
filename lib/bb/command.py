@@ -310,7 +310,8 @@ class CommandsSync:
     def updateConfig(self, command, params):
         options = params[0]
         environment = params[1]
-        command.cooker.updateConfigOpts(options, environment)
+        cmdline = params[2]
+        command.cooker.updateConfigOpts(options, environment, cmdline)
     updateConfig.needconfig = False
 
     def parseConfiguration(self, command, params):

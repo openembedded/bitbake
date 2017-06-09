@@ -192,6 +192,8 @@ class BBCooker:
         bb.parse.__mtime_cache = {}
         bb.parse.BBHandler.cached_statements = {}
 
+        self.ui_cmdline = None
+
         self.initConfigurationData()
 
         # we log all events to a file if so directed
@@ -359,6 +361,8 @@ class BBCooker:
 
         if consolelog:
             self.data.setVar("BB_CONSOLELOG", consolelog)
+
+        self.data.setVar('BB_CMDLINE', self.ui_cmdline)
 
         #
         # Copy of the data store which has been expanded.
@@ -539,7 +543,8 @@ class BBCooker:
 
         self.handleCollections(self.data.getVar("BBFILE_COLLECTIONS"))
 
-    def updateConfigOpts(self, options, environment):
+    def updateConfigOpts(self, options, environment, cmdline):
+        self.ui_cmdline = cmdline
         clean = True
         for o in options:
             if o in ['prefile', 'postfile']:
