@@ -181,13 +181,13 @@ class BBCooker:
         self.confignotifier = pyinotify.Notifier(self.configwatcher, self.config_notifications)
         self.watchmask = pyinotify.IN_CLOSE_WRITE | pyinotify.IN_CREATE | pyinotify.IN_DELETE | \
                          pyinotify.IN_DELETE_SELF | pyinotify.IN_MODIFY | pyinotify.IN_MOVE_SELF | \
-                         pyinotify.IN_MOVED_FROM | pyinotify.IN_MOVED_TO 
+                         pyinotify.IN_MOVED_FROM | pyinotify.IN_MOVED_TO
         self.watcher = pyinotify.WatchManager()
         self.watcher.bbseen = []
         self.watcher.bbwatchedfiles = []
         self.notifier = pyinotify.Notifier(self.watcher, self.notifications)
 
-        # If being called by something like tinfoil, we need to clean cached data 
+        # If being called by something like tinfoil, we need to clean cached data
         # which may now be invalid
         bb.parse.__mtime_cache = {}
         bb.parse.BBHandler.cached_statements = {}
@@ -282,7 +282,7 @@ class BBCooker:
             watchtarget = None
             while True:
                 # We try and add watches for files that don't exist but if they did, would influence
-                # the parser. The parent directory of these files may not exist, in which case we need 
+                # the parser. The parent directory of these files may not exist, in which case we need
                 # to watch any parent that does exist for changes.
                 try:
                     watcher.add_watch(f, self.watchmask, quiet=False)
@@ -440,7 +440,7 @@ class BBCooker:
                 del self.configuration.env[k]
                 clean = False
             if k not in self.configuration.env and k not in environment:
-                 continue
+                continue
             if environment[k] != self.configuration.env[k]:
                 logger.debug(1, "Updating environment variable %s from %s to %s" % (k, self.configuration.env[k], environment[k]))
                 self.configuration.env[k] = environment[k]
