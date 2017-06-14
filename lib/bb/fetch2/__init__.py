@@ -1619,6 +1619,15 @@ class Fetch(object):
                     logger.debug(1, "Trying PREMIRRORS")
                     mirrors = mirror_from_string(self.d.getVar('PREMIRRORS'))
                     localpath = try_mirrors(self, self.d, ud, mirrors, False)
+                    if localpath:
+                        try:
+                            # early checksum verification so that if the checksum of the premirror
+                            # contents mismatch the fetcher can still try upstream and mirrors
+                            update_stamp(ud, self.d)
+                        except ChecksumError as e:
+                            logger.warning("Checksum failure encountered with premirror download of %s - will attempt other sources." % u)
+                            logger.debug(1, str(e))
+                            localpath = ""
 
                 if premirroronly:
                     self.d.setVar("BB_NO_NETWORK", "1")
