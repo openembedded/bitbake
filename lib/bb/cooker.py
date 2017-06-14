@@ -415,17 +415,24 @@ class BBCooker:
         self.ui_cmdline = cmdline
         clean = True
         for o in options:
-            if o in ['prefile', 'postfile']:
-                clean = False
-                server_val = getattr(self.configuration, "%s_server" % o)
+            if o in ['prefile', 'postfile', 'tracking']:
+                server_val = getattr(self.configuration, "%s_server" % o, None)
                 if not options[o] and server_val:
                     # restore value provided on server start
+                    logger.debug(1, "Restoring server value for option '%s'" % o)
                     setattr(self.configuration, o, server_val)
+                    clean = False
                     continue
+                if getattr(self.configuration, o) == options[o]:
+                    # Value is the same, no need to mark dirty
+                    continue
+                else:
+                    logger.debug(1, "Marking as dirty due to '%s' option change to '%s'" % (o, options[o]))
+                    clean = False
             setattr(self.configuration, o, options[o])
         for k in bb.utils.approved_variables():
             if k in environment and k not in self.configuration.env:
-                logger.debug(1, "Updating environment variable %s to %s" % (k, environment[k]))
+                logger.debug(1, "Updating new environment variable %s to %s" % (k, environment[k]))
                 self.configuration.env[k] = environment[k]
                 clean = False
             if k in self.configuration.env and k not in environment:
@@ -435,7 +442,7 @@ class BBCooker:
             if k not in self.configuration.env and k not in environment:
                  continue
             if environment[k] != self.configuration.env[k]:
-                logger.debug(1, "Updating environment variable %s to %s" % (k, environment[k]))
+                logger.debug(1, "Updating environment variable %s from %s to %s" % (k, self.configuration.env[k], environment[k]))
                 self.configuration.env[k] = environment[k]
                 clean = False
         if not clean:
