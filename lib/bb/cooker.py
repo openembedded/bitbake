@@ -1361,8 +1361,10 @@ class BBCooker:
                 return False
 
             if not retval:
-                bb.event.fire(bb.event.BuildCompleted(len(rq.rqdata.runtaskentries), buildname, targets, failures, interrupted), self.data)
-                self.command.finishAsyncCommand(msg)
+                try:
+                    bb.event.fire(bb.event.BuildCompleted(len(rq.rqdata.runtaskentries), buildname, targets, failures, interrupted), self.data)
+                finally:
+                    self.command.finishAsyncCommand(msg)
                 return False
             if retval is True:
                 return True
