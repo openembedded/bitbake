@@ -858,6 +858,12 @@ class MockEvent(object):
         self.pathname = None
         self.lineno = None
 
+    def getMessage(self):
+        """
+        Simulate LogRecord message return
+        """
+        return self.msg
+
 
 class BuildInfoHelper(object):
     """ This class gathers the build information from the server and sends it
