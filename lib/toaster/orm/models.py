@@ -225,16 +225,16 @@ class Project(models.Model):
             return( -1 )
 
     def get_last_outcome(self):
-        build_id = self.get_last_build_id
+        build_id = self.get_last_build_id()
         if (-1 == build_id):
             return( "" )
         try:
-            return Build.objects.filter( id = self.get_last_build_id )[ 0 ].outcome
+            return Build.objects.filter( id = build_id )[ 0 ].outcome
         except (Build.DoesNotExist,IndexError):
             return( "not_found" )
 
     def get_last_target(self):
-        build_id = self.get_last_build_id
+        build_id = self.get_last_build_id()
         if (-1 == build_id):
             return( "" )
         try:
@@ -243,7 +243,7 @@ class Project(models.Model):
             return( "not_found" )
 
     def get_last_errors(self):
-        build_id = self.get_last_build_id
+        build_id = self.get_last_build_id()
         if (-1 == build_id):
             return( 0 )
         try:
@@ -252,7 +252,7 @@ class Project(models.Model):
             return( "not_found" )
 
     def get_last_warnings(self):
-        build_id = self.get_last_build_id
+        build_id = self.get_last_build_id()
         if (-1 == build_id):
             return( 0 )
         try:
@@ -269,7 +269,7 @@ class Project(models.Model):
         return last_build.get_image_file_extensions()
 
     def get_last_imgfiles(self):
-        build_id = self.get_last_build_id
+        build_id = self.get_last_build_id()
         if (-1 == build_id):
             return( "" )
         try:
