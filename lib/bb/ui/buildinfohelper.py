@@ -981,6 +981,7 @@ class BuildInfoHelper(object):
             pathRE = pathRE[:-1]
 
         p = re.compile(pathRE)
+        path=re.sub(r'[$^]',r'',pathRE)
         # Heuristics: we always match recipe to the deepest layer path in
         # the discovered layers
         for lvo in sorted(self.orm_wrapper.layer_version_objects,
@@ -990,12 +991,16 @@ class BuildInfoHelper(object):
             if lvo.layer.local_source_dir:
                 if p.fullmatch(os.path.abspath(lvo.layer.local_source_dir)):
                     return lvo
+            if 0 == path.find(lvo.local_path):
+                # sub-layer path inside existing layer
+                return lvo
 
         # if we get here, we didn't read layers correctly;
         # dump whatever information we have on the error log
         logger.warning("Could not match layer dependency for path %s : %s",
                        pathRE,
                        self.orm_wrapper.layer_version_objects)
+        return None
 
     def _get_layer_version_for_path(self, path):
         self._ensure_build()
@@ -1396,9 +1401,9 @@ class BuildInfoHelper(object):
             for lv in event._depgraph['layer-priorities']:
                 (_, path, _, priority) = lv
                 layer_version_obj = self._get_layer_version_for_dependency(path)
-                assert layer_version_obj is not None
-                layer_version_obj.priority = priority
-                layer_version_obj.save()
+                if layer_version_obj:
+                    layer_version_obj.priority = priority
+                    layer_version_obj.save()
 
         # save recipe information
         self.internal_state['recipes'] = {}
