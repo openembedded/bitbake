@@ -260,7 +260,7 @@
                 files.
                 For this example, you need to create the file in your project directory
                 and define some key BitBake variables.
-                For more information on the <filename>bitbake.conf</filename>,
+                For more information on the <filename>bitbake.conf</filename> file,
                 see
                 <ulink url='http://git.openembedded.org/bitbake/tree/conf/bitbake.conf'></ulink>.
                 </para>
@@ -300,19 +300,19 @@
                 file exists, you can run the <filename>bitbake</filename>
                 command again:
                 <literallayout class='monospaced'>
-$ bitbake
-ERROR: Traceback (most recent call last):
-  File "/home/scott-lenovo/bitbake/lib/bb/cookerdata.py", line 163, in wrapped
-    return func(fn, *args)
-  File "/home/scott-lenovo/bitbake/lib/bb/cookerdata.py", line 177, in _inherit
-    bb.parse.BBHandler.inherit(bbclass, "configuration INHERITs", 0, data)
-  File "/home/scott-lenovo/bitbake/lib/bb/parse/parse_py/BBHandler.py", line 92, in inherit
-    include(fn, file, lineno, d, "inherit")
-  File "/home/scott-lenovo/bitbake/lib/bb/parse/parse_py/ConfHandler.py", line 100, in include
-    raise ParseError("Could not %(error_out)s file %(fn)s" % vars(), oldfn, lineno)
-ParseError: ParseError in configuration INHERITs: Could not inherit file classes/base.bbclass
+     $ bitbake
+     ERROR: Traceback (most recent call last):
+       File "/home/scott-lenovo/bitbake/lib/bb/cookerdata.py", line 163, in wrapped
+         return func(fn, *args)
+       File "/home/scott-lenovo/bitbake/lib/bb/cookerdata.py", line 177, in _inherit
+         bb.parse.BBHandler.inherit(bbclass, "configuration INHERITs", 0, data)
+       File "/home/scott-lenovo/bitbake/lib/bb/parse/parse_py/BBHandler.py", line 92, in inherit
+         include(fn, file, lineno, d, "inherit")
+       File "/home/scott-lenovo/bitbake/lib/bb/parse/parse_py/ConfHandler.py", line 100, in include
+         raise ParseError("Could not %(error_out)s file %(fn)s" % vars(), oldfn, lineno)
+     ParseError: ParseError in configuration INHERITs: Could not inherit file classes/base.bbclass
 
-ERROR: Unable to parse base: ParseError in configuration INHERITs: Could not inherit file classes/base.bbclass
+     ERROR: Unable to parse base: ParseError in configuration INHERITs: Could not inherit file classes/base.bbclass
                 </literallayout>
                 In the sample output, BitBake could not find the
                 <filename>classes/base.bbclass</filename> file.
