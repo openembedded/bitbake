@@ -269,7 +269,7 @@
                 and define some key BitBake variables.
                 For more information on the <filename>bitbake.conf</filename>,
                 see
-                <ulink url='http://hambedded.org/blog/2012/11/24/from-bitbake-hello-world-to-an-image/#an-overview-of-bitbakeconf'></ulink>
+                <ulink url='http://git.openembedded.org/bitbake/tree/conf/bitbake.conf'></ulink>.
                 </para>
                 <para>Use the following commands to create the <filename>conf</filename>
                 directory in the project directory:
