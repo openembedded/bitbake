@@ -375,8 +375,8 @@ ERROR: Unable to parse base: ParseError in configuration INHERITs: Could not inh
                 code separate from the general metadata used by BitBake.
                 Thus, this example creates and uses a layer called "mylayer".
                 <note>
-                    You can find additional information on adding a layer at
-                    <ulink url='http://hambedded.org/blog/2012/11/24/from-bitbake-hello-world-to-an-image/#adding-an-example-layer'></ulink>.
+                    You can find additional information on layers at
+                    <ulink url='http://www.yoctoproject.org/docs/2.3/bitbake-user-manual/bitbake-user-manual.html#layers'></ulink>.
                 </note>
                 </para>
                 <para>Minimally, you need a recipe file and a layer configuration
