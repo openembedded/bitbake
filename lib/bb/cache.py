@@ -107,7 +107,7 @@ class CoreRecipeInfo(RecipeInfoCommon):
 
         self.pn = self.getvar('PN', metadata)
         self.packages = self.listvar('PACKAGES', metadata)
-        if not self.pn in self.packages:
+        if not self.packages:
             self.packages.append(self.pn)
 
         self.basetaskhashes = self.taskvar('BB_BASEHASH', self.tasks, metadata)
@@ -217,7 +217,7 @@ class CoreRecipeInfo(RecipeInfoCommon):
             cachedata.packages_dynamic[package].append(fn)
 
         # Build hash of runtime depends and recommends
-        for package in self.packages + [self.pn]:
+        for package in self.packages:
             cachedata.rundeps[fn][package] = list(self.rdepends) + self.rdepends_pkg[package]
             cachedata.runrecs[fn][package] = list(self.rrecommends) + self.rrecommends_pkg[package]
 
