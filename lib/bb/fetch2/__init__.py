@@ -48,11 +48,11 @@ logger = logging.getLogger("BitBake.Fetcher")
 class BBFetchException(Exception):
     """Class all fetch exceptions inherit from"""
     def __init__(self, message):
-         self.msg = message
-         Exception.__init__(self, message)
+        self.msg = message
+        Exception.__init__(self, message)
 
     def __str__(self):
-         return self.msg
+        return self.msg
 
 class UntrustedUrl(BBFetchException):
     """Exception raised when encountering a host not listed in BB_ALLOWED_NETWORKS"""
@@ -68,24 +68,24 @@ class UntrustedUrl(BBFetchException):
 class MalformedUrl(BBFetchException):
     """Exception raised when encountering an invalid url"""
     def __init__(self, url, message=''):
-         if message:
-             msg = message
-         else:
-             msg = "The URL: '%s' is invalid and cannot be interpreted" % url
-         self.url = url
-         BBFetchException.__init__(self, msg)
-         self.args = (url,)
+        if message:
+            msg = message
+        else:
+            msg = "The URL: '%s' is invalid and cannot be interpreted" % url
+        self.url = url
+        BBFetchException.__init__(self, msg)
+        self.args = (url,)
 
 class FetchError(BBFetchException):
     """General fetcher exception when something happens incorrectly"""
     def __init__(self, message, url = None):
-         if url:
+        if url:
             msg = "Fetcher failure for URL: '%s'. %s" % (url, message)
-         else:
+        else:
             msg = "Fetcher failure: %s" % message
-         self.url = url
-         BBFetchException.__init__(self, msg)
-         self.args = (message, url)
+        self.url = url
+        BBFetchException.__init__(self, msg)
+        self.args = (message, url)
 
 class ChecksumError(FetchError):
     """Exception when mismatched checksum encountered"""
@@ -99,44 +99,44 @@ class NoChecksumError(FetchError):
 class UnpackError(BBFetchException):
     """General fetcher exception when something happens incorrectly when unpacking"""
     def __init__(self, message, url):
-         msg = "Unpack failure for URL: '%s'. %s" % (url, message)
-         self.url = url
-         BBFetchException.__init__(self, msg)
-         self.args = (message, url)
+        msg = "Unpack failure for URL: '%s'. %s" % (url, message)
+        self.url = url
+        BBFetchException.__init__(self, msg)
+        self.args = (message, url)
 
 class NoMethodError(BBFetchException):
     """Exception raised when there is no method to obtain a supplied url or set of urls"""
     def __init__(self, url):
-         msg = "Could not find a fetcher which supports the URL: '%s'" % url
-         self.url = url
-         BBFetchException.__init__(self, msg)
-         self.args = (url,)
+        msg = "Could not find a fetcher which supports the URL: '%s'" % url
+        self.url = url
+        BBFetchException.__init__(self, msg)
+        self.args = (url,)
 
 class MissingParameterError(BBFetchException):
     """Exception raised when a fetch method is missing a critical parameter in the url"""
     def __init__(self, missing, url):
-         msg = "URL: '%s' is missing the required parameter '%s'" % (url, missing)
-         self.url = url
-         self.missing = missing
-         BBFetchException.__init__(self, msg)
-         self.args = (missing, url)
+        msg = "URL: '%s' is missing the required parameter '%s'" % (url, missing)
+        self.url = url
+        self.missing = missing
+        BBFetchException.__init__(self, msg)
+        self.args = (missing, url)
 
 class ParameterError(BBFetchException):
     """Exception raised when a url cannot be proccessed due to invalid parameters."""
     def __init__(self, message, url):
-         msg = "URL: '%s' has invalid parameters. %s" % (url, message)
-         self.url = url
-         BBFetchException.__init__(self, msg)
-         self.args = (message, url)
+        msg = "URL: '%s' has invalid parameters. %s" % (url, message)
+        self.url = url
+        BBFetchException.__init__(self, msg)
+        self.args = (message, url)
 
 class NetworkAccess(BBFetchException):
     """Exception raised when network access is disabled but it is required."""
     def __init__(self, url, cmd):
-         msg = "Network access disabled through BB_NO_NETWORK (or set indirectly due to use of BB_FETCH_PREMIRRORONLY) but access requested with command %s (for url %s)" % (cmd, url)
-         self.url = url
-         self.cmd = cmd
-         BBFetchException.__init__(self, msg)
-         self.args = (url, cmd)
+        msg = "Network access disabled through BB_NO_NETWORK (or set indirectly due to use of BB_FETCH_PREMIRRORONLY) but access requested with command %s (for url %s)" % (cmd, url)
+        self.url = url
+        self.cmd = cmd
+        BBFetchException.__init__(self, msg)
+        self.args = (url, cmd)
 
 class NonLocalMethod(Exception):
     def __init__(self):
@@ -455,7 +455,7 @@ def uri_replace(ud, uri_find, uri_replace, replacements, d, mirrortarball=None):
                 result_decoded[loc][k] = uri_replace_decoded[loc][k]
         elif (re.match(regexp, uri_decoded[loc])):
             if not uri_replace_decoded[loc]:
-                result_decoded[loc] = ""    
+                result_decoded[loc] = ""
             else:
                 for k in replacements:
                     uri_replace_decoded[loc] = uri_replace_decoded[loc].replace(k, replacements[k])
@@ -733,7 +733,7 @@ def get_srcrev(d, method_name='sortable_revision'):
     In the multi SCM case, we build a value based on SRCREV_FORMAT which must
     have been set.
 
-    The idea here is that we put the string "AUTOINC+" into return value if the revisions are not 
+    The idea here is that we put the string "AUTOINC+" into return value if the revisions are not
     incremental, other code is then responsible for turning that into an increasing value (if needed)
 
     A method_name can be supplied to retrieve an alternatively formatted revision from a fetcher, if
@@ -785,7 +785,7 @@ def get_srcrev(d, method_name='sortable_revision'):
     format = re.sub(name_to_rev_re, lambda match: name_to_rev[match.group(0)], format)
 
     if seenautoinc:
-       format = "AUTOINC+" + format
+        format = "AUTOINC+" + format
 
     return format
 
@@ -921,7 +921,7 @@ def build_mirroruris(origud, mirrors, ld):
                     logger.debug(1, "Mirror fetch failure for url %s (original url: %s)" % (newuri, origud.url))
                     logger.debug(1, str(e))
                     try:
-                        # setup_localpath of file:// urls may fail, we should still see 
+                        # setup_localpath of file:// urls may fail, we should still see
                         # if mirrors of the url exist
                         adduri(newud, uris, uds, localmirrors, tarballs)
                     except UnboundLocalError:
@@ -1117,7 +1117,7 @@ def srcrev_internal_helper(ud, d, name):
     attempts.append("SRCREV")
 
     for a in attempts:
-        srcrev = d.getVar(a)              
+        srcrev = d.getVar(a)
         if srcrev and srcrev != "INVALID":
             break
 
@@ -1230,7 +1230,7 @@ class FetchData(object):
         for m in methods:
             if m.supports(self, d):
                 self.method = m
-                break                
+                break
 
         if not self.method:
             raise NoMethodError(url)
@@ -1265,7 +1265,7 @@ class FetchData(object):
         elif self.basepath or self.basename:
             basepath = dldir + os.sep + (self.basepath or self.basename)
         else:
-             bb.fatal("Can't determine lock path for url %s" % url)
+            bb.fatal("Can't determine lock path for url %s" % url)
 
         self.donestamp = basepath + '.done'
         self.lockfile = basepath + '.lock'
@@ -1328,13 +1328,13 @@ class FetchMethod(object):
         if os.path.isdir(urldata.localpath) == True:
             return False
         if urldata.localpath.find("*") != -1:
-             return False
+            return False
 
         return True
 
     def recommends_checksum(self, urldata):
         """
-        Is the backend on where checksumming is recommended (should warnings 
+        Is the backend on where checksumming is recommended (should warnings
         be displayed if there is no checksum)?
         """
         return False
@@ -1614,7 +1614,7 @@ class Fetch(object):
 
             try:
                 self.d.setVar("BB_NO_NETWORK", network)
- 
+
                 if verify_donestamp(ud, self.d) and not m.need_update(ud, self.d):
                     localpath = ud.localpath
                 elif m.try_premirror(ud, self.d):
