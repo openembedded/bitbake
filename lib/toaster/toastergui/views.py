@@ -457,10 +457,15 @@ def builddashboard( request, build_id ):
         npkg = 0
         pkgsz = 0
         package = None
-        for package in Package.objects.filter(id__in = [x.package_id for x in t.target_installed_package_set.all()]):
-            pkgsz = pkgsz + package.size
-            if package.installed_name:
-                npkg = npkg + 1
+        # Chunk the query to avoid "too many SQL variables" error
+        package_set = t.target_installed_package_set.all()
+        package_set_len = len(package_set)
+        for ps_start in range(0,package_set_len,500):
+            ps_stop = min(ps_start+500,package_set_len)
+            for package in Package.objects.filter(id__in = [x.package_id for x in package_set[ps_start:ps_stop]]):
+                pkgsz = pkgsz + package.size
+                if package.installed_name:
+                    npkg = npkg + 1
         elem['npkg'] = npkg
         elem['pkgsz'] = pkgsz
         ti = Target_Image_File.objects.filter(target_id = t.id)
