@@ -1,4 +1,4 @@
-from django.core.management.base import NoArgsCommand, CommandError
+from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
 from django.core.management import call_command
@@ -18,7 +18,7 @@ def DN(path):
         return os.path.dirname(path)
 
 
-class Command(NoArgsCommand):
+class Command(BaseCommand):
     args = ""
     help = "Verifies that the configured settings are valid and usable, or prompts the user to fix the settings."
 
@@ -152,7 +152,7 @@ class Command(NoArgsCommand):
 
 
 
-    def handle_noargs(self, **options):
+    def handle(self, **options):
         retval = 0
         retval += self._verify_build_environment()
         retval += self._verify_default_settings()

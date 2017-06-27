@@ -1,4 +1,4 @@
-from django.core.management.base import NoArgsCommand
+from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.db.models import Q
 
@@ -16,7 +16,7 @@ import os
 logger = logging.getLogger("toaster")
 
 
-class Command(NoArgsCommand):
+class Command(BaseCommand):
     args = ""
     help = "Schedules and executes build requests as possible. "\
            "Does not return (interrupt with Ctrl-C)"
@@ -168,7 +168,7 @@ class Command(NoArgsCommand):
         except Exception as e:
             logger.warn("runbuilds: schedule exception %s" % str(e))
 
-    def handle_noargs(self, **options):
+    def handle(self, **options):
         pidfile_path = os.path.join(os.environ.get("BUILDDIR", "."),
                                     ".runbuilds.pid")
 

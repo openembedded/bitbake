@@ -23,6 +23,8 @@ from django.conf.urls import patterns, include, url
 from django.views.generic import RedirectView
 from django.views.decorators.cache import never_cache
 
+import bldcollector.views
+
 import logging
 
 logger = logging.getLogger("toaster")
@@ -31,7 +33,7 @@ logger = logging.getLogger("toaster")
 from django.contrib import admin
 admin.autodiscover()
 
-urlpatterns = patterns('',
+urlpatterns = [
 
     # Examples:
     # url(r'^toaster/', include('toaster.foo.urls')),
@@ -42,11 +44,11 @@ urlpatterns = patterns('',
 
     # This is here to maintain backward compatibility and will be deprecated
     # in the future.
-    url(r'^orm/eventfile$', 'bldcollector.views.eventfile'),
+    url(r'^orm/eventfile$', bldcollector.views.eventfile),
 
     # if no application is selected, we have the magic toastergui app here
     url(r'^$', never_cache(RedirectView.as_view(url='/toastergui/', permanent=True))),
-)
+]
 
 import toastermain.settings
 

@@ -1,7 +1,7 @@
 #
 # BitBake Toaster Implementation
 #
-# Copyright (C) 2014        Intel Corporation
+# Copyright (C) 2014-2017   Intel Corporation
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 2 as
@@ -19,7 +19,9 @@
 
 from django.conf.urls import patterns, include, url
 
-urlpatterns = patterns('bldcollector.views',
+import bldcollector.views
+
+urlpatterns = [
         # landing point for pushing a bitbake_eventlog.json file to this toaster instace
-        url(r'^eventfile$', 'eventfile', name='eventfile'),
-        )
+        url(r'^eventfile$', bldcollector.views.eventfile, name='eventfile'),
+]
