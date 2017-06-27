@@ -1516,12 +1516,12 @@ class Layer_Version(models.Model):
         return self._handle_url_path(self.layer.vcs_web_tree_base_url, '')
 
     def get_vcs_reference(self):
+        if self.commit is not None and len(self.commit) > 0:
+            return self.commit
         if self.branch is not None and len(self.branch) > 0:
             return self.branch
         if self.release is not None:
             return self.release.name
-        if self.commit is not None and len(self.commit) > 0:
-            return self.commit
         return 'N/A'
 
     def get_detailspage_url(self, project_id=None):
