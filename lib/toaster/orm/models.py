@@ -321,6 +321,22 @@ class Project(models.Model):
 
         return queryset
 
+    def get_available_distros(self):
+        """ Returns QuerySet of all Distros which are provided by the
+        Layers currently added to the Project """
+        queryset = Distro.objects.filter(
+            layer_version__in=self.get_project_layer_versions())
+
+        return queryset
+
+    def get_all_compatible_distros(self):
+        """ Returns QuerySet of all the compatible Wind River distros available to the
+        project including ones from Layers not currently added """
+        queryset = Distro.objects.filter(
+            layer_version__in=self.get_all_compatible_layer_versions())
+
+        return queryset
+
     def get_available_recipes(self):
         """ Returns QuerySet of all the recipes that are provided by layers
         added to this project """
@@ -1794,6 +1810,21 @@ def signal_runbuilds():
             os.kill(int(pidf.read()), SIGUSR1)
     except FileNotFoundError:
         logger.info("Stopping existing runbuilds: no current process found")
+
+class Distro(models.Model):
+    search_allowed_fields = ["name", "description", "layer_version__layer__name"]
+    up_date = models.DateTimeField(null = True, default = None)
+
+    layer_version = models.ForeignKey('Layer_Version')
+    name = models.CharField(max_length=255)
+    description = models.CharField(max_length=255)
+
+    def get_vcs_distro_file_link_url(self):
+        path = self.name+'.conf'
+        return self.layer_version.get_vcs_file_link_url(path)
+
+    def __unicode__(self):
+        return "Distro " + self.name + "(" + self.description + ")"
 
 django.db.models.signals.post_save.connect(invalidate_cache)
 django.db.models.signals.post_delete.connect(invalidate_cache)

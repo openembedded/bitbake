@@ -23,6 +23,7 @@ from django.core.management.base import BaseCommand
 
 from orm.models import LayerSource, Layer, Release, Layer_Version
 from orm.models import LayerVersionDependency, Machine, Recipe
+from orm.models import Distro
 
 import os
 import sys
@@ -248,6 +249,24 @@ class Command(BaseCommand):
                 LayerVersionDependency.objects.get_or_create(layer_version=lv,
                                                              depends_on=lvd)
             self.mini_progress("Layer version dependencies", i, total)
+
+        # update Distros
+        logger.info("Fetching distro information")
+        distros_info = _get_json_response(
+            apilinks['distros'] + "?filter=layerbranch__branch__name:%s" %
+            "OR".join(whitelist_branch_names))
+
+        total = len(distros_info)
+        for i, di in enumerate(distros_info):
+            distro, created = Distro.objects.get_or_create(
+                name=di['name'],
+                layer_version=Layer_Version.objects.get(
+                    pk=li_layer_branch_id_to_toaster_lv_id[di['layerbranch']]))
+            distro.up_date = di['updated']
+            distro.name = di['name']
+            distro.description = di['description']
+            distro.save()
+            self.mini_progress("distros", i, total)
 
         # update machines
         logger.info("Fetching machine information")

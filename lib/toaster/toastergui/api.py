@@ -874,6 +874,12 @@ class XhrProject(View):
             machinevar.value = request.POST['machineName']
             machinevar.save()
 
+        # Distro name change
+        if 'distroName' in request.POST:
+            distrovar = prj.projectvariable_set.get(name="DISTRO")
+            distrovar.value = request.POST['distroName']
+            distrovar.save()
+
         return JsonResponse({"error": "ok"})
 
     def get(self, request, *args, **kwargs):
@@ -960,10 +966,11 @@ class XhrProject(View):
         except ProjectVariable.DoesNotExist:
             data["machine"] = None
         try:
-            data["distro"] = project.projectvariable_set.get(
-                name="DISTRO").value
+            data["distro"] = {"name":
+                               project.projectvariable_set.get(
+                                   name="DISTRO").value}
         except ProjectVariable.DoesNotExist:
-            data["distro"] = "-- not set yet"
+            data["distro"] = None
 
         data['error'] = "ok"
 

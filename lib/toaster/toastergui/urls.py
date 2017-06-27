@@ -158,6 +158,11 @@ urlpatterns = [
             name=tables.LayerMachinesTable.__name__.lower()),
 
 
+        url(r'^project/(?P<pid>\d+)/distros/$',
+            tables.DistrosTable.as_view(template_name="generic-toastertable-page.html"),
+            name="projectdistros"),
+
+
         url(r'^project/(?P<pid>\d+)/customrecipe/(?P<custrecipeid>\d+)/selectpackages/$',
             tables.SelectPackagesTable.as_view(), name="recipeselectpackages"),
 
@@ -186,6 +191,9 @@ urlpatterns = [
         url(r'^xhr_typeahead/gitrev$',
             typeaheads.GitRevisionTypeAhead.as_view(),
             name='xhr_gitrevtypeahead'),
+
+        url(r'^xhr_typeahead/(?P<pid>\d+)/distros$',
+            typeaheads.DistrosTypeAhead.as_view(), name='xhr_distrostypeahead'),
 
         url(r'^xhr_testreleasechange/(?P<pid>\d+)$', views.xhr_testreleasechange,
             name='xhr_testreleasechange'),
