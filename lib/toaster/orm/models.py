@@ -437,6 +437,12 @@ class Build(models.Model):
     # number of recipes parsed so far for this build
     recipes_parsed = models.IntegerField(default=0)
 
+    # number of repos to clone for this build
+    repos_to_clone = models.IntegerField(default=1)
+
+    # number of repos cloned so far for this build
+    repos_cloned = models.IntegerField(default=0)
+
     @staticmethod
     def get_recent(project=None):
         """
@@ -667,6 +673,13 @@ class Build(models.Model):
         else:
             return False
 
+    def is_cloning(self):
+        """
+        True if the build is still cloning repos
+        """
+        return self.outcome == Build.IN_PROGRESS and \
+            self.repos_cloned < self.repos_to_clone
+
     def is_parsing(self):
         """
         True if the build is still parsing recipes
@@ -698,6 +711,8 @@ class Build(models.Model):
             return 'Cancelling';
         elif self.is_queued():
             return 'Queued'
+        elif self.is_cloning():
+            return 'Cloning'
         elif self.is_parsing():
             return 'Parsing'
         elif self.is_starting():
