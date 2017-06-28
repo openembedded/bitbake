@@ -92,7 +92,7 @@ class Npm(FetchMethod):
 
         ud.write_tarballs = ((d.getVar("BB_GENERATE_MIRROR_TARBALLS") or "0") != "0")
         mirrortarball = 'npm_%s-%s.tar.xz' % (ud.pkgname, ud.version)
-        mirrortarball = ud.mirrortarball.replace('/', '-')
+        mirrortarball = mirrortarball.replace('/', '-')
         ud.fullmirror = os.path.join(d.getVar("DL_DIR"), mirrortarball)
         ud.mirrortarballs = [mirrortarball]
 
