@@ -358,6 +358,12 @@ class OperationProgress(Event):
 class ConfigParsed(Event):
     """Configuration Parsing Complete"""
 
+class MultiConfigParsed(Event):
+    """Multi-Config Parsing Complete"""
+    def __init__(self, mcdata):
+        self.mcdata = mcdata
+        Event.__init__(self)
+
 class RecipeEvent(Event):
     def __init__(self, fn):
         self.fn = fn

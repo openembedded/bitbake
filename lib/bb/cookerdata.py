@@ -294,6 +294,8 @@ class CookerDataBuilder(object):
                 mcdata = self.parseConfigurationFiles(self.prefiles, self.postfiles, config)
                 bb.event.fire(bb.event.ConfigParsed(), mcdata)
                 self.mcdata[config] = mcdata
+            if multiconfig:
+                bb.event.fire(bb.event.MultiConfigParsed(self.mcdata), self.data)
 
         except (SyntaxError, bb.BBHandledException):
             raise bb.BBHandledException
