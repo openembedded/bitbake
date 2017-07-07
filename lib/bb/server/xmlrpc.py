@@ -227,6 +227,8 @@ class XMLRPCServer(SimpleXMLRPCServer, BaseImplServer):
         self.idle_timeout = idle_timeout
         if idle_timeout:
             self.register_idle_function(self.handle_idle_timeout, self)
+        self.heartbeat_seconds = 1 # default, BB_HEARTBEAT_EVENT will be checked once we have a datastore.
+        self.next_heartbeat = time.time()
 
     def addcooker(self, cooker):
         BaseImplServer.addcooker(self, cooker)
@@ -250,6 +252,15 @@ class XMLRPCServer(SimpleXMLRPCServer, BaseImplServer):
         return []
 
     def serve_forever(self):
+        heartbeat_event = self.cooker.data.getVar('BB_HEARTBEAT_EVENT')
+        if heartbeat_event:
+            try:
+                self.heartbeat_seconds = float(heartbeat_event)
+            except:
+                # Throwing an exception here causes bitbake to hang.
+                # Just warn about the invalid setting and continue
+                bb.warn('Ignoring invalid BB_HEARTBEAT_EVENT=%s, must be a float specifying seconds.' % heartbeat_event)
+
         # Start the actual XMLRPC server
         bb.cooker.server_main(self.cooker, self._serve_forever)
 
@@ -296,6 +307,21 @@ class XMLRPCServer(SimpleXMLRPCServer, BaseImplServer):
             except IOError:
                 # we ignore interrupted calls
                 pass
+
+            # Create new heartbeat event?
+            now = time.time()
+            if now >= self.next_heartbeat:
+                # We might have missed heartbeats. Just trigger once in
+                # that case and continue after the usual delay.
+                self.next_heartbeat += self.heartbeat_seconds
+                if self.next_heartbeat <= now:
+                    self.next_heartbeat = now + self.heartbeat_seconds
+                heartbeat = bb.event.HeartbeatEvent(now)
+                bb.event.fire(heartbeat, self.cooker.data)
+            if nextsleep and now + nextsleep > self.next_heartbeat:
+                # Shorten timeout so that we we wake up in time for
+                # the heartbeat.
+                nextsleep = self.next_heartbeat - now
 
         # Tell idle functions we're exiting
         for function, data in list(self._idlefuns.items()):
