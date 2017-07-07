@@ -253,6 +253,8 @@ class ProcessEventQueue(multiprocessing.queues.Queue):
         try:
             if not self.server.is_alive():
                 return self.getEvent()
+            if timeout == 0:
+                return self.get(False)
             return self.get(True, timeout)
         except Empty:
             return None
