@@ -125,7 +125,7 @@ class BitBakeServerCommands():
         """
         Unregister a remote UI Event Handler
         """
-        return bb.event.unregister_UIHhandler(handlerNum)
+        return bb.event.unregister_UIHhandler(handlerNum, True)
 
     def runCommand(self, command):
         """

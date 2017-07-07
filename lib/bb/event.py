@@ -212,6 +212,12 @@ def fire(event, d):
     if worker_fire:
         worker_fire(event, d)
     else:
+        # If messages have been queued up, clear the queue
+        global _uiready, ui_queue
+        if _uiready and ui_queue:
+            for queue_event in ui_queue:
+                fire_ui_handlers(queue_event, d)
+            ui_queue = []
         fire_ui_handlers(event, d)
 
 def fire_from_worker(event, d):
@@ -291,7 +297,10 @@ def register_UIHhandler(handler, mainui=False):
     _ui_logfilters[_ui_handler_seq] = UIEventFilter(level, debug_domains)
     return _ui_handler_seq
 
-def unregister_UIHhandler(handlerNum):
+def unregister_UIHhandler(handlerNum, mainui=False):
+    if mainui:
+        global _uiready
+        _uiready = False
     if handlerNum in _ui_handlers:
         del _ui_handlers[handlerNum]
     return

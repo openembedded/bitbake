@@ -137,7 +137,7 @@ class ProcessServer(Process, BaseImplServer):
                 logger.exception('Running command %s', command)
 
         self.event_queue.close()
-        bb.event.unregister_UIHhandler(self.event_handle.value)
+        bb.event.unregister_UIHhandler(self.event_handle.value, True)
         self.command_channel.close()
         self.cooker.shutdown(True)
         self.quitout.close()
