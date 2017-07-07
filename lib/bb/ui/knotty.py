@@ -472,7 +472,7 @@ def main(server, eventHandler, params, tf = TerminalFilter):
                         continue
 
                     # Prefix task messages with recipe/task
-                    if event.taskpid in helper.running_tasks:
+                    if event.taskpid in helper.running_tasks and event.levelno != format.PLAIN:
                         taskinfo = helper.running_tasks[event.taskpid]
                         event.msg = taskinfo['title'] + ': ' + event.msg
                 if hasattr(event, 'fn'):
