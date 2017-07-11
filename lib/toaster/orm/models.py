@@ -456,8 +456,8 @@ class Build(models.Model):
     # number of repos to clone for this build
     repos_to_clone = models.IntegerField(default=1)
 
-    # number of repos cloned so far for this build
-    repos_cloned = models.IntegerField(default=0)
+    # number of repos cloned so far for this build (default off)
+    repos_cloned = models.IntegerField(default=1)
 
     @staticmethod
     def get_recent(project=None):

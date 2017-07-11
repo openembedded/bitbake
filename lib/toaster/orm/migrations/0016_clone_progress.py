@@ -13,12 +13,12 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='build',
             name='repos_cloned',
-            field=models.IntegerField(default=0),
+            field=models.IntegerField(default=1),
         ),
         migrations.AddField(
             model_name='build',
             name='repos_to_clone',
-            field=models.IntegerField(default=1),
+            field=models.IntegerField(default=1), # (default off)
         ),
     ]
 
