@@ -508,7 +508,7 @@ class Build(models.Model):
         tf = Task.objects.filter(build = self)
         tfc = tf.count()
         if tfc > 0:
-            completeper = tf.exclude(order__isnull=True).count()*100 // tfc
+            completeper = tf.exclude(outcome=Task.OUTCOME_NA).count()*100 // tfc
         else:
             completeper = 0
         return completeper
@@ -709,10 +709,11 @@ class Build(models.Model):
         tasks.
 
         Note that the mechanism for testing whether a Task is "done" is whether
-        its order field is set, as per the completeper() method.
+        its outcome field is set, as per the completeper() method.
         """
         return self.outcome == Build.IN_PROGRESS and \
-            self.task_build.filter(order__isnull=False).count() == 0
+            self.task_build.exclude(outcome=Task.OUTCOME_NA).count() == 0
+
 
     def get_state(self):
         """
