@@ -439,7 +439,7 @@ def setup_bitbake(configParams, configuration, extrafeatures=None, setup_logging
                         raise bb.server.process.ProcessTimeout("Bitbake still shutting down as socket exists but no lock?")
                 if not configParams.server_only:
                     server_connection = bb.server.process.connectProcessServer(sockname, featureset)
-                if server_connection:
+                if server_connection or configParams.server_only:
                     break
             except (Exception, bb.server.process.ProcessTimeout) as e:
                 if not retries:
