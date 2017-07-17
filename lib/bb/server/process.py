@@ -186,7 +186,12 @@ class ProcessServer(Process, BaseImplServer):
             nextsleep = self.next_heartbeat - now
 
         if nextsleep is not None:
-            select.select(fds,[],[],nextsleep)
+            try:
+                select.select(fds,[],[],nextsleep)
+            except InterruptedError:
+                # ignore EINTR error, nextsleep only used for wait
+                # certain time
+                pass
 
     def runCommand(self, command):
         """
