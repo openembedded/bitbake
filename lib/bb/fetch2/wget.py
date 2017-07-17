@@ -30,6 +30,7 @@ import tempfile
 import subprocess
 import os
 import logging
+import errno
 import bb
 import bb.progress
 import urllib.request, urllib.parse, urllib.error
@@ -206,8 +207,21 @@ class Wget(FetchMethod):
                     h.request(req.get_method(), req.selector, req.data, headers)
                 except socket.error as err: # XXX what error?
                     # Don't close connection when cache is enabled.
+                    # Instead, try to detect connections that are no longer
+                    # usable (for example, closed unexpectedly) and remove
+                    # them from the cache.
                     if fetch.connection_cache is None:
                         h.close()
+                    elif isinstance(err, OSError) and err.errno == errno.EBADF:
+                        # This happens when the server closes the connection despite the Keep-Alive.
+                        # Apparently urllib then uses the file descriptor, expecting it to be
+                        # connected, when in reality the connection is already gone.
+                        # We let the request fail and expect it to be
+                        # tried once more ("try_again" in check_status()),
+                        # with the dead connection removed from the cache.
+                        # If it still fails, we give up, which can happend for bad
+                        # HTTP proxy settings.
+                        fetch.connection_cache.remove_connection(h.host, h.port)
                     raise urllib.error.URLError(err)
                 else:
                     try:
