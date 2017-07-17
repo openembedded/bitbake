@@ -355,7 +355,7 @@ def bitbake_main(configParams, configuration):
                                   ("the BBSERVER environment variable" if "BBSERVER" in os.environ \
                                    else "the '--remote-server' option"))
 
-    if configParams.observe_only and (not configParams.remote_server or configParams.bind):
+    if configParams.observe_only and not (configParams.remote_server or configParams.bind):
         raise BBMainException("FATAL: '--observe-only' can only be used by UI clients "
                               "connecting to a server.\n")
 
