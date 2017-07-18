@@ -18,10 +18,4 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-""" Base code for Bitbake server process
-
-Have a common base for that all Bitbake server classes ensures a consistent
-approach to the interface, and minimize risks associated with code duplication.
-
-"""
 

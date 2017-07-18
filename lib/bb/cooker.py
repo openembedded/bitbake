@@ -215,19 +215,6 @@ class BBCooker:
 
         self.configuration.server_register_idlecallback(_process_inotify_updates, [self.confignotifier, self.notifier])
 
-        # Take a lock so only one copy of bitbake can run against a given build
-        # directory at a time
-        if not self.lockBitbake():
-            bb.fatal("Only one copy of bitbake should be run against a build directory")
-        try:
-            self.lock.seek(0)
-            self.lock.truncate()
-            if len(configuration.interface) >= 2:
-                self.lock.write("%s:%s\n" % (configuration.interface[0], configuration.interface[1]));
-            self.lock.flush()
-        except:
-            pass
-
         # TOSTOP must not be set or our children will hang when they output
         try:
             fd = sys.stdout.fileno()
@@ -1557,33 +1544,6 @@ class BBCooker:
     def post_serve(self):
         prserv.serv.auto_shutdown(self.data)
         bb.event.fire(CookerExit(), self.data)
-        lockfile = self.lock.name
-        self.lock.close()
-        self.lock = None
-
-        while not self.lock:
-            with bb.utils.timeout(3):
-                self.lock = bb.utils.lockfile(lockfile, shared=False, retry=False, block=True)
-                if not self.lock:
-                    # Some systems may not have lsof available
-                    procs = None
-                    try:
-                        procs = subprocess.check_output(["lsof", '-w', lockfile], stderr=subprocess.STDOUT)
-                    except OSError as e:
-                        if e.errno != errno.ENOENT:
-                            raise
-                    if procs is None:
-                        # Fall back to fuser if lsof is unavailable
-                        try:
-                            procs = subprocess.check_output(["fuser", '-v', lockfile], stderr=subprocess.STDOUT)
-                        except OSError as e:
-                            if e.errno != errno.ENOENT:
-                                raise
-
-                    msg = "Delaying shutdown due to active processes which appear to be holding bitbake.lock"
-                    if procs:
-                        msg += ":\n%s" % str(procs)
-                    print(msg)
 
 
     def shutdown(self, force = False):
@@ -1605,23 +1565,7 @@ class BBCooker:
 
     def clientComplete(self):
         """Called when the client is done using the server"""
-        if self.configuration.server_only:
-            self.finishcommand()
-        else:
-            self.shutdown(True)
-
-    def lockBitbake(self):
-        if not hasattr(self, 'lock'):
-            self.lock = None
-            if self.data:
-                lockfile = self.data.expand("${TOPDIR}/bitbake.lock")
-                if lockfile:
-                    self.lock = bb.utils.lockfile(lockfile, False, False)
-        return self.lock
-
-    def unlockBitbake(self):
-        if hasattr(self, 'lock') and self.lock:
-            bb.utils.unlockfile(self.lock)
+        self.finishcommand()
 
 def server_main(cooker, func, *args):
     cooker.pre_serve()

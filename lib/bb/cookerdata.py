@@ -76,7 +76,7 @@ class ConfigParameters(object):
         for o in ["abort", "tryaltconfigs", "force", "invalidate_stamp",
                   "verbose", "debug", "dry_run", "dump_signatures",
                   "debug_domains", "extra_assume_provided", "profile",
-                  "prefile", "postfile", "tracking"]:
+                  "prefile", "postfile", "tracking", "server_timeout"]:
             options[o] = getattr(self.options, o)
 
         ret, error = server.runCommand(["updateConfig", options, environment, sys.argv])
@@ -144,7 +144,8 @@ class CookerConfiguration(object):
         self.dump_signatures = []
         self.dry_run = False
         self.tracking = False
-        self.interface = []
+        self.xmlrpcinterface = []
+        self.server_timeout = None
         self.writeeventlog = False
         self.server_only = False
         self.limited_deps = False

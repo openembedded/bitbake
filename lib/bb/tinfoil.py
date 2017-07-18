@@ -243,7 +243,7 @@ class Tinfoil:
         cookerconfig = CookerConfiguration()
         cookerconfig.setConfigParameters(config_params)
 
-        server, self.server_connection, ui_module = setup_bitbake(config_params,
+        self.server_connection, ui_module = setup_bitbake(config_params,
                             cookerconfig,
                             extrafeatures,
                             setup_logging=False)

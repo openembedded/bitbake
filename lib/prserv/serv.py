@@ -6,7 +6,7 @@ import queue
 import socket
 import io
 import sqlite3
-import bb.server.xmlrpc
+import bb.server.xmlrpcclient
 import prserv
 import prserv.db
 import errno
@@ -300,7 +300,7 @@ class PRServerConnection(object):
             host, port = singleton.getinfo()
         self.host = host
         self.port = port
-        self.connection, self.transport = bb.server.xmlrpc._create_server(self.host, self.port)
+        self.connection, self.transport = bb.server.xmlrpcclient._create_server(self.host, self.port)
 
     def terminate(self):
         try:
