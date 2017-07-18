@@ -29,6 +29,7 @@ __version__ = "0.2"
 # Standard Python modules.
 import os                    # Miscellaneous OS interfaces.
 import sys                   # System-specific parameters and functions.
+import io
 
 # Default daemon parameters.
 # File mode creation mask of the daemon.
@@ -124,6 +125,7 @@ def createDaemon(function, logfile):
         # streams to be flushed twice and any temporary files may be unexpectedly
         # removed.  It's therefore recommended that child branches of a fork()
         # and the parent branch(es) of a daemon use _exit().
+        os.waitpid(pid, 0)
         return
 
     # Close all open file descriptors.  This prevents the child from keeping
@@ -177,16 +179,18 @@ def createDaemon(function, logfile):
 #    os.dup2(0, 1)                      # standard output (1)
 #    os.dup2(0, 2)                      # standard error (2)
 
-
-    si = open('/dev/null', 'r')
-    so = open(logfile, 'w')
-    se = so
-
-
     # Replace those fds with our own
+    si = open('/dev/null', 'r')
     os.dup2(si.fileno(), sys.stdin.fileno())
-    os.dup2(so.fileno(), sys.stdout.fileno())
-    os.dup2(se.fileno(), sys.stderr.fileno())
+
+    try:
+        so = open(logfile, 'a+')
+        se = so
+        os.dup2(so.fileno(), sys.stdout.fileno())
+        os.dup2(se.fileno(), sys.stderr.fileno())
+    except io.UnsupportedOperation:
+        sys.stdout = open(logfile, 'a+')
+        sys.stderr = sys.stdout
 
     function()
 
