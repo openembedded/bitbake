@@ -230,6 +230,27 @@ def findConfigFile(configfile, data):
 
     return None
 
+#
+# We search for a conf/bblayers.conf under an entry in BBPATH or in cwd working 
+# up to /. If that fails, we search for a conf/bitbake.conf in BBPATH.
+#
+
+def findTopdir():
+    d = bb.data.init()
+    bbpath = None
+    if 'BBPATH' in os.environ:
+        bbpath = os.environ['BBPATH']
+        d.setVar('BBPATH', bbpath)
+
+    layerconf = findConfigFile("bblayers.conf", d)
+    if layerconf:
+        return os.path.dirname(os.path.dirname(layerconf))
+    if bbpath:
+        bitbakeconf = bb.utils.which(bbpath, "conf/bitbake.conf")
+        if bitbakeconf:
+            return os.path.dirname(os.path.dirname(bitbakeconf))
+    return None
+
 class CookerDataBuilder(object):
 
     def __init__(self, cookercfg, worker = False):
