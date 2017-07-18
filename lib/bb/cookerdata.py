@@ -328,6 +328,15 @@ class CookerDataBuilder(object):
             logger.exception("Error parsing configuration files")
             raise bb.BBHandledException
 
+        # Create a copy so we can reset at a later date when UIs disconnect
+        self.origdata = self.data
+        self.data = bb.data.createCopy(self.origdata)
+        self.mcdata[''] = self.data
+
+    def reset(self):
+        self.data = bb.data.createCopy(self.origdata)
+        self.mcdata[''] = self.data
+
     def _findLayerConf(self, data):
         return findConfigFile("bblayers.conf", data)
 

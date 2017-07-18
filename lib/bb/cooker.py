@@ -1566,6 +1566,8 @@ class BBCooker:
     def clientComplete(self):
         """Called when the client is done using the server"""
         self.finishcommand()
+        self.databuilder.reset()
+        self.data = self.databuilder.data
 
 def server_main(cooker, func, *args):
     cooker.pre_serve()
