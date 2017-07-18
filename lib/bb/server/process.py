@@ -33,8 +33,6 @@ import select
 from queue import Empty
 from multiprocessing import Event, Process, util, Queue, Pipe, queues, Manager
 
-from . import BitBakeBaseServer, BitBakeBaseServerConnection, BaseImplServer
-
 logger = logging.getLogger('BitBake')
 
 class ServerCommunicator():
@@ -85,12 +83,12 @@ class EventAdapter():
             print("EventAdapter puked: %s" % str(err))
 
 
-class ProcessServer(Process, BaseImplServer):
+class ProcessServer(Process):
     profile_filename = "profile.log"
     profile_processed_filename = "profile.log.processed"
 
     def __init__(self, command_channel, event_queue, featurelist):
-        BaseImplServer.__init__(self)
+        self._idlefuns = {}
         Process.__init__(self)
         self.command_channel = command_channel
         self.event_queue = event_queue
@@ -208,7 +206,15 @@ class ProcessServer(Process, BaseImplServer):
         self.quitin.send("quit")
         self.quitin.close()
 
-class BitBakeProcessServerConnection(BitBakeBaseServerConnection):
+    def addcooker(self, cooker):
+        self.cooker = cooker
+
+    def register_idle_function(self, function, data):
+        """Register a function to be called while the server is idle"""
+        assert hasattr(function, '__call__')
+        self._idlefuns[function] = data
+
+class BitBakeProcessServerConnection(object):
     def __init__(self, serverImpl, ui_channel, event_queue):
         self.procserver = serverImpl
         self.ui_channel = ui_channel
@@ -247,6 +253,9 @@ class BitBakeProcessServerConnection(BitBakeBaseServerConnection):
         # fd leakage because isn't called on Queue.close()
         self.event_queue._writer.close()
 
+    def setupEventQueue(self):
+        pass
+
 # Wrap Queue to provide API which isn't server implementation specific
 class ProcessEventQueue(multiprocessing.queues.Queue):
     def __init__(self, maxsize):
@@ -279,7 +288,7 @@ class ProcessEventQueue(multiprocessing.queues.Queue):
                 sys.exit(1)
             return None
 
-class BitBakeServer(BitBakeBaseServer):
+class BitBakeServer(object):
     def initServer(self, single_use=True):
         # establish communication channels.  We use bidirectional pipes for
         # ui <--> server command/response pairs
@@ -304,3 +313,16 @@ class BitBakeServer(BitBakeBaseServer):
             raise BaseException(error)
         signal.signal(signal.SIGTERM, lambda i, s: self.connection.sigterm_terminate())
         return self.connection
+
+    def addcooker(self, cooker):
+        self.cooker = cooker
+        self.serverImpl.addcooker(cooker)
+
+    def getServerIdleCB(self):
+        return self.serverImpl.register_idle_function
+
+    def saveConnectionDetails(self):
+        return
+
+    def endSession(self):
+        self.connection.terminate()
