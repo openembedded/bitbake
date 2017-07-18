@@ -63,7 +63,12 @@ class ServerCommunicator():
                 pass
 
     def getEventHandle(self):
-        return self.event_handle.value
+        handle, error = self.runCommand(["getUIHandlerNum"])
+        if error:
+            logger.error("Unable to get UI Handler Number: %s" % error)
+            raise BaseException(error)
+
+        return handle
 
 class EventAdapter():
     """

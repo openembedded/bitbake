@@ -238,6 +238,11 @@ class CommandsSync:
         return command.cooker.matchFile(fMatch)
     matchFile.needconfig = False
 
+    def getUIHandlerNum(self, command, params):
+        return bb.event.get_uihandler()
+    getUIHandlerNum.needconfig = False
+    getUIHandlerNum.readonly = True
+
     def setEventMask(self, command, params):
         handlerNum = params[0]
         llevel = params[1]

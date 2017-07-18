@@ -288,13 +288,13 @@ def set_eventfilter(func):
     _eventfilter = func
 
 def register_UIHhandler(handler, mainui=False):
-    if mainui:
-        global _uiready
-        _uiready = True
     bb.event._ui_handler_seq = bb.event._ui_handler_seq + 1
     _ui_handlers[_ui_handler_seq] = handler
     level, debug_domains = bb.msg.constructLogOptions()
     _ui_logfilters[_ui_handler_seq] = UIEventFilter(level, debug_domains)
+    if mainui:
+        global _uiready
+        _uiready = _ui_handler_seq
     return _ui_handler_seq
 
 def unregister_UIHhandler(handlerNum, mainui=False):
@@ -304,6 +304,11 @@ def unregister_UIHhandler(handlerNum, mainui=False):
     if handlerNum in _ui_handlers:
         del _ui_handlers[handlerNum]
     return
+
+def get_uihandler():
+    if _uiready is False:
+        return None
+    return _uiready
 
 # Class to allow filtering of events and specific filtering of LogRecords *before* we put them over the IPC
 class UIEventFilter(object):
