@@ -90,7 +90,7 @@ def main():
 
         if getattr(args, 'parserecipes', False):
             tinfoil.config_data.disableTracking()
-            tinfoil.parseRecipes()
+            tinfoil.parse_recipes()
             tinfoil.config_data.enableTracking()
 
         return args.func(args)

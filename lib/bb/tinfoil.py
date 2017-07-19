@@ -289,7 +289,13 @@ class Tinfoil:
 
     def parseRecipes(self):
         """
-        Force a parse of all recipes. Normally you should specify
+        Legacy function - use parse_recipes() instead.
+        """
+        self.parse_recipes()
+
+    def parse_recipes(self):
+        """
+        Load information on all recipes. Normally you should specify
         config_only=False when calling prepare() instead of using this
         function; this function is designed for situations where you need
         to initialise Tinfoil and use it with config_only=True first and
