@@ -173,6 +173,14 @@ class TinfoilCookerAdapter:
                 attrvalue = self.tinfoil.run_command('getBbFilePriority') or {}
             elif name == 'pkg_dp':
                 attrvalue = self.tinfoil.run_command('getDefaultPreference') or {}
+            elif name == 'fn_provides':
+                attrvalue = self.tinfoil.run_command('getRecipeProvides') or {}
+            elif name == 'packages':
+                attrvalue = self.tinfoil.run_command('getRecipePackages') or {}
+            elif name == 'packages_dynamic':
+                attrvalue = self.tinfoil.run_command('getRecipePackagesDynamic') or {}
+            elif name == 'rproviders':
+                attrvalue = self.tinfoil.run_command('getRProviders') or {}
             else:
                 raise AttributeError("%s instance has no attribute '%s'" % (self.__class__.__name__, name))
 

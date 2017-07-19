@@ -312,6 +312,38 @@ class CommandsSync:
         return command.cooker.recipecaches[mc].pkg_pepvpr
     getRecipeVersions.readonly = True
 
+    def getRecipeProvides(self, command, params):
+        try:
+            mc = params[0]
+        except IndexError:
+            mc = ''
+        return command.cooker.recipecaches[mc].fn_provides
+    getRecipeProvides.readonly = True
+
+    def getRecipePackages(self, command, params):
+        try:
+            mc = params[0]
+        except IndexError:
+            mc = ''
+        return command.cooker.recipecaches[mc].packages
+    getRecipePackages.readonly = True
+
+    def getRecipePackagesDynamic(self, command, params):
+        try:
+            mc = params[0]
+        except IndexError:
+            mc = ''
+        return command.cooker.recipecaches[mc].packages_dynamic
+    getRecipePackagesDynamic.readonly = True
+
+    def getRProviders(self, command, params):
+        try:
+            mc = params[0]
+        except IndexError:
+            mc = ''
+        return command.cooker.recipecaches[mc].rproviders
+    getRProviders.readonly = True
+
     def getRuntimeDepends(self, command, params):
         ret = []
         try:
