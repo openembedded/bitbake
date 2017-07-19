@@ -217,6 +217,82 @@ class TinfoilCookerAdapter:
         return self.tinfoil.find_best_provider(pn)
 
 
+class TinfoilRecipeInfo:
+    """
+    Provides a convenient representation of the cached information for a single recipe.
+    Some attributes are set on construction, others are read on-demand (which internally
+    may result in a remote procedure call to the bitbake server the first time).
+    Note that only information which is cached is available through this object - if
+    you need other variable values you will need to parse the recipe using
+    Tinfoil.parse_recipe().
+    """
+    def __init__(self, recipecache, d, pn, fn, fns):
+        self._recipecache = recipecache
+        self._d = d
+        self.pn = pn
+        self.fn = fn
+        self.fns = fns
+        self.inherit_files = recipecache.inherits[fn]
+        self.depends = recipecache.deps[fn]
+        (self.pe, self.pv, self.pr) = recipecache.pkg_pepvpr[fn]
+        self._cached_packages = None
+        self._cached_rprovides = None
+        self._cached_packages_dynamic = None
+
+    def __getattr__(self, name):
+        if name == 'alternates':
+            return [x for x in self.fns if x != self.fn]
+        elif name == 'rdepends':
+            return self._recipecache.rundeps[self.fn]
+        elif name == 'rrecommends':
+            return self._recipecache.runrecs[self.fn]
+        elif name == 'provides':
+            return self._recipecache.fn_provides[self.fn]
+        elif name == 'packages':
+            if self._cached_packages is None:
+                self._cached_packages = []
+                for pkg, fns in self._recipecache.packages.items():
+                    if self.fn in fns:
+                        self._cached_packages.append(pkg)
+            return self._cached_packages
+        elif name == 'packages_dynamic':
+            if self._cached_packages_dynamic is None:
+                self._cached_packages_dynamic = []
+                for pkg, fns in self._recipecache.packages_dynamic.items():
+                    if self.fn in fns:
+                        self._cached_packages_dynamic.append(pkg)
+            return self._cached_packages_dynamic
+        elif name == 'rprovides':
+            if self._cached_rprovides is None:
+                self._cached_rprovides = []
+                for pkg, fns in self._recipecache.rproviders.items():
+                    if self.fn in fns:
+                        self._cached_rprovides.append(pkg)
+            return self._cached_rprovides
+        else:
+            raise AttributeError("%s instance has no attribute '%s'" % (self.__class__.__name__, name))
+    def inherits(self, only_recipe=False):
+        """
+        Get the inherited classes for a recipe. Returns the class names only.
+        Parameters:
+            only_recipe: True to return only the classes inherited by the recipe
+                         itself, False to return all classes inherited within
+                         the context for the recipe (which includes globally
+                         inherited classes).
+        """
+        if only_recipe:
+            global_inherit = [x for x in (self._d.getVar('BBINCLUDED') or '').split() if x.endswith('.bbclass')]
+        else:
+            global_inherit = []
+        for clsfile in self.inherit_files:
+            if only_recipe and clsfile in global_inherit:
+                continue
+            clsname = os.path.splitext(os.path.basename(clsfile))[0]
+            yield clsname
+    def __str__(self):
+        return '%s' % self.pn
+
+
 class Tinfoil:
 
     def __init__(self, output=sys.stdout, tracking=False, setup_logging=True):
@@ -400,6 +476,72 @@ class Tinfoil:
 
     def get_file_appends(self, fn):
         return self.run_command('getFileAppends', fn)
+
+    def all_recipes(self, mc='', sort=True):
+        """
+        Enable iterating over all recipes in the current configuration.
+        Returns an iterator over TinfoilRecipeInfo objects created on demand.
+        Parameters:
+            mc: The multiconfig, default of '' uses the main configuration.
+            sort: True to sort recipes alphabetically (default), False otherwise
+        """
+        recipecache = self.cooker.recipecaches[mc]
+        if sort:
+            recipes = sorted(recipecache.pkg_pn.items())
+        else:
+            recipes = recipecache.pkg_pn.items()
+        for pn, fns in recipes:
+            prov = self.find_best_provider(pn)
+            recipe = TinfoilRecipeInfo(recipecache,
+                                       self.config_data,
+                                       pn=pn,
+                                       fn=prov[3],
+                                       fns=fns)
+            yield recipe
+
+    def all_recipe_files(self, mc='', variants=True, preferred_only=False):
+        """
+        Enable iterating over all recipe files in the current configuration.
+        Returns an iterator over file paths.
+        Parameters:
+            mc: The multiconfig, default of '' uses the main configuration.
+            variants: True to include variants of recipes created through
+                      BBCLASSEXTEND (default) or False to exclude them
+            preferred_only: True to include only the preferred recipe where
+                      multiple exist providing the same PN, False to list
+                      all recipes
+        """
+        recipecache = self.cooker.recipecaches[mc]
+        if preferred_only:
+            files = []
+            for pn in recipecache.pkg_pn.keys():
+                prov = self.find_best_provider(pn)
+                files.append(prov[3])
+        else:
+            files = recipecache.pkg_fn.keys()
+        for fn in sorted(files):
+            if not variants and fn.startswith('virtual:'):
+                continue
+            yield fn
+
+
+    def get_recipe_info(self, pn, mc=''):
+        """
+        Get information on a specific recipe in the current configuration by name (PN).
+        Returns a TinfoilRecipeInfo object created on demand.
+        Parameters:
+            mc: The multiconfig, default of '' uses the main configuration.
+        """
+        recipecache = self.cooker.recipecaches[mc]
+        prov = self.find_best_provider(pn)
+        fn = prov[3]
+        actual_pn = recipecache.pkg_fn[fn]
+        recipe = TinfoilRecipeInfo(recipecache,
+                                    self.config_data,
+                                    pn=actual_pn,
+                                    fn=fn,
+                                    fns=recipecache.pkg_pn[actual_pn])
+        return recipe
 
     def parse_recipe(self, pn):
         """
