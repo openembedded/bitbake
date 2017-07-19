@@ -207,8 +207,10 @@ class TerminalFilter(object):
             self.interactive = False
             bb.note("Unable to use interactive mode for this terminal, using fallback")
             return
-        console.addFilter(InteractConsoleLogFilter(self, format))
-        errconsole.addFilter(InteractConsoleLogFilter(self, format))
+        if console:
+            console.addFilter(InteractConsoleLogFilter(self, format))
+        if errconsole:
+            errconsole.addFilter(InteractConsoleLogFilter(self, format))
 
         self.main_progress = None
 
