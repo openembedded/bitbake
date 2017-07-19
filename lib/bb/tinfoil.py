@@ -55,6 +55,7 @@ class TinfoilCommandFailed(Exception):
     """Exception raised when run_command fails"""
 
 class TinfoilDataStoreConnector:
+    """Connector object used to enable access to datastore objects via tinfoil"""
 
     def __init__(self, tinfoil, dsindex):
         self.tinfoil = tinfoil
@@ -294,8 +295,25 @@ class TinfoilRecipeInfo:
 
 
 class Tinfoil:
+    """
+    Tinfoil - an API for scripts and utilities to query
+    BitBake internals and perform build operations.
+    """
 
     def __init__(self, output=sys.stdout, tracking=False, setup_logging=True):
+        """
+        Create a new tinfoil object.
+        Parameters:
+            output: specifies where console output should be sent. Defaults
+                    to sys.stdout.
+            tracking: True to enable variable history tracking, False to
+                    disable it (default). Enabling this has a minor
+                    performance impact so typically it isn't enabled
+                    unless you need to query variable history.
+            setup_logging: True to setup a logger so that things like
+                    bb.warn() will work immediately and timeout warnings
+                    are visible; False to let BitBake do this itself.
+        """
         self.logger = logging.getLogger('BitBake')
         self.config_data = None
         self.cooker = None
@@ -316,6 +334,37 @@ class Tinfoil:
         self.shutdown()
 
     def prepare(self, config_only=False, config_params=None, quiet=0, extra_features=None):
+        """
+        Prepares the underlying BitBake system to be used via tinfoil.
+        This function must be called prior to calling any of the other
+        functions in the API.
+        NOTE: if you call prepare() you must absolutely call shutdown()
+        before your code terminates. You can use a "with" block to ensure
+        this happens e.g.
+
+            with bb.tinfoil.Tinfoil() as tinfoil:
+                tinfoil.prepare()
+                ...
+
+        Parameters:
+            config_only: True to read only the configuration and not load
+                        the cache / parse recipes. This is useful if you just
+                        want to query the value of a variable at the global
+                        level or you want to do anything else that doesn't
+                        involve knowing anything about the recipes in the
+                        current configuration. False loads the cache / parses
+                        recipes.
+            config_params: optionally specify your own configuration
+                        parameters. If not specified an instance of
+                        TinfoilConfigParameters will be created internally.
+            quiet:      quiet level controlling console output - equivalent
+                        to bitbake's -q/--quiet option. Default of 0 gives
+                        the same output level as normal bitbake execution.
+            extra_features: extra features to be added to the feature
+                        set requested from the server. See
+                        CookerFeatures._feature_list for possible
+                        features.
+        """
         self.quiet = quiet
 
         if self.tracking:
@@ -440,9 +489,16 @@ class Tinfoil:
         return self.server_connection.events.waitEvent(timeout)
 
     def get_overlayed_recipes(self):
+        """
+        Find recipes which are overlayed (i.e. where recipes exist in multiple layers)
+        """
         return defaultdict(list, self.run_command('getOverlayedRecipes'))
 
     def get_skipped_recipes(self):
+        """
+        Find recipes which were skipped (i.e. SkipRecipe was raised
+        during parsing).
+        """
         return OrderedDict(self.run_command('getSkippedRecipes'))
 
     def get_all_providers(self):
@@ -475,6 +531,9 @@ class Tinfoil:
         return best[3]
 
     def get_file_appends(self, fn):
+        """
+        Find the bbappends for a recipe file
+        """
         return self.run_command('getFileAppends', fn)
 
     def all_recipes(self, mc='', sort=True):
@@ -739,6 +798,12 @@ class Tinfoil:
             return ret
 
     def shutdown(self):
+        """
+        Shut down tinfoil. Disconnects from the server and gracefully
+        releases any associated resources. You must call this function if
+        prepare() has been called, or use a with... block when you create
+        the tinfoil object which will ensure that it gets called.
+        """
         if self.server_connection:
             self.run_command('clientComplete')
             _server_connections.remove(self.server_connection)
