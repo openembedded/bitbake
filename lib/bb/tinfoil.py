@@ -415,12 +415,15 @@ class Tinfoil:
         else:
             return None
 
-    def build_file(self, buildfile, task):
+    def build_file(self, buildfile, task, internal=True):
         """
         Runs the specified task for just a single recipe (i.e. no dependencies).
-        This is equivalent to bitbake -b, except no warning will be printed.
+        This is equivalent to bitbake -b, except with the default internal=True
+        no warning about dependencies will be produced, normal info messages
+        from the runqueue will be silenced and BuildInit, BuildStarted and
+        BuildCompleted events will not be fired.
         """
-        return self.run_command('buildFile', buildfile, task, True)
+        return self.run_command('buildFile', buildfile, task, internal)
 
     def shutdown(self):
         if self.server_connection:

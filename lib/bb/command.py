@@ -548,11 +548,14 @@ class CommandsAsync:
         bfile = params[0]
         task = params[1]
         if len(params) > 2:
-            hidewarning = params[2]
+            internal = params[2]
         else:
-            hidewarning = False
+            internal = False
 
-        command.cooker.buildFile(bfile, task, hidewarning)
+        if internal:
+            command.cooker.buildFileInternal(bfile, task, fireevents=False, quietlog=True)
+        else:
+            command.cooker.buildFile(bfile, task)
     buildFile.needcache = False
 
     def buildTargets(self, command, params):

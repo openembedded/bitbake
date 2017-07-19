@@ -1219,20 +1219,26 @@ class BBCooker:
             raise NoSpecificMatch
         return matches[0]
 
-    def buildFile(self, buildfile, task, hidewarning=False):
+    def buildFile(self, buildfile, task):
         """
         Build the file matching regexp buildfile
         """
         bb.event.fire(bb.event.BuildInit(), self.data)
 
-        if not hidewarning:
-            # Too many people use -b because they think it's how you normally
-            # specify a target to be built, so show a warning
-            bb.warn("Buildfile specified, dependencies will not be handled. If this is not what you want, do not use -b / --buildfile.")
+        # Too many people use -b because they think it's how you normally
+        # specify a target to be built, so show a warning
+        bb.warn("Buildfile specified, dependencies will not be handled. If this is not what you want, do not use -b / --buildfile.")
 
         # Parse the configuration here. We need to do it explicitly here since
         # buildFile() doesn't use the cache
         self.parseConfiguration()
+
+        self.buildFileInternal(buildfile, task)
+
+    def buildFileInternal(self, buildfile, task, fireevents=True, quietlog=False):
+        """
+        Build the file matching regexp buildfile
+        """
 
         # If we are told to do the None task then query the default task
         if (task == None):
@@ -1270,8 +1276,8 @@ class BBCooker:
         # Remove external dependencies
         self.recipecaches[mc].task_deps[fn]['depends'] = {}
         self.recipecaches[mc].deps[fn] = []
-        self.recipecaches[mc].rundeps[fn] = []
-        self.recipecaches[mc].runrecs[fn] = []
+        self.recipecaches[mc].rundeps[fn] = defaultdict(list)
+        self.recipecaches[mc].runrecs[fn] = defaultdict(list)
 
         # Invalidate task for target if force mode active
         if self.configuration.force:
@@ -1283,8 +1289,13 @@ class BBCooker:
         taskdata[mc] = bb.taskdata.TaskData(self.configuration.abort)
         taskdata[mc].add_provider(self.databuilder.mcdata[mc], self.recipecaches[mc], item)
 
+        if quietlog:
+            rqloglevel = bb.runqueue.logger.getEffectiveLevel()
+            bb.runqueue.logger.setLevel(logging.WARNING)
+
         buildname = self.databuilder.mcdata[mc].getVar("BUILDNAME")
-        bb.event.fire(bb.event.BuildStarted(buildname, [item]), self.databuilder.mcdata[mc])
+        if fireevents:
+            bb.event.fire(bb.event.BuildStarted(buildname, [item]), self.databuilder.mcdata[mc])
 
         # Execute the runqueue
         runlist = [[mc, item, task, fn]]
@@ -1311,11 +1322,16 @@ class BBCooker:
                 retval = False
             except SystemExit as exc:
                 self.command.finishAsyncCommand(str(exc))
+                if quietlog:
+                    bb.runqueue.logger.setLevel(rqloglevel)
                 return False
 
             if not retval:
-                bb.event.fire(bb.event.BuildCompleted(len(rq.rqdata.runtaskentries), buildname, item, failures, interrupted), self.databuilder.mcdata[mc])
+                if fireevents:
+                    bb.event.fire(bb.event.BuildCompleted(len(rq.rqdata.runtaskentries), buildname, item, failures, interrupted), self.databuilder.mcdata[mc])
                 self.command.finishAsyncCommand(msg)
+                if quietlog:
+                    bb.runqueue.logger.setLevel(rqloglevel)
                 return False
             if retval is True:
                 return True
