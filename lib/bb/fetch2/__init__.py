@@ -39,6 +39,7 @@ import errno
 import bb.persist_data, bb.utils
 import bb.checksum
 import bb.process
+import bb.event
 
 __version__ = "2"
 _checksum_cache = bb.checksum.FileChecksumCache()
@@ -141,6 +142,13 @@ class NetworkAccess(BBFetchException):
 class NonLocalMethod(Exception):
     def __init__(self):
         Exception.__init__(self)
+
+class MissingChecksumEvent(bb.event.Event):
+    def __init__(self, url, md5sum, sha256sum):
+        self.url = url
+        self.checksums = {'md5sum': md5sum,
+                          'sha256sum': sha256sum}
+        bb.event.Event.__init__(self)
 
 
 class URI(object):
@@ -583,6 +591,8 @@ def verify_checksum(ud, d, precomputed={}):
                              (ud.localpath, ud.md5_name, md5data,
                               ud.sha256_name, sha256data))
             raise NoChecksumError('Missing SRC_URI checksum', ud.url)
+
+        bb.event.fire(MissingChecksumEvent(ud.url, md5data, sha256data), d)
 
         if strict == "ignore":
             return {
