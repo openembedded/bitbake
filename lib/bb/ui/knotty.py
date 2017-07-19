@@ -560,7 +560,7 @@ def main(server, eventHandler, params, tf = TerminalFilter):
                 return_value = event.exitcode
                 if event.error:
                     errors = errors + 1
-                    logger.error("Command execution failed: %s", event.error)
+                    logger.error(str(event))
                 main.shutdown = 2
                 continue
             if isinstance(event, bb.command.CommandExit):
@@ -571,39 +571,16 @@ def main(server, eventHandler, params, tf = TerminalFilter):
                 main.shutdown = 2
                 continue
             if isinstance(event, bb.event.MultipleProviders):
-                logger.info("multiple providers are available for %s%s (%s)", event._is_runtime and "runtime " or "",
-                            event._item,
-                            ", ".join(event._candidates))
-                rtime = ""
-                if event._is_runtime:
-                    rtime = "R"
-                logger.info("consider defining a PREFERRED_%sPROVIDER entry to match %s" % (rtime, event._item))
+                logger.info(str(event))
                 continue
             if isinstance(event, bb.event.NoProvider):
-                if event._runtime:
-                    r = "R"
-                else:
-                    r = ""
-
-                extra = ''
-                if not event._reasons:
-                    if event._close_matches:
-                        extra = ". Close matches:\n  %s" % '\n  '.join(event._close_matches)
-
                 # For universe builds, only show these as warnings, not errors
-                h = logger.warning
                 if not universe:
                     return_value = 1
                     errors = errors + 1
-                    h = logger.error
-
-                if event._dependees:
-                    h("Nothing %sPROVIDES '%s' (but %s %sDEPENDS on or otherwise requires it)%s", r, event._item, ", ".join(event._dependees), r, extra)
+                    logger.error(str(event))
                 else:
-                    h("Nothing %sPROVIDES '%s'%s", r, event._item, extra)
-                if event._reasons:
-                    for reason in event._reasons:
-                        h("%s", reason)
+                    logger.warning(str(event))
                 continue
 
             if isinstance(event, bb.runqueue.sceneQueueTaskStarted):
@@ -625,13 +602,11 @@ def main(server, eventHandler, params, tf = TerminalFilter):
             if isinstance(event, bb.runqueue.runQueueTaskFailed):
                 return_value = 1
                 taskfailures.append(event.taskstring)
-                logger.error("Task (%s) failed with exit code '%s'",
-                             event.taskstring, event.exitcode)
+                logger.error(str(event))
                 continue
 
             if isinstance(event, bb.runqueue.sceneQueueTaskFailed):
-                logger.warning("Setscene task (%s) failed with exit code '%s' - real task will be run instead",
-                               event.taskstring, event.exitcode)
+                logger.warning(str(event))
                 continue
 
             if isinstance(event, bb.event.DepTreeGenerated):

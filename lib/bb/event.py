@@ -521,6 +521,28 @@ class NoProvider(Event):
     def isRuntime(self):
         return self._runtime
 
+    def __str__(self):
+        msg = ''
+        if self._runtime:
+            r = "R"
+        else:
+            r = ""
+
+        extra = ''
+        if not self._reasons:
+            if self._close_matches:
+                extra = ". Close matches:\n  %s" % '\n  '.join(self._close_matches)
+
+        if self._dependees:
+            msg = "Nothing %sPROVIDES '%s' (but %s %sDEPENDS on or otherwise requires it)%s" % (r, self._item, ", ".join(self._dependees), r, extra)
+        else:
+            msg = "Nothing %sPROVIDES '%s'%s" % (r, self._item, extra)
+        if self._reasons:
+            for reason in self._reasons:
+                msg += '\n' + reason
+        return msg
+
+
 class MultipleProviders(Event):
     """Multiple Providers"""
 
@@ -547,6 +569,16 @@ class MultipleProviders(Event):
         Get the possible Candidates for a PROVIDER.
         """
         return self._candidates
+
+    def __str__(self):
+        msg = "Multiple providers are available for %s%s (%s)" % (self._is_runtime and "runtime " or "",
+                            self._item,
+                            ", ".join(self._candidates))
+        rtime = ""
+        if self._is_runtime:
+            rtime = "R"
+        msg += "\nConsider defining a PREFERRED_%sPROVIDER entry to match %s" % (rtime, self._item)
+        return msg
 
 class ParseStarted(OperationStarted):
     """Recipe parsing for the runqueue has begun"""

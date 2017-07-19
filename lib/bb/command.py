@@ -50,6 +50,8 @@ class CommandFailed(CommandExit):
     def __init__(self, message):
         self.error = message
         CommandExit.__init__(self, 1)
+    def __str__(self):
+        return "Command execution failed: %s" % self.error
 
 class CommandError(Exception):
     pass

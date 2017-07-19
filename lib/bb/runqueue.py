@@ -2488,6 +2488,9 @@ class runQueueTaskFailed(runQueueEvent):
         runQueueEvent.__init__(self, task, stats, rq)
         self.exitcode = exitcode
 
+    def __str__(self):
+        return "Task (%s) failed with exit code '%s'" % (self.taskstring, self.exitcode)
+
 class sceneQueueTaskFailed(sceneQueueEvent):
     """
     Event notifying a setscene task failed
@@ -2495,6 +2498,9 @@ class sceneQueueTaskFailed(sceneQueueEvent):
     def __init__(self, task, stats, exitcode, rq):
         sceneQueueEvent.__init__(self, task, stats, rq)
         self.exitcode = exitcode
+
+    def __str__(self):
+        return "Setscene task (%s) failed with exit code '%s' - real task will be run instead" % (self.taskstring, self.exitcode)
 
 class sceneQueueComplete(sceneQueueEvent):
     """
