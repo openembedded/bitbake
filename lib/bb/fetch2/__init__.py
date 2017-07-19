@@ -584,6 +584,12 @@ def verify_checksum(ud, d, precomputed={}):
                               ud.sha256_name, sha256data))
             raise NoChecksumError('Missing SRC_URI checksum', ud.url)
 
+        if strict == "ignore":
+            return {
+                _MD5_KEY: md5data,
+                _SHA256_KEY: sha256data
+            }
+
         # Log missing sums so user can more easily add them
         logger.warning('Missing md5 SRC_URI checksum for %s, consider adding to the recipe:\n'
                        'SRC_URI[%s] = "%s"',
