@@ -217,6 +217,7 @@ class Tinfoil:
         self.tracking = tracking
         self.ui_module = None
         self.server_connection = None
+        self.recipes_parsed = False
         if setup_logging:
             # This is the *client-side* logger, nothing to do with
             # logging messages from the server
@@ -270,6 +271,7 @@ class Tinfoil:
                 self.run_command('parseConfiguration')
             else:
                 self.run_actions(config_params)
+                self.recipes_parsed = True
 
             self.config_data = bb.data.init()
             connector = TinfoilDataStoreConnector(self, None)
@@ -303,6 +305,7 @@ class Tinfoil:
         """
         config_params = TinfoilConfigParameters(config_only=False)
         self.run_actions(config_params)
+        self.recipes_parsed = True
 
     def run_command(self, command, *params):
         """
