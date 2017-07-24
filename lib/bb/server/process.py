@@ -312,7 +312,7 @@ class ServerCommunicator():
                     if self.recv.poll(1):
                         return self.recv.get()
                     else:
-                        bb.warn("Timeout while attempting to communicate with bitbake server")
+                        bb.note("Timeout while attempting to communicate with bitbake server, retrying...")
                 raise ProcessTimeout("Gave up; Too many tries: timeout while attempting to communicate with bitbake server")
             except KeyboardInterrupt:
                 pass
