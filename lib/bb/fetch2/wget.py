@@ -90,13 +90,13 @@ class Wget(FetchMethod):
 
         self.basecmd = d.getVar("FETCHCMD_wget") or "/usr/bin/env wget -t 2 -T 30 --passive-ftp --no-check-certificate"
 
-    def _runwget(self, ud, d, command, quiet):
+    def _runwget(self, ud, d, command, quiet, workdir=None):
 
         progresshandler = WgetProgressHandler(d)
 
         logger.debug(2, "Fetching %s using command '%s'" % (ud.url, command))
         bb.fetch2.check_network_access(d, command, ud.url)
-        runfetchcmd(command + ' --progress=dot -v', d, quiet, log=progresshandler)
+        runfetchcmd(command + ' --progress=dot -v', d, quiet, log=progresshandler, workdir=workdir)
 
     def download(self, ud, d):
         """Fetch urls"""
@@ -422,17 +422,16 @@ class Wget(FetchMethod):
         Run fetch checkstatus to get directory information
         """
         f = tempfile.NamedTemporaryFile()
+        with tempfile.TemporaryDirectory(prefix="wget-index-") as workdir, tempfile.NamedTemporaryFile(dir=workdir, prefix="wget-listing-") as f:
+            agent = "Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9.2.12) Gecko/20101027 Ubuntu/9.10 (karmic) Firefox/3.6.12"
+            fetchcmd = self.basecmd
+            fetchcmd += " -O " + f.name + " --user-agent='" + agent + "' '" + uri + "'"
+            try:
+                self._runwget(ud, d, fetchcmd, True, workdir=workdir)
+                fetchresult = f.read()
+            except bb.fetch2.BBFetchException:
+                fetchresult = ""
 
-        agent = "Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9.2.12) Gecko/20101027 Ubuntu/9.10 (karmic) Firefox/3.6.12"
-        fetchcmd = self.basecmd
-        fetchcmd += " -O " + f.name + " --user-agent='" + agent + "' '" + uri + "'"
-        try:
-            self._runwget(ud, d, fetchcmd, True)
-            fetchresult = f.read()
-        except bb.fetch2.BBFetchException:
-            fetchresult = ""
-
-        f.close()
         return fetchresult
 
     def _check_latest_version(self, url, package, package_regex, current_version, ud, d):
