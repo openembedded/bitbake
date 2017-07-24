@@ -1585,28 +1585,6 @@ class BBCooker:
         self.databuilder.reset()
         self.data = self.databuilder.data
 
-def server_main(cooker, func, *args):
-    cooker.pre_serve()
-
-    if cooker.configuration.profile:
-        try:
-            import cProfile as profile
-        except:
-            import profile
-        prof = profile.Profile()
-
-        ret = profile.Profile.runcall(prof, func, *args)
-
-        prof.dump_stats("profile.log")
-        bb.utils.process_profilelog("profile.log")
-        print("Raw profiling information saved to profile.log and processed statistics to profile.log.processed")
-
-    else:
-        ret = func(*args)
-
-    cooker.post_serve()
-
-    return ret
 
 class CookerExit(bb.event.Event):
     """

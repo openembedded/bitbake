@@ -103,9 +103,27 @@ class ProcessServer(multiprocessing.Process):
         except:
             pass
 
-        bb.cooker.server_main(self.cooker, self.main)
+        if self.cooker.configuration.profile:
+            try:
+                import cProfile as profile
+            except:
+                import profile
+            prof = profile.Profile()
+
+            ret = profile.Profile.runcall(prof, self.main)
+
+            prof.dump_stats("profile.log")
+            bb.utils.process_profilelog("profile.log")
+            print("Raw profiling information saved to profile.log and processed statistics to profile.log.processed")
+
+        else:
+            ret = self.main()
+
+        return ret
 
     def main(self):
+        self.cooker.pre_serve()
+
         bb.utils.set_process_name("Cooker")
 
         ready = []
@@ -183,6 +201,8 @@ class ProcessServer(multiprocessing.Process):
             self.cooker.shutdown(True)
         except:
             pass
+
+        self.cooker.post_serve()
 
         # Remove the socket file so we don't get any more connections to avoid races
         os.unlink(self.sockname)
