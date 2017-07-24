@@ -10,6 +10,7 @@ import bb.server.xmlrpcclient
 import prserv
 import prserv.db
 import errno
+import select
 
 logger = logging.getLogger("BitBake.PRserv")
 
@@ -58,6 +59,8 @@ class PRServer(SimpleXMLRPCServer):
         self.register_function(self.dump_db, "dump_db")
         self.register_function(self.importone, "importone")
         self.register_introspection_functions()
+
+        self.quitpipein, self.quitpipeout = os.pipe()
 
         self.requestqueue = queue.Queue()
         self.handlerthread = threading.Thread(target = self.process_request_thread)
@@ -153,11 +156,16 @@ class PRServer(SimpleXMLRPCServer):
 
     def quit(self):
         self.quit=True
+        os.write(self.quitpipeout, b"q")
+        os.close(self.quitpipeout)
         return
 
     def work_forever(self,):
         self.quit = False
-        self.timeout = 0.5
+        # This timeout applies to the poll in TCPServer, we need the select 
+        # below to wake on our quit pipe closing. We only ever call into handle_request
+        # if there is data there.
+        self.timeout = 0.01
 
         bb.utils.set_process_name("PRServ")
 
@@ -170,11 +178,16 @@ class PRServer(SimpleXMLRPCServer):
 
         self.handlerthread.start()
         while not self.quit:
-            self.handle_request()
+            ready = select.select([self.fileno(), self.quitpipein], [], [], 30)
+            if self.quit:
+                break
+            if self.fileno() in ready[0]:
+                self.handle_request()
         self.handlerthread.join()
         self.db.disconnect()
         logger.info("PRServer: stopping...")
         self.server_close()
+        os.close(self.quitpipein)
         return
 
     def start(self):
@@ -182,6 +195,7 @@ class PRServer(SimpleXMLRPCServer):
             pid = self.daemonize()
         else:
             pid = self.fork()
+            self.pid = pid
 
         # Ensure both the parent sees this and the child from the work_forever log entry above
         logger.info("Started PRServer with DBfile: %s, IP: %s, PORT: %s, PID: %s" %
@@ -472,6 +486,7 @@ def auto_shutdown(d=None):
             PRServerConnection(host, port).terminate()
         except:
             logger.critical("Stop PRService %s:%d failed" % (host,port))
+        os.waitpid(singleton.prserv.pid, 0)
         singleton = None
 
 def ping(host, port):
