@@ -1033,7 +1033,7 @@ def try_mirror_url(fetch, origud, ud, ld, check = False):
 
     except IOError as e:
         if e.errno in [os.errno.ESTALE]:
-            logger.warn("Stale Error Observed %s." % ud.url)
+            logger.warning("Stale Error Observed %s." % ud.url)
             return False
         raise
 
