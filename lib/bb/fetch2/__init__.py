@@ -1738,7 +1738,7 @@ class Fetch(object):
 
     def unpack(self, root, urls=None):
         """
-        Check all urls exist upstream
+        Unpack urls to root
         """
 
         if not urls:
