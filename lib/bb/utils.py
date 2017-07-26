@@ -1502,7 +1502,7 @@ def export_proxies(d):
 
 def load_plugins(logger, plugins, pluginpath):
     def load_plugin(name):
-        logger.debug('Loading plugin %s' % name)
+        logger.debug(1, 'Loading plugin %s' % name)
         fp, pathname, description = imp.find_module(name, [pluginpath])
         try:
             return imp.load_module(name, fp, pathname, description)
@@ -1510,7 +1510,7 @@ def load_plugins(logger, plugins, pluginpath):
             if fp:
                 fp.close()
 
-    logger.debug('Loading plugins from %s...' % pluginpath)
+    logger.debug(1, 'Loading plugins from %s...' % pluginpath)
 
     expanded = (glob.glob(os.path.join(pluginpath, '*' + ext))
                 for ext in python_extensions)
