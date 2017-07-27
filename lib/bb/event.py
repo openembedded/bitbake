@@ -819,3 +819,11 @@ class NetworkTestFailed(Event):
     """
     Event to indicate network test has failed
     """
+
+class FindSigInfoResult(Event):
+    """
+    Event to return results from findSigInfo command
+    """
+    def __init__(self, result):
+        Event.__init__(self)
+        self.result = result

@@ -746,3 +746,14 @@ class CommandsAsync:
         command.finishAsyncCommand()
     clientComplete.needcache = False
 
+    def findSigInfo(self, command, params):
+        """
+        Find signature info files via the signature generator
+        """
+        pn = params[0]
+        taskname = params[1]
+        sigs = params[2]
+        res = bb.siggen.find_siginfo(pn, taskname, sigs, command.cooker.data)
+        bb.event.fire(bb.event.FindSigInfoResult(res), command.cooker.data)
+        command.finishAsyncCommand()
+    findSigInfo.needcache = False
