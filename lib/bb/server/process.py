@@ -420,7 +420,11 @@ def connectProcessServer(sockname, featureset):
     finally:
         os.chdir(cwd)
 
+    readfd = writefd = readfd1 = writefd1 = readfd2 = writefd2 = None
+    eq = command_chan_recv = command_chan = None
+
     try:
+
         # Send an fd for the remote to write events to
         readfd, writefd = os.pipe()
         eq = BBUIEventQueue(readfd)
@@ -435,9 +439,22 @@ def connectProcessServer(sockname, featureset):
 
         server_connection = BitBakeProcessServerConnection(command_chan, command_chan_recv, eq, sock)
 
+        # Close the ends of the pipes we won't use
+        for i in [writefd, readfd1, writefd2]:
+            os.close(i)
+
         server_connection.connection.updateFeatureSet(featureset)
 
-    except:
+    except (Exception, SystemExit) as e:
+        if command_chan_recv:
+            command_chan_recv.close()
+        if command_chan:
+            command_chan.close()
+        for i in [writefd, readfd1, writefd2]:
+            try:
+                os.close(i)
+            except OSError:
+                pass
         sock.close()
         raise
 
