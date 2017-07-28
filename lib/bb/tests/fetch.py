@@ -1440,7 +1440,7 @@ class GitShallowTest(FetcherTest):
         def test_bitbake(self):
             self.git('remote add --mirror=fetch origin git://github.com/openembedded/bitbake', cwd=self.srcdir)
             self.git('config core.bare true', cwd=self.srcdir)
-            self.git('fetch --tags', cwd=self.srcdir)
+            self.git('fetch', cwd=self.srcdir)
 
             self.d.setVar('BB_GIT_SHALLOW_DEPTH', '0')
             # Note that the 1.10.0 tag is annotated, so this also tests
