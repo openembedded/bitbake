@@ -1726,9 +1726,8 @@ class Fetch(object):
             ret = try_mirrors(self, self.d, ud, mirrors, True)
             if not ret:
                 # Next try checking from the original uri, u
-                try:
-                    ret = m.checkstatus(self, ud, self.d)
-                except:
+                ret = m.checkstatus(self, ud, self.d)
+                if not ret:
                     # Finally, try checking uri, u, from MIRRORS
                     mirrors = mirror_from_string(self.d.getVar('MIRRORS'))
                     ret = try_mirrors(self, self.d, ud, mirrors, True)
