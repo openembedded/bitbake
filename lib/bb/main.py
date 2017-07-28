@@ -277,7 +277,7 @@ class BitBakeConfigParameters(cookerdata.ConfigParameters):
 
         parser.add_option("-m", "--kill-server", action="store_true",
                           dest="kill_server", default=False,
-                          help="Terminate the bitbake server.")
+                          help="Terminate any running bitbake server.")
 
         parser.add_option("", "--observe-only", action="store_true",
                           dest="observe_only", default=False,
@@ -370,8 +370,10 @@ def bitbake_main(configParams, configuration):
     server_connection, ui_module = setup_bitbake(configParams, configuration)
     # No server connection
     if server_connection is None:
-        if configParams.status_only or configParams.kill_server:
+        if configParams.status_only:
             return 1
+        if configParams.kill_server:
+            return 0
 
     if not configParams.server_only:
         if configParams.status_only:
