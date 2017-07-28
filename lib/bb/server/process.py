@@ -499,9 +499,14 @@ class BBUIEventQueue:
     def startCallbackHandler(self):
         bb.utils.set_process_name("UIEventQueue")
         while True:
-            self.reader.wait()
-            event = self.reader.get()
-            self.queue_event(event)
+            try:
+                self.reader.wait()
+                event = self.reader.get()
+                self.queue_event(event)
+            except EOFError:
+                # Easiest way to exit is to close the file descriptor to cause an exit
+                break
+        self.reader.close()
 
 class ConnectionReader(object):
 
