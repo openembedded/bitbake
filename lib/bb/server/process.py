@@ -523,6 +523,10 @@ class ConnectionReader(object):
     def fileno(self):
         return self.reader.fileno()
 
+    def close(self):
+        return self.reader.close()
+
+
 class ConnectionWriter(object):
 
     def __init__(self, fd):
@@ -536,3 +540,8 @@ class ConnectionWriter(object):
         with self.wlock:
             self.writer.send_bytes(obj)
 
+    def fileno(self):
+        return self.writer.fileno()
+
+    def close(self):
+        return self.writer.close()
