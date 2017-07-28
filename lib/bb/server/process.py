@@ -336,12 +336,16 @@ class ServerCommunicator():
         return
 
 class BitBakeProcessServerConnection(object):
-    def __init__(self, ui_channel, recv, eq):
+    def __init__(self, ui_channel, recv, eq, sock):
         self.connection = ServerCommunicator(ui_channel, recv)
         self.events = eq
+        # Save sock so it doesn't get gc'd for the life of our connection
+        self.socket_connection = sock
 
     def terminate(self):
         self.socket_connection.close()
+        self.connection.connection.close()
+        self.connection.recv.close()
         return
 
 class BitBakeServer(object):
@@ -413,12 +417,10 @@ def connectProcessServer(sockname, featureset):
 
         sendfds(sock, [writefd, readfd1, writefd2])
 
-        server_connection = BitBakeProcessServerConnection(command_chan, command_chan_recv, eq)
+        server_connection = BitBakeProcessServerConnection(command_chan, command_chan_recv, eq, sock)
 
         server_connection.connection.updateFeatureSet(featureset)
 
-        # Save sock so it doesn't get gc'd for the life of our connection
-        server_connection.socket_connection = sock
     except:
         sock.close()
         raise
