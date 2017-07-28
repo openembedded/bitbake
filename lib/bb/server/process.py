@@ -303,19 +303,10 @@ class ServerCommunicator():
         self.recv = recv
 
     def runCommand(self, command):
-
         self.connection.send(command)
-        while True:
-            # don't let the user ctrl-c while we're waiting for a response
-            try:
-                for idx in range(0,4): # 0, 1, 2, 3
-                    if self.recv.poll(1):
-                        return self.recv.get()
-                    else:
-                        bb.note("Timeout while attempting to communicate with bitbake server, retrying...")
-                raise ProcessTimeout("Gave up; Too many tries: timeout while attempting to communicate with bitbake server")
-            except KeyboardInterrupt:
-                pass
+        if not self.recv.poll(5):
+            raise ProcessTimeout("Timeout while waiting for a reply from the bitbake server")
+        return self.recv.get()
 
     def updateFeatureSet(self, featureset):
         _, error = self.runCommand(["setFeatures", featureset])
