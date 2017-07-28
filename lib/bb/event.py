@@ -149,23 +149,30 @@ def print_ui_queue():
 
         # First check to see if we have any proper messages
         msgprint = False
+        msgerrs = False
+
+        # Should we print to stderr?
+        for event in ui_queue[:]:
+            if isinstance(event, logging.LogRecord) and event.levelno >= logging.WARNING:
+                msgerrs = True
+                break
+
+        if msgerrs:
+            logger.addHandler(stderr)
+        else:
+            logger.addHandler(stdout)
+
         for event in ui_queue[:]:
             if isinstance(event, logging.LogRecord):
                 if event.levelno > logging.DEBUG:
-                    if event.levelno >= logging.WARNING:
-                        logger.addHandler(stderr)
-                    else:
-                        logger.addHandler(stdout)
                     logger.handle(event)
                     msgprint = True
-        if msgprint:
-            return
 
         # Nope, so just print all of the messages we have (including debug messages)
-        logger.addHandler(stdout)
-        for event in ui_queue[:]:
-            if isinstance(event, logging.LogRecord):
-                logger.handle(event)
+        if not msgprint:
+            for event in ui_queue[:]:
+                if isinstance(event, logging.LogRecord):
+                    logger.handle(event)
 
 def fire_ui_handlers(event, d):
     global _thread_lock
