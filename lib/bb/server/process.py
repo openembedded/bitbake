@@ -355,6 +355,7 @@ class BitBakeServer(object):
         self.featureset = featureset
         self.sockname = sockname
         self.bitbake_lock = lock
+        self.readypipe, self.readypipein = os.pipe()
 
         # Create server control socket
         if os.path.exists(sockname):
@@ -363,6 +364,8 @@ class BitBakeServer(object):
         self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         # AF_UNIX has path length issues so chdir here to workaround
         cwd = os.getcwd()
+        logfile = os.path.join(cwd, "bitbake-cookerdaemon.log")
+
         try:
             os.chdir(os.path.dirname(sockname))
             self.sock.bind(os.path.basename(sockname))
@@ -371,9 +374,22 @@ class BitBakeServer(object):
         self.sock.listen(1)
 
         os.set_inheritable(self.sock.fileno(), True)
-        bb.daemonize.createDaemon(self._startServer, "bitbake-cookerdaemon.log")
+        bb.daemonize.createDaemon(self._startServer, logfile)
         self.sock.close()
         self.bitbake_lock.close()
+
+        ready = ConnectionReader(self.readypipe)
+        r = ready.wait(8)
+        if not r:
+            ready.close()
+            bb.error("Unable to start bitbake server")
+            if os.path.exists(logfile):
+                with open(logfile, "r") as f:
+                    logs=f.readlines()
+                bb.error("Last 10 lines of server log %s:\n%s" % (logfile, "".join(logs[-10:])))
+            raise SystemExit(1)
+        ready.close()
+        os.close(self.readypipein)
 
     def _startServer(self):
         server = ProcessServer(self.bitbake_lock, self.sock, self.sockname)
@@ -385,7 +401,7 @@ class BitBakeServer(object):
             if value:
                 setattr(self.configuration, "%s_server" % param, value)
 
-        self.cooker = bb.cooker.BBCooker(self.configuration, self.featureset)
+        self.cooker = bb.cooker.BBCooker(self.configuration, self.featureset, self.readypipein)
         server.cooker = self.cooker
         server.server_timeout = self.configuration.server_timeout
         server.xmlrpcinterface = self.configuration.xmlrpcinterface
