@@ -244,6 +244,11 @@ urlpatterns = [
         url(r'^mostrecentbuilds$', widgets.MostRecentBuildsView.as_view(),
             name='most_recent_builds'),
 
-          # default redirection
+        # JSON data for aggregators
+        url(r'^api/builds$', views.json_builds, name='json_builds'),
+        url(r'^api/building$', views.json_building, name='json_building'),
+        url(r'^api/build/(?P<build_id>\d+)$', views.json_build, name='json_build'),
+
+        # default redirection
         url(r'^$', RedirectView.as_view(url='landing', permanent=True)),
 ]

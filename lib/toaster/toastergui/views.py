@@ -35,7 +35,7 @@ from orm.models import BitbakeVersion, CustomImageRecipe
 from django.core.urlresolvers import reverse, resolve
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.http import HttpResponseNotFound
+from django.http import HttpResponseNotFound, JsonResponse
 from django.utils import timezone
 from datetime import timedelta, datetime
 from toastergui.templatetags.projecttags import json as jsonfilter
@@ -1256,6 +1256,89 @@ def managedcontextprocessor(request):
     }
     return ret
 
+# REST-based API calls to return build/building status to external Toaster
+# managers and aggregators via JSON
+
+def _json_build_status(build_id,extend):
+    build_stat = None
+    try:
+        build = Build.objects.get( pk = build_id )
+        build_stat = {}
+        build_stat['id'] = build.id
+        build_stat['name'] = build.build_name
+        build_stat['machine'] = build.machine
+        build_stat['distro'] = build.distro
+        build_stat['start'] = build.started_on
+        # look up target name
+        target= Target.objects.get( build = build )
+        if target:
+            if target.task:
+                build_stat['target'] = '%s:%s' % (target.target,target.task)
+            else:
+                build_stat['target'] = '%s' % (target.target)
+        else:
+            build_stat['target'] = ''
+        # look up project name
+        project = Project.objects.get( build = build )
+        if project:
+            build_stat['project'] = project.name
+        else:
+            build_stat['project'] = ''
+        if Build.IN_PROGRESS == build.outcome:
+            now = timezone.now()
+            timediff = now - build.started_on
+            build_stat['seconds']='%.3f' % timediff.total_seconds()
+            build_stat['clone']='%d:%d' % (build.repos_cloned,build.repos_to_clone)
+            build_stat['parse']='%d:%d' % (build.recipes_parsed,build.recipes_to_parse)
+            tf = Task.objects.filter(build = build)
+            tfc = tf.count()
+            if tfc > 0:
+                tfd = tf.exclude(order__isnull=True).count()
+            else:
+                tfd = 0
+            build_stat['task']='%d:%d' % (tfd,tfc)
+        else:
+            build_stat['outcome'] = build.get_outcome_text()
+            timediff = build.completed_on - build.started_on
+            build_stat['seconds']='%.3f' % timediff.total_seconds()
+            build_stat['stop'] = build.completed_on
+            messages = LogMessage.objects.all().filter(build = build)
+            errors = len(messages.filter(level=LogMessage.ERROR) |
+                 messages.filter(level=LogMessage.EXCEPTION) |
+                 messages.filter(level=LogMessage.CRITICAL))
+            build_stat['errors'] = errors
+            warnings = len(messages.filter(level=LogMessage.WARNING))
+            build_stat['warnings'] = warnings
+        if extend:
+            build_stat['cooker_log'] = build.cooker_log_path
+    except Exception as e:
+        build_state = str(e)
+    return build_stat
+
+def json_builds(request):
+    build_table = []
+    builds = []
+    try:
+        builds = Build.objects.exclude(outcome=Build.IN_PROGRESS).order_by("-started_on")
+        for build in builds:
+            build_table.append(_json_build_status(build.id,False))
+    except Exception as e:
+        build_table = str(e)
+    return JsonResponse({'builds' : build_table, 'count' : len(builds)})
+
+def json_building(request):
+    build_table = []
+    builds = []
+    try:
+        builds = Build.objects.filter(outcome=Build.IN_PROGRESS).order_by("-started_on")
+        for build in builds:
+            build_table.append(_json_build_status(build.id,False))
+    except Exception as e:
+        build_table = str(e)
+    return JsonResponse({'building' : build_table, 'count' : len(builds)})
+
+def json_build(request,build_id):
+    return JsonResponse({'build' : _json_build_status(build_id,True)})
 
 
 import toastermain.settings
@@ -1694,3 +1777,4 @@ if True:
                 return render(request, "unavailable_artifact.html")
         except (ObjectDoesNotExist, IOError):
             return render(request, "unavailable_artifact.html")
+

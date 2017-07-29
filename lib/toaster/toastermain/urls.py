@@ -20,9 +20,8 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 from django.conf.urls import patterns, include, url
-from django.views.generic import RedirectView
+from django.views.generic import RedirectView, TemplateView
 from django.views.decorators.cache import never_cache
-
 import bldcollector.views
 
 import logging
@@ -45,6 +44,8 @@ urlpatterns = [
     # This is here to maintain backward compatibility and will be deprecated
     # in the future.
     url(r'^orm/eventfile$', bldcollector.views.eventfile),
+
+    url(r'^health$', TemplateView.as_view(template_name="health.html"), name='Toaster Health'),
 
     # if no application is selected, we have the magic toastergui app here
     url(r'^$', never_cache(RedirectView.as_view(url='/toastergui/', permanent=True))),
