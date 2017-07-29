@@ -283,11 +283,6 @@ class Wget(FetchMethod):
             """
             http_error_403 = http_error_405
 
-            """
-            Some servers (e.g. FusionForge) returns 406 Not Acceptable when they
-            actually mean 405 Method Not Allowed.
-            """
-            http_error_406 = http_error_405
 
         class FixedHTTPRedirectHandler(urllib.request.HTTPRedirectHandler):
             """
@@ -316,7 +311,9 @@ class Wget(FetchMethod):
             uri = ud.url.split(";")[0]
             r = urllib.request.Request(uri)
             r.get_method = lambda: "HEAD"
-
+            # Some servers (FusionForge, as used on Alioth) require that the
+            # optional Accept header is set.
+            r.add_header("Accept", "*/*")
             def add_basic_auth(login_str, request):
                 '''Adds Basic auth to http request, pass in login:password as string'''
                 import base64
