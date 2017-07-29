@@ -24,6 +24,7 @@ import os
 import sys
 import re
 import shutil
+import time
 from django.db import transaction
 from django.db.models import Q
 from bldcontrol.models import BuildEnvironment, BRLayer, BRVariable, BRTarget, BRBitbake
@@ -331,12 +332,22 @@ class LocalhostBEController(BuildEnvironmentController):
         bitbake = os.path.join(self.pokydirname, 'bitbake', 'bin', 'bitbake')
         toasterlayers = os.path.join(builddir,"conf/toaster-bblayers.conf")
         self._shellcmd('bash -c \"source %s %s; BITBAKE_UI="knotty" %s --read %s --read %s '
-                       '--server-only -t xmlrpc -B 0.0.0.0:0\"' % (oe_init,
+                       '--server-only -B 0.0.0.0:0\"' % (oe_init,
                        builddir, bitbake, confpath, toasterlayers), self.be.sourcedir)
 
         # read port number from bitbake.lock
         self.be.bbport = ""
         bblock = os.path.join(builddir, 'bitbake.lock')
+        # allow 10 seconds for bb lock file to appear but also be populated
+        for lock_check in range(10):
+            if not os.path.exists(bblock):
+                logger.debug("localhostbecontroller: waiting for bblock file to appear")
+                time.sleep(1)
+                continue
+            if 10 < os.stat(bblock).st_size:
+                break
+            logger.debug("localhostbecontroller: waiting for bblock content to appear")
+            time.sleep(1)
         with open(bblock) as fplock:
             for line in fplock:
                 if ":" in line:
@@ -365,10 +376,10 @@ class LocalhostBEController(BuildEnvironmentController):
         log = os.path.join(builddir, 'toaster_ui.log')
         local_bitbake = os.path.join(os.path.dirname(os.getenv('BBBASEDIR')),
                                      'bitbake')
-        self._shellcmd(['bash -c \"(TOASTER_BRBE="%s" BBSERVER="0.0.0.0:-1" '
+        self._shellcmd(['bash -c \"(TOASTER_BRBE="%s" BBSERVER="0.0.0.0:%s" '
                         '%s %s -u toasterui --token="" >>%s 2>&1;'
-                        'BITBAKE_UI="knotty" BBSERVER=0.0.0.0:-1 %s -m)&\"' \
-                        % (brbe, local_bitbake, bbtargets, log, bitbake)],
+                        'BITBAKE_UI="knotty" BBSERVER=0.0.0.0:%s %s -m)&\"' \
+                        % (brbe, self.be.bbport, local_bitbake, bbtargets, log, self.be.bbport, bitbake)],
                         builddir, nowait=True)
 
         logger.debug('localhostbecontroller: Build launched, exiting. '

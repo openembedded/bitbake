@@ -451,7 +451,7 @@ class Build(models.Model):
     recipes_to_parse = models.IntegerField(default=1)
 
     # number of recipes parsed so far for this build
-    recipes_parsed = models.IntegerField(default=0)
+    recipes_parsed = models.IntegerField(default=1)
 
     # number of repos to clone for this build
     repos_to_clone = models.IntegerField(default=1)
