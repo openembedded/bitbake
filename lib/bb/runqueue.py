@@ -2372,7 +2372,7 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
         self.rq.scenequeue_covered = self.scenequeue_covered
         self.rq.scenequeue_notcovered = self.scenequeue_notcovered
 
-        logger.debug(1, 'We can skip tasks %s', sorted(self.rq.scenequeue_covered))
+        logger.debug(1, 'We can skip tasks %s', "\n".join(sorted(self.rq.scenequeue_covered)))
 
         self.rq.state = runQueueRunInit
 
