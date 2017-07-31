@@ -30,6 +30,7 @@ __version__ = "0.2"
 import os                    # Miscellaneous OS interfaces.
 import sys                   # System-specific parameters and functions.
 import io
+import traceback
 
 # Default daemon parameters.
 # File mode creation mask of the daemon.
@@ -192,6 +193,10 @@ def createDaemon(function, logfile):
         sys.stdout = open(logfile, 'a+')
         sys.stderr = sys.stdout
 
-    function()
-
-    os._exit(0)
+    try:
+        function()
+    except Exception as e:
+        traceback.print_exc()
+        bb.event.print_ui_queue()
+    finally:
+        os._exit(0)
