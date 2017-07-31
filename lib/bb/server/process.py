@@ -133,19 +133,6 @@ class ProcessServer(multiprocessing.Process):
         if self.xmlrpc:
             fds.append(self.xmlrpc)
         while not self.quit:
-            if self.command_channel in ready:
-                command = self.command_channel.get()
-                if command[0] == "terminateServer":
-                    self.quit = True
-                    continue
-                try:
-                    print("Running command %s" % command)
-                    self.command_channel_reply.send(self.cooker.command.runCommand(command))
-                except Exception as e:
-                   logger.exception('Exception in server main event loop running command %s (%s)' % (command, str(e)))
-
-            if self.xmlrpc in ready:
-                self.xmlrpc.handle_requests()
             if self.sock in ready:
                 self.controllersock, address = self.sock.accept()
                 if self.haveui:
@@ -193,6 +180,24 @@ class ProcessServer(multiprocessing.Process):
             if not self.haveui and self.lastui and self.timeout and (self.lastui + self.timeout) < time.time():
                 print("Server timeout, exiting.")
                 self.quit = True
+
+            if self.command_channel in ready:
+                try:
+                    command = self.command_channel.get()
+                except EOFError:
+                    # Client connection shutting down
+                    continue
+                if command[0] == "terminateServer":
+                    self.quit = True
+                    continue
+                try:
+                    print("Running command %s" % command)
+                    self.command_channel_reply.send(self.cooker.command.runCommand(command))
+                except Exception as e:
+                   logger.exception('Exception in server main event loop running command %s (%s)' % (command, str(e)))
+
+            if self.xmlrpc in ready:
+                self.xmlrpc.handle_requests()
 
             ready = self.idle_commands(.1, fds)
 
