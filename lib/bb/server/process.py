@@ -100,7 +100,8 @@ class ProcessServer(multiprocessing.Process):
             else:
                 self.bitbake_lock.write("%s\n" % (os.getpid()))
             self.bitbake_lock.flush()
-        except:
+        except Exception as e:
+            print("Error writing to lock file: %s" % str(e))
             pass
 
         if self.cooker.configuration.profile:
@@ -132,6 +133,7 @@ class ProcessServer(multiprocessing.Process):
         fds = [self.sock]
         if self.xmlrpc:
             fds.append(self.xmlrpc)
+        print("Entering server connection loop")
         while not self.quit:
             if self.sock in ready:
                 self.controllersock, address = self.sock.accept()
@@ -388,6 +390,7 @@ class BitBakeServer(object):
         os.close(self.readypipein)
 
     def _startServer(self):
+        print("Starting bitbake server pid %d" % os.getpid())
         server = ProcessServer(self.bitbake_lock, self.sock, self.sockname)
         self.configuration.setServerRegIdleCallback(server.register_idle_function)
 
