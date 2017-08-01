@@ -678,12 +678,12 @@ class BBCooker:
                     depend_tree["pn"][pn][ei] = vars(self.recipecaches[mc])[ei][taskfn]
 
 
+            dotname = "%s.%s" % (pn, bb.runqueue.taskname_from_tid(tid))
+            if not dotname in depend_tree["tdepends"]:
+                depend_tree["tdepends"][dotname] = []
             for dep in rq.rqdata.runtaskentries[tid].depends:
                 (depmc, depfn, deptaskname, deptaskfn) = bb.runqueue.split_tid_mcfn(dep)
                 deppn = self.recipecaches[mc].pkg_fn[deptaskfn]
-                dotname = "%s.%s" % (pn, bb.runqueue.taskname_from_tid(tid))
-                if not dotname in depend_tree["tdepends"]:
-                    depend_tree["tdepends"][dotname] = []
                 depend_tree["tdepends"][dotname].append("%s.%s" % (deppn, bb.runqueue.taskname_from_tid(dep)))
             if taskfn not in seen_fns:
                 seen_fns.append(taskfn)
