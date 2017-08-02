@@ -77,6 +77,6 @@ def createDaemon(function, logfile):
         function()
     except Exception as e:
         traceback.print_exc()
-        bb.event.print_ui_queue()
     finally:
+        bb.event.print_ui_queue()
         os._exit(0)
