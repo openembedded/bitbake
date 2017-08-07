@@ -383,8 +383,7 @@ class Tinfoil:
 
         self.server_connection, ui_module = setup_bitbake(config_params,
                             cookerconfig,
-                            extrafeatures,
-                            setup_logging=False)
+                            extrafeatures)
 
         self.ui_module = ui_module
 

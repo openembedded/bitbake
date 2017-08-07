@@ -394,10 +394,10 @@ def bitbake_main(configParams, configuration):
 
     return 1
 
-def setup_bitbake(configParams, configuration, extrafeatures=None, setup_logging=True):
+def setup_bitbake(configParams, configuration, extrafeatures=None):
     # Ensure logging messages get sent to the UI as events
     handler = bb.event.LogHandler()
-    if setup_logging and not configParams.status_only:
+    if not configParams.status_only:
         # In status only mode there are no logs and no UI
         logger.addHandler(handler)
 
