@@ -180,7 +180,8 @@ class ProcessServer(multiprocessing.Process):
                     if self.timeout is None:
                         print("No timeout, exiting.")
                         self.quit = True
-            if not self.haveui and self.lastui and self.timeout and (self.lastui + self.timeout) < time.time():
+            if not self.timeout == -1.0 and not self.haveui and self.lastui and self.timeout and \
+                    (self.lastui + self.timeout) < time.time():
                 print("Server timeout, exiting.")
                 self.quit = True
 

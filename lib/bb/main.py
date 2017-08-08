@@ -259,8 +259,10 @@ class BitBakeConfigParameters(cookerdata.ConfigParameters):
                           help="The name/address for the bitbake xmlrpc server to bind to.")
 
         parser.add_option("-T", "--idle-timeout", type=float, dest="server_timeout",
-                          default=os.environ.get("BB_SERVER_TIMEOUT", 0) or None,
-                          help="Set timeout to unload bitbake server due to inactivity")
+                          default=os.getenv("BB_SERVER_TIMEOUT"),
+                          help="Set timeout to unload bitbake server due to inactivity, "
+                                "set to -1 means no unload, "
+                                "default: Environment variable BB_SERVER_TIMEOUT.")
 
         parser.add_option("", "--no-setscene", action="store_true",
                           dest="nosetscene", default=False,
