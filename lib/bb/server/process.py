@@ -164,7 +164,7 @@ class ProcessServer(multiprocessing.Process):
 
                     self.haveui = True
 
-                except EOFError:
+                except (EOFError, OSError):
                     print("Disconnecting Client")
                     fds.remove(self.controllersock)
                     fds.remove(self.command_channel)
@@ -190,7 +190,7 @@ class ProcessServer(multiprocessing.Process):
                     command = self.command_channel.get()
                 except EOFError:
                     # Client connection shutting down
-                    self.command_channel = False
+                    ready = []
                     continue
                 if command[0] == "terminateServer":
                     self.quit = True
