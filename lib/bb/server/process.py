@@ -173,6 +173,7 @@ class ProcessServer(multiprocessing.Process):
                     self.event_writer.writer.close()
                     del self.event_writer
                     self.controllersock.close()
+                    self.controllersock = False
                     self.haveui = False
                     self.lastui = time.time()
                     self.cooker.clientComplete()
@@ -188,6 +189,7 @@ class ProcessServer(multiprocessing.Process):
                     command = self.command_channel.get()
                 except EOFError:
                     # Client connection shutting down
+                    self.command_channel = False
                     continue
                 if command[0] == "terminateServer":
                     self.quit = True
