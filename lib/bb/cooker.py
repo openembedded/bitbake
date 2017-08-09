@@ -1192,7 +1192,7 @@ class BBCooker:
             bf = os.path.abspath(bf)
 
         self.collection = CookerCollectFiles(self.bbfile_config_priorities)
-        filelist, masked = self.collection.collect_bbfiles(self.data, self.data)
+        filelist, masked, searchdirs = self.collection.collect_bbfiles(self.data, self.data)
         try:
             os.stat(bf)
             bf = os.path.abspath(bf)
@@ -1482,7 +1482,11 @@ class BBCooker:
                     self.recipecaches[mc].ignored_dependencies.add(dep)
 
             self.collection = CookerCollectFiles(self.bbfile_config_priorities)
-            (filelist, masked) = self.collection.collect_bbfiles(self.data, self.data)
+            (filelist, masked, searchdirs) = self.collection.collect_bbfiles(self.data, self.data)
+
+            # Add inotify watches for directories searched for bb/bbappend files
+            for dirent in searchdirs:
+                self.add_filewatch([[dirent]])
 
             self.parser = CookerParser(self, filelist, masked)
             self.parsecache_valid = True
@@ -1654,6 +1658,18 @@ class CookerCollectFiles(object):
             collectlog.error("no recipe files to build, check your BBPATH and BBFILES?")
             bb.event.fire(CookerExit(), eventdata)
 
+        # We need to track where we look so that we can add inotify watches. There
+        # is no nice way to do this, this is horrid. We intercept the os.listdir()
+        # calls while we run glob().
+        origlistdir = os.listdir
+        searchdirs = []
+
+        def ourlistdir(d):
+            searchdirs.append(d)
+            return origlistdir(d)
+
+        os.listdir = ourlistdir
+
         # Can't use set here as order is important
         newfiles = []
         for f in files:
@@ -1670,6 +1686,8 @@ class CookerCollectFiles(object):
                 for g in sorted(globbed):
                     if g not in newfiles:
                         newfiles.append(g)
+
+        os.listdir = origlistdir
 
         bbmask = config.getVar('BBMASK')
 
@@ -1729,7 +1747,7 @@ class CookerCollectFiles(object):
                 topfile = bbfile_seen[base]
                 self.overlayed[topfile].append(f)
 
-        return (bbfiles, masked)
+        return (bbfiles, masked, searchdirs)
 
     def get_file_appends(self, fn):
         """
