@@ -205,15 +205,11 @@ class BBCooker:
 
         self.inotify_modified_files = []
 
-        def _process_inotify_updates(server, notifier_list, abort):
-            for n in notifier_list:
-                if n.check_events(timeout=0):
-                    # read notified events and enqeue them
-                    n.read_events()
-                    n.process_events()
+        def _process_inotify_updates(server, cooker, abort):
+            cooker.process_inotify_updates()
             return 1.0
 
-        self.configuration.server_register_idlecallback(_process_inotify_updates, [self.confignotifier, self.notifier])
+        self.configuration.server_register_idlecallback(_process_inotify_updates, self)
 
         # TOSTOP must not be set or our children will hang when they output
         try:
@@ -240,6 +236,13 @@ class BBCooker:
         if readypipe:
             os.write(readypipe, b"ready")
             os.close(readypipe)
+
+    def process_inotify_updates(self):
+        for n in [self.confignotifier, self.notifier]:
+            if n.check_events(timeout=0):
+                # read notified events and enqeue them
+                n.read_events()
+                n.process_events()
 
     def config_notifications(self, event):
         if event.maskname == "IN_Q_OVERFLOW":
