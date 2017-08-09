@@ -263,6 +263,9 @@ class BBCooker:
             self.parsecache_valid = False
             bb.parse.clear_cache()
             return
+        if event.pathname.endswith("bitbake-cookerdaemon.log") \
+                or event.pathname.endswith("bitbake.lock"):
+            return
         if not event.pathname in self.inotify_modified_files:
             self.inotify_modified_files.append(event.pathname)
         self.parsecache_valid = False
