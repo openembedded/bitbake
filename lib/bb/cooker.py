@@ -189,7 +189,7 @@ class BBCooker:
 
         # If being called by something like tinfoil, we need to clean cached data
         # which may now be invalid
-        bb.parse.__mtime_cache = {}
+        bb.parse.clear_cache()
         bb.parse.BBHandler.cached_statements = {}
 
         self.ui_cmdline = None
@@ -247,7 +247,9 @@ class BBCooker:
     def config_notifications(self, event):
         if event.maskname == "IN_Q_OVERFLOW":
             bb.warn("inotify event queue overflowed, invalidating caches.")
+            self.parsecache_valid = False
             self.baseconfig_valid = False
+            bb.parse.clear_cache()
             return
         if not event.pathname in self.configwatcher.bbwatchedfiles:
             return
@@ -259,6 +261,7 @@ class BBCooker:
         if event.maskname == "IN_Q_OVERFLOW":
             bb.warn("inotify event queue overflowed, invalidating caches.")
             self.parsecache_valid = False
+            bb.parse.clear_cache()
             return
         if not event.pathname in self.inotify_modified_files:
             self.inotify_modified_files.append(event.pathname)
