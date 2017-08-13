@@ -134,6 +134,26 @@ class ProcessServer(multiprocessing.Process):
         if self.xmlrpc:
             fds.append(self.xmlrpc)
         print("Entering server connection loop")
+
+        def disconnect_client(self, fds):
+            if not self.haveui:
+                return
+            print("Disconnecting Client")
+            fds.remove(self.controllersock)
+            fds.remove(self.command_channel)
+            bb.event.unregister_UIHhandler(self.event_handle, True)
+            self.command_channel_reply.writer.close()
+            self.event_writer.writer.close()
+            del self.event_writer
+            self.controllersock.close()
+            self.controllersock = False
+            self.haveui = False
+            self.lastui = time.time()
+            self.cooker.clientComplete()
+            if self.timeout is None:
+                print("No timeout, exiting.")
+                self.quit = True
+
         while not self.quit:
             if self.sock in ready:
                 self.controllersock, address = self.sock.accept()
@@ -165,21 +185,8 @@ class ProcessServer(multiprocessing.Process):
                     self.haveui = True
 
                 except (EOFError, OSError):
-                    print("Disconnecting Client")
-                    fds.remove(self.controllersock)
-                    fds.remove(self.command_channel)
-                    bb.event.unregister_UIHhandler(self.event_handle, True)
-                    self.command_channel_reply.writer.close()
-                    self.event_writer.writer.close()
-                    del self.event_writer
-                    self.controllersock.close()
-                    self.controllersock = False
-                    self.haveui = False
-                    self.lastui = time.time()
-                    self.cooker.clientComplete()
-                    if self.timeout is None:
-                        print("No timeout, exiting.")
-                        self.quit = True
+                    disconnect_client(self, fds)
+
             if not self.timeout == -1.0 and not self.haveui and self.lastui and self.timeout and \
                     (self.lastui + self.timeout) < time.time():
                 print("Server timeout, exiting.")
@@ -191,6 +198,7 @@ class ProcessServer(multiprocessing.Process):
                 except EOFError:
                     # Client connection shutting down
                     ready = []
+                    disconnect_client(self, fds)
                     continue
                 if command[0] == "terminateServer":
                     self.quit = True
