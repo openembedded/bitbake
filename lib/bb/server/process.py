@@ -388,7 +388,7 @@ class BitBakeServer(object):
         self.bitbake_lock.close()
 
         ready = ConnectionReader(self.readypipe)
-        r = ready.wait(8)
+        r = ready.wait(30)
         if not r:
             ready.close()
             bb.error("Unable to start bitbake server")
