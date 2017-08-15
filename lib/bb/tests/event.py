@@ -240,8 +240,8 @@ class EventHandlingTest(unittest.TestCase):
                          expected)
 
         # unregister handler and register it only for OperationStarted
-        result = bb.event.remove("event_handler1",
-                                 self._test_process.event_handler1)
+        bb.event.remove("event_handler1",
+                        self._test_process.event_handler1)
         mask = ["bb.event.OperationStarted"]
         result = bb.event.register("event_handler1",
                                    self._test_process.event_handler1,
@@ -254,8 +254,8 @@ class EventHandlingTest(unittest.TestCase):
                          expected)
 
         # unregister handler and register it only for OperationCompleted
-        result = bb.event.remove("event_handler1",
-                                 self._test_process.event_handler1)
+        bb.event.remove("event_handler1",
+                        self._test_process.event_handler1)
         mask = ["bb.event.OperationCompleted"]
         result = bb.event.register("event_handler1",
                                    self._test_process.event_handler1,
