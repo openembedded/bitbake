@@ -388,6 +388,14 @@ class EventHandlingTest(unittest.TestCase):
         self.assertEqual(self._test_ui1.event.send.call_args_list,
                          expected)
 
+    def test_worker_fire(self):
+        """ Test the triggering of bb.event.worker_fire callback """
+        bb.event.worker_fire = Mock()
+        event = bb.event.Event()
+        bb.event.fire(event, None)
+        expected = [call(event, None)]
+        self.assertEqual(bb.event.worker_fire.call_args_list, expected)
+
     def test_print_ui_queue(self):
         """ Test print_ui_queue method """
         event1 = bb.event.OperationStarted()
