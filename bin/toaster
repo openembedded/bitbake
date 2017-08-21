@@ -24,6 +24,14 @@ Usage: source toaster start|stop [webport=<address:port>] [noweb]
         [webport] Set the development server (default: localhost:8000)
 "
 
+custom_extention()
+{
+    custom_extension=$BBBASEDIR/lib/toaster/orm/fixtures/custom_toaster_append.sh
+    if [ -f $custom_extension ] ; then
+        $custom_extension $*
+    fi
+}
+
 databaseCheck()
 {
     retval=0
@@ -50,6 +58,11 @@ databaseCheck()
 webserverKillAll()
 {
     local pidfile
+    if [ -f ${BUILDDIR}/.toastermain.pid ] ; then
+        custom_extention web_stop_postpend
+    else
+        custom_extention noweb_stop_postpend
+    fi
     for pidfile in ${BUILDDIR}/.toastermain.pid ${BUILDDIR}/.runbuilds.pid; do
         if [ -f ${pidfile} ]; then
             pid=`cat ${pidfile}`
@@ -89,6 +102,7 @@ webserverStartAll()
     else
         echo "Toaster development webserver started at http://$ADDR_PORT"
         echo -e "\nYou can now run 'bitbake <target>' on the command line and monitor your build in Toaster.\nYou can also use a Toaster project to configure and run a build.\n"
+        custom_extention web_start_postpend $ADDR_PORT
     fi
 
     return $retval
@@ -168,7 +182,6 @@ fi
 unset OE_ROOT
 
 
-
 WEBSERVER=1
 ADDR_PORT="localhost:8000"
 unset CMD
@@ -241,6 +254,7 @@ fi
 echo "The system will $CMD."
 
 # Execute the commands
+custom_extention toaster_prepend $CMD $ADDR_PORT
 
 case $CMD in
     start )
@@ -262,9 +276,10 @@ case $CMD in
             if [ ! -f "$TOASTER_DIR/toaster.sqlite" ] ; then
                 if ! databaseCheck; then
                     echo "Failed ${CMD}."
-                  return 4
+                    return 4
                 fi
             fi
+            custom_extention noweb_start_postpend $ADDR_PORT
         fi
         if [ $WEBSERVER -gt 0 ] && ! webserverStartAll; then
             echo "Failed ${CMD}."
@@ -278,6 +293,7 @@ case $CMD in
         # set fail safe stop system on terminal exit
         trap stop_system SIGHUP
         echo "Successful ${CMD}."
+        custom_extention toaster_postpend $CMD $ADDR_PORT
         return 0
     ;;
     stop )
@@ -285,3 +301,5 @@ case $CMD in
         echo "Successful ${CMD}."
     ;;
 esac
+custom_extention toaster_postpend $CMD $ADDR_PORT
+
