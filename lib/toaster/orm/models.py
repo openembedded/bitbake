@@ -1658,7 +1658,7 @@ class CustomImageRecipe(Recipe):
 
     def get_base_recipe_file(self):
         """Get the base recipe file path if it exists on the file system"""
-        path_schema_one = "%s/%s" % (self.base_recipe.layer_version.dirpath,
+        path_schema_one = "%s/%s" % (self.base_recipe.layer_version.local_path,
                                      self.base_recipe.file_path)
 
         path_schema_two = self.base_recipe.file_path
