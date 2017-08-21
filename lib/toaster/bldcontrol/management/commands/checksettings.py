@@ -75,7 +75,10 @@ class Command(BaseCommand):
                         call_command("loaddata", "settings")
                         template_conf = os.environ.get("TEMPLATECONF", "")
 
-                        if "poky" in template_conf:
+                        if ToasterSetting.objects.filter(name='CUSTOM_XML_ONLY').count() > 0:
+                            # only use the custom settings
+                            pass
+                        elif "poky" in template_conf:
                             print("Loading poky configuration")
                             call_command("loaddata", "poky")
                         else:

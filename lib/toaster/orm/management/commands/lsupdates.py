@@ -81,6 +81,8 @@ class Command(BaseCommand):
         os.system('setterm -cursor off')
 
         self.apiurl = DEFAULT_LAYERINDEX_SERVER
+        if ToasterSetting.objects.filter(name='CUSTOM_LAYERINDEX_SERVER').count() == 1:
+            self.apiurl = ToasterSetting.objects.get(name = 'CUSTOM_LAYERINDEX_SERVER').value
 
         assert self.apiurl is not None
         try:
@@ -92,7 +94,9 @@ class Command(BaseCommand):
 
         proxy_settings = os.environ.get("http_proxy", None)
 
-        def _get_json_response(apiurl=DEFAULT_LAYERINDEX_SERVER):
+        def _get_json_response(apiurl=None):
+            if None == apiurl:
+                apiurl=self.apiurl
             http_progress = Spinner()
             http_progress.start()
 
