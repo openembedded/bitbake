@@ -312,7 +312,7 @@ class ProcessServer(multiprocessing.Process):
                 # Ignore EINTR
                 return []
         else:
-            return []
+            return select.select(fds,[],[],0)[0]
 
 
 class ServerCommunicator():
