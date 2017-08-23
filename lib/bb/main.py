@@ -438,9 +438,10 @@ def setup_bitbake(configParams, configuration, extrafeatures=None):
                         return None, None
                     # we start a server with a given configuration
                     logger.info("Starting bitbake server...")
-                    server = bb.server.process.BitBakeServer(lock, sockname, configuration, featureset)
-                    # The server will handle any events already in the queue
+                    # Clear the event queue since we already displayed messages
                     bb.event.ui_queue = []
+                    server = bb.server.process.BitBakeServer(lock, sockname, configuration, featureset)
+
                 else:
                     logger.info("Reconnecting to bitbake server...")
                     if not os.path.exists(sockname):
@@ -448,7 +449,13 @@ def setup_bitbake(configParams, configuration, extrafeatures=None):
                         time.sleep(5)
                         raise bb.server.process.ProcessTimeout("Bitbake still shutting down as socket exists but no lock?")
                 if not configParams.server_only:
-                    server_connection = bb.server.process.connectProcessServer(sockname, featureset)
+                    try:
+                        server_connection = bb.server.process.connectProcessServer(sockname, featureset)
+                    except EOFError:
+                        # The server may have been shutting down but not closed the socket yet. If that happened,
+                        # ignore it.
+                        pass
+
                 if server_connection or configParams.server_only:
                     break
             except (Exception, bb.server.process.ProcessTimeout) as e:

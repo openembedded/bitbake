@@ -215,16 +215,16 @@ class ProcessServer(multiprocessing.Process):
             ready = self.idle_commands(.1, fds)
 
         print("Exiting")
+        # Remove the socket file so we don't get any more connections to avoid races
+        os.unlink(self.sockname)
+        self.sock.close()
+
         try: 
             self.cooker.shutdown(True)
         except:
             pass
 
         self.cooker.post_serve()
-
-        # Remove the socket file so we don't get any more connections to avoid races
-        os.unlink(self.sockname)
-        self.sock.close()
 
         # Finally release the lockfile but warn about other processes holding it open
         lock = self.bitbake_lock
