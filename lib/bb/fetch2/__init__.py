@@ -411,8 +411,6 @@ def encodeurl(decoded):
 
     type, host, path, user, pswd, p = decoded
 
-    if not path:
-        raise MissingParameterError('path', "encoded from the data %s" % str(decoded))
     if not type:
         raise MissingParameterError('type', "encoded from the data %s" % str(decoded))
     url = '%s://' % type
@@ -423,10 +421,11 @@ def encodeurl(decoded):
         url += "@"
     if host and type != "file":
         url += "%s" % host
-    # Standardise path to ensure comparisons work
-    while '//' in path:
-        path = path.replace("//", "/")
-    url += "%s" % urllib.parse.quote(path)
+    if path:
+        # Standardise path to ensure comparisons work
+        while '//' in path:
+            path = path.replace("//", "/")
+        url += "%s" % urllib.parse.quote(path)
     if p:
         for parm in p:
             url += ";%s=%s" % (parm, p[parm])
