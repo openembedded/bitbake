@@ -446,7 +446,15 @@ def setup_bitbake(configParams, configuration, extrafeatures=None):
                     logger.info("Reconnecting to bitbake server...")
                     if not os.path.exists(sockname):
                         print("Previous bitbake instance shutting down?, waiting to retry...")
-                        time.sleep(5)
+                        i = 0
+                        lock = None
+                        # Wait for 5s or until we can get the lock
+                        while not lock and i < 50:
+                            time.sleep(0.1)
+                            _, lock = lockBitbake()
+                            i += 1
+                        if lock:
+                            bb.utils.unlockfile(lock)
                         raise bb.server.process.ProcessTimeout("Bitbake still shutting down as socket exists but no lock?")
                 if not configParams.server_only:
                     try:
