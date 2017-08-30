@@ -69,6 +69,9 @@ class SignatureGenerator(object):
     def set_taskdata(self, data):
         self.runtaskdeps, self.taskhash, self.file_checksum_values, self.taints, self.basehash = data
 
+    def reset(self, data):
+        return
+
 class SignatureGeneratorBasic(SignatureGenerator):
     """
     """
