@@ -635,17 +635,24 @@ class Tinfoil:
                          specify config_data then you cannot use a virtual
                          specification for fn.
         """
-        if appends and appendlist == []:
-            appends = False
-        if config_data:
-            dctr = bb.remotedata.RemoteDatastores.transmit_datastore(config_data)
-            dscon = self.run_command('parseRecipeFile', fn, appends, appendlist, dctr)
-        else:
-            dscon = self.run_command('parseRecipeFile', fn, appends, appendlist)
-        if dscon:
-            return self._reconvert_type(dscon, 'DataStoreConnectionHandle')
-        else:
-            return None
+        if self.tracking:
+            # Enable history tracking just for the parse operation
+            self.run_command('enableDataTracking')
+        try:
+            if appends and appendlist == []:
+                appends = False
+            if config_data:
+                dctr = bb.remotedata.RemoteDatastores.transmit_datastore(config_data)
+                dscon = self.run_command('parseRecipeFile', fn, appends, appendlist, dctr)
+            else:
+                dscon = self.run_command('parseRecipeFile', fn, appends, appendlist)
+            if dscon:
+                return self._reconvert_type(dscon, 'DataStoreConnectionHandle')
+            else:
+                return None
+        finally:
+            if self.tracking:
+                self.run_command('disableDataTracking')
 
     def build_file(self, buildfile, task, internal=True):
         """
