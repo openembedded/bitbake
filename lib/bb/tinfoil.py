@@ -325,7 +325,12 @@ class Tinfoil:
         if setup_logging:
             # This is the *client-side* logger, nothing to do with
             # logging messages from the server
+            oldhandlers = self.logger.handlers[:]
             bb.msg.logger_create('BitBake', output)
+            self.localhandlers = []
+            for handler in self.logger.handlers:
+                if handler not in oldhandlers:
+                    self.localhandlers.append(handler)
 
     def __enter__(self):
         return self
@@ -380,6 +385,12 @@ class Tinfoil:
 
         cookerconfig = CookerConfiguration()
         cookerconfig.setConfigParameters(config_params)
+
+        if not config_only:
+            # Disable local loggers because the UI module is going to set up its own
+            for handler in self.localhandlers:
+                self.logger.handlers.remove(handler)
+            self.localhandlers = []
 
         self.server_connection, ui_module = setup_bitbake(config_params,
                             cookerconfig,
