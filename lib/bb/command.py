@@ -79,7 +79,7 @@ class Command:
                     return None, "Not able to execute not readonly commands in readonly mode"
             try:
                 self.cooker.process_inotify_updates()
-                if getattr(command_method, 'needconfig', False):
+                if getattr(command_method, 'needconfig', True):
                     self.cooker.updateCacheSync()
                 result = command_method(self, commandline)
             except CommandError as exc:
@@ -283,6 +283,7 @@ class CommandsSync:
     parseConfiguration.needconfig = False
 
     def getLayerPriorities(self, command, params):
+        command.cooker.parseConfiguration()
         ret = []
         # regex objects cannot be marshalled by xmlrpc
         for collection, pattern, regex, pri in command.cooker.bbfile_config_priorities:
