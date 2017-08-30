@@ -1276,6 +1276,7 @@ class BBCooker:
         fn = self.matchFile(fn)
 
         self.buildSetVars()
+        self.reset_mtime_caches()
 
         bb_cache = bb.cache.Cache(self.databuilder, self.data_hash, self.caches_array)
 
@@ -1356,6 +1357,10 @@ class BBCooker:
                 if fireevents:
                     bb.event.fire(bb.event.BuildCompleted(len(rq.rqdata.runtaskentries), buildname, item, failures, interrupted), self.databuilder.mcdata[mc])
                 self.command.finishAsyncCommand(msg)
+                # We trashed self.recipecaches above
+                self.parsecache_valid = False
+                self.configuration.limited_deps = False
+                bb.parse.siggen.reset(self.data)
                 if quietlog:
                     bb.runqueue.logger.setLevel(rqloglevel)
                 return False
