@@ -1255,16 +1255,16 @@ class BBCooker:
         # specify a target to be built, so show a warning
         bb.warn("Buildfile specified, dependencies will not be handled. If this is not what you want, do not use -b / --buildfile.")
 
-        # Parse the configuration here. We need to do it explicitly here since
-        # buildFile() doesn't use the cache
-        self.parseConfiguration()
-
         self.buildFileInternal(buildfile, task)
 
     def buildFileInternal(self, buildfile, task, fireevents=True, quietlog=False):
         """
         Build the file matching regexp buildfile
         """
+
+        # Parse the configuration here. We need to do it explicitly here since
+        # buildFile() doesn't use the cache
+        self.parseConfiguration()
 
         # If we are told to do the None task then query the default task
         if (task == None):
