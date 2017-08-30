@@ -312,6 +312,32 @@ class TerminalFilter(object):
             fd = sys.stdin.fileno()
             self.termios.tcsetattr(fd, self.termios.TCSADRAIN, self.stdinbackup)
 
+def print_event_log(event, includelogs, loglines, termfilter):
+    # FIXME refactor this out further
+    logfile = event.logfile
+    if logfile and os.path.exists(logfile):
+        termfilter.clearFooter()
+        bb.error("Logfile of failure stored in: %s" % logfile)
+        if includelogs and not event.errprinted:
+            print("Log data follows:")
+            f = open(logfile, "r")
+            lines = []
+            while True:
+                l = f.readline()
+                if l == '':
+                    break
+                l = l.rstrip()
+                if loglines:
+                    lines.append(' | %s' % l)
+                    if len(lines) > int(loglines):
+                        lines.pop(0)
+                else:
+                    print('| %s' % l)
+            f.close()
+            if lines:
+                for line in lines:
+                    print(line)
+
 def _log_settings_from_server(server, observe_only):
     # Get values of variables which control our output
     includelogs, error = server.runCommand(["getVariable", "BBINCLUDELOGS"])
@@ -489,29 +515,7 @@ def main(server, eventHandler, params, tf = TerminalFilter):
                 continue
             if isinstance(event, bb.build.TaskFailed):
                 return_value = 1
-                logfile = event.logfile
-                if logfile and os.path.exists(logfile):
-                    termfilter.clearFooter()
-                    bb.error("Logfile of failure stored in: %s" % logfile)
-                    if includelogs and not event.errprinted:
-                        print("Log data follows:")
-                        f = open(logfile, "r")
-                        lines = []
-                        while True:
-                            l = f.readline()
-                            if l == '':
-                                break
-                            l = l.rstrip()
-                            if loglines:
-                                lines.append(' | %s' % l)
-                                if len(lines) > int(loglines):
-                                    lines.pop(0)
-                            else:
-                                print('| %s' % l)
-                        f.close()
-                        if lines:
-                            for line in lines:
-                                print(line)
+                print_event_log(event, includelogs, loglines, termfilter)
             if isinstance(event, bb.build.TaskBase):
                 logger.info(event._message)
                 continue

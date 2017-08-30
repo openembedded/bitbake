@@ -714,6 +714,9 @@ class Tinfoil:
                 eventmask.extend(extra_events)
             ret = self.set_event_mask(eventmask)
 
+        includelogs = self.config_data.getVar('BBINCLUDELOGS')
+        loglines = self.config_data.getVar('BBINCLUDELOGS_LINES')
+
         ret = self.run_command('buildTargets', targets, task)
         if handle_events:
             result = False
@@ -743,6 +746,10 @@ class Tinfoil:
                             if event_callback and event_callback(event):
                                 continue
                             if helper.eventHandler(event):
+                                if isinstance(event, bb.build.TaskFailedSilent):
+                                    logger.warning("Logfile for failed setscene task is %s" % event.logfile)
+                                elif isinstance(event, bb.build.TaskFailed):
+                                    bb.ui.knotty.print_event_log(event, includelogs, loglines, termfilter)
                                 continue
                             if isinstance(event, bb.event.ProcessStarted):
                                 if self.quiet > 1:
