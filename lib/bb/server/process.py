@@ -405,12 +405,6 @@ class BitBakeServer(object):
         server = ProcessServer(self.bitbake_lock, self.sock, self.sockname)
         self.configuration.setServerRegIdleCallback(server.register_idle_function)
 
-        # Copy prefile and postfile to _server variants
-        for param in ('prefile', 'postfile'):
-            value = getattr(self.configuration, param)
-            if value:
-                setattr(self.configuration, "%s_server" % param, value)
-
         self.cooker = bb.cooker.BBCooker(self.configuration, self.featureset, self.readypipein)
         server.cooker = self.cooker
         server.server_timeout = self.configuration.server_timeout

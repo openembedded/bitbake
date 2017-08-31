@@ -416,19 +416,16 @@ class BBCooker:
         clean = True
         for o in options:
             if o in ['prefile', 'postfile']:
-                server_val = getattr(self.configuration, "%s_server" % o, None)
-                if not options[o] and server_val:
-                    # restore value provided on server start
-                    logger.debug(1, "Restoring server value for option '%s'" % o)
-                    setattr(self.configuration, o, server_val)
-                    clean = False
-                    continue
-                if getattr(self.configuration, o) == options[o]:
-                    # Value is the same, no need to mark dirty
-                    continue
-                else:
-                    logger.debug(1, "Marking as dirty due to '%s' option change to '%s'" % (o, options[o]))
-                    clean = False
+                # Only these options may require a reparse
+                try:
+                    if getattr(self.configuration, o) == options[o]:
+                        # Value is the same, no need to mark dirty
+                        continue
+                except AttributeError:
+                    pass
+                logger.debug(1, "Marking as dirty due to '%s' option change to '%s'" % (o, options[o]))
+                print("Marking as dirty due to '%s' option change to '%s'" % (o, options[o]))
+                clean = False
             setattr(self.configuration, o, options[o])
         for k in bb.utils.approved_variables():
             if k in environment and k not in self.configuration.env:
