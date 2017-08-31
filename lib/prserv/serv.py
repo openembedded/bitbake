@@ -492,7 +492,11 @@ def auto_shutdown():
             PRServerConnection(host, port).terminate()
         except:
             logger.critical("Stop PRService %s:%d failed" % (host,port))
-        os.waitpid(singleton.prserv.pid, 0)
+
+        try:
+            os.waitpid(singleton.prserv.pid, 0)
+        except ChildProcessError:
+            pass
         singleton = None
 
 def ping(host, port):
