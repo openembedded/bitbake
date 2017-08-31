@@ -69,7 +69,7 @@ class ConfigParameters(object):
 
     def updateToServer(self, server, environment):
         options = {}
-        for o in ["abort", "tryaltconfigs", "force", "invalidate_stamp",
+        for o in ["abort", "force", "invalidate_stamp",
                   "verbose", "debug", "dry_run", "dump_signatures",
                   "debug_domains", "extra_assume_provided", "profile",
                   "prefile", "postfile", "server_timeout"]:

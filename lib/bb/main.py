@@ -150,11 +150,6 @@ class BitBakeConfigParameters(cookerdata.ConfigParameters):
                                "failed and anything depending on it cannot be built, as much as "
                                "possible will be built before stopping.")
 
-        parser.add_option("-a", "--tryaltconfigs", action="store_true",
-                          dest="tryaltconfigs", default=False,
-                          help="Continue with builds by trying to use alternative providers "
-                               "where possible.")
-
         parser.add_option("-f", "--force", action="store_true", dest="force", default=False,
                           help="Force the specified targets/task to run (invalidating any "
                                "existing stamp file).")

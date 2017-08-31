@@ -1355,12 +1355,7 @@ class RunQueue:
                 logger.info("Tasks Summary: Attempted %d tasks of which %d didn't need to be rerun and all succeeded.", self.rqexe.stats.completed, self.rqexe.stats.skipped)
 
         if self.state is runQueueFailed:
-            if not self.rqdata.taskData[''].tryaltconfigs:
-                raise bb.runqueue.TaskFailure(self.rqexe.failed_tids)
-            for tid in self.rqexe.failed_tids:
-                (mc, fn, tn, _) = split_tid_mcfn(tid)
-                self.rqdata.taskData[mc].fail_fn(fn)
-            self.rqdata.reset()
+            raise bb.runqueue.TaskFailure(self.rqexe.failed_tids)
 
         if self.state is runQueueComplete:
             # All done
