@@ -84,6 +84,8 @@ class PRServer(SimpleXMLRPCServer):
             except queue.Empty:
                 self.table.sync_if_dirty()
                 continue
+            if request is None:
+                continue
             try:
                 self.finish_request(request, client_address)
                 self.shutdown_request(request)
@@ -103,7 +105,8 @@ class PRServer(SimpleXMLRPCServer):
     def sigterm_handler(self, signum, stack):
         if self.table:
             self.table.sync()
-        self.quit=True
+        self.quit()
+        self.requestqueue.put((None, None))
 
     def process_request(self, request, client_address):
         self.requestqueue.put((request, client_address))
