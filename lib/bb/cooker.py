@@ -379,6 +379,13 @@ class BBCooker:
         self.baseconfig_valid = True
         self.parsecache_valid = False
 
+    def handlePRServ(self):
+        # Setup a PR Server based on the new configuration
+        try:
+            self.prhost = prserv.serv.auto_start(self.data)
+        except prserv.serv.PRServiceConfigError as e:
+            bb.fatal("Unable to start PR Server, exitting")
+
     def enableDataTracking(self):
         self.configuration.tracking = True
         if hasattr(self, "data"):
@@ -1468,6 +1475,7 @@ class BBCooker:
         if not self.baseconfig_valid:
             logger.debug(1, "Reloading base configuration data")
             self.initConfigurationData()
+            self.handlePRServ()
 
     # This is called for all async commands when self.state != running
     def updateCache(self):
@@ -1571,14 +1579,9 @@ class BBCooker:
         return pkgs_to_build
 
     def pre_serve(self):
-        # Empty the environment. The environment will be populated as
-        # necessary from the data store.
-        #bb.utils.empty_environment()
-        try:
-            self.prhost = prserv.serv.auto_start(self.data)
-        except prserv.serv.PRServiceConfigError:
-            bb.event.fire(CookerExit(), self.data)
-            self.state = state.error
+        # We now are in our own process so we can call this here.
+        # PRServ exits if its parent process exits
+        self.handlePRServ()
         return
 
     def post_serve(self):
