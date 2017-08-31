@@ -478,7 +478,7 @@ def auto_start(d):
         logger.critical("PRservice %s:%d not available" % (host, port))
         raise PRServiceConfigError
 
-def auto_shutdown(d=None):
+def auto_shutdown():
     global singleton
     if singleton:
         host, port = singleton.getinfo()

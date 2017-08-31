@@ -1576,7 +1576,7 @@ class BBCooker:
         return
 
     def post_serve(self):
-        prserv.serv.auto_shutdown(self.data)
+        prserv.serv.auto_shutdown()
         bb.event.fire(CookerExit(), self.data)
 
 
