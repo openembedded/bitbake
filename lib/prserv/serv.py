@@ -442,6 +442,9 @@ class PRServiceConfigError(Exception):
 def auto_start(d):
     global singleton
 
+    # Shutdown any existing PR Server
+    auto_shutdown()
+
     host_params = list(filter(None, (d.getVar('PRSERV_HOST') or '').split(':')))
     if not host_params:
         return None
