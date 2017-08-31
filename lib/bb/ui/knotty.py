@@ -344,6 +344,9 @@ _evt_list = [ "bb.runqueue.runQueueExitWait", "bb.event.LogExecTTY", "logging.Lo
 
 def main(server, eventHandler, params, tf = TerminalFilter):
 
+    if not params.observe_only:
+        params.updateToServer(server, os.environ.copy())
+
     includelogs, loglines, consolelogfile = _log_settings_from_server(server, params.observe_only)
 
     if sys.stdin.isatty() and sys.stdout.isatty():
@@ -398,7 +401,6 @@ def main(server, eventHandler, params, tf = TerminalFilter):
     universe = False
     if not params.observe_only:
         params.updateFromServer(server)
-        params.updateToServer(server, os.environ.copy())
         cmdline = params.parseActions()
         if not cmdline:
             print("Nothing to do.  Use 'bitbake world' to build everything, or run 'bitbake --help' for usage information.")
