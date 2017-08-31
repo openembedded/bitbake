@@ -327,6 +327,9 @@ class CookerDataBuilder(object):
         self.mcdata[''] = self.data
 
     def reset(self):
+        # We may not have run parseBaseConfiguration() yet
+        if not hasattr(self, 'origdata'):
+            return
         self.data = bb.data.createCopy(self.origdata)
         self.mcdata[''] = self.data
 
