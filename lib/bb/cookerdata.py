@@ -41,10 +41,6 @@ class ConfigParameters(object):
 
         self.options.pkgs_to_build = targets or []
 
-        self.options.tracking = False
-        if hasattr(self.options, "show_environment") and self.options.show_environment:
-            self.options.tracking = True
-
         for key, val in self.options.__dict__.items():
             setattr(self, key, val)
 
@@ -76,7 +72,7 @@ class ConfigParameters(object):
         for o in ["abort", "tryaltconfigs", "force", "invalidate_stamp",
                   "verbose", "debug", "dry_run", "dump_signatures",
                   "debug_domains", "extra_assume_provided", "profile",
-                  "prefile", "postfile", "tracking", "server_timeout"]:
+                  "prefile", "postfile", "server_timeout"]:
             options[o] = getattr(self.options, o)
 
         ret, error = server.runCommand(["updateConfig", options, environment, sys.argv])
@@ -158,7 +154,6 @@ class CookerConfiguration(object):
             if key in parameters.options.__dict__:
                 setattr(self, key, parameters.options.__dict__[key])
         self.env = parameters.environment.copy()
-        self.tracking = parameters.tracking
 
     def setServerRegIdleCallback(self, srcb):
         self.server_register_idlecallback = srcb

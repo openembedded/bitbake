@@ -415,7 +415,7 @@ class BBCooker:
         self.ui_cmdline = cmdline
         clean = True
         for o in options:
-            if o in ['prefile', 'postfile', 'tracking']:
+            if o in ['prefile', 'postfile']:
                 server_val = getattr(self.configuration, "%s_server" % o, None)
                 if not options[o] and server_val:
                     # restore value provided on server start
@@ -486,6 +486,12 @@ class BBCooker:
         if not pkgs_to_build:
             pkgs_to_build = []
 
+        orig_tracking = self.configuration.tracking
+        if not orig_tracking:
+            self.enableDataTracking()
+            self.reset()
+
+
         if buildfile:
             # Parse the configuration here. We need to do it explicitly here since
             # this showEnvironment() code path doesn't use the cache
@@ -530,6 +536,9 @@ class BBCooker:
             if envdata.getVarFlag(e, 'func', False) and envdata.getVarFlag(e, 'python', False):
                 logger.plain("\npython %s () {\n%s}\n", e, envdata.getVar(e, False))
 
+        if not orig_tracking:
+            self.disableDataTracking()
+            self.reset()
 
     def buildTaskData(self, pkgs_to_build, task, abort, allowincomplete=False):
         """
