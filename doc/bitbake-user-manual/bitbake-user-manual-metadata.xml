@@ -923,6 +923,14 @@
                     inherited class within your recipe by doing so
                     after the "inherit" statement.
                 </note>
+                If you want to use the directive to inherit
+                multiple classes, you can separate the classes with spaces.
+                The following example shows how to inherit both the
+                <filename>autotools</filename> and <filename>pkgconfig</filename>
+                classes:
+                <literallayout class='monospaced'>
+     inherit autotools pkgconfig
+                </literallayout>
             </para>
 
             <para>
@@ -1076,8 +1084,9 @@
 
             <para>
                 When creating a configuration file (<filename>.conf</filename>),
-                you can use the <filename>INHERIT</filename> directive to
-                inherit a class.
+                you can use the
+                <link linkend='var-INHERIT'><filename>INHERIT</filename></link>
+                configuration directive to inherit a class.
                 BitBake only supports this directive when used within
                 a configuration file.
             </para>
@@ -1099,8 +1108,7 @@
                 <note>
                     Because <filename>.conf</filename> files are parsed
                     first during BitBake's execution, using
-                    <link linkend='var-INHERIT'><filename>INHERIT</filename></link>
-                    to inherit a class effectively
+                    <filename>INHERIT</filename> to inherit a class effectively
                     inherits the class globally (i.e. for all recipes).
                 </note>
                 If you want to use the directive to inherit
@@ -1111,7 +1119,7 @@
                 <filename>autotools</filename> and <filename>pkgconfig</filename>
                 classes:
                 <literallayout class='monospaced'>
-     inherit autotools pkgconfig
+     INHERIT += "autotools pkgconfig"
                 </literallayout>
             </para>
         </section>
