@@ -1293,13 +1293,13 @@ class BBCooker:
                 elif regex == "":
                     parselog.debug(1, "BBFILE_PATTERN_%s is empty" % c)
                     errors = False
-                    continue
-                try:
-                    cre = re.compile(regex)
-                except re.error:
-                    parselog.error("BBFILE_PATTERN_%s \"%s\" is not a valid regular expression", c, regex)
-                    errors = True
-                    continue
+                else:
+                    try:
+                        cre = re.compile(regex)
+                    except re.error:
+                        parselog.error("BBFILE_PATTERN_%s \"%s\" is not a valid regular expression", c, regex)
+                        errors = True
+                        continue
                 self.bbfile_config_priorities.append((c, regex, cre, collection_priorities[c]))
         if errors:
             # We've already printed the actual error(s)
