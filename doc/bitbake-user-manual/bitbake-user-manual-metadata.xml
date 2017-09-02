@@ -899,11 +899,12 @@
 
             <para>
                 The <filename>inherit</filename> directive is a rudimentary
-                means of specifying what classes of functionality your
-                recipes require.
+                means of specifying functionality contained in class files
+                that your recipes require.
                 For example, you can easily abstract out the tasks involved in
                 building a package that uses Autoconf and Automake and put
-                those tasks into a class file that can be used by your recipe.
+                those tasks into a class file and then have your recipe
+                inherit that class file.
             </para>
 
             <para>
@@ -925,10 +926,13 @@
             </para>
 
             <para>
-                If necessary, it is possible to inherit a class
-                conditionally by using
-                a variable expression after the <filename>inherit</filename>
-                statement.
+                An advantage with the inherit directive as compared to both
+                the
+                <link linkend='include-directive'>include</link> and
+                <link linkend='require-inclusion'>require</link> directives
+                is that you can inherit class files conditionally.
+                You can accomplish this by using a variable expression
+                after the <filename>inherit</filename> statement.
                 Here is an example:
                 <literallayout class='monospaced'>
      inherit ${VARNAME}
@@ -985,6 +989,17 @@
             </para>
 
             <para>
+                The include directive is a more generic method of including
+                functionality as compared to the
+                <link linkend='inherit-directive'>inherit</link> directive,
+                which is restricted to class (i.e. <filename>.bbclass</filename>)
+                files.
+                The include directive is applicable for any other kind of
+                shared or encapsulated functionality or configuration that
+                does not suit a <filename>.bbclass</filename> file.
+            </para>
+
+            <para>
                 As an example, suppose you needed a recipe to include some
                 self-test definitions:
                 <literallayout class='monospaced'>
@@ -1015,6 +1030,18 @@
                 be found.
                 Thus, any file you require is inserted into the file that is
                 being parsed at the location of the directive.
+            </para>
+
+            <para>
+                The require directive, like the include directive previously
+                described, is a more generic method of including
+                functionality as compared to the
+                <link linkend='inherit-directive'>inherit</link> directive,
+                which is restricted to class (i.e. <filename>.bbclass</filename>)
+                files.
+                The require directive is applicable for any other kind of
+                shared or encapsulated functionality or configuration that
+                does not suit a <filename>.bbclass</filename> file.
             </para>
 
             <para>
