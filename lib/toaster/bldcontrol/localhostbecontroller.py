@@ -213,6 +213,10 @@ class LocalhostBEController(BuildEnvironmentController):
         self.setCloneStatus(bitbake,'complete',clone_total,clone_count)
         logger.debug("localhostbecontroller: current layer list %s " % pformat(layerlist))
 
+        if self.pokydirname is None and os.path.exists(os.path.join(self.be.sourcedir, "oe-init-build-env")):
+            logger.debug("localhostbecontroller: selected poky dir name %s" % self.be.sourcedir)
+            self.pokydirname = self.be.sourcedir
+
         # 5. create custom layer and add custom recipes to it
         for target in targets:
             try:
