@@ -1616,6 +1616,8 @@ class BBCooker:
     def clientComplete(self):
         """Called when the client is done using the server"""
         self.finishcommand()
+        self.extraconfigdata = {}
+        self.command.reset()
         self.databuilder.reset()
         self.data = self.databuilder.data
 

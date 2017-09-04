@@ -145,6 +145,9 @@ class Command:
         self.currentAsyncCommand = None
         self.cooker.finishcommand()
 
+    def reset(self):
+        self.remotedatastores = bb.remotedata.RemoteDatastores(self.cooker)
+
 def split_mc_pn(pn):
     if pn.startswith("multiconfig:"):
         _, mc, pn = pn.split(":", 2)
