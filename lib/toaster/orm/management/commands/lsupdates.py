@@ -166,6 +166,8 @@ class Command(BaseCommand):
                 l.description = li['description']
 
                 if created:
+                    # predefined layers in the fixtures (for example poky.xml)
+                    # always preempt the Layer Index for these values
                     l.vcs_url = li['vcs_url']
                     l.vcs_web_url = li['vcs_web_url']
                     l.vcs_web_tree_base_url = li['vcs_web_tree_base_url']
