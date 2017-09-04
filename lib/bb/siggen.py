@@ -70,7 +70,8 @@ class SignatureGenerator(object):
         self.runtaskdeps, self.taskhash, self.file_checksum_values, self.taints, self.basehash = data
 
     def reset(self, data):
-        return
+        self.__init__(data)
+
 
 class SignatureGeneratorBasic(SignatureGenerator):
     """
@@ -96,9 +97,6 @@ class SignatureGeneratorBasic(SignatureGenerator):
             self.checksum_cache.init_cache(data, checksum_cache_file)
         else:
             self.checksum_cache = None
-
-    def reset(self, data):
-        self.__init__(data)
 
     def init_rundepcheck(self, data):
         self.taskwhitelist = data.getVar("BB_HASHTASK_WHITELIST") or None
