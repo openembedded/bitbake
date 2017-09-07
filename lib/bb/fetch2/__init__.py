@@ -1559,6 +1559,14 @@ class FetchMethod(object):
         key = self._revision_key(ud, d, name)
         return "%s-%s" % (key, d.getVar("PN") or "")
 
+    def latest_versionstring(self, ud, d):
+        """
+        Compute the latest release name like "x.y.x" in "x.y.x+gitHASH"
+        by searching through the tags output of ls-remote, comparing
+        versions and returning the highest match as a (version, revision) pair.
+        """
+        return ('', '')
+
 class Fetch(object):
     def __init__(self, urls, d, cache = True, localonly = False, connection_cache = None):
         if localonly and cache:
