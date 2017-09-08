@@ -79,6 +79,14 @@ class Command(BaseCommand):
             br.save()
             bec.be.lock = BuildEnvironment.LOCK_FREE
             bec.be.save()
+            # Cancel the pending build and report the exception to the UI
+            log_object = LogMessage.objects.create(
+                            build = br.build,
+                            level = LogMessage.EXCEPTION,
+                            message = errmsg)
+            log_object.save()
+            br.build.outcome = Build.FAILED
+            br.build.save()
 
     def archive(self):
         for br in BuildRequest.objects.filter(state=BuildRequest.REQ_ARCHIVE):
