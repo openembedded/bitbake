@@ -1834,7 +1834,7 @@ class RunQueueExecuteTasks(RunQueueExecute):
         Run the tasks in a queue prepared by rqdata.prepare()
         """
 
-        if self.rqdata.setscenewhitelist and not self.rqdata.setscenewhitelist_checked:
+        if self.rqdata.setscenewhitelist is not None and not self.rqdata.setscenewhitelist_checked:
             self.rqdata.setscenewhitelist_checked = True
 
             # Check tasks that are going to run against the whitelist
@@ -2249,7 +2249,7 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
         self.scenequeue_updatecounters(task)
 
     def check_taskfail(self, task):
-        if self.rqdata.setscenewhitelist:
+        if self.rqdata.setscenewhitelist is not None:
             realtask = task.split('_setscene')[0]
             (mc, fn, taskname, taskfn) = split_tid_mcfn(realtask)
             pn = self.rqdata.dataCaches[mc].pkg_fn[taskfn]
@@ -2603,7 +2603,7 @@ def get_setscene_enforce_whitelist(d):
 
 def check_setscene_enforce_whitelist(pn, taskname, whitelist):
     import fnmatch
-    if whitelist:
+    if whitelist is not None:
         item = '%s:%s' % (pn, taskname)
         for whitelist_item in whitelist:
             if fnmatch.fnmatch(item, whitelist_item):
