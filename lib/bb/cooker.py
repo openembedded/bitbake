@@ -165,7 +165,7 @@ class BBCooker:
     Manages one bitbake build run
     """
 
-    def __init__(self, configuration, featureSet=None, readypipe=None):
+    def __init__(self, configuration, featureSet=None):
         self.recipecaches = None
         self.skiplist = {}
         self.featureset = CookerFeatures()
@@ -232,10 +232,6 @@ class BBCooker:
         signal.signal(signal.SIGTERM, self.sigterm_exception)
         # Let SIGHUP exit as SIGTERM
         signal.signal(signal.SIGHUP, self.sigterm_exception)
-
-        if readypipe:
-            os.write(readypipe, b"ready")
-            os.close(readypipe)
 
     def process_inotify_updates(self):
         for n in [self.confignotifier, self.notifier]:

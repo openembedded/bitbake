@@ -388,8 +388,10 @@ class BitBakeServer(object):
         self.bitbake_lock.close()
 
         ready = ConnectionReader(self.readypipe)
-        r = ready.wait(30)
-        if not r:
+        r = ready.poll(30)
+        if r:
+            r = ready.get()
+        if not r or r != "ready":
             ready.close()
             bb.error("Unable to start bitbake server")
             if os.path.exists(logfile):
@@ -404,8 +406,15 @@ class BitBakeServer(object):
         print("Starting bitbake server pid %d" % os.getpid())
         server = ProcessServer(self.bitbake_lock, self.sock, self.sockname)
         self.configuration.setServerRegIdleCallback(server.register_idle_function)
-
-        self.cooker = bb.cooker.BBCooker(self.configuration, self.featureset, self.readypipein)
+        writer = ConnectionWriter(self.readypipein)
+        try:
+            self.cooker = bb.cooker.BBCooker(self.configuration, self.featureset)
+            writer.send("ready")
+        except:
+            writer.send("fail")
+            raise
+        finally:
+            os.close(self.readypipein)
         server.cooker = self.cooker
         server.server_timeout = self.configuration.server_timeout
         server.xmlrpcinterface = self.configuration.xmlrpcinterface
