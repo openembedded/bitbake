@@ -33,6 +33,8 @@ import select
 import socket
 import subprocess
 import errno
+import re
+import datetime
 import bb.server.xmlrpcserver
 from bb import daemonize
 from multiprocessing import queues
@@ -358,6 +360,9 @@ class BitBakeProcessServerConnection(object):
         return
 
 class BitBakeServer(object):
+    start_log_format = '--- Starting bitbake server pid %s at %s ---'
+    start_log_datetime_format = '%Y-%m-%d %H:%M:%S.%f'
+
     def __init__(self, lock, sockname, configuration, featureset):
 
         self.configuration = configuration
@@ -383,6 +388,7 @@ class BitBakeServer(object):
         self.sock.listen(1)
 
         os.set_inheritable(self.sock.fileno(), True)
+        startdatetime = datetime.datetime.now()
         bb.daemonize.createDaemon(self._startServer, logfile)
         self.sock.close()
         self.bitbake_lock.close()
@@ -395,15 +401,31 @@ class BitBakeServer(object):
             ready.close()
             bb.error("Unable to start bitbake server")
             if os.path.exists(logfile):
+                logstart_re = re.compile(self.start_log_format % ('([0-9]+)', '([0-9-]+ [0-9:.]+)'))
+                started = False
+                lines = []
                 with open(logfile, "r") as f:
-                    logs=f.readlines()
-                bb.error("Last 10 lines of server log %s:\n%s" % (logfile, "".join(logs[-10:])))
+                    for line in f:
+                        if started:
+                            lines.append(line)
+                        else:
+                            res = logstart_re.match(line.rstrip())
+                            if res:
+                                ldatetime = datetime.datetime.strptime(res.group(2), self.start_log_datetime_format)
+                                if ldatetime >= startdatetime:
+                                    started = True
+                                    lines.append(line)
+                if lines:
+                    if len(lines) > 10:
+                        bb.error("Last 10 lines of server log for this session (%s):\n%s" % (logfile, "".join(lines[-10:])))
+                    else:
+                        bb.error("Server log for this session (%s):\n%s" % (logfile, "".join(lines)))
             raise SystemExit(1)
         ready.close()
         os.close(self.readypipein)
 
     def _startServer(self):
-        print("Starting bitbake server pid %d" % os.getpid())
+        print(self.start_log_format % (os.getpid(), datetime.datetime.now().strftime(self.start_log_datetime_format)))
         server = ProcessServer(self.bitbake_lock, self.sock, self.sockname)
         self.configuration.setServerRegIdleCallback(server.register_idle_function)
         writer = ConnectionWriter(self.readypipein)
