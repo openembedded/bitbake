@@ -924,12 +924,12 @@
                     after the "inherit" statement.
                 </note>
                 If you want to use the directive to inherit
-                multiple classes, you can separate the classes with spaces.
+                multiple classes, separate them with spaces.
                 The following example shows how to inherit both the
-                <filename>autotools</filename> and <filename>pkgconfig</filename>
+                <filename>buildhistory</filename> and <filename>rm_work</filename>
                 classes:
                 <literallayout class='monospaced'>
-     inherit autotools pkgconfig
+     inherit buildhistory rm_work
                 </literallayout>
             </para>
 
