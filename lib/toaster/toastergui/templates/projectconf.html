@@ -41,7 +41,7 @@
       </div>
       <button id="apply-change-dl_dir" class="btn btn-default" type="button">Save</button>
       <button id="cancel-change-dl_dir" type="button" class="btn btn-link">Cancel</button>
-      <p class="help-block" id="hintError-dl_dir" style="display:none;">The directory path cannot include spaces or any of these characters: . \ ? % * : | " " &lt; &gt;</p>
+      <p class="help-block" id="hintError-dl_dir" style="display:none;">The directory path cannot include spaces or any of these characters: \ ? % * : | " " &lt; &gt;</p>
       <p class="help-block" id="hintError-initialChar-dl_dir" style="display:none;">The directory path should either start with a /, e.g. /home/toaster/downloads; or with a variable, e.g. ${TOPDIR}/downloads.</p>
     </form>
     </dd>
@@ -151,7 +151,7 @@
       </div>
       <button id="apply-change-sstate_dir" class="btn btn-default" type="button">Save</button>
       <button id="cancel-change-sstate_dir" type="button" class="btn btn-link">Cancel</button>
-      <p class="help-block" id="hintError-sstate_dir" style="display:none;">The directory path cannot include spaces or any of these characters: . \ ? % * : | " " &lt; &gt;</p>
+      <p class="help-block" id="hintError-sstate_dir" style="display:none;">The directory path cannot include spaces or any of these characters: \ ? % * : | " " &lt; &gt;</p>
       <p class="help-block" id="hintError-initialChar-sstate_dir" style="display:none;">The directory path should either start with a /, e.g. /home/toaster/sstate-cache; or with a variable, e.g. ${TOPDIR}/sstate-cache.</p>
     </form>
     </dd>
@@ -594,7 +594,7 @@ $(document).ready(function() {
       var input = $(this);
       var reBeginWithSlash = /^\//;
       var reCheckVariable = /^\$/;
-      var re = /([ <>\\|":\.%\?\*]+)/;
+      var re = /([ <>\\|":%\?\*]+)/;
       var invalidDir = re.test(input.val());
       var invalidSlash = reBeginWithSlash.test(input.val());
       var invalidVar = reCheckVariable.test(input.val());
@@ -961,7 +961,7 @@ $(document).ready(function() {
       var input = $(this);
       var reBeginWithSlash = /^\//;
       var reCheckVariable = /^\$/;
-      var re = /([ <>\\|":\.%\?\*]+)/;
+      var re = /([ <>\\|":%\?\*]+)/;
       var invalidDir = re.test(input.val());
       var invalidSlash = reBeginWithSlash.test(input.val());
       var invalidVar = reCheckVariable.test(input.val());
