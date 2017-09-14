@@ -1695,25 +1695,25 @@ class CookerCollectFiles(object):
             return origlistdir(d)
 
         os.listdir = ourlistdir
-
-        # Can't use set here as order is important
-        newfiles = []
-        for f in files:
-            if os.path.isdir(f):
-                dirfiles = self.find_bbfiles(f)
-                for g in dirfiles:
-                    if g not in newfiles:
-                        newfiles.append(g)
-            else:
-                globbed = glob.glob(f)
-                if not globbed and os.path.exists(f):
-                    globbed = [f]
-                # glob gives files in order on disk. Sort to be deterministic.
-                for g in sorted(globbed):
-                    if g not in newfiles:
-                        newfiles.append(g)
-
-        os.listdir = origlistdir
+        try:
+            # Can't use set here as order is important
+            newfiles = []
+            for f in files:
+                if os.path.isdir(f):
+                    dirfiles = self.find_bbfiles(f)
+                    for g in dirfiles:
+                        if g not in newfiles:
+                            newfiles.append(g)
+                else:
+                    globbed = glob.glob(f)
+                    if not globbed and os.path.exists(f):
+                        globbed = [f]
+                    # glob gives files in order on disk. Sort to be deterministic.
+                    for g in sorted(globbed):
+                        if g not in newfiles:
+                            newfiles.append(g)
+        finally:
+            os.listdir = origlistdir
 
         bbmask = config.getVar('BBMASK')
 
