@@ -266,12 +266,15 @@ class BBCooker:
             self.inotify_modified_files.append(event.pathname)
         self.parsecache_valid = False
 
-    def add_filewatch(self, deps, watcher=None):
+    def add_filewatch(self, deps, watcher=None, dirs=False):
         if not watcher:
             watcher = self.watcher
         for i in deps:
             watcher.bbwatchedfiles.append(i[0])
-            f = os.path.dirname(i[0])
+            if dirs:
+                f = i[0]
+            else:
+                f = os.path.dirname(i[0])
             if f in watcher.bbseen:
                 continue
             watcher.bbseen.append(f)
@@ -1512,7 +1515,7 @@ class BBCooker:
 
             # Add inotify watches for directories searched for bb/bbappend files
             for dirent in searchdirs:
-                self.add_filewatch([[dirent]])
+                self.add_filewatch([[dirent]], dirs=True)
 
             self.parser = CookerParser(self, filelist, masked)
             self.parsecache_valid = True
