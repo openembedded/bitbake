@@ -293,14 +293,14 @@ class XhrLayer(View):
                 layer_source=LayerSource.TYPE_IMPORTED)
 
             # Local layer
-            if 'local_source_dir' in layer_data:
+            if ('local_source_dir' in layer_data) and layer.local_source_dir:
                 layer.local_source_dir = layer_data['local_source_dir']
             # git layer
             elif 'vcs_url' in layer_data:
                 layer.vcs_url = layer_data['vcs_url']
                 layer_version.dirpath = layer_data['dir_path']
-                layer_version.commit = layer_data['get_ref']
-                layer_version.branch = layer_data['get_ref']
+                layer_version.commit = layer_data['git_ref']
+                layer_version.branch = layer_data['git_ref']
 
             layer.save()
             layer_version.save()
