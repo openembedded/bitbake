@@ -273,12 +273,30 @@
                 some editor to create the <filename>bitbake.conf</filename>
                 so that it contains the following:
                 <literallayout class='monospaced'>
+     <link linkend='var-PN'>PN</link>  = "${@bb.parse.BBHandler.vars_from_file(d.getVar('FILE', False),d)[0] or 'defaultpkgname'}"
+                </literallayout>
+                <literallayout class='monospaced'>
      TMPDIR  = "${<link linkend='var-TOPDIR'>TOPDIR</link>}/tmp"
      <link linkend='var-CACHE'>CACHE</link>   = "${TMPDIR}/cache"
-     <link linkend='var-STAMP'>STAMP</link>   = "${TMPDIR}/stamps"
-     <link linkend='var-T'>T</link>       = "${TMPDIR}/work"
-     <link linkend='var-B'>B</link>       = "${TMPDIR}"
+     <link linkend='var-STAMP'>STAMP</link>   = "${TMPDIR}/${PN}/stamps"
+     <link linkend='var-T'>T</link>       = "${TMPDIR}/${PN}/work"
+     <link linkend='var-B'>B</link>       = "${TMPDIR}/${PN}"
                 </literallayout>
+                <note>
+                    Without a value for <filename>PN</filename>, the
+                    variables <filename>STAMP</filename>,
+                    <filename>T</filename>, and <filename>B</filename>,
+                    prevent more than one recipe from working. You can fix
+                    this by either setting <filename>PN</filename> to have
+                    a value similar to what OpenEmbedded and BitBake use
+                    in the default <filename>bitbake.conf</filename> file
+                    (see previous example). Or, by manually updating each
+                    recipe to set <filename>PN</filename>. You will also
+                    need to include <filename>PN</filename> as part of the
+                    <filename>STAMP</filename>, <filename>T</filename>, and
+                    <filename>B</filename> variable definitions in the
+                    <filename>local.conf</filename> file.
+                </note>
                 The <filename>TMPDIR</filename> variable establishes a directory
                 that BitBake uses for build output and intermediate files (other
                 than the cached information used by the
