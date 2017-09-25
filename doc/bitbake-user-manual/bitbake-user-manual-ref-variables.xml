@@ -1901,7 +1901,7 @@
                     Here are two examples:
                     <literallayout class='monospaced'>
      PREFERRED_VERSION_python = "2.7.3"
-     PREFERRED_VERSION_linux-yocto = "3.10%"
+     PREFERRED_VERSION_linux-yocto = "4.12%"
                     </literallayout>
                 </para>
             </glossdef>
