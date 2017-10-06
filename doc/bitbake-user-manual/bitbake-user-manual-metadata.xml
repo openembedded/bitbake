@@ -669,7 +669,7 @@
                         <literallayout class='monospaced'>
      DEPENDS = "glibc ncurses"
      OVERRIDES = "machine:local"
-     DEPENDS_append_machine = "libmad"
+     DEPENDS_append_machine = " libmad"
                         </literallayout>
                         In this example, <filename>DEPENDS</filename> becomes
                         "glibc ncurses libmad".
