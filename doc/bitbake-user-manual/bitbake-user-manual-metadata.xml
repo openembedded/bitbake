@@ -2132,6 +2132,8 @@
                 <listitem><para>
                     <filename>bb.event.BuildStarted()</filename>:
                     Fired when a new build starts.
+                    BitBake fires multiple "BuildStarted" events (one per configuration)
+                    when multiple configuration (multiconfig) is enabled.
                     </para></listitem>
                 <listitem><para>
                     <filename>bb.build.TaskStarted()</filename>:
