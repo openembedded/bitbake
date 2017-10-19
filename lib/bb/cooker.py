@@ -1686,15 +1686,23 @@ class CookerCollectFiles(object):
 
         # We need to track where we look so that we can add inotify watches. There
         # is no nice way to do this, this is horrid. We intercept the os.listdir()
-        # calls while we run glob().
+        # (or os.scandir() for python 3.6+) calls while we run glob().
         origlistdir = os.listdir
+        if hasattr(os, 'scandir'):
+            origscandir = os.scandir
         searchdirs = []
 
         def ourlistdir(d):
             searchdirs.append(d)
             return origlistdir(d)
 
+        def ourscandir(d):
+            searchdirs.append(d)
+            return origscandir(d)
+
         os.listdir = ourlistdir
+        if hasattr(os, 'scandir'):
+            os.scandir = ourscandir
         try:
             # Can't use set here as order is important
             newfiles = []
@@ -1714,6 +1722,8 @@ class CookerCollectFiles(object):
                             newfiles.append(g)
         finally:
             os.listdir = origlistdir
+            if hasattr(os, 'scandir'):
+                os.scandir = origscandir
 
         bbmask = config.getVar('BBMASK')
 
