@@ -47,6 +47,9 @@ logger = logging.getLogger("BitBake")
 class BBMainException(Exception):
     pass
 
+class BBMainFatal(bb.BBHandledException):
+    pass
+
 def present_options(optionlist):
     if len(optionlist) > 1:
         return ' or '.join([', '.join(optionlist[:-1]), optionlist[-1]])
@@ -461,6 +464,8 @@ def setup_bitbake(configParams, configuration, extrafeatures=None):
 
                 if server_connection or configParams.server_only:
                     break
+            except BBMainFatal:
+                raise
             except (Exception, bb.server.process.ProcessTimeout) as e:
                 if not retries:
                     raise
@@ -491,6 +496,9 @@ def setup_bitbake(configParams, configuration, extrafeatures=None):
 
 def lockBitbake():
     topdir = bb.cookerdata.findTopdir()
+    if not topdir:
+        bb.error("Unable to find conf/bblayers.conf or conf/bitbake.conf. BBAPTH is unset and/or not in a build directory?")
+        raise BBMainFatal
     lockfile = topdir + "/bitbake.lock"
     return topdir, bb.utils.lockfile(lockfile, False, False)
 
