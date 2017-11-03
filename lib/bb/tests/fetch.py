@@ -848,10 +848,11 @@ class FetchCheckStatusTest(FetcherTest):
     def test_wget_checkstatus(self):
         fetch = bb.fetch2.Fetch(self.test_wget_uris, self.d)
         for u in self.test_wget_uris:
-            ud = fetch.ud[u]
-            m = ud.method
-            ret = m.checkstatus(fetch, ud, self.d)
-            self.assertTrue(ret, msg="URI %s, can't check status" % (u))
+            with self.subTest(url=u):
+                ud = fetch.ud[u]
+                m = ud.method
+                ret = m.checkstatus(fetch, ud, self.d)
+                self.assertTrue(ret, msg="URI %s, can't check status" % (u))
 
     @skipIfNoNetwork()
     def test_wget_checkstatus_connection_cache(self):
@@ -862,10 +863,11 @@ class FetchCheckStatusTest(FetcherTest):
                     connection_cache = connection_cache)
 
         for u in self.test_wget_uris:
-            ud = fetch.ud[u]
-            m = ud.method
-            ret = m.checkstatus(fetch, ud, self.d)
-            self.assertTrue(ret, msg="URI %s, can't check status" % (u))
+            with self.subTest(url=u):
+                ud = fetch.ud[u]
+                m = ud.method
+                ret = m.checkstatus(fetch, ud, self.d)
+                self.assertTrue(ret, msg="URI %s, can't check status" % (u))
 
         connection_cache.close_connections()
 
