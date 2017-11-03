@@ -28,6 +28,11 @@ from bb.fetch2 import URI
 from bb.fetch2 import FetchMethod
 import bb
 
+def skipIfNoNetwork():
+    if os.environ.get("BB_SKIP_NETTESTS") == "yes":
+        return unittest.skip("Network tests being skipped")
+    return lambda f: f
+
 class URITest(unittest.TestCase):
     test_uris = {
         "http://www.google.com/index.html" : {
@@ -518,141 +523,153 @@ class FetcherLocalTest(FetcherTest):
             self.fetchUnpack(['file://a;subdir=/bin/sh'])
 
 class FetcherNetworkTest(FetcherTest):
+    @skipIfNoNetwork()
+    def test_fetch(self):
+        fetcher = bb.fetch.Fetch(["http://downloads.yoctoproject.org/releases/bitbake/bitbake-1.0.tar.gz", "http://downloads.yoctoproject.org/releases/bitbake/bitbake-1.1.tar.gz"], self.d)
+        fetcher.download()
+        self.assertEqual(os.path.getsize(self.dldir + "/bitbake-1.0.tar.gz"), 57749)
+        self.assertEqual(os.path.getsize(self.dldir + "/bitbake-1.1.tar.gz"), 57892)
+        self.d.setVar("BB_NO_NETWORK", "1")
+        fetcher = bb.fetch.Fetch(["http://downloads.yoctoproject.org/releases/bitbake/bitbake-1.0.tar.gz", "http://downloads.yoctoproject.org/releases/bitbake/bitbake-1.1.tar.gz"], self.d)
+        fetcher.download()
+        fetcher.unpack(self.unpackdir)
+        self.assertEqual(len(os.listdir(self.unpackdir + "/bitbake-1.0/")), 9)
+        self.assertEqual(len(os.listdir(self.unpackdir + "/bitbake-1.1/")), 9)
 
-    if os.environ.get("BB_SKIP_NETTESTS") == "yes":
-        print("Unset BB_SKIP_NETTESTS to run network tests")
-    else:
-        def test_fetch(self):
-            fetcher = bb.fetch.Fetch(["http://downloads.yoctoproject.org/releases/bitbake/bitbake-1.0.tar.gz", "http://downloads.yoctoproject.org/releases/bitbake/bitbake-1.1.tar.gz"], self.d)
-            fetcher.download()
-            self.assertEqual(os.path.getsize(self.dldir + "/bitbake-1.0.tar.gz"), 57749)
-            self.assertEqual(os.path.getsize(self.dldir + "/bitbake-1.1.tar.gz"), 57892)
-            self.d.setVar("BB_NO_NETWORK", "1")
-            fetcher = bb.fetch.Fetch(["http://downloads.yoctoproject.org/releases/bitbake/bitbake-1.0.tar.gz", "http://downloads.yoctoproject.org/releases/bitbake/bitbake-1.1.tar.gz"], self.d)
-            fetcher.download()
+    @skipIfNoNetwork()
+    def test_fetch_mirror(self):
+        self.d.setVar("MIRRORS", "http://.*/.* http://downloads.yoctoproject.org/releases/bitbake")
+        fetcher = bb.fetch.Fetch(["http://invalid.yoctoproject.org/releases/bitbake/bitbake-1.0.tar.gz"], self.d)
+        fetcher.download()
+        self.assertEqual(os.path.getsize(self.dldir + "/bitbake-1.0.tar.gz"), 57749)
+
+    @skipIfNoNetwork()
+    def test_fetch_mirror_of_mirror(self):
+        self.d.setVar("MIRRORS", "http://.*/.* http://invalid2.yoctoproject.org/ \n http://invalid2.yoctoproject.org/.* http://downloads.yoctoproject.org/releases/bitbake")
+        fetcher = bb.fetch.Fetch(["http://invalid.yoctoproject.org/releases/bitbake/bitbake-1.0.tar.gz"], self.d)
+        fetcher.download()
+        self.assertEqual(os.path.getsize(self.dldir + "/bitbake-1.0.tar.gz"), 57749)
+
+    @skipIfNoNetwork()
+    def test_fetch_file_mirror_of_mirror(self):
+        self.d.setVar("MIRRORS", "http://.*/.* file:///some1where/ \n file:///some1where/.* file://some2where/ \n file://some2where/.* http://downloads.yoctoproject.org/releases/bitbake")
+        fetcher = bb.fetch.Fetch(["http://invalid.yoctoproject.org/releases/bitbake/bitbake-1.0.tar.gz"], self.d)
+        os.mkdir(self.dldir + "/some2where")
+        fetcher.download()
+        self.assertEqual(os.path.getsize(self.dldir + "/bitbake-1.0.tar.gz"), 57749)
+
+    @skipIfNoNetwork()
+    def test_fetch_premirror(self):
+        self.d.setVar("PREMIRRORS", "http://.*/.* http://downloads.yoctoproject.org/releases/bitbake")
+        fetcher = bb.fetch.Fetch(["http://invalid.yoctoproject.org/releases/bitbake/bitbake-1.0.tar.gz"], self.d)
+        fetcher.download()
+        self.assertEqual(os.path.getsize(self.dldir + "/bitbake-1.0.tar.gz"), 57749)
+
+    @skipIfNoNetwork()
+    def gitfetcher(self, url1, url2):
+        def checkrevision(self, fetcher):
             fetcher.unpack(self.unpackdir)
-            self.assertEqual(len(os.listdir(self.unpackdir + "/bitbake-1.0/")), 9)
-            self.assertEqual(len(os.listdir(self.unpackdir + "/bitbake-1.1/")), 9)
+            revision = bb.process.run("git rev-parse HEAD", shell=True, cwd=self.unpackdir + "/git")[0].strip()
+            self.assertEqual(revision, "270a05b0b4ba0959fe0624d2a4885d7b70426da5")
 
-        def test_fetch_mirror(self):
-            self.d.setVar("MIRRORS", "http://.*/.* http://downloads.yoctoproject.org/releases/bitbake")
-            fetcher = bb.fetch.Fetch(["http://invalid.yoctoproject.org/releases/bitbake/bitbake-1.0.tar.gz"], self.d)
-            fetcher.download()
-            self.assertEqual(os.path.getsize(self.dldir + "/bitbake-1.0.tar.gz"), 57749)
+        self.d.setVar("BB_GENERATE_MIRROR_TARBALLS", "1")
+        self.d.setVar("SRCREV", "270a05b0b4ba0959fe0624d2a4885d7b70426da5")
+        fetcher = bb.fetch.Fetch([url1], self.d)
+        fetcher.download()
+        checkrevision(self, fetcher)
+        # Wipe out the dldir clone and the unpacked source, turn off the network and check mirror tarball works
+        bb.utils.prunedir(self.dldir + "/git2/")
+        bb.utils.prunedir(self.unpackdir)
+        self.d.setVar("BB_NO_NETWORK", "1")
+        fetcher = bb.fetch.Fetch([url2], self.d)
+        fetcher.download()
+        checkrevision(self, fetcher)
 
-        def test_fetch_mirror_of_mirror(self):
-            self.d.setVar("MIRRORS", "http://.*/.* http://invalid2.yoctoproject.org/ \n http://invalid2.yoctoproject.org/.* http://downloads.yoctoproject.org/releases/bitbake")
-            fetcher = bb.fetch.Fetch(["http://invalid.yoctoproject.org/releases/bitbake/bitbake-1.0.tar.gz"], self.d)
-            fetcher.download()
-            self.assertEqual(os.path.getsize(self.dldir + "/bitbake-1.0.tar.gz"), 57749)
+    @skipIfNoNetwork()
+    def test_gitfetch(self):
+        url1 = url2 = "git://git.openembedded.org/bitbake"
+        self.gitfetcher(url1, url2)
 
-        def test_fetch_file_mirror_of_mirror(self):
-            self.d.setVar("MIRRORS", "http://.*/.* file:///some1where/ \n file:///some1where/.* file://some2where/ \n file://some2where/.* http://downloads.yoctoproject.org/releases/bitbake")
-            fetcher = bb.fetch.Fetch(["http://invalid.yoctoproject.org/releases/bitbake/bitbake-1.0.tar.gz"], self.d)
-            os.mkdir(self.dldir + "/some2where")
-            fetcher.download()
-            self.assertEqual(os.path.getsize(self.dldir + "/bitbake-1.0.tar.gz"), 57749)
+    @skipIfNoNetwork()
+    def test_gitfetch_goodsrcrev(self):
+        # SRCREV is set but matches rev= parameter
+        url1 = url2 = "git://git.openembedded.org/bitbake;rev=270a05b0b4ba0959fe0624d2a4885d7b70426da5"
+        self.gitfetcher(url1, url2)
 
-        def test_fetch_premirror(self):
-            self.d.setVar("PREMIRRORS", "http://.*/.* http://downloads.yoctoproject.org/releases/bitbake")
-            fetcher = bb.fetch.Fetch(["http://invalid.yoctoproject.org/releases/bitbake/bitbake-1.0.tar.gz"], self.d)
-            fetcher.download()
-            self.assertEqual(os.path.getsize(self.dldir + "/bitbake-1.0.tar.gz"), 57749)
+    @skipIfNoNetwork()
+    def test_gitfetch_badsrcrev(self):
+        # SRCREV is set but does not match rev= parameter
+        url1 = url2 = "git://git.openembedded.org/bitbake;rev=dead05b0b4ba0959fe0624d2a4885d7b70426da5"
+        self.assertRaises(bb.fetch.FetchError, self.gitfetcher, url1, url2)
 
-        def gitfetcher(self, url1, url2):
-            def checkrevision(self, fetcher):
-                fetcher.unpack(self.unpackdir)
-                revision = bb.process.run("git rev-parse HEAD", shell=True, cwd=self.unpackdir + "/git")[0].strip()
-                self.assertEqual(revision, "270a05b0b4ba0959fe0624d2a4885d7b70426da5")
+    @skipIfNoNetwork()
+    def test_gitfetch_tagandrev(self):
+        # SRCREV is set but does not match rev= parameter
+        url1 = url2 = "git://git.openembedded.org/bitbake;rev=270a05b0b4ba0959fe0624d2a4885d7b70426da5;tag=270a05b0b4ba0959fe0624d2a4885d7b70426da5"
+        self.assertRaises(bb.fetch.FetchError, self.gitfetcher, url1, url2)
 
-            self.d.setVar("BB_GENERATE_MIRROR_TARBALLS", "1")
-            self.d.setVar("SRCREV", "270a05b0b4ba0959fe0624d2a4885d7b70426da5")
-            fetcher = bb.fetch.Fetch([url1], self.d)
-            fetcher.download()
-            checkrevision(self, fetcher)
-            # Wipe out the dldir clone and the unpacked source, turn off the network and check mirror tarball works
-            bb.utils.prunedir(self.dldir + "/git2/")
-            bb.utils.prunedir(self.unpackdir)
-            self.d.setVar("BB_NO_NETWORK", "1")
-            fetcher = bb.fetch.Fetch([url2], self.d)
-            fetcher.download()
-            checkrevision(self, fetcher)
+    @skipIfNoNetwork()
+    def test_gitfetch_localusehead(self):
+        # Create dummy local Git repo
+        src_dir = tempfile.mkdtemp(dir=self.tempdir,
+                                   prefix='gitfetch_localusehead_')
+        src_dir = os.path.abspath(src_dir)
+        bb.process.run("git init", cwd=src_dir)
+        bb.process.run("git commit --allow-empty -m'Dummy commit'",
+                       cwd=src_dir)
+        # Use other branch than master
+        bb.process.run("git checkout -b my-devel", cwd=src_dir)
+        bb.process.run("git commit --allow-empty -m'Dummy commit 2'",
+                       cwd=src_dir)
+        stdout = bb.process.run("git rev-parse HEAD", cwd=src_dir)
+        orig_rev = stdout[0].strip()
 
-        def test_gitfetch(self):
-            url1 = url2 = "git://git.openembedded.org/bitbake"
-            self.gitfetcher(url1, url2)
+        # Fetch and check revision
+        self.d.setVar("SRCREV", "AUTOINC")
+        url = "git://" + src_dir + ";protocol=file;usehead=1"
+        fetcher = bb.fetch.Fetch([url], self.d)
+        fetcher.download()
+        fetcher.unpack(self.unpackdir)
+        stdout = bb.process.run("git rev-parse HEAD",
+                                cwd=os.path.join(self.unpackdir, 'git'))
+        unpack_rev = stdout[0].strip()
+        self.assertEqual(orig_rev, unpack_rev)
 
-        def test_gitfetch_goodsrcrev(self):
-            # SRCREV is set but matches rev= parameter
-            url1 = url2 = "git://git.openembedded.org/bitbake;rev=270a05b0b4ba0959fe0624d2a4885d7b70426da5"
-            self.gitfetcher(url1, url2)
+    @skipIfNoNetwork()
+    def test_gitfetch_remoteusehead(self):
+        url = "git://git.openembedded.org/bitbake;usehead=1"
+        self.assertRaises(bb.fetch.ParameterError, self.gitfetcher, url, url)
 
-        def test_gitfetch_badsrcrev(self):
-            # SRCREV is set but does not match rev= parameter
-            url1 = url2 = "git://git.openembedded.org/bitbake;rev=dead05b0b4ba0959fe0624d2a4885d7b70426da5"
-            self.assertRaises(bb.fetch.FetchError, self.gitfetcher, url1, url2)
+    @skipIfNoNetwork()
+    def test_gitfetch_premirror(self):
+        url1 = "git://git.openembedded.org/bitbake"
+        url2 = "git://someserver.org/bitbake"
+        self.d.setVar("PREMIRRORS", "git://someserver.org/bitbake git://git.openembedded.org/bitbake \n")
+        self.gitfetcher(url1, url2)
 
-        def test_gitfetch_tagandrev(self):
-            # SRCREV is set but does not match rev= parameter
-            url1 = url2 = "git://git.openembedded.org/bitbake;rev=270a05b0b4ba0959fe0624d2a4885d7b70426da5;tag=270a05b0b4ba0959fe0624d2a4885d7b70426da5"
-            self.assertRaises(bb.fetch.FetchError, self.gitfetcher, url1, url2)
+    @skipIfNoNetwork()
+    def test_gitfetch_premirror2(self):
+        url1 = url2 = "git://someserver.org/bitbake"
+        self.d.setVar("PREMIRRORS", "git://someserver.org/bitbake git://git.openembedded.org/bitbake \n")
+        self.gitfetcher(url1, url2)
 
-        def test_gitfetch_localusehead(self):
-            # Create dummy local Git repo
-            src_dir = tempfile.mkdtemp(dir=self.tempdir,
-                                       prefix='gitfetch_localusehead_')
-            src_dir = os.path.abspath(src_dir)
-            bb.process.run("git init", cwd=src_dir)
-            bb.process.run("git commit --allow-empty -m'Dummy commit'",
-                           cwd=src_dir)
-            # Use other branch than master
-            bb.process.run("git checkout -b my-devel", cwd=src_dir)
-            bb.process.run("git commit --allow-empty -m'Dummy commit 2'",
-                           cwd=src_dir)
-            stdout = bb.process.run("git rev-parse HEAD", cwd=src_dir)
-            orig_rev = stdout[0].strip()
+    @skipIfNoNetwork()
+    def test_gitfetch_premirror3(self):
+        realurl = "git://git.openembedded.org/bitbake"
+        dummyurl = "git://someserver.org/bitbake"
+        self.sourcedir = self.unpackdir.replace("unpacked", "sourcemirror.git")
+        os.chdir(self.tempdir)
+        bb.process.run("git clone %s %s 2> /dev/null" % (realurl, self.sourcedir), shell=True)
+        self.d.setVar("PREMIRRORS", "%s git://%s;protocol=file \n" % (dummyurl, self.sourcedir))
+        self.gitfetcher(dummyurl, dummyurl)
 
-            # Fetch and check revision
-            self.d.setVar("SRCREV", "AUTOINC")
-            url = "git://" + src_dir + ";protocol=file;usehead=1"
-            fetcher = bb.fetch.Fetch([url], self.d)
-            fetcher.download()
-            fetcher.unpack(self.unpackdir)
-            stdout = bb.process.run("git rev-parse HEAD",
-                                    cwd=os.path.join(self.unpackdir, 'git'))
-            unpack_rev = stdout[0].strip()
-            self.assertEqual(orig_rev, unpack_rev)
-
-        def test_gitfetch_remoteusehead(self):
-            url = "git://git.openembedded.org/bitbake;usehead=1"
-            self.assertRaises(bb.fetch.ParameterError, self.gitfetcher, url, url)
-
-        def test_gitfetch_premirror(self):
-            url1 = "git://git.openembedded.org/bitbake"
-            url2 = "git://someserver.org/bitbake"
-            self.d.setVar("PREMIRRORS", "git://someserver.org/bitbake git://git.openembedded.org/bitbake \n")
-            self.gitfetcher(url1, url2)
-
-        def test_gitfetch_premirror2(self):
-            url1 = url2 = "git://someserver.org/bitbake"
-            self.d.setVar("PREMIRRORS", "git://someserver.org/bitbake git://git.openembedded.org/bitbake \n")
-            self.gitfetcher(url1, url2)
-
-        def test_gitfetch_premirror3(self):
-            realurl = "git://git.openembedded.org/bitbake"
-            dummyurl = "git://someserver.org/bitbake"
-            self.sourcedir = self.unpackdir.replace("unpacked", "sourcemirror.git")
-            os.chdir(self.tempdir)
-            bb.process.run("git clone %s %s 2> /dev/null" % (realurl, self.sourcedir), shell=True)
-            self.d.setVar("PREMIRRORS", "%s git://%s;protocol=file \n" % (dummyurl, self.sourcedir))
-            self.gitfetcher(dummyurl, dummyurl)
-
-        def test_git_submodule(self):
-            fetcher = bb.fetch.Fetch(["gitsm://git.yoctoproject.org/git-submodule-test;rev=f12e57f2edf0aa534cf1616fa983d165a92b0842"], self.d)
-            fetcher.download()
-            # Previous cwd has been deleted
-            os.chdir(os.path.dirname(self.unpackdir))
-            fetcher.unpack(self.unpackdir)
+    @skipIfNoNetwork()
+    def test_git_submodule(self):
+        fetcher = bb.fetch.Fetch(["gitsm://git.yoctoproject.org/git-submodule-test;rev=f12e57f2edf0aa534cf1616fa983d165a92b0842"], self.d)
+        fetcher.download()
+        # Previous cwd has been deleted
+        os.chdir(os.path.dirname(self.unpackdir))
+        fetcher.unpack(self.unpackdir)
 
 
 class TrustedNetworksTest(FetcherTest):
@@ -782,32 +799,32 @@ class FetchLatestVersionTest(FetcherTest):
         ("db", "http://download.oracle.com/berkeley-db/db-5.3.21.tar.gz", "http://www.oracle.com/technetwork/products/berkeleydb/downloads/index-082944.html", "http://download.oracle.com/otn/berkeley-db/(?P<name>db-)(?P<pver>((\d+[\.\-_]*)+))\.tar\.gz")
             : "6.1.19",
     }
-    if os.environ.get("BB_SKIP_NETTESTS") == "yes":
-        print("Unset BB_SKIP_NETTESTS to run network tests")
-    else:
-        def test_git_latest_versionstring(self):
-            for k, v in self.test_git_uris.items():
-                self.d.setVar("PN", k[0])
-                self.d.setVar("SRCREV", k[2])
-                self.d.setVar("UPSTREAM_CHECK_GITTAGREGEX", k[3])
-                ud = bb.fetch2.FetchData(k[1], self.d)
-                pupver= ud.method.latest_versionstring(ud, self.d)
-                verstring = pupver[0]
-                self.assertTrue(verstring, msg="Could not find upstream version")
-                r = bb.utils.vercmp_string(v, verstring)
-                self.assertTrue(r == -1 or r == 0, msg="Package %s, version: %s <= %s" % (k[0], v, verstring))
 
-        def test_wget_latest_versionstring(self):
-            for k, v in self.test_wget_uris.items():
-                self.d.setVar("PN", k[0])
-                self.d.setVar("UPSTREAM_CHECK_URI", k[2])
-                self.d.setVar("UPSTREAM_CHECK_REGEX", k[3])
-                ud = bb.fetch2.FetchData(k[1], self.d)
-                pupver = ud.method.latest_versionstring(ud, self.d)
-                verstring = pupver[0]
-                self.assertTrue(verstring, msg="Could not find upstream version")
-                r = bb.utils.vercmp_string(v, verstring)
-                self.assertTrue(r == -1 or r == 0, msg="Package %s, version: %s <= %s" % (k[0], v, verstring))
+    @skipIfNoNetwork()
+    def test_git_latest_versionstring(self):
+        for k, v in self.test_git_uris.items():
+            self.d.setVar("PN", k[0])
+            self.d.setVar("SRCREV", k[2])
+            self.d.setVar("UPSTREAM_CHECK_GITTAGREGEX", k[3])
+            ud = bb.fetch2.FetchData(k[1], self.d)
+            pupver= ud.method.latest_versionstring(ud, self.d)
+            verstring = pupver[0]
+            self.assertTrue(verstring, msg="Could not find upstream version")
+            r = bb.utils.vercmp_string(v, verstring)
+            self.assertTrue(r == -1 or r == 0, msg="Package %s, version: %s <= %s" % (k[0], v, verstring))
+
+    @skipIfNoNetwork()
+    def test_wget_latest_versionstring(self):
+        for k, v in self.test_wget_uris.items():
+            self.d.setVar("PN", k[0])
+            self.d.setVar("UPSTREAM_CHECK_URI", k[2])
+            self.d.setVar("UPSTREAM_CHECK_REGEX", k[3])
+            ud = bb.fetch2.FetchData(k[1], self.d)
+            pupver = ud.method.latest_versionstring(ud, self.d)
+            verstring = pupver[0]
+            self.assertTrue(verstring, msg="Could not find upstream version")
+            r = bb.utils.vercmp_string(v, verstring)
+            self.assertTrue(r == -1 or r == 0, msg="Package %s, version: %s <= %s" % (k[0], v, verstring))
 
 
 class FetchCheckStatusTest(FetcherTest):
@@ -827,33 +844,30 @@ class FetchCheckStatusTest(FetcherTest):
                       "https://github.com/kergoth/tslib/releases/download/1.1/tslib-1.1.tar.xz"
                       ]
 
-    if os.environ.get("BB_SKIP_NETTESTS") == "yes":
-        print("Unset BB_SKIP_NETTESTS to run network tests")
-    else:
+    @skipIfNoNetwork()
+    def test_wget_checkstatus(self):
+        fetch = bb.fetch2.Fetch(self.test_wget_uris, self.d)
+        for u in self.test_wget_uris:
+            ud = fetch.ud[u]
+            m = ud.method
+            ret = m.checkstatus(fetch, ud, self.d)
+            self.assertTrue(ret, msg="URI %s, can't check status" % (u))
 
-        def test_wget_checkstatus(self):
-            fetch = bb.fetch2.Fetch(self.test_wget_uris, self.d)
-            for u in self.test_wget_uris:
-                ud = fetch.ud[u]
-                m = ud.method
-                ret = m.checkstatus(fetch, ud, self.d)
-                self.assertTrue(ret, msg="URI %s, can't check status" % (u))
+    @skipIfNoNetwork()
+    def test_wget_checkstatus_connection_cache(self):
+        from bb.fetch2 import FetchConnectionCache
 
+        connection_cache = FetchConnectionCache()
+        fetch = bb.fetch2.Fetch(self.test_wget_uris, self.d,
+                    connection_cache = connection_cache)
 
-        def test_wget_checkstatus_connection_cache(self):
-            from bb.fetch2 import FetchConnectionCache
+        for u in self.test_wget_uris:
+            ud = fetch.ud[u]
+            m = ud.method
+            ret = m.checkstatus(fetch, ud, self.d)
+            self.assertTrue(ret, msg="URI %s, can't check status" % (u))
 
-            connection_cache = FetchConnectionCache()
-            fetch = bb.fetch2.Fetch(self.test_wget_uris, self.d,
-                        connection_cache = connection_cache)
-
-            for u in self.test_wget_uris:
-                ud = fetch.ud[u]
-                m = ud.method
-                ret = m.checkstatus(fetch, ud, self.d)
-                self.assertTrue(ret, msg="URI %s, can't check status" % (u))
-
-            connection_cache.close_connections()
+        connection_cache.close_connections()
 
 
 class GitMakeShallowTest(FetcherTest):
@@ -972,15 +986,13 @@ class GitMakeShallowTest(FetcherTest):
         self.make_shallow()
         self.assertRevCount(1)
 
-    if os.environ.get("BB_SKIP_NETTESTS") == "yes":
-        print("Unset BB_SKIP_NETTESTS to run network tests")
-    else:
-        def test_make_shallow_bitbake(self):
-            self.git('remote add origin https://github.com/openembedded/bitbake')
-            self.git('fetch --tags origin')
-            orig_revs = len(self.git('rev-list --all').splitlines())
-            self.make_shallow(['refs/tags/1.10.0'])
-            self.assertRevCount(orig_revs - 1746, ['--all'])
+    @skipIfNoNetwork()
+    def test_make_shallow_bitbake(self):
+        self.git('remote add origin https://github.com/openembedded/bitbake')
+        self.git('fetch --tags origin')
+        orig_revs = len(self.git('rev-list --all').splitlines())
+        self.make_shallow(['refs/tags/1.10.0'])
+        self.assertRevCount(orig_revs - 1746, ['--all'])
 
 class GitShallowTest(FetcherTest):
     def setUp(self):
@@ -1436,24 +1448,22 @@ class GitShallowTest(FetcherTest):
         with self.assertRaises(bb.fetch2.FetchError):
             self.fetch()
 
-    if os.environ.get("BB_SKIP_NETTESTS") == "yes":
-        print("Unset BB_SKIP_NETTESTS to run network tests")
-    else:
-        def test_bitbake(self):
-            self.git('remote add --mirror=fetch origin git://github.com/openembedded/bitbake', cwd=self.srcdir)
-            self.git('config core.bare true', cwd=self.srcdir)
-            self.git('fetch', cwd=self.srcdir)
+    @skipIfNoNetwork()
+    def test_bitbake(self):
+        self.git('remote add --mirror=fetch origin git://github.com/openembedded/bitbake', cwd=self.srcdir)
+        self.git('config core.bare true', cwd=self.srcdir)
+        self.git('fetch', cwd=self.srcdir)
 
-            self.d.setVar('BB_GIT_SHALLOW_DEPTH', '0')
-            # Note that the 1.10.0 tag is annotated, so this also tests
-            # reference of an annotated vs unannotated tag
-            self.d.setVar('BB_GIT_SHALLOW_REVS', '1.10.0')
+        self.d.setVar('BB_GIT_SHALLOW_DEPTH', '0')
+        # Note that the 1.10.0 tag is annotated, so this also tests
+        # reference of an annotated vs unannotated tag
+        self.d.setVar('BB_GIT_SHALLOW_REVS', '1.10.0')
 
-            self.fetch_shallow()
+        self.fetch_shallow()
 
-            # Confirm that the history of 1.10.0 was removed
-            orig_revs = len(self.git('rev-list master', cwd=self.srcdir).splitlines())
-            revs = len(self.git('rev-list master').splitlines())
-            self.assertNotEqual(orig_revs, revs)
-            self.assertRefs(['master', 'origin/master'])
-            self.assertRevCount(orig_revs - 1758)
+        # Confirm that the history of 1.10.0 was removed
+        orig_revs = len(self.git('rev-list master', cwd=self.srcdir).splitlines())
+        revs = len(self.git('rev-list master').splitlines())
+        self.assertNotEqual(orig_revs, revs)
+        self.assertRefs(['master', 'origin/master'])
+        self.assertRevCount(orig_revs - 1758)
