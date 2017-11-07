@@ -250,6 +250,7 @@ class Wget(FetchMethod):
                         return ""
                     def close(self):
                         pass
+                    closed = False
 
                 resp = addinfourl(fp_dummy(), r.msg, req.get_full_url())
                 resp.code = r.status
