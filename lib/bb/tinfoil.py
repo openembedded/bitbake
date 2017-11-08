@@ -322,14 +322,14 @@ class Tinfoil:
         self.server_connection = None
         self.recipes_parsed = False
         self.quiet = 0
+        self.oldhandlers = self.logger.handlers[:]
         if setup_logging:
             # This is the *client-side* logger, nothing to do with
             # logging messages from the server
-            oldhandlers = self.logger.handlers[:]
             bb.msg.logger_create('BitBake', output)
             self.localhandlers = []
             for handler in self.logger.handlers:
-                if handler not in oldhandlers:
+                if handler not in self.oldhandlers:
                     self.localhandlers.append(handler)
 
     def __enter__(self):
@@ -834,6 +834,12 @@ class Tinfoil:
             bb.event.ui_queue = []
             self.server_connection.terminate()
             self.server_connection = None
+
+        # Restore logging handlers to how it looked when we started
+        if self.oldhandlers:
+            for handler in self.logger.handlers:
+                if handler not in self.oldhandlers:
+                    self.logger.handlers.remove(handler)
 
     def _reconvert_type(self, obj, origtypename):
         """
