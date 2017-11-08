@@ -58,19 +58,22 @@ class ActionPlugin(LayerPlugin):
             shutil.rmtree(tempdir)
 
     def do_remove_layer(self, args):
-        """Remove a layer from bblayers.conf."""
+        """Remove one or more layers from bblayers.conf."""
         bblayers_conf = os.path.join('conf', 'bblayers.conf')
         if not os.path.exists(bblayers_conf):
             sys.stderr.write("Unable to find bblayers.conf\n")
             return 1
 
-        if args.layerdir.startswith('*'):
-            layerdir = args.layerdir
-        elif not '/' in args.layerdir:
-            layerdir = '*/%s' % args.layerdir
-        else:
-            layerdir = os.path.abspath(args.layerdir)
-        (_, notremoved) = bb.utils.edit_bblayers_conf(bblayers_conf, None, layerdir)
+        layerdirs = []
+        for item in args.layerdir:
+            if item.startswith('*'):
+                layerdir = item
+            elif not '/' in item:
+                layerdir = '*/%s' % item
+            else:
+                layerdir = os.path.abspath(item)
+            layerdirs.append(layerdir)
+        (_, notremoved) = bb.utils.edit_bblayers_conf(bblayers_conf, None, layerdirs)
         if notremoved:
             for item in notremoved:
                 sys.stderr.write("No layers matching %s found in BBLAYERS\n" % item)
@@ -245,7 +248,7 @@ build results (as the layer priority order has effectively changed).
         parser_add_layer.add_argument('layerdir', nargs='+', help='Layer directory/directories to add')
 
         parser_remove_layer = self.add_command(sp, 'remove-layer', self.do_remove_layer, parserecipes=False)
-        parser_remove_layer.add_argument('layerdir', help='Layer directory to remove (wildcards allowed, enclose in quotes to avoid shell expansion)')
+        parser_remove_layer.add_argument('layerdir', nargs='+', help='Layer directory/directories to remove (wildcards allowed, enclose in quotes to avoid shell expansion)')
         parser_remove_layer.set_defaults(func=self.do_remove_layer)
 
         parser_flatten = self.add_command(sp, 'flatten', self.do_flatten)
