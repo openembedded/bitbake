@@ -885,7 +885,7 @@ class BBCooker:
                         continue
                     f.write('"%s" -> "%s"\n' % (pn, dep))
             f.write("}\n")
-        logger.info("Flatened recipe dependencies saved to 'recipe-depends.dot'")
+        logger.info("Flattened recipe dependencies saved to 'recipe-depends.dot'")
 
     def show_appends_with_no_recipes(self):
         # Determine which bbappends haven't been applied
