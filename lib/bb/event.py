@@ -173,6 +173,10 @@ def print_ui_queue():
             for event in ui_queue[:]:
                 if isinstance(event, logging.LogRecord):
                     logger.handle(event)
+        if msgerrs:
+            logger.removeHandler(stderr)
+        else:
+            logger.removeHandler(stdout)
 
 def fire_ui_handlers(event, d):
     global _thread_lock
