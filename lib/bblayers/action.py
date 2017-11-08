@@ -18,16 +18,18 @@ def plugin_init(plugins):
 
 class ActionPlugin(LayerPlugin):
     def do_add_layer(self, args):
-        """Add a layer to bblayers.conf."""
-        layerdir = os.path.abspath(args.layerdir)
-        if not os.path.exists(layerdir):
-            sys.stderr.write("Specified layer directory doesn't exist\n")
-            return 1
+        """Add one or more layers to bblayers.conf."""
+        layerdirs = [os.path.abspath(ldir) for ldir in args.layerdir]
 
-        layer_conf = os.path.join(layerdir, 'conf', 'layer.conf')
-        if not os.path.exists(layer_conf):
-            sys.stderr.write("Specified layer directory doesn't contain a conf/layer.conf file\n")
-            return 1
+        for layerdir in layerdirs:
+            if not os.path.exists(layerdir):
+                sys.stderr.write("Specified layer directory %s doesn't exist\n" % layerdir)
+                return 1
+
+            layer_conf = os.path.join(layerdir, 'conf', 'layer.conf')
+            if not os.path.exists(layer_conf):
+                sys.stderr.write("Specified layer directory %s doesn't contain a conf/layer.conf file\n" % layerdir)
+                return 1
 
         bblayers_conf = os.path.join('conf', 'bblayers.conf')
         if not os.path.exists(bblayers_conf):
@@ -40,7 +42,7 @@ class ActionPlugin(LayerPlugin):
         shutil.copy2(bblayers_conf, backup)
 
         try:
-            notadded, _ = bb.utils.edit_bblayers_conf(bblayers_conf, layerdir, None)
+            notadded, _ = bb.utils.edit_bblayers_conf(bblayers_conf, layerdirs, None)
             if not (args.force or notadded):
                 try:
                     self.tinfoil.parseRecipes()
@@ -240,7 +242,7 @@ build results (as the layer priority order has effectively changed).
 
     def register_commands(self, sp):
         parser_add_layer = self.add_command(sp, 'add-layer', self.do_add_layer, parserecipes=False)
-        parser_add_layer.add_argument('layerdir', help='Layer directory to add')
+        parser_add_layer.add_argument('layerdir', nargs='+', help='Layer directory/directories to add')
 
         parser_remove_layer = self.add_command(sp, 'remove-layer', self.do_remove_layer, parserecipes=False)
         parser_remove_layer.add_argument('layerdir', help='Layer directory to remove (wildcards allowed, enclose in quotes to avoid shell expansion)')
