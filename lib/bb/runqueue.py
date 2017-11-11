@@ -181,7 +181,7 @@ class RunQueueScheduler(object):
         if self.rq.stats.active < self.rq.number_tasks:
             return self.next_buildable_task()
 
-    def newbuilable(self, task):
+    def newbuildable(self, task):
         self.buildable.append(task)
 
     def describe_task(self, taskid):
@@ -1781,7 +1781,7 @@ class RunQueueExecuteTasks(RunQueueExecute):
 
     def setbuildable(self, task):
         self.runq_buildable.add(task)
-        self.sched.newbuilable(task)
+        self.sched.newbuildable(task)
 
     def task_completeoutright(self, task):
         """
