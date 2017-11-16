@@ -1424,7 +1424,7 @@ class FetchMethod(object):
                 cmd = 'gzip -dc %s > %s' % (file, efile)
             elif file.endswith('.bz2'):
                 cmd = 'bzip2 -dc %s > %s' % (file, efile)
-            elif file.endswith('.tar.xz'):
+            elif file.endswith('.txz') or file.endswith('.tar.xz'):
                 cmd = 'xz -dc %s | tar x --no-same-owner -f -' % file
             elif file.endswith('.xz'):
                 cmd = 'xz -dc %s > %s' % (file, efile)
