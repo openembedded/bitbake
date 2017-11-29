@@ -56,7 +56,7 @@ class LayerIndexPlugin(ActionPlugin):
         r = conn.getresponse()
         if r.status != 200:
             raise Exception("Failed to read " + path + ": %d %s" % (r.status, r.reason))
-        return json.loads(r.read())
+        return json.loads(r.read().decode())
 
     def get_layer_deps(self, layername, layeritems, layerbranches, layerdependencies, branchnum, selfname=False):
         def layeritems_info_id(items_name, layeritems):
