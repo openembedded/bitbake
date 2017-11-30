@@ -41,6 +41,7 @@ import types
 import json
 import collections
 import re
+import os
 
 from toastergui.tablefilter import TableFilterMap
 
@@ -85,6 +86,9 @@ class ToasterTable(TemplateView):
         context['title'] = self.title
         context['table_name'] = type(self).__name__.lower()
         context['empty_state'] = self.empty_state
+
+        # global variables
+        context['project_enable'] = ('1' == os.environ.get('TOASTER_BUILDSERVER'))
 
         return context
 
