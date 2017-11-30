@@ -277,7 +277,7 @@ def _validate_input(field_input, model):
             return None, invalid + str(field_input_list)
 
         # Check we are looking for a valid field
-        valid_fields = model._meta.get_all_field_names()
+        valid_fields = [f.name for f in model._meta.get_fields()]
         for field in field_input_list[0].split(AND_VALUE_SEPARATOR):
             if True in [field.startswith(x) for x in valid_fields]:
                 break
