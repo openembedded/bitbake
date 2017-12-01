@@ -186,7 +186,7 @@ TEMPLATES = [
                 'django.template.context_processors.tz',
                 'django.contrib.messages.context_processors.messages',
                 # Custom
-                'django.core.context_processors.request',
+                'django.template.context_processors.request',
                 'toastergui.views.managedcontextprocessor',
 
             ],
