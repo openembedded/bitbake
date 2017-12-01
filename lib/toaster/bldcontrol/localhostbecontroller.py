@@ -332,15 +332,18 @@ class LocalhostBEController(BuildEnvironmentController):
                 conf.write('%s="%s"\n' % (var.name, var.value))
             conf.write('INHERIT+="toaster buildhistory"')
 
+        # clean the Toaster to build environment
+        env_clean = 'unset BBPATH;' # clean BBPATH for <= YP-2.4.0
+
         # run bitbake server from the clone
         bitbake = os.path.join(self.pokydirname, 'bitbake', 'bin', 'bitbake')
         toasterlayers = os.path.join(builddir,"conf/toaster-bblayers.conf")
-        self._shellcmd('bash -c \"source %s %s; BITBAKE_UI="knotty" %s --read %s --read %s '
-                       '--server-only -B 0.0.0.0:0\"' % (oe_init,
+        self._shellcmd('%s bash -c \"source %s %s; BITBAKE_UI="knotty" %s --read %s --read %s '
+                       '--server-only -B 0.0.0.0:0\"' % (env_clean, oe_init,
                        builddir, bitbake, confpath, toasterlayers), self.be.sourcedir)
 
         # read port number from bitbake.lock
-        self.be.bbport = ""
+        self.be.bbport = -1
         bblock = os.path.join(builddir, 'bitbake.lock')
         # allow 10 seconds for bb lock file to appear but also be populated
         for lock_check in range(10):
@@ -352,6 +355,9 @@ class LocalhostBEController(BuildEnvironmentController):
                 break
             logger.debug("localhostbecontroller: waiting for bblock content to appear")
             time.sleep(1)
+        else:
+            raise BuildSetupException("Cannot find bitbake server lock file '%s'. Aborting." % bblock)
+
         with open(bblock) as fplock:
             for line in fplock:
                 if ":" in line:
@@ -359,7 +365,7 @@ class LocalhostBEController(BuildEnvironmentController):
                     logger.debug("localhostbecontroller: bitbake port %s", self.be.bbport)
                     break
 
-        if not self.be.bbport:
+        if -1 == self.be.bbport:
             raise BuildSetupException("localhostbecontroller: can't read bitbake port from %s" % bblock)
 
         self.be.bbaddress = "localhost"
@@ -380,10 +386,10 @@ class LocalhostBEController(BuildEnvironmentController):
         log = os.path.join(builddir, 'toaster_ui.log')
         local_bitbake = os.path.join(os.path.dirname(os.getenv('BBBASEDIR')),
                                      'bitbake')
-        self._shellcmd(['bash -c \"(TOASTER_BRBE="%s" BBSERVER="0.0.0.0:%s" '
+        self._shellcmd(['%s bash -c \"(TOASTER_BRBE="%s" BBSERVER="0.0.0.0:%s" '
                         '%s %s -u toasterui  --read %s --read %s --token="" >>%s 2>&1;'
                         'BITBAKE_UI="knotty" BBSERVER=0.0.0.0:%s %s -m)&\"' \
-                        % (brbe, self.be.bbport, local_bitbake, bbtargets, confpath, toasterlayers, log,
+                        % (env_clean, brbe, self.be.bbport, local_bitbake, bbtargets, confpath, toasterlayers, log,
                         self.be.bbport, bitbake,)],
                         builddir, nowait=True)
 
