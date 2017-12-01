@@ -18,9 +18,10 @@
 # along with this program. If not, see http://www.gnu.org/licenses/.
 
 HELP="
-Usage: source toaster start|stop [webport=<address:port>] [noweb]
+Usage: source toaster start|stop [webport=<address:port>] [noweb] [nobuild]
     Optional arguments:
-        [noweb] Setup the environment for building with toaster but don't start the development server
+        [nobuild] Setup the environment for capturing builds with toaster but disable managed builds
+        [noweb] Setup the environment for capturing builds with toaster but don't start the web server
         [webport] Set the development server (default: localhost:8000)
 "
 
@@ -183,12 +184,16 @@ unset OE_ROOT
 
 
 WEBSERVER=1
+export TOASTER_BUILDSERVER=1
 ADDR_PORT="localhost:8000"
 unset CMD
 for param in $*; do
     case $param in
     noweb )
             WEBSERVER=0
+    ;;
+    nobuild )
+            TOASTER_BUILDSERVER=0
     ;;
     start )
             CMD=$param
@@ -286,9 +291,13 @@ case $CMD in
             return 4
         fi
         export BITBAKE_UI='toasterui'
-        $MANAGE runbuilds \
-           </dev/null >>${BUILDDIR}/toaster_runbuilds.log 2>&1 \
-           & echo $! >${BUILDDIR}/.runbuilds.pid
+        if [ $TOASTER_BUILDSERVER -eq 1 ] ; then
+            $MANAGE runbuilds \
+               </dev/null >>${BUILDDIR}/toaster_runbuilds.log 2>&1 \
+               & echo $! >${BUILDDIR}/.runbuilds.pid
+        else
+            echo "Toaster build server not started."
+        fi
 
         # set fail safe stop system on terminal exit
         trap stop_system SIGHUP

@@ -21,11 +21,13 @@
 		          </p>
 
 		          {% if lvs_nos %}
+                    {% if project_enable %}
 		            <p class="top-air">
 		              <a class="btn btn-primary btn-lg" href="{% url 'newproject' %}">
 			              Create your first Toaster project to run manage builds
 		              </a>
 		            </p>
+                    {% endif %}
 		          {% else %}
                 <div class="alert alert-info lead top-air">
                   Toaster has no layer information. Without layer information, you cannot run builds. To generate layer information you can:
