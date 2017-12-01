@@ -52,12 +52,14 @@ class LocalhostBEController(BuildEnvironmentController):
         self.pokydirname = None
         self.islayerset = False
 
-    def _shellcmd(self, command, cwd=None, nowait=False):
+    def _shellcmd(self, command, cwd=None, nowait=False,env=None):
         if cwd is None:
             cwd = self.be.sourcedir
+        if env is None:
+            env=os.environ.copy()
 
-        logger.debug("lbc_shellcmmd: (%s) %s" % (cwd, command))
-        p = subprocess.Popen(command, cwd = cwd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        logger.debug("lbc_shellcmd: (%s) %s" % (cwd, command))
+        p = subprocess.Popen(command, cwd = cwd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
         if nowait:
             return
         (out,err) = p.communicate()
@@ -98,6 +100,8 @@ class LocalhostBEController(BuildEnvironmentController):
 
         layerlist = []
         nongitlayerlist = []
+        git_env = os.environ.copy()
+        # (note: add custom environment settings here)
 
         # set layers in the layersource
 
@@ -138,7 +142,7 @@ class LocalhostBEController(BuildEnvironmentController):
         cached_layers = {}
 
         try:
-            for remotes in self._shellcmd("git remote -v", self.be.sourcedir).split("\n"):
+            for remotes in self._shellcmd("git remote -v", self.be.sourcedir,env=git_env).split("\n"):
                 try:
                     remote = remotes.split("\t")[1].split(" ")[0]
                     if remote not in cached_layers:
@@ -167,7 +171,7 @@ class LocalhostBEController(BuildEnvironmentController):
             if os.path.exists(localdirname):
                 try:
                     localremotes = self._shellcmd("git remote -v",
-                                                  localdirname)
+                                                  localdirname,env=git_env)
                     if not giturl in localremotes and commit != 'HEAD':
                         raise BuildSetupException("Existing git repository at %s, but with different remotes ('%s', expected '%s'). Toaster will not continue out of fear of damaging something." % (localdirname, ", ".join(localremotes.split("\n")), giturl))
                 except ShellCmdException:
@@ -177,18 +181,18 @@ class LocalhostBEController(BuildEnvironmentController):
             else:
                 if giturl in cached_layers:
                     logger.debug("localhostbecontroller git-copying %s to %s" % (cached_layers[giturl], localdirname))
-                    self._shellcmd("git clone \"%s\" \"%s\"" % (cached_layers[giturl], localdirname))
-                    self._shellcmd("git remote remove origin", localdirname)
-                    self._shellcmd("git remote add origin \"%s\"" % giturl, localdirname)
+                    self._shellcmd("git clone \"%s\" \"%s\"" % (cached_layers[giturl], localdirname),env=git_env)
+                    self._shellcmd("git remote remove origin", localdirname,env=git_env)
+                    self._shellcmd("git remote add origin \"%s\"" % giturl, localdirname,env=git_env)
                 else:
                     logger.debug("localhostbecontroller: cloning %s in %s" % (giturl, localdirname))
-                    self._shellcmd('git clone "%s" "%s"' % (giturl, localdirname))
+                    self._shellcmd('git clone "%s" "%s"' % (giturl, localdirname),env=git_env)
 
             # branch magic name "HEAD" will inhibit checkout
             if commit != "HEAD":
                 logger.debug("localhostbecontroller: checking out commit %s to %s " % (commit, localdirname))
                 ref = commit if re.match('^[a-fA-F0-9]+$', commit) else 'origin/%s' % commit
-                self._shellcmd('git fetch --all && git reset --hard "%s"' % ref, localdirname)
+                self._shellcmd('git fetch --all && git reset --hard "%s"' % ref, localdirname,env=git_env)
 
             # take the localdirname as poky dir if we can find the oe-init-build-env
             if self.pokydirname is None and os.path.exists(os.path.join(localdirname, "oe-init-build-env")):
@@ -198,7 +202,7 @@ class LocalhostBEController(BuildEnvironmentController):
                 # make sure we have a working bitbake
                 if not os.path.exists(os.path.join(self.pokydirname, 'bitbake')):
                     logger.debug("localhostbecontroller: checking bitbake into the poky dirname %s " % self.pokydirname)
-                    self._shellcmd("git clone -b \"%s\" \"%s\" \"%s\" " % (bitbake.commit, bitbake.giturl, os.path.join(self.pokydirname, 'bitbake')))
+                    self._shellcmd("git clone -b \"%s\" \"%s\" \"%s\" " % (bitbake.commit, bitbake.giturl, os.path.join(self.pokydirname, 'bitbake')),env=git_env)
 
             # verify our repositories
             for name, dirpath in gitrepos[(giturl, commit)]:
