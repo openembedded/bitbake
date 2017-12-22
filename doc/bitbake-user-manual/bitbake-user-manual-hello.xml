@@ -298,7 +298,7 @@
                     <filename>local.conf</filename> file.
                 </note>
                 The <filename>TMPDIR</filename> variable establishes a directory
-                that BitBake uses for build output and intermediate files (other
+                that BitBake uses for build output and intermediate files other
                 than the cached information used by the
                 <link linkend='setscene'>Setscene</link> process.
                 Here, the <filename>TMPDIR</filename> directory is set to
