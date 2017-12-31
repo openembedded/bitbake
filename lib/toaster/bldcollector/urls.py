@@ -17,7 +17,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 
-from djaV2 ngo.conf.urls import include, url
+from django.conf.urls import include, url
 
 import bldcollector.views
 
