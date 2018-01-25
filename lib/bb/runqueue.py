@@ -681,49 +681,59 @@ class RunQueueData:
         # e.g. do_sometask[recrdeptask] = "do_someothertask"
         # (makes sure sometask runs after someothertask of all DEPENDS, RDEPENDS and intertask dependencies, recursively)
         # We need to do this separately since we need all of runtaskentries[*].depends to be complete before this is processed
-        self.init_progress_reporter.next_stage(len(recursivetasks))
-        extradeps = {}
-        for taskcounter, tid in enumerate(recursivetasks):
-            extradeps[tid] = set(self.runtaskentries[tid].depends)
+        self.init_progress_reporter.next_stage()
+        extradeps = True
+        # Loop here since recrdeptasks can depend upon other recrdeptasks and we have to
+        # resolve these recursively until we aren't adding any further extra dependencies
+        while extradeps:
+            extradeps = {}
 
-            tasknames = recursivetasks[tid]
-            seendeps = set()
+            for taskcounter, tid in enumerate(recursivetasks):
+                extradeps[tid] = set(self.runtaskentries[tid].depends)
 
-            def generate_recdeps(t):
-                newdeps = set()
-                (mc, fn, taskname, _) = split_tid_mcfn(t)
-                add_resolved_dependencies(mc, fn, tasknames, newdeps)
-                extradeps[tid].update(newdeps)
-                seendeps.add(t)
-                newdeps.add(t)
-                for i in newdeps:
-                    if i not in self.runtaskentries:
-                        # Not all recipes might have the recrdeptask task as a task
-                        continue
-                    task = self.runtaskentries[i].task
-                    for n in self.runtaskentries[i].depends:
-                        if n not in seendeps:
-                             generate_recdeps(n)
-            generate_recdeps(tid)
+                tasknames = recursivetasks[tid]
+                seendeps = set()
 
-            if tid in recursiveitasks:
-                for dep in recursiveitasks[tid]:
-                    generate_recdeps(dep)
-            self.init_progress_reporter.update(taskcounter)
+                def generate_recdeps(t):
+                    newdeps = set()
+                    (mc, fn, taskname, _) = split_tid_mcfn(t)
+                    add_resolved_dependencies(mc, fn, tasknames, newdeps)
+                    extradeps[tid].update(newdeps)
+                    seendeps.add(t)
+                    newdeps.add(t)
+                    for i in newdeps:
+                        if i not in self.runtaskentries:
+                            # Not all recipes might have the recrdeptask task as a task
+                            continue
+                        task = self.runtaskentries[i].task
+                        for n in self.runtaskentries[i].depends:
+                            if n not in seendeps:
+                                 generate_recdeps(n)
+                generate_recdeps(tid)
 
-        # Remove circular references so that do_a[recrdeptask] = "do_a do_b" can work
-        for tid in recursivetasks:
-            extradeps[tid].difference_update(recursivetasksselfref)
+                if tid in recursiveitasks:
+                    for dep in recursiveitasks[tid]:
+                        generate_recdeps(dep)
 
-        for tid in self.runtaskentries:
-            task = self.runtaskentries[tid].task
-            # Add in extra dependencies
-            if tid in extradeps:
-                 self.runtaskentries[tid].depends = extradeps[tid]
-            # Remove all self references
-            if tid in self.runtaskentries[tid].depends:
-                logger.debug(2, "Task %s contains self reference!", tid)
-                self.runtaskentries[tid].depends.remove(tid)
+            for tid in self.runtaskentries:
+                task = self.runtaskentries[tid].task
+                # Add in extra dependencies
+                if tid in extradeps:
+                     extradeps[tid].difference_update(self.runtaskentries[tid].depends)
+                     self.runtaskentries[tid].depends.update(extradeps[tid])
+                     # Remove circular references so that do_a[recrdeptask] = "do_a do_b" can work
+                     self.runtaskentries[tid].depends.difference_update(recursivetasksselfref)
+                     extradeps[tid].difference_update(recursivetasksselfref)
+                     if not len(extradeps[tid]):
+                         del extradeps[tid]
+                     if tid not in recursivetasks:
+                        bb.warn(tid)
+                # Remove all self references
+                if tid in self.runtaskentries[tid].depends:
+                    logger.debug(2, "Task %s contains self reference!", tid)
+                    self.runtaskentries[tid].depends.remove(tid)
+
+            bb.debug(1, "Added %s recursive dependencies in this loop" % len(extradeps))
 
         self.init_progress_reporter.next_stage()
 
