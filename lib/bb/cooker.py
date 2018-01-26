@@ -856,12 +856,12 @@ class BBCooker:
 
         with open('task-depends.dot', 'w') as f:
             f.write("digraph depends {\n")
-            for task in depgraph["tdepends"]:
+            for task in sorted(depgraph["tdepends"]):
                 (pn, taskname) = task.rsplit(".", 1)
                 fn = depgraph["pn"][pn]["filename"]
                 version = depgraph["pn"][pn]["version"]
                 f.write('"%s.%s" [label="%s %s\\n%s\\n%s"]\n' % (pn, taskname, pn, taskname, version, fn))
-                for dep in depgraph["tdepends"][task]:
+                for dep in sorted(depgraph["tdepends"][task]):
                     f.write('"%s" -> "%s"\n' % (task, dep))
             f.write("}\n")
         logger.info("Task dependencies saved to 'task-depends.dot'")
@@ -869,18 +869,18 @@ class BBCooker:
         with open('recipe-depends.dot', 'w') as f:
             f.write("digraph depends {\n")
             pndeps = {}
-            for task in depgraph["tdepends"]:
+            for task in sorted(depgraph["tdepends"]):
                 (pn, taskname) = task.rsplit(".", 1)
                 if pn not in pndeps:
                     pndeps[pn] = set()
-                for dep in depgraph["tdepends"][task]:
+                for dep in sorted(depgraph["tdepends"][task]):
                     (deppn, deptaskname) = dep.rsplit(".", 1)
                     pndeps[pn].add(deppn)
-            for pn in pndeps:
+            for pn in sorted(pndeps):
                 fn = depgraph["pn"][pn]["filename"]
                 version = depgraph["pn"][pn]["version"]
                 f.write('"%s" [label="%s\\n%s\\n%s"]\n' % (pn, pn, version, fn))
-                for dep in pndeps[pn]:
+                for dep in sorted(pndeps[pn]):
                     if dep == pn:
                         continue
                     f.write('"%s" -> "%s"\n' % (pn, dep))
