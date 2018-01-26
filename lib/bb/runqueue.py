@@ -74,6 +74,9 @@ def build_tid(mc, fn, taskname):
         return "multiconfig:" + mc + ":" + fn + ":" + taskname
     return fn + ":" + taskname
 
+def tid_replacetask(tid, taskname):
+    return tid.rsplit(":", 1)[0] + ":" + taskname
+
 class RunQueueStats:
     """
     Holds statistics on the tasks handled by the associated runQueue
@@ -581,12 +584,6 @@ class RunQueueData:
                     if t in taskData[mc].taskentries:
                         depends.add(t)
 
-        def add_resolved_dependencies(mc, fn, tasknames, depends):
-            for taskname in tasknames:
-                tid = build_tid(mc, fn, taskname)
-                if tid in self.runtaskentries:
-                    depends.add(tid)
-
         for mc in taskData:
             for tid in taskData[mc].taskentries:
 
@@ -689,16 +686,22 @@ class RunQueueData:
             extradeps = {}
 
             for taskcounter, tid in enumerate(recursivetasks):
-                extradeps[tid] = set(self.runtaskentries[tid].depends)
+                extradeps[tid] = set()
 
                 tasknames = recursivetasks[tid]
                 seendeps = set()
+                seenbasedeps = set()
 
                 def generate_recdeps(t):
                     newdeps = set()
-                    (mc, fn, taskname, _) = split_tid_mcfn(t)
-                    add_resolved_dependencies(mc, fn, tasknames, newdeps)
-                    extradeps[tid].update(newdeps)
+                    basetid = fn_from_tid(t)
+                    if basetid not in seenbasedeps:
+                        for taskname in tasknames:
+                            newtid = tid_replacetask(t, taskname)
+                            if newtid in self.runtaskentries and newtid not in seendeps:
+                                newdeps.add(newtid)
+                                extradeps[tid].add(newtid)
+                        seenbasedeps.add(basetid)
                     seendeps.add(t)
                     newdeps.add(t)
                     for i in newdeps:
