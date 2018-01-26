@@ -777,6 +777,40 @@
             </para>
         </section>
 
+        <section id='repo-fetcher'>
+            <title>Repo Fetcher (<filename>repo://</filename>)</title>
+
+            <para>
+                This fetcher submodule fetches code from google-repo
+                source control system.
+                The fetcher work by initiating and syncing sources of the
+                repo into
+                <link linkend='var-REPODIR'><filename>REPODIR</filename></link>,
+                which is usually
+                <filename><link linkend='var-DL_DIR'>DL_DIR</link>/repo</filename>.
+            </para>
+
+            <para>
+                This fetcher support the following parameters:
+                <itemizedlist>
+                    <listitem><para><emphasis>"protocol":</emphasis>
+                        Protocol to fetch the repo manifest (default: git).
+                        </para></listitem>
+                    <listitem><para><emphasis>"branch":</emphasis>
+                        Branch or tag of repository to get (default: master).
+                        </para></listitem>
+                    <listitem><para><emphasis>"manifest":</emphasis>
+                        Name of the manifest file (default: default.xml).
+                        </para></listitem>
+                </itemizedlist>
+                Some example URLs are as follows:
+                <literallayout class='monospaced'>
+    SRC_URI = "repo://REPOROOT;protocol=git;branch=some_branch;manifest=my_manifest.xml"
+    SRC_URI = "repo://REPOROOT;protocol=file;branch=some_branch;manifest=my_manifest.xml"
+                </literallayout>
+            </para>
+        </section>
+
         <section id='other-fetchers'>
             <title>Other Fetchers</title>
 
@@ -794,9 +828,6 @@
                         </para></listitem>
                     <listitem><para>
                         Secure Shell (<filename>ssh://</filename>)
-                        </para></listitem>
-                    <listitem><para>
-                        Repo (<filename>repo://</filename>)
                         </para></listitem>
                     <listitem><para>
                         OSC (<filename>osc://</filename>)
