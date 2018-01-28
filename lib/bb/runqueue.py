@@ -705,7 +705,6 @@ class RunQueueData:
                         if i not in self.runtaskentries:
                             # Not all recipes might have the recrdeptask task as a task
                             continue
-                        task = self.runtaskentries[i].task
                         for n in self.runtaskentries[i].depends:
                             if n not in seendeps:
                                  generate_recdeps(n)
@@ -716,7 +715,6 @@ class RunQueueData:
                         generate_recdeps(dep)
 
             for tid in self.runtaskentries:
-                task = self.runtaskentries[tid].task
                 # Add in extra dependencies
                 if tid in extradeps:
                      extradeps[tid].difference_update(self.runtaskentries[tid].depends)
