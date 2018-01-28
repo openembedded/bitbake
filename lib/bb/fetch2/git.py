@@ -363,6 +363,7 @@ class Git(FetchMethod):
             progresshandler = GitProgressHandler(d)
             runfetchcmd(fetch_cmd, d, log=progresshandler, workdir=ud.clonedir)
             runfetchcmd("%s prune-packed" % ud.basecmd, d, workdir=ud.clonedir)
+            runfetchcmd("%s pack-refs --all" % ud.basecmd, d, workdir=ud.clonedir)
             runfetchcmd("%s pack-redundant --all | xargs -r rm" % ud.basecmd, d, workdir=ud.clonedir)
             try:
                 os.unlink(ud.fullmirror)
