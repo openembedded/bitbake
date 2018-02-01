@@ -1604,8 +1604,6 @@ class BBCooker:
 
         if self.parser:
             self.parser.shutdown(clean=not force, force=force)
-        self.notifier.stop()
-        self.confignotifier.stop()
 
     def finishcommand(self):
         self.state = state.initial
