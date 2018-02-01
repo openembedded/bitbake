@@ -1808,21 +1808,25 @@ class CookerCollectFiles(object):
             realfn, cls, mc = bb.cache.virtualfn2realfn(p)
             priorities[p] = self.calc_bbfile_priority(realfn, matched)
 
-        # Don't show the warning if the BBFILE_PATTERN did match .bbappend files
         unmatched = set()
         for _, _, regex, pri in self.bbfile_config_priorities:
             if not regex in matched:
                 unmatched.add(regex)
 
-        def findmatch(regex):
+        # Don't show the warning if the BBFILE_PATTERN did match .bbappend files
+        def find_bbappend_match(regex):
             for b in self.bbappends:
                 (bbfile, append) = b
                 if regex.match(append):
+                    # If the bbappend is matched by already "matched set", return False
+                    for matched_regex in matched:
+                        if matched_regex.match(append):
+                            return False
                     return True
             return False
 
         for unmatch in unmatched.copy():
-            if findmatch(unmatch):
+            if find_bbappend_match(unmatch):
                 unmatched.remove(unmatch)
 
         for collection, pattern, regex, _ in self.bbfile_config_priorities:
