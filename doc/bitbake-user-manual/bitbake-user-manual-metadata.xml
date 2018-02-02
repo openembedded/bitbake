@@ -2651,14 +2651,19 @@
             OpenEmbedded metadata-based example.
         </para>
 
+<!--
         <para>
-            This list is a place holder of content existed from previous work
+            Bug 12030: This list is a place holder of content existed from previous work
             on the manual.
             Some or all of it probably needs integrated into the subsections
             that make up this section.
             For now, I have just provided a short glossary-like description
             for each variable.
-            Ultimately, this list goes away.
+        </para>
+-->
+
+        <para>
+            The following list describes related variables:
             <itemizedlist>
                 <listitem><para><filename>STAMP</filename>:
                     The base path to create stamp files.</para></listitem>
