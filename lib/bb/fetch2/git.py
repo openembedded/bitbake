@@ -125,6 +125,9 @@ class GitProgressHandler(bb.progress.LineFilterProgressHandler):
 
 
 class Git(FetchMethod):
+    bitbake_dir = os.path.abspath(os.path.join(os.path.dirname(os.path.join(os.path.abspath(__file__))), '..', '..', '..'))
+    make_shallow_path = os.path.join(bitbake_dir, 'bin', 'git-make-shallow')
+
     """Class to fetch a module or modules from git repositories"""
     def init(self, d):
         pass
@@ -446,7 +449,7 @@ class Git(FetchMethod):
                 shallow_branches.append(r)
 
         # Make the repository shallow
-        shallow_cmd = ['git', 'make-shallow', '-s']
+        shallow_cmd = [self.make_shallow_path, '-s']
         for b in shallow_branches:
             shallow_cmd.append('-r')
             shallow_cmd.append(b)

@@ -874,9 +874,6 @@ class FetchCheckStatusTest(FetcherTest):
 
 
 class GitMakeShallowTest(FetcherTest):
-    bitbake_dir = os.path.join(os.path.dirname(os.path.join(os.path.abspath(__file__))), '..', '..', '..')
-    make_shallow_path = os.path.join(bitbake_dir, 'bin', 'git-make-shallow')
-
     def setUp(self):
         FetcherTest.setUp(self)
         self.gitdir = os.path.join(self.tempdir, 'gitshallow')
@@ -905,7 +902,7 @@ class GitMakeShallowTest(FetcherTest):
     def make_shallow(self, args=None):
         if args is None:
             args = ['HEAD']
-        return bb.process.run([self.make_shallow_path] + args, cwd=self.gitdir)
+        return bb.process.run([bb.fetch2.git.Git.make_shallow_path] + args, cwd=self.gitdir)
 
     def add_empty_file(self, path, msg=None):
         if msg is None:
