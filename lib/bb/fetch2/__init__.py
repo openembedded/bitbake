@@ -363,6 +363,9 @@ def decodeurl(url):
     user, password, parameters).
     """
 
+    # work around npm-ish project names that may start with a @ (as in @types/sleep, @angular,...)
+    url = url.replace('name=@', 'name=__AT__')
+
     m = re.compile('(?P<type>[^:]*)://((?P<user>[^/;]+)@)?(?P<location>[^;]+)(;(?P<parm>.*))?').match(url)
     if not m:
         raise MalformedUrl(url)
@@ -400,6 +403,8 @@ def decodeurl(url):
                 if not '=' in s:
                     raise MalformedUrl(url, "The URL: '%s' is invalid: parameter %s does not specify a value (missing '=')" % (url, s))
                 s1, s2 = s.split('=')
+                if s1=='name':
+                    s2 = s2.replace('__AT__', '@')
                 p[s1] = s2
 
     return type, host, urllib.parse.unquote(path), user, pswd, p
