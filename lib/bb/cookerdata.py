@@ -143,7 +143,8 @@ class CookerConfiguration(object):
         self.writeeventlog = False
         self.server_only = False
         self.limited_deps = False
-        self.runall = None
+        self.runall = []
+        self.runonly = []
 
         self.env = {}
 

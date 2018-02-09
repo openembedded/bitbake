@@ -841,30 +841,57 @@ class RunQueueData:
         #
         # Once all active tasks are marked, prune the ones we don't need.
 
-        delcount = 0
+        delcount = {}
         for tid in list(self.runtaskentries.keys()):
             if tid not in runq_build:
+                delcount[tid] = self.runtaskentries[tid]
                 del self.runtaskentries[tid]
-                delcount += 1
 
-        self.init_progress_reporter.next_stage()
-
-        if self.cooker.configuration.runall is not None:
-            runall = "do_%s" % self.cooker.configuration.runall
-            runall_tids = { k: v for k, v in self.runtaskentries.items() if taskname_from_tid(k) == runall }
-
+        # Handle --runall
+        if self.cooker.configuration.runall:
             # re-run the mark_active and then drop unused tasks from new list
             runq_build = {}
-            for tid in list(runall_tids):
-                mark_active(tid,1)
+
+            for task in self.cooker.configuration.runall:
+                runall_tids = set()
+                for tid in list(self.runtaskentries):
+                    wanttid = fn_from_tid(tid) + ":do_%s" % task
+                    if wanttid in delcount:
+                        self.runtaskentries[wanttid] = delcount[wanttid]
+                    if wanttid in self.runtaskentries:
+                        runall_tids.add(wanttid)
+
+                for tid in list(runall_tids):
+                    mark_active(tid,1)
 
             for tid in list(self.runtaskentries.keys()):
                 if tid not in runq_build:
+                    delcount[tid] = self.runtaskentries[tid]
                     del self.runtaskentries[tid]
-                    delcount += 1
 
             if len(self.runtaskentries) == 0:
-                bb.msg.fatal("RunQueue", "No remaining tasks to run for build target %s with runall %s" % (target, runall))
+                bb.msg.fatal("RunQueue", "Could not find any tasks with the tasknames %s to run within the recipes of the taskgraphs of the targets %s" % (str(self.cooker.configuration.runall), str(self.targets)))
+
+        self.init_progress_reporter.next_stage()
+
+        # Handle runonly
+        if self.cooker.configuration.runonly:
+            # re-run the mark_active and then drop unused tasks from new list
+            runq_build = {}
+
+            for task in self.cooker.configuration.runonly:
+                runonly_tids = { k: v for k, v in self.runtaskentries.items() if taskname_from_tid(k) == "do_%s" % task }
+
+                for tid in list(runonly_tids):
+                    mark_active(tid,1)
+
+            for tid in list(self.runtaskentries.keys()):
+                if tid not in runq_build:
+                    delcount[tid] = self.runtaskentries[tid]
+                    del self.runtaskentries[tid]
+
+            if len(self.runtaskentries) == 0:
+                bb.msg.fatal("RunQueue", "Could not find any tasks with the tasknames %s to run within the taskgraphs of the targets %s" % (str(self.cooker.configuration.runonly), str(self.targets)))
 
         #
         # Step D - Sanity checks and computation
@@ -877,7 +904,7 @@ class RunQueueData:
             else:
                 bb.msg.fatal("RunQueue", "No active tasks and not in --continue mode?! Please report this bug.")
 
-        logger.verbose("Pruned %s inactive tasks, %s left", delcount, len(self.runtaskentries))
+        logger.verbose("Pruned %s inactive tasks, %s left", len(delcount), len(self.runtaskentries))
 
         logger.verbose("Assign Weightings")
 
