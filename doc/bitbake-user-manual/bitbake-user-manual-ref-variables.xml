@@ -2089,6 +2089,16 @@
             </glossdef>
         </glossentry>
 
+        <glossentry id='var-REPODIR'><glossterm>REPODIR</glossterm>
+            <glossdef>
+                <para>
+                    The directory in which a local copy of a
+                    <filename>google-repo</filename> directory is stored
+                    when it is synced.
+                </para>
+            </glossdef>
+        </glossentry>
+
         <glossentry id='var-RPROVIDES'><glossterm>RPROVIDES</glossterm>
             <glossdef>
                 <para>
