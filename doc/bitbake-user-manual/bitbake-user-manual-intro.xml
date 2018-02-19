@@ -564,8 +564,12 @@
                              Writes the event log of the build to a bitbake event
                              json file. Use '' (empty string) to assign the name
                              automatically.
-       --runall=RUNALL       Run the specified task for all build targets and their
-                             dependencies.
+       --runall=RUNALL       Run the specified task for any recipe in the taskgraph
+                             of the specified target (even if it wouldn't otherwise
+                             have run).
+       --runonly=RUNONLY     Run only the specified task within the taskgraph of
+                             the specified targets (and any task dependencies those
+                             tasks may have).
                 </literallayout>
             </para>
         </section>
