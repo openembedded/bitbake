@@ -383,10 +383,10 @@
                 code separate from the general metadata used by BitBake.
                 Thus, this example creates and uses a layer called "mylayer".
                 <note>
-                    You can find additional information on layers at
-                    <ulink url='http://www.yoctoproject.org/docs/2.3/bitbake-user-manual/bitbake-user-manual.html#layers'></ulink>.
-                </note>
-                </para>
+                    You can find additional information on layers in the
+                    "<link linkend='layers'>Layers</link>" section.
+                </note></para>
+
                 <para>Minimally, you need a recipe file and a layer configuration
                 file in your layer.
                 The configuration file needs to be in the <filename>conf</filename>
