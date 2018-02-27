@@ -765,7 +765,7 @@ class RunQueueData:
             bb.debug(1, "Added %s recursive dependencies in this loop" % extradeps)
 
         # Remove recrdeptask circular references so that do_a[recrdeptask] = "do_a do_b" can work
-        for tid in self.runtaskentries:
+        for tid in recursivetasksselfref:
             self.runtaskentries[tid].depends.difference_update(recursivetasksselfref)
 
         self.init_progress_reporter.next_stage()
