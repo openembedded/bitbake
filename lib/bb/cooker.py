@@ -516,6 +516,8 @@ class BBCooker:
             fn = runlist[0][3]
         else:
             envdata = self.data
+            data.expandKeys(envdata)
+            parse.ast.runAnonFuncs(envdata)
 
         if fn:
             try:
@@ -529,9 +531,6 @@ class BBCooker:
         with closing(StringIO()) as env:
             self.data.inchistory.emit(env)
             logger.plain(env.getvalue())
-
-        data.expandKeys(envdata)
-        parse.ast.runAnonFuncs(envdata)
 
         # emit variables and shell functions
         with closing(StringIO()) as env:
