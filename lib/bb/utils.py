@@ -187,7 +187,7 @@ def explode_deps(s):
             #r[-1] += ' ' + ' '.join(j)
     return r
 
-def explode_dep_versions2(s):
+def explode_dep_versions2(s, *, sort=True):
     """
     Take an RDEPENDS style string of format:
     "DEPEND1 (optional version) DEPEND2 (optional version) ..."
@@ -250,7 +250,8 @@ def explode_dep_versions2(s):
         if not (i in r and r[i]):
             r[lastdep] = []
 
-    r = collections.OrderedDict(sorted(r.items(), key=lambda x: x[0]))
+    if sort:
+        r = collections.OrderedDict(sorted(r.items(), key=lambda x: x[0]))
     return r
 
 def explode_dep_versions(s):
