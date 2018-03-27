@@ -913,7 +913,7 @@ class FetchLatestVersionTest(FetcherTest):
             ud = bb.fetch2.FetchData(k[1], self.d)
             pupver= ud.method.latest_versionstring(ud, self.d)
             verstring = pupver[0]
-            self.assertTrue(verstring, msg="Could not find upstream version")
+            self.assertTrue(verstring, msg="Could not find upstream version for %s" % k[0])
             r = bb.utils.vercmp_string(v, verstring)
             self.assertTrue(r == -1 or r == 0, msg="Package %s, version: %s <= %s" % (k[0], v, verstring))
 
@@ -926,7 +926,7 @@ class FetchLatestVersionTest(FetcherTest):
             ud = bb.fetch2.FetchData(k[1], self.d)
             pupver = ud.method.latest_versionstring(ud, self.d)
             verstring = pupver[0]
-            self.assertTrue(verstring, msg="Could not find upstream version")
+            self.assertTrue(verstring, msg="Could not find upstream version for %s" % k[0])
             r = bb.utils.vercmp_string(v, verstring)
             self.assertTrue(r == -1 or r == 0, msg="Package %s, version: %s <= %s" % (k[0], v, verstring))
 
