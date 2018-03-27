@@ -595,7 +595,8 @@ class Git(FetchMethod):
         tagregex = re.compile(d.getVar('UPSTREAM_CHECK_GITTAGREGEX') or "(?P<pver>([0-9][\.|_]?)+)")
         try:
             output = self._lsremote(ud, d, "refs/tags/*")
-        except bb.fetch2.FetchError or bb.fetch2.NetworkAccess:
+        except (bb.fetch2.FetchError, bb.fetch2.NetworkAccess) as e:
+            bb.note("Could not list remote: %s" % str(e))
             return pupver
 
         verstring = ""
