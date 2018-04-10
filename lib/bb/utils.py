@@ -807,8 +807,8 @@ def movefile(src, dest, newmtime = None, sstat = None):
                 return None # failure
         try:
             if didcopy:
-                os.lchown(dest, sstat[stat.ST_UID], sstat[stat.ST_GID])
-                os.chmod(dest, stat.S_IMODE(sstat[stat.ST_MODE])) # Sticky is reset on chown
+                os.lchown(destpath, sstat[stat.ST_UID], sstat[stat.ST_GID])
+                os.chmod(destpath, stat.S_IMODE(sstat[stat.ST_MODE])) # Sticky is reset on chown
                 os.unlink(src)
         except Exception as e:
             print("movefile: Failed to chown/chmod/unlink", dest, e)
