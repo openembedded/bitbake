@@ -383,7 +383,7 @@ def decodeurl(url):
         path = location
     else:
         host = location
-        path = ""
+        path = "/"
     if user:
         m = re.compile('(?P<user>[^:]+)(:?(?P<pswd>.*))').match(user)
         if m:
