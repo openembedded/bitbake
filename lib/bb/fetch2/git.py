@@ -322,16 +322,13 @@ class Git(FetchMethod):
     def download(self, ud, d):
         """Fetch url"""
 
-        no_clone = not os.path.exists(ud.clonedir)
-        need_update = no_clone or self.need_update(ud, d)
-
         # A current clone is preferred to either tarball, a shallow tarball is
         # preferred to an out of date clone, and a missing clone will use
         # either tarball.
-        if ud.shallow and os.path.exists(ud.fullshallow) and need_update:
+        if ud.shallow and os.path.exists(ud.fullshallow) and self.need_update(ud, d):
             ud.localpath = ud.fullshallow
             return
-        elif os.path.exists(ud.fullmirror) and no_clone:
+        elif os.path.exists(ud.fullmirror) and not os.path.exists(ud.clonedir):
             bb.utils.mkdirhier(ud.clonedir)
             runfetchcmd("tar -xzf %s" % ud.fullmirror, d, workdir=ud.clonedir)
 
@@ -353,6 +350,8 @@ class Git(FetchMethod):
         for name in ud.names:
             if not self._contains_ref(ud, d, name, ud.clonedir):
                 needupdate = True
+                break
+
         if needupdate:
             try: 
                 runfetchcmd("%s remote rm origin" % ud.basecmd, d, workdir=ud.clonedir)
@@ -373,6 +372,7 @@ class Git(FetchMethod):
             except OSError as exc:
                 if exc.errno != errno.ENOENT:
                     raise
+
         for name in ud.names:
             if not self._contains_ref(ud, d, name, ud.clonedir):
                 raise bb.fetch2.FetchError("Unable to find revision %s in branch %s even from upstream" % (ud.revisions[name], ud.branches[name]))
@@ -472,7 +472,7 @@ class Git(FetchMethod):
         if os.path.exists(destdir):
             bb.utils.prunedir(destdir)
 
-        if ud.shallow and (not os.path.exists(ud.clonedir) or self.need_update(ud, d)):
+        if ud.shallow and self.need_update(ud, d):
             bb.utils.mkdirhier(destdir)
             runfetchcmd("tar -xzf %s" % ud.fullshallow, d, workdir=destdir)
         else:
