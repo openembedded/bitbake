@@ -94,13 +94,13 @@ class RunQueueStats:
         self.active = self.active - 1
         self.failed = self.failed + 1
 
-    def taskCompleted(self, number = 1):
-        self.active = self.active - number
-        self.completed = self.completed + number
+    def taskCompleted(self):
+        self.active = self.active - 1
+        self.completed = self.completed + 1
 
-    def taskSkipped(self, number = 1):
-        self.active = self.active + number
-        self.skipped = self.skipped + number
+    def taskSkipped(self):
+        self.active = self.active + 1
+        self.skipped = self.skipped + 1
 
     def taskActive(self):
         self.active = self.active + 1
@@ -1896,8 +1896,8 @@ class RunQueueExecuteTasks(RunQueueExecute):
         self.setbuildable(task)
         bb.event.fire(runQueueTaskSkipped(task, self.stats, self.rq, reason), self.cfgData)
         self.task_completeoutright(task)
-        self.stats.taskCompleted()
         self.stats.taskSkipped()
+        self.stats.taskCompleted()
 
     def execute(self):
         """
@@ -2342,8 +2342,8 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
     def task_failoutright(self, task):
         self.runq_running.add(task)
         self.runq_buildable.add(task)
-        self.stats.taskCompleted()
         self.stats.taskSkipped()
+        self.stats.taskCompleted()
         self.scenequeue_notcovered.add(task)
         self.scenequeue_updatecounters(task, True)
 
@@ -2351,8 +2351,8 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
         self.runq_running.add(task)
         self.runq_buildable.add(task)
         self.task_completeoutright(task)
-        self.stats.taskCompleted()
         self.stats.taskSkipped()
+        self.stats.taskCompleted()
 
     def execute(self):
         """
