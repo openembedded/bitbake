@@ -134,6 +134,7 @@ class RunQueueScheduler(object):
         self.prio_map = [self.rqdata.runtaskentries.keys()]
 
         self.buildable = []
+        self.skip_maxthread = {}
         self.stamps = {}
         for tid in self.rqdata.runtaskentries:
             (mc, fn, taskname, taskfn) = split_tid_mcfn(tid)
@@ -150,8 +151,25 @@ class RunQueueScheduler(object):
         self.buildable = [x for x in self.buildable if x not in self.rq.runq_running]
         if not self.buildable:
             return None
+
+        # Filter out tasks that have a max number of threads that have been exceeded
+        skip_buildable = {}
+        for running in self.rq.runq_running.difference(self.rq.runq_complete):
+            rtaskname = taskname_from_tid(running)
+            if rtaskname not in self.skip_maxthread:
+                self.skip_maxthread[rtaskname] = self.rq.cfgData.getVarFlag(rtaskname, "number_threads")
+            if not self.skip_maxthread[rtaskname]:
+                continue
+            if rtaskname in skip_buildable:
+                skip_buildable[rtaskname] += 1
+            else:
+                skip_buildable[rtaskname] = 1
+
         if len(self.buildable) == 1:
             tid = self.buildable[0]
+            taskname = taskname_from_tid(tid)
+            if taskname in skip_buildable and skip_buildable[taskname] >= int(self.skip_maxthread[taskname]):
+                return None
             stamp = self.stamps[tid]
             if stamp not in self.rq.build_stamps.values():
                 return tid
@@ -164,6 +182,9 @@ class RunQueueScheduler(object):
         best = None
         bestprio = None
         for tid in self.buildable:
+            taskname = taskname_from_tid(tid)
+            if taskname in skip_buildable and skip_buildable[taskname] >= int(self.skip_maxthread[taskname]):
+                continue
             prio = self.rev_prio_map[tid]
             if bestprio is None or bestprio > prio:
                 stamp = self.stamps[tid]
