@@ -49,7 +49,7 @@ class Svn(FetchMethod):
         if not "module" in ud.parm:
             raise MissingParameterError('module', ud.url)
 
-        ud.basecmd = d.getVar('FETCHCMD_svn')
+        ud.basecmd = d.getVar("FETCHCMD_svn") or "/usr/bin/env svn --non-interactive --trust-server-cert"
 
         ud.module = ud.parm["module"]
 
@@ -59,8 +59,9 @@ class Svn(FetchMethod):
             ud.path_spec = ud.parm["path_spec"]
 
         # Create paths to svn checkouts
+        svndir = d.getVar("SVNDIR") or (d.getVar("DL_DIR") + "/svn")
         relpath = self._strip_leading_slashes(ud.path)
-        ud.pkgdir = os.path.join(d.expand('${SVNDIR}'), ud.host, relpath)
+        ud.pkgdir = os.path.join(svndir, ud.host, relpath)
         ud.moddir = os.path.join(ud.pkgdir, ud.module)
 
         ud.setup_revisions(d)

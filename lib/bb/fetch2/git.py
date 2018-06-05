@@ -261,7 +261,7 @@ class Git(FetchMethod):
                 gitsrcname = gitsrcname + '_' + ud.revisions[name]
 
         dl_dir = d.getVar("DL_DIR")
-        gitdir = d.getVar("GITDIR") or (dl_dir + "/git2/")
+        gitdir = d.getVar("GITDIR") or (dl_dir + "/git2")
         ud.clonedir = os.path.join(gitdir, gitsrcname)
         ud.localfile = ud.clonedir
 
