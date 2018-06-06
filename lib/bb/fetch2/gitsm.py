@@ -98,7 +98,7 @@ class GitSM(Git):
                         for line in lines:
                             f.write(line)
 
-    def update_submodules(self, ud, d):
+    def update_submodules(self, ud, d, allow_network):
         # We have to convert bare -> full repo, do the submodule bit, then convert back
         tmpclonedir = ud.clonedir + ".tmp"
         gitdir = tmpclonedir + os.sep + ".git"
@@ -108,11 +108,46 @@ class GitSM(Git):
         runfetchcmd("sed " + gitdir + "/config -i -e 's/bare.*=.*true/bare = false/'", d)
         runfetchcmd(ud.basecmd + " reset --hard", d, workdir=tmpclonedir)
         runfetchcmd(ud.basecmd + " checkout -f " + ud.revisions[ud.names[0]], d, workdir=tmpclonedir)
-        runfetchcmd(ud.basecmd + " submodule update --init --recursive", d, workdir=tmpclonedir)
-        self._set_relative_paths(tmpclonedir)
-        runfetchcmd("sed " + gitdir + "/config -i -e 's/bare.*=.*false/bare = true/'", d, workdir=tmpclonedir)
-        os.rename(gitdir, ud.clonedir,)
-        bb.utils.remove(tmpclonedir, True)
+
+        try:
+            if allow_network:
+                fetch_flags = ""
+            else:
+                fetch_flags = "--no-fetch"
+
+            # The 'git submodule sync' sandwiched between two successive 'git submodule update' commands is
+            # intentional. See the notes on the similar construction in download() for an explanation.
+            runfetchcmd("%(basecmd)s submodule update --init --recursive %(fetch_flags)s || (%(basecmd)s submodule sync --recursive && %(basecmd)s submodule update --init --recursive %(fetch_flags)s)" % {'basecmd': ud.basecmd, 'fetch_flags' : fetch_flags}, d, workdir=tmpclonedir)
+        except bb.fetch.FetchError:
+            if allow_network:
+                raise
+            else:
+                # This method was called as a probe to see whether the submodule history
+                # is complete enough to allow the current working copy to have its
+                # modules filled in. It's not, so swallow up the exception and report
+                # the negative result.
+                return False
+        finally:
+            self._set_relative_paths(tmpclonedir)
+            runfetchcmd("sed " + gitdir + "/config -i -e 's/bare.*=.*false/bare = true/'", d, workdir=tmpclonedir)
+            os.rename(gitdir, ud.clonedir,)
+            bb.utils.remove(tmpclonedir, True)
+
+        return True
+
+    def need_update(self, ud, d):
+        main_repo_needs_update = Git.need_update(self, ud, d)
+
+        # First check that the main repository has enough history fetched. If it doesn't, then we don't
+        # even have the .gitmodules and gitlinks for the submodules to attempt asking whether the
+        # submodules' histories are recent enough.
+        if main_repo_needs_update:
+            return True
+
+        # Now check that the submodule histories are new enough. The git-submodule command doesn't have
+        # any clean interface for doing this aside from just attempting the checkout (with network
+        # fetched disabled).
+        return not self.update_submodules(ud, d, allow_network=False)
 
     def download(self, ud, d):
         Git.download(self, ud, d)
@@ -120,7 +155,7 @@ class GitSM(Git):
         if not ud.shallow or ud.localpath != ud.fullshallow:
             submodules = self.uses_submodules(ud, d, ud.clonedir)
             if submodules:
-                self.update_submodules(ud, d)
+                self.update_submodules(ud, d, allow_network=True)
 
     def clone_shallow_local(self, ud, dest, d):
         super(GitSM, self).clone_shallow_local(ud, dest, d)
@@ -132,4 +167,36 @@ class GitSM(Git):
 
         if self.uses_submodules(ud, d, ud.destdir):
             runfetchcmd(ud.basecmd + " checkout " + ud.revisions[ud.names[0]], d, workdir=ud.destdir)
-            runfetchcmd(ud.basecmd + " submodule update --init --recursive", d, workdir=ud.destdir)
+
+            # Copy over the submodules' fetched histories too.
+            if ud.bareclone:
+                repo_conf = ud.destdir
+            else:
+                repo_conf = os.path.join(ud.destdir, '.git')
+
+            if os.path.exists(ud.clonedir):
+                # This is not a copy unpacked from a shallow mirror clone. So
+                # the manual intervention to populate the .git/modules done
+                # in clone_shallow_local() won't have been done yet.
+                runfetchcmd("cp -fpPRH %s %s" % (os.path.join(ud.clonedir, 'modules'), repo_conf), d)
+                fetch_flags = "--no-fetch"
+            elif os.path.exists(os.path.join(repo_conf, 'modules')):
+                # Unpacked from a shallow mirror clone. Manual population of
+                # .git/modules is already done.
+                fetch_flags = "--no-fetch"
+            else:
+                # This isn't fatal; git-submodule will just fetch it
+                # during do_unpack().
+                fetch_flags = ""
+                bb.error("submodule history not retrieved during do_fetch()")
+
+            # Careful not to hit the network during unpacking; all history should already
+            # be fetched.
+            #
+            # The repeated attempts to do the submodule initialization sandwiched around a sync to
+            # install the correct remote URLs into the submodules' .git/config metadata are deliberate.
+            # Bad remote URLs are leftover in the modules' .git/config files from the unpack of bare
+            # clone tarballs and an initial 'git submodule update' is necessary to prod them back to
+            # enough life so that the 'git submodule sync' realizes the existing module .git/config
+            # files exist to be updated.
+            runfetchcmd("%(basecmd)s submodule update --init --recursive %(fetch_flags)s || (%(basecmd)s submodule sync --recursive && %(basecmd)s submodule update --init --recursive %(fetch_flags)s)" % {'basecmd': ud.basecmd, 'fetch_flags': fetch_flags}, d, workdir=ud.destdir)
