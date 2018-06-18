@@ -1929,6 +1929,38 @@
                         not careful.
                     </note>
                     </para></listitem>
+                <listitem><para><emphasis><filename>[number_threads]</filename>:</emphasis>
+                    Limits tasks to a specific number of simultaneous threads
+                    during execution.
+                    This varflag is useful when your build host has a large number
+                    of cores but certain tasks need to be rate-limited due to various
+                    kinds of resource constraints (e.g. to avoid network throttling).
+                    <filename>number_threads</filename> works similarly to the
+                    <link linkend='var-BB_NUMBER_THREADS'><filename>BB_NUMBER_THREADS</filename></link>
+                    variable but is task-specific.</para>
+
+                    <para>Set the value globally.
+                    For example, the following makes sure the
+                    <filename>do_fetch</filename> task uses no more than two
+                    simultaneous execution threads:
+                    <literallayout class='monospaced'>
+     do_fetch[number_threads] = "2"
+                    </literallayout>
+                    <note><title>Warnings</title>
+                        <itemizedlist>
+                            <listitem><para>
+                                Setting the varflag in individual recipes rather
+                                than globally can result in unpredictable behavior.
+                                </para></listitem>
+                            <listitem><para>
+                                Setting the varflag to a value greater than the
+                                value used in the <filename>BB_NUMBER_THREADS</filename>
+                                variable causes <filename>number_threads</filename>
+                                to have no effect.
+                                </para></listitem>
+                        </itemizedlist>
+                    </note>
+                    </para></listitem>
                 <listitem><para><emphasis><filename>[postfuncs]</filename>:</emphasis>
                     List of functions to call after the completion of the task.
                     </para></listitem>
