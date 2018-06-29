@@ -1093,7 +1093,7 @@ class RunQueueData:
                     bb.debug(1, "Task %s is marked nostamp, cannot invalidate this task" % taskname)
             else:
                 logger.verbose("Invalidate task %s, %s", taskname, fn)
-                bb.parse.siggen.invalidate_task(taskname, self.dataCaches[mc], fn)
+                bb.parse.siggen.invalidate_task(taskname, self.dataCaches[mc], taskfn)
 
         self.init_progress_reporter.next_stage()
 
