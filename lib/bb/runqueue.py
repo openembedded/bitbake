@@ -1061,7 +1061,7 @@ class RunQueueData:
 
         # Create a whitelist usable by the stamp checks
         self.stampfnwhitelist = {}
-        for mc in self.taskData: 
+        for mc in self.taskData:
             self.stampfnwhitelist[mc] = []
             for entry in self.stampwhitelist.split():
                 if entry not in self.taskData[mc].build_targets:
