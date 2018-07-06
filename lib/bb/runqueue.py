@@ -1892,8 +1892,6 @@ class RunQueueExecuteTasks(RunQueueExecute):
                     alldeps = 0
             if alldeps == 1:
                 self.setbuildable(revdep)
-                fn = fn_from_tid(revdep)
-                taskname = taskname_from_tid(revdep)
                 logger.debug(1, "Marking task %s as buildable", revdep)
 
     def task_complete(self, task):
