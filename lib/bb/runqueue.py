@@ -1886,11 +1886,12 @@ class RunQueueExecuteTasks(RunQueueExecute):
                 continue
             if revdep in self.runq_buildable:
                 continue
-            alldeps = 1
+            alldeps = True
             for dep in self.rqdata.runtaskentries[revdep].depends:
                 if dep not in self.runq_complete:
-                    alldeps = 0
-            if alldeps == 1:
+                    alldeps = False
+                    break
+            if alldeps:
                 self.setbuildable(revdep)
                 logger.debug(1, "Marking task %s as buildable", revdep)
 
