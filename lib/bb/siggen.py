@@ -347,7 +347,7 @@ class SignatureGeneratorBasicHash(SignatureGeneratorBasic):
 
     def stampcleanmask(self, stampbase, fn, taskname, extrainfo):
         return self.stampfile(stampbase, fn, taskname, extrainfo, clean=True)
-        
+
     def invalidate_task(self, task, d, fn):
         bb.note("Tainting hash to force rebuild of task %s, %s" % (fn, task))
         bb.build.write_taint(task, d, fn)
@@ -636,7 +636,7 @@ def compare_sigfiles(a, b, recursecb=None, color=False, collapsed=False):
                         if collapsed:
                             output.extend(recout)
                         else:
-                            # If a dependent hash changed, might as well print the line above and then defer to the changes in 
+                            # If a dependent hash changed, might as well print the line above and then defer to the changes in
                             # that hash since in all likelyhood, they're the same changes this task also saw.
                             output = [output[-1]] + recout
 
