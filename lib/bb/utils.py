@@ -906,6 +906,23 @@ def copyfile(src, dest, newmtime = None, sstat = None):
         newmtime = sstat[stat.ST_MTIME]
     return newmtime
 
+def break_hardlinks(src, sstat = None):
+    """
+    Ensures src is the only hardlink to this file.  Other hardlinks,
+    if any, are not affected (other than in their st_nlink value, of
+    course).  Returns true on success and false on failure.
+
+    """
+    try:
+        if not sstat:
+            sstat = os.lstat(src)
+    except Exception as e:
+        logger.warning("break_hardlinks: stat of %s failed (%s)" % (src, e))
+        return False
+    if sstat[stat.ST_NLINK] == 1:
+        return True
+    return copyfile(src, src, sstat=sstat)
+
 def which(path, item, direction = 0, history = False, executable=False):
     """
     Locate `item` in the list of paths `path` (colon separated string like $PATH).
