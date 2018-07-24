@@ -239,18 +239,21 @@ class LayerIndexPlugin(ActionPlugin):
                     return 1
                 addlayers.append((subdir, name, layerdir))
         if not args.show_only:
+            localargs = argparse.Namespace()
+            localargs.layerdir = []
+            localargs.force = args.force
             for subdir, name, layerdir in set(addlayers):
                 if os.path.exists(layerdir):
                     if subdir:
-                        logger.plain("Adding layer \"%s\" to conf/bblayers.conf" % subdir)
+                        logger.plain("Adding layer \"%s\" (%s) to conf/bblayers.conf" % (subdir, layerdir))
                     else:
-                        logger.plain("Adding layer \"%s\" to conf/bblayers.conf" % name)
-                    localargs = argparse.Namespace()
-                    localargs.layerdir = layerdir
-                    localargs.force = args.force
-                    self.do_add_layer(localargs)
+                        logger.plain("Adding layer \"%s\" (%s) to conf/bblayers.conf" % (name, layerdir))
+                    localargs.layerdir.append(layerdir)
                 else:
                     break
+
+            if localargs.layerdir:
+                self.do_add_layer(localargs)
 
     def do_layerindex_show_depends(self, args):
         """Find layer dependencies from layer index.
