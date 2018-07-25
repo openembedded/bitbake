@@ -377,11 +377,12 @@ class BitBakeServer(object):
         if os.path.exists(sockname):
             os.unlink(sockname)
 
+        # Place the log in the builddirectory alongside the lock file
+        logfile = os.path.join(os.path.dirname(self.bitbake_lock.name), "bitbake-cookerdaemon.log")
+
         self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         # AF_UNIX has path length issues so chdir here to workaround
         cwd = os.getcwd()
-        logfile = os.path.join(cwd, "bitbake-cookerdaemon.log")
-
         try:
             os.chdir(os.path.dirname(sockname))
             self.sock.bind(os.path.basename(sockname))
