@@ -602,6 +602,19 @@ class RunQueueData:
                     if t in taskData[mc].taskentries:
                         depends.add(t)
 
+        def add_mc_dependencies(mc, tid):
+            mcdeps = taskData[mc].get_mcdepends()
+            for dep in mcdeps:
+                mcdependency = dep.split(':')
+                pn = mcdependency[3]
+                frommc = mcdependency[1]
+                mcdep = mcdependency[2]
+                deptask = mcdependency[4]
+                if mc == frommc:
+                    fn = taskData[mcdep].build_targets[pn][0]
+                    newdep = '%s:%s' % (fn,deptask)
+                    taskData[mc].taskentries[tid].tdepends.append(newdep)
+
         for mc in taskData:
             for tid in taskData[mc].taskentries:
 
@@ -618,12 +631,16 @@ class RunQueueData:
                 if fn in taskData[mc].failed_fns:
                     continue
 
+                # We add multiconfig dependencies before processing internal task deps (tdepends)
+                if 'mcdepends' in task_deps and taskname in task_deps['mcdepends']:
+                    add_mc_dependencies(mc, tid)
+
                 # Resolve task internal dependencies
                 #
                 # e.g. addtask before X after Y
                 for t in taskData[mc].taskentries[tid].tdepends:
-                    (_, depfn, deptaskname, _) = split_tid_mcfn(t)
-                    depends.add(build_tid(mc, depfn, deptaskname))
+                    (depmc, depfn, deptaskname, _) = split_tid_mcfn(t)
+                    depends.add(build_tid(depmc, depfn, deptaskname))
 
                 # Resolve 'deptask' dependencies
                 #

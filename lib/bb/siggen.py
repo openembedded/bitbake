@@ -193,15 +193,24 @@ class SignatureGeneratorBasic(SignatureGenerator):
         return taint
 
     def get_taskhash(self, fn, task, deps, dataCache):
+
+        mc = ''
+        if fn.startswith('multiconfig:'):
+            mc = fn.split(':')[1]
         k = fn + "." + task
+
         data = dataCache.basetaskhash[k]
         self.basehash[k] = data
         self.runtaskdeps[k] = []
         self.file_checksum_values[k] = []
         recipename = dataCache.pkg_fn[fn]
-
         for dep in sorted(deps, key=clean_basepath):
-            depname = dataCache.pkg_fn[self.pkgnameextract.search(dep).group('fn')]
+            pkgname = self.pkgnameextract.search(dep).group('fn')
+            if mc:
+                depmc = pkgname.split(':')[1]
+                if mc != depmc:
+                    continue
+            depname = dataCache.pkg_fn[pkgname]
             if not self.rundep_check(fn, recipename, task, dep, depname, dataCache):
                 continue
             if dep not in self.taskhash:

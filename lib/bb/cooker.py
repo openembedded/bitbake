@@ -609,7 +609,14 @@ class BBCooker:
                 k2 = k.split(":do_")
                 k = k2[0]
                 ktask = k2[1]
-            taskdata[mc].add_provider(localdata[mc], self.recipecaches[mc], k)
+            if mc:
+                # Provider might be from another mc
+                for mcavailable in self.multiconfigs:
+                    # The first element is empty
+                    if mcavailable:
+                        taskdata[mcavailable].add_provider(localdata[mcavailable], self.recipecaches[mcavailable], k)
+            else:
+                taskdata[mc].add_provider(localdata[mc], self.recipecaches[mc], k)
             current += 1
             if not ktask.startswith("do_"):
                 ktask = "do_%s" % ktask
@@ -620,6 +627,27 @@ class BBCooker:
             runlist.append([mc, k, ktask, fn])
             bb.event.fire(bb.event.TreeDataPreparationProgress(current, len(fulltargetlist)), self.data)
 
+        mcdeps = taskdata[mc].get_mcdepends()
+        # No need to do check providers if there are no mcdeps or not an mc build
+        if mcdeps and mc:
+            # Make sure we can provide the multiconfig dependency
+            seen = set()
+            new = True
+            while new:
+                new = False
+                for mc in self.multiconfigs:
+                    for k in mcdeps:
+                        if k in seen:
+                            continue
+                        l = k.split(':')
+                        depmc = l[2]
+                        if depmc not in self.multiconfigs:
+                            bb.fatal("Multiconfig dependency %s depends on nonexistent mc configuration %s" % (k,depmc))
+                        else:
+                            logger.debug(1, "Adding providers for multiconfig dependency %s" % l[3])
+                            taskdata[depmc].add_provider(localdata[depmc], self.recipecaches[depmc], l[3])
+                            seen.add(k)
+                            new = True
         for mc in self.multiconfigs:
             taskdata[mc].add_unresolved(localdata[mc], self.recipecaches[mc])
 
@@ -706,8 +734,8 @@ class BBCooker:
             if not dotname in depend_tree["tdepends"]:
                 depend_tree["tdepends"][dotname] = []
             for dep in rq.rqdata.runtaskentries[tid].depends:
-                (depmc, depfn, deptaskname, deptaskfn) = bb.runqueue.split_tid_mcfn(dep)
-                deppn = self.recipecaches[mc].pkg_fn[deptaskfn]
+                (depmc, depfn, _, deptaskfn) = bb.runqueue.split_tid_mcfn(dep)
+                deppn = self.recipecaches[depmc].pkg_fn[deptaskfn]
                 depend_tree["tdepends"][dotname].append("%s.%s" % (deppn, bb.runqueue.taskname_from_tid(dep)))
             if taskfn not in seen_fns:
                 seen_fns.append(taskfn)

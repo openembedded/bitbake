@@ -803,6 +803,7 @@ def add_tasks(tasklist, d):
             if name in flags:
                 deptask = d.expand(flags[name])
                 task_deps[name][task] = deptask
+        getTask('mcdepends')
         getTask('depends')
         getTask('rdepends')
         getTask('deptask')
