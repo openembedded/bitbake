@@ -2314,9 +2314,14 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
                 sq_hash.append(self.rqdata.runtaskentries[tid].hash)
                 sq_taskname.append(taskname)
                 sq_task.append(tid)
+
+            self.cooker.data.setVar("BB_SETSCENE_STAMPCURRENT_COUNT", len(stamppresent))
+
             call = self.rq.hashvalidate + "(sq_fn, sq_task, sq_hash, sq_hashfn, d)"
             locs = { "sq_fn" : sq_fn, "sq_task" : sq_taskname, "sq_hash" : sq_hash, "sq_hashfn" : sq_hashfn, "d" : self.cooker.data }
             valid = bb.utils.better_eval(call, locs)
+
+            self.cooker.data.delVar("BB_SETSCENE_STAMPCURRENT_COUNT")
 
             valid_new = stamppresent
             for v in valid:
