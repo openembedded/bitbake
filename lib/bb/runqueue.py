@@ -199,7 +199,7 @@ class RunQueueScheduler(object):
         """
         Return the id of the task we should build next
         """
-        if self.rq.stats.active < self.rq.number_tasks:
+        if self.rq.can_start_task():
             return self.next_buildable_task()
 
     def newbuildable(self, task):
@@ -1754,6 +1754,10 @@ class RunQueueExecute:
         valid = bb.utils.better_eval(call, locs)
         return valid
 
+    def can_start_task(self):
+        can_start = self.stats.active < self.number_tasks
+        return can_start
+
 class RunQueueExecuteDummy(RunQueueExecute):
     def __init__(self, rq):
         self.rq = rq
@@ -2044,7 +2048,7 @@ class RunQueueExecuteTasks(RunQueueExecute):
             self.build_stamps2.append(self.build_stamps[task])
             self.runq_running.add(task)
             self.stats.taskActive()
-            if self.stats.active < self.number_tasks:
+            if self.can_start_task():
                 return True
 
         if self.stats.active > 0:
@@ -2404,7 +2408,7 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
         self.rq.read_workers()
 
         task = None
-        if self.stats.active < self.number_tasks:
+        if self.can_start_task():
             # Find the next setscene to run
             for nexttask in self.rqdata.runq_setscene_tids:
                 if nexttask in self.runq_buildable and nexttask not in self.runq_running and self.stamps[nexttask] not in self.build_stamps.values():
@@ -2463,7 +2467,7 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
             self.build_stamps2.append(self.build_stamps[task])
             self.runq_running.add(task)
             self.stats.taskActive()
-            if self.stats.active < self.number_tasks:
+            if self.can_start_task():
                 return True
 
         if self.stats.active > 0:
