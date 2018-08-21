@@ -49,8 +49,8 @@ def createDaemon(function, logfile):
             # exit() or _exit()?
             # _exit is like exit(), but it doesn't call any functions registered
             # with atexit (and on_exit) or any registered signal handlers.  It also
-            # closes any open file descriptors.  Using exit() may cause all stdio
-            # streams to be flushed twice and any temporary files may be unexpectedly
+            # closes any open file descriptors, but doesn't flush any buffered output.
+            # Using exit() may cause all any temporary files to be unexpectedly
             # removed.  It's therefore recommended that child branches of a fork()
             # and the parent branch(es) of a daemon use _exit().
             os._exit(0)
@@ -79,4 +79,9 @@ def createDaemon(function, logfile):
         traceback.print_exc()
     finally:
         bb.event.print_ui_queue()
+        # os._exit() doesn't flush open files like os.exit() does. Manually flush
+        # stdout and stderr so that any logging output will be seen, particularly
+        # exception tracebacks.
+        sys.stdout.flush()
+        sys.stderr.flush()
         os._exit(0)
