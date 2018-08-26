@@ -1398,7 +1398,9 @@ if True:
             mandatory_fields = ['projectname', 'ptype']
             try:
                 ptype = request.POST.get('ptype')
-                if ptype == "build":
+                if ptype == "import":
+                    mandatory_fields.append('importdir')
+                else:
                     mandatory_fields.append('projectversion')
                 # make sure we have values for all mandatory_fields
                 missing = [field for field in mandatory_fields if len(request.POST.get(field, '')) == 0]
@@ -1415,14 +1417,22 @@ if True:
                     login(request, user)
 
                 #  save the project
-                if ptype == "analysis":
-                    release = None
+                if ptype == "import":
+                    if not os.path.isdir('%s/conf' % request.POST['importdir']):
+                        raise BadParameterException("Bad path or missing 'conf' directory (%s)" % request.POST['importdir'])
+                    from django.core import management
+                    management.call_command('buildimport', '--command=import', '--name=%s' % request.POST['projectname'], '--path=%s' % request.POST['importdir'], interactive=False)
+                    prj = Project.objects.get(name = request.POST['projectname'])
+                    prj.merged_attr = True
+                    prj.save()
                 else:
                     release = Release.objects.get(pk = request.POST.get('projectversion', None ))
+                    prj = Project.objects.create_project(name = request.POST['projectname'], release = release)
+                    prj.user_id = request.user.pk
+                    if 'mergeattr' == request.POST.get('mergeattr', ''):
+                        prj.merged_attr = True
+                    prj.save()
 
-                prj = Project.objects.create_project(name = request.POST['projectname'], release = release)
-                prj.user_id = request.user.pk
-                prj.save()
                 return redirect(reverse(project, args=(prj.pk,)) + "?notify=new-project")
 
             except (IntegrityError, BadParameterException) as e:

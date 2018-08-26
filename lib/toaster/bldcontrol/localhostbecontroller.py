@@ -373,8 +373,8 @@ class LocalhostBEController(BuildEnvironmentController):
                 conf.write('INHERIT+="toaster buildhistory"')
         else:
             # Append the Toaster-specific values directly to the bblayers.conf
-            bblconfpath = os.path.join(bitbake.req.project.builddir, "conf/bblayers.conf")
-            bblconfpath_save = os.path.join(bitbake.req.project.builddir, "conf/bblayers.conf.save")
+            bblconfpath = os.path.join(builddir, "conf/bblayers.conf")
+            bblconfpath_save = os.path.join(builddir, "conf/bblayers.conf.save")
             shutil.copyfile(bblconfpath, bblconfpath_save)
             with open(bblconfpath) as bblayers:
                 content = bblayers.readlines()
@@ -399,8 +399,8 @@ class LocalhostBEController(BuildEnvironmentController):
                 bblayers.write('  "\n')
                 bblayers.write('#=== TOASTER_CONFIG_EPILOG ===\n')
             # Append the Toaster-specific values directly to the local.conf
-            bbconfpath = os.path.join(bitbake.req.project.builddir, "conf/local.conf")
-            bbconfpath_save = os.path.join(bitbake.req.project.builddir, "conf/local.conf.save")
+            bbconfpath = os.path.join(builddir, "conf/local.conf")
+            bbconfpath_save = os.path.join(builddir, "conf/local.conf.save")
             shutil.copyfile(bbconfpath, bbconfpath_save)
             with open(bbconfpath) as f:
                 content = f.readlines()

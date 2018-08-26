@@ -484,11 +484,8 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         project_name = options['name']
         project_path = options['path']
-        project_callback = options['callback']
-        if options['release']:
-            release_name = options['release']
-        else:
-            release_name = ''
+        project_callback = options['callback'] if options['callback'] else ''
+        release_name = options['release'] if options['release'] else ''
 
         #
         # Delete project
