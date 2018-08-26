@@ -444,8 +444,19 @@ class LocalhostBEController(BuildEnvironmentController):
         # clean the Toaster to build environment
         env_clean = 'unset BBPATH;' # clean BBPATH for <= YP-2.4.0
 
-        # run bitbake server from the clone
+        # run bitbake server from the clone if available
+        # otherwise pick it from the PATH
         bitbake = os.path.join(self.pokydirname, 'bitbake', 'bin', 'bitbake')
+        if not os.path.exists(bitbake):
+            logger.info("Bitbake not available under %s, will try to use it from PATH" %
+                        self.pokydirname)
+            for path in os.environ["PATH"].split(os.pathsep):
+                if os.path.exists(os.path.join(path, 'bitbake')):
+                    bitbake = os.path.join(path, 'bitbake')
+                    break
+            else:
+                logger.error("Looks like Bitbake is not available, please fix your environment")
+
         toasterlayers = os.path.join(builddir,"conf/toaster-bblayers.conf")
         if not is_merged_attr:
             self._shellcmd('%s bash -c \"source %s %s; BITBAKE_UI="knotty" %s --read %s --read %s '
