@@ -353,10 +353,9 @@ class Git(FetchMethod):
                 break
 
         if needupdate:
-            try: 
-                runfetchcmd("%s remote rm origin" % ud.basecmd, d, workdir=ud.clonedir)
-            except bb.fetch2.FetchError:
-                logger.debug(1, "No Origin")
+            output = runfetchcmd("%s remote" % ud.basecmd, d, quiet=True, workdir=ud.clonedir)
+            if "origin" in output:
+              runfetchcmd("%s remote rm origin" % ud.basecmd, d, workdir=ud.clonedir)
 
             runfetchcmd("%s remote add --mirror=fetch origin %s" % (ud.basecmd, repourl), d, workdir=ud.clonedir)
             fetch_cmd = "LANG=C %s fetch -f --prune --progress %s refs/*:refs/*" % (ud.basecmd, repourl)
