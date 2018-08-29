@@ -1661,7 +1661,10 @@ class CookerExit(bb.event.Event):
 class CookerCollectFiles(object):
     def __init__(self, priorities):
         self.bbappends = []
-        self.bbfile_config_priorities = priorities
+        # Priorities is a list of tupples, with the second element as the pattern.
+        # We need to sort the list with the longest pattern first, and so on to
+        # the shortest.  This allows nested layers to be properly evaluated.
+        self.bbfile_config_priorities = sorted(priorities, key=lambda tup: tup[1], reverse=True)
 
     def calc_bbfile_priority( self, filename, matched = None ):
         for _, _, regex, pri in self.bbfile_config_priorities:
