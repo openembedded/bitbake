@@ -723,6 +723,75 @@
                     </literallayout>
                 </para>
             </section>
+
+            <section id='executing-a-multiple-configuration-build'>
+                <title>Executing a Multiple Configuration Build</title>
+
+                <para>
+                    BitBake is able to build multiple images or packages
+                    using a single command where the different targets
+                    require different configurations (multiple configuration
+                    builds).
+                    Each target, in this scenario, is referred to as a
+                    "multiconfig".
+                </para>
+
+                <para>
+                    To accomplish a multiple configuration build, you must
+                    define each target's configuration separately using
+                    a parallel configuration file in the build directory.
+                    The location for these multiconfig configuration files
+                    is specific.
+                    They must reside in the current build directory in
+                    a sub-directory of <filename>conf</filename> named
+                    <filename>multiconfig</filename>.
+                    Following is an example for two separate targets:
+                    <imagedata fileref="figures/bb_multiconfig_files.png" align="center" width="4in" depth="3in" />
+                </para>
+
+                <para>
+                    The reason for this required file hierarchy
+                    is because the <filename>BBPATH</filename> variable
+                    is not constructed until the layers are parsed.
+                    Consequently, using the configuration file as a
+                    pre-configuration file is not possible unless it is
+                    located in the current working directory.
+                </para>
+
+                <para>
+                    Minimally, each configuration file must define the
+                    machine and the temporary directory BitBake uses
+                    for the build.
+                    Suggested practice dictates that you do not
+                    overlap the temporary directories used during the
+                    builds.
+                </para>
+
+                <para>
+                    Aside from separate configuration files for each
+                    target, you have to enable BitBake to perform multiple
+                    configuration builds by enabling it in the local
+                    configuration file.
+                    Enabling is accomplished through a variable specific
+                    to the build environment.
+                </para>
+
+                <para>
+                    Once the target configuration files are in place and
+                    BitBake has been enabled to perform multiple configuration
+                    builds, use the following command form to start the
+                    builds:
+                    <literallayout class='monospaced'>
+     $ bitbake [multiconfig:<replaceable>multiconfigname</replaceable>:]<replaceable>target</replaceable> [[[multiconfig:<replaceable>multiconfigname</replaceable>:]<replaceable>target</replaceable>] ... ]
+                    </literallayout>
+                    Here is an example for two multiconfigs:
+                    <filename>Target_1</filename> and
+                    <filename>Target_2</filename>:
+                    <literallayout class='monospaced'>
+     $ bitbake multiconfig:Target_1:<replaceable>target</replaceable> multiconfig:Target_2:<replaceable>target</replaceable>
+                    </literallayout>
+                </para>
+            </section>
         </section>
     </section>
 </chapter>
