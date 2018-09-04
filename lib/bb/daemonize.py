@@ -16,6 +16,10 @@ def createDaemon(function, logfile):
     background as a daemon, returning control to the caller.
     """
 
+    # Ensure stdout/stderror are flushed before forking to avoid duplicate output
+    sys.stdout.flush()
+    sys.stderr.flush()
+
     try:
         # Fork a child process so the parent can exit.  This returns control to
         # the command-line or shell.  It also guarantees that the child will not
@@ -66,12 +70,14 @@ def createDaemon(function, logfile):
 
     try:
         so = open(logfile, 'a+')
-        se = so
         os.dup2(so.fileno(), sys.stdout.fileno())
-        os.dup2(se.fileno(), sys.stderr.fileno())
+        os.dup2(so.fileno(), sys.stderr.fileno())
     except io.UnsupportedOperation:
         sys.stdout = open(logfile, 'a+')
-        sys.stderr = sys.stdout
+
+    # Have stdout and stderr be the same so log output matches chronologically
+    # and there aren't two seperate buffers
+    sys.stderr = sys.stdout
 
     try:
         function()

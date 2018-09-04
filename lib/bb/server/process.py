@@ -395,11 +395,16 @@ class BitBakeServer(object):
         bb.daemonize.createDaemon(self._startServer, logfile)
         self.sock.close()
         self.bitbake_lock.close()
+        os.close(self.readypipein)
 
         ready = ConnectionReader(self.readypipe)
         r = ready.poll(30)
         if r:
-            r = ready.get()
+            try:
+                r = ready.get()
+            except EOFError:
+                # Trap the child exitting/closing the pipe and error out
+                r = None
         if not r or r != "ready":
             ready.close()
             bb.error("Unable to start bitbake server")
@@ -425,21 +430,16 @@ class BitBakeServer(object):
                         bb.error("Server log for this session (%s):\n%s" % (logfile, "".join(lines)))
             raise SystemExit(1)
         ready.close()
-        os.close(self.readypipein)
 
     def _startServer(self):
         print(self.start_log_format % (os.getpid(), datetime.datetime.now().strftime(self.start_log_datetime_format)))
         server = ProcessServer(self.bitbake_lock, self.sock, self.sockname)
         self.configuration.setServerRegIdleCallback(server.register_idle_function)
+        os.close(self.readypipe)
         writer = ConnectionWriter(self.readypipein)
-        try:
-            self.cooker = bb.cooker.BBCooker(self.configuration, self.featureset)
-            writer.send("ready")
-        except:
-            writer.send("fail")
-            raise
-        finally:
-            os.close(self.readypipein)
+        self.cooker = bb.cooker.BBCooker(self.configuration, self.featureset)
+        writer.send("ready")
+        writer.close()
         server.cooker = self.cooker
         server.server_timeout = self.configuration.server_timeout
         server.xmlrpcinterface = self.configuration.xmlrpcinterface
