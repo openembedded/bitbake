@@ -804,6 +804,82 @@
                     </literallayout>
                 </para>
             </section>
+
+            <section id='bb-enabling-multiple-configuration-build-dependencies'>
+                <title>Enabling Multiple Configuration Build Dependencies</title>
+
+                <para>
+                    Sometimes dependencies can exist between targets
+                    (multiconfigs) in a multiple configuration build.
+                    For example, suppose that in order to build an image
+                    for a particular architecture, the root filesystem of
+                    another build for a different architecture needs to
+                    exist.
+                    In other words, the image for the first multiconfig depends
+                    on the root filesystem of the second multiconfig.
+                    This dependency is essentially that the task in the recipe
+                    that builds one multiconfig is dependent on the
+                    completion of the task in the recipe that builds
+                    another multiconfig.
+                </para>
+
+                <para>
+                    To enable dependencies in a multiple configuration
+                    build, you must declare the dependencies in the recipe
+                    using the following statement form:
+                    <literallayout class='monospaced'>
+     <replaceable>task_or_package</replaceable>[mcdepends] = "multiconfig:<replaceable>from_multiconfig</replaceable>:<replaceable>to_multiconfig</replaceable>:<replaceable>recipe_name</replaceable>:<replaceable>task_on_which_to_depend</replaceable>"
+                    </literallayout>
+                    To better show how to use this statement, consider an
+                    example with two multiconfigs: <filename>target1</filename>
+                    and <filename>target2</filename>:
+                    <literallayout class='monospaced'>
+     <replaceable>image_task</replaceable>[mcdepends] = "multiconfig:target1:target2:<replaceable>image2</replaceable>:<replaceable>rootfs_task</replaceable>"
+                    </literallayout>
+                    In this example, the
+                    <replaceable>from_multiconfig</replaceable> is "target1" and
+                    the <replaceable>to_multiconfig</replaceable> is "target2".
+                    The task on which the image whose recipe contains
+                    <replaceable>image_task</replaceable> depends on the
+                    completion of the <replaceable>rootfs_task</replaceable>
+                    used to build out <replaceable>image2</replaceable>, which
+                    is associated with the "target2" multiconfig.
+               </para>
+
+               <para>
+                   Once you set up this dependency, you can build the
+                   "target1" multiconfig using a BitBake command as follows:
+                   <literallayout class='monospaced'>
+     $ bitbake multiconfig:target1:<replaceable>image1</replaceable>
+                   </literallayout>
+                   This command executes all the tasks needed to create
+                   <replaceable>image1</replaceable> for the "target1"
+                   multiconfig.
+                   Because of the dependency, BitBake also executes through
+                   the <replaceable>rootfs_task</replaceable> for the "target2"
+                   multiconfig build.
+               </para>
+
+               <para>
+                   Having a recipe depend on the root filesystem of another
+                   build might not seem that useful.
+                   Consider this change to the statement in the
+                   <replaceable>image1</replaceable> recipe:
+                   <literallayout class='monospaced'>
+     <replaceable>image_task</replaceable>[mcdepends] = "multiconfig:target1:target2:<replaceable>image2</replaceable>:<replaceable>image_task</replaceable>"
+                   </literallayout>
+                   In this case, BitBake must create
+                   <replaceable>image2</replaceable> for the "target2"
+                   build since the "target1" build depends on it.
+               </para>
+
+               <para>
+                   Because "target1" and "target2" are enabled for multiple
+                   configuration builds and have separate configuration
+                   files, BitBake places the artifacts for each build in the
+                   respective temporary build directories.
+               </para>
+            </section>
         </section>
     </section>
 </chapter>
