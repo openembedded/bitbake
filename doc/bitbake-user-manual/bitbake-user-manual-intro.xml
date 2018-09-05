@@ -769,11 +769,23 @@
 
                 <para>
                     Aside from separate configuration files for each
-                    target, you have to enable BitBake to perform multiple
-                    configuration builds by enabling it in the local
+                    target, you must also enable BitBake to perform multiple
+                    configuration builds.
+                    Enabling is accomplished by setting the
+                    <link linkend='var-BBMULTICONFIG'><filename>BBMULTICONFIG</filename></link>
+                    variable in the <filename>local.conf</filename>
                     configuration file.
-                    Enabling is accomplished through a variable specific
-                    to the build environment.
+                    As an example, suppose you had configuration files
+                    for <filename>target1</filename> and
+                    <filename>target2</filename> defined in the build
+                    directory.
+                    The following statement in the
+                    <filename>local.conf</filename> file both enables
+                    BitBake to perform multiple configuration builds and
+                    specifies the two multiconfigs:
+                    <literallayout class='monospaced'>
+     BBMULTICONFIG = "target1 target2"
+                    </literallayout>
                 </para>
 
                 <para>
@@ -785,10 +797,10 @@
      $ bitbake [multiconfig:<replaceable>multiconfigname</replaceable>:]<replaceable>target</replaceable> [[[multiconfig:<replaceable>multiconfigname</replaceable>:]<replaceable>target</replaceable>] ... ]
                     </literallayout>
                     Here is an example for two multiconfigs:
-                    <filename>Target_1</filename> and
-                    <filename>Target_2</filename>:
+                    <filename>target1</filename> and
+                    <filename>target2</filename>:
                     <literallayout class='monospaced'>
-     $ bitbake multiconfig:Target_1:<replaceable>target</replaceable> multiconfig:Target_2:<replaceable>target</replaceable>
+     $ bitbake multiconfig:target1:<replaceable>target</replaceable> multiconfig:target2:<replaceable>target</replaceable>
                     </literallayout>
                 </para>
             </section>

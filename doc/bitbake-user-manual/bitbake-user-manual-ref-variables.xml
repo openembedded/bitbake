@@ -1205,6 +1205,45 @@
             </glossdef>
         </glossentry>
 
+        <glossentry id='var-BBMULTICONFIG'><glossterm>BBMULTICONFIG</glossterm>
+            <info>
+                BBMULTICONFIG[doc] = "Enables BitBake to perform multiple configuration builds and lists each separate configuration (multiconfig)."
+            </info>
+            <glossdef>
+                <para role="glossdeffirst">
+<!--                <para role="glossdeffirst"><imagedata fileref="figures/define-generic.png" /> -->
+                    Enables BitBake to perform multiple configuration builds
+                    and lists each separate configuration (multiconfig).
+                    You can use this variable to cause BitBake to build
+                    multiple targets where each target has a separate
+                    configuration.
+                    Define <filename>BBMULTICONFIG</filename> in your
+                    <filename>conf/local.conf</filename> configuration file.
+                </para>
+
+                <para>
+                    As an example, the following line specifies three
+                    multiconfigs, each having a separate configuration file:
+                    <literallayout class='monospaced'>
+     BBMULTIFONFIG = "configA configB configC"
+                    </literallayout>
+                    Each configuration file you use must reside in the
+                    build directory within a directory named
+                    <filename>conf/multiconfig</filename> (e.g.
+                    <replaceable>build_directory</replaceable><filename>/conf/multiconfig/configA.conf</filename>).
+                </para>
+
+                <para>
+                    For information on how to use
+                    <filename>BBMULTICONFIG</filename> in an environment that
+                    supports building targets with multiple configurations,
+                    see the
+                    "<link linkend='executing-a-multiple-configuration-build'>Executing a Multiple Configuration Build</link>"
+                    section.
+                </para>
+            </glossdef>
+        </glossentry>
+
         <glossentry id='var-BBPATH'><glossterm>BBPATH</glossterm>
             <glossdef>
                 <para>
