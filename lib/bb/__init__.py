@@ -63,6 +63,10 @@ class BBLogger(Logger):
     def verbose(self, msg, *args, **kwargs):
         return self.log(logging.INFO - 1, msg, *args, **kwargs)
 
+    def verbnote(self, msg, *args, **kwargs):
+        return self.log(logging.INFO + 2, msg, *args, **kwargs)
+
+
 logging.raiseExceptions = False
 logging.setLoggerClass(BBLogger)
 
@@ -93,6 +97,18 @@ def debug(lvl, *args):
 def note(*args):
     mainlogger.info(''.join(args))
 
+#
+# A higher prioity note which will show on the console but isn't a warning
+#
+# Something is happening the user should be aware of but they probably did
+# something to make it happen
+#
+def verbnote(*args):
+    mainlogger.verbnote(''.join(args))
+
+#
+# Warnings - things the user likely needs to pay attention to and fix
+#
 def warn(*args):
     mainlogger.warning(''.join(args))
 
