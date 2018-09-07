@@ -1070,7 +1070,7 @@ class RunQueueData:
                     msg += "\n%s has unique rprovides:\n  %s" % (provfn, "\n  ".join(rprovide_results[provfn] - commonrprovs))
 
                 if self.warn_multi_bb:
-                    logger.warning(msg)
+                    logger.verbnote(msg)
                 else:
                     logger.error(msg)
 

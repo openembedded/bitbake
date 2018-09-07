@@ -1594,7 +1594,7 @@ class BBCooker:
                     pkgs_to_build.append(t)
 
         if 'universe' in pkgs_to_build:
-            parselog.warning("The \"universe\" target is only intended for testing and may produce errors.")
+            parselog.verbnote("The \"universe\" target is only intended for testing and may produce errors.")
             parselog.debug(1, "collating packages for \"universe\"")
             pkgs_to_build.remove('universe')
             for mc in self.multiconfigs:
