@@ -65,8 +65,8 @@ def createDaemon(function, logfile):
     # The second child.
 
     # Replace standard fds with our own
-    si = open('/dev/null', 'r')
-    os.dup2(si.fileno(), sys.stdin.fileno())
+    with open('/dev/null', 'r') as si:
+        os.dup2(si.fileno(), sys.stdin.fileno())
 
     try:
         so = open(logfile, 'a+')
