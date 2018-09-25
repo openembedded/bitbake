@@ -32,7 +32,7 @@ class LayerIndexCookerTest(LayersTest):
         # configure the test data.  But we can emulate the basics of the layer.conf
         # files, so that is what we will do.
 
-        new_topdir = os.path.join(os.path.dirname(__file__), "testdata")
+        new_topdir = os.path.join(os.path.dirname(os.path.realpath(__file__)), "testdata")
         new_bbpath = os.path.join(new_topdir, "build")
 
         self.d.setVar('TOPDIR', new_topdir)
