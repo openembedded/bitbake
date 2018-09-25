@@ -497,7 +497,11 @@ def lockfile(name, shared=False, retry=True, block=False):
                 if statinfo.st_ino == statinfo2.st_ino:
                     return lf
             lf.close()
-        except Exception:
+        except OSError as e:
+            if e.errno == errno.EACCES:
+                logger.error("Unable to acquire lock '%s', %s",
+                             e.strerror, name)
+                sys.exit(1)
             try:
                 lf.close()
             except Exception:
