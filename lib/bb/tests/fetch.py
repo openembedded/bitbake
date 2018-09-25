@@ -1344,6 +1344,9 @@ class GitShallowTest(FetcherTest):
         smdir = os.path.join(self.tempdir, 'gitsubmodule')
         bb.utils.mkdirhier(smdir)
         self.git('init', cwd=smdir)
+        # Make this look like it was cloned from a remote...
+        self.git('config --add remote.origin.url "%s"' % smdir, cwd=smdir)
+        self.git('config --add remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"', cwd=smdir)
         self.add_empty_file('asub', cwd=smdir)
 
         self.git('submodule init', cwd=self.srcdir)
