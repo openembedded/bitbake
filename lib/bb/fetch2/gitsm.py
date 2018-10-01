@@ -78,7 +78,7 @@ class GitSM(Git):
             url = uris[module].replace('%s:' % proto, 'gitsm:', 1)
             url += ';protocol=%s' % proto
             url += ";name=%s" % module
-            url += ";qbareclone=1;nocheckout=1"
+            url += ";bareclone=1;nocheckout=1"
 
             ld = d.createCopy()
             # Not necessary to set SRC_URI, since we're passing the URI to
