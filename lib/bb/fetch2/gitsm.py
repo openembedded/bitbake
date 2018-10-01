@@ -44,6 +44,22 @@ class GitSM(Git):
         """
         return ud.type in ['gitsm']
 
+    @staticmethod
+    def parse_gitmodules(gitmodules):
+        modules = {}
+        module = ""
+        for line in gitmodules.splitlines():
+            if line.startswith('[submodule'):
+                module = line.split('"')[1]
+                modules[module] = {}
+            elif module and line.strip().startswith('path'):
+                path = line.split('=')[1].strip()
+                modules[module]['path'] = path
+            elif module and line.strip().startswith('url'):
+                url = line.split('=')[1].strip()
+                modules[module]['url'] = url
+        return modules
+
     def update_submodules(self, ud, d):
         submodules = []
         paths = {}
@@ -57,17 +73,10 @@ class GitSM(Git):
                 # No submodules to update
                 continue
 
-            module = ""
-            for line in gitmodules.splitlines():
-                if line.startswith('[submodule'):
-                    module = line.split('"')[1]
-                    submodules.append(module)
-                elif module and line.strip().startswith('path'):
-                    path = line.split('=')[1].strip()
-                    paths[module] = path
-                elif module and line.strip().startswith('url'):
-                    url = line.split('=')[1].strip()
-                    uris[module] = url
+            for m, md in self.parse_gitmodules(gitmodules).items():
+                submodules.append(m)
+                paths[m] = md['path']
+                uris[m] = md['url']
 
         for module in submodules:
             module_hash = runfetchcmd("%s ls-tree -z -d %s %s" % (ud.basecmd, ud.revisions[name], paths[module]), d, quiet=True, workdir=ud.clonedir)
@@ -173,10 +182,7 @@ class GitSM(Git):
                 # No submodules to update
                 continue
 
-            for line in gitmodules.splitlines():
-                if line.startswith('[submodule'):
-                    module = line.split('"')[1]
-                    submodules.append(module)
+            submodules = list(self.parse_gitmodules(gitmodules).keys())
 
         self.copy_submodules(submodules, ud, dest, d)
 
@@ -200,23 +206,25 @@ class GitSM(Git):
                 # No submodules to update
                 continue
 
-            module = ""
-            for line in gitmodules.splitlines():
-                if line.startswith('[submodule'):
-                    module = line.split('"')[1]
-                    submodules.append(module)
-                elif module and line.strip().startswith('path'):
-                    path = line.split('=')[1].strip()
-                    paths[module] = path
-                elif module and line.strip().startswith('url'):
-                    url = line.split('=')[1].strip()
-                    uris[module] = url
+            for m, md in self.parse_gitmodules(gitmodules).items():
+                submodules.append(m)
+                paths[m] = md['path']
+                uris[m] = md['url']
 
         self.copy_submodules(submodules, ud, ud.destdir, d)
 
-        for module in submodules:
-            srcpath = os.path.join(ud.clonedir, 'modules', module)
-            modpath = os.path.join(repo_conf, 'modules', module)
+        submodules_queue = [(module, os.path.join(repo_conf, 'modules', module)) for module in submodules]
+        while len(submodules_queue) != 0:
+            module, modpath = submodules_queue.pop()
+
+            # add submodule children recursively
+            try:
+                gitmodules = runfetchcmd("%s show HEAD:.gitmodules" % (ud.basecmd), d, quiet=True, workdir=modpath)
+                for m, md in self.parse_gitmodules(gitmodules).items():
+                    submodules_queue.append([m, os.path.join(modpath, 'modules', m)])
+            except:
+                # no children
+                pass
 
             # Determine (from the submodule) the correct url to reference
             try:
@@ -235,4 +243,4 @@ class GitSM(Git):
 
         if submodules:
             # Run submodule update, this sets up the directories -- without touching the config
-            runfetchcmd("%s submodule update --no-fetch" % (ud.basecmd), d, quiet=True, workdir=ud.destdir)
+            runfetchcmd("%s submodule update --recursive --no-fetch" % (ud.basecmd), d, quiet=True, workdir=ud.destdir)
