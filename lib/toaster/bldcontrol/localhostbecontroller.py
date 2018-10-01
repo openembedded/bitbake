@@ -177,8 +177,11 @@ class LocalhostBEController(BuildEnvironmentController):
                 try:
                     localremotes = self._shellcmd("git remote -v",
                                                   localdirname,env=git_env)
-                    if not giturl in localremotes and commit != 'HEAD':
-                        raise BuildSetupException("Existing git repository at %s, but with different remotes ('%s', expected '%s'). Toaster will not continue out of fear of damaging something." % (localdirname, ", ".join(localremotes.split("\n")), giturl))
+                    # NOTE: this nice-to-have check breaks when using git remaping to get past firewall
+                    #       Re-enable later with .gitconfig remapping checks
+                    #if not giturl in localremotes and commit != 'HEAD':
+                    #    raise BuildSetupException("Existing git repository at %s, but with different remotes ('%s', expected '%s'). Toaster will not continue out of fear of damaging something." % (localdirname, ", ".join(localremotes.split("\n")), giturl))
+                    pass
                 except ShellCmdException:
                     # our localdirname might not be a git repository
                     #- that's fine
