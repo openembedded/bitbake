@@ -98,12 +98,14 @@ class GitSM(Git):
 
             # Correct the submodule references to the local download version...
             runfetchcmd("%(basecmd)s config submodule.%(module)s.url %(url)s" % {'basecmd': ud.basecmd, 'module': module, 'url' : local_paths[module]}, d, workdir=ud.clonedir)
-            try:
-                os.mkdir(os.path.join(ud.clonedir, 'modules'))
-            except OSError:
-                pass
-            if not os.path.exists(os.path.join(ud.clonedir, 'modules', paths[module])):
-                os.symlink(local_paths[module], os.path.join(ud.clonedir, 'modules', paths[module]))
+
+            symlink_path = os.path.join(ud.clonedir, 'modules', paths[module])
+            if not os.path.exists(symlink_path):
+                try:
+                    os.makedirs(os.path.dirname(symlink_path), exist_ok=True)
+                except OSError:
+                    pass
+                os.symlink(local_paths[module], symlink_path)
 
         return True
 
@@ -148,6 +150,7 @@ class GitSM(Git):
                 if os.path.exists(modpath):
                     target = os.path.dirname(modpath)
 
+                os.makedirs(os.path.dirname(target), exist_ok=True)
                 runfetchcmd("cp -fpLR %s %s" % (srcpath, target), d)
             elif os.path.exists(modpath):
                 # Module already exists, likely unpacked from a shallow mirror clone
