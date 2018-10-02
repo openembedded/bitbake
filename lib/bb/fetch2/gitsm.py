@@ -31,6 +31,7 @@ NOTE: Switching a SRC_URI from "git://" to "gitsm://" requires a clean of your r
 
 import os
 import bb
+import copy
 from   bb.fetch2.git import Git
 from   bb.fetch2 import runfetchcmd
 from   bb.fetch2 import logger
@@ -77,6 +78,10 @@ class GitSM(Git):
                 submodules.append(m)
                 paths[m] = md['path']
                 uris[m] = md['url']
+                if uris[m].startswith('..'):
+                    newud = copy.copy(ud)
+                    newud.path = os.path.realpath(os.path.join(newud.path, md['url']))
+                    uris[m] = Git._get_repo_url(self, newud)
 
         for module in submodules:
             module_hash = runfetchcmd("%s ls-tree -z -d %s %s" % (ud.basecmd, ud.revisions[name], paths[module]), d, quiet=True, workdir=ud.clonedir)
