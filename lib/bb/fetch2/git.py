@@ -476,7 +476,7 @@ class Git(FetchMethod):
         if os.path.exists(destdir):
             bb.utils.prunedir(destdir)
 
-        if ud.shallow and os.path.exists(ud.fullshallow) and self.need_update(ud, d):
+        if ud.shallow and os.path.exists(ud.fullshallow) and self.clonedir_need_update(ud, d):
             bb.utils.mkdirhier(destdir)
             runfetchcmd("tar -xzf %s" % ud.fullshallow, d, workdir=destdir)
         else:
