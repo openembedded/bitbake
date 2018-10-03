@@ -299,16 +299,21 @@ class Git(FetchMethod):
         return ud.clonedir
 
     def need_update(self, ud, d):
+        return self.clonedir_need_update(ud, d) or self.shallow_tarball_need_update(ud) or self.tarball_need_update(ud)
+
+    def clonedir_need_update(self, ud, d):
         if not os.path.exists(ud.clonedir):
             return True
         for name in ud.names:
             if not self._contains_ref(ud, d, name, ud.clonedir):
                 return True
-        if ud.shallow and ud.write_shallow_tarballs and not os.path.exists(ud.fullshallow):
-            return True
-        if ud.write_tarballs and not os.path.exists(ud.fullmirror):
-            return True
         return False
+
+    def shallow_tarball_need_update(self, ud):
+        return ud.shallow and ud.write_shallow_tarballs and not os.path.exists(ud.fullshallow)
+
+    def tarball_need_update(self, ud):
+        return ud.write_tarballs and not os.path.exists(ud.fullmirror)
 
     def try_premirror(self, ud, d):
         # If we don't do this, updating an existing checkout with only premirrors
