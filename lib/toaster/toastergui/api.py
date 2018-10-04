@@ -677,7 +677,13 @@ class XhrCustomRecipe(View):
         recipe_path = os.path.join(layerpath, "recipes", "%s.bb" %
                                    recipe.name)
         with open(recipe_path, "w") as recipef:
-            recipef.write(recipe.generate_recipe_file_contents())
+            content = recipe.generate_recipe_file_contents()
+            if not content:
+                # Delete this incomplete image recipe object
+                recipe.delete()
+                return error_response("recipe-parent-not-exist")
+            else:
+                recipef.write(recipe.generate_recipe_file_contents())
 
         return JsonResponse(
             {"error": "ok",
