@@ -646,10 +646,10 @@
             <glossdef>
                 <para>
                     Contains the name of the currently executing task.
-                    The value does not include the "do_" prefix.
+                    The value includes the "do_" prefix.
                     For example, if the currently executing task is
                     <filename>do_config</filename>, the value is
-                    "config".
+                    "do_config".
                 </para>
             </glossdef>
         </glossentry>
