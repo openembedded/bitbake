@@ -1709,6 +1709,8 @@ class GitShallowTest(FetcherTest):
             fetcher.unpack(self.d.getVar('WORKDIR'))
 
         self.assertTrue("No up to date source found" in context.exception.msg)
+        self.assertTrue("clone directory not available or not up to date" in context.exception.msg)
+        self.assertTrue("shallow clone not enabled or not available" in context.exception.msg)
 
     @skipIfNoNetwork()
     def test_that_unpack_does_work_when_using_git_shallow_tarball_but_tarball_is_not_available(self):

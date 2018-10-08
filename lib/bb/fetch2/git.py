@@ -476,14 +476,27 @@ class Git(FetchMethod):
         if os.path.exists(destdir):
             bb.utils.prunedir(destdir)
 
-        clonedir_is_up_to_date = not self.clonedir_need_update(ud, d)
-        if clonedir_is_up_to_date:
-            runfetchcmd("%s clone %s %s/ %s" % (ud.basecmd, ud.cloneflags, ud.clonedir, destdir), d)
-        elif ud.shallow and os.path.exists(ud.fullshallow):
-            bb.utils.mkdirhier(destdir)
-            runfetchcmd("tar -xzf %s" % ud.fullshallow, d, workdir=destdir)
-        else:
-            raise bb.fetch2.UnpackError("No up to date source found", ud.url)
+        source_found = False
+        source_error = []
+
+        if not source_found:
+            clonedir_is_up_to_date = not self.clonedir_need_update(ud, d)
+            if clonedir_is_up_to_date:
+                runfetchcmd("%s clone %s %s/ %s" % (ud.basecmd, ud.cloneflags, ud.clonedir, destdir), d)
+                source_found = True
+            else:
+                source_error.append("clone directory not available or not up to date: " + ud.clonedir)
+
+        if not source_found:
+            if ud.shallow and os.path.exists(ud.fullshallow):
+                bb.utils.mkdirhier(destdir)
+                runfetchcmd("tar -xzf %s" % ud.fullshallow, d, workdir=destdir)
+                source_found = True
+            else:
+                source_error.append("shallow clone not enabled or not available: " + ud.fullshallow)
+
+        if not source_found:
+            raise bb.fetch2.UnpackError("No up to date source found: " + "; ".join(source_error), ud.url)
 
         repourl = self._get_repo_url(ud)
         runfetchcmd("%s remote set-url origin %s" % (ud.basecmd, repourl), d, workdir=destdir)
