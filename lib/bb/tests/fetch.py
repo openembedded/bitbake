@@ -1699,6 +1699,17 @@ class GitShallowTest(FetcherTest):
         self.assertRefs(['master', 'origin/master'])
         self.assertRevCount(orig_revs - 1758)
 
+    def test_that_unpack_throws_an_error_when_the_git_clone_nor_shallow_tarball_exist(self):
+        self.add_empty_file('a')
+        fetcher, ud = self.fetch()
+        bb.utils.remove(self.gitdir, recurse=True)
+        bb.utils.remove(self.dldir, recurse=True)
+
+        with self.assertRaises(bb.fetch2.UnpackError) as context:
+            fetcher.unpack(self.d.getVar('WORKDIR'))
+
+        self.assertTrue("No up to date source found" in context.exception.msg)
+
     @skipIfNoNetwork()
     def test_that_unpack_does_work_when_using_git_shallow_tarball_but_tarball_is_not_available(self):
         self.d.setVar('SRCREV', 'e5939ff608b95cdd4d0ab0e1935781ab9a276ac0')
