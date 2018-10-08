@@ -476,11 +476,12 @@ class Git(FetchMethod):
         if os.path.exists(destdir):
             bb.utils.prunedir(destdir)
 
-        if ud.shallow and os.path.exists(ud.fullshallow) and self.clonedir_need_update(ud, d):
+        clonedir_is_up_to_date = not self.clonedir_need_update(ud, d)
+        if clonedir_is_up_to_date:
+            runfetchcmd("%s clone %s %s/ %s" % (ud.basecmd, ud.cloneflags, ud.clonedir, destdir), d)
+        elif ud.shallow and os.path.exists(ud.fullshallow):
             bb.utils.mkdirhier(destdir)
             runfetchcmd("tar -xzf %s" % ud.fullshallow, d, workdir=destdir)
-        elif not self.clonedir_need_update(ud, d):
-            runfetchcmd("%s clone %s %s/ %s" % (ud.basecmd, ud.cloneflags, ud.clonedir, destdir), d)
         else:
             raise bb.fetch2.UnpackError("No up to date source found", ud.url)
 
