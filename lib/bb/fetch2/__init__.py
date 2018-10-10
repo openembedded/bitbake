@@ -837,14 +837,16 @@ def runfetchcmd(cmd, d, quiet=False, cleanup=None, log=None, workdir=None):
     if not cleanup:
         cleanup = []
 
-    # If PATH contains WORKDIR which contains PV which contains SRCPV we
+    # If PATH contains WORKDIR which contains PV-PR which contains SRCPV we
     # can end up in circular recursion here so give the option of breaking it
     # in a data store copy.
     try:
         d.getVar("PV")
+        d.getVar("PR")
     except bb.data_smart.ExpansionError:
         d = bb.data.createCopy(d)
         d.setVar("PV", "fetcheravoidrecurse")
+        d.setVar("PR", "fetcheravoidrecurse")
 
     origenv = d.getVar("BB_ORIGENV", False)
     for var in exportvars:
