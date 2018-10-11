@@ -448,7 +448,7 @@ layerBranches set.  If not, they are effectively blank.'''
 This function is used to implement debugging and provide the user info.
 '''
         for lix in self.indexes:
-            if object not in lix:
+            if not hasattr(lix, object):
                 continue
 
             logger.plain ('')
@@ -1046,15 +1046,15 @@ class LayerBranch(LayerIndexItemObj):
         self.id = id
         self.collection = collection
         self.version = version
-        if type(layer) != type(LayerItem):
-            self.layer_id = layer
-        else:
+        if isinstance(layer, LayerItem):
             self.layer = layer
-
-        if type(branch) != type(Branch):
-            self.branch_id = branch
         else:
+            self.layer_id = layer
+
+        if isinstance(branch, Branch):
             self.branch = branch
+        else:
+            self.branch_id = branch
 
         self.vcs_subdir = vcs_subdir
         self.vcs_last_fetch = vcs_last_fetch
@@ -1088,7 +1088,7 @@ class LayerBranch(LayerIndexItemObj):
 
     @layer.setter
     def layer(self, value):
-        if type(value) != type(LayerItem):
+        if not isinstance(value, LayerItem):
             raise TypeError('value is not a LayerItem')
         if self.index != value.index:
             raise AttributeError('Object and value do not share the same index and thus key set.')
@@ -1122,7 +1122,7 @@ class LayerBranch(LayerIndexItemObj):
 
     @branch.setter
     def branch(self, value):
-        if type(value) != type(LayerItem):
+        if not isinstance(value, LayerItem):
             raise TypeError('value is not a LayerItem')
         if self.index != value.index:
             raise AttributeError('Object and value do not share the same index and thus key set.')
@@ -1181,7 +1181,7 @@ class LayerIndexItemObj_LayerBranch(LayerIndexItemObj):
 
     @layerbranch.setter
     def layerbranch(self, value):
-        if type(value) != type(LayerBranch):
+        if not isinstance(value, LayerBranch):
             raise TypeError('value (%s) is not a layerBranch' % type(value))
         if self.index != value.index:
             raise AttributeError('Object and value do not share the same index and thus key set.')
@@ -1207,14 +1207,14 @@ class LayerIndexItemObj_LayerBranch(LayerIndexItemObj):
 class LayerDependency(LayerIndexItemObj_LayerBranch):
     def define_data(self, id, layerbranch, dependency, required=True):
         self.id = id
-        if type(layerbranch) != type(LayerBranch):
-            self.layerbranch_id = layerbranch
-        else:
+        if isinstance(layerbranch, LayerBranch):
             self.layerbranch = layerbranch
-        if type(dependency) != type(LayerDependency):
-            self.dependency_id = dependency
         else:
+            self.layerbranch_id = layerbranch
+        if isinstance(dependency, LayerDependency):
             self.dependency = dependency
+        else:
+            self.dependency_id = dependency
         self.required = required
 
     @property
@@ -1240,7 +1240,7 @@ class LayerDependency(LayerIndexItemObj_LayerBranch):
 
     @dependency.setter
     def dependency(self, value):
-        if type(value) != type(LayerDependency):
+        if not isinstance(value, LayerDependency):
             raise TypeError('value (%s) is not a dependency' % type(value))
         if self.index != value.index:
             raise AttributeError('Object and value do not share the same index and thus key set.')
@@ -1288,10 +1288,10 @@ class Recipe(LayerIndexItemObj_LayerBranch):
         self.inherits = inherits
         self.updated = updated or datetime.datetime.today().isoformat()
         self.blacklisted = blacklisted
-        if type(layerbranch) != type(LayerBranch):
-            self.layerbranch_id = layerbranch
-        else:
+        if isinstance(layerbranch, LayerBranch):
             self.layerbranch = layerbranch
+        else:
+            self.layerbranch_id = layerbranch
 
     @property
     def fullpath(self):
@@ -1324,10 +1324,10 @@ class Machine(LayerIndexItemObj_LayerBranch):
         self.id = id
         self.name = name
         self.description = description
-        if type(layerbranch) != type(LayerBranch):
-            self.layerbranch_id = layerbranch
-        else:
+        if isinstance(layerbranch, LayerBranch):
             self.layerbranch = layerbranch
+        else:
+            self.layerbranch_id = layerbranch
         self.updated = updated or datetime.datetime.today().isoformat()
 
 class Distro(LayerIndexItemObj_LayerBranch):
@@ -1337,12 +1337,11 @@ class Distro(LayerIndexItemObj_LayerBranch):
         self.id = id
         self.name = name
         self.description = description
-        if type(layerbranch) != type(LayerBranch):
-            self.layerbranch_id = layerbranch
-        else:
+        if isinstance(layerbranch, LayerBranch):
             self.layerbranch = layerbranch
+        else:
+            self.layerbranch_id = layerbranch
         self.updated = updated or datetime.datetime.today().isoformat()
-
 
 # When performing certain actions, we may need to sort the data.
 # This will allow us to keep it consistent from run to run.

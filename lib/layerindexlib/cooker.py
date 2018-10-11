@@ -136,10 +136,13 @@ class CookerPlugin(layerindexlib.plugin.IndexPlugin):
                 layerrev = self._run_command('git rev-parse HEAD', layerpath, default="<unknown>")
 
                 for remotes in self._run_command('git remote -v', layerpath, default="").split("\n"):
-                    remote = remotes.split("\t")[1].split(" ")[0]
-                    if "(fetch)" == remotes.split("\t")[1].split(" ")[1]:
-                        layerurl = self._handle_git_remote(remote)
-                        break
+                    if not remotes:
+                        layerurl = self._handle_git_remote(layerpath)
+                    else:
+                        remote = remotes.split("\t")[1].split(" ")[0]
+                        if "(fetch)" == remotes.split("\t")[1].split(" ")[1]:
+                            layerurl = self._handle_git_remote(remote)
+                            break
 
             layerItemId += 1
             index.layerItems[layerItemId] = layerindexlib.LayerItem(index, None)
@@ -297,7 +300,7 @@ class CookerPlugin(layerindexlib.plugin.IndexPlugin):
 
             for layerBranchId in index.layerBranches:
                 # load_bblayers uses the description to cache the actual path...
-                machine_path = index.layerBranches[layerBranchId].getDescription()
+                machine_path = index.layerBranches[layerBranchId].layer.description
                 machine_path = os.path.join(machine_path, 'conf/machine')
                 if os.path.isdir(machine_path):
                     for (dirpath, _, filenames) in os.walk(machine_path):
@@ -310,7 +313,7 @@ class CookerPlugin(layerindexlib.plugin.IndexPlugin):
                                 machine = layerindexlib.Machine(index, None)
                                 machine.define_data(id=machineId, name=fname[:-5],
                                                     description=fname[:-5],
-                                                    layerbranch=collection_layerbranch[entry])
+                                                    layerbranch=index.layerBranches[layerBranchId])
 
                                 index.add_element("machines", [machine])
 
@@ -321,7 +324,7 @@ class CookerPlugin(layerindexlib.plugin.IndexPlugin):
 
             for layerBranchId in index.layerBranches:
                 # load_bblayers uses the description to cache the actual path...
-                distro_path = index.layerBranches[layerBranchId].getDescription()
+                distro_path = index.layerBranches[layerBranchId].layer.description
                 distro_path = os.path.join(distro_path, 'conf/distro')
                 if os.path.isdir(distro_path):
                     for (dirpath, _, filenames) in os.walk(distro_path):
@@ -334,7 +337,7 @@ class CookerPlugin(layerindexlib.plugin.IndexPlugin):
                                 distro = layerindexlib.Distro(index, None)
                                 distro.define_data(id=distroId, name=fname[:-5],
                                                     description=fname[:-5],
-                                                    layerbranch=collection_layerbranch[entry])
+                                                    layerbranch=index.layerBranches[layerBranchId])
 
                                 index.add_element("distros", [distro])
 
