@@ -267,6 +267,16 @@ class VariableHistory(object):
             return
         self.variables[var].append(loginfo.copy())
 
+    def rename_variable_hist(self, oldvar, newvar):
+        if not self.dataroot._tracking:
+            return
+        if oldvar not in self.variables:
+            return
+        if newvar not in self.variables:
+            self.variables[newvar] = []
+        for i in self.variables[oldvar]:
+            self.variables[newvar].append(i.copy())
+
     def variable(self, var):
         remote_connector = self.dataroot.getVar('_remote_data', False)
         if remote_connector:
@@ -619,6 +629,7 @@ class DataSmart(MutableMapping):
 
         val = self.getVar(key, 0, parsing=True)
         if val is not None:
+            self.varhistory.rename_variable_hist(key, newkey)
             loginfo['variable'] = newkey
             loginfo['op'] = 'rename from %s' % key
             loginfo['detail'] = val
