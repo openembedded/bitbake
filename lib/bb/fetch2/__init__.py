@@ -1018,16 +1018,7 @@ def try_mirror_url(fetch, origud, ud, ld, check = False):
                     origud.method.build_mirror_data(origud, ld)
             return origud.localpath
         # Otherwise the result is a local file:// and we symlink to it
-        if not os.path.exists(origud.localpath):
-            if os.path.islink(origud.localpath):
-                # Broken symbolic link
-                os.unlink(origud.localpath)
-
-            # As per above, in case two tasks end up here simultaneously.
-            try:
-                os.symlink(ud.localpath, origud.localpath)
-            except FileExistsError:
-                pass
+        ensure_symlink(ud.localpath, origud.localpath)
         update_stamp(origud, ld)
         return ud.localpath
 
@@ -1059,6 +1050,22 @@ def try_mirror_url(fetch, origud, ud, ld, check = False):
     finally:
         if ud.lockfile and ud.lockfile != origud.lockfile:
             bb.utils.unlockfile(lf)
+
+
+def ensure_symlink(target, link_name):
+    if not os.path.exists(link_name):
+        if os.path.islink(link_name):
+            # Broken symbolic link
+            os.unlink(link_name)
+
+        # In case this is executing without any file locks held (as is
+        # the case for file:// URLs), two tasks may end up here at the
+        # same time, in which case we do not want the second task to
+        # fail when the link has already been created by the first task.
+        try:
+            os.symlink(target, link_name)
+        except FileExistsError:
+            pass
 
 
 def try_mirrors(fetch, d, origud, mirrors, check = False):
