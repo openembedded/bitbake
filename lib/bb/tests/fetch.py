@@ -869,27 +869,27 @@ class FetcherNetworkTest(FetcherTest):
         self.assertRaises(bb.fetch.ParameterError, self.gitfetcher, url, url)
 
     @skipIfNoNetwork()
-    def test_gitfetch_premirror(self):
-        url1 = "git://git.openembedded.org/bitbake"
-        url2 = "git://someserver.org/bitbake"
+    def test_gitfetch_finds_local_tarball_for_mirrored_url_when_previous_downloaded_by_the_recipe_url(self):
+        recipeurl = "git://git.openembedded.org/bitbake"
+        mirrorurl = "git://someserver.org/bitbake"
         self.d.setVar("PREMIRRORS", "git://someserver.org/bitbake git://git.openembedded.org/bitbake \n")
-        self.gitfetcher(url1, url2)
+        self.gitfetcher(recipeurl, mirrorurl)
 
     @skipIfNoNetwork()
-    def test_gitfetch_premirror2(self):
-        url1 = url2 = "git://someserver.org/bitbake"
+    def test_gitfetch_finds_local_tarball_when_previous_downloaded_from_a_premirror(self):
+        recipeurl = "git://someserver.org/bitbake"
         self.d.setVar("PREMIRRORS", "git://someserver.org/bitbake git://git.openembedded.org/bitbake \n")
-        self.gitfetcher(url1, url2)
+        self.gitfetcher(recipeurl, recipeurl)
 
     @skipIfNoNetwork()
-    def test_gitfetch_premirror3(self):
+    def test_gitfetch_finds_local_repository_when_premirror_rewrites_the_recipe_url(self):
         realurl = "git://git.openembedded.org/bitbake"
-        dummyurl = "git://someserver.org/bitbake"
+        recipeurl = "git://someserver.org/bitbake"
         self.sourcedir = self.unpackdir.replace("unpacked", "sourcemirror.git")
         os.chdir(self.tempdir)
         bb.process.run("git clone %s %s 2> /dev/null" % (realurl, self.sourcedir), shell=True)
-        self.d.setVar("PREMIRRORS", "%s git://%s;protocol=file \n" % (dummyurl, self.sourcedir))
-        self.gitfetcher(dummyurl, dummyurl)
+        self.d.setVar("PREMIRRORS", "%s git://%s;protocol=file \n" % (recipeurl, self.sourcedir))
+        self.gitfetcher(recipeurl, recipeurl)
 
     @skipIfNoNetwork()
     def test_git_submodule(self):
