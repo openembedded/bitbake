@@ -463,6 +463,55 @@ class MirrorUriTest(FetcherTest):
                                 'https://BBBB/B/B/B/bitbake/bitbake-1.0.tar.gz',
                                 'http://AAAA/A/A/A/B/B/bitbake/bitbake-1.0.tar.gz'])
 
+
+class GitDownloadDirectoryNamingTest(FetcherTest):
+    def setUp(self):
+        super(GitDownloadDirectoryNamingTest, self).setUp()
+        self.recipe_url = "git://git.openembedded.org/bitbake"
+        self.recipe_dir = "git.openembedded.org.bitbake"
+        self.mirror_url = "git://github.com/openembedded/bitbake.git"
+        self.mirror_dir = "github.com.openembedded.bitbake.git"
+
+        self.d.setVar('SRCREV', '82ea737a0b42a8b53e11c9cde141e9e9c0bd8c40')
+
+    def setup_mirror_rewrite(self):
+        self.d.setVar("PREMIRRORS", self.recipe_url + " " + self.mirror_url + " \n")
+
+    @skipIfNoNetwork()
+    def test_that_directory_is_named_after_recipe_url_when_no_mirroring_is_used(self):
+        self.setup_mirror_rewrite()
+        fetcher = bb.fetch.Fetch([self.recipe_url], self.d)
+
+        fetcher.download()
+
+        dir = os.listdir(self.dldir + "/git2")
+        self.assertIn(self.recipe_dir, dir)
+
+    @skipIfNoNetwork()
+    def test_that_directory_exists_for_mirrored_url_and_recipe_url_when_mirroring_is_used(self):
+        self.setup_mirror_rewrite()
+        fetcher = bb.fetch.Fetch([self.recipe_url], self.d)
+
+        fetcher.download()
+
+        dir = os.listdir(self.dldir + "/git2")
+        self.assertIn(self.mirror_dir, dir)
+        self.assertIn(self.recipe_dir, dir)
+
+    @skipIfNoNetwork()
+    def test_that_recipe_directory_and_mirrored_directory_exists_when_mirroring_is_used_and_the_mirrored_directory_already_exists(self):
+        self.setup_mirror_rewrite()
+        fetcher = bb.fetch.Fetch([self.mirror_url], self.d)
+        fetcher.download()
+        fetcher = bb.fetch.Fetch([self.recipe_url], self.d)
+
+        fetcher.download()
+
+        dir = os.listdir(self.dldir + "/git2")
+        self.assertIn(self.mirror_dir, dir)
+        self.assertIn(self.recipe_dir, dir)
+
+
 class FetcherLocalTest(FetcherTest):
     def setUp(self):
         def touch(fn):
