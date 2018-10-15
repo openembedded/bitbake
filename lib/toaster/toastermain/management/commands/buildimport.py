@@ -55,6 +55,7 @@ import os
 import re
 import os.path
 import subprocess
+import shutil
 
 # Toaster variable section delimiters
 TOASTER_PROLOG = '#=== TOASTER_CONFIG_PROLOG ==='
