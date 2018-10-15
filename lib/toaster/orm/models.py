@@ -1877,7 +1877,7 @@ class Distro(models.Model):
     description = models.CharField(max_length=255)
 
     def get_vcs_distro_file_link_url(self):
-        path = self.name+'.conf'
+        path = 'conf/distro/%s.conf' % self.name
         return self.layer_version.get_vcs_file_link_url(path)
 
     def __unicode__(self):
