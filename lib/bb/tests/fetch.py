@@ -512,6 +512,40 @@ class GitDownloadDirectoryNamingTest(FetcherTest):
         self.assertIn(self.recipe_dir, dir)
 
 
+class TarballNamingTest(FetcherTest):
+    def setUp(self):
+        super(TarballNamingTest, self).setUp()
+        self.recipe_url = "git://git.openembedded.org/bitbake"
+        self.recipe_tarball = "git2_git.openembedded.org.bitbake.tar.gz"
+        self.mirror_url = "git://github.com/openembedded/bitbake.git"
+        self.mirror_tarball = "git2_github.com.openembedded.bitbake.git.tar.gz"
+
+        self.d.setVar('BB_GENERATE_MIRROR_TARBALLS', '1')
+        self.d.setVar('SRCREV', '82ea737a0b42a8b53e11c9cde141e9e9c0bd8c40')
+
+    def setup_mirror_rewrite(self):
+        self.d.setVar("PREMIRRORS", self.recipe_url + " " + self.mirror_url + " \n")
+
+    @skipIfNoNetwork()
+    def test_that_the_recipe_tarball_is_created_when_no_mirroring_is_used(self):
+        fetcher = bb.fetch.Fetch([self.recipe_url], self.d)
+
+        fetcher.download()
+
+        dir = os.listdir(self.dldir)
+        self.assertIn(self.recipe_tarball, dir)
+
+    @skipIfNoNetwork()
+    def test_that_the_mirror_tarball_is_created_when_mirroring_is_used(self):
+        self.setup_mirror_rewrite()
+        fetcher = bb.fetch.Fetch([self.recipe_url], self.d)
+
+        fetcher.download()
+
+        dir = os.listdir(self.dldir)
+        self.assertIn(self.mirror_tarball, dir)
+
+
 class FetcherLocalTest(FetcherTest):
     def setUp(self):
         def touch(fn):
