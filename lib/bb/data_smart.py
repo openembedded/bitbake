@@ -805,7 +805,7 @@ class DataSmart(MutableMapping):
                 cachename = var + "[" + flag + "]"
             value = self.expand(value, cachename)
 
-        if value and flag == "_content" and local_var is not None and "_remove" in local_var:
+        if value and flag == "_content" and local_var is not None and "_remove" in local_var and not parsing:
             removes = []
             self.need_overrides()
             for (r, o) in local_var["_remove"]:
