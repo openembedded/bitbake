@@ -281,7 +281,7 @@ class TestConcatOverride(unittest.TestCase):
     def test_remove(self):
         self.d.setVar("TEST", "${VAL} ${BAR}")
         self.d.setVar("TEST_remove", "val")
-        self.assertEqual(self.d.getVar("TEST"), "bar")
+        self.assertEqual(self.d.getVar("TEST"), " bar")
 
     def test_remove_cleared(self):
         self.d.setVar("TEST", "${VAL} ${BAR}")
@@ -300,7 +300,7 @@ class TestConcatOverride(unittest.TestCase):
         self.d.setVar("TEST", "${VAL} ${BAR}")
         self.d.setVar("TEST_remove", "val")
         self.d.setVar("TEST_TEST", "${TEST} ${TEST}")
-        self.assertEqual(self.d.getVar("TEST_TEST"), "bar bar")
+        self.assertEqual(self.d.getVar("TEST_TEST"), " bar  bar")
 
     def test_empty_remove(self):
         self.d.setVar("TEST", "")
@@ -311,13 +311,25 @@ class TestConcatOverride(unittest.TestCase):
         self.d.setVar("BAR", "Z")
         self.d.setVar("TEST", "${BAR}/X Y")
         self.d.setVar("TEST_remove", "${BAR}/X")
-        self.assertEqual(self.d.getVar("TEST"), "Y")
+        self.assertEqual(self.d.getVar("TEST"), " Y")
 
     def test_remove_expansion_items(self):
         self.d.setVar("TEST", "A B C D")
         self.d.setVar("BAR", "B D")
         self.d.setVar("TEST_remove", "${BAR}")
-        self.assertEqual(self.d.getVar("TEST"), "A C")
+        self.assertEqual(self.d.getVar("TEST"), "A  C ")
+
+    def test_remove_preserve_whitespace(self):
+        # When the removal isn't active, the original value should be preserved
+        self.d.setVar("TEST", " A B")
+        self.d.setVar("TEST_remove", "C")
+        self.assertEqual(self.d.getVar("TEST"), " A B")
+
+    def test_remove_preserve_whitespace2(self):
+        # When the removal is active preserve the whitespace
+        self.d.setVar("TEST", " A B")
+        self.d.setVar("TEST_remove", "B")
+        self.assertEqual(self.d.getVar("TEST"), " A ")
 
 class TestOverrides(unittest.TestCase):
     def setUp(self):

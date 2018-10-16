@@ -342,7 +342,7 @@
 
             <para>
                 When you use this syntax, BitBake expects one or more strings.
-                Surrounding spaces are removed as well.
+                Surrounding spaces and spacing are preserved.
                 Here is an example:
                 <literallayout class='monospaced'>
      FOO = "123 456 789 123456 123 456 123 456"
@@ -352,8 +352,8 @@
      FOO2_remove = "abc def"
                 </literallayout>
                 The variable <filename>FOO</filename> becomes
-                "789 123456" and <filename>FOO2</filename> becomes
-                "ghi abcdef".
+                "  789 123456    " and <filename>FOO2</filename> becomes
+                "  ghi abcdef    ".
             </para>
 
             <para>

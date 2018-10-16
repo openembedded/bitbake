@@ -42,6 +42,7 @@ __setvar_keyword__ = ["_append", "_prepend", "_remove"]
 __setvar_regexp__ = re.compile('(?P<base>.*?)(?P<keyword>_append|_prepend|_remove)(_(?P<add>[^A-Z]*))?$')
 __expand_var_regexp__ = re.compile(r"\${[^{}@\n\t :]+}")
 __expand_python_regexp__ = re.compile(r"\${@.+?}")
+__whitespace_split__ = re.compile('(\s)')
 
 def infer_caller_details(loginfo, parent = False, varval = True):
     """Save the caller the trouble of specifying everything."""
@@ -818,8 +819,8 @@ class DataSmart(MutableMapping):
 
             if removes:
                 filtered = filter(lambda v: v not in removes,
-                                  value.split())
-                value = " ".join(filtered)
+                                  __whitespace_split__.split(value))
+                value = "".join(filtered)
                 if expand and var in self.expand_cache:
                     # We need to ensure the expand cache has the correct value
                     # flag == "_content" here
