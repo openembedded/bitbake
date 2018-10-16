@@ -805,7 +805,7 @@ class DataSmart(MutableMapping):
             value = parser.value
 
         if value and flag == "_content" and local_var is not None and "_remove" in local_var and not parsing:
-            removes = []
+            removes = {}
             self.need_overrides()
             for (r, o) in local_var["_remove"]:
                 match = True
@@ -814,14 +814,23 @@ class DataSmart(MutableMapping):
                         if not o2 in self.overrides:
                             match = False                            
                 if match:
-                    removes.extend(self.expand(r).split())
+                    removes[r] = self.expand(r).split()
 
-            if removes:
-                filtered = filter(lambda v: v not in removes,
-                                  __whitespace_split__.split(value))
-                value = "".join(filtered)
-                if parser:
-                    parser.value = value
+            if removes and parser:
+                parser.removes = set()
+                val = ""
+                for v in __whitespace_split__.split(parser.value):
+                    skip = False
+                    for r in removes:
+                        if v in removes[r]:
+                            parser.removes.add(r)
+                            skip = True
+                    if skip:
+                        continue
+                    val = val + v
+                parser.value = val
+                if expand:
+                    value = parser.value
 
         if parser:
             self.expand_cache[cachename] = parser

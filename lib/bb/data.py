@@ -307,6 +307,14 @@ def build_dependencies(key, keys, shelldeps, varflagsexcl, d):
                 return newvalue
             return value + newvalue
 
+        def handle_remove(value, deps, removes, d):
+            for r in sorted(removes):
+                r2 = d.expandWithRefs(r, None)
+                value += "\n_remove of %s" % r
+                deps |= r2.references
+                deps = deps | (keys & r2.execs)
+            return value
+
         if "vardepvalue" in varflags:
             value = varflags.get("vardepvalue")
         elif varflags.get("func"):
@@ -327,6 +335,8 @@ def build_dependencies(key, keys, shelldeps, varflagsexcl, d):
                 deps = deps | parsedvar.references
                 deps = deps | (keys & parser.execs) | (keys & parsedvar.execs)
                 value = handle_contains(value, parsedvar.contains, d)
+                if hasattr(parsedvar, "removes"):
+                    value = handle_remove(value, deps, parsedvar.removes, d)
             if vardeps is None:
                 parser.log.flush()
             if "prefuncs" in varflags:
@@ -340,6 +350,8 @@ def build_dependencies(key, keys, shelldeps, varflagsexcl, d):
             deps |= parser.references
             deps = deps | (keys & parser.execs)
             value = handle_contains(value, parser.contains, d)
+            if hasattr(parser, "removes"):
+                value = handle_remove(value, deps, parser.removes, d)
 
         if "vardepvalueexclude" in varflags:
             exclude = varflags.get("vardepvalueexclude")
