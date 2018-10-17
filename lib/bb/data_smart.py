@@ -105,11 +105,7 @@ class VariableParse:
             if self.varname and key:
                 if self.varname == key:
                     raise Exception("variable %s references itself!" % self.varname)
-            if key in self.d.expand_cache:
-                varparse = self.d.expand_cache[key]
-                var = varparse.value
-            else:
-                var = self.d.getVarFlag(key, "_content")
+            var = self.d.getVarFlag(key, "_content")
             self.references.add(key)
             if var is not None:
                 return var
@@ -412,9 +408,6 @@ class DataSmart(MutableMapping):
         if not isinstance(s, str): # sanity check
             return VariableParse(varname, self, s)
 
-        if varname and varname in self.expand_cache:
-            return self.expand_cache[varname]
-
         varparse = VariableParse(varname, self)
 
         while s.find('${') != -1:
@@ -437,9 +430,6 @@ class DataSmart(MutableMapping):
                 raise ExpansionError(varname, s, exc) from exc
 
         varparse.value = s
-
-        if varname:
-            self.expand_cache[varname] = varparse
 
         return varparse
 
@@ -509,6 +499,7 @@ class DataSmart(MutableMapping):
 
     def setVar(self, var, value, **loginfo):
         #print("var=" + str(var) + "  val=" + str(value))
+        self.expand_cache = {}
         parsing=False
         if 'parsing' in loginfo:
             parsing=True
@@ -521,7 +512,7 @@ class DataSmart(MutableMapping):
 
         if 'op' not in loginfo:
             loginfo['op'] = "set"
-        self.expand_cache = {}
+
         match  = __setvar_regexp__.match(var)
         if match and match.group("keyword") in __setvar_keyword__:
             base = match.group('base')
@@ -672,6 +663,7 @@ class DataSmart(MutableMapping):
         self.setVar(var + "_prepend", value, ignore=True, parsing=True)
 
     def delVar(self, var, **loginfo):
+        self.expand_cache = {}
         if '_remote_data' in self.dict:
             connector = self.dict["_remote_data"]["_content"]
             res = connector.delVar(var)
@@ -681,7 +673,6 @@ class DataSmart(MutableMapping):
         loginfo['detail'] = ""
         loginfo['op'] = 'del'
         self.varhistory.record(**loginfo)
-        self.expand_cache = {}
         self.dict[var] = {}
         if var in self.overridedata:
             del self.overridedata[var]
@@ -704,13 +695,13 @@ class DataSmart(MutableMapping):
                          override = None
 
     def setVarFlag(self, var, flag, value, **loginfo):
+        self.expand_cache = {}
         if '_remote_data' in self.dict:
             connector = self.dict["_remote_data"]["_content"]
             res = connector.setVarFlag(var, flag, value)
             if not res:
                 return
 
-        self.expand_cache = {}
         if 'op' not in loginfo:
             loginfo['op'] = "set"
         loginfo['flag'] = flag
@@ -732,6 +723,17 @@ class DataSmart(MutableMapping):
             self.dict["__exportlist"]["_content"].add(var)
 
     def getVarFlag(self, var, flag, expand=True, noweakdefault=False, parsing=False):
+        if flag == "_content":
+            cachename = var
+        else:
+            if not flag:
+                bb.warn("Calling getVarFlag with flag unset is invalid")
+                return None
+            cachename = var + "[" + flag + "]"
+
+        if expand and cachename in self.expand_cache:
+            return self.expand_cache[cachename].value
+
         local_var, overridedata = self._findVar(var)
         value = None
         if flag == "_content" and overridedata is not None and not parsing:
@@ -796,14 +798,9 @@ class DataSmart(MutableMapping):
                 if match:
                     value = r + value
 
-        if expand and value:
-            # Only getvar (flag == _content) hits the expand cache
-            cachename = None
-            if flag == "_content":
-                cachename = var
-            else:
-                cachename = var + "[" + flag + "]"
-            value = self.expand(value, cachename)
+        if expand:
+            self.expand_cache[cachename] = self.expandWithRefs(value, cachename)
+            value = self.expand_cache[cachename].value
 
         if value and flag == "_content" and local_var is not None and "_remove" in local_var and not parsing:
             removes = []
@@ -821,20 +818,19 @@ class DataSmart(MutableMapping):
                 filtered = filter(lambda v: v not in removes,
                                   __whitespace_split__.split(value))
                 value = "".join(filtered)
-                if expand and var in self.expand_cache:
-                    # We need to ensure the expand cache has the correct value
-                    # flag == "_content" here
-                    self.expand_cache[var].value = value
+                if expand and cachename in self.expand_cache:
+                    self.expand_cache[cachename].value = value
+
         return value
 
     def delVarFlag(self, var, flag, **loginfo):
+        self.expand_cache = {}
         if '_remote_data' in self.dict:
             connector = self.dict["_remote_data"]["_content"]
             res = connector.delVarFlag(var, flag)
             if not res:
                 return
 
-        self.expand_cache = {}
         local_var, _ = self._findVar(var)
         if not local_var:
             return
