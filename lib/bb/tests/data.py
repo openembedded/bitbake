@@ -455,6 +455,54 @@ class Contains(unittest.TestCase):
         self.assertFalse(bb.utils.contains_any("SOMEFLAG", "x y z", True, False, self.d))
 
 
+class TaskHash(unittest.TestCase):
+    def test_taskhashes(self):
+        def gettask_bashhash(taskname, d):
+            tasklist, gendeps, lookupcache = bb.data.generate_dependencies(d)
+            taskdeps, basehash = bb.data.generate_dependency_hash(tasklist, gendeps, lookupcache, set(), "somefile")
+            bb.warn(str(lookupcache))
+            return basehash["somefile." + taskname]
+
+        d = bb.data.init()
+        d.setVar("__BBTASKS", ["mytask"])
+        d.setVar("__exportlist", [])
+        d.setVar("mytask", "${MYCOMMAND}")
+        d.setVar("MYCOMMAND", "${VAR}; foo; bar; exit 0")
+        d.setVar("VAR", "val")
+        orighash = gettask_bashhash("mytask", d)
+
+        # Changing a variable should change the hash
+        d.setVar("VAR", "val2")
+        nexthash = gettask_bashhash("mytask", d)
+        self.assertNotEqual(orighash, nexthash)
+
+        d.setVar("VAR", "val")
+        # Adding an inactive removal shouldn't change the hash
+        d.setVar("BAR", "notbar")
+        d.setVar("MYCOMMAND_remove", "${BAR}")
+        nexthash = gettask_bashhash("mytask", d)
+        self.assertEqual(orighash, nexthash)
+
+        # Adding an active removal should change the hash
+        d.setVar("BAR", "bar;")
+        nexthash = gettask_bashhash("mytask", d)
+        self.assertNotEqual(orighash, nexthash)
+
+        # Setup an inactive contains()
+        d.setVar("VAR", "${@bb.utils.contains('VAR2', 'A', 'val', '', d)}")
+        orighash = gettask_bashhash("mytask", d)
+
+        # Activate the contains() and the hash should change
+        d.setVar("VAR2", "A")
+        nexthash = gettask_bashhash("mytask", d)
+        self.assertNotEqual(orighash, nexthash)
+
+        # The contains should be inactive but even though VAR2 has a
+        # different value the hash should match the original
+        d.setVar("VAR2", "B")
+        nexthash = gettask_bashhash("mytask", d)
+        self.assertEqual(orighash, nexthash)
+
 class Serialize(unittest.TestCase):
 
     def test_serialize(self):
