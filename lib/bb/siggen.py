@@ -110,42 +110,13 @@ class SignatureGeneratorBasic(SignatureGenerator):
         ignore_mismatch = ((d.getVar("BB_HASH_IGNORE_MISMATCH") or '') == '1')
         tasklist, gendeps, lookupcache = bb.data.generate_dependencies(d)
 
-        taskdeps = {}
-        basehash = {}
+        taskdeps, basehash = bb.data.generate_dependency_hash(tasklist, gendeps, lookupcache, self.basewhitelist, fn)
 
         for task in tasklist:
-            data = lookupcache[task]
-
-            if data is None:
-                bb.error("Task %s from %s seems to be empty?!" % (task, fn))
-                data = ''
-
-            gendeps[task] -= self.basewhitelist
-            newdeps = gendeps[task]
-            seen = set()
-            while newdeps:
-                nextdeps = newdeps
-                seen |= nextdeps
-                newdeps = set()
-                for dep in nextdeps:
-                    if dep in self.basewhitelist:
-                        continue
-                    gendeps[dep] -= self.basewhitelist
-                    newdeps |= gendeps[dep]
-                newdeps -= seen
-
-            alldeps = sorted(seen)
-            for dep in alldeps:
-                data = data + dep
-                var = lookupcache[dep]
-                if var is not None:
-                    data = data + str(var)
-            datahash = hashlib.md5(data.encode("utf-8")).hexdigest()
             k = fn + "." + task
-            if not ignore_mismatch and k in self.basehash and self.basehash[k] != datahash:
-                bb.error("When reparsing %s, the basehash value changed from %s to %s. The metadata is not deterministic and this needs to be fixed." % (k, self.basehash[k], datahash))
-            self.basehash[k] = datahash
-            taskdeps[task] = alldeps
+            if not ignore_mismatch and k in self.basehash and self.basehash[k] != basehash[k]:
+                bb.error("When reparsing %s, the basehash value changed from %s to %s. The metadata is not deterministic and this needs to be fixed." % (k, self.basehash[k], basehash[k]))
+            self.basehash[k] = basehash[k]
 
         self.taskdeps[fn] = taskdeps
         self.gendeps[fn] = gendeps

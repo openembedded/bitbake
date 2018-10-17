@@ -38,6 +38,7 @@ the speed is more critical here.
 # Based on functions from the base bb module, Copyright 2003 Holger Schurig
 
 import sys, os, re
+import hashlib
 if sys.argv[0][-5:] == "pydoc":
     path = os.path.dirname(os.path.dirname(sys.argv[1]))
 else:
@@ -404,6 +405,43 @@ def generate_dependencies(d):
             newdeps -= seen
         #print "For %s: %s" % (task, str(deps[task]))
     return tasklist, deps, values
+
+def generate_dependency_hash(tasklist, gendeps, lookupcache, whitelist, fn):
+    taskdeps = {}
+    basehash = {}
+
+    for task in tasklist:
+        data = lookupcache[task]
+
+        if data is None:
+            bb.error("Task %s from %s seems to be empty?!" % (task, fn))
+            data = ''
+
+        gendeps[task] -= whitelist
+        newdeps = gendeps[task]
+        seen = set()
+        while newdeps:
+            nextdeps = newdeps
+            seen |= nextdeps
+            newdeps = set()
+            for dep in nextdeps:
+                if dep in whitelist:
+                    continue
+                gendeps[dep] -= whitelist
+                newdeps |= gendeps[dep]
+            newdeps -= seen
+
+        alldeps = sorted(seen)
+        for dep in alldeps:
+            data = data + dep
+            var = lookupcache[dep]
+            if var is not None:
+                data = data + str(var)
+        k = fn + "." + task
+        basehash[k] = hashlib.md5(data.encode("utf-8")).hexdigest()
+        taskdeps[task] = alldeps
+
+    return taskdeps, basehash
 
 def inherits_class(klass, d):
     val = d.getVar('__inherit_cache', False) or []
