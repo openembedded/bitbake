@@ -722,7 +722,7 @@ class DataSmart(MutableMapping):
                 self.dict["__exportlist"]["_content"] = set()
             self.dict["__exportlist"]["_content"].add(var)
 
-    def getVarFlag(self, var, flag, expand=True, noweakdefault=False, parsing=False):
+    def getVarFlag(self, var, flag, expand=True, noweakdefault=False, parsing=False, retparser=False):
         if flag == "_content":
             cachename = var
         else:
@@ -798,9 +798,11 @@ class DataSmart(MutableMapping):
                 if match:
                     value = r + value
 
+        parser = None
+        if expand or retparser:
+            parser = self.expandWithRefs(value, cachename)
         if expand:
-            self.expand_cache[cachename] = self.expandWithRefs(value, cachename)
-            value = self.expand_cache[cachename].value
+            value = parser.value
 
         if value and flag == "_content" and local_var is not None and "_remove" in local_var and not parsing:
             removes = []
@@ -818,8 +820,14 @@ class DataSmart(MutableMapping):
                 filtered = filter(lambda v: v not in removes,
                                   __whitespace_split__.split(value))
                 value = "".join(filtered)
-                if expand and cachename in self.expand_cache:
-                    self.expand_cache[cachename].value = value
+                if parser:
+                    parser.value = value
+
+        if parser:
+            self.expand_cache[cachename] = parser
+
+        if retparser:
+            return value, parser
 
         return value
 

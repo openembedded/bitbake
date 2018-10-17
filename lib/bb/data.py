@@ -283,14 +283,12 @@ def build_dependencies(key, keys, shelldeps, varflagsexcl, d):
     try:
         if key[-1] == ']':
             vf = key[:-1].split('[')
-            value = d.getVarFlag(vf[0], vf[1], False)
-            parser = d.expandWithRefs(value, key)
+            value, parser = d.getVarFlag(vf[0], vf[1], False, retparser=True)
             deps |= parser.references
             deps = deps | (keys & parser.execs)
             return deps, value
         varflags = d.getVarFlags(key, ["vardeps", "vardepvalue", "vardepsexclude", "exports", "postfuncs", "prefuncs", "lineno", "filename"]) or {}
         vardeps = varflags.get("vardeps")
-        value = d.getVarFlag(key, "_content", False)
 
         def handle_contains(value, contains, d):
             newvalue = ""
@@ -310,9 +308,10 @@ def build_dependencies(key, keys, shelldeps, varflagsexcl, d):
             return value + newvalue
 
         if "vardepvalue" in varflags:
-           value = varflags.get("vardepvalue")
+            value = varflags.get("vardepvalue")
         elif varflags.get("func"):
             if varflags.get("python"):
+                value = d.getVarFlag(key, "_content", False)
                 parser = bb.codeparser.PythonParser(key, logger)
                 if value and "\t" in value:
                     logger.warning("Variable %s contains tabs, please remove these (%s)" % (key, d.getVar("FILE")))
@@ -321,7 +320,7 @@ def build_dependencies(key, keys, shelldeps, varflagsexcl, d):
                 deps = deps | (keys & parser.execs)
                 value = handle_contains(value, parser.contains, d)
             else:
-                parsedvar = d.expandWithRefs(value, key)
+                value, parsedvar = d.getVarFlag(key, "_content", False, retparser=True)
                 parser = bb.codeparser.ShellParser(key, logger)
                 parser.parse_shell(parsedvar.value)
                 deps = deps | shelldeps
@@ -337,7 +336,7 @@ def build_dependencies(key, keys, shelldeps, varflagsexcl, d):
             if "exports" in varflags:
                 deps = deps | set(varflags["exports"].split())
         else:
-            parser = d.expandWithRefs(value, key)
+            value, parser = d.getVarFlag(key, "_content", False, retparser=True)
             deps |= parser.references
             deps = deps | (keys & parser.execs)
             value = handle_contains(value, parser.contains, d)
