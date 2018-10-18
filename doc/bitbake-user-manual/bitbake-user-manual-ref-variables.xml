@@ -115,7 +115,8 @@
                             is either not set or set to "0".
                             </para></listitem>
                         <listitem><para>
-                            Limited support for wildcard matching against the
+                            Limited support for the "<filename>*</filename>"
+                            wildcard character for matching against the
                             beginning of host names exists.
                             For example, the following setting matches
                             <filename>git.gnu.org</filename>,
@@ -124,6 +125,13 @@
                             <literallayout class='monospaced'>
      BB_ALLOWED_NETWORKS = "*.gnu.org"
                             </literallayout>
+                            <note><title>Important</title>
+                                The use of the "<filename>*</filename>"
+                                character only works at the beginning of
+                                a host name.
+                                You cannot use the wildcard character in any
+                                other location of the name.
+                            </note>
                             </para></listitem>
                         <listitem><para>
                             Mirrors not in the host list are skipped and
@@ -1082,7 +1090,19 @@
 
         <glossentry id='var-BBFILES'><glossterm>BBFILES</glossterm>
             <glossdef>
-                <para>List of recipe files BitBake uses to build software.</para>
+                <para>
+                    A space-separated list of recipe files BitBake uses to
+                    build software.
+                </para>
+
+                <para>
+                    When specifying recipe files, you can pattern match using
+                    Python's
+                    <ulink url='https://docs.python.org/2/library/glob.html'><filename>glob</filename></ulink>
+                    syntax.
+                    For details on the syntax, see the documentation by
+                    following the previous link.
+                </para>
             </glossdef>
         </glossentry>
 
@@ -1166,10 +1186,14 @@
                     match any of the expressions.
                     It is as if BitBake does not see them at all.
                     Consequently, matching files are not parsed or otherwise
-                    used by BitBake.</para>
+                    used by BitBake.
+                </para>
+
                 <para>
                     The values you provide are passed to Python's regular
                     expression compiler.
+                    Consequently, the syntax follows Python's Regular
+                    Expression (re) syntax.
                     The expressions are compared against the full paths to
                     the files.
                     For complete syntax information, see Python's
@@ -1933,15 +1957,27 @@
                     you want to select, and you should set
                     <link linkend='var-PV'><filename>PV</filename></link>
                     accordingly for precedence.
-                    You can use the "<filename>%</filename>" character as a
-                    wildcard to match any number of characters, which can be
-                    useful when specifying versions that contain long revision
-                    numbers that could potentially change.
+                </para>
+
+                <para>
+                    The <filename>PREFERRED_VERSION</filename> variable
+                    supports limited wildcard use through the
+                    "<filename>%</filename>" character.
+                    You can use the character to match any number of
+                    characters, which can be useful when specifying versions
+                    that contain long revision numbers that potentially change.
                     Here are two examples:
                     <literallayout class='monospaced'>
      PREFERRED_VERSION_python = "2.7.3"
      PREFERRED_VERSION_linux-yocto = "4.12%"
                     </literallayout>
+                    <note><title>Important</title>
+                        The use of the "<filename>%</filename>" character
+                        is limited in that it only works at the end of the
+                        string.
+                        You cannot use the wildcard character in any other
+                        location of the string.
+                    </note>
                 </para>
             </glossdef>
         </glossentry>

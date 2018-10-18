@@ -342,13 +342,14 @@
 
             <para>
                 When you name an append file, you can use the
-                wildcard character (%) to allow for matching recipe names.
+                "<filename>%</filename>" wildcard character to allow for matching
+                recipe names.
                 For example, suppose you have an append file named
                 as follows:
                 <literallayout class='monospaced'>
      busybox_1.21.%.bbappend
                 </literallayout>
-                That append file would match any <filename>busybox_1.21.x.bb</filename>
+                That append file would match any <filename>busybox_1.21.</filename><replaceable>x</replaceable><filename>.bb</filename>
                 version of the recipe.
                 So, the append file would match the following recipe names:
                 <literallayout class='monospaced'>
@@ -356,6 +357,14 @@
      busybox_1.21.2.bb
      busybox_1.21.3.bb
                 </literallayout>
+                <note><title>Important</title>
+                    The use of the "<filename>%</filename>" character
+                    is limited in that it only works directly in front of the
+                    <filename>.bbappend</filename> portion of the append file's
+                    name.
+                    You cannot use the wildcard character in any other
+                    location of the name.
+                </note>
                 If the <filename>busybox</filename> recipe was updated to
                 <filename>busybox_1.3.0.bb</filename>, the append name would not
                 match.
