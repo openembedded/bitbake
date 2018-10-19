@@ -736,6 +736,7 @@ class DataSmart(MutableMapping):
 
         local_var, overridedata = self._findVar(var)
         value = None
+        removes = set()
         if flag == "_content" and overridedata is not None and not parsing:
             match = False
             active = {}
@@ -762,7 +763,11 @@ class DataSmart(MutableMapping):
                             match = active[a]
                             del active[a]
             if match:
-                value = self.getVar(match, False)
+                value, subparser = self.getVarFlag(match, "_content", False, retparser=True)
+                if hasattr(subparser, "removes"):
+                    # We have to carry the removes from the overridden variable to apply at the
+                    # end of processing
+                    removes = subparser.removes
 
         if local_var is not None and value is None:
             if flag in local_var:
@@ -805,7 +810,6 @@ class DataSmart(MutableMapping):
             value = parser.value
 
         if value and flag == "_content" and local_var is not None and "_remove" in local_var and not parsing:
-            removes = {}
             self.need_overrides()
             for (r, o) in local_var["_remove"]:
                 match = True
@@ -814,15 +818,20 @@ class DataSmart(MutableMapping):
                         if not o2 in self.overrides:
                             match = False                            
                 if match:
-                    removes[r] = self.expand(r).split()
+                    removes.add(r)
 
+        if value and flag == "_content" and not parsing:
             if removes and parser:
+                expanded_removes = {}
+                for r in removes:
+                    expanded_removes[r] = self.expand(r).split()
+
                 parser.removes = set()
                 val = ""
                 for v in __whitespace_split__.split(parser.value):
                     skip = False
                     for r in removes:
-                        if v in removes[r]:
+                        if v in expanded_removes[r]:
                             parser.removes.add(r)
                             skip = True
                     if skip:

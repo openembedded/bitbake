@@ -386,6 +386,15 @@ class TestOverrides(unittest.TestCase):
         self.d.setVar("OVERRIDES", "foo:bar:some_val")
         self.assertEqual(self.d.getVar("TEST"), "testvalue3")
 
+    def test_remove_with_override(self):
+        self.d.setVar("TEST_bar", "testvalue2")
+        self.d.setVar("TEST_some_val", "testvalue3 testvalue5")
+        self.d.setVar("TEST_some_val_remove", "testvalue3")
+        self.d.setVar("TEST_foo", "testvalue4")
+        self.d.setVar("OVERRIDES", "foo:bar:some_val")
+        self.assertEqual(self.d.getVar("TEST"), " testvalue5")
+
+
 class TestKeyExpansion(unittest.TestCase):
     def setUp(self):
         self.d = bb.data.init()
