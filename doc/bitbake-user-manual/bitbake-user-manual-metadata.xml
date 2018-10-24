@@ -2752,27 +2752,28 @@
         </para>
     </section>
 
-    <section id='wildcard-support'>
-        <title>Wildcard Support</title>
+    <section id='wildcard-support-in-variables'>
+        <title>Wildcard Support in Variables</title>
 
         <para>
-            Support for wildcard use varies depending on the context in
-            which it is used.
+            Support for wildcard use in variables varies depending on the
+            context in which it is used.
             For example, some variables and file names allow limited use of
             wildcards through the "<filename>%</filename>" and
             "<filename>*</filename>" characters.
             Other variables or names support Python's
-            <ulink url='https://docs.python.org/2/library/glob.html'><filename>glob</filename></ulink>
+            <ulink url='https://docs.python.org/3/library/glob.html'><filename>glob</filename></ulink>
             syntax,
-            <ulink url='https://docs.python.org/2/library/fnmatch.html#module-fnmatch'><filename>fnmatch</filename></ulink>
-            syntax, or Regular Expression (re) syntax.
+            <ulink url='https://docs.python.org/3/library/fnmatch.html#module-fnmatch'><filename>fnmatch</filename></ulink>
+            syntax, or
+            <ulink url='https://docs.python.org/3/library/re.html#re'><filename>Regular Expression (re)</filename></ulink>
+            syntax.
         </para>
 
         <para>
-            When a particular variable's list of filenames or filenames
-            in general used by BitBake or a build system
-            based on BitBake support the use of wildcards, the
-            documentation describes its use and limitations.
+            For variables that have wildcard suport, the
+            documentation describes which form of wildcard, its
+            use, and its limitations.
         </para>
     </section>
 

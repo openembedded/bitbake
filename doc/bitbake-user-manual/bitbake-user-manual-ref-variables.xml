@@ -126,11 +126,18 @@
      BB_ALLOWED_NETWORKS = "*.gnu.org"
                             </literallayout>
                             <note><title>Important</title>
-                                The use of the "<filename>*</filename>"
+                                <para>The use of the "<filename>*</filename>"
                                 character only works at the beginning of
-                                a host name.
+                                a host name and it must be isolated from
+                                the remainder of the host name.
                                 You cannot use the wildcard character in any
-                                other location of the name.
+                                other location of the name or combined with
+                                the front part of the name.</para>
+
+                                <para>For example,
+                                <filename>*.foo.bar</filename> is supported,
+                                while <filename>*aa.foo.bar</filename> is not.
+                                </para>
                             </note>
                             </para></listitem>
                         <listitem><para>
@@ -1098,7 +1105,7 @@
                 <para>
                     When specifying recipe files, you can pattern match using
                     Python's
-                    <ulink url='https://docs.python.org/2/library/glob.html'><filename>glob</filename></ulink>
+                    <ulink url='https://docs.python.org/3/library/glob.html'><filename>glob</filename></ulink>
                     syntax.
                     For details on the syntax, see the documentation by
                     following the previous link.
@@ -1198,7 +1205,7 @@
                     the files.
                     For complete syntax information, see Python's
                     documentation at
-                    <ulink url='http://docs.python.org/release/2.3/lib/re-syntax.html'></ulink>.
+                    <ulink url='http://docs.python.org/3/library/re.html#re'></ulink>.
                 </para>
 
                 <para>
