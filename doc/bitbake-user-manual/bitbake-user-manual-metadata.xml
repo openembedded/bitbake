@@ -352,8 +352,9 @@
      FOO2_remove = "abc def"
                 </literallayout>
                 The variable <filename>FOO</filename> becomes
-                "  789 123456    " and <filename>FOO2</filename> becomes
-                "  ghi abcdef    ".
+                "&nbsp;&nbsp;789 123456&nbsp;&nbsp;&nbsp;&nbsp;"
+                and <filename>FOO2</filename> becomes
+                "&nbsp;&nbsp;ghi abcdef&nbsp;&nbsp;&nbsp;&nbsp;".
             </para>
 
             <para>
