@@ -152,9 +152,9 @@ class GitSM(Git):
         if submodules and not os.path.exists(os.path.join(repo_conf, 'modules')):
             os.mkdir(os.path.join(repo_conf, 'modules'))
 
-        for module in submodules:
-            srcpath = os.path.join(ud.clonedir, 'modules', module)
-            modpath = os.path.join(repo_conf, 'modules', module)
+        for module, md in submodules.items():
+            srcpath = os.path.join(ud.clonedir, 'modules', md['path'])
+            modpath = os.path.join(repo_conf, 'modules', md['path'])
 
             if os.path.exists(srcpath):
                 if os.path.exists(os.path.join(srcpath, '.git')):
@@ -187,9 +187,8 @@ class GitSM(Git):
                 # No submodules to update
                 continue
 
-            submodules = list(self.parse_gitmodules(gitmodules).keys())
-
-        self.copy_submodules(submodules, ud, dest, d)
+            submodules = self.parse_gitmodules(gitmodules)
+            self.copy_submodules(submodules, ud, dest, d)
 
     def unpack(self, ud, destdir, d):
         Git.unpack(self, ud, destdir, d)
@@ -200,7 +199,7 @@ class GitSM(Git):
         else:
             repo_conf = os.path.join(ud.destdir, '.git')
 
-        submodules = []
+        update_submodules = False
         paths = {}
         uris = {}
         local_paths = {}
@@ -211,41 +210,41 @@ class GitSM(Git):
                 # No submodules to update
                 continue
 
-            for m, md in self.parse_gitmodules(gitmodules).items():
-                submodules.append(m)
-                paths[m] = md['path']
-                uris[m] = md['url']
+            submodules = self.parse_gitmodules(gitmodules)
+            self.copy_submodules(submodules, ud, ud.destdir, d)
 
-        self.copy_submodules(submodules, ud, ud.destdir, d)
+            submodules_queue = [(module, os.path.join(repo_conf, 'modules', md['path'])) for module, md in submodules.items()]
+            while len(submodules_queue) != 0:
+                module, modpath = submodules_queue.pop()
 
-        submodules_queue = [(module, os.path.join(repo_conf, 'modules', module)) for module in submodules]
-        while len(submodules_queue) != 0:
-            module, modpath = submodules_queue.pop()
+                # add submodule children recursively
+                try:
+                    gitmodules = runfetchcmd("%s show HEAD:.gitmodules" % (ud.basecmd), d, quiet=True, workdir=modpath)
+                    for m, md in self.parse_gitmodules(gitmodules).items():
+                        submodules_queue.append([m, os.path.join(modpath, 'modules', md['path'])])
+                except:
+                    # no children
+                    pass
 
-            # add submodule children recursively
-            try:
-                gitmodules = runfetchcmd("%s show HEAD:.gitmodules" % (ud.basecmd), d, quiet=True, workdir=modpath)
-                for m, md in self.parse_gitmodules(gitmodules).items():
-                    submodules_queue.append([m, os.path.join(modpath, 'modules', m)])
-            except:
-                # no children
-                pass
 
-            # Determine (from the submodule) the correct url to reference
-            try:
-                output = runfetchcmd("%(basecmd)s config remote.origin.url" % {'basecmd': ud.basecmd}, d, workdir=modpath)
-            except bb.fetch2.FetchError as e:
-                # No remote url defined in this submodule
-                continue
+                # There are submodules to update
+                update_submodules = True
 
-            local_paths[module] = output
+                # Determine (from the submodule) the correct url to reference
+                try:
+                    output = runfetchcmd("%(basecmd)s config remote.origin.url" % {'basecmd': ud.basecmd}, d, workdir=modpath)
+                except bb.fetch2.FetchError as e:
+                    # No remote url defined in this submodule
+                    continue
 
-            # Setup the local URL properly (like git submodule init or sync would do...)
-            runfetchcmd("%(basecmd)s config submodule.%(module)s.url %(url)s" % {'basecmd': ud.basecmd, 'module': module, 'url' : local_paths[module]}, d, workdir=ud.destdir)
+                local_paths[module] = output
 
-            # Ensure the submodule repository is NOT set to bare, since we're checking it out...
-            runfetchcmd("%s config core.bare false" % (ud.basecmd), d, quiet=True, workdir=modpath)
+                # Setup the local URL properly (like git submodule init or sync would do...)
+                runfetchcmd("%(basecmd)s config submodule.%(module)s.url %(url)s" % {'basecmd': ud.basecmd, 'module': module, 'url' : local_paths[module]}, d, workdir=ud.destdir)
 
-        if submodules:
+                # Ensure the submodule repository is NOT set to bare, since we're checking it out...
+                runfetchcmd("%s config core.bare false" % (ud.basecmd), d, quiet=True, workdir=modpath)
+
+        if update_submodules:
             # Run submodule update, this sets up the directories -- without touching the config
             runfetchcmd("%s submodule update --recursive --no-fetch" % (ud.basecmd), d, quiet=True, workdir=ud.destdir)
