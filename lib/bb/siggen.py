@@ -185,7 +185,7 @@ class SignatureGeneratorBasic(SignatureGenerator):
             if not self.rundep_check(fn, recipename, task, dep, depname, dataCache):
                 continue
             if dep not in self.taskhash:
-                bb.fatal("%s is not in taskhash, caller isn't calling in dependency order?", dep)
+                bb.fatal("%s is not in taskhash, caller isn't calling in dependency order?" % dep)
             data = data + self.taskhash[dep]
             self.runtaskdeps[k].append(dep)
 
