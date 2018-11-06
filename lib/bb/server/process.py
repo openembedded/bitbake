@@ -453,15 +453,14 @@ def connectProcessServer(sockname, featureset):
     cwd = os.getcwd()
 
     try:
-        os.chdir(os.path.dirname(sockname))
-        sock.connect(os.path.basename(sockname))
-    finally:
-        os.chdir(cwd)
+        try:
+            os.chdir(os.path.dirname(sockname))
+            sock.connect(os.path.basename(sockname))
+        finally:
+            os.chdir(cwd)
 
-    readfd = writefd = readfd1 = writefd1 = readfd2 = writefd2 = None
-    eq = command_chan_recv = command_chan = None
-
-    try:
+        readfd = writefd = readfd1 = writefd1 = readfd2 = writefd2 = None
+        eq = command_chan_recv = command_chan = None
 
         # Send an fd for the remote to write events to
         readfd, writefd = os.pipe()
