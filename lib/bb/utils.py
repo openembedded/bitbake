@@ -27,7 +27,8 @@ import bb
 import bb.msg
 import multiprocessing
 import fcntl
-import imp
+import importlib
+from importlib import machinery
 import itertools
 import subprocess
 import glob
@@ -43,7 +44,7 @@ from contextlib import contextmanager
 from ctypes import cdll
 
 logger = logging.getLogger("BitBake.Util")
-python_extensions = [e for e, _, _ in imp.get_suffixes()]
+python_extensions = importlib.machinery.all_suffixes()
 
 
 def clean_context():
@@ -1544,12 +1545,9 @@ def export_proxies(d):
 def load_plugins(logger, plugins, pluginpath):
     def load_plugin(name):
         logger.debug(1, 'Loading plugin %s' % name)
-        fp, pathname, description = imp.find_module(name, [pluginpath])
-        try:
-            return imp.load_module(name, fp, pathname, description)
-        finally:
-            if fp:
-                fp.close()
+        spec = importlib.machinery.PathFinder.find_spec(name, path=[pluginpath] )
+        if spec:
+            return spec.loader.load_module()
 
     logger.debug(1, 'Loading plugins from %s...' % pluginpath)
 
