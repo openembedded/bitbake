@@ -69,8 +69,8 @@ class VersionStringException(Exception):
 
 def explode_version(s):
     r = []
-    alpha_regexp = re.compile('^([a-zA-Z]+)(.*)$')
-    numeric_regexp = re.compile('^(\d+)(.*)$')
+    alpha_regexp = re.compile(r'^([a-zA-Z]+)(.*)$')
+    numeric_regexp = re.compile(r'^(\d+)(.*)$')
     while (s != ''):
         if s[0] in string.digits:
             m = numeric_regexp.match(s)
@@ -1158,14 +1158,14 @@ def edit_metadata(meta_lines, variables, varfunc, match_overrides=False):
 
     var_res = {}
     if match_overrides:
-        override_re = '(_[a-zA-Z0-9-_$(){}]+)?'
+        override_re = r'(_[a-zA-Z0-9-_$(){}]+)?'
     else:
         override_re = ''
     for var in variables:
         if var.endswith('()'):
-            var_res[var] = re.compile('^(%s%s)[ \\t]*\([ \\t]*\)[ \\t]*{' % (var[:-2].rstrip(), override_re))
+            var_res[var] = re.compile(r'^(%s%s)[ \\t]*\([ \\t]*\)[ \\t]*{' % (var[:-2].rstrip(), override_re))
         else:
-            var_res[var] = re.compile('^(%s%s)[ \\t]*[?+:.]*=[+.]*[ \\t]*(["\'])' % (var, override_re))
+            var_res[var] = re.compile(r'^(%s%s)[ \\t]*[?+:.]*=[+.]*[ \\t]*(["\'])' % (var, override_re))
 
     updated = False
     varset_start = ''
