@@ -45,7 +45,7 @@ __addtask_regexp__       = re.compile("addtask\s+(?P<func>\w+)\s*((before\s*(?P<
 __deltask_regexp__       = re.compile("deltask\s+(?P<func>\w+)")
 __addhandler_regexp__    = re.compile( r"addhandler\s+(.+)" )
 __def_regexp__           = re.compile( r"def\s+(\w+).*:" )
-__python_func_regexp__   = re.compile( r"(\s+.*)|(^$)" )
+__python_func_regexp__   = re.compile( r"(\s+.*)|(^$)|(^#)" )
 
 __infunc__ = []
 __inpython__ = False
