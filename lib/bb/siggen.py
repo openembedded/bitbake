@@ -342,10 +342,10 @@ def dump_this_task(outfile, d):
 def init_colors(enable_color):
     """Initialise colour dict for passing to compare_sigfiles()"""
     # First set up the colours
-    colors = {'color_title':   '\033[1;37;40m',
-              'color_default': '\033[0;37;40m',
-              'color_add':     '\033[1;32;40m',
-              'color_remove':  '\033[1;31;40m',
+    colors = {'color_title':   '\033[1m',
+              'color_default': '\033[0m',
+              'color_add':     '\033[0;32m',
+              'color_remove':  '\033[0;31m',
              }
     # Leave all keys present but clear the values
     if not enable_color:
