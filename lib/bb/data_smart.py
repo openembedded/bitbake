@@ -427,7 +427,8 @@ class DataSmart(MutableMapping):
             except bb.parse.SkipRecipe:
                 raise
             except Exception as exc:
-                raise ExpansionError(varname, s, exc) from exc
+                tb = sys.exc_info()[2]
+                raise ExpansionError(varname, s, exc).with_traceback(tb) from exc
 
         varparse.value = s
 
