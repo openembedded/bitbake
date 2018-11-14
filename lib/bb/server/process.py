@@ -424,7 +424,11 @@ class BitBakeServer(object):
                         bb.error("Last 10 lines of server log for this session (%s):\n%s" % (logfile, "".join(lines[-10:])))
                     else:
                         bb.error("Server log for this session (%s):\n%s" % (logfile, "".join(lines)))
+            else:
+                bb.error("%s doesn't exist" % logfile)
+
             raise SystemExit(1)
+
         ready.close()
         os.close(self.readypipein)
 
