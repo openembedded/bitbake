@@ -318,10 +318,13 @@ def better_compile(text, file, realfile, mode = "exec", lineno = 0):
         error = []
         # split the text into lines again
         body = text.split('\n')
-        error.append("Error in compiling python function in %s, line %s:\n" % (realfile, lineno))
+        error.append("Error in compiling python function in %s, line %s:\n" % (realfile, e.lineno))
         if hasattr(e, "lineno"):
             error.append("The code lines resulting in this error were:")
-            error.extend(_print_trace(body, e.lineno))
+            # e.lineno: line's position in reaflile
+            # lineno: function name's "position -1" in realfile
+            # e.lineno - lineno: line's relative position in function
+            error.extend(_print_trace(body, e.lineno - lineno))
         else:
             error.append("The function causing this error was:")
             for line in body:
