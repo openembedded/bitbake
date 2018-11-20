@@ -609,14 +609,7 @@ class BBCooker:
                 k2 = k.split(":do_")
                 k = k2[0]
                 ktask = k2[1]
-            if mc:
-                # Provider might be from another mc
-                for mcavailable in self.multiconfigs:
-                    # The first element is empty
-                    if mcavailable:
-                        taskdata[mcavailable].add_provider(localdata[mcavailable], self.recipecaches[mcavailable], k)
-            else:
-                taskdata[mc].add_provider(localdata[mc], self.recipecaches[mc], k)
+            taskdata[mc].add_provider(localdata[mc], self.recipecaches[mc], k)
             current += 1
             if not ktask.startswith("do_"):
                 ktask = "do_%s" % ktask
