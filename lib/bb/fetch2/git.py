@@ -488,12 +488,15 @@ class Git(FetchMethod):
                 source_error.append("clone directory not available or not up to date: " + ud.clonedir)
 
         if not source_found:
-            if ud.shallow and os.path.exists(ud.fullshallow):
-                bb.utils.mkdirhier(destdir)
-                runfetchcmd("tar -xzf %s" % ud.fullshallow, d, workdir=destdir)
-                source_found = True
+            if ud.shallow:
+                if os.path.exists(ud.fullshallow):
+                    bb.utils.mkdirhier(destdir)
+                    runfetchcmd("tar -xzf %s" % ud.fullshallow, d, workdir=destdir)
+                    source_found = True
+                else:
+                    source_error.append("shallow clone not available: " + ud.fullshallow)
             else:
-                source_error.append("shallow clone not enabled or not available: " + ud.fullshallow)
+                source_error.append("shallow clone not enabled")
 
         if not source_found:
             raise bb.fetch2.UnpackError("No up to date source found: " + "; ".join(source_error), ud.url)
