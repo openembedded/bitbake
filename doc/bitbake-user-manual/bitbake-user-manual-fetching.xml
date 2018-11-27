@@ -588,6 +588,11 @@
                         The name of the path in which to place the checkout.
                         By default, the path is <filename>git/</filename>.
                         </para></listitem>
+                   <listitem><para><emphasis>"usehead":</emphasis>
+                        For local git:// urls to use the current branch HEAD
+                        as the revision for use with AUTOREV. Implies nobranch.
+                        Will only work when protocol is "file".
+                        </para></listitem>
                 </itemizedlist>
                 Here are some example URLs:
                 <literallayout class='monospaced'>
