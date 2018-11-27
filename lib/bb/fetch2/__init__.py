@@ -256,7 +256,7 @@ class URI(object):
 
         # Identify if the URI is relative or not
         if urlp.scheme in self._relative_schemes and \
-           re.compile("^\w+:(?!//)").match(uri):
+           re.compile(r"^\w+:(?!//)").match(uri):
             self.relative = True
 
         if not self.relative:
