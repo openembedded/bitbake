@@ -426,8 +426,8 @@ class BitBakeServer(object):
                                     started = True
                                     lines.append(line)
                 if lines:
-                    if len(lines) > 10:
-                        bb.error("Last 10 lines of server log for this session (%s):\n%s" % (logfile, "".join(lines[-10:])))
+                    if len(lines) > 60:
+                        bb.error("Last 60 lines of server log for this session (%s):\n%s" % (logfile, "".join(lines[-60:])))
                     else:
                         bb.error("Server log for this session (%s):\n%s" % (logfile, "".join(lines)))
             else:
