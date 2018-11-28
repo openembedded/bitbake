@@ -489,7 +489,8 @@ def connectProcessServer(sockname, featureset):
             command_chan.close()
         for i in [writefd, readfd1, writefd2]:
             try:
-                os.close(i)
+                if i:
+                    os.close(i)
             except OSError:
                 pass
         sock.close()
