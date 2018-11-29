@@ -410,9 +410,9 @@ class BitBakeServer(object):
             except EOFError:
                 # Trap the child exitting/closing the pipe and error out
                 r = None
-        if not r or r != "ready":
+        if not r or r[0] != "r":
             ready.close()
-            bb.error("Unable to start bitbake server")
+            bb.error("Unable to start bitbake server (%s)" % str(r))
             if os.path.exists(logfile):
                 logstart_re = re.compile(self.start_log_format % ('([0-9]+)', '([0-9-]+ [0-9:.]+)'))
                 started = False
@@ -455,7 +455,7 @@ class BitBakeServer(object):
         os.close(self.readypipe)
         writer = ConnectionWriter(self.readypipein)
         self.cooker = bb.cooker.BBCooker(self.configuration, self.featureset)
-        writer.send("ready")
+        writer.send("r")
         writer.close()
         server.cooker = self.cooker
         server.server_timeout = self.configuration.server_timeout
