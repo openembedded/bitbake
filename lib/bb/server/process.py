@@ -428,6 +428,8 @@ class BitBakeServer(object):
 
     def _startServer(self):
         print(self.start_log_format % (os.getpid(), datetime.datetime.now().strftime(self.start_log_datetime_format)))
+        sys.stdout.flush()
+
         server = ProcessServer(self.bitbake_lock, self.sock, self.sockname)
         self.configuration.setServerRegIdleCallback(server.register_idle_function)
         writer = ConnectionWriter(self.readypipein)
@@ -443,6 +445,8 @@ class BitBakeServer(object):
         server.server_timeout = self.configuration.server_timeout
         server.xmlrpcinterface = self.configuration.xmlrpcinterface
         print("Started bitbake server pid %d" % os.getpid())
+        sys.stdout.flush()
+
         server.start()
 
 def connectProcessServer(sockname, featureset):
