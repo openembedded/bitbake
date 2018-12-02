@@ -400,7 +400,10 @@ class BitBakeServer(object):
         os.close(self.readypipein)
 
         ready = ConnectionReader(self.readypipe)
-        r = ready.poll(30)
+        r = ready.poll(5)
+        if not r:
+            bb.note("Bitbake server didn't start within 5 seconds, waiting for 90")
+            r = ready.poll(90)
         if r:
             try:
                 r = ready.get()
