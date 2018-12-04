@@ -368,8 +368,9 @@ class ShellParser():
     def _parse_shell(self, value):
         try:
             tokens, _ = pyshyacc.parse(value, eof=True, debug=False)
-        except pyshlex.NeedMore:
-            raise sherrors.ShellSyntaxError("Unexpected EOF")
+        except Exception:
+            bb.error('Error during parse shell code, the last 5 lines are:\n%s' % '\n'.join(value.split('\n')[-5:]))
+            raise
 
         self.process_tokens(tokens)
 
