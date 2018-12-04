@@ -311,6 +311,13 @@ class SignatureGeneratorBasic(SignatureGenerator):
 class SignatureGeneratorBasicHash(SignatureGeneratorBasic):
     name = "basichash"
 
+    def get_stampfile_hash(self, task):
+        if task in self.taskhash:
+            return self.taskhash[task]
+
+        # If task is not in basehash, then error
+        return self.basehash[task]
+
     def stampfile(self, stampbase, fn, taskname, extrainfo, clean=False):
         if taskname != "do_setscene" and taskname.endswith("_setscene"):
             k = fn + "." + taskname[:-9]
@@ -318,11 +325,9 @@ class SignatureGeneratorBasicHash(SignatureGeneratorBasic):
             k = fn + "." + taskname
         if clean:
             h = "*"
-        elif k in self.taskhash:
-            h = self.taskhash[k]
         else:
-            # If k is not in basehash, then error
-            h = self.basehash[k]
+            h = self.get_stampfile_hash(k)
+
         return ("%s.%s.%s.%s" % (stampbase, taskname, h, extrainfo)).rstrip('.')
 
     def stampcleanmask(self, stampbase, fn, taskname, extrainfo):
