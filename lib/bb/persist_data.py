@@ -94,7 +94,7 @@ class SQLTable(collections.MutableMapping):
         self.table = table
         self.connection = connect(self.cachefile)
 
-        self._execute_single("CREATE TABLE IF NOT EXISTS %s(key TEXT, value TEXT);" % table)
+        self._execute_single("CREATE TABLE IF NOT EXISTS %s(key TEXT PRIMARY KEY NOT NULL, value TEXT);" % table)
 
     @_Decorators.retry
     @_Decorators.transaction
