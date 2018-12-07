@@ -168,7 +168,7 @@ class Wget(FetchMethod):
                 """
                 host = req.host
                 if not host:
-                    raise urlllib2.URLError('no host given')
+                    raise urllib.error.URLError('no host given')
 
                 h = http_class(host, timeout=req.timeout) # will parse host:port
                 h.set_debuglevel(self._debuglevel)
