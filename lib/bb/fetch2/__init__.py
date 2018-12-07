@@ -1028,7 +1028,7 @@ def try_mirror_url(fetch, origud, ud, ld, check = False):
         raise
 
     except IOError as e:
-        if e.errno in [os.errno.ESTALE]:
+        if e.errno in [errno.ESTALE]:
             logger.warning("Stale Error Observed %s." % ud.url)
             return False
         raise
@@ -1717,7 +1717,7 @@ class Fetch(object):
                 update_stamp(ud, self.d)
 
             except IOError as e:
-                if e.errno in [os.errno.ESTALE]:
+                if e.errno in [errno.ESTALE]:
                     logger.error("Stale Error Observed %s." % u)
                     raise ChecksumError("Stale Error Detected")
 
