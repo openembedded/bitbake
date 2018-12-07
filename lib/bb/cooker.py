@@ -175,17 +175,30 @@ class BBCooker:
 
         self.configuration = configuration
 
+        bb.debug(1, "BBCooker starting %s" % time.time())
+        sys.stdout.flush()
+
         self.configwatcher = pyinotify.WatchManager()
+        bb.debug(1, "BBCooker pyinotify1 %s" % time.time())
+        sys.stdout.flush()
+
         self.configwatcher.bbseen = []
         self.configwatcher.bbwatchedfiles = []
         self.confignotifier = pyinotify.Notifier(self.configwatcher, self.config_notifications)
+        bb.debug(1, "BBCooker pyinotify2 %s" % time.time())
+        sys.stdout.flush()
         self.watchmask = pyinotify.IN_CLOSE_WRITE | pyinotify.IN_CREATE | pyinotify.IN_DELETE | \
                          pyinotify.IN_DELETE_SELF | pyinotify.IN_MODIFY | pyinotify.IN_MOVE_SELF | \
                          pyinotify.IN_MOVED_FROM | pyinotify.IN_MOVED_TO
         self.watcher = pyinotify.WatchManager()
+        bb.debug(1, "BBCooker pyinotify3 %s" % time.time())
+        sys.stdout.flush()
         self.watcher.bbseen = []
         self.watcher.bbwatchedfiles = []
         self.notifier = pyinotify.Notifier(self.watcher, self.notifications)
+
+        bb.debug(1, "BBCooker pyinotify complete %s" % time.time())
+        sys.stdout.flush()
 
         # If being called by something like tinfoil, we need to clean cached data
         # which may now be invalid
@@ -195,6 +208,9 @@ class BBCooker:
         self.ui_cmdline = None
 
         self.initConfigurationData()
+
+        bb.debug(1, "BBCooker parsed base configuration %s" % time.time())
+        sys.stdout.flush()
 
         # we log all events to a file if so directed
         if self.configuration.writeeventlog:
@@ -232,6 +248,9 @@ class BBCooker:
         signal.signal(signal.SIGTERM, self.sigterm_exception)
         # Let SIGHUP exit as SIGTERM
         signal.signal(signal.SIGHUP, self.sigterm_exception)
+
+        bb.debug(1, "BBCooker startup complete %s" % time.time())
+        sys.stdout.flush()
 
     def process_inotify_updates(self):
         for n in [self.confignotifier, self.notifier]:
