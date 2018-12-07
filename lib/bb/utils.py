@@ -708,15 +708,7 @@ def prunedir(topdir):
     # CAUTION:  This is dangerous!
     if _check_unsafe_delete_path(topdir):
         raise Exception('bb.utils.prunedir: called with dangerous path "%s", refusing to delete!' % topdir)
-    for root, dirs, files in os.walk(topdir, topdown = False):
-        for name in files:
-            os.remove(os.path.join(root, name))
-        for name in dirs:
-            if os.path.islink(os.path.join(root, name)):
-                os.remove(os.path.join(root, name))
-            else:
-                os.rmdir(os.path.join(root, name))
-    os.rmdir(topdir)
+    remove(topdir, recurse=True)
 
 #
 # Could also use return re.compile("(%s)" % "|".join(map(re.escape, suffixes))).sub(lambda mo: "", var)
