@@ -42,24 +42,31 @@ logger = logging.getLogger("BitBake.PersistData")
 class SQLTable(collections.MutableMapping):
     class _Decorators(object):
         @staticmethod
-        def retry(f):
+        def retry(*, reconnect=True):
             """
             Decorator that restarts a function if a database locked sqlite
-            exception occurs.
+            exception occurs. If reconnect is True, the database connection
+            will be closed and reopened each time a failure occurs
             """
-            def wrap_func(self, *args, **kwargs):
-                count = 0
-                while True:
-                    try:
-                        return f(self, *args, **kwargs)
-                    except sqlite3.OperationalError as exc:
-                        if 'is locked' in str(exc) and count < 500:
-                            count = count + 1
-                            self.connection.close()
-                            self.connection = connect(self.cachefile)
-                            continue
-                        raise
-            return wrap_func
+            def retry_wrapper(f):
+                def wrap_func(self, *args, **kwargs):
+                    # Reconnect if necessary
+                    if self.connection is None and reconnect:
+                        self.reconnect()
+
+                    count = 0
+                    while True:
+                        try:
+                            return f(self, *args, **kwargs)
+                        except sqlite3.OperationalError as exc:
+                            if 'is locked' in str(exc) and count < 500:
+                                count = count + 1
+                                if reconnect:
+                                    self.reconnect()
+                                continue
+                            raise
+                return wrap_func
+            return retry_wrapper
 
         @staticmethod
         def transaction(f):
@@ -86,11 +93,28 @@ class SQLTable(collections.MutableMapping):
     def __init__(self, cachefile, table):
         self.cachefile = cachefile
         self.table = table
-        self.connection = connect(self.cachefile)
 
+        self.connection = None
         self._execute_single("CREATE TABLE IF NOT EXISTS %s(key TEXT PRIMARY KEY NOT NULL, value TEXT);" % table)
 
-    @_Decorators.retry
+    @_Decorators.retry(reconnect=False)
+    @_Decorators.transaction
+    def _setup_database(self, cursor):
+        cursor.execute("pragma synchronous = off;")
+        # Enable WAL and keep the autocheckpoint length small (the default is
+        # usually 1000). Persistent caches are usually read-mostly, so keeping
+        # this short will keep readers running quickly
+        cursor.execute("pragma journal_mode = WAL;")
+        cursor.execute("pragma wal_autocheckpoint = 100;")
+
+    def reconnect(self):
+        if self.connection is not None:
+            self.connection.close()
+        self.connection = sqlite3.connect(self.cachefile, timeout=5)
+        self.connection.text_factory = str
+        self._setup_database()
+
+    @_Decorators.retry()
     @_Decorators.transaction
     def _execute_single(self, cursor, *query):
         """
@@ -99,7 +123,7 @@ class SQLTable(collections.MutableMapping):
         """
         cursor.execute(*query)
 
-    @_Decorators.retry
+    @_Decorators.retry()
     def _row_iter(self, f, *query):
         """
         Helper function that returns a row iterator. Each time __next__ is
@@ -141,7 +165,7 @@ class SQLTable(collections.MutableMapping):
     def __exit__(self, *excinfo):
         self.connection.__exit__(*excinfo)
 
-    @_Decorators.retry
+    @_Decorators.retry()
     @_Decorators.transaction
     def __getitem__(self, cursor, key):
         cursor.execute("SELECT * from %s where key=?;" % self.table, [key])
@@ -150,14 +174,14 @@ class SQLTable(collections.MutableMapping):
             return row[1]
         raise KeyError(key)
 
-    @_Decorators.retry
+    @_Decorators.retry()
     @_Decorators.transaction
     def __delitem__(self, cursor, key):
         if key not in self:
             raise KeyError(key)
         cursor.execute("DELETE from %s where key=?;" % self.table, [key])
 
-    @_Decorators.retry
+    @_Decorators.retry()
     @_Decorators.transaction
     def __setitem__(self, cursor, key, value):
         if not isinstance(key, str):
@@ -172,13 +196,13 @@ class SQLTable(collections.MutableMapping):
         else:
             cursor.execute("INSERT into %s(key, value) values (?, ?);" % self.table, [key, value])
 
-    @_Decorators.retry
+    @_Decorators.retry()
     @_Decorators.transaction
     def __contains__(self, cursor, key):
         cursor.execute('SELECT * from %s where key=?;' % self.table, [key])
         return cursor.fetchone() is not None
 
-    @_Decorators.retry
+    @_Decorators.retry()
     @_Decorators.transaction
     def __len__(self, cursor):
         cursor.execute("SELECT COUNT(key) FROM %s;" % self.table)
@@ -213,7 +237,7 @@ class SQLTable(collections.MutableMapping):
         return self._row_iter(lambda row: (row[0], row[1]), "SELECT * FROM %s;" %
                               self.table)
 
-    @_Decorators.retry
+    @_Decorators.retry()
     @_Decorators.transaction
     def clear(self, cursor):
         cursor.execute("DELETE FROM %s;" % self.table)
@@ -269,17 +293,6 @@ class PersistData(object):
         Deletes a key/value pair
         """
         del self.data[domain][key]
-
-def connect(database):
-    connection = sqlite3.connect(database, timeout=5)
-    connection.execute("pragma synchronous = off;")
-    # Enable WAL and keep the autocheckpoint length small (the default is
-    # usually 1000). Persistent caches are usually read-mostly, so keeping
-    # this short will keep readers running quickly
-    connection.execute("pragma journal_mode = WAL;")
-    connection.execute("pragma wal_autocheckpoint = 100;")
-    connection.text_factory = str
-    return connection
 
 def persist(domain, d):
     """Convenience factory for SQLTable objects based upon metadata"""
