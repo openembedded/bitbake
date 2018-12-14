@@ -474,6 +474,8 @@ def connectProcessServer(sockname, featureset):
     readfd = writefd = readfd1 = writefd1 = readfd2 = writefd2 = None
     eq = command_chan_recv = command_chan = None
 
+    sock.settimeout(2)
+
     try:
         try:
             os.chdir(os.path.dirname(sockname))
