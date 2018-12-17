@@ -436,7 +436,7 @@ def generate_dependency_hash(tasklist, gendeps, lookupcache, whitelist, fn):
             if var is not None:
                 data = data + str(var)
         k = fn + "." + task
-        basehash[k] = hashlib.md5(data.encode("utf-8")).hexdigest()
+        basehash[k] = hashlib.sha256(data.encode("utf-8")).hexdigest()
         taskdeps[task] = alldeps
 
     return taskdeps, basehash

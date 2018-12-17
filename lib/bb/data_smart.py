@@ -1074,4 +1074,4 @@ class DataSmart(MutableMapping):
                     data.update({i:value})
 
         data_str = str([(k, data[k]) for k in sorted(data.keys())])
-        return hashlib.md5(data_str.encode("utf-8")).hexdigest()
+        return hashlib.sha256(data_str.encode("utf-8")).hexdigest()

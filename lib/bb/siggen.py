@@ -216,7 +216,7 @@ class SignatureGeneratorBasic(SignatureGenerator):
             self.taints[k] = taint
             logger.warning("%s is tainted from a forced run" % k)
 
-        h = hashlib.md5(data.encode("utf-8")).hexdigest()
+        h = hashlib.sha256(data.encode("utf-8")).hexdigest()
         self.taskhash[k] = h
         #d.setVar("BB_TASKHASH_task-%s" % task, taskhash[task])
         return h
@@ -650,7 +650,7 @@ def calc_basehash(sigdata):
         if val is not None:
             basedata = basedata + str(val)
 
-    return hashlib.md5(basedata.encode("utf-8")).hexdigest()
+    return hashlib.sha256(basedata.encode("utf-8")).hexdigest()
 
 def calc_taskhash(sigdata):
     data = sigdata['basehash']
@@ -668,7 +668,7 @@ def calc_taskhash(sigdata):
         else:
             data = data + sigdata['taint']
 
-    return hashlib.md5(data.encode("utf-8")).hexdigest()
+    return hashlib.sha256(data.encode("utf-8")).hexdigest()
 
 
 def dump_sigfile(a):
