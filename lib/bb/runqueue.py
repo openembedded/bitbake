@@ -1378,6 +1378,26 @@ class RunQueue:
             cache[tid] = iscurrent
         return iscurrent
 
+    def validate_hash(self, *, sq_fn, sq_task, sq_hash, sq_hashfn, siginfo, sq_unihash, d):
+        locs = {"sq_fn" : sq_fn, "sq_task" : sq_task, "sq_hash" : sq_hash, "sq_hashfn" : sq_hashfn,
+                "sq_unihash" : sq_unihash, "siginfo" : siginfo, "d" : d}
+
+        hashvalidate_args = ("(sq_fn, sq_task, sq_hash, sq_hashfn, d, siginfo=siginfo, sq_unihash=sq_unihash)",
+                             "(sq_fn, sq_task, sq_hash, sq_hashfn, d, siginfo=siginfo)",
+                             "(sq_fn, sq_task, sq_hash, sq_hashfn, d)")
+
+        for args in hashvalidate_args[:-1]:
+            try:
+                call = self.hashvalidate + args
+                return bb.utils.better_eval(call, locs)
+            except TypeError:
+                continue
+
+        # Call the last entry without a try...catch to propagate any thrown
+        # TypeError
+        call = self.hashvalidate + hashvalidate_args[-1]
+        return bb.utils.better_eval(call, locs)
+
     def _execute_runqueue(self):
         """
         Run the tasks in a queue prepared by rqdata.prepare()
@@ -1549,6 +1569,7 @@ class RunQueue:
         valid = []
         sq_hash = []
         sq_hashfn = []
+        sq_unihash = []
         sq_fn = []
         sq_taskname = []
         sq_task = []
@@ -1567,16 +1588,13 @@ class RunQueue:
             sq_fn.append(fn)
             sq_hashfn.append(self.rqdata.dataCaches[mc].hashfn[taskfn])
             sq_hash.append(self.rqdata.runtaskentries[tid].hash)
+            sq_unihash.append(self.rqdata.runtaskentries[tid].unihash)
             sq_taskname.append(taskname)
             sq_task.append(tid)
-        locs = { "sq_fn" : sq_fn, "sq_task" : sq_taskname, "sq_hash" : sq_hash, "sq_hashfn" : sq_hashfn, "d" : self.cooker.data }
-        try:
-            call = self.hashvalidate + "(sq_fn, sq_task, sq_hash, sq_hashfn, d, siginfo=True)"
-            valid = bb.utils.better_eval(call, locs)
-        # Handle version with no siginfo parameter
-        except TypeError:
-            call = self.hashvalidate + "(sq_fn, sq_task, sq_hash, sq_hashfn, d)"
-            valid = bb.utils.better_eval(call, locs)
+
+        valid = self.validate_hash(sq_fn=sq_fn, sq_task=sq_taskname, sq_hash=sq_hash, sq_hashfn=sq_hashfn,
+                siginfo=True, sq_unihash=sq_unihash, d=self.cooker.data)
+
         for v in valid:
             valid_new.add(sq_task[v])
 
@@ -2293,6 +2311,7 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
         if self.rq.hashvalidate:
             sq_hash = []
             sq_hashfn = []
+            sq_unihash = []
             sq_fn = []
             sq_taskname = []
             sq_task = []
@@ -2324,14 +2343,14 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
                 sq_fn.append(fn)
                 sq_hashfn.append(self.rqdata.dataCaches[mc].hashfn[taskfn])
                 sq_hash.append(self.rqdata.runtaskentries[tid].hash)
+                sq_unihash.append(self.rqdata.runtaskentries[tid].unihash)
                 sq_taskname.append(taskname)
                 sq_task.append(tid)
 
             self.cooker.data.setVar("BB_SETSCENE_STAMPCURRENT_COUNT", len(stamppresent))
 
-            call = self.rq.hashvalidate + "(sq_fn, sq_task, sq_hash, sq_hashfn, d)"
-            locs = { "sq_fn" : sq_fn, "sq_task" : sq_taskname, "sq_hash" : sq_hash, "sq_hashfn" : sq_hashfn, "d" : self.cooker.data }
-            valid = bb.utils.better_eval(call, locs)
+            valid = self.rq.validate_hash(sq_fn=sq_fn, sq_task=sq_taskname, sq_hash=sq_hash, sq_hashfn=sq_hashfn,
+                    siginfo=False, sq_unihash=sq_unihash, d=self.cooker.data)
 
             self.cooker.data.delVar("BB_SETSCENE_STAMPCURRENT_COUNT")
 
