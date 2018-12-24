@@ -130,6 +130,7 @@ class ProcessServer(multiprocessing.Process):
         bb.utils.set_process_name("Cooker")
 
         ready = []
+        newconnections = []
 
         self.controllersock = False
         fds = [self.sock]
@@ -138,37 +139,48 @@ class ProcessServer(multiprocessing.Process):
         print("Entering server connection loop")
 
         def disconnect_client(self, fds):
-            if not self.haveui:
-                return
             print("Disconnecting Client")
-            fds.remove(self.controllersock)
-            fds.remove(self.command_channel)
-            bb.event.unregister_UIHhandler(self.event_handle, True)
-            self.command_channel_reply.writer.close()
-            self.event_writer.writer.close()
-            del self.event_writer
-            self.controllersock.close()
-            self.controllersock = False
-            self.haveui = False
-            self.lastui = time.time()
-            self.cooker.clientComplete()
-            if self.timeout is None:
+            if self.controllersock:
+                fds.remove(self.controllersock)
+                self.controllersock.close()
+                self.controllersock = False
+            if self.haveui:
+                fds.remove(self.command_channel)
+                bb.event.unregister_UIHhandler(self.event_handle, True)
+                self.command_channel_reply.writer.close()
+                self.event_writer.writer.close()
+                self.command_channel.close()
+                self.command_channel = False
+                del self.event_writer
+                self.lastui = time.time()
+                self.cooker.clientComplete()
+                self.haveui = False
+            ready = select.select(fds,[],[],0)[0]
+            if newconnections:
+                print("Starting new client")
+                conn = newconnections.pop(-1)
+                fds.append(conn)
+                self.controllersock = conn
+            elif self.timeout is None and not ready:
                 print("No timeout, exiting.")
                 self.quit = True
 
         while not self.quit:
             if self.sock in ready:
-                self.controllersock, address = self.sock.accept()
-                if self.haveui:
-                    print("Dropping connection attempt as we have a UI %s" % (str(ready)))
-                    self.controllersock.close()
-                else:
-                    print("Accepting %s" % (str(ready)))
-                    fds.append(self.controllersock)
+                while select.select([self.sock],[],[],0)[0]:
+                    controllersock, address = self.sock.accept()
+                    if self.controllersock:
+                        print("Queuing %s (%s)" % (str(ready), str(newconnections)))
+                        newconnections.append(controllersock)
+                    else:
+                        print("Accepting %s (%s)" % (str(ready), str(newconnections)))
+                        self.controllersock = controllersock
+                        fds.append(controllersock)
             if self.controllersock in ready:
                 try:
-                    print("Connecting Client")
+                    print("Processing Client")
                     ui_fds = recvfds(self.controllersock, 3)
+                    print("Connecting Client")
 
                     # Where to write events to
                     writer = ConnectionWriter(ui_fds[0])
