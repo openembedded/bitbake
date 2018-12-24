@@ -478,7 +478,14 @@ def connectProcessServer(sockname, featureset):
     try:
         try:
             os.chdir(os.path.dirname(sockname))
-            sock.connect(os.path.basename(sockname))
+            finished = False
+            while not finished:
+                try:
+                    sock.connect(os.path.basename(sockname))
+                    finished = True
+                except IOError as e:
+                    if e.errno == errno.EWOULDBLOCK:
+                        pass
         finally:
             os.chdir(cwd)
 
