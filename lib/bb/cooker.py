@@ -1895,35 +1895,6 @@ class ParsingFailure(Exception):
         self.recipe = recipe
         Exception.__init__(self, realexception, recipe)
 
-class Feeder(multiprocessing.Process):
-    def __init__(self, jobs, to_parsers, quit):
-        self.quit = quit
-        self.jobs = jobs
-        self.to_parsers = to_parsers
-        multiprocessing.Process.__init__(self)
-
-    def run(self):
-        while True:
-            try:
-                quit = self.quit.get_nowait()
-            except queue.Empty:
-                pass
-            else:
-                if quit == 'cancel':
-                    self.to_parsers.cancel_join_thread()
-                break
-
-            try:
-                job = self.jobs.pop()
-            except IndexError:
-                break
-
-            try:
-                self.to_parsers.put(job, timeout=0.5)
-            except queue.Full:
-                self.jobs.insert(0, job)
-                continue
-
 class Parser(multiprocessing.Process):
     def __init__(self, jobs, results, quit, init, profile):
         self.jobs = jobs
@@ -2058,12 +2029,13 @@ class CookerParser(object):
                 multiprocessing.util.Finalize(None, bb.codeparser.parser_cache_save, exitpriority=1)
                 multiprocessing.util.Finalize(None, bb.fetch.fetcher_parse_save, exitpriority=1)
 
-            self.feeder_quit = multiprocessing.Queue(maxsize=1)
             self.parser_quit = multiprocessing.Queue(maxsize=self.num_processes)
-            self.jobs = multiprocessing.Queue(maxsize=self.num_processes)
             self.result_queue = multiprocessing.Queue()
-            self.feeder = Feeder(self.willparse, self.jobs, self.feeder_quit)
-            self.feeder.start()
+
+            self.jobs = multiprocessing.Queue()
+            for j in self.willparse:
+                self.jobs.put(j)
+
             for i in range(0, self.num_processes):
                 parser = Parser(self.jobs, self.result_queue, self.parser_quit, init, self.cooker.configuration.profile)
                 parser.start()
@@ -2086,12 +2058,9 @@ class CookerParser(object):
                                             self.total)
 
             bb.event.fire(event, self.cfgdata)
-            self.feeder_quit.put(None)
             for process in self.processes:
                 self.parser_quit.put(None)
         else:
-            self.feeder_quit.put('cancel')
-
             self.parser_quit.cancel_join_thread()
             for process in self.processes:
                 self.parser_quit.put(None)
@@ -2104,7 +2073,6 @@ class CookerParser(object):
                 process.terminate()
             else:
                 process.join()
-        self.feeder.join()
 
         sync = threading.Thread(target=self.bb_cache.sync)
         sync.start()
