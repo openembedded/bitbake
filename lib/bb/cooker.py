@@ -1941,11 +1941,8 @@ class Parser(multiprocessing.Process):
                 result = pending.pop()
             else:
                 try:
-                    job = self.jobs.get(timeout=0.25)
-                except queue.Empty:
-                    continue
-
-                if job is None:
+                    job = self.jobs.pop()
+                except IndexError:
                     break
                 result = self.parse(*job)
 
@@ -2032,12 +2029,12 @@ class CookerParser(object):
             self.parser_quit = multiprocessing.Queue(maxsize=self.num_processes)
             self.result_queue = multiprocessing.Queue()
 
-            self.jobs = multiprocessing.Queue()
-            for j in self.willparse:
-                self.jobs.put(j)
+            def chunkify(lst,n):
+                return [lst[i::n] for i in range(n)]
+            self.jobs = chunkify(self.willparse, self.num_processes)
 
             for i in range(0, self.num_processes):
-                parser = Parser(self.jobs, self.result_queue, self.parser_quit, init, self.cooker.configuration.profile)
+                parser = Parser(self.jobs[i], self.result_queue, self.parser_quit, init, self.cooker.configuration.profile)
                 parser.start()
                 self.process_names.append(parser.name)
                 self.processes.append(parser)
@@ -2064,8 +2061,6 @@ class CookerParser(object):
             self.parser_quit.cancel_join_thread()
             for process in self.processes:
                 self.parser_quit.put(None)
-
-            self.jobs.cancel_join_thread()
 
         for process in self.processes:
             if force:
