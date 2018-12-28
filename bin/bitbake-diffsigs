@@ -188,7 +188,9 @@ else:
         sys.exit(1)
     try:
         if not options.dump and options.sigdatafile1 and options.sigdatafile2:
-            output = bb.siggen.compare_sigfiles(options.sigdatafile1, options.sigdatafile2, color=color)
+            with bb.tinfoil.Tinfoil() as tinfoil:
+                tinfoil.prepare(config_only=True)
+                output = bb.siggen.compare_sigfiles(options.sigdatafile1, options.sigdatafile2, recursecb, color=color)
         elif options.sigdatafile1:
             output = bb.siggen.dump_sigfile(options.sigdatafile1)
         else:
