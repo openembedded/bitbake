@@ -639,27 +639,38 @@ class BBCooker:
             runlist.append([mc, k, ktask, fn])
             bb.event.fire(bb.event.TreeDataPreparationProgress(current, len(fulltargetlist)), self.data)
 
-        mcdeps = taskdata[mc].get_mcdepends()
+
         # No need to do check providers if there are no mcdeps or not an mc build
-        if mcdeps and mc:
-            # Make sure we can provide the multiconfig dependency
-            seen = set()
-            new = True
-            while new:
-                new = False
-                for mc in self.multiconfigs:
-                    for k in mcdeps:
-                        if k in seen:
-                            continue
-                        l = k.split(':')
-                        depmc = l[2]
-                        if depmc not in self.multiconfigs:
-                            bb.fatal("Multiconfig dependency %s depends on nonexistent mc configuration %s" % (k,depmc))
-                        else:
-                            logger.debug(1, "Adding providers for multiconfig dependency %s" % l[3])
-                            taskdata[depmc].add_provider(localdata[depmc], self.recipecaches[depmc], l[3])
-                            seen.add(k)
-                            new = True
+        if mc:
+            # Add unresolved first, so we can get multiconfig indirect dependencies on time
+            for mcavailable in self.multiconfigs:
+                # The first element is empty
+                if mcavailable:
+                    taskdata[mcavailable].add_unresolved(localdata[mcavailable], self.recipecaches[mcavailable])
+
+
+            mcdeps = taskdata[mc].get_mcdepends()
+
+            if mcdeps:
+                # Make sure we can provide the multiconfig dependency
+                seen = set()
+                new = True
+                while new:
+                    new = False
+                    for mc in self.multiconfigs:
+                        for k in mcdeps:
+                            if k in seen:
+                                continue
+                            l = k.split(':')
+                            depmc = l[2]
+                            if depmc not in self.multiconfigs:
+                                bb.fatal("Multiconfig dependency %s depends on nonexistent mc configuration %s" % (k,depmc))
+                            else:
+                                logger.debug(1, "Adding providers for multiconfig dependency %s" % l[3])
+                                taskdata[depmc].add_provider(localdata[depmc], self.recipecaches[depmc], l[3])
+                                seen.add(k)
+                                new = True
+
         for mc in self.multiconfigs:
             taskdata[mc].add_unresolved(localdata[mc], self.recipecaches[mc])
 
