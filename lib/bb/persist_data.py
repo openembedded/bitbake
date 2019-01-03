@@ -59,7 +59,7 @@ class SQLTable(collections.MutableMapping):
                         try:
                             return f(self, *args, **kwargs)
                         except sqlite3.OperationalError as exc:
-                            if 'is locked' in str(exc) and count < 500:
+                            if count < 500 and ('is locked' in str(exc) or 'locking protocol' in str(exc)):
                                 count = count + 1
                                 if reconnect:
                                     self.reconnect()
