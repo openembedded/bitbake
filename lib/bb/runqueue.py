@@ -1167,7 +1167,7 @@ class RunQueueData:
             procdep.append(fn_from_tid(dep) + "." + taskname_from_tid(dep))
         (mc, fn, taskname, taskfn) = split_tid_mcfn(tid)
         self.runtaskentries[tid].hash = bb.parse.siggen.get_taskhash(taskfn, taskname, procdep, self.dataCaches[mc])
-        self.runtaskentries[tid].unihash = bb.parse.siggen.get_unihash(fn + "." + taskname)
+        self.runtaskentries[tid].unihash = bb.parse.siggen.get_unihash(taskfn + "." + taskname)
 
     def dump_data(self):
         """
