@@ -199,7 +199,7 @@ class Git(FetchMethod):
             depth_default = 1
         ud.shallow_depths = collections.defaultdict(lambda: depth_default)
 
-        revs_default = d.getVar("BB_GIT_SHALLOW_REVS", True)
+        revs_default = d.getVar("BB_GIT_SHALLOW_REVS")
         ud.shallow_revs = []
         ud.branches = {}
         for pos, name in enumerate(ud.names):

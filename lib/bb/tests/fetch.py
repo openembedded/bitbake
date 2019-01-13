@@ -1338,7 +1338,7 @@ class GitShallowTest(FetcherTest):
 
     def fetch(self, uri=None):
         if uri is None:
-            uris = self.d.getVar('SRC_URI', True).split()
+            uris = self.d.getVar('SRC_URI').split()
             uri = uris[0]
             d = self.d
         else:
@@ -1397,7 +1397,7 @@ class GitShallowTest(FetcherTest):
 
         srcrev = self.git('rev-parse HEAD', cwd=self.srcdir).strip()
         self.d.setVar('SRCREV', srcrev)
-        uri = self.d.getVar('SRC_URI', True).split()[0]
+        uri = self.d.getVar('SRC_URI').split()[0]
         uri = '%s;nobranch=1;bare=1' % uri
 
         self.fetch_shallow(uri)
@@ -1576,7 +1576,7 @@ class GitShallowTest(FetcherTest):
         self.add_empty_file('f')
         self.assertRevCount(7, cwd=self.srcdir)
 
-        uri = self.d.getVar('SRC_URI', True).split()[0]
+        uri = self.d.getVar('SRC_URI').split()[0]
         uri = '%s;branch=master,a_branch;name=master,a_branch' % uri
 
         self.d.setVar('BB_GIT_SHALLOW_DEPTH', '0')
@@ -1602,7 +1602,7 @@ class GitShallowTest(FetcherTest):
         self.add_empty_file('f')
         self.assertRevCount(7, cwd=self.srcdir)
 
-        uri = self.d.getVar('SRC_URI', True).split()[0]
+        uri = self.d.getVar('SRC_URI').split()[0]
         uri = '%s;branch=master,a_branch;name=master,a_branch' % uri
 
         self.d.setVar('BB_GIT_SHALLOW_DEPTH', '0')
