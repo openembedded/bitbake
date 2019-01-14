@@ -90,7 +90,7 @@ class SignatureGeneratorBasic(SignatureGenerator):
         self.taints = {}
         self.gendeps = {}
         self.lookupcache = {}
-        self.pkgnameextract = re.compile("(?P<fn>.*)\..*")
+        self.pkgnameextract = re.compile(r"(?P<fn>.*)\..*")
         self.basewhitelist = set((data.getVar("BB_HASHBASE_WHITELIST") or "").split())
         self.taskwhitelist = None
         self.init_rundepcheck(data)

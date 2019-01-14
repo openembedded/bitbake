@@ -481,7 +481,7 @@ class Wget(FetchMethod):
         version_dir = ['', '', '']
         version = ['', '', '']
 
-        dirver_regex = re.compile("(?P<pfx>\D*)(?P<ver>(\d+[\.\-_])+(\d+))")
+        dirver_regex = re.compile(r"(?P<pfx>\D*)(?P<ver>(\d+[\.\-_])+(\d+))")
         s = dirver_regex.search(dirver)
         if s:
             version_dir[1] = s.group('ver')
@@ -541,26 +541,26 @@ class Wget(FetchMethod):
                 gst-fluendo-mp3
         """
         # match most patterns which uses "-" as separator to version digits
-        pn_prefix1 = "[a-zA-Z][a-zA-Z0-9]*([-_][a-zA-Z]\w+)*\+?[-_]"
+        pn_prefix1 = r"[a-zA-Z][a-zA-Z0-9]*([-_][a-zA-Z]\w+)*\+?[-_]"
         # a loose pattern such as for unzip552.tar.gz
-        pn_prefix2 = "[a-zA-Z]+"
+        pn_prefix2 = r"[a-zA-Z]+"
         # a loose pattern such as for 80325-quicky-0.4.tar.gz
-        pn_prefix3 = "[0-9]+[-]?[a-zA-Z]+"
+        pn_prefix3 = r"[0-9]+[-]?[a-zA-Z]+"
         # Save the Package Name (pn) Regex for use later
-        pn_regex = "(%s|%s|%s)" % (pn_prefix1, pn_prefix2, pn_prefix3)
+        pn_regex = r"(%s|%s|%s)" % (pn_prefix1, pn_prefix2, pn_prefix3)
 
         # match version
-        pver_regex = "(([A-Z]*\d+[a-zA-Z]*[\.\-_]*)+)"
+        pver_regex = r"(([A-Z]*\d+[a-zA-Z]*[\.\-_]*)+)"
 
         # match arch
         parch_regex = "-source|_all_"
 
         # src.rpm extension was added only for rpm package. Can be removed if the rpm
         # packaged will always be considered as having to be manually upgraded
-        psuffix_regex = "(tar\.gz|tgz|tar\.bz2|zip|xz|tar\.lz|rpm|bz2|orig\.tar\.gz|tar\.xz|src\.tar\.gz|src\.tgz|svnr\d+\.tar\.bz2|stable\.tar\.gz|src\.rpm)"
+        psuffix_regex = r"(tar\.gz|tgz|tar\.bz2|zip|xz|tar\.lz|rpm|bz2|orig\.tar\.gz|tar\.xz|src\.tar\.gz|src\.tgz|svnr\d+\.tar\.bz2|stable\.tar\.gz|src\.rpm)"
 
         # match name, version and archive type of a package
-        package_regex_comp = re.compile("(?P<name>%s?\.?v?)(?P<pver>%s)(?P<arch>%s)?[\.-](?P<type>%s$)"
+        package_regex_comp = re.compile(r"(?P<name>%s?\.?v?)(?P<pver>%s)(?P<arch>%s)?[\.-](?P<type>%s$)"
                                                     % (pn_regex, pver_regex, parch_regex, psuffix_regex))
         self.suffix_regex_comp = re.compile(psuffix_regex)
 
@@ -572,7 +572,7 @@ class Wget(FetchMethod):
             version = self._parse_path(package_regex_comp, package)
             if version:
                 package_custom_regex_comp = re.compile(
-                    "(?P<name>%s)(?P<pver>%s)(?P<arch>%s)?[\.-](?P<type>%s)" %
+                    r"(?P<name>%s)(?P<pver>%s)(?P<arch>%s)?[\.-](?P<type>%s)" %
                     (re.escape(version[0]), pver_regex, parch_regex, psuffix_regex))
             else:
                 package_custom_regex_comp = None
@@ -589,7 +589,7 @@ class Wget(FetchMethod):
         current_version = ['', d.getVar('PV'), '']
 
         """possible to have no version in pkg name, such as spectrum-fw"""
-        if not re.search("\d+", package):
+        if not re.search(r"\d+", package):
             current_version[1] = re.sub('_', '.', current_version[1])
             current_version[1] = re.sub('-', '.', current_version[1])
             return (current_version[1], '')
@@ -607,13 +607,13 @@ class Wget(FetchMethod):
 
             # search for version matches on folders inside the path, like:
             # "5.7" in http://download.gnome.org/sources/${PN}/5.7/${PN}-${PV}.tar.gz
-            dirver_regex = re.compile("(?P<dirver>[^/]*(\d+\.)*\d+([-_]r\d+)*)/")
+            dirver_regex = re.compile(r"(?P<dirver>[^/]*(\d+\.)*\d+([-_]r\d+)*)/")
             m = dirver_regex.search(path)
             if m:
                 pn = d.getVar('PN')
                 dirver = m.group('dirver')
 
-                dirver_pn_regex = re.compile("%s\d?" % (re.escape(pn)))
+                dirver_pn_regex = re.compile(r"%s\d?" % (re.escape(pn)))
                 if not dirver_pn_regex.search(dirver):
                     return (self._check_latest_version_by_dir(dirver,
                         package, package_regex, current_version, ud, d), '')

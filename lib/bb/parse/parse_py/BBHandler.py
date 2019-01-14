@@ -38,15 +38,15 @@ from .ConfHandler import include, init
 # For compatibility
 bb.deprecate_import(__name__, "bb.parse", ["vars_from_file"])
 
-__func_start_regexp__    = re.compile( r"(((?P<py>python)|(?P<fr>fakeroot))\s*)*(?P<func>[\w\.\-\+\{\}\$]+)?\s*\(\s*\)\s*{$" )
-__inherit_regexp__       = re.compile( r"inherit\s+(.+)" )
-__export_func_regexp__   = re.compile( r"EXPORT_FUNCTIONS\s+(.+)" )
-__addtask_regexp__       = re.compile("addtask\s+(?P<func>\w+)\s*((before\s*(?P<before>((.*(?=after))|(.*))))|(after\s*(?P<after>((.*(?=before))|(.*)))))*")
-__deltask_regexp__       = re.compile("deltask\s+(?P<func>\w+)")
-__addhandler_regexp__    = re.compile( r"addhandler\s+(.+)" )
-__def_regexp__           = re.compile( r"def\s+(\w+).*:" )
-__python_func_regexp__   = re.compile( r"(\s+.*)|(^$)|(^#)" )
-__python_tab_regexp__    = re.compile(" *\t")
+__func_start_regexp__    = re.compile(r"(((?P<py>python)|(?P<fr>fakeroot))\s*)*(?P<func>[\w\.\-\+\{\}\$]+)?\s*\(\s*\)\s*{$" )
+__inherit_regexp__       = re.compile(r"inherit\s+(.+)" )
+__export_func_regexp__   = re.compile(r"EXPORT_FUNCTIONS\s+(.+)" )
+__addtask_regexp__       = re.compile(r"addtask\s+(?P<func>\w+)\s*((before\s*(?P<before>((.*(?=after))|(.*))))|(after\s*(?P<after>((.*(?=before))|(.*)))))*")
+__deltask_regexp__       = re.compile(r"deltask\s+(?P<func>\w+)")
+__addhandler_regexp__    = re.compile(r"addhandler\s+(.+)" )
+__def_regexp__           = re.compile(r"def\s+(\w+).*:" )
+__python_func_regexp__   = re.compile(r"(\s+.*)|(^$)|(^#)" )
+__python_tab_regexp__    = re.compile(r" *\t")
 
 __infunc__ = []
 __inpython__ = False
