@@ -150,68 +150,7 @@ class GitSM(Git):
 
     def download(self, ud, d):
         Git.download(self, ud, d)
-
-        if not ud.shallow or ud.localpath != ud.fullshallow:
-            self.update_submodules(ud, d)
-
-    def copy_submodules(self, submodules, ud, name, destdir, d):
-        if ud.bareclone:
-            repo_conf = destdir
-        else:
-            repo_conf = os.path.join(destdir, '.git')
-
-        if submodules and not os.path.exists(os.path.join(repo_conf, 'modules')):
-            os.mkdir(os.path.join(repo_conf, 'modules'))
-
-        for module, md in submodules.items():
-            srcpath = os.path.join(ud.clonedir, 'modules', md['path'])
-            modpath = os.path.join(repo_conf, 'modules', md['path'])
-
-            # Check if the module is initialized
-            try:
-                module_hash = runfetchcmd("%s ls-tree -z -d %s %s" % (ud.basecmd, ud.revisions[name], md['path']), d, quiet=True, workdir=ud.clonedir)
-            except:
-                # If the command fails, we don't have a valid file to check.  If it doesn't
-                # fail -- it still might be a failure, see next check...
-                module_hash = ""
-
-            if not module_hash:
-                logger.debug(1, "submodule %s is defined, but is not initialized in the repository. Skipping", module)
-                continue
-
-            if os.path.exists(srcpath):
-                if os.path.exists(os.path.join(srcpath, '.git')):
-                    srcpath = os.path.join(srcpath, '.git')
-
-                target = modpath
-                if os.path.exists(modpath):
-                    target = os.path.dirname(modpath)
-
-                os.makedirs(os.path.dirname(target), exist_ok=True)
-                runfetchcmd("cp -fpLR %s %s" % (srcpath, target), d)
-            elif os.path.exists(modpath):
-                # Module already exists, likely unpacked from a shallow mirror clone
-                pass
-            else:
-                # This is fatal, as we do NOT want git-submodule to hit the network
-                raise bb.fetch2.FetchError('Submodule %s does not exist in %s or %s.' % (module, srcpath, modpath))
-
-    def clone_shallow_local(self, ud, dest, d):
-        super(GitSM, self).clone_shallow_local(ud, dest, d)
-
-        # Copy over the submodules' fetched histories too.
-        repo_conf = os.path.join(dest, '.git')
-
-        submodules = []
-        for name in ud.names:
-            try:
-                gitmodules = runfetchcmd("%s show %s:.gitmodules" % (ud.basecmd, ud.revision), d, quiet=True, workdir=dest)
-            except:
-                # No submodules to update
-                continue
-
-            submodules = self.parse_gitmodules(gitmodules)
-            self.copy_submodules(submodules, ud, name, dest, d)
+        self.update_submodules(ud, d)
 
     def unpack_submodules(self, repo_conf, ud, d):
         submodules = []
@@ -293,6 +232,9 @@ class GitSM(Git):
 
             # Correct the submodule references to the local download version...
             runfetchcmd("%(basecmd)s config submodule.%(module)s.url %(url)s" % {'basecmd': ud.basecmd, 'module': module, 'url' : local_paths[module]}, d, workdir=ud.destdir)
+
+            if ud.shallow:
+                runfetchcmd("%(basecmd)s config submodule.%(module)s.shallow true" % {'basecmd': ud.basecmd, 'module': module}, d, workdir=ud.destdir)
 
             # Ensure the submodule repository is NOT set to bare, since we're checking it out...
             runfetchcmd("%s config core.bare false" % (ud.basecmd), d, quiet=True, workdir=os.path.join(repo_conf, 'modules', paths[module]))
