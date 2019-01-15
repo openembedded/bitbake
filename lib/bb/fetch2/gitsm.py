@@ -148,20 +148,6 @@ class GitSM(Git):
 
         return True
 
-    def need_update(self, ud, d):
-        main_repo_needs_update = Git.need_update(self, ud, d)
-
-        # First check that the main repository has enough history fetched. If it doesn't, then we don't
-        # even have the .gitmodules and gitlinks for the submodules to attempt asking whether the
-        # submodules' histories are recent enough.
-        if main_repo_needs_update:
-            return True
-
-        # Now check that the submodule histories are new enough. The git-submodule command doesn't have
-        # any clean interface for doing this aside from just attempting the checkout (with network
-        # fetched disabled).
-        return not self.update_submodules(ud, d)
-
     def download(self, ud, d):
         Git.download(self, ud, d)
 
