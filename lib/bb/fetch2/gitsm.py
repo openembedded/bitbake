@@ -176,12 +176,11 @@ class GitSM(Git):
 
             try:
                 newfetch = Fetch([url], d, cache=False)
-                newfetch.unpack(root=os.path.join(repo_conf, 'modules'))
+                newfetch.unpack(root=os.path.dirname(os.path.join(repo_conf, 'modules', modpath)))
             except Exception as e:
                 logger.error('gitsm: submodule unpack failed: %s %s' % (type(e).__name__, str(e)))
                 raise
 
-            newfetch = Fetch([url], d, cache=False)
             local_path = newfetch.localpath(url)
 
             # Correct the submodule references to the local download version...
@@ -191,7 +190,11 @@ class GitSM(Git):
                 runfetchcmd("%(basecmd)s config submodule.%(module)s.shallow true" % {'basecmd': ud.basecmd, 'module': module}, d, workdir=ud.destdir)
 
             # Ensure the submodule repository is NOT set to bare, since we're checking it out...
-            runfetchcmd("%s config core.bare false" % (ud.basecmd), d, quiet=True, workdir=os.path.join(repo_conf, 'modules', modpath))
+            try:
+                runfetchcmd("%s config core.bare false" % (ud.basecmd), d, quiet=True, workdir=os.path.join(repo_conf, 'modules', modpath))
+            except:
+                logger.error("Unable to set git config core.bare to false for %s" % os.path.join(repo_conf, 'modules', modpath))
+                raise
 
         Git.unpack(self, ud, destdir, d)
 
