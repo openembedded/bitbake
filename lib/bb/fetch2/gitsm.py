@@ -198,6 +198,8 @@ class GitSM(Git):
 
         Git.unpack(self, ud, destdir, d)
 
-        if not ud.bareclone and self.process_submodules(ud, ud.destdir, unpack_submodules, d):
+        ret = self.process_submodules(ud, ud.destdir, unpack_submodules, d)
+
+        if not ud.bareclone and ret:
             # Run submodule update, this sets up the directories -- without touching the config
             runfetchcmd("%s submodule update --recursive --no-fetch" % (ud.basecmd), d, quiet=True, workdir=ud.destdir)
