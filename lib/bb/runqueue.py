@@ -50,6 +50,11 @@ def fn_from_tid(tid):
 def taskname_from_tid(tid):
     return tid.rsplit(":", 1)[1]
 
+def mc_from_tid(tid):
+    if tid.startswith('multiconfig:'):
+        return tid.split(':')[1]
+    return ""
+
 def split_tid(tid):
     (mc, fn, taskname, _) = split_tid_mcfn(tid)
     return (mc, fn, taskname)
@@ -2102,10 +2107,23 @@ class RunQueueExecuteTasks(RunQueueExecute):
 
         return True
 
+    def filtermcdeps(self, task, deps):
+        ret = set()
+        mainmc = mc_from_tid(task)
+        for dep in deps:
+            mc = mc_from_tid(dep)
+            if mc != mainmc:
+                continue
+            ret.add(dep)
+        return ret
+
+    # We filter out multiconfig dependencies from taskdepdata we pass to the tasks 
+    # as most code can't handle them
     def build_taskdepdata(self, task):
         taskdepdata = {}
         next = self.rqdata.runtaskentries[task].depends
         next.add(task)
+        next = self.filtermcdeps(task, next)
         while next:
             additional = []
             for revdep in next:
@@ -2115,6 +2133,7 @@ class RunQueueExecuteTasks(RunQueueExecute):
                 provides = self.rqdata.dataCaches[mc].fn_provides[taskfn]
                 taskhash = self.rqdata.runtaskentries[revdep].hash
                 unihash = self.rqdata.runtaskentries[revdep].unihash
+                deps = self.filtermcdeps(task, deps)
                 taskdepdata[revdep] = [pn, taskname, fn, deps, provides, taskhash, unihash]
                 for revdep2 in deps:
                     if revdep2 not in taskdepdata:
