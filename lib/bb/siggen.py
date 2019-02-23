@@ -184,6 +184,8 @@ class SignatureGeneratorBasic(SignatureGenerator):
                 depmc = pkgname.split(':')[1]
                 if mc != depmc:
                     continue
+            if dep.startswith("multiconfig:") and not mc:
+                continue
             depname = dataCache.pkg_fn[pkgname]
             if not self.rundep_check(fn, recipename, task, dep, depname, dataCache):
                 continue
