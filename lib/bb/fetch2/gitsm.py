@@ -64,6 +64,7 @@ class GitSM(Git):
     def update_submodules(self, ud, d):
         submodules = []
         paths = {}
+        revision = {}
         uris = {}
         local_paths = {}
 
@@ -77,6 +78,7 @@ class GitSM(Git):
             for m, md in self.parse_gitmodules(gitmodules).items():
                 submodules.append(m)
                 paths[m] = md['path']
+                revision[m] = ud.revisions[name]
                 uris[m] = md['url']
                 if uris[m].startswith('..'):
                     newud = copy.copy(ud)
@@ -84,7 +86,17 @@ class GitSM(Git):
                     uris[m] = Git._get_repo_url(self, newud)
 
         for module in submodules:
-            module_hash = runfetchcmd("%s ls-tree -z -d %s %s" % (ud.basecmd, ud.revisions[name], paths[module]), d, quiet=True, workdir=ud.clonedir)
+            try:
+                module_hash = runfetchcmd("%s ls-tree -z -d %s %s" % (ud.basecmd, revision[module], paths[module]), d, quiet=True, workdir=ud.clonedir)
+            except:
+                # If the command fails, we don't have a valid file to check.  If it doesn't
+                # fail -- it still might be a failure, see next check...
+                module_hash = ""
+
+            if not module_hash:
+                logger.debug(1, "submodule %s is defined, but is not initialized in the repository. Skipping", module)
+                continue
+
             module_hash = module_hash.split()[2]
 
             # Build new SRC_URI
@@ -143,7 +155,7 @@ class GitSM(Git):
         if not ud.shallow or ud.localpath != ud.fullshallow:
             self.update_submodules(ud, d)
 
-    def copy_submodules(self, submodules, ud, destdir, d):
+    def copy_submodules(self, submodules, ud, name, destdir, d):
         if ud.bareclone:
             repo_conf = destdir
         else:
@@ -155,6 +167,18 @@ class GitSM(Git):
         for module, md in submodules.items():
             srcpath = os.path.join(ud.clonedir, 'modules', md['path'])
             modpath = os.path.join(repo_conf, 'modules', md['path'])
+
+            # Check if the module is initialized
+            try:
+                module_hash = runfetchcmd("%s ls-tree -z -d %s %s" % (ud.basecmd, ud.revisions[name], md['path']), d, quiet=True, workdir=ud.clonedir)
+            except:
+                # If the command fails, we don't have a valid file to check.  If it doesn't
+                # fail -- it still might be a failure, see next check...
+                module_hash = ""
+
+            if not module_hash:
+                logger.debug(1, "submodule %s is defined, but is not initialized in the repository. Skipping", module)
+                continue
 
             if os.path.exists(srcpath):
                 if os.path.exists(os.path.join(srcpath, '.git')):
@@ -188,7 +212,7 @@ class GitSM(Git):
                 continue
 
             submodules = self.parse_gitmodules(gitmodules)
-            self.copy_submodules(submodules, ud, dest, d)
+            self.copy_submodules(submodules, ud, name, dest, d)
 
     def unpack(self, ud, destdir, d):
         Git.unpack(self, ud, destdir, d)
@@ -211,7 +235,7 @@ class GitSM(Git):
                 continue
 
             submodules = self.parse_gitmodules(gitmodules)
-            self.copy_submodules(submodules, ud, ud.destdir, d)
+            self.copy_submodules(submodules, ud, name, ud.destdir, d)
 
             submodules_queue = [(module, os.path.join(repo_conf, 'modules', md['path'])) for module, md in submodules.items()]
             while len(submodules_queue) != 0:
