@@ -98,6 +98,12 @@ class GitSM(Git):
                 uris[m] = md['url']
                 subrevision[m] = module_hash.split()[2]
 
+                # Convert relative to absolute uri based on parent uri
+                if uris[m].startswith('..'):
+                    newud = copy.copy(ud)
+                    newud.path = os.path.realpath(os.path.join(newud.path, uris[m]))
+                    uris[m] = Git._get_repo_url(self, newud)
+
         for module in submodules:
             # Translate the module url into a SRC_URI
 
@@ -120,11 +126,6 @@ class GitSM(Git):
                     # This has to be a file reference
                     proto = "file"
                     url = "gitsm://" + uris[module]
-                    if uris[module].startswith('..'):
-                        # Local on disk relative reference
-                        newud = copy.copy(ud)
-                        newud.path = os.path.realpath(os.path.join(newud.path, md['url']))
-                        url = "gitsm://" + Git._get_repo_url(self, newud)
 
             url += ';protocol=%s' % proto
             url += ";name=%s" % module
