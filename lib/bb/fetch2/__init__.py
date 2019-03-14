@@ -777,7 +777,8 @@ def get_srcrev(d, method_name='sortable_revision'):
     #
     format = d.getVar('SRCREV_FORMAT')
     if not format:
-        raise FetchError("The SRCREV_FORMAT variable must be set when multiple SCMs are used.")
+        raise FetchError("The SRCREV_FORMAT variable must be set when multiple SCMs are used.\n"\
+                         "The SCMs are:\n%s" % '\n'.join(scms))
 
     name_to_rev = {}
     seenautoinc = False
