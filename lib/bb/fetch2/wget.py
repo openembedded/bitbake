@@ -296,7 +296,7 @@ class Wget(FetchMethod):
         exported_proxies = export_proxies(d)
 
         handlers = [FixedHTTPRedirectHandler, HTTPMethodFallback]
-        if export_proxies:
+        if exported_proxies:
             handlers.append(urllib.request.ProxyHandler())
         handlers.append(CacheHTTPHandler())
         # XXX: Since Python 2.7.9 ssl cert validation is enabled by default
