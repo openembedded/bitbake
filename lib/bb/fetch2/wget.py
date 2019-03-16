@@ -290,7 +290,7 @@ class Wget(FetchMethod):
             """
             def redirect_request(self, req, fp, code, msg, headers, newurl):
                 newreq = urllib.request.HTTPRedirectHandler.redirect_request(self, req, fp, code, msg, headers, newurl)
-                newreq.get_method = lambda: req.get_method()
+                newreq.get_method = req.get_method
                 return newreq
         exported_proxies = export_proxies(d)
 
