@@ -33,11 +33,14 @@ import logging
 import errno
 import bb
 import bb.progress
+import socket
+import http.client
 import urllib.request, urllib.parse, urllib.error
 from   bb.fetch2 import FetchMethod
 from   bb.fetch2 import FetchError
 from   bb.fetch2 import logger
 from   bb.fetch2 import runfetchcmd
+from   bb.fetch2 import FetchConnectionCache
 from   bb.utils import export_proxies
 from   bs4 import BeautifulSoup
 from   bs4 import SoupStrainer
@@ -132,10 +135,6 @@ class Wget(FetchMethod):
         return True
 
     def checkstatus(self, fetch, ud, d, try_again=True):
-        import urllib.request, urllib.error, urllib.parse, socket, http.client
-        from urllib.response import addinfourl
-        from bb.fetch2 import FetchConnectionCache
-
         class HTTPConnectionCache(http.client.HTTPConnection):
             if fetch.connection_cache:
                 def connect(self):
@@ -252,7 +251,7 @@ class Wget(FetchMethod):
                         pass
                     closed = False
 
-                resp = addinfourl(fp_dummy(), r.msg, req.get_full_url())
+                resp = urllib.response.addinfourl(fp_dummy(), r.msg, req.get_full_url())
                 resp.code = r.status
                 resp.msg = r.reason
 
@@ -326,7 +325,7 @@ class Wget(FetchMethod):
                 add_basic_auth(ud.user + ':' + ud.pswd, r)
 
             try:
-                import netrc, urllib.parse
+                import netrc
                 n = netrc.netrc()
                 login, unused, password = n.authenticators(urllib.parse.urlparse(uri).hostname)
                 add_basic_auth("%s:%s" % (login, password), r)
