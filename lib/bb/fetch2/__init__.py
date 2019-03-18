@@ -524,7 +524,7 @@ def fetcher_parse_save():
 def fetcher_parse_done():
     _checksum_cache.save_merge()
 
-def fetcher_compare_revisions():
+def fetcher_compare_revisions(d):
     """
     Compare the revisions in the persistant cache with current values and
     return true/false on whether they've changed.
@@ -1403,7 +1403,7 @@ class FetchMethod(object):
         Fetch urls
         Assumes localpath was called first
         """
-        raise NoMethodError(url)
+        raise NoMethodError(urldata.url)
 
     def unpack(self, urldata, rootdir, data):
         iterate = False
@@ -1547,7 +1547,7 @@ class FetchMethod(object):
         Check the status of a URL
         Assumes localpath was called first
         """
-        logger.info("URL %s could not be checked for status since no method exists.", url)
+        logger.info("URL %s could not be checked for status since no method exists.", urldata.url)
         return True
 
     def latest_revision(self, ud, d, name):
@@ -1555,7 +1555,7 @@ class FetchMethod(object):
         Look in the cache for the latest revision, if not present ask the SCM.
         """
         if not hasattr(self, "_latest_revision"):
-            raise ParameterError("The fetcher for this URL does not support _latest_revision", url)
+            raise ParameterError("The fetcher for this URL does not support _latest_revision", ud.url)
 
         revs = bb.persist_data.persist('BB_URI_HEADREVS', d)
         key = self.generate_revision_key(ud, d, name)
@@ -1786,7 +1786,7 @@ class Fetch(object):
 
         for url in urls:
             if url not in self.ud:
-                self.ud[url] = FetchData(url, d)
+                self.ud[url] = FetchData(url, self.d)
             ud = self.ud[url]
             ud.setup_localpath(self.d)
 
