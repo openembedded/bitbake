@@ -322,8 +322,8 @@ class Wget(FetchMethod):
                 authheader =  "Basic %s" % encodeuser
                 r.add_header("Authorization", authheader)
 
-            if ud.user:
-                add_basic_auth(ud.user, r)
+            if ud.user and ud.pswd:
+                add_basic_auth(ud.user + ':' + ud.pswd, r)
 
             try:
                 import netrc, urllib.parse
