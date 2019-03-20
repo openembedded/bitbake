@@ -858,7 +858,10 @@ def runfetchcmd(cmd, d, quiet=False, cleanup=None, log=None, workdir=None):
     # Disable pseudo as it may affect ssh, potentially causing it to hang.
     cmd = 'export PSEUDO_DISABLED=1; ' + cmd
 
-    logger.debug(1, "Running %s", cmd)
+    if workdir:
+        logger.debug(1, "Running '%s' in %s" % (cmd, workdir))
+    else:
+        logger.debug(1, "Running %s", cmd)
 
     success = False
     error_message = ""
