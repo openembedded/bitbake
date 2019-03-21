@@ -1216,8 +1216,8 @@ class BBCooker:
                     continue
                 elif regex == "":
                     parselog.debug(1, "BBFILE_PATTERN_%s is empty" % c)
+                    cre = re.compile('^NULL$')
                     errors = False
-                    continue
                 else:
                     try:
                         cre = re.compile(regex)
