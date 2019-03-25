@@ -1642,7 +1642,7 @@ class Fetch(object):
             urls = self.urls
 
         network = self.d.getVar("BB_NO_NETWORK")
-        premirroronly = (self.d.getVar("BB_FETCH_PREMIRRORONLY") == "1")
+        premirroronly = bb.utils.to_boolean(self.d.getVar("BB_FETCH_PREMIRRORONLY"))
 
         for u in urls:
             ud = self.ud[u]
