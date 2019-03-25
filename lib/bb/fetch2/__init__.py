@@ -898,7 +898,7 @@ def check_network_access(d, info, url):
     log remote network access, and error if BB_NO_NETWORK is set or the given
     URI is untrusted
     """
-    if d.getVar("BB_NO_NETWORK") == "1":
+    if bb.utils.to_boolean(d.getVar("BB_NO_NETWORK")):
         raise NetworkAccess(url, info)
     elif not trusted_network(d, url):
         raise UntrustedUrl(url, info)
@@ -1098,7 +1098,7 @@ def trusted_network(d, url):
     BB_ALLOWED_NETWORKS is set globally or for a specific recipe.
     Note: modifies SRC_URI & mirrors.
     """
-    if d.getVar('BB_NO_NETWORK') == "1":
+    if bb.utils.to_boolean(d.getVar("BB_NO_NETWORK")):
         return True
 
     pkgname = d.expand(d.getVar('PN', False))
