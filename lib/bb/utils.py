@@ -734,7 +734,7 @@ def mkdirhier(directory):
     try:
         os.makedirs(directory)
     except OSError as e:
-        if e.errno != errno.EEXIST:
+        if e.errno != errno.EEXIST or not os.path.isdir(directory):
             raise e
 
 def movefile(src, dest, newmtime = None, sstat = None):
