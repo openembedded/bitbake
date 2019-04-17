@@ -1667,7 +1667,7 @@ class RunQueue:
             recout = []
             if len(hashfiles) == 2:
                 out2 = bb.siggen.compare_sigfiles(hashfiles[hash1], hashfiles[hash2], recursecb)
-                recout.extend(list('  ' + l for l in out2))
+                recout.extend(list('    ' + l for l in out2))
             else:
                 recout.append("Unable to find matching sigdata for %s with hashes %s or %s" % (key, hash1, hash2))
 
