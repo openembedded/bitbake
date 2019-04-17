@@ -119,6 +119,12 @@ class SignatureGeneratorBasic(SignatureGenerator):
             k = fn + "." + task
             if not ignore_mismatch and k in self.basehash and self.basehash[k] != basehash[k]:
                 bb.error("When reparsing %s, the basehash value changed from %s to %s. The metadata is not deterministic and this needs to be fixed." % (k, self.basehash[k], basehash[k]))
+                bb.error("The following commands may help:")
+                cmd = "$ bitbake %s -c%s" % (d.getVar('PN'), task)
+                # Make sure sigdata is dumped before run printdiff
+                bb.error("%s -Snone" % cmd)
+                bb.error("Then:")
+                bb.error("%s -Sprintdiff\n" % cmd)
             self.basehash[k] = basehash[k]
 
         self.taskdeps[fn] = taskdeps
