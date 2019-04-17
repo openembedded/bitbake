@@ -633,6 +633,10 @@ def compare_sigfiles(a, b, recursecb=None, color=False, collapsed=False):
     a_taint = a_data.get('taint', None)
     b_taint = b_data.get('taint', None)
     if a_taint != b_taint:
+        if a_taint.startswith('nostamp:'):
+            a_taint = a_taint.replace('nostamp:', 'nostamp(uuid4):')
+        if b_taint.startswith('nostamp:'):
+            b_taint = b_taint.replace('nostamp:', 'nostamp(uuid4):')
         output.append(color_format("{color_title}Taint (by forced/invalidated task) changed{color_default} from %s to %s") % (a_taint, b_taint))
 
     return output
@@ -705,7 +709,11 @@ def dump_sigfile(a):
             output.append("Hash for dependent task %s is %s" % (dep, a_data['runtaskhashes'][dep]))
 
     if 'taint' in a_data:
-        output.append("Tainted (by forced/invalidated task): %s" % a_data['taint'])
+        if a_data['taint'].startswith('nostamp:'):
+            msg = a_data['taint'].replace('nostamp:', 'nostamp(uuid4):')
+        else:
+            msg = a_data['taint']
+        output.append("Tainted (by forced/invalidated task): %s" % msg)
 
     if 'task' in a_data:
         computed_basehash = calc_basehash(a_data)
