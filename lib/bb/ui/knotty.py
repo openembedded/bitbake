@@ -222,6 +222,18 @@ class TerminalFilter(object):
             sys.stdout.flush()
         self.footer_present = False
 
+    def elapsed(self, sec):
+        hrs = int(sec / 3600.0)
+        sec -= hrs * 3600
+        min = int(sec / 60.0)
+        sec -= min * 60
+        if hrs > 0:
+            return "%dh%dm%ds" % (hrs, min, sec)
+        elif min > 0:
+            return "%dm%ds" % (min, sec)
+        else:
+            return "%ds" % (sec)
+
     def updateFooter(self):
         if not self.cuu:
             return
@@ -258,7 +270,7 @@ class TerminalFilter(object):
             else:
                 start_time = activetasks[t].get("starttime", None)
                 if start_time:
-                    tasks.append("%s - %ds (pid %s)" % (activetasks[t]["title"], currenttime - start_time, t))
+                    tasks.append("%s - %s (pid %s)" % (activetasks[t]["title"], self.elapsed(currenttime - start_time), t))
                 else:
                     tasks.append("%s (pid %s)" % (activetasks[t]["title"], t))
 
