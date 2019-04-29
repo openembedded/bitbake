@@ -187,3 +187,21 @@ python () {
         self.assertEqual(d1.getVar("VAR_var"), "B")
         self.assertEqual(d2.getVar("VAR_var"), None)
 
+    addtask_deltask = """
+addtask do_patch after do_foo after do_unpack before do_configure before do_compile
+addtask do_fetch do_patch
+
+deltask do_fetch do_patch
+"""
+    def test_parse_addtask_deltask(self):
+        import sys
+        f = self.parsehelper(self.addtask_deltask)
+        d = bb.parse.handle(f.name, self.d)['']
+
+        stdout = sys.stdout.getvalue()
+        self.assertTrue("addtask contained multiple 'before' keywords" in stdout)
+        self.assertTrue("addtask contained multiple 'after' keywords" in stdout)
+        self.assertTrue('addtask ignored: " do_patch"' in stdout)
+        self.assertTrue('deltask ignored: " do_patch"' in stdout)
+        self.assertTrue('dependent task do_foo does not exist' in stdout)
+
