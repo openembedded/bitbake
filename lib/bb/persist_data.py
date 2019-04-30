@@ -8,6 +8,8 @@ currently, providing a key/value store accessed by 'domain'.
 # Copyright (C) 2007        Richard Purdie
 # Copyright (C) 2010        Chris Larson <chris_larson@mentor.com>
 #
+# SPDX-License-Identifier: GPL-2.0-only
+#
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 2 as
 # published by the Free Software Foundation.

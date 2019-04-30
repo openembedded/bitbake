@@ -4,6 +4,8 @@
 #
 # BitBake Toaster Implementation
 #
+# SPDX-License-Identifier: GPL-2.0-only
+#
 # Copyright (C) 2013-2016 Intel Corporation
 #
 # This program is free software; you can redistribute it and/or modify
