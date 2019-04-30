@@ -8,6 +8,8 @@
 # Copyright (C) 2003, 2004 Phil Blundell
 # Copyright (C) 2009 Holger Hans Peter Freyther
 #
+# SPDX-License-Identifier: GPL-2.0-only
+#
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 2 as
 # published by the Free Software Foundation.

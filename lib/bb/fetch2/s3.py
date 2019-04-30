@@ -13,6 +13,8 @@ The aws tool must be correctly installed and configured prior to use.
 # Based in part on bb.fetch2.wget:
 #    Copyright (C) 2003, 2004  Chris Larson
 #
+# SPDX-License-Identifier: GPL-2.0-only
+#
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 2 as
 # published by the Free Software Foundation.

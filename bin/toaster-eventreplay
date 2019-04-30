@@ -4,9 +4,10 @@
 #
 # Copyright (C) 2014        Alex Damian
 #
+# SPDX-License-Identifier: GPL-2.0-only
+#
 # This file re-uses code spread throughout other Bitbake source files.
 # As such, all other copyrights belong to their own right holders.
-#
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 2 as

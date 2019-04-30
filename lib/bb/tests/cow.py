@@ -3,6 +3,8 @@
 #
 # BitBake Tests for Copy-on-Write (cow.py)
 #
+# SPDX-License-Identifier: GPL-2.0-only
+#
 # Copyright 2006 Holger Freyther <freyther@handhelds.org>
 #
 # This program is free software; you can redistribute it and/or modify
