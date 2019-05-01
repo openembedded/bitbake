@@ -1,5 +1,3 @@
-# ex:ts=4:sw=4:sts=4:et
-# -*- tab-width: 4; c-basic-offset: 4; indent-tabs-mode: nil -*-
 #
 # Extra RecipeInfo will be all defined in this file. Currently,
 # Only Hob (Image Creator) Requests some extra fields. So
