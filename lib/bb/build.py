@@ -818,8 +818,8 @@ def add_tasks(tasklist, d):
         if 'deps' in flags:
             for dep in flags['deps']:
                 # Check and warn for "addtask task after foo" while foo does not exist
-                if not dep in tasklist:
-                    bb.warn('%s: dependent task %s for %s does not exist' % (d.getVar('PN'), dep, task))
+                #if not dep in tasklist:
+                #    bb.warn('%s: dependent task %s for %s does not exist' % (d.getVar('PN'), dep, task))
                 dep = d.expand(dep)
                 task_deps['parents'][task].append(dep)
 
