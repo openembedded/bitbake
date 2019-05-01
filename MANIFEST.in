@@ -10,4 +10,3 @@ include classes/*
 include doc/*
 include doc/manual/*
 include ez_setup.py
-include HEADER
