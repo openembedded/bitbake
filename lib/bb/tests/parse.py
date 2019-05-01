@@ -203,5 +203,5 @@ deltask do_fetch do_patch
         self.assertTrue("addtask contained multiple 'after' keywords" in stdout)
         self.assertTrue('addtask ignored: " do_patch"' in stdout)
         self.assertTrue('deltask ignored: " do_patch"' in stdout)
-        self.assertTrue('dependent task do_foo does not exist' in stdout)
+        self.assertTrue('dependent task do_foo for do_patch does not exist' in stdout)
 
