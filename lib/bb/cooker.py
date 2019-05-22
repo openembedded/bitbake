@@ -391,8 +391,9 @@ class BBCooker:
         if CookerFeatures.BASEDATASTORE_TRACKING in self.featureset:
             self.disableDataTracking()
 
-        self.data.renameVar("__depends", "__base_depends")
-        self.add_filewatch(self.data.getVar("__base_depends", False), self.configwatcher)
+        for mc in self.databuilder.mcdata.values():
+            mc.renameVar("__depends", "__base_depends")
+            self.add_filewatch(mc.getVar("__base_depends", False), self.configwatcher)
 
         self.baseconfig_valid = True
         self.parsecache_valid = False
