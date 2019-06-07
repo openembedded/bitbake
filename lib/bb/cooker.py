@@ -505,7 +505,7 @@ class BBCooker:
             self.reset()
 
         def mc_base(p):
-            if p.startswith('multiconfig:'):
+            if p.startswith('mc:'):
                 s = p.split(':')
                 if len(s) == 2:
                     return s[1]
@@ -583,10 +583,10 @@ class BBCooker:
         wildcard = False
 
         # Wild card expansion:
-        # Replace string such as "multiconfig:*:bash"
-        # into "multiconfig:A:bash multiconfig:B:bash bash"
+        # Replace string such as "mc:*:bash"
+        # into "mc:A:bash mc:B:bash bash"
         for k in targetlist:
-            if k.startswith("multiconfig:"):
+            if k.startswith("mc:"):
                 if wildcard:
                     bb.fatal('multiconfig conflict')
                 if k.split(":")[1] == "*":
@@ -619,7 +619,7 @@ class BBCooker:
         runlist = []
         for k in fulltargetlist:
             mc = ""
-            if k.startswith("multiconfig:"):
+            if k.startswith("mc:"):
                 mc = k.split(":")[1]
                 k = ":".join(k.split(":")[2:])
             ktask = task
@@ -700,7 +700,7 @@ class BBCooker:
     @staticmethod
     def add_mc_prefix(mc, pn):
         if mc:
-            return "multiconfig:%s:%s" % (mc, pn)
+            return "mc:%s:%s" % (mc, pn)
         return pn
 
     def buildDependTree(self, rq, taskdata):
@@ -1477,7 +1477,7 @@ class BBCooker:
         ntargets = []
         for target in runlist:
             if target[0]:
-                ntargets.append("multiconfig:%s:%s:%s" % (target[0], target[1], target[2]))
+                ntargets.append("mc:%s:%s:%s" % (target[0], target[1], target[2]))
             ntargets.append("%s:%s" % (target[1], target[2]))
 
         for mc in self.multiconfigs:
@@ -1607,7 +1607,7 @@ class BBCooker:
                 bb.providers.buildWorldTargetList(self.recipecaches[mc], task)
                 for t in self.recipecaches[mc].world_target:
                     if mc:
-                        t = "multiconfig:" + mc + ":" + t
+                        t = "mc:" + mc + ":" + t
                     pkgs_to_build.append(t)
 
         if 'universe' in pkgs_to_build:
@@ -1626,7 +1626,7 @@ class BBCooker:
                             bb.debug(1, "Skipping %s for universe tasks as task %s doesn't exist" % (t, task))
                             continue
                     if mc:
-                        t = "multiconfig:" + mc + ":" + t
+                        t = "mc:" + mc + ":" + t
                     pkgs_to_build.append(t)
 
         return pkgs_to_build
