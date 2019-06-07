@@ -163,12 +163,35 @@ class LogTee(object):
 
     def __repr__(self):
         return '<LogTee {0}>'.format(self.name)
+
     def flush(self):
         self.outfile.flush()
 
+
+class StdoutNoopContextManager:
+    """
+    This class acts like sys.stdout, but adds noop __enter__ and __exit__ methods.
+    """
+    def __enter__(self):
+        return sys.stdout
+
+    def __exit__(self, *exc_info):
+        pass
+
+    def write(self, string):
+        return sys.stdout.write(string)
+
+    def flush(self):
+        sys.stdout.flush()
+
+    @property
+    def name(self):
+        return sys.stdout.name
+
+
 #
 # pythonexception allows the python exceptions generated to be raised
-# as the real exceptions (not FuncFailed) and without a backtrace at the 
+# as the real exceptions (not FuncFailed) and without a backtrace at the
 # origin of the failure.
 #
 def exec_func(func, d, dirs = None, pythonexception=False):
@@ -375,9 +398,9 @@ exit $ret
             cmd = [fakerootcmd, runfile]
 
     if bb.msg.loggerDefaultVerbose:
-        logfile = LogTee(logger, sys.stdout)
+        logfile = LogTee(logger, StdoutNoopContextManager())
     else:
-        logfile = sys.stdout
+        logfile = StdoutNoopContextManager()
 
     progress = d.getVarFlag(func, 'progress')
     if progress:
@@ -433,7 +456,7 @@ exit $ret
             bb.debug(2, "Executing shell function %s" % func)
 
             try:
-                with open(os.devnull, 'r+') as stdin:
+                with open(os.devnull, 'r+') as stdin, logfile:
                     bb.process.run(cmd, shell=False, stdin=stdin, log=logfile, extrafiles=[(fifo,readfifo)])
             except bb.process.CmdError:
                 logfn = d.getVar('BB_LOGFILE')
