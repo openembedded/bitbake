@@ -323,6 +323,21 @@ trap 'bb_exit_handler' 0
 set -e
 '''
 
+def create_progress_handler(func, progress, logfile, d):
+    if progress == 'percent':
+        # Use default regex
+        return bb.progress.BasicProgressHandler(d, outfile=logfile)
+    elif progress.startswith('percent:'):
+        # Use specified regex
+        return bb.progress.BasicProgressHandler(d, regex=progress.split(':', 1)[1], outfile=logfile)
+    elif progress.startswith('outof:'):
+        # Use specified regex
+        return bb.progress.OutOfProgressHandler(d, regex=progress.split(':', 1)[1], outfile=logfile)
+    else:
+        bb.warn('%s: invalid task progress varflag value "%s", ignoring' % (func, progress))
+
+    return logfile
+
 def exec_func_shell(func, d, runfile, cwd=None):
     """Execute a shell function from the metadata
 
@@ -366,17 +381,7 @@ exit $ret
 
     progress = d.getVarFlag(func, 'progress')
     if progress:
-        if progress == 'percent':
-            # Use default regex
-            logfile = bb.progress.BasicProgressHandler(d, outfile=logfile)
-        elif progress.startswith('percent:'):
-            # Use specified regex
-            logfile = bb.progress.BasicProgressHandler(d, regex=progress.split(':', 1)[1], outfile=logfile)
-        elif progress.startswith('outof:'):
-            # Use specified regex
-            logfile = bb.progress.OutOfProgressHandler(d, regex=progress.split(':', 1)[1], outfile=logfile)
-        else:
-            bb.warn('%s: invalid task progress varflag value "%s", ignoring' % (func, progress))
+        logfile = create_progress_handler(func, progress, logfile, d)
 
     fifobuffer = bytearray()
     def readfifo(data):
