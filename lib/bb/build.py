@@ -356,6 +356,27 @@ def create_progress_handler(func, progress, logfile, d):
     elif progress.startswith('outof:'):
         # Use specified regex
         return bb.progress.OutOfProgressHandler(d, regex=progress.split(':', 1)[1], outfile=logfile)
+    elif progress.startswith("custom:"):
+        # Use a custom progress handler that was injected via OE_EXTRA_IMPORTS or __builtins__
+        import functools
+        from types import ModuleType
+
+        parts = progress.split(":", 2)
+        _, cls, otherargs = parts[0], parts[1], (parts[2] or None) if parts[2:] else None
+        if cls:
+            def resolve(x, y):
+                if not x:
+                    return None
+                if isinstance(x, ModuleType):
+                    return getattr(x, y, None)
+                return x.get(y)
+            cls_obj = functools.reduce(resolve, cls.split("."), bb.utils._context)
+            if not cls_obj:
+                # Fall-back on __builtins__
+                cls_obj = functools.reduce(lambda x, y: x.get(y), cls.split("."), __builtins__)
+            if cls_obj:
+                return cls_obj(d, outfile=logfile, otherargs=otherargs)
+            bb.warn('%s: unknown custom progress handler in task progress varflag value "%s", ignoring' % (func, cls))
     else:
         bb.warn('%s: invalid task progress varflag value "%s", ignoring' % (func, progress))
 
