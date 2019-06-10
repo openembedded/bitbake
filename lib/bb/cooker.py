@@ -639,9 +639,13 @@ class BBCooker:
             runlist.append([mc, k, ktask, fn])
             bb.event.fire(bb.event.TreeDataPreparationProgress(current, len(fulltargetlist)), self.data)
 
+        havemc = False
+        for mc in self.multiconfigs:
+            if taskdata[mc].get_mcdepends():
+                havemc = True
 
         # No need to do check providers if there are no mcdeps or not an mc build
-        if len(self.multiconfigs) > 1:
+        if havemc or len(self.multiconfigs) > 1:
             seen = set()
             new = True
             # Make sure we can provide the multiconfig dependency
