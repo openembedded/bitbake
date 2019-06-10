@@ -1600,6 +1600,9 @@ class BBCooker:
         for pkg in pkgs_to_build:
             if pkg in ignore:
                 parselog.warning("Explicit target \"%s\" is in ASSUME_PROVIDED, ignoring" % pkg)
+            if pkg.startswith("multiconfig:"):
+                pkgs_to_build.remove(pkg)
+                pkgs_to_build.append(pkg.replace("multiconfig:", "mc:"))
 
         if 'world' in pkgs_to_build:
             pkgs_to_build.remove('world')
