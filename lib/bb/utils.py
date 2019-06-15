@@ -120,6 +120,10 @@ def vercmp_part(a, b):
             return -1
         elif oa > ob:
             return 1
+        elif ca is None:
+            return -1
+        elif cb is None:
+            return 1
         elif ca < cb:
             return -1
         elif ca > cb:
