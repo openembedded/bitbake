@@ -254,6 +254,11 @@ class BitBakeConfigParameters(cookerdata.ConfigParameters):
                           help="Do not run any setscene tasks. sstate will be ignored and "
                                "everything needed, built.")
 
+        parser.add_option("", "--skip-setscene", action="store_true",
+                          dest="skipsetscene", default=False,
+                          help="Skip setscene tasks if they would be executed. Tasks previously "
+                               "restored from sstate will be kept, unlike --no-setscene")
+
         parser.add_option("", "--setscene-only", action="store_true",
                           dest="setsceneonly", default=False,
                           help="Only run setscene tasks, don't run any real tasks.")

@@ -2488,6 +2488,11 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
                 self.task_skip(task)
                 return True
 
+            if self.cooker.configuration.skipsetscene:
+                logger.debug(2, 'No setscene tasks should be executed. Skipping %s', task)
+                self.task_failoutright(task)
+                return True
+
             startevent = sceneQueueTaskStarted(task, self.stats, self.rq)
             bb.event.fire(startevent, self.cfgData)
 
