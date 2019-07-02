@@ -447,12 +447,7 @@ def setup_bitbake(configParams, configuration, extrafeatures=None):
                             bb.utils.unlockfile(lock)
                         raise bb.server.process.ProcessTimeout("Bitbake still shutting down as socket exists but no lock?")
                 if not configParams.server_only:
-                    try:
-                        server_connection = bb.server.process.connectProcessServer(sockname, featureset)
-                    except EOFError:
-                        # The server may have been shutting down but not closed the socket yet. If that happened,
-                        # ignore it.
-                        pass
+                    server_connection = bb.server.process.connectProcessServer(sockname, featureset)
 
                 if server_connection or configParams.server_only:
                     break
@@ -463,7 +458,7 @@ def setup_bitbake(configParams, configuration, extrafeatures=None):
                     raise
                 retries -= 1
                 tryno = 8 - retries
-                if isinstance(e, (bb.server.process.ProcessTimeout, BrokenPipeError)):
+                if isinstance(e, (bb.server.process.ProcessTimeout, BrokenPipeError, EOFError)):
                     logger.info("Retrying server connection (#%d)..." % tryno)
                 else:
                     logger.info("Retrying server connection (#%d)... (%s)" % (tryno, traceback.format_exc()))
