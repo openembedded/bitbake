@@ -468,7 +468,8 @@ def setup_bitbake(configParams, configuration, extrafeatures=None):
                 else:
                     logger.info("Retrying server connection (#%d)... (%s)" % (tryno, traceback.format_exc()))
             if not retries:
-                bb.fatal("Unable to connect to bitbake server, or start one")
+                bb.fatal("Unable to connect to bitbake server, or start one (server startup failures would be in bitbake-cookerdaemon.log).")
+            bb.event.print_ui_queue()
             if retries < 5:
                 time.sleep(5)
 
