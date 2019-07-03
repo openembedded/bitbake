@@ -196,11 +196,6 @@ class RunQueueScheduler(object):
         if self.rq.can_start_task():
             return self.next_buildable_task()
 
-    def initbuildable(self):
-        for tid in self.rqdata.runtaskentries:
-            if tid in self.rq.runq_buildable:
-                self.buildable.append(tid)
-
     def newbuildable(self, task):
         self.buildable.append(task)
 
@@ -2504,7 +2499,7 @@ def start_runqueue_tasks(rqexec):
         # Mark initial buildable tasks
         for tid in rqexec.rqdata.runtaskentries:
             if len(rqexec.rqdata.runtaskentries[tid].depends) == 0:
-                rqexec.runq_buildable.add(tid)
+                rqexec.setbuildable(tid)
             if len(rqexec.rqdata.runtaskentries[tid].revdeps) > 0 and rqexec.rqdata.runtaskentries[tid].revdeps.issubset(rqexec.scenequeue_covered):
                 rqexec.scenequeue_covered.add(tid)
 
@@ -2526,8 +2521,6 @@ def start_runqueue_tasks(rqexec):
 
         for task in self.rq.scenequeue_notcovered:
             logger.debug(1, 'Not skipping task %s', task)
-
-        rqexec.sched.initbuildable()
 
 class TaskFailure(Exception):
     """
