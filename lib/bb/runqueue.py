@@ -2080,6 +2080,252 @@ class RunQueueExecuteTasks(RunQueueExecute):
         #bb.note("Task %s: " % task + str(taskdepdata).replace("], ", "],\n"))
         return taskdepdata
 
+class SQData(object):
+    def __init__(self):
+        # SceneQueue dependencies
+        self.sq_deps = {}
+        # SceneQueue reverse dependencies
+        self.sq_revdeps = {}
+        # Copy of reverse dependencies used by sq processing code
+        self.sq_revdeps2 = {}
+        # Injected inter-setscene task dependencies
+        self.sq_harddeps = {}
+        # Cache of stamp files so duplicates can't run in parallel
+        self.stamps = {}
+        # Setscene tasks directly depended upon by the build
+        self.unskippable = []
+        # List of setscene tasks which aren't present
+        self.outrightfail = []
+        # A list of normal tasks a setscene task covers
+        self.sq_covered_tasks = {}
+
+def build_scenequeue_data(sqdata, rqdata, rq, cooker, stampcache, sqrq):
+
+    sq_revdeps = {}
+    sq_revdeps_new = {}
+    sq_revdeps_squash = {}
+
+    # We need to construct a dependency graph for the setscene functions. Intermediate
+    # dependencies between the setscene tasks only complicate the code. This code
+    # therefore aims to collapse the huge runqueue dependency tree into a smaller one
+    # only containing the setscene functions.
+
+    rqdata.init_progress_reporter.next_stage()
+
+    # First process the chains up to the first setscene task.
+    endpoints = {}
+    for tid in rqdata.runtaskentries:
+        sq_revdeps[tid] = copy.copy(rqdata.runtaskentries[tid].revdeps)
+        sq_revdeps_new[tid] = set()
+        if (len(sq_revdeps[tid]) == 0) and tid not in rqdata.runq_setscene_tids:
+            #bb.warn("Added endpoint %s" % (tid))
+            endpoints[tid] = set()
+
+    rqdata.init_progress_reporter.next_stage()
+
+    # Secondly process the chains between setscene tasks.
+    for tid in rqdata.runq_setscene_tids:
+        #bb.warn("Added endpoint 2 %s" % (tid))
+        for dep in rqdata.runtaskentries[tid].depends:
+                if tid in sq_revdeps[dep]:
+                    sq_revdeps[dep].remove(tid)
+                if dep not in endpoints:
+                    endpoints[dep] = set()
+                #bb.warn("  Added endpoint 3 %s" % (dep))
+                endpoints[dep].add(tid)
+
+    rqdata.init_progress_reporter.next_stage()
+
+    def process_endpoints(endpoints):
+        newendpoints = {}
+        for point, task in endpoints.items():
+            tasks = set()
+            if task:
+                tasks |= task
+            if sq_revdeps_new[point]:
+                tasks |= sq_revdeps_new[point]
+            sq_revdeps_new[point] = set()
+            if point in rqdata.runq_setscene_tids:
+                sq_revdeps_new[point] = tasks
+                tasks = set()
+                continue
+            for dep in rqdata.runtaskentries[point].depends:
+                if point in sq_revdeps[dep]:
+                    sq_revdeps[dep].remove(point)
+                if tasks:
+                    sq_revdeps_new[dep] |= tasks
+                if len(sq_revdeps[dep]) == 0 and dep not in rqdata.runq_setscene_tids:
+                    newendpoints[dep] = task
+        if len(newendpoints) != 0:
+            process_endpoints(newendpoints)
+
+    process_endpoints(endpoints)
+
+    rqdata.init_progress_reporter.next_stage()
+
+    # Build a list of setscene tasks which are "unskippable"
+    # These are direct endpoints referenced by the build
+    endpoints2 = {}
+    sq_revdeps2 = {}
+    sq_revdeps_new2 = {}
+    def process_endpoints2(endpoints):
+        newendpoints = {}
+        for point, task in endpoints.items():
+            tasks = set([point])
+            if task:
+                tasks |= task
+            if sq_revdeps_new2[point]:
+                tasks |= sq_revdeps_new2[point]
+            sq_revdeps_new2[point] = set()
+            if point in rqdata.runq_setscene_tids:
+                sq_revdeps_new2[point] = tasks
+            for dep in rqdata.runtaskentries[point].depends:
+                if point in sq_revdeps2[dep]:
+                    sq_revdeps2[dep].remove(point)
+                if tasks:
+                    sq_revdeps_new2[dep] |= tasks
+                if (len(sq_revdeps2[dep]) == 0 or len(sq_revdeps_new2[dep]) != 0) and dep not in rqdata.runq_setscene_tids:
+                    newendpoints[dep] = tasks
+        if len(newendpoints) != 0:
+            process_endpoints2(newendpoints)
+    for tid in rqdata.runtaskentries:
+        sq_revdeps2[tid] = copy.copy(rqdata.runtaskentries[tid].revdeps)
+        sq_revdeps_new2[tid] = set()
+        if (len(sq_revdeps2[tid]) == 0) and tid not in rqdata.runq_setscene_tids:
+            endpoints2[tid] = set()
+    process_endpoints2(endpoints2)
+    for tid in rqdata.runq_setscene_tids:
+        if sq_revdeps_new2[tid]:
+            sqdata.unskippable.append(tid)
+
+    rqdata.init_progress_reporter.next_stage(len(rqdata.runtaskentries))
+
+    for taskcounter, tid in enumerate(rqdata.runtaskentries):
+        if tid in rqdata.runq_setscene_tids:
+            deps = set()
+            for dep in sq_revdeps_new[tid]:
+                deps.add(dep)
+            sq_revdeps_squash[tid] = deps
+        elif len(sq_revdeps_new[tid]) != 0:
+            bb.msg.fatal("RunQueue", "Something went badly wrong during scenequeue generation, aborting. Please report this problem.")
+        rqdata.init_progress_reporter.update(taskcounter)
+
+    rqdata.init_progress_reporter.next_stage()
+
+    # Resolve setscene inter-task dependencies
+    # e.g. do_sometask_setscene[depends] = "targetname:do_someothertask_setscene"
+    # Note that anything explicitly depended upon will have its reverse dependencies removed to avoid circular dependencies
+    for tid in rqdata.runq_setscene_tids:
+            (mc, fn, taskname, taskfn) = split_tid_mcfn(tid)
+            realtid = tid + "_setscene"
+            idepends = rqdata.taskData[mc].taskentries[realtid].idepends
+            sqdata.stamps[tid] = bb.build.stampfile(taskname + "_setscene", rqdata.dataCaches[mc], taskfn, noextra=True)
+            for (depname, idependtask) in idepends:
+
+                if depname not in rqdata.taskData[mc].build_targets:
+                    continue
+
+                depfn = rqdata.taskData[mc].build_targets[depname][0]
+                if depfn is None:
+                     continue
+                deptid = depfn + ":" + idependtask.replace("_setscene", "")
+                if deptid not in rqdata.runtaskentries:
+                    bb.msg.fatal("RunQueue", "Task %s depends upon non-existent task %s:%s" % (realtid, depfn, idependtask))
+
+                if not deptid in sqdata.sq_harddeps:
+                    sqdata.sq_harddeps[deptid] = set()
+                sqdata.sq_harddeps[deptid].add(tid)
+
+                sq_revdeps_squash[tid].add(deptid)
+                # Have to zero this to avoid circular dependencies
+                sq_revdeps_squash[deptid] = set()
+
+    rqdata.init_progress_reporter.next_stage()
+
+    for task in sqdata.sq_harddeps:
+        for dep in sqdata.sq_harddeps[task]:
+            sq_revdeps_squash[dep].add(task)
+
+    rqdata.init_progress_reporter.next_stage()
+
+    #for tid in sq_revdeps_squash:
+    #    for dep in sq_revdeps_squash[tid]:
+    #        data = data + "\n   %s" % dep
+    #    bb.warn("Task %s_setscene: is %s " % (tid, data
+
+    sqdata.sq_revdeps = sq_revdeps_squash
+    sqdata.sq_revdeps2 = copy.deepcopy(sqdata.sq_revdeps)
+
+    for tid in sqdata.sq_revdeps:
+        sqdata.sq_deps[tid] = set()
+    for tid in sqdata.sq_revdeps:
+        for dep in sqdata.sq_revdeps[tid]:
+            sqdata.sq_deps[dep].add(tid)
+
+    rqdata.init_progress_reporter.next_stage()
+
+    for tid in sqdata.sq_revdeps:
+        if len(sqdata.sq_revdeps[tid]) == 0:
+            sqrq.runq_buildable.add(tid)
+
+    rqdata.init_progress_reporter.finish()
+
+    if rq.hashvalidate:
+        sq_hash = []
+        sq_hashfn = []
+        sq_unihash = []
+        sq_fn = []
+        sq_taskname = []
+        sq_task = []
+        noexec = []
+        stamppresent = []
+        for tid in sqdata.sq_revdeps:
+            (mc, fn, taskname, taskfn) = split_tid_mcfn(tid)
+
+            taskdep = rqdata.dataCaches[mc].task_deps[taskfn]
+
+            if 'noexec' in taskdep and taskname in taskdep['noexec']:
+                noexec.append(tid)
+                sqrq.task_skip(tid)
+                bb.build.make_stamp(taskname + "_setscene", rqdata.dataCaches[mc], taskfn)
+                continue
+
+            if rq.check_stamp_task(tid, taskname + "_setscene", cache=stampcache):
+                logger.debug(2, 'Setscene stamp current for task %s', tid)
+                stamppresent.append(tid)
+                sqrq.task_skip(tid)
+                continue
+
+            if rq.check_stamp_task(tid, taskname, recurse = True, cache=stampcache):
+                logger.debug(2, 'Normal stamp current for task %s', tid)
+                stamppresent.append(tid)
+                sqrq.task_skip(tid)
+                continue
+
+            sq_fn.append(fn)
+            sq_hashfn.append(rqdata.dataCaches[mc].hashfn[taskfn])
+            sq_hash.append(rqdata.runtaskentries[tid].hash)
+            sq_unihash.append(rqdata.runtaskentries[tid].unihash)
+            sq_taskname.append(taskname)
+            sq_task.append(tid)
+
+        cooker.data.setVar("BB_SETSCENE_STAMPCURRENT_COUNT", len(stamppresent))
+
+        valid = rq.validate_hash(sq_fn=sq_fn, sq_task=sq_taskname, sq_hash=sq_hash, sq_hashfn=sq_hashfn,
+                siginfo=False, sq_unihash=sq_unihash, d=cooker.data)
+
+        cooker.data.delVar("BB_SETSCENE_STAMPCURRENT_COUNT")
+
+        valid_new = stamppresent
+        for v in valid:
+            valid_new.append(sq_task[v])
+
+        for tid in sqdata.sq_revdeps:
+            if tid not in valid_new and tid not in noexec:
+                logger.debug(2, 'No package found, so skipping setscene task %s', tid)
+                sqdata.outrightfail.append(tid)
+
+
 class RunQueueExecuteScenequeue(RunQueueExecute):
     def __init__(self, rq):
         RunQueueExecute.__init__(self, rq)
@@ -2097,250 +2343,24 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
 
         self.stats = RunQueueStats(len(self.rqdata.runq_setscene_tids))
 
-        sq_revdeps = {}
-        sq_revdeps_new = {}
-        sq_revdeps_squash = {}
-        self.sq_harddeps = {}
-        self.stamps = {}
-
-        # We need to construct a dependency graph for the setscene functions. Intermediate
-        # dependencies between the setscene tasks only complicate the code. This code
-        # therefore aims to collapse the huge runqueue dependency tree into a smaller one
-        # only containing the setscene functions.
-
-        self.rqdata.init_progress_reporter.next_stage()
-
-        # First process the chains up to the first setscene task.
-        endpoints = {}
-        for tid in self.rqdata.runtaskentries:
-            sq_revdeps[tid] = copy.copy(self.rqdata.runtaskentries[tid].revdeps)
-            sq_revdeps_new[tid] = set()
-            if (len(sq_revdeps[tid]) == 0) and tid not in self.rqdata.runq_setscene_tids:
-                #bb.warn("Added endpoint %s" % (tid))
-                endpoints[tid] = set()
-
-        self.rqdata.init_progress_reporter.next_stage()
-
-        # Secondly process the chains between setscene tasks.
-        for tid in self.rqdata.runq_setscene_tids:
-            #bb.warn("Added endpoint 2 %s" % (tid))
-            for dep in self.rqdata.runtaskentries[tid].depends:
-                    if tid in sq_revdeps[dep]:
-                        sq_revdeps[dep].remove(tid)
-                    if dep not in endpoints:
-                        endpoints[dep] = set()
-                    #bb.warn("  Added endpoint 3 %s" % (dep))
-                    endpoints[dep].add(tid)
-
-        self.rqdata.init_progress_reporter.next_stage()
-
-        def process_endpoints(endpoints):
-            newendpoints = {}
-            for point, task in endpoints.items():
-                tasks = set()
-                if task:
-                    tasks |= task
-                if sq_revdeps_new[point]:
-                    tasks |= sq_revdeps_new[point]
-                sq_revdeps_new[point] = set()
-                if point in self.rqdata.runq_setscene_tids:
-                    sq_revdeps_new[point] = tasks
-                    tasks = set()
-                    continue
-                for dep in self.rqdata.runtaskentries[point].depends:
-                    if point in sq_revdeps[dep]:
-                        sq_revdeps[dep].remove(point)
-                    if tasks:
-                        sq_revdeps_new[dep] |= tasks
-                    if len(sq_revdeps[dep]) == 0 and dep not in self.rqdata.runq_setscene_tids:
-                        newendpoints[dep] = task
-            if len(newendpoints) != 0:
-                process_endpoints(newendpoints)
-
-        process_endpoints(endpoints)
-
-        self.rqdata.init_progress_reporter.next_stage()
-
-        # Build a list of setscene tasks which are "unskippable"
-        # These are direct endpoints referenced by the build
-        endpoints2 = {}
-        sq_revdeps2 = {}
-        sq_revdeps_new2 = {}
-        def process_endpoints2(endpoints):
-            newendpoints = {}
-            for point, task in endpoints.items():
-                tasks = set([point])
-                if task:
-                    tasks |= task
-                if sq_revdeps_new2[point]:
-                    tasks |= sq_revdeps_new2[point]
-                sq_revdeps_new2[point] = set()
-                if point in self.rqdata.runq_setscene_tids:
-                    sq_revdeps_new2[point] = tasks
-                for dep in self.rqdata.runtaskentries[point].depends:
-                    if point in sq_revdeps2[dep]:
-                        sq_revdeps2[dep].remove(point)
-                    if tasks:
-                        sq_revdeps_new2[dep] |= tasks
-                    if (len(sq_revdeps2[dep]) == 0 or len(sq_revdeps_new2[dep]) != 0) and dep not in self.rqdata.runq_setscene_tids:
-                        newendpoints[dep] = tasks
-            if len(newendpoints) != 0:
-                process_endpoints2(newendpoints)
-        for tid in self.rqdata.runtaskentries:
-            sq_revdeps2[tid] = copy.copy(self.rqdata.runtaskentries[tid].revdeps)
-            sq_revdeps_new2[tid] = set()
-            if (len(sq_revdeps2[tid]) == 0) and tid not in self.rqdata.runq_setscene_tids:
-                endpoints2[tid] = set()
-        process_endpoints2(endpoints2)
-        self.unskippable = []
-        for tid in self.rqdata.runq_setscene_tids:
-            if sq_revdeps_new2[tid]:
-                self.unskippable.append(tid)
-
-        self.rqdata.init_progress_reporter.next_stage(len(self.rqdata.runtaskentries))
-
-        for taskcounter, tid in enumerate(self.rqdata.runtaskentries):
-            if tid in self.rqdata.runq_setscene_tids:
-                deps = set()
-                for dep in sq_revdeps_new[tid]:
-                    deps.add(dep)
-                sq_revdeps_squash[tid] = deps
-            elif len(sq_revdeps_new[tid]) != 0:
-                bb.msg.fatal("RunQueue", "Something went badly wrong during scenequeue generation, aborting. Please report this problem.")
-            self.rqdata.init_progress_reporter.update(taskcounter)
-
-        self.rqdata.init_progress_reporter.next_stage()
-
-        # Resolve setscene inter-task dependencies
-        # e.g. do_sometask_setscene[depends] = "targetname:do_someothertask_setscene"
-        # Note that anything explicitly depended upon will have its reverse dependencies removed to avoid circular dependencies
-        for tid in self.rqdata.runq_setscene_tids:
-                (mc, fn, taskname, taskfn) = split_tid_mcfn(tid)
-                realtid = tid + "_setscene"
-                idepends = self.rqdata.taskData[mc].taskentries[realtid].idepends
-                self.stamps[tid] = bb.build.stampfile(taskname + "_setscene", self.rqdata.dataCaches[mc], taskfn, noextra=True)
-                for (depname, idependtask) in idepends:
-
-                    if depname not in self.rqdata.taskData[mc].build_targets:
-                        continue
-
-                    depfn = self.rqdata.taskData[mc].build_targets[depname][0]
-                    if depfn is None:
-                         continue
-                    deptid = depfn + ":" + idependtask.replace("_setscene", "")
-                    if deptid not in self.rqdata.runtaskentries:
-                        bb.msg.fatal("RunQueue", "Task %s depends upon non-existent task %s:%s" % (realtid, depfn, idependtask))
-
-                    if not deptid in self.sq_harddeps:
-                        self.sq_harddeps[deptid] = set()
-                    self.sq_harddeps[deptid].add(tid)
-
-                    sq_revdeps_squash[tid].add(deptid)
-                    # Have to zero this to avoid circular dependencies
-                    sq_revdeps_squash[deptid] = set()
-
-        self.rqdata.init_progress_reporter.next_stage()
-
-        for task in self.sq_harddeps:
-             for dep in self.sq_harddeps[task]:
-                 sq_revdeps_squash[dep].add(task)
-
-        self.rqdata.init_progress_reporter.next_stage()
-
-        #for tid in sq_revdeps_squash:
-        #    for dep in sq_revdeps_squash[tid]:
-        #        data = data + "\n   %s" % dep
-        #    bb.warn("Task %s_setscene: is %s " % (tid, data
-
-        self.sq_deps = {}
-        self.sq_revdeps = sq_revdeps_squash
-        self.sq_revdeps2 = copy.deepcopy(self.sq_revdeps)
-
-        for tid in self.sq_revdeps:
-            self.sq_deps[tid] = set()
-        for tid in self.sq_revdeps:
-            for dep in self.sq_revdeps[tid]:
-                self.sq_deps[dep].add(tid)
-
-        self.rqdata.init_progress_reporter.next_stage()
-
-        for tid in self.sq_revdeps:
-            if len(self.sq_revdeps[tid]) == 0:
-                self.runq_buildable.add(tid)
-
-        self.rqdata.init_progress_reporter.finish()
-
-        self.outrightfail = []
-        if self.rq.hashvalidate:
-            sq_hash = []
-            sq_hashfn = []
-            sq_unihash = []
-            sq_fn = []
-            sq_taskname = []
-            sq_task = []
-            noexec = []
-            stamppresent = []
-            for tid in self.sq_revdeps:
-                (mc, fn, taskname, taskfn) = split_tid_mcfn(tid)
-
-                taskdep = self.rqdata.dataCaches[mc].task_deps[taskfn]
-
-                if 'noexec' in taskdep and taskname in taskdep['noexec']:
-                    noexec.append(tid)
-                    self.task_skip(tid)
-                    bb.build.make_stamp(taskname + "_setscene", self.rqdata.dataCaches[mc], taskfn)
-                    continue
-
-                if self.rq.check_stamp_task(tid, taskname + "_setscene", cache=self.stampcache):
-                    logger.debug(2, 'Setscene stamp current for task %s', tid)
-                    stamppresent.append(tid)
-                    self.task_skip(tid)
-                    continue
-
-                if self.rq.check_stamp_task(tid, taskname, recurse = True, cache=self.stampcache):
-                    logger.debug(2, 'Normal stamp current for task %s', tid)
-                    stamppresent.append(tid)
-                    self.task_skip(tid)
-                    continue
-
-                sq_fn.append(fn)
-                sq_hashfn.append(self.rqdata.dataCaches[mc].hashfn[taskfn])
-                sq_hash.append(self.rqdata.runtaskentries[tid].hash)
-                sq_unihash.append(self.rqdata.runtaskentries[tid].unihash)
-                sq_taskname.append(taskname)
-                sq_task.append(tid)
-
-            self.cooker.data.setVar("BB_SETSCENE_STAMPCURRENT_COUNT", len(stamppresent))
-
-            valid = self.rq.validate_hash(sq_fn=sq_fn, sq_task=sq_taskname, sq_hash=sq_hash, sq_hashfn=sq_hashfn,
-                    siginfo=False, sq_unihash=sq_unihash, d=self.cooker.data)
-
-            self.cooker.data.delVar("BB_SETSCENE_STAMPCURRENT_COUNT")
-
-            valid_new = stamppresent
-            for v in valid:
-                valid_new.append(sq_task[v])
-
-            for tid in self.sq_revdeps:
-                if tid not in valid_new and tid not in noexec:
-                    logger.debug(2, 'No package found, so skipping setscene task %s', tid)
-                    self.outrightfail.append(tid)
+        self.sqdata = SQData()
+        build_scenequeue_data(self.sqdata, self.rqdata, self.rq, self.cooker, self.stampcache, self)
 
         logger.info('Executing SetScene Tasks')
 
         self.rq.state = runQueueSceneRun
 
     def scenequeue_updatecounters(self, task, fail = False):
-        for dep in self.sq_deps[task]:
-            if fail and task in self.sq_harddeps and dep in self.sq_harddeps[task]:
+        for dep in self.sqdata.sq_deps[task]:
+            if fail and task in self.sqdata.sq_harddeps and dep in self.sqdata.sq_harddeps[task]:
                 logger.debug(2, "%s was unavailable and is a hard dependency of %s so skipping" % (task, dep))
                 self.scenequeue_updatecounters(dep, fail)
                 continue
-            if task not in self.sq_revdeps2[dep]:
+            if task not in self.sqdata.sq_revdeps2[dep]:
                 # May already have been removed by the fail case above
                 continue
-            self.sq_revdeps2[dep].remove(task)
-            if len(self.sq_revdeps2[dep]) == 0:
+            self.sqdata.sq_revdeps2[dep].remove(task)
+            if len(self.sqdata.sq_revdeps2[dep]) == 0:
                 self.runq_buildable.add(dep)
 
     def task_completeoutright(self, task):
@@ -2401,10 +2421,10 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
         if self.can_start_task():
             # Find the next setscene to run
             for nexttask in self.rqdata.runq_setscene_tids:
-                if nexttask in self.runq_buildable and nexttask not in self.runq_running and self.stamps[nexttask] not in self.build_stamps.values():
-                    if nexttask in self.unskippable:
+                if nexttask in self.runq_buildable and nexttask not in self.runq_running and self.sqdata.stamps[nexttask] not in self.build_stamps.values():
+                    if nexttask in self.sqdata.unskippable:
                         logger.debug(2, "Setscene task %s is unskippable" % nexttask)
-                    if nexttask not in self.unskippable and len(self.sq_revdeps[nexttask]) > 0 and self.sq_revdeps[nexttask].issubset(self.scenequeue_covered) and self.check_dependencies(nexttask, self.sq_revdeps[nexttask], True):
+                    if nexttask not in self.sqdata.unskippable and len(self.sqdata.sq_revdeps[nexttask]) > 0 and self.sqdata.sq_revdeps[nexttask].issubset(self.scenequeue_covered) and self.check_dependencies(nexttask, self.sqdata.sq_revdeps[nexttask], True):
                         fn = fn_from_tid(nexttask)
                         foundtarget = False
 
@@ -2415,7 +2435,7 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
                             self.task_skip(nexttask)
                             self.scenequeue_notneeded.add(nexttask)
                             return True
-                    if nexttask in self.outrightfail:
+                    if nexttask in self.sqdata.outrightfail:
                         self.task_failoutright(nexttask)
                         return True
                     task = nexttask
@@ -2471,10 +2491,10 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
             self.rq.read_workers()
             return self.rq.active_fds()
 
-        #for tid in self.sq_revdeps:
+        #for tid in self.sqdata.sq_revdeps:
         #    if tid not in self.runq_running:
         #        buildable = tid in self.runq_buildable
-        #        revdeps = self.sq_revdeps[tid]
+        #        revdeps = self.sqdata.sq_revdeps[tid]
         #        bb.warn("Found we didn't run %s %s %s" % (tid, buildable, str(revdeps)))
 
         self.rq.scenequeue_covered = self.scenequeue_covered
