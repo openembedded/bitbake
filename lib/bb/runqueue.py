@@ -1679,6 +1679,50 @@ class RunQueue:
                 output = bb.siggen.compare_sigfiles(latestmatch, match, recursecb)
                 bb.plain("\nTask %s:%s couldn't be used from the cache because:\n  We need hash %s, closest matching task was %s\n  " % (pn, taskname, h, prevh) + '\n  '.join(output))
 
+def process_setscene_whitelist(rq, rqdata, stampcache, sched, rqex):
+    # Check tasks that are going to run against the whitelist
+    def check_norun_task(tid, showerror=False):
+        (mc, fn, taskname, taskfn) = split_tid_mcfn(tid)
+        # Ignore covered tasks
+        if tid in rq.scenequeue_covered:
+            return False
+        # Ignore stamped tasks
+        if rq.check_stamp_task(tid, taskname, cache=stampcache):
+            return False
+        # Ignore noexec tasks
+        taskdep = rqdata.dataCaches[mc].task_deps[taskfn]
+        if 'noexec' in taskdep and taskname in taskdep['noexec']:
+            return False
+
+        pn = rqdata.dataCaches[mc].pkg_fn[taskfn]
+        if not check_setscene_enforce_whitelist(pn, taskname, rqdata.setscenewhitelist):
+            if showerror:
+                if tid in rqdata.runq_setscene_tids:
+                    logger.error('Task %s.%s attempted to execute unexpectedly and should have been setscened' % (pn, taskname))
+                else:
+                    logger.error('Task %s.%s attempted to execute unexpectedly' % (pn, taskname))
+            return True
+        return False
+    # Look to see if any tasks that we think shouldn't run are going to
+    unexpected = False
+    for tid in rqdata.runtaskentries:
+        if check_norun_task(tid):
+            unexpected = True
+            break
+    if unexpected:
+        # Run through the tasks in the rough order they'd have executed and print errors
+        # (since the order can be useful - usually missing sstate for the last few tasks
+        # is the cause of the problem)
+        task = sched.next()
+        while task is not None:
+            check_norun_task(task, showerror=True)
+            rqex.task_skip(task, 'Setscene enforcement check')
+            task = sched.next()
+
+        rq.state = runQueueCleanUp
+        return True
+
+
 class RunQueueExecute:
 
     def __init__(self, rq):
@@ -1920,46 +1964,7 @@ class RunQueueExecuteTasks(RunQueueExecute):
         if self.rqdata.setscenewhitelist is not None and not self.rqdata.setscenewhitelist_checked:
             self.rqdata.setscenewhitelist_checked = True
 
-            # Check tasks that are going to run against the whitelist
-            def check_norun_task(tid, showerror=False):
-                (mc, fn, taskname, taskfn) = split_tid_mcfn(tid)
-                # Ignore covered tasks
-                if tid in self.rq.scenequeue_covered:
-                    return False
-                # Ignore stamped tasks
-                if self.rq.check_stamp_task(tid, taskname, cache=self.stampcache):
-                    return False
-                # Ignore noexec tasks
-                taskdep = self.rqdata.dataCaches[mc].task_deps[taskfn]
-                if 'noexec' in taskdep and taskname in taskdep['noexec']:
-                    return False
-
-                pn = self.rqdata.dataCaches[mc].pkg_fn[taskfn]
-                if not check_setscene_enforce_whitelist(pn, taskname, self.rqdata.setscenewhitelist):
-                    if showerror:
-                        if tid in self.rqdata.runq_setscene_tids:
-                            logger.error('Task %s.%s attempted to execute unexpectedly and should have been setscened' % (pn, taskname))
-                        else:
-                            logger.error('Task %s.%s attempted to execute unexpectedly' % (pn, taskname))
-                    return True
-                return False
-            # Look to see if any tasks that we think shouldn't run are going to
-            unexpected = False
-            for tid in self.rqdata.runtaskentries:
-                if check_norun_task(tid):
-                    unexpected = True
-                    break
-            if unexpected:
-                # Run through the tasks in the rough order they'd have executed and print errors
-                # (since the order can be useful - usually missing sstate for the last few tasks
-                # is the cause of the problem)
-                task = self.sched.next()
-                while task is not None:
-                    check_norun_task(task, showerror=True)
-                    self.task_skip(task, 'Setscene enforcement check')
-                    task = self.sched.next()
-
-                self.rq.state = runQueueCleanUp
+            if process_setscenewhitelist(self.rq, self.rqdata, self.stampcache, self.sched, self):
                 return True
 
         self.rq.read_workers()
