@@ -1194,7 +1194,6 @@ class RunQueue:
 
         self.stamppolicy = cfgData.getVar("BB_STAMP_POLICY") or "perfile"
         self.hashvalidate = cfgData.getVar("BB_HASHCHECK_FUNCTION") or None
-        self.setsceneverify = cfgData.getVar("BB_SETSCENE_VERIFY_FUNCTION2") or None
         self.depvalidate = cfgData.getVar("BB_SETSCENE_DEPVALID") or None
 
         self.state = runQueuePrepare
@@ -1819,32 +1818,7 @@ class RunQueueExecuteTasks(RunQueueExecute):
                     found = True
                     self.rq.scenequeue_covered.add(tid)
 
-        logger.debug(1, 'Skip list (pre setsceneverify) %s', sorted(self.rq.scenequeue_covered))
-
-        # Allow the metadata to elect for setscene tasks to run anyway
-        covered_remove = set()
-        if self.rq.setsceneverify:
-            invalidtasks = []
-            tasknames = {}
-            fns = {}
-            for tid in self.rqdata.runtaskentries:
-                (mc, fn, taskname, taskfn) = split_tid_mcfn(tid)
-                taskdep = self.rqdata.dataCaches[mc].task_deps[taskfn]
-                fns[tid] = taskfn
-                tasknames[tid] = taskname
-                if 'noexec' in taskdep and taskname in taskdep['noexec']:
-                    continue
-                if self.rq.check_stamp_task(tid, taskname + "_setscene", cache=self.stampcache):
-                    logger.debug(2, 'Setscene stamp current for task %s', tid)
-                    continue
-                if self.rq.check_stamp_task(tid, taskname, recurse = True, cache=self.stampcache):
-                    logger.debug(2, 'Normal stamp current for task %s', tid)
-                    continue
-                invalidtasks.append(tid)
-
-            call = self.rq.setsceneverify + "(covered, tasknames, fns, d, invalidtasks=invalidtasks)"
-            locs = { "covered" : self.rq.scenequeue_covered, "tasknames" : tasknames, "fns" : fns, "d" : self.cooker.data, "invalidtasks" : invalidtasks }
-            covered_remove = bb.utils.better_eval(call, locs)
+        logger.debug(1, 'Skip list %s', sorted(self.rq.scenequeue_covered))
 
         def removecoveredtask(tid):
             (mc, fn, taskname, taskfn) = split_tid_mcfn(tid)
@@ -1852,9 +1826,9 @@ class RunQueueExecuteTasks(RunQueueExecute):
             bb.build.del_stamp(taskname, self.rqdata.dataCaches[mc], taskfn)
             self.rq.scenequeue_covered.remove(tid)
 
-        toremove = covered_remove | self.rq.scenequeue_notcovered
+        toremove = self.rq.scenequeue_notcovered
         for task in toremove:
-            logger.debug(1, 'Not skipping task %s due to setsceneverify', task)
+            logger.debug(1, 'Not skipping task %s', task)
         while toremove:
             covered_remove = []
             for task in toremove:
@@ -1870,7 +1844,6 @@ class RunQueueExecuteTasks(RunQueueExecute):
             toremove = covered_remove
 
         logger.debug(1, 'Full skip list %s', self.rq.scenequeue_covered)
-
 
         for mc in self.rqdata.dataCaches:
             target_pairs = []
