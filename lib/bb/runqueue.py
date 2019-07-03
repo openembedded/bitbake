@@ -1407,7 +1407,6 @@ class RunQueue:
         retval = True
 
         if self.state is runQueuePrepare:
-            self.rqexe = RunQueueExecuteDummy(self)
             # NOTE: if you add, remove or significantly refactor the stages of this
             # process then you should recalculate the weightings here. This is quite
             # easy to do - just change the next line temporarily to pass debug=True as
@@ -1449,7 +1448,9 @@ class RunQueue:
                 self.rqdata.init_progress_reporter.next_stage()
                 self.start_worker()
                 self.rqdata.init_progress_reporter.next_stage()
-                self.rqexe = RunQueueExecuteScenequeue(self)
+                if not self.rqexe:
+                    self.rqexe = RunQueueExecute(self)
+                start_scenequeue_tasks(self.rqexe)
 
         if self.state is runQueueSceneRun:
             retval = self.rqexe.sq_execute()
@@ -1461,7 +1462,9 @@ class RunQueue:
                 # Just in case we didn't setscene
                 self.rqdata.init_progress_reporter.finish()
                 logger.info("Executing RunQueue Tasks")
-                self.rqexe = RunQueueExecuteTasks(self)
+                if not self.rqexe:
+                    self.rqexe = RunQueueExecute(self)
+                start_runqueue_tasks(self.rqexe)
                 self.state = runQueueRunning
 
         if self.state is runQueueRunning:
@@ -1478,11 +1481,12 @@ class RunQueue:
 
         if build_done and self.rqexe:
             self.teardown_workers()
-            if self.rqexe.stats.failed:
-                logger.info("Tasks Summary: Attempted %d tasks of which %d didn't need to be rerun and %d failed.", self.rqexe.stats.completed + self.rqexe.stats.failed, self.rqexe.stats.skipped, self.rqexe.stats.failed)
-            else:
-                # Let's avoid the word "failed" if nothing actually did
-                logger.info("Tasks Summary: Attempted %d tasks of which %d didn't need to be rerun and all succeeded.", self.rqexe.stats.completed, self.rqexe.stats.skipped)
+            if self.rqexe:
+                if self.rqexe.stats.failed:
+                    logger.info("Tasks Summary: Attempted %d tasks of which %d didn't need to be rerun and %d failed.", self.rqexe.stats.completed + self.rqexe.stats.failed, self.rqexe.stats.skipped, self.rqexe.stats.failed)
+                else:
+                    # Let's avoid the word "failed" if nothing actually did
+                    logger.info("Tasks Summary: Attempted %d tasks of which %d didn't need to be rerun and all succeeded.", self.rqexe.stats.completed, self.rqexe.stats.skipped)
 
         if self.state is runQueueFailed:
             raise bb.runqueue.TaskFailure(self.rqexe.failed_tids)
@@ -2483,88 +2487,71 @@ def build_scenequeue_data(sqdata, rqdata, rq, cooker, stampcache, sqrq):
                 logger.debug(2, 'No package found, so skipping setscene task %s', tid)
                 sqdata.outrightfail.append(tid)
 
-
-class RunQueueExecuteDummy(RunQueueExecute):
-    def __init__(self, rq):
-        self.rq = rq
-        self.stats = RunQueueStats(0)
-
-    def finish(self):
-        self.rq.state = runQueueComplete
-        return
-
-class RunQueueExecuteTasks(RunQueueExecute):
-    def __init__(self, rq):
-        RunQueueExecute.__init__(self, rq)
-
-        self.stampcache = {}
+def start_runqueue_tasks(rqexec):
 
         # Mark initial buildable tasks
-        for tid in self.rqdata.runtaskentries:
-            if len(self.rqdata.runtaskentries[tid].depends) == 0:
-                self.runq_buildable.add(tid)
-            if len(self.rqdata.runtaskentries[tid].revdeps) > 0 and self.rqdata.runtaskentries[tid].revdeps.issubset(self.rq.scenequeue_covered):
-                self.rq.scenequeue_covered.add(tid)
+        for tid in rqexec.rqdata.runtaskentries:
+            if len(rqexec.rqdata.runtaskentries[tid].depends) == 0:
+                rqexec.runq_buildable.add(tid)
+            if len(rqexec.rqdata.runtaskentries[tid].revdeps) > 0 and rqexec.rqdata.runtaskentries[tid].revdeps.issubset(rqexec.rq.scenequeue_covered):
+                rqexec.rq.scenequeue_covered.add(tid)
 
         found = True
         while found:
             found = False
-            for tid in self.rqdata.runtaskentries:
-                if tid in self.rq.scenequeue_covered:
+            for tid in rqexec.rqdata.runtaskentries:
+                if tid in rqexec.rq.scenequeue_covered:
                     continue
-                logger.debug(1, 'Considering %s: %s' % (tid, str(self.rqdata.runtaskentries[tid].revdeps)))
+                logger.debug(1, 'Considering %s: %s' % (tid, str(rqexec.rqdata.runtaskentries[tid].revdeps)))
 
-                if len(self.rqdata.runtaskentries[tid].revdeps) > 0 and self.rqdata.runtaskentries[tid].revdeps.issubset(self.rq.scenequeue_covered):
-                    if tid in self.rq.scenequeue_notcovered:
+                if len(rqexec.rqdata.runtaskentries[tid].revdeps) > 0 and rqexec.rqdata.runtaskentries[tid].revdeps.issubset(rqexec.rq.scenequeue_covered):
+                    if tid in rqexec.rq.scenequeue_notcovered:
                         continue
                     found = True
-                    self.rq.scenequeue_covered.add(tid)
+                    rqexec.rq.scenequeue_covered.add(tid)
 
-        logger.debug(1, 'Skip list %s', sorted(self.rq.scenequeue_covered))
+        logger.debug(1, 'Skip list %s', sorted(rqexec.rq.scenequeue_covered))
 
         for task in self.rq.scenequeue_notcovered:
             logger.debug(1, 'Not skipping task %s', task)
 
-        for mc in self.rqdata.dataCaches:
+        for mc in rqexec.rqdata.dataCaches:
             target_pairs = []
-            for tid in self.rqdata.target_tids:
+            for tid in rqexec.rqdata.target_tids:
                 (tidmc, fn, taskname, _) = split_tid_mcfn(tid)
                 if tidmc == mc:
                     target_pairs.append((fn, taskname))
 
-            event.fire(bb.event.StampUpdate(target_pairs, self.rqdata.dataCaches[mc].stamp), self.cfgData)
+            event.fire(bb.event.StampUpdate(target_pairs, rqexec.rqdata.dataCaches[mc].stamp), rqexec.cfgData)
 
-        schedulers = self.get_schedulers()
+        schedulers = rqexec.get_schedulers()
         for scheduler in schedulers:
-            if self.scheduler == scheduler.name:
-                self.sched = scheduler(self, self.rqdata)
+            if rqexec.scheduler == scheduler.name:
+                rqexec.sched = scheduler(rqexec, rqexec.rqdata)
                 logger.debug(1, "Using runqueue scheduler '%s'", scheduler.name)
                 break
         else:
             bb.fatal("Invalid scheduler '%s'.  Available schedulers: %s" %
-                     (self.scheduler, ", ".join(obj.name for obj in schedulers)))
+                     (rqexec.scheduler, ", ".join(obj.name for obj in schedulers)))
 
-class RunQueueExecuteScenequeue(RunQueueExecute):
-    def __init__(self, rq):
-        RunQueueExecute.__init__(self, rq)
-
-        self.scenequeue_covered = set()
-        self.scenequeue_notcovered = set()
-        self.scenequeue_notneeded = set()
+def start_scenequeue_tasks(rqexec):
+        rqexec.scenequeue_covered = set()
+        rqexec.scenequeue_notcovered = set()
+        rqexec.scenequeue_notneeded = set()
 
         # If we don't have any setscene functions, skip this step
-        if len(self.rqdata.runq_setscene_tids) == 0:
-            rq.scenequeue_covered = set()
-            rq.scenequeue_notcovered = set()
-            rq.state = runQueueRunInit
+        if len(rqexec.rqdata.runq_setscene_tids) == 0:
+            rqexec.rq.scenequeue_covered = set()
+            rqexec.rq.scenequeue_notcovered = set()
+            rqexec.rq.state = runQueueRunInit
             return
 
-        self.sqdata = SQData()
-        build_scenequeue_data(self.sqdata, self.rqdata, self.rq, self.cooker, self.stampcache, self)
+        rqexec.sqdata = SQData()
+        build_scenequeue_data(rqexec.sqdata, rqexec.rqdata, rqexec.rq, rqexec.cooker, rqexec.stampcache, rqexec)
 
         logger.info('Executing SetScene Tasks')
 
-        self.rq.state = runQueueSceneRun
+        rqexec.rq.state = runQueueSceneRun
 
 class TaskFailure(Exception):
     """
