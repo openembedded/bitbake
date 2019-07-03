@@ -1420,15 +1420,16 @@ class RunQueue:
                 self.state = runQueueComplete
             else:
                 self.state = runQueueSceneInit
-                self.rqdata.init_progress_reporter.next_stage()
-
-                # we are ready to run,  emit dependency info to any UI or class which
-                # needs it
-                depgraph = self.cooker.buildDependTree(self, self.rqdata.taskData)
-                self.rqdata.init_progress_reporter.next_stage()
-                bb.event.fire(bb.event.DepTreeGenerated(depgraph), self.cooker.data)
 
         if self.state is runQueueSceneInit:
+            self.rqdata.init_progress_reporter.next_stage()
+
+            # we are ready to run,  emit dependency info to any UI or class which
+            # needs it
+            depgraph = self.cooker.buildDependTree(self, self.rqdata.taskData)
+            self.rqdata.init_progress_reporter.next_stage()
+            bb.event.fire(bb.event.DepTreeGenerated(depgraph), self.cooker.data)
+
             if not self.dm_event_handler_registered:
                  res = bb.event.register(self.dm_event_handler_name,
                                          lambda x: self.dm.check(self) if self.state in [runQueueSceneRun, runQueueRunning, runQueueCleanUp] else False,
@@ -1444,13 +1445,13 @@ class RunQueue:
                 if 'printdiff' in dump:
                     self.write_diffscenetasks(invalidtasks)
                 self.state = runQueueComplete
-            else:
-                self.rqdata.init_progress_reporter.next_stage()
-                self.start_worker()
-                self.rqdata.init_progress_reporter.next_stage()
-                if not self.rqexe:
-                    self.rqexe = RunQueueExecute(self)
-                start_scenequeue_tasks(self.rqexe)
+
+        if self.state is runQueueSceneInit:
+            self.rqdata.init_progress_reporter.next_stage()
+            self.start_worker()
+            self.rqdata.init_progress_reporter.next_stage()
+            self.rqexe = RunQueueExecute(self)
+            start_scenequeue_tasks(self.rqexe)
 
         if self.state is runQueueSceneRun:
             retval = self.rqexe.sq_execute()
@@ -1458,14 +1459,15 @@ class RunQueue:
         if self.state is runQueueRunInit:
             if self.cooker.configuration.setsceneonly:
                 self.state = runQueueComplete
-            else:
-                # Just in case we didn't setscene
-                self.rqdata.init_progress_reporter.finish()
-                logger.info("Executing RunQueue Tasks")
-                if not self.rqexe:
-                    self.rqexe = RunQueueExecute(self)
-                start_runqueue_tasks(self.rqexe)
-                self.state = runQueueRunning
+
+        if self.state is runQueueRunInit:
+            # Just in case we didn't setscene
+            self.rqdata.init_progress_reporter.finish()
+            logger.info("Executing RunQueue Tasks")
+            if not self.rqexe:
+                self.rqexe = RunQueueExecute(self)
+            start_runqueue_tasks(self.rqexe)
+            self.state = runQueueRunning
 
         if self.state is runQueueRunning:
             retval = self.rqexe.execute()
