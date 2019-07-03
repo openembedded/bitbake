@@ -1693,7 +1693,7 @@ def process_setscene_whitelist(rq, rqdata, stampcache, sched, rqex):
     def check_norun_task(tid, showerror=False):
         (mc, fn, taskname, taskfn) = split_tid_mcfn(tid)
         # Ignore covered tasks
-        if tid in rqex.scenequeue_covered:
+        if tid in rqex.tasks_covered:
             return False
         # Ignore stamped tasks
         if rq.check_stamp_task(tid, taskname, cache=stampcache):
@@ -1768,7 +1768,10 @@ class RunQueueExecute:
         if self.number_tasks <= 0:
              bb.fatal("Invalid BB_NUMBER_THREADS %s" % self.number_tasks)
 
+        # List of setscene tasks which we've covered
         self.scenequeue_covered = set()
+        # List of tasks which are covered (including setscene ones)
+        self.tasks_covered = set()
         self.scenequeue_notcovered = set()
         self.scenequeue_notneeded = set()
 
@@ -1958,7 +1961,7 @@ class RunQueueExecute:
         if task is not None:
             (mc, fn, taskname, taskfn) = split_tid_mcfn(task)
 
-            if task in self.scenequeue_covered:
+            if task in self.tasks_covered:
                 logger.debug(2, "Setscene covered task %s", task)
                 self.task_skip(task, "covered")
                 return True
@@ -2089,6 +2092,7 @@ class RunQueueExecute:
 
         logger.debug(1, 'Found task %s which could be accelerated', task)
         self.scenequeue_covered.add(task)
+        self.tasks_covered.add(task)
         self.scenequeue_updatecounters(task)
 
     def sq_check_taskfail(self, task):
@@ -2500,24 +2504,24 @@ def start_runqueue_tasks(rqexec):
         for tid in rqexec.rqdata.runtaskentries:
             if len(rqexec.rqdata.runtaskentries[tid].depends) == 0:
                 rqexec.setbuildable(tid)
-            if len(rqexec.rqdata.runtaskentries[tid].revdeps) > 0 and rqexec.rqdata.runtaskentries[tid].revdeps.issubset(rqexec.scenequeue_covered):
-                rqexec.scenequeue_covered.add(tid)
+            if len(rqexec.rqdata.runtaskentries[tid].revdeps) > 0 and rqexec.rqdata.runtaskentries[tid].revdeps.issubset(rqexec.tasks_covered):
+                rqexec.tasks_covered.add(tid)
 
         found = True
         while found:
             found = False
             for tid in rqexec.rqdata.runtaskentries:
-                if tid in rqexec.scenequeue_covered:
+                if tid in rqexec.tasks_covered:
                     continue
                 logger.debug(1, 'Considering %s: %s' % (tid, str(rqexec.rqdata.runtaskentries[tid].revdeps)))
 
-                if len(rqexec.rqdata.runtaskentries[tid].revdeps) > 0 and rqexec.rqdata.runtaskentries[tid].revdeps.issubset(rqexec.scenequeue_covered):
+                if len(rqexec.rqdata.runtaskentries[tid].revdeps) > 0 and rqexec.rqdata.runtaskentries[tid].revdeps.issubset(rqexec.tasks_covered):
                     if tid in rqexec.scenequeue_notcovered:
                         continue
                     found = True
-                    rqexec.scenequeue_covered.add(tid)
+                    rqexec.tasks_covered.add(tid)
 
-        logger.debug(1, 'Skip list %s', sorted(rqexec.scenequeue_covered))
+        logger.debug(1, 'Skip list %s', sorted(rqexec.tasks_covered))
 
         for task in self.rq.scenequeue_notcovered:
             logger.debug(1, 'Not skipping task %s', task)
