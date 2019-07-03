@@ -404,23 +404,6 @@ class RecipeTaskPreProcess(RecipeEvent):
 class RecipeParsed(RecipeEvent):
     """ Recipe Parsing Complete """
 
-class StampUpdate(Event):
-    """Trigger for any adjustment of the stamp files to happen"""
-
-    def __init__(self, targets, stampfns):
-        self._targets = targets
-        self._stampfns = stampfns
-        Event.__init__(self)
-
-    def getStampPrefix(self):
-        return self._stampfns
-
-    def getTargets(self):
-        return self._targets
-
-    stampPrefix = property(getStampPrefix)
-    targets = property(getTargets)
-
 class BuildBase(Event):
     """Base class for bitbake build events"""
 

@@ -2539,16 +2539,7 @@ def start_runqueue_tasks(rqexec):
         for task in self.rq.scenequeue_notcovered:
             logger.debug(1, 'Not skipping task %s', task)
 
-        for mc in rqexec.rqdata.dataCaches:
-            target_pairs = []
-            for tid in rqexec.rqdata.target_tids:
-                (tidmc, fn, taskname, _) = split_tid_mcfn(tid)
-                if tidmc == mc:
-                    target_pairs.append((fn, taskname))
-
-            event.fire(bb.event.StampUpdate(target_pairs, rqexec.rqdata.dataCaches[mc].stamp), rqexec.cfgData)
         rqexec.sched.initbuildable()
-
 
 class TaskFailure(Exception):
     """
