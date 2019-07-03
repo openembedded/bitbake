@@ -1759,7 +1759,8 @@ class RunQueueExecute:
         self.rq.state = runQueueComplete
         return True
 
-    def check_dependencies(self, task, taskdeps, setscene = False):
+    # Used by setscene only
+    def check_dependencies(self, task, taskdeps):
         if not self.rq.depvalidate:
             return False
 
@@ -2424,7 +2425,7 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
                 if nexttask in self.runq_buildable and nexttask not in self.runq_running and self.sqdata.stamps[nexttask] not in self.build_stamps.values():
                     if nexttask in self.sqdata.unskippable:
                         logger.debug(2, "Setscene task %s is unskippable" % nexttask)
-                    if nexttask not in self.sqdata.unskippable and len(self.sqdata.sq_revdeps[nexttask]) > 0 and self.sqdata.sq_revdeps[nexttask].issubset(self.scenequeue_covered) and self.check_dependencies(nexttask, self.sqdata.sq_revdeps[nexttask], True):
+                    if nexttask not in self.sqdata.unskippable and len(self.sqdata.sq_revdeps[nexttask]) > 0 and self.sqdata.sq_revdeps[nexttask].issubset(self.scenequeue_covered) and self.check_dependencies(nexttask, self.sqdata.sq_revdeps[nexttask]):
                         fn = fn_from_tid(nexttask)
                         foundtarget = False
 
