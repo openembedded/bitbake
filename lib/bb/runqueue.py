@@ -103,8 +103,6 @@ class RunQueueStats:
 # runQueue state machine
 runQueuePrepare = 2
 runQueueSceneInit = 3
-runQueueSceneRun = 4
-runQueueRunInit = 5
 runQueueRunning = 6
 runQueueFailed = 7
 runQueueCleanUp = 8
@@ -1203,7 +1201,7 @@ class RunQueue:
         # Invoked at regular time intervals via the bitbake heartbeat event
         # while the build is running. We generate a unique name for the handler
         # here, just in case that there ever is more than one RunQueue instance,
-        # start the handler when reaching runQueueSceneRun, and stop it when
+        # start the handler when reaching runQueueSceneInit, and stop it when
         # done with the build.
         self.dm = monitordisk.diskMonitor(cfgData)
         self.dm_event_handler_name = '_bb_diskmonitor_' + str(id(self))
@@ -1433,7 +1431,7 @@ class RunQueue:
 
             if not self.dm_event_handler_registered:
                  res = bb.event.register(self.dm_event_handler_name,
-                                         lambda x: self.dm.check(self) if self.state in [runQueueSceneRun, runQueueRunning, runQueueCleanUp] else False,
+                                         lambda x: self.dm.check(self) if self.state in [runQueueRunning, runQueueCleanUp] else False,
                                          ('bb.event.HeartbeatEvent',))
                  self.dm_event_handler_registered = True
 
@@ -1465,8 +1463,6 @@ class RunQueue:
             self.state = runQueueRunning
 
         if self.state is runQueueRunning:
-            retval = self.rqexe.sq_execute()
-            # FIXME revtal
             retval = self.rqexe.execute()
 
         if self.state is runQueueCleanUp:
@@ -1899,19 +1895,118 @@ class RunQueueExecute:
 
     def execute(self):
         """
-        Run the tasks in a queue prepared by rqdata.prepare()
+        Run the tasks in a queue prepared by prepare_runqueue
         """
-
-        if self.cooker.configuration.setsceneonly:
-            return True
 
         self.rq.read_workers()
 
-        if self.stats.total == 0:
-            # nothing to do
-            self.rq.state = runQueueCleanUp
+        task = None
+        if not self.sqdone and self.can_start_task():
+            # Find the next setscene to run
+            for nexttask in self.rqdata.runq_setscene_tids:
+                if nexttask in self.sq_buildable and nexttask not in self.sq_running and self.sqdata.stamps[nexttask] not in self.build_stamps.values():
+                    if nexttask in self.sqdata.unskippable:
+                        logger.debug(2, "Setscene task %s is unskippable" % nexttask)
+                    if nexttask not in self.sqdata.unskippable and len(self.sqdata.sq_revdeps[nexttask]) > 0 and self.sqdata.sq_revdeps[nexttask].issubset(self.scenequeue_covered) and self.check_dependencies(nexttask, self.sqdata.sq_revdeps[nexttask]):
+                        fn = fn_from_tid(nexttask)
+                        foundtarget = False
 
-        task = self.sched.next()
+                        if nexttask in self.rqdata.target_tids:
+                            foundtarget = True
+                        if not foundtarget:
+                            logger.debug(2, "Skipping setscene for task %s" % nexttask)
+                            self.sq_task_skip(nexttask)
+                            self.scenequeue_notneeded.add(nexttask)
+                            return True
+                    if nexttask in self.sqdata.outrightfail:
+                        self.sq_task_failoutright(nexttask)
+                        return True
+                    task = nexttask
+                    break
+        if task is not None:
+            (mc, fn, taskname, taskfn) = split_tid_mcfn(task)
+            taskname = taskname + "_setscene"
+            if self.rq.check_stamp_task(task, taskname_from_tid(task), recurse = True, cache=self.stampcache):
+                logger.debug(2, 'Stamp for underlying task %s is current, so skipping setscene variant', task)
+                self.sq_task_failoutright(task)
+                return True
+
+            if self.cooker.configuration.force:
+                if task in self.rqdata.target_tids:
+                    self.sq_task_failoutright(task)
+                    return True
+
+            if self.rq.check_stamp_task(task, taskname, cache=self.stampcache):
+                logger.debug(2, 'Setscene stamp current task %s, so skip it and its dependencies', task)
+                self.sq_task_skip(task)
+                return True
+
+            if self.cooker.configuration.skipsetscene:
+                logger.debug(2, 'No setscene tasks should be executed. Skipping %s', task)
+                self.sq_task_failoutright(task)
+                return True
+
+            startevent = sceneQueueTaskStarted(task, self.sq_stats, self.rq)
+            bb.event.fire(startevent, self.cfgData)
+
+            taskdepdata = self.sq_build_taskdepdata(task)
+
+            taskdep = self.rqdata.dataCaches[mc].task_deps[taskfn]
+            taskhash = self.rqdata.get_task_hash(task)
+            unihash = self.rqdata.get_task_unihash(task)
+            if 'fakeroot' in taskdep and taskname in taskdep['fakeroot'] and not self.cooker.configuration.dry_run:
+                if not mc in self.rq.fakeworker:
+                    self.rq.start_fakeworker(self, mc)
+                self.rq.fakeworker[mc].process.stdin.write(b"<runtask>" + pickle.dumps((taskfn, task, taskname, taskhash, unihash, True, self.cooker.collection.get_file_appends(taskfn), taskdepdata, False)) + b"</runtask>")
+                self.rq.fakeworker[mc].process.stdin.flush()
+            else:
+                self.rq.worker[mc].process.stdin.write(b"<runtask>" + pickle.dumps((taskfn, task, taskname, taskhash, unihash, True, self.cooker.collection.get_file_appends(taskfn), taskdepdata, False)) + b"</runtask>")
+                self.rq.worker[mc].process.stdin.flush()
+
+            self.build_stamps[task] = bb.build.stampfile(taskname, self.rqdata.dataCaches[mc], taskfn, noextra=True)
+            self.build_stamps2.append(self.build_stamps[task])
+            self.sq_running.add(task)
+            self.sq_live.add(task)
+            self.sq_stats.taskActive()
+            if self.can_start_task():
+                return True
+
+        if not self.sq_live and not self.sqdone:
+            logger.info("Setscene tasks completed")
+            logger.debug(1, 'We could skip tasks %s', "\n".join(sorted(self.scenequeue_covered)))
+
+            completeevent = sceneQueueComplete(self.sq_stats, self.rq)
+            bb.event.fire(completeevent, self.cfgData)
+
+            err = False
+            for x in self.rqdata.runtaskentries:
+                if x not in self.tasks_covered and x not in self.tasks_notcovered:
+                    logger.error("Task %s was never moved from the setscene queue" % x)
+                    err = True
+                if x not in self.tasks_scenequeue_done:
+                    logger.error("Task %s was never processed by the setscene code" % x)
+                    err = True
+                if len(self.rqdata.runtaskentries[x].depends) == 0 and x not in self.runq_buildable:
+                    logger.error("Task %s was never marked as buildable by the setscene code" % x)
+                    err = True
+            if err:
+                self.rq.state = runQueueFailed
+                return True
+
+            if self.cooker.configuration.setsceneonly:
+                self.rq.state = runQueueComplete
+                return True
+            self.sqdone = True
+
+            if self.stats.total == 0:
+                # nothing to do
+                self.rq.state = runQueueComplete
+                return True
+
+        if self.cooker.configuration.setsceneonly:
+            task = None
+        else:
+            task = self.sched.next()
         if task is not None:
             (mc, fn, taskname, taskfn) = split_tid_mcfn(task)
 
@@ -2163,109 +2258,6 @@ class RunQueueExecute:
         self.sq_task_completeoutright(task)
         self.sq_stats.taskSkipped()
         self.sq_stats.taskCompleted()
-
-    def sq_execute(self):
-        """
-        Run the tasks in a queue prepared by prepare_runqueue
-        """
-
-        if self.sqdone:
-            return True
-
-        self.rq.read_workers()
-
-        task = None
-        if self.can_start_task():
-            # Find the next setscene to run
-            for nexttask in self.rqdata.runq_setscene_tids:
-                if nexttask in self.sq_buildable and nexttask not in self.sq_running and self.sqdata.stamps[nexttask] not in self.build_stamps.values():
-                    if nexttask in self.sqdata.unskippable:
-                        logger.debug(2, "Setscene task %s is unskippable" % nexttask)
-                    if nexttask not in self.sqdata.unskippable and len(self.sqdata.sq_revdeps[nexttask]) > 0 and self.sqdata.sq_revdeps[nexttask].issubset(self.scenequeue_covered) and self.check_dependencies(nexttask, self.sqdata.sq_revdeps[nexttask]):
-                        fn = fn_from_tid(nexttask)
-                        foundtarget = False
-
-                        if nexttask in self.rqdata.target_tids:
-                            foundtarget = True
-                        if not foundtarget:
-                            logger.debug(2, "Skipping setscene for task %s" % nexttask)
-                            self.sq_task_skip(nexttask)
-                            self.scenequeue_notneeded.add(nexttask)
-                            return True
-                    if nexttask in self.sqdata.outrightfail:
-                        self.sq_task_failoutright(nexttask)
-                        return True
-                    task = nexttask
-                    break
-        if task is not None:
-            (mc, fn, taskname, taskfn) = split_tid_mcfn(task)
-            taskname = taskname + "_setscene"
-            if self.rq.check_stamp_task(task, taskname_from_tid(task), recurse = True, cache=self.stampcache):
-                logger.debug(2, 'Stamp for underlying task %s is current, so skipping setscene variant', task)
-                self.sq_task_failoutright(task)
-                return True
-
-            if self.cooker.configuration.force:
-                if task in self.rqdata.target_tids:
-                    self.sq_task_failoutright(task)
-                    return True
-
-            if self.rq.check_stamp_task(task, taskname, cache=self.stampcache):
-                logger.debug(2, 'Setscene stamp current task %s, so skip it and its dependencies', task)
-                self.sq_task_skip(task)
-                return True
-
-            if self.cooker.configuration.skipsetscene:
-                logger.debug(2, 'No setscene tasks should be executed. Skipping %s', task)
-                self.sq_task_failoutright(task)
-                return True
-
-            startevent = sceneQueueTaskStarted(task, self.sq_stats, self.rq)
-            bb.event.fire(startevent, self.cfgData)
-
-            taskdepdata = self.sq_build_taskdepdata(task)
-
-            taskdep = self.rqdata.dataCaches[mc].task_deps[taskfn]
-            taskhash = self.rqdata.get_task_hash(task)
-            unihash = self.rqdata.get_task_unihash(task)
-            if 'fakeroot' in taskdep and taskname in taskdep['fakeroot'] and not self.cooker.configuration.dry_run:
-                if not mc in self.rq.fakeworker:
-                    self.rq.start_fakeworker(self, mc)
-                self.rq.fakeworker[mc].process.stdin.write(b"<runtask>" + pickle.dumps((taskfn, task, taskname, taskhash, unihash, True, self.cooker.collection.get_file_appends(taskfn), taskdepdata, False)) + b"</runtask>")
-                self.rq.fakeworker[mc].process.stdin.flush()
-            else:
-                self.rq.worker[mc].process.stdin.write(b"<runtask>" + pickle.dumps((taskfn, task, taskname, taskhash, unihash, True, self.cooker.collection.get_file_appends(taskfn), taskdepdata, False)) + b"</runtask>")
-                self.rq.worker[mc].process.stdin.flush()
-
-            self.build_stamps[task] = bb.build.stampfile(taskname, self.rqdata.dataCaches[mc], taskfn, noextra=True)
-            self.build_stamps2.append(self.build_stamps[task])
-            self.sq_running.add(task)
-            self.sq_live.add(task)
-            self.sq_stats.taskActive()
-            if self.can_start_task():
-                return True
-
-        if self.stats.active > 0 or self.sq_stats.active > 0:
-            self.rq.read_workers()
-            return self.rq.active_fds()
-
-        #for tid in self.sqdata.sq_revdeps:
-        #    if tid not in self.sq_running:
-        #        buildable = tid in self.sq_buildable
-        #        revdeps = self.sqdata.sq_revdeps[tid]
-        #        bb.warn("Found we didn't run %s %s %s" % (tid, buildable, str(revdeps)))
-
-        logger.debug(1, 'We can skip tasks %s', "\n".join(sorted(self.scenequeue_covered)))
-
-        completeevent = sceneQueueComplete(self.sq_stats, self.rq)
-        bb.event.fire(completeevent, self.cfgData)
-
-        if self.cooker.configuration.setsceneonly:
-            self.rq.state = runQueueComplete
-
-        self.sqdone = True
-
-        return True
 
     def sq_build_taskdepdata(self, task):
         def getsetscenedeps(tid):
