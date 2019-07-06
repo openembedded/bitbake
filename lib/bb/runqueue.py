@@ -2280,7 +2280,7 @@ class SQData(object):
         # Cache of stamp files so duplicates can't run in parallel
         self.stamps = {}
         # Setscene tasks directly depended upon by the build
-        self.unskippable = []
+        self.unskippable = set()
         # List of setscene tasks which aren't present
         self.outrightfail = []
         # A list of normal tasks a setscene task covers
@@ -2357,38 +2357,19 @@ def build_scenequeue_data(sqdata, rqdata, rq, cooker, stampcache, sqrq):
 
     # Build a list of setscene tasks which are "unskippable"
     # These are direct endpoints referenced by the build
-    endpoints2 = {}
-    sq_revdeps2 = {}
-    sq_revdeps_new2 = {}
-    def process_endpoints2(endpoints):
-        newendpoints = {}
-        for point, task in endpoints.items():
-            tasks = set([point])
-            if task:
-                tasks |= task
-            if sq_revdeps_new2[point]:
-                tasks |= sq_revdeps_new2[point]
-            sq_revdeps_new2[point] = set()
-            if point in rqdata.runq_setscene_tids:
-                sq_revdeps_new2[point] = tasks
-            for dep in rqdata.runtaskentries[point].depends:
-                if point in sq_revdeps2[dep]:
-                    sq_revdeps2[dep].remove(point)
-                if tasks:
-                    sq_revdeps_new2[dep] |= tasks
-                if (len(sq_revdeps2[dep]) == 0 or len(sq_revdeps_new2[dep]) != 0) and dep not in rqdata.runq_setscene_tids:
-                    newendpoints[dep] = tasks
-        if len(newendpoints) != 0:
-            process_endpoints2(newendpoints)
+    # Take the build endpoints (no revdeps) and find the sstate tasks they depend upon
+    new = True
     for tid in rqdata.runtaskentries:
-        sq_revdeps2[tid] = copy.copy(rqdata.runtaskentries[tid].revdeps)
-        sq_revdeps_new2[tid] = set()
-        if (len(sq_revdeps2[tid]) == 0) and tid not in rqdata.runq_setscene_tids:
-            endpoints2[tid] = set()
-    process_endpoints2(endpoints2)
-    for tid in rqdata.runq_setscene_tids:
-        if sq_revdeps_new2[tid]:
-            sqdata.unskippable.append(tid)
+        if len(rqdata.runtaskentries[tid].revdeps) == 0:
+            sqdata.unskippable.add(tid)
+    while new:
+        new = False
+        for tid in sqdata.unskippable.copy():
+            if tid in rqdata.runq_setscene_tids:
+                continue
+            sqdata.unskippable.remove(tid)
+            sqdata.unskippable |= rqdata.runtaskentries[tid].depends
+            new = True
 
     rqdata.init_progress_reporter.next_stage(len(rqdata.runtaskentries))
 
