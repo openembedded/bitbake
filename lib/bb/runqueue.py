@@ -2373,6 +2373,7 @@ def build_scenequeue_data(sqdata, rqdata, rq, cooker, stampcache, sqrq):
 
     rqdata.init_progress_reporter.next_stage(len(rqdata.runtaskentries))
 
+    # Sanity check all dependencies could be changed to setscene task references
     for taskcounter, tid in enumerate(rqdata.runtaskentries):
         if tid in rqdata.runq_setscene_tids:
             deps = set()
@@ -2422,14 +2423,16 @@ def build_scenequeue_data(sqdata, rqdata, rq, cooker, stampcache, sqrq):
     rqdata.init_progress_reporter.next_stage()
 
     #for tid in sq_revdeps_squash:
+    #    data = ""
     #    for dep in sq_revdeps_squash[tid]:
     #        data = data + "\n   %s" % dep
-    #    bb.warn("Task %s_setscene: is %s " % (tid, data
+    #    bb.warn("Task %s_setscene: is %s " % (tid, data))
 
     sqdata.sq_revdeps = sq_revdeps_squash
     sqdata.sq_revdeps2 = copy.deepcopy(sqdata.sq_revdeps)
     sqdata.sq_covered_tasks = sq_collated_deps
 
+    # Build reverse version of revdeps to populate deps structure
     for tid in sqdata.sq_revdeps:
         sqdata.sq_deps[tid] = set()
     for tid in sqdata.sq_revdeps:
