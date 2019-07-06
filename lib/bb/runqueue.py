@@ -2289,7 +2289,6 @@ class SQData(object):
 def build_scenequeue_data(sqdata, rqdata, rq, cooker, stampcache, sqrq):
 
     sq_revdeps = {}
-    sq_revdeps_new = {}
     sq_revdeps_squash = {}
     sq_collated_deps = {}
 
@@ -2304,7 +2303,7 @@ def build_scenequeue_data(sqdata, rqdata, rq, cooker, stampcache, sqrq):
     endpoints = {}
     for tid in rqdata.runtaskentries:
         sq_revdeps[tid] = copy.copy(rqdata.runtaskentries[tid].revdeps)
-        sq_revdeps_new[tid] = set()
+        sq_revdeps_squash[tid] = set()
         if (len(sq_revdeps[tid]) == 0) and tid not in rqdata.runq_setscene_tids:
             #bb.warn("Added endpoint %s" % (tid))
             endpoints[tid] = set()
@@ -2331,21 +2330,21 @@ def build_scenequeue_data(sqdata, rqdata, rq, cooker, stampcache, sqrq):
             tasks = set()
             if task:
                 tasks |= task
-            if sq_revdeps_new[point]:
-                tasks |= sq_revdeps_new[point]
+            if sq_revdeps_squash[point]:
+                tasks |= sq_revdeps_squash[point]
             if point not in rqdata.runq_setscene_tids:
                 for t in tasks:
                     sq_collated_deps[t].add(point)
-            sq_revdeps_new[point] = set()
+            sq_revdeps_squash[point] = set()
             if point in rqdata.runq_setscene_tids:
-                sq_revdeps_new[point] = tasks
+                sq_revdeps_squash[point] = tasks
                 tasks = set()
                 continue
             for dep in rqdata.runtaskentries[point].depends:
                 if point in sq_revdeps[dep]:
                     sq_revdeps[dep].remove(point)
                 if tasks:
-                    sq_revdeps_new[dep] |= tasks
+                    sq_revdeps_squash[dep] |= tasks
                 if len(sq_revdeps[dep]) == 0 and dep not in rqdata.runq_setscene_tids:
                     newendpoints[dep] = task
         if len(newendpoints) != 0:
@@ -2376,9 +2375,11 @@ def build_scenequeue_data(sqdata, rqdata, rq, cooker, stampcache, sqrq):
     # Sanity check all dependencies could be changed to setscene task references
     for taskcounter, tid in enumerate(rqdata.runtaskentries):
         if tid in rqdata.runq_setscene_tids:
-            sq_revdeps_squash[tid] = set(sq_revdeps_new[tid])
-        elif len(sq_revdeps_new[tid]) != 0:
+            pass
+        elif len(sq_revdeps_squash[tid]) != 0:
             bb.msg.fatal("RunQueue", "Something went badly wrong during scenequeue generation, aborting. Please report this problem.")
+        else:
+            del sq_revdeps_squash[tid]
         rqdata.init_progress_reporter.update(taskcounter)
 
     rqdata.init_progress_reporter.next_stage()
