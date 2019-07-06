@@ -2291,6 +2291,7 @@ def build_scenequeue_data(sqdata, rqdata, rq, cooker, stampcache, sqrq):
     sq_revdeps = {}
     sq_revdeps_new = {}
     sq_revdeps_squash = {}
+    sq_collated_deps = {}
 
     # We need to construct a dependency graph for the setscene functions. Intermediate
     # dependencies between the setscene tasks only complicate the code. This code
@@ -2312,6 +2313,7 @@ def build_scenequeue_data(sqdata, rqdata, rq, cooker, stampcache, sqrq):
 
     # Secondly process the chains between setscene tasks.
     for tid in rqdata.runq_setscene_tids:
+        sq_collated_deps[tid] = set()
         #bb.warn("Added endpoint 2 %s" % (tid))
         for dep in rqdata.runtaskentries[tid].depends:
                 if tid in sq_revdeps[dep]:
@@ -2331,6 +2333,9 @@ def build_scenequeue_data(sqdata, rqdata, rq, cooker, stampcache, sqrq):
                 tasks |= task
             if sq_revdeps_new[point]:
                 tasks |= sq_revdeps_new[point]
+            if point not in rqdata.runq_setscene_tids:
+                for t in tasks:
+                    sq_collated_deps[t].add(point)
             sq_revdeps_new[point] = set()
             if point in rqdata.runq_setscene_tids:
                 sq_revdeps_new[point] = tasks
@@ -2442,6 +2447,7 @@ def build_scenequeue_data(sqdata, rqdata, rq, cooker, stampcache, sqrq):
 
     sqdata.sq_revdeps = sq_revdeps_squash
     sqdata.sq_revdeps2 = copy.deepcopy(sqdata.sq_revdeps)
+    sqdata.sq_covered_tasks = sq_collated_deps
 
     for tid in sqdata.sq_revdeps:
         sqdata.sq_deps[tid] = set()
