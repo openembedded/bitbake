@@ -49,7 +49,8 @@ class SignatureGenerator(object):
         return self.taskhash[task]
 
     def get_taskhash(self, fn, task, deps, dataCache):
-        return "0"
+        self.taskhash[fn + "." + task] = "0"
+        return self.taskhash[fn + "." + task]
 
     def writeout_file_checksum_cache(self):
         """Write/update the file checksum cache onto disk"""
