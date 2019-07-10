@@ -2044,7 +2044,7 @@ class RunQueueExecute:
         for dep in self.sqdata.sq_deps[task]:
             if fail and task in self.sqdata.sq_harddeps and dep in self.sqdata.sq_harddeps[task]:
                 logger.debug(2, "%s was unavailable and is a hard dependency of %s so skipping" % (task, dep))
-                self.scenequeue_updatecounters(dep, fail)
+                self.sq_task_failoutright(dep)
                 continue
             if task not in self.sqdata.sq_revdeps2[dep]:
                 # May already have been removed by the fail case above
