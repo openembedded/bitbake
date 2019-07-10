@@ -142,7 +142,8 @@ class RunQueueScheduler(object):
         Return the id of the first task we find that is buildable
         """
         self.buildable = [x for x in self.buildable if x not in self.rq.runq_running]
-        if not self.buildable:
+        buildable = self.buildable
+        if not buildable:
             return None
 
         # Filter out tasks that have a max number of threads that have been exceeded
@@ -158,8 +159,8 @@ class RunQueueScheduler(object):
             else:
                 skip_buildable[rtaskname] = 1
 
-        if len(self.buildable) == 1:
-            tid = self.buildable[0]
+        if len(buildable) == 1:
+            tid = buildable[0]
             taskname = taskname_from_tid(tid)
             if taskname in skip_buildable and skip_buildable[taskname] >= int(self.skip_maxthread[taskname]):
                 return None
@@ -174,7 +175,7 @@ class RunQueueScheduler(object):
 
         best = None
         bestprio = None
-        for tid in self.buildable:
+        for tid in buildable:
             taskname = taskname_from_tid(tid)
             if taskname in skip_buildable and skip_buildable[taskname] >= int(self.skip_maxthread[taskname]):
                 continue
