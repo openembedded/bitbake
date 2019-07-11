@@ -2443,29 +2443,29 @@ def build_scenequeue_data(sqdata, rqdata, rq, cooker, stampcache, sqrq):
     # e.g. do_sometask_setscene[depends] = "targetname:do_someothertask_setscene"
     # Note that anything explicitly depended upon will have its reverse dependencies removed to avoid circular dependencies
     for tid in rqdata.runq_setscene_tids:
-            (mc, fn, taskname, taskfn) = split_tid_mcfn(tid)
-            realtid = tid + "_setscene"
-            idepends = rqdata.taskData[mc].taskentries[realtid].idepends
-            sqdata.stamps[tid] = bb.build.stampfile(taskname + "_setscene", rqdata.dataCaches[mc], taskfn, noextra=True)
-            for (depname, idependtask) in idepends:
+        (mc, fn, taskname, taskfn) = split_tid_mcfn(tid)
+        realtid = tid + "_setscene"
+        idepends = rqdata.taskData[mc].taskentries[realtid].idepends
+        sqdata.stamps[tid] = bb.build.stampfile(taskname + "_setscene", rqdata.dataCaches[mc], taskfn, noextra=True)
+        for (depname, idependtask) in idepends:
 
-                if depname not in rqdata.taskData[mc].build_targets:
-                    continue
+            if depname not in rqdata.taskData[mc].build_targets:
+                continue
 
-                depfn = rqdata.taskData[mc].build_targets[depname][0]
-                if depfn is None:
-                     continue
-                deptid = depfn + ":" + idependtask.replace("_setscene", "")
-                if deptid not in rqdata.runtaskentries:
-                    bb.msg.fatal("RunQueue", "Task %s depends upon non-existent task %s:%s" % (realtid, depfn, idependtask))
+            depfn = rqdata.taskData[mc].build_targets[depname][0]
+            if depfn is None:
+                continue
+            deptid = depfn + ":" + idependtask.replace("_setscene", "")
+            if deptid not in rqdata.runtaskentries:
+                bb.msg.fatal("RunQueue", "Task %s depends upon non-existent task %s:%s" % (realtid, depfn, idependtask))
 
-                if not deptid in sqdata.sq_harddeps:
-                    sqdata.sq_harddeps[deptid] = set()
-                sqdata.sq_harddeps[deptid].add(tid)
+            if not deptid in sqdata.sq_harddeps:
+                sqdata.sq_harddeps[deptid] = set()
+            sqdata.sq_harddeps[deptid].add(tid)
 
-                sq_revdeps_squash[tid].add(deptid)
-                # Have to zero this to avoid circular dependencies
-                sq_revdeps_squash[deptid] = set()
+            sq_revdeps_squash[tid].add(deptid)
+            # Have to zero this to avoid circular dependencies
+            sq_revdeps_squash[deptid] = set()
 
     rqdata.init_progress_reporter.next_stage()
 
