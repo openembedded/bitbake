@@ -1908,12 +1908,7 @@ class RunQueueExecute:
                     if nexttask in self.sqdata.unskippable:
                         logger.debug(2, "Setscene task %s is unskippable" % nexttask)
                     if nexttask not in self.sqdata.unskippable and len(self.sqdata.sq_revdeps[nexttask]) > 0 and self.sqdata.sq_revdeps[nexttask].issubset(self.scenequeue_covered) and self.check_dependencies(nexttask, self.sqdata.sq_revdeps[nexttask]):
-                        fn = fn_from_tid(nexttask)
-                        foundtarget = False
-
-                        if nexttask in self.rqdata.target_tids:
-                            foundtarget = True
-                        if not foundtarget:
+                        if nexttask not in self.rqdata.target_tids:
                             logger.debug(2, "Skipping setscene for task %s" % nexttask)
                             self.sq_task_skip(nexttask)
                             self.scenequeue_notneeded.add(nexttask)
