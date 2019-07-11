@@ -68,6 +68,14 @@ def build_tid(mc, fn, taskname):
         return "mc:" + mc + ":" + fn + ":" + taskname
     return fn + ":" + taskname
 
+# Index used to pair up potentially matching multiconfig tasks
+# We match on PN, taskname and hash being equal
+def pending_hash_index(tid, rqdata):
+    (mc, fn, taskname, taskfn) = split_tid_mcfn(tid)
+    pn = rqdata.dataCaches[mc].pkg_fn[taskfn]
+    h = rqdata.runtaskentries[tid].hash
+    return pn + ":" + "taskname" + h
+
 class RunQueueStats:
     """
     Holds statistics on the tasks handled by the associated runQueue
@@ -1717,6 +1725,7 @@ class RunQueueExecute:
         self.build_stamps = {}
         self.build_stamps2 = []
         self.failed_tids = []
+        self.sq_deferred = {}
 
         self.stampcache = {}
 
@@ -1921,17 +1930,32 @@ class RunQueueExecute:
             # Find the next setscene to run
             for nexttask in self.rqdata.runq_setscene_tids:
                 if nexttask in self.sq_buildable and nexttask not in self.sq_running and self.sqdata.stamps[nexttask] not in self.build_stamps.values():
-                    if nexttask in self.sqdata.unskippable:
-                        logger.debug(2, "Setscene task %s is unskippable" % nexttask)
                     if nexttask not in self.sqdata.unskippable and len(self.sqdata.sq_revdeps[nexttask]) > 0 and self.sqdata.sq_revdeps[nexttask].issubset(self.scenequeue_covered) and self.check_dependencies(nexttask, self.sqdata.sq_revdeps[nexttask]):
                         if nexttask not in self.rqdata.target_tids:
                             logger.debug(2, "Skipping setscene for task %s" % nexttask)
                             self.sq_task_skip(nexttask)
                             self.scenequeue_notneeded.add(nexttask)
+                            if nexttask in self.sq_deferred:
+                                del self.sq_deferred[nexttask]
                             return True
+                    if nexttask in self.sq_deferred:
+                        if self.sq_deferred[nexttask] not in self.runq_complete:
+                            continue
+                        logger.debug(1, "Task %s no longer deferred" % nexttask)
+                        del self.sq_deferred[nexttask]
+                        valid = self.rq.validate_hashes(set([nexttask]), self.cooker.data, None, False)
+                        if not valid:
+                            logger.debug(1, "%s didn't become valid, skipping setscene" % nexttask)
+                            self.sq_task_failoutright(nexttask)
+                            return True
+                        else:
+                            self.sqdata.outrightfail.remove(nexttask)
                     if nexttask in self.sqdata.outrightfail:
+                        logger.debug(2, 'No package found, so skipping setscene task %s', nexttask)
                         self.sq_task_failoutright(nexttask)
                         return True
+                    if nexttask in self.sqdata.unskippable:
+                        logger.debug(2, "Setscene task %s is unskippable" % nexttask)
                     task = nexttask
                     break
         if task is not None:
@@ -1982,7 +2006,7 @@ class RunQueueExecute:
             if self.can_start_task():
                 return True
 
-        if not self.sq_live and not self.sqdone:
+        if not self.sq_live and not self.sqdone and not self.sq_deferred:
             logger.info("Setscene tasks completed")
             logger.debug(1, 'We could skip tasks %s', "\n".join(sorted(self.scenequeue_covered)))
 
@@ -2082,6 +2106,13 @@ class RunQueueExecute:
         if self.stats.active > 0 or self.sq_stats.active > 0:
             self.rq.read_workers()
             return self.rq.active_fds()
+
+        # No more tasks can be run. If we have deferred setscene tasks we should run them.
+        if self.sq_deferred:
+            tid = self.sq_deferred.pop(list(self.sq_deferred.keys())[0])
+            logger.warning("Runqeueue deadlocked on deferred tasks, forcing task %s" % tid)
+            self.sq_task_failoutright(tid)
+            return True
 
         if len(self.failed_tids) != 0:
             self.rq.state = runQueueFailed
@@ -2347,7 +2378,7 @@ class SQData(object):
         # Setscene tasks directly depended upon by the build
         self.unskippable = set()
         # List of setscene tasks which aren't present
-        self.outrightfail = []
+        self.outrightfail = set()
         # A list of normal tasks a setscene task covers
         self.sq_covered_tasks = {}
 
@@ -2510,7 +2541,9 @@ def build_scenequeue_data(sqdata, rqdata, rq, cooker, stampcache, sqrq):
 
     rqdata.init_progress_reporter.next_stage()
 
+    multiconfigs = set()
     for tid in sqdata.sq_revdeps:
+        multiconfigs.add(mc_from_tid(tid))
         if len(sqdata.sq_revdeps[tid]) == 0:
             sqrq.sq_buildable.add(tid)
 
@@ -2552,10 +2585,21 @@ def build_scenequeue_data(sqdata, rqdata, rq, cooker, stampcache, sqrq):
         for v in valid:
             valid_new.append(v)
 
-        for tid in sqdata.sq_revdeps:
-            if tid not in valid_new and tid not in noexec:
-                logger.debug(2, 'No package found, so skipping setscene task %s', tid)
-                sqdata.outrightfail.append(tid)
+        hashes = {}
+        for mc in sorted(multiconfigs):
+          for tid in sqdata.sq_revdeps:
+            if mc_from_tid(tid) != mc:
+                continue
+            if tid not in valid_new and tid not in noexec and tid not in sqrq.scenequeue_notcovered:
+                sqdata.outrightfail.add(tid)
+
+                h = pending_hash_index(tid, rqdata)
+                if h not in hashes:
+                    hashes[h] = tid
+                else:
+                    sqrq.sq_deferred[tid] = hashes[h]
+                    bb.warn("Deferring %s after %s" % (tid, hashes[h]))
+
 
 class TaskFailure(Exception):
     """

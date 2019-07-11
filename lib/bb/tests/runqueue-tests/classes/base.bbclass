@@ -4,7 +4,9 @@ SSTATEVALID ??= ""
 def stamptask(d):
     import time
 
-    thistask = d.expand("${PN}:${BB_CURRENTTASK}") 
+    thistask = d.expand("${PN}:${BB_CURRENTTASK}")
+    if d.getVar("BB_CURRENT_MC") != "default":
+        thistask = d.expand("${BB_CURRENT_MC}:${PN}:${BB_CURRENTTASK}")
     if thistask in d.getVar("SLOWTASKS").split():
         bb.note("Slowing task %s" % thistask)
         time.sleep(0.5)
@@ -13,48 +15,63 @@ def stamptask(d):
         f.write(thistask + "\n")
 
 python do_fetch() {
+    # fetch
     stamptask(d)
 }
 python do_unpack() {
+    # unpack
     stamptask(d)
 }
 python do_patch() {
+    # patch
     stamptask(d)
 }
 python do_populate_lic() {
+    # populate_lic
     stamptask(d)
 }
 python do_prepare_recipe_sysroot() {
+    # prepare_recipe_sysroot
     stamptask(d)
 }
 python do_configure() {
+    # configure
     stamptask(d)
 }
 python do_compile() {
+    # compile
     stamptask(d)
 }
 python do_install() {
+    # install
     stamptask(d)
 }
 python do_populate_sysroot() {
+    # populate_sysroot
     stamptask(d)
 }
 python do_package() {
+    # package
     stamptask(d)
 }
 python do_package_write_ipk() {
+    # package_write_ipk
     stamptask(d)
 }
 python do_package_write_rpm() {
+    # package_write_rpm
     stamptask(d)
 }
 python do_packagedata() {
+    # packagedata
     stamptask(d)
 }
 python do_package_qa() {
+    # package_qa
     stamptask(d)
 }
 python do_build() {
+    # build
     stamptask(d)
 }
 do_prepare_recipe_sysroot[deptask] = "do_populate_sysroot"
