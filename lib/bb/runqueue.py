@@ -1376,10 +1376,43 @@ class RunQueue:
             cache[tid] = iscurrent
         return iscurrent
 
-    def validate_hash(self, *, sq_fn, sq_task, sq_hash, sq_hashfn, siginfo, sq_unihash, d):
+    def validate_hashes(self, tocheck, data, presentcount=None, siginfo=False):
+        valid = set()
+        if self.hashvalidate:
+            sq_hash = []
+            sq_hashfn = []
+            sq_unihash = []
+            sq_fn = []
+            sq_taskname = []
+            sq_task = []
+            for tid in tocheck:
+                (mc, fn, taskname, taskfn) = split_tid_mcfn(tid)
+
+                sq_fn.append(fn)
+                sq_hashfn.append(self.rqdata.dataCaches[mc].hashfn[taskfn])
+                sq_hash.append(self.rqdata.runtaskentries[tid].hash)
+                sq_unihash.append(self.rqdata.runtaskentries[tid].unihash)
+                sq_taskname.append(taskname)
+                sq_task.append(tid)
+
+            if presentcount is not None:
+                data.setVar("BB_SETSCENE_STAMPCURRENT_COUNT", presentcount)
+
+            valid_ids = self.validate_hash(sq_fn, sq_taskname, sq_hash, sq_hashfn, siginfo, sq_unihash, data, presentcount)
+
+            if presentcount is not None:
+                data.delVar("BB_SETSCENE_STAMPCURRENT_COUNT")
+
+            for v in valid_ids:
+                valid.add(sq_task[v])
+
+        return valid
+
+    def validate_hash(self, sq_fn, sq_task, sq_hash, sq_hashfn, siginfo, sq_unihash, d, presentcount):
         locs = {"sq_fn" : sq_fn, "sq_task" : sq_task, "sq_hash" : sq_hash, "sq_hashfn" : sq_hashfn,
                 "sq_unihash" : sq_unihash, "siginfo" : siginfo, "d" : d}
 
+        # Backwards compatibility
         hashvalidate_args = ("(sq_fn, sq_task, sq_hash, sq_hashfn, d, siginfo=siginfo, sq_unihash=sq_unihash)",
                              "(sq_fn, sq_task, sq_hash, sq_hashfn, d, siginfo=siginfo)",
                              "(sq_fn, sq_task, sq_hash, sq_hashfn, d)")
@@ -1564,16 +1597,8 @@ class RunQueue:
 
     def print_diffscenetasks(self):
 
-        valid = []
-        sq_hash = []
-        sq_hashfn = []
-        sq_unihash = []
-        sq_fn = []
-        sq_taskname = []
-        sq_task = []
         noexec = []
-        stamppresent = []
-        valid_new = set()
+        tocheck = set()
 
         for tid in self.rqdata.runtaskentries:
             (mc, fn, taskname, taskfn) = split_tid_mcfn(tid)
@@ -1583,18 +1608,9 @@ class RunQueue:
                 noexec.append(tid)
                 continue
 
-            sq_fn.append(fn)
-            sq_hashfn.append(self.rqdata.dataCaches[mc].hashfn[taskfn])
-            sq_hash.append(self.rqdata.runtaskentries[tid].hash)
-            sq_unihash.append(self.rqdata.runtaskentries[tid].unihash)
-            sq_taskname.append(taskname)
-            sq_task.append(tid)
+            tocheck.add(tid)
 
-        valid = self.validate_hash(sq_fn=sq_fn, sq_task=sq_taskname, sq_hash=sq_hash, sq_hashfn=sq_hashfn,
-                siginfo=True, sq_unihash=sq_unihash, d=self.cooker.data)
-
-        for v in valid:
-            valid_new.add(sq_task[v])
+        valid_new = self.validate_hashes(tocheck, self.cooker.data, None, True)
 
         # Tasks which are both setscene and noexec never care about dependencies
         # We therefore find tasks which are setscene and noexec and mark their
@@ -2501,14 +2517,10 @@ def build_scenequeue_data(sqdata, rqdata, rq, cooker, stampcache, sqrq):
     rqdata.init_progress_reporter.finish()
 
     if rq.hashvalidate:
-        sq_hash = []
-        sq_hashfn = []
-        sq_unihash = []
-        sq_fn = []
-        sq_taskname = []
-        sq_task = []
         noexec = []
         stamppresent = []
+        tocheck = set()
+
         for tid in sqdata.sq_revdeps:
             (mc, fn, taskname, taskfn) = split_tid_mcfn(tid)
 
@@ -2532,23 +2544,13 @@ def build_scenequeue_data(sqdata, rqdata, rq, cooker, stampcache, sqrq):
                 sqrq.sq_task_skip(tid)
                 continue
 
-            sq_fn.append(fn)
-            sq_hashfn.append(rqdata.dataCaches[mc].hashfn[taskfn])
-            sq_hash.append(rqdata.runtaskentries[tid].hash)
-            sq_unihash.append(rqdata.runtaskentries[tid].unihash)
-            sq_taskname.append(taskname)
-            sq_task.append(tid)
+            tocheck.add(tid)
 
-        cooker.data.setVar("BB_SETSCENE_STAMPCURRENT_COUNT", len(stamppresent))
-
-        valid = rq.validate_hash(sq_fn=sq_fn, sq_task=sq_taskname, sq_hash=sq_hash, sq_hashfn=sq_hashfn,
-                siginfo=False, sq_unihash=sq_unihash, d=cooker.data)
-
-        cooker.data.delVar("BB_SETSCENE_STAMPCURRENT_COUNT")
+        valid = rq.validate_hashes(tocheck, cooker.data, len(stamppresent), False)
 
         valid_new = stamppresent
         for v in valid:
-            valid_new.append(sq_task[v])
+            valid_new.append(v)
 
         for tid in sqdata.sq_revdeps:
             if tid not in valid_new and tid not in noexec:
