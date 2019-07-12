@@ -5,6 +5,9 @@ def stamptask(d):
     import time
 
     thistask = d.expand("${PN}:${BB_CURRENTTASK}")
+    with open(d.expand("${TOPDIR}/%s.run") % thistask, "a+") as f:
+        f.write("\n")
+
     if d.getVar("BB_CURRENT_MC") != "default":
         thistask = d.expand("${BB_CURRENT_MC}:${PN}:${BB_CURRENTTASK}")
     if thistask in d.getVar("SLOWTASKS").split():
@@ -224,6 +227,9 @@ def sstate_checkhashes(sq_fn, sq_task, sq_hash, sq_hashfn, d, siginfo=False, *, 
         n = os.path.basename(sq_fn[task]).rsplit(".", 1)[0] + ":" + sq_task[task]
         if n in valid:
             bb.note("SState: Found valid sstate for %s" % n)
+            ret.append(task)
+        elif os.path.exists(d.expand("${TOPDIR}/%s.run" % n.replace("do_", ""))):
+            bb.note("SState: Found valid sstate for %s (already run)" % n)
             ret.append(task)
         else:
             missed.append(task)
