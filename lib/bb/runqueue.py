@@ -2167,7 +2167,6 @@ class RunQueueExecute:
         return taskdepdata
 
     def scenequeue_process_notcovered(self, task):
-        logger.debug(1, 'Not skipping setscene task %s', task)
         if len(self.rqdata.runtaskentries[task].depends) == 0:
             self.setbuildable(task)
         notcovered = set([task])
@@ -2233,6 +2232,7 @@ class RunQueueExecute:
             self.scenequeue_process_unskippable(task)
 
         if task in self.scenequeue_notcovered:
+            logger.debug(1, 'Not skipping setscene task %s', task)
             self.scenequeue_process_notcovered(task)
         elif task in self.scenequeue_covered:
             logger.debug(1, 'Queued setscene task %s', task)
@@ -2243,6 +2243,14 @@ class RunQueueExecute:
                 logger.debug(1, 'Processing setscene task %s', task)
                 covered = self.sqdata.sq_covered_tasks[task]
                 covered.add(task)
+
+                # If a task is in target_tids and isn't a setscene task, we can't skip it.
+                cantskip = covered.intersection(self.rqdata.target_tids).difference(self.rqdata.runq_setscene_tids)
+                for tid in cantskip:
+                    self.tasks_notcovered.add(tid)
+                    self.scenequeue_process_notcovered(tid)
+                covered.difference_update(cantskip)
+
                 # Remove notcovered tasks
                 covered.difference_update(self.tasks_notcovered)
                 self.tasks_covered.update(covered)

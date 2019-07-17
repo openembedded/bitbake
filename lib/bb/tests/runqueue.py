@@ -97,6 +97,15 @@ class RunQueueTests(unittest.TestCase):
             expected = ['a1:fetch', 'a1:unpack', 'a1:patch']
             self.assertEqual(set(tasks), set(expected))
 
+    def test_mix_covered_notcovered(self):
+        with tempfile.TemporaryDirectory(prefix="runqueuetest") as tempdir:
+            cmd = ["bitbake", "a1:do_patch", "a1:do_populate_sysroot"]
+            sstatevalid = self.a1_sstatevalid
+            tasks = self.run_bitbakecmd(cmd, tempdir, sstatevalid)
+            expected = ['a1:fetch', 'a1:unpack', 'a1:patch', 'a1:populate_sysroot_setscene']
+            self.assertEqual(set(tasks), set(expected))
+
+
     # Test targets with intermediate setscene tasks alongside a target with no intermediate setscene tasks
     def test_mixed_direct_tasks_setscene_tasks(self):
         with tempfile.TemporaryDirectory(prefix="runqueuetest") as tempdir:
