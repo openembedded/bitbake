@@ -1,4 +1,4 @@
-# Copyright (C) 2018 Garmin Ltd.
+# Copyright (C) 2018-2019 Garmin Ltd.
 #
 # SPDX-License-Identifier: GPL-2.0-only
 #
@@ -32,7 +32,7 @@ class HashEquivalenceServer(BaseHTTPRequestHandler):
 
             d = None
             with contextlib.closing(self.db.cursor()) as cursor:
-                cursor.execute('SELECT taskhash, method, unihash FROM tasks_v1 WHERE method=:method AND taskhash=:taskhash ORDER BY created ASC LIMIT 1',
+                cursor.execute('SELECT taskhash, method, unihash FROM tasks_v2 WHERE method=:method AND taskhash=:taskhash ORDER BY created ASC LIMIT 1',
                         {'method': method, 'taskhash': taskhash})
 
                 row = cursor.fetchone()
@@ -63,15 +63,29 @@ class HashEquivalenceServer(BaseHTTPRequestHandler):
 
             with contextlib.closing(self.db.cursor()) as cursor:
                 cursor.execute('''
-                    SELECT taskhash, method, unihash FROM tasks_v1 WHERE method=:method AND outhash=:outhash
+                    -- Find tasks with a matching outhash (that is, tasks that
+                    -- are equivalent)
+                    SELECT taskhash, method, unihash FROM tasks_v2 WHERE method=:method AND outhash=:outhash
+
+                    -- If there is an exact match on the taskhash, return it.
+                    -- Otherwise return the oldest matching outhash of any
+                    -- taskhash
                     ORDER BY CASE WHEN taskhash=:taskhash THEN 1 ELSE 2 END,
                         created ASC
+
+                    -- Only return one row
                     LIMIT 1
                     ''', {k: data[k] for k in ('method', 'outhash', 'taskhash')})
 
                 row = cursor.fetchone()
 
+                # If no matching outhash was found, or one *was* found but it
+                # wasn't an exact match on the taskhash, a new entry for this
+                # taskhash should be added
                 if row is None or row['taskhash'] != data['taskhash']:
+                    # If a row matching the outhash was found, the unihash for
+                    # the new taskhash should be the same as that one.
+                    # Otherwise the caller provided unihash is used.
                     unihash = data['unihash']
                     if row is not None:
                         unihash = row['unihash']
@@ -88,18 +102,17 @@ class HashEquivalenceServer(BaseHTTPRequestHandler):
                         if k in data:
                             insert_data[k] = data[k]
 
-                    cursor.execute('''INSERT INTO tasks_v1 (%s) VALUES (%s)''' % (
+                    cursor.execute('''INSERT INTO tasks_v2 (%s) VALUES (%s)''' % (
                             ', '.join(sorted(insert_data.keys())),
                             ', '.join(':' + k for k in sorted(insert_data.keys()))),
                         insert_data)
 
                     logger.info('Adding taskhash %s with unihash %s', data['taskhash'], unihash)
-                    cursor.execute('SELECT taskhash, method, unihash FROM tasks_v1 WHERE id=:id', {'id': cursor.lastrowid})
-                    row = cursor.fetchone()
 
                     self.db.commit()
-
-                d = {k: row[k] for k in ('taskhash', 'method', 'unihash')}
+                    d = {'taskhash': data['taskhash'], 'method': data['method'], 'unihash': unihash}
+                else:
+                    d = {k: row[k] for k in ('taskhash', 'method', 'unihash')}
 
                 self.send_response(200)
                 self.send_header('Content-Type', 'application/json; charset=utf-8')
@@ -120,7 +133,7 @@ def create_server(addr, db, prefix=''):
 
     with contextlib.closing(db.cursor()) as cursor:
         cursor.execute('''
-            CREATE TABLE IF NOT EXISTS tasks_v1 (
+            CREATE TABLE IF NOT EXISTS tasks_v2 (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 method TEXT NOT NULL,
                 outhash TEXT NOT NULL,
@@ -134,9 +147,13 @@ def create_server(addr, db, prefix=''):
                 PV TEXT,
                 PR TEXT,
                 task TEXT,
-                outhash_siginfo TEXT
+                outhash_siginfo TEXT,
+
+                UNIQUE(method, outhash, taskhash)
                 )
             ''')
+        cursor.execute('CREATE INDEX IF NOT EXISTS taskhash_lookup ON tasks_v2 (method, taskhash)')
+        cursor.execute('CREATE INDEX IF NOT EXISTS outhash_lookup ON tasks_v2 (method, outhash)')
 
     logger.info('Starting server on %s', addr)
     return HTTPServer(addr, Handler)
