@@ -2206,12 +2206,9 @@ class RunQueueExecute:
                 logger.debug(2, "%s was unavailable and is a hard dependency of %s so skipping" % (task, dep))
                 self.sq_task_failoutright(dep)
                 continue
-            if task not in self.sqdata.sq_revdeps2[dep]:
-                # May already have been removed by the fail case above
-                continue
-            self.sqdata.sq_revdeps2[dep].remove(task)
-            if len(self.sqdata.sq_revdeps2[dep]) == 0:
-                self.sq_buildable.add(dep)
+            if self.sqdata.sq_revdeps[dep].issubset(self.scenequeue_covered | self.scenequeue_notcovered):
+                if dep not in self.sq_buildable:
+                    self.sq_buildable.add(dep)
 
         next = set([task])
         while next:
@@ -2377,8 +2374,6 @@ class SQData(object):
         self.sq_deps = {}
         # SceneQueue reverse dependencies
         self.sq_revdeps = {}
-        # Copy of reverse dependencies used by sq processing code
-        self.sq_revdeps2 = {}
         # Injected inter-setscene task dependencies
         self.sq_harddeps = {}
         # Cache of stamp files so duplicates can't run in parallel
@@ -2537,7 +2532,6 @@ def build_scenequeue_data(sqdata, rqdata, rq, cooker, stampcache, sqrq):
     #    bb.warn("Task %s_setscene: is %s " % (tid, data))
 
     sqdata.sq_revdeps = sq_revdeps_squash
-    sqdata.sq_revdeps2 = copy.deepcopy(sqdata.sq_revdeps)
     sqdata.sq_covered_tasks = sq_collated_deps
 
     # Build reverse version of revdeps to populate deps structure
