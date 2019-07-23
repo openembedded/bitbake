@@ -41,6 +41,7 @@ class SignatureGenerator(object):
         self.runtaskdeps = {}
         self.file_checksum_values = {}
         self.taints = {}
+        self.unitaskhashes = {}
 
     def finalise(self, fn, d, varient):
         return
@@ -73,13 +74,22 @@ class SignatureGenerator(object):
         return
 
     def get_taskdata(self):
-        return (self.runtaskdeps, self.taskhash, self.file_checksum_values, self.taints, self.basehash)
+        return (self.runtaskdeps, self.taskhash, self.file_checksum_values, self.taints, self.basehash, self.unitaskhashes)
 
     def set_taskdata(self, data):
-        self.runtaskdeps, self.taskhash, self.file_checksum_values, self.taints, self.basehash = data
+        self.runtaskdeps, self.taskhash, self.file_checksum_values, self.taints, self.basehash, self.unitaskhashes = data
 
     def reset(self, data):
         self.__init__(data)
+
+    def get_taskhashes(self):
+        return self.taskhash, self.unitaskhashes
+
+    def set_taskhashes(self, hashes):
+        self.taskhash, self.unitaskhashes = hashes
+
+    def save_unitaskhashes(self):
+        return
 
 
 class SignatureGeneratorBasic(SignatureGenerator):
@@ -106,6 +116,9 @@ class SignatureGeneratorBasic(SignatureGenerator):
             self.checksum_cache.init_cache(data, checksum_cache_file)
         else:
             self.checksum_cache = None
+
+        self.unihash_cache = bb.cache.SimpleCache("1")
+        self.unitaskhashes = self.unihash_cache.init_cache(data, "bb_unihashes.dat", {})
 
     def init_rundepcheck(self, data):
         self.taskwhitelist = data.getVar("BB_HASHTASK_WHITELIST") or None
@@ -243,6 +256,9 @@ class SignatureGeneratorBasic(SignatureGenerator):
         else:
             bb.fetch2.fetcher_parse_save()
             bb.fetch2.fetcher_parse_done()
+
+    def save_unitaskhashes(self):
+        self.unihash_cache.save(self.unitaskhashes)
 
     def dump_sigtask(self, fn, task, stampbase, runtime):
 

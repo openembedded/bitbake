@@ -1516,6 +1516,7 @@ class RunQueue:
             self.dm_event_handler_registered = False
 
         if build_done and self.rqexe:
+            bb.parse.siggen.save_unitaskhashes()
             self.teardown_workers()
             if self.rqexe:
                 if self.rqexe.stats.failed:
