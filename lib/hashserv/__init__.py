@@ -21,6 +21,8 @@ class HashEquivalenceServer(BaseHTTPRequestHandler):
     def opendb(self):
         self.db = sqlite3.connect(self.dbname)
         self.db.row_factory = sqlite3.Row
+        self.db.execute("PRAGMA synchronous = OFF;")
+        self.db.execute("PRAGMA journal_mode = MEMORY;")
 
     def do_GET(self):
         try:
