@@ -18,8 +18,15 @@ class HashEquivalenceServer(BaseHTTPRequestHandler):
     def log_message(self, f, *args):
         logger.debug(f, *args)
 
+    def opendb(self):
+        self.db = sqlite3.connect(self.dbname)
+        self.db.row_factory = sqlite3.Row
+
     def do_GET(self):
         try:
+            if not self.db:
+                self.opendb()
+
             p = urllib.parse.urlparse(self.path)
 
             if p.path != self.prefix + '/v1/equivalent':
@@ -52,6 +59,9 @@ class HashEquivalenceServer(BaseHTTPRequestHandler):
 
     def do_POST(self):
         try:
+            if not self.db:
+                self.opendb()
+
             p = urllib.parse.urlparse(self.path)
 
             if p.path != self.prefix + '/v1/equivalent':
@@ -123,13 +133,16 @@ class HashEquivalenceServer(BaseHTTPRequestHandler):
             self.send_error(400, explain=traceback.format_exc())
             return
 
-def create_server(addr, db, prefix=''):
+def create_server(addr, dbname, prefix=''):
     class Handler(HashEquivalenceServer):
         pass
 
-    Handler.prefix = prefix
-    Handler.db = db
+    db = sqlite3.connect(dbname)
     db.row_factory = sqlite3.Row
+
+    Handler.prefix = prefix
+    Handler.db = None
+    Handler.dbname = dbname
 
     with contextlib.closing(db.cursor()) as cursor:
         cursor.execute('''
