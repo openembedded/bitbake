@@ -10,6 +10,9 @@ import sqlite3
 import json
 import traceback
 import logging
+import socketserver
+import queue
+import threading
 from datetime import datetime
 
 logger = logging.getLogger('hashserv')
@@ -135,6 +138,41 @@ class HashEquivalenceServer(BaseHTTPRequestHandler):
             self.send_error(400, explain=traceback.format_exc())
             return
 
+class ThreadedHTTPServer(HTTPServer):
+    quit = False
+
+    def serve_forever(self):
+        self.requestqueue = queue.Queue()
+        self.handlerthread = threading.Thread(target=self.process_request_thread)
+        self.handlerthread.daemon = False
+
+        self.handlerthread.start()
+        super().serve_forever()
+
+    def process_request_thread(self):
+        while not self.quit:
+            try:
+                (request, client_address) = self.requestqueue.get(True)
+            except queue.Empty:
+                continue
+            if request is None:
+                continue
+            try:
+                self.finish_request(request, client_address)
+            except Exception:
+                self.handle_error(request, client_address)
+            finally:
+                self.shutdown_request(request)
+
+    def process_request(self, request, client_address):
+        self.requestqueue.put((request, client_address))
+
+    def server_close(self):
+        super().server_close()
+        self.quit = True
+        self.requestqueue.put((None, None))
+        self.handlerthread.join()
+
 def create_server(addr, dbname, prefix=''):
     class Handler(HashEquivalenceServer):
         pass
@@ -171,4 +209,5 @@ def create_server(addr, dbname, prefix=''):
         cursor.execute('CREATE INDEX IF NOT EXISTS outhash_lookup ON tasks_v2 (method, outhash)')
 
     logger.info('Starting server on %s', addr)
-    return HTTPServer(addr, Handler)
+
+    return ThreadedHTTPServer(addr, Handler)
