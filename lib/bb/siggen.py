@@ -388,11 +388,14 @@ class SignatureGeneratorUniHashMixIn(object):
             # If a unique hash is reported, use it as the stampfile hash. This
             # ensures that if a task won't be re-run if the taskhash changes,
             # but it would result in the same output hash
-            unihash = self.unihashes.get(self.__get_task_unihash_key(task))
+            unihash = self.unitaskhashes.get(self.__get_task_unihash_key(task), None)
             if unihash is not None:
                 return unihash
 
         return super().get_stampfile_hash(task)
+
+    def set_unihash(self, task, unihash):
+        self.unitaskhashes[self.__get_task_unihash_key(task)] = unihash
 
     def get_unihash(self, task):
         import urllib
@@ -404,7 +407,7 @@ class SignatureGeneratorUniHashMixIn(object):
 
         # TODO: This cache can grow unbounded. It probably only needs to keep
         # for each task
-        unihash = self.unihashes.get(key)
+        unihash = self.unitaskhashes.get(key, None)
         if unihash is not None:
             return unihash
 
@@ -446,7 +449,7 @@ class SignatureGeneratorUniHashMixIn(object):
         except (KeyError, json.JSONDecodeError) as e:
             bb.warn('Poorly formatted response from %s: %s' % (self.server, str(e)))
 
-        self.unihashes[key] = unihash
+        self.unitaskhashes[key] = unihash
         return unihash
 
     def report_unihash(self, path, task, d):
@@ -464,7 +467,7 @@ class SignatureGeneratorUniHashMixIn(object):
         key = fn + '.do_' + task + ':' + taskhash
 
         # Sanity checks
-        cache_unihash = self.unihashes.get(key)
+        cache_unihash = self.unitaskhashes.get(key, None)
         if cache_unihash is None:
             bb.fatal('%s not in unihash cache. Please report this error' % key)
 
@@ -515,6 +518,7 @@ class SignatureGeneratorUniHashMixIn(object):
 
                 if new_unihash != unihash:
                     bb.debug(1, 'Task %s unihash changed %s -> %s by server %s' % (taskhash, unihash, new_unihash, self.server))
+                    bb.event.fire(bb.runqueue.taskUniHashUpdate(fn + ':do_' + task, new_unihash), d)
                 else:
                     bb.debug(1, 'Reported task %s as unihash %s to %s' % (taskhash, unihash, self.server))
             except urllib.error.URLError as e:
