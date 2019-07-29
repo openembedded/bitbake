@@ -1174,10 +1174,9 @@ class RunQueueData:
     def prepare_task_hash(self, tid):
         procdep = []
         for dep in self.runtaskentries[tid].depends:
-            procdep.append(fn_from_tid(dep) + "." + taskname_from_tid(dep))
-        (mc, fn, taskname, taskfn) = split_tid_mcfn(tid)
-        self.runtaskentries[tid].hash = bb.parse.siggen.get_taskhash(taskfn, taskname, procdep, self.dataCaches[mc])
-        self.runtaskentries[tid].unihash = bb.parse.siggen.get_unihash(taskfn + "." + taskname)
+            procdep.append(dep)
+        self.runtaskentries[tid].hash = bb.parse.siggen.get_taskhash(tid, procdep, self.dataCaches[mc_from_tid(tid)])
+        self.runtaskentries[tid].unihash = bb.parse.siggen.get_unihash(tid)
 
     def dump_data(self):
         """
@@ -1401,7 +1400,7 @@ class RunQueue:
                 sq_data['hashfn'][tid] = self.rqdata.dataCaches[mc].hashfn[taskfn]
                 sq_data['unihash'][tid] = self.rqdata.runtaskentries[tid].unihash
 
-            valid_ids = self.validate_hash(sq_data, data, siginfo, currentcount)
+            valid = self.validate_hash(sq_data, data, siginfo, currentcount)
 
         return valid
 
@@ -2152,8 +2151,7 @@ class RunQueueExecute:
         if unihash != self.rqdata.runtaskentries[tid].unihash:
             logger.info("Task %s unihash changed to %s" % (tid, unihash))
             self.rqdata.runtaskentries[tid].unihash = unihash
-            (mc, fn, taskname, taskfn) = split_tid_mcfn(tid)
-            bb.parse.siggen.set_unihash(taskfn + "." + taskname, unihash)
+            bb.parse.siggen.set_unihash(tid, unihash)
 
             # Work out all tasks which depend on this one
             total = set()
@@ -2177,12 +2175,11 @@ class RunQueueExecute:
                         continue
                     procdep = []
                     for dep in self.rqdata.runtaskentries[tid].depends:
-                        procdep.append(fn_from_tid(dep) + "." + taskname_from_tid(dep))
-                    (mc, fn, taskname, taskfn) = split_tid_mcfn(tid)
+                        procdep.append(dep)
                     orighash = self.rqdata.runtaskentries[tid].hash
-                    self.rqdata.runtaskentries[tid].hash = bb.parse.siggen.get_taskhash(taskfn, taskname, procdep, self.rqdata.dataCaches[mc])
+                    self.rqdata.runtaskentries[tid].hash = bb.parse.siggen.get_taskhash(tid, procdep, self.rqdata.dataCaches[mc_from_tid(tid)])
                     origuni = self.rqdata.runtaskentries[tid].unihash
-                    self.rqdata.runtaskentries[tid].unihash = bb.parse.siggen.get_unihash(taskfn + "." + taskname)
+                    self.rqdata.runtaskentries[tid].unihash = bb.parse.siggen.get_unihash(tid)
                     logger.debug(1, "Task %s hash changes: %s->%s %s->%s" % (tid, orighash, self.rqdata.runtaskentries[tid].hash, origuni, self.rqdata.runtaskentries[tid].unihash))
                     next |= self.rqdata.runtaskentries[tid].revdeps
                     changed.add(tid)

@@ -220,7 +220,7 @@ class CoreRecipeInfo(RecipeInfoCommon):
 
         cachedata.hashfn[fn] = self.hashfilename
         for task, taskhash in self.basetaskhashes.items():
-            identifier = '%s.%s' % (fn, task)
+            identifier = '%s:%s' % (fn, task)
             cachedata.basetaskhash[identifier] = taskhash
 
         cachedata.inherits[fn] = self.inherits
