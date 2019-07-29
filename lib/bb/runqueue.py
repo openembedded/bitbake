@@ -1388,57 +1388,29 @@ class RunQueue:
             cache[tid] = iscurrent
         return iscurrent
 
-    def validate_hashes(self, tocheck, data, presentcount=None, siginfo=False):
+    def validate_hashes(self, tocheck, data, currentcount=None, siginfo=False):
         valid = set()
         if self.hashvalidate:
-            sq_hash = []
-            sq_hashfn = []
-            sq_unihash = []
-            sq_fn = []
-            sq_taskname = []
-            sq_task = []
+            sq_data = {}
+            sq_data['hash'] = {}
+            sq_data['hashfn'] = {}
+            sq_data['unihash'] = {}
             for tid in tocheck:
                 (mc, fn, taskname, taskfn) = split_tid_mcfn(tid)
+                sq_data['hash'][tid] = self.rqdata.runtaskentries[tid].hash
+                sq_data['hashfn'][tid] = self.rqdata.dataCaches[mc].hashfn[taskfn]
+                sq_data['unihash'][tid] = self.rqdata.runtaskentries[tid].unihash
 
-                sq_fn.append(fn)
-                sq_hashfn.append(self.rqdata.dataCaches[mc].hashfn[taskfn])
-                sq_hash.append(self.rqdata.runtaskentries[tid].hash)
-                sq_unihash.append(self.rqdata.runtaskentries[tid].unihash)
-                sq_taskname.append(taskname)
-                sq_task.append(tid)
-
-            if presentcount is not None:
-                data.setVar("BB_SETSCENE_STAMPCURRENT_COUNT", presentcount)
-
-            valid_ids = self.validate_hash(sq_fn, sq_taskname, sq_hash, sq_hashfn, siginfo, sq_unihash, data, presentcount)
-
-            if presentcount is not None:
-                data.delVar("BB_SETSCENE_STAMPCURRENT_COUNT")
-
-            for v in valid_ids:
-                valid.add(sq_task[v])
+            valid_ids = self.validate_hash(sq_data, data, siginfo, currentcount)
 
         return valid
 
-    def validate_hash(self, sq_fn, sq_task, sq_hash, sq_hashfn, siginfo, sq_unihash, d, presentcount):
-        locs = {"sq_fn" : sq_fn, "sq_task" : sq_task, "sq_hash" : sq_hash, "sq_hashfn" : sq_hashfn,
-                "sq_unihash" : sq_unihash, "siginfo" : siginfo, "d" : d}
+    def validate_hash(self, sq_data, d, siginfo, currentcount):
+        locs = {"sq_data" : sq_data, "d" : d, "siginfo" : siginfo, "currentcount" : currentcount}
 
-        # Backwards compatibility
-        hashvalidate_args = ("(sq_fn, sq_task, sq_hash, sq_hashfn, d, siginfo=siginfo, sq_unihash=sq_unihash)",
-                             "(sq_fn, sq_task, sq_hash, sq_hashfn, d, siginfo=siginfo)",
-                             "(sq_fn, sq_task, sq_hash, sq_hashfn, d)")
+        # Metadata has **kwargs so args can be added, sq_data can also gain new fields
+        call = self.hashvalidate + "(sq_data, d, siginfo=siginfo, currentcount=currentcount)"
 
-        for args in hashvalidate_args[:-1]:
-            try:
-                call = self.hashvalidate + args
-                return bb.utils.better_eval(call, locs)
-            except TypeError:
-                continue
-
-        # Call the last entry without a try...catch to propagate any thrown
-        # TypeError
-        call = self.hashvalidate + hashvalidate_args[-1]
         return bb.utils.better_eval(call, locs)
 
     def _execute_runqueue(self):

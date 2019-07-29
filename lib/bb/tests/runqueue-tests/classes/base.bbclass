@@ -216,27 +216,25 @@ def setscene_depvalid(task, taskdependees, notneeded, d, log=None):
 
 BB_HASHCHECK_FUNCTION = "sstate_checkhashes"
 
-def sstate_checkhashes(sq_fn, sq_task, sq_hash, sq_hashfn, d, siginfo=False, *, sq_unihash=None):
+def sstate_checkhashes(sq_data, d, siginfo=False, currentcount=0, **kwargs):
 
-    ret = []
-    missed = []
+    found = set()
+    missed = set()
 
     valid = d.getVar("SSTATEVALID").split()
 
-    for task in range(len(sq_fn)):
-        n = os.path.basename(sq_fn[task]).rsplit(".", 1)[0] + ":" + sq_task[task]
+    for tid in sq_data['hash']:
+        n = os.path.basename(bb.runqueue.fn_from_tid(tid)).split(".")[0] + ":do_" + bb.runqueue.taskname_from_tid(tid)[3:]
+        print(n)
         if n in valid:
             bb.note("SState: Found valid sstate for %s" % n)
-            ret.append(task)
+            found.add(tid)
         elif os.path.exists(d.expand("${TOPDIR}/%s.run" % n.replace("do_", ""))):
             bb.note("SState: Found valid sstate for %s (already run)" % n)
-            ret.append(task)
+            found.add(tid)
         else:
-            missed.append(task)
+            missed.add(tid)
             bb.note("SState: Found no valid sstate for %s" % n)
 
-    if hasattr(bb.parse.siggen, "checkhashes"):
-        bb.parse.siggen.checkhashes(missed, ret, sq_fn, sq_task, sq_hash, sq_hashfn, d)
-
-    return ret
+    return found
 
