@@ -193,6 +193,8 @@ class BBCooker:
         bb.parse.BBHandler.cached_statements = {}
 
         self.ui_cmdline = None
+        self.hashserv = None
+        self.hashservport = None
 
         self.initConfigurationData()
 
@@ -231,8 +233,6 @@ class BBCooker:
         self.state = state.initial
 
         self.parser = None
-        self.hashserv = None
-        self.hashservport = None
 
         signal.signal(signal.SIGTERM, self.sigterm_exception)
         # Let SIGHUP exit as SIGTERM
@@ -372,12 +372,13 @@ class BBCooker:
         self.data.setVar('BB_CMDLINE', self.ui_cmdline)
 
         if self.data.getVar("BB_HASHSERVE") == "localhost:0":
-            dbfile = (self.data.getVar("PERSISTENT_DIR") or self.data.getVar("CACHE")) + "/hashserv.db"
-            self.hashserv = hashserv.create_server(('localhost', 0), dbfile, '')
-            self.hashservport = "localhost:" + str(self.hashserv.server_port)
-            thread = threading.Thread(target=self.hashserv.serve_forever)
-            thread.daemon = True
-            thread.start()
+            if not self.hashserv:
+                dbfile = (self.data.getVar("PERSISTENT_DIR") or self.data.getVar("CACHE")) + "/hashserv.db"
+                self.hashserv = hashserv.create_server(('localhost', 0), dbfile, '')
+                self.hashservport = "localhost:" + str(self.hashserv.server_port)
+                self.hashserv.process = multiprocessing.Process(target=self.hashserv.serve_forever)
+                self.hashserv.process.daemon = True
+                self.hashserv.process.start()
             self.data.setVar("BB_HASHSERVE", self.hashservport)
 
         #
@@ -1658,7 +1659,8 @@ class BBCooker:
     def post_serve(self):
         prserv.serv.auto_shutdown()
         if self.hashserv:
-            self.hashserv.shutdown()
+            self.hashserv.process.terminate()
+            self.hashserv.process.join()
         bb.event.fire(CookerExit(), self.data)
 
     def shutdown(self, force = False):

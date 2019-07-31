@@ -6,7 +6,7 @@
 #
 
 import unittest
-import threading
+import multiprocessing
 import sqlite3
 import hashlib
 import urllib.request
@@ -21,16 +21,16 @@ class TestHashEquivalenceServer(unittest.TestCase):
         self.dbfile = tempfile.NamedTemporaryFile(prefix="bb-hashserv-db-")
         self.server = create_server(('localhost', 0), self.dbfile.name)
         self.server_addr = 'http://localhost:%d' % self.server.socket.getsockname()[1]
-        self.server_thread = threading.Thread(target=self.server.serve_forever)
+        self.server_thread = multiprocessing.Process(target=self.server.serve_forever)
+        self.server_thread.daemon = True
         self.server_thread.start()
 
     def tearDown(self):
         # Shutdown server
         s = getattr(self, 'server', None)
         if s is not None:
-            self.server.shutdown()
+            self.server_thread.terminate()
             self.server_thread.join()
-            self.server.server_close()
 
     def send_get(self, path):
         url = '%s/%s' % (self.server_addr, path)

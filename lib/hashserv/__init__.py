@@ -13,6 +13,7 @@ import logging
 import socketserver
 import queue
 import threading
+import signal
 from datetime import datetime
 
 logger = logging.getLogger('hashserv')
@@ -147,7 +148,13 @@ class ThreadedHTTPServer(HTTPServer):
         self.handlerthread.daemon = False
 
         self.handlerthread.start()
+
+        signal.signal(signal.SIGTERM, self.sigterm_exception)
         super().serve_forever()
+
+    def sigterm_exception(self, signum, stackframe):
+        self.server_close()
+        os._exit(0)
 
     def process_request_thread(self):
         while not self.quit:
@@ -163,6 +170,7 @@ class ThreadedHTTPServer(HTTPServer):
                 self.handle_error(request, client_address)
             finally:
                 self.shutdown_request(request)
+        os._exit(0)
 
     def process_request(self, request, client_address):
         self.requestqueue.put((request, client_address))
@@ -208,6 +216,8 @@ def create_server(addr, dbname, prefix=''):
         cursor.execute('CREATE INDEX IF NOT EXISTS taskhash_lookup ON tasks_v2 (method, taskhash)')
         cursor.execute('CREATE INDEX IF NOT EXISTS outhash_lookup ON tasks_v2 (method, outhash)')
 
-    logger.info('Starting server on %s', addr)
+    ret = ThreadedHTTPServer(addr, Handler)
 
-    return ThreadedHTTPServer(addr, Handler)
+    logger.info('Starting server on %s\n', ret.server_port)
+
+    return ret
