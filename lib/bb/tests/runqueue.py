@@ -25,7 +25,7 @@ class RunQueueTests(unittest.TestCase):
     a1_sstatevalid = "a1:do_package a1:do_package_qa a1:do_packagedata a1:do_package_write_ipk a1:do_package_write_rpm a1:do_populate_lic a1:do_populate_sysroot"
     b1_sstatevalid = "b1:do_package b1:do_package_qa b1:do_packagedata b1:do_package_write_ipk b1:do_package_write_rpm b1:do_populate_lic b1:do_populate_sysroot"
 
-    def run_bitbakecmd(self, cmd, builddir, sstatevalid="", slowtasks="", extraenv=None):
+    def run_bitbakecmd(self, cmd, builddir, sstatevalid="", slowtasks="", extraenv=None, cleanup=False):
         env = os.environ.copy()
         env["BBPATH"] = os.path.realpath(os.path.join(os.path.dirname(__file__), "runqueue-tests"))
         env["BB_ENV_EXTRAWHITE"] = "SSTATEVALID SLOWTASKS"
@@ -42,6 +42,8 @@ class RunQueueTests(unittest.TestCase):
         tasks = []
         with open(builddir + "/task.log", "r") as f:
             tasks = [line.rstrip() for line in f]
+        if cleanup:
+            os.remove(builddir + "/task.log")
         return tasks
 
     def test_no_setscenevalid(self):
@@ -224,5 +226,28 @@ class RunQueueTests(unittest.TestCase):
                        ['mc1:b1:build', 'mc2:b1:build']
             for x in ['mc1:a1:package_qa_setscene', 'mc2:a1:package_qa_setscene', 'a1:build', 'a1:package_qa']:
                 expected.remove(x)
+            self.assertEqual(set(tasks), set(expected))
+
+
+    def test_hashserv(self):
+        with tempfile.TemporaryDirectory(prefix="runqueuetest") as tempdir:
+            extraenv = {
+                "BB_HASHSERVE" : "localhost:0",
+                "BB_SIGNATURE_HANDLER" : "TestEquivHash"
+            }
+            cmd = ["bitbake", "a1", "b1"]
+            setscenetasks = ['package_write_ipk_setscene', 'package_write_rpm_setscene', 'packagedata_setscene',
+                             'populate_sysroot_setscene', 'package_qa_setscene']
+            sstatevalid = ""
+            tasks = self.run_bitbakecmd(cmd, tempdir, sstatevalid, extraenv=extraenv, cleanup=True)
+            expected = ['a1:' + x for x in self.alltasks] + ['b1:' + x for x in self.alltasks]
+            self.assertEqual(set(tasks), set(expected))
+            cmd = ["bitbake", "a1", "-c", "install", "-f"]
+            tasks = self.run_bitbakecmd(cmd, tempdir, sstatevalid, extraenv=extraenv, cleanup=True)
+            expected = ['a1:install']
+            self.assertEqual(set(tasks), set(expected))
+            cmd = ["bitbake", "a1", "b1"]
+            tasks = self.run_bitbakecmd(cmd, tempdir, sstatevalid, extraenv=extraenv, cleanup=True)
+            expected = ['a1:' + x for x in setscenetasks] + ['b1:' + x for x in setscenetasks] + ['a1:build', 'b1:build']
             self.assertEqual(set(tasks), set(expected))
 

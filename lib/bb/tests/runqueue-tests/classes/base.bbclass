@@ -5,7 +5,8 @@ def stamptask(d):
     import time
 
     thistask = d.expand("${PN}:${BB_CURRENTTASK}")
-    with open(d.expand("${TOPDIR}/%s.run") % thistask, "a+") as f:
+    stampname = d.expand("${TOPDIR}/%s.run" % thistask)
+    with open(stampname, "a+") as f:
         f.write("\n")
 
     if d.getVar("BB_CURRENT_MC") != "default":
@@ -13,9 +14,20 @@ def stamptask(d):
     if thistask in d.getVar("SLOWTASKS").split():
         bb.note("Slowing task %s" % thistask)
         time.sleep(0.5)
+    if d.getVar("BB_HASHSERVE"):
+        task = d.getVar("BB_CURRENTTASK")
+        if task in ['package', 'package_qa', 'packagedata', 'package_write_ipk', 'package_write_rpm', 'populate_lic', 'populate_sysroot']:
+            bb.parse.siggen.report_unihash(os.getcwd(), d.getVar("BB_CURRENTTASK"), d)
 
     with open(d.expand("${TOPDIR}/task.log"), "a+") as f:
         f.write(thistask + "\n")
+
+
+def sstate_output_hash(path, sigfile, task, d):
+    import hashlib
+    h = hashlib.sha256()
+    h.update(d.expand("${PN}:${BB_CURRENTTASK}").encode('utf-8'))
+    return h.hexdigest()
 
 python do_fetch() {
     # fetch

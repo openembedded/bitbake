@@ -12,6 +12,7 @@ import bb.data
 import difflib
 import simplediff
 from bb.checksum import FileChecksumCache
+from bb import runqueue
 
 logger = logging.getLogger('BitBake.SigGen')
 
@@ -473,10 +474,12 @@ class SignatureGeneratorUniHashMixIn(object):
 
             locs = {'path': path, 'sigfile': sigfile, 'task': task, 'd': d}
 
-            (module, method) = self.method.rsplit('.', 1)
-            locs['method'] = getattr(importlib.import_module(module), method)
-
-            outhash = bb.utils.better_eval('method(path, sigfile, task, d)', locs)
+            if "." in self.method:
+                (module, method) = self.method.rsplit('.', 1)
+                locs['method'] = getattr(importlib.import_module(module), method)
+                outhash = bb.utils.better_eval('method(path, sigfile, task, d)', locs)
+            else:
+                outhash = bb.utils.better_eval(self.method + '(path, sigfile, task, d)', locs)
 
             try:
                 url = '%s/v1/equivalent' % self.server
@@ -526,6 +529,18 @@ class SignatureGeneratorUniHashMixIn(object):
                     os.symlink(sigfile_name, sigfile_link_path)
                 except OSError:
                     pass
+
+
+#
+# Dummy class used for bitbake-selftest
+#
+class SignatureGeneratorTestEquivHash(SignatureGeneratorUniHashMixIn, SignatureGeneratorBasicHash):
+    name = "TestEquivHash"
+    def init_rundepcheck(self, data):
+        super().init_rundepcheck(data)
+        self.server = "http://" + data.getVar('BB_HASHSERVE')
+        self.method = "sstate_output_hash"
+
 
 def dump_this_task(outfile, d):
     import bb.parse
