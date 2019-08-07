@@ -2077,6 +2077,14 @@ class CookerParser(object):
             for process in self.processes:
                 self.parser_quit.put(None)
 
+        # Cleanup the queue before call process.join(), otherwise there might be
+        # deadlocks.
+        while True:
+            try:
+               self.result_queue.get(timeout=0.25)
+            except queue.Empty:
+                break
+
         for process in self.processes:
             if force:
                 process.join(.1)
