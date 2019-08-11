@@ -2124,7 +2124,7 @@ class RunQueueExecute:
     # as most code can't handle them
     def build_taskdepdata(self, task):
         taskdepdata = {}
-        next = self.rqdata.runtaskentries[task].depends
+        next = self.rqdata.runtaskentries[task].depends.copy()
         next.add(task)
         next = self.filtermcdeps(task, next)
         while next:
