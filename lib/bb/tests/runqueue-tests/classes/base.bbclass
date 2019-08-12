@@ -7,7 +7,7 @@ def stamptask(d):
     thistask = d.expand("${PN}:${BB_CURRENTTASK}")
     stampname = d.expand("${TOPDIR}/%s.run" % thistask)
     with open(stampname, "a+") as f:
-        f.write("\n")
+        f.write(d.getVar("BB_UNIHASH") + "\n")
 
     if d.getVar("BB_CURRENT_MC") != "default":
         thistask = d.expand("${BB_CURRENT_MC}:${PN}:${BB_CURRENTTASK}")
@@ -235,18 +235,28 @@ def sstate_checkhashes(sq_data, d, siginfo=False, currentcount=0, **kwargs):
 
     valid = d.getVar("SSTATEVALID").split()
 
-    for tid in sq_data['hash']:
+    for tid in sorted(sq_data['hash']):
         n = os.path.basename(bb.runqueue.fn_from_tid(tid)).split(".")[0] + ":do_" + bb.runqueue.taskname_from_tid(tid)[3:]
         print(n)
+        stampfile = d.expand("${TOPDIR}/%s.run" % n.replace("do_", ""))
         if n in valid:
             bb.note("SState: Found valid sstate for %s" % n)
             found.add(tid)
-        elif os.path.exists(d.expand("${TOPDIR}/%s.run" % n.replace("do_", ""))):
-            bb.note("SState: Found valid sstate for %s (already run)" % n)
+        elif n + ":" + sq_data['hash'][tid] in valid:
+            bb.note("SState: Found valid sstate for %s" % n)
             found.add(tid)
+        elif os.path.exists(stampfile):
+            with open(stampfile, "r") as f:
+                hash = f.readline().strip()
+            if hash == sq_data['hash'][tid]:
+                bb.note("SState: Found valid sstate for %s (already run)" % n)
+                found.add(tid)
+            else:
+                bb.note("SState: sstate hash didn't match previous run for %s (%s vs %s)" % (n, sq_data['hash'][tid], hash))
+                missed.add(tid)
         else:
             missed.add(tid)
-            bb.note("SState: Found no valid sstate for %s" % n)
+            bb.note("SState: Found no valid sstate for %s (%s)" % (n, sq_data['hash'][tid]))
 
     return found
 
