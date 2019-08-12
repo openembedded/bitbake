@@ -1730,7 +1730,9 @@ class RunQueueExecute:
         self.tasks_notcovered = set()
         self.scenequeue_notneeded = set()
 
-        self.coveredtopocess = set()
+        # We can't skip specified target tasks which aren't setscene tasks
+        self.cantskip = set(self.rqdata.target_tids)
+        self.cantskip.difference_update(self.rqdata.runq_setscene_tids)
 
         schedulers = self.get_schedulers()
         for scheduler in schedulers:
@@ -2235,12 +2237,12 @@ class RunQueueExecute:
             if not valid:
                 continue
 
+            if tid in self.tasks_scenequeue_done:
+                self.tasks_scenequeue_done.remove(tid)
             for dep in self.sqdata.sq_covered_tasks[tid]:
                 if dep not in self.runq_complete:
-                    if dep in self.tasks_scenequeue_done:
+                    if dep in self.tasks_scenequeue_done and dep not in self.sqdata.unskippable:
                         self.tasks_scenequeue_done.remove(dep)
-                    if dep in self.tasks_notcovered:
-                        self.tasks_notcovered.remove(dep)
 
             if tid in self.sq_buildable:
                 self.sq_buildable.remove(tid)
@@ -2254,6 +2256,8 @@ class RunQueueExecute:
                 self.sqdata.outrightfail.remove(tid)
             if tid in self.scenequeue_notcovered:
                 self.scenequeue_notcovered.remove(tid)
+            if tid in self.scenequeue_covered:
+                self.scenequeue_covered.remove(tid)
 
             (mc, fn, taskname, taskfn) = split_tid_mcfn(tid)
             self.sqdata.stamps[tid] = bb.build.stampfile(taskname + "_setscene", self.rqdata.dataCaches[mc], taskfn, noextra=True)
@@ -2269,41 +2273,8 @@ class RunQueueExecute:
         if changes:
             self.update_holdofftasks()
 
-    def scenequeue_process_notcovered(self, task):
-        if len(self.rqdata.runtaskentries[task].depends) == 0:
-            self.setbuildable(task)
-        notcovered = set([task])
-        while notcovered:
-            new = set()
-            for t in sorted(notcovered):
-                for deptask in sorted(self.rqdata.runtaskentries[t].depends):
-                    if deptask in notcovered or deptask in new or deptask in self.rqdata.runq_setscene_tids or deptask in self.tasks_notcovered:
-                        continue
-                    logger.debug(1, 'Task %s depends on non-setscene task %s so not skipping' % (t, deptask))
-                    new.add(deptask)
-                    self.tasks_notcovered.add(deptask)
-                    if len(self.rqdata.runtaskentries[deptask].depends) == 0:
-                        self.setbuildable(deptask)
-            notcovered = new
-
-    def scenequeue_process_unskippable(self, task):
-        # Look up the dependency chain for non-setscene things which depend on this task
-        # and mark as 'done'/notcovered
-        ready = set([task])
-        while ready:
-            new = set()
-            for t in sorted(ready):
-                for deptask in sorted(self.rqdata.runtaskentries[t].revdeps):
-                    if deptask in ready or deptask in new or deptask in self.tasks_scenequeue_done or deptask in self.rqdata.runq_setscene_tids:
-                        continue
-                    if deptask in self.sqdata.unskippable:
-                        new.add(deptask)
-                        self.tasks_scenequeue_done.add(deptask)
-                        self.tasks_notcovered.add(deptask)
-                        #logger.warning("Up: " + str(deptask))
-            ready = new
-
     def scenequeue_updatecounters(self, task, fail=False):
+
         for dep in sorted(self.sqdata.sq_deps[task]):
             if fail and task in self.sqdata.sq_harddeps and dep in self.sqdata.sq_harddeps[task]:
                 logger.debug(2, "%s was unavailable and is a hard dependency of %s so skipping" % (task, dep))
@@ -2325,39 +2296,30 @@ class RunQueueExecute:
                         continue
                     if self.rqdata.runtaskentries[dep].revdeps.issubset(self.tasks_scenequeue_done):
                         new.add(dep)
-                        #logger.warning(" Down: " + dep)
             next = new
 
-        if task in self.sqdata.unskippable:
-            self.scenequeue_process_unskippable(task)
+        notcovered = set(self.scenequeue_notcovered)
+        notcovered |= self.cantskip
+        for tid in self.scenequeue_notcovered:
+            notcovered |= self.sqdata.sq_covered_tasks[tid]
+        notcovered |= self.sqdata.unskippable.difference(self.rqdata.runq_setscene_tids)
+        notcovered.intersection_update(self.tasks_scenequeue_done)
 
-        if task in self.scenequeue_notcovered:
-            logger.debug(1, 'Not skipping setscene task %s', task)
-            self.scenequeue_process_notcovered(task)
-        elif task in self.scenequeue_covered:
-            logger.debug(1, 'Queued setscene task %s', task)
-            self.coveredtopocess.add(task)
+        covered = set(self.scenequeue_covered)
+        for tid in self.scenequeue_covered:
+            covered |= self.sqdata.sq_covered_tasks[tid]
+        covered.difference_update(notcovered)
+        covered.intersection_update(self.tasks_scenequeue_done)
 
-        for task in sorted(self.coveredtopocess.copy()):
-            if self.sqdata.sq_covered_tasks[task].issubset(self.tasks_scenequeue_done):
-                logger.debug(1, 'Processing setscene task %s', task)
-                covered = self.sqdata.sq_covered_tasks[task]
-                covered.add(task)
+        for tid in notcovered | covered:
+            if len(self.rqdata.runtaskentries[tid].depends) == 0:
+                self.setbuildable(tid)
+            elif self.rqdata.runtaskentries[tid].depends.issubset(self.runq_complete):
+                 self.setbuildable(tid)
 
-                # If a task is in target_tids and isn't a setscene task, we can't skip it.
-                cantskip = covered.intersection(self.rqdata.target_tids).difference(self.rqdata.runq_setscene_tids)
-                for tid in sorted(cantskip):
-                    self.tasks_notcovered.add(tid)
-                    self.scenequeue_process_notcovered(tid)
-                covered.difference_update(cantskip)
+        self.tasks_covered = covered
+        self.tasks_notcovered = notcovered
 
-                # Remove notcovered tasks
-                covered.difference_update(self.tasks_notcovered)
-                self.tasks_covered.update(covered)
-                self.coveredtopocess.remove(task)
-                for tid in sorted(covered):
-                    if self.rqdata.runtaskentries[tid].depends.issubset(self.runq_complete):
-                        self.setbuildable(tid)
         self.update_holdofftasks()
 
     def sq_task_completeoutright(self, task):
@@ -2369,7 +2331,6 @@ class RunQueueExecute:
 
         logger.debug(1, 'Found task %s which could be accelerated', task)
         self.scenequeue_covered.add(task)
-        self.tasks_covered.add(task)
         self.scenequeue_updatecounters(task)
 
     def sq_check_taskfail(self, task):
@@ -2390,7 +2351,6 @@ class RunQueueExecute:
         self.sq_stats.taskFailed()
         bb.event.fire(sceneQueueTaskFailed(task, self.sq_stats, result, self), self.cfgData)
         self.scenequeue_notcovered.add(task)
-        self.tasks_notcovered.add(task)
         self.scenequeue_updatecounters(task, True)
         self.sq_check_taskfail(task)
 
@@ -2400,7 +2360,6 @@ class RunQueueExecute:
         self.sq_stats.taskSkipped()
         self.sq_stats.taskCompleted()
         self.scenequeue_notcovered.add(task)
-        self.tasks_notcovered.add(task)
         self.scenequeue_updatecounters(task, True)
 
     def sq_task_skip(self, task):
@@ -2564,6 +2523,7 @@ def build_scenequeue_data(sqdata, rqdata, rq, cooker, stampcache, sqrq):
     for tid in rqdata.runtaskentries:
         if len(rqdata.runtaskentries[tid].revdeps) == 0:
             sqdata.unskippable.add(tid)
+    sqdata.unskippable |= sqrq.cantskip
     while new:
         new = False
         orig = sqdata.unskippable.copy()
@@ -2572,13 +2532,12 @@ def build_scenequeue_data(sqdata, rqdata, rq, cooker, stampcache, sqrq):
                 continue
             if len(rqdata.runtaskentries[tid].depends) == 0:
                 # These are tasks which have no setscene tasks in their chain, need to mark as directly buildable
-                sqrq.tasks_notcovered.add(tid)
-                sqrq.tasks_scenequeue_done.add(tid)
                 sqrq.setbuildable(tid)
-            sqrq.scenequeue_process_unskippable(tid)
             sqdata.unskippable |= rqdata.runtaskentries[tid].depends
             if sqdata.unskippable != orig:
                 new = True
+
+    sqrq.tasks_scenequeue_done |= sqdata.unskippable.difference(rqdata.runq_setscene_tids)
 
     rqdata.init_progress_reporter.next_stage(len(rqdata.runtaskentries))
 
