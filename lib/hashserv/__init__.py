@@ -151,6 +151,7 @@ class ThreadedHTTPServer(HTTPServer):
 
         signal.signal(signal.SIGTERM, self.sigterm_exception)
         super().serve_forever()
+        os._exit(0)
 
     def sigterm_exception(self, signum, stackframe):
         self.server_close()
