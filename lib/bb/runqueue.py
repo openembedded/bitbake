@@ -1746,9 +1746,9 @@ class RunQueueExecute:
             bb.fatal("Invalid scheduler '%s'.  Available schedulers: %s" %
                      (self.scheduler, ", ".join(obj.name for obj in schedulers)))
 
-        if len(self.rqdata.runq_setscene_tids) > 0:
-            self.sqdata = SQData()
-            build_scenequeue_data(self.sqdata, self.rqdata, self.rq, self.cooker, self.stampcache, self)
+        #if len(self.rqdata.runq_setscene_tids) > 0:
+        self.sqdata = SQData()
+        build_scenequeue_data(self.sqdata, self.rqdata, self.rq, self.cooker, self.stampcache, self)
 
     def runqueue_process_waitpid(self, task, status):
 
@@ -1901,6 +1901,35 @@ class RunQueueExecute:
         self.stats.taskSkipped()
         self.stats.taskCompleted()
 
+    def summarise_scenequeue_errors(self):
+        err = False
+        if not self.sqdone:
+            logger.debug(1, 'We could skip tasks %s', "\n".join(sorted(self.scenequeue_covered)))
+            completeevent = sceneQueueComplete(self.sq_stats, self.rq)
+            bb.event.fire(completeevent, self.cfgData)
+        if self.sq_deferred:
+            logger.error("Scenequeue had deferred entries: %s" % pprint.pformat(self.sq_deferred))
+            err = True
+        if self.changed_setscene:
+            logger.error("Scenequeue had unprocessed changed entries: %s" % pprint.pformat(self.changed_setscene))
+            err = True
+        if self.holdoff_tasks:
+            logger.error("Scenequeue had holdoff tasks: %s" % pprint.pformat(self.holdoff_tasks))
+            err = True
+
+        for x in self.rqdata.runtaskentries:
+            if x not in self.tasks_covered and x not in self.tasks_notcovered:
+                logger.error("Task %s was never moved from the setscene queue" % x)
+                err = True
+            if x not in self.tasks_scenequeue_done:
+                logger.error("Task %s was never processed by the setscene code" % x)
+                err = True
+            if len(self.rqdata.runtaskentries[x].depends) == 0 and x not in self.runq_buildable:
+                logger.error("Task %s was never marked as buildable by the setscene code" % x)
+                err = True
+        return err
+
+
     def execute(self):
         """
         Run the tasks in a queue prepared by prepare_runqueue
@@ -1996,22 +2025,8 @@ class RunQueueExecute:
 
         if not self.sq_live and not self.sqdone and not self.sq_deferred and not self.changed_setscene and not self.holdoff_tasks:
             logger.info("Setscene tasks completed")
-            logger.debug(1, 'We could skip tasks %s', "\n".join(sorted(self.scenequeue_covered)))
 
-            completeevent = sceneQueueComplete(self.sq_stats, self.rq)
-            bb.event.fire(completeevent, self.cfgData)
-
-            err = False
-            for x in self.rqdata.runtaskentries:
-                if x not in self.tasks_covered and x not in self.tasks_notcovered:
-                    logger.error("Task %s was never moved from the setscene queue" % x)
-                    err = True
-                if x not in self.tasks_scenequeue_done:
-                    logger.error("Task %s was never processed by the setscene code" % x)
-                    err = True
-                if len(self.rqdata.runtaskentries[x].depends) == 0 and x not in self.runq_buildable:
-                    logger.error("Task %s was never marked as buildable by the setscene code" % x)
-                    err = True
+            err = self.summarise_scenequeue_errors()
             if err:
                 self.rq.state = runQueueFailed
                 return True
@@ -2107,14 +2122,22 @@ class RunQueueExecute:
             return True
 
         # Sanity Checks
+        err = self.summarise_scenequeue_errors()
         for task in self.rqdata.runtaskentries:
             if task not in self.runq_buildable:
                 logger.error("Task %s never buildable!", task)
+                err = True
             elif task not in self.runq_running:
                 logger.error("Task %s never ran!", task)
+                err = True
             elif task not in self.runq_complete:
                 logger.error("Task %s never completed!", task)
-        self.rq.state = runQueueComplete
+                err = True
+
+        if err:
+            self.rq.state = runQueueFailed
+        else:
+            self.rq.state = runQueueComplete
 
         return True
 
