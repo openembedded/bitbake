@@ -2237,7 +2237,7 @@ class RunQueueExecute:
             self.update_holdofftasks()
 
     def update_holdofftasks(self):
-        self.holdoff_tasks = set(self.changed_setscene)
+        self.holdoff_tasks = set()
 
         for tid in self.rqdata.runq_setscene_tids:
             if tid not in self.scenequeue_covered and tid not in self.scenequeue_notcovered:
