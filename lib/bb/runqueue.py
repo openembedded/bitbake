@@ -133,7 +133,7 @@ class RunQueueScheduler(object):
 
         self.prio_map = [self.rqdata.runtaskentries.keys()]
 
-        self.buildable = []
+        self.buildable = set()
         self.skip_maxthread = {}
         self.stamps = {}
         for tid in self.rqdata.runtaskentries:
@@ -148,8 +148,10 @@ class RunQueueScheduler(object):
         """
         Return the id of the first task we find that is buildable
         """
-        self.buildable = [x for x in self.buildable if x not in self.rq.runq_running]
-        buildable = [x for x in self.buildable if (x in self.rq.tasks_covered or x in self.rq.tasks_notcovered) and x not in self.rq.holdoff_tasks]
+        buildable = set(self.buildable)
+        buildable.difference_update(self.rq.runq_running)
+        buildable.difference_update(self.rq.holdoff_tasks)
+        buildable.intersection_update(self.rq.tasks_covered | self.rq.tasks_notcovered)
         if not buildable:
             return None
 
@@ -167,7 +169,7 @@ class RunQueueScheduler(object):
                 skip_buildable[rtaskname] = 1
 
         if len(buildable) == 1:
-            tid = buildable[0]
+            tid = buildable.pop()
             taskname = taskname_from_tid(tid)
             if taskname in skip_buildable and skip_buildable[taskname] >= int(self.skip_maxthread[taskname]):
                 return None
@@ -204,7 +206,7 @@ class RunQueueScheduler(object):
             return self.next_buildable_task()
 
     def newbuildable(self, task):
-        self.buildable.append(task)
+        self.buildable.add(task)
 
     def removebuildable(self, task):
         self.buildable.remove(task)
