@@ -1920,6 +1920,10 @@ class RunQueueExecute:
                             if nexttask in self.sq_deferred:
                                 del self.sq_deferred[nexttask]
                             return True
+                    # If covered tasks are running, need to wait for them to complete
+                    for t in self.sqdata.sq_covered_tasks[nexttask]:
+                        if t in self.runq_running and t not in self.runq_complete:
+                            continue
                     if nexttask in self.sq_deferred:
                         if self.sq_deferred[nexttask] not in self.runq_complete:
                             continue
