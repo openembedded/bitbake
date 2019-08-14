@@ -2189,8 +2189,6 @@ class RunQueueExecute:
             for dep in self.sqdata.sq_covered_tasks[tid]:
                 if dep not in self.runq_complete:
                     self.holdoff_tasks.add(dep)
-        logger.debug(2, "Holding off tasks %s" % pprint.pformat(self.holdoff_tasks))
-
 
     def process_possible_migrations(self):
 
