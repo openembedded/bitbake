@@ -384,8 +384,8 @@ class RunQueueTests(unittest.TestCase):
             with open(tempdir + "/stamps/b1.do_install.taint", "w") as f:
                f.write("ed36d46a-2977-458a-b3de-eef885bc1817")
             cmd = ["bitbake", "e1", "-DD"]
-            sstatevalid = "e1:do_package:b710f6312ffed900b4b2761cc05538645f4ff3e7e0b70d688c70c0f3bcc2e1a2"
-            tasks = self.run_bitbakecmd(cmd, tempdir, sstatevalid, extraenv=extraenv, cleanup=True, slowtasks="e1:fetch")
+            sstatevalid = "e1:do_package:f9aa46d63cb63d70a09712b6bc7fab57e4966cf8e8b52ff5ad1ba23823aec7d4 e1:do_package:b710f6312ffed900b4b2761cc05538645f4ff3e7e0b70d688c70c0f3bcc2e1a2"
+            tasks = self.run_bitbakecmd(cmd, tempdir, sstatevalid, extraenv=extraenv, cleanup=True, slowtasks="e1:fetch b1:install")
             expected = ['a1:package', 'a1:install', 'b1:package', 'b1:install', 'a1:populate_sysroot', 'b1:populate_sysroot',
                         'a1:package_write_ipk_setscene', 'b1:packagedata_setscene', 'b1:package_write_rpm_setscene',
                         'a1:package_write_rpm_setscene', 'b1:package_write_ipk_setscene', 'a1:packagedata_setscene',
