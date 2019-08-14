@@ -1918,6 +1918,17 @@ class RunQueueExecute:
             logger.error("Scenequeue had holdoff tasks: %s" % pprint.pformat(self.holdoff_tasks))
             err = True
 
+        for tid in self.rqdata.runq_setscene_tids:
+            if tid not in self.scenequeue_covered and tid not in self.scenequeue_notcovered:
+                err = True
+                logger.error("Setscene Task %s was never marked as covered or not covered" % tid)
+            if tid not in self.sq_buildable:
+                err = True
+                logger.error("Setscene Task %s was never marked as buildable" % tid)
+            if tid not in self.sq_running:
+                err = True
+                logger.error("Setscene Task %s was never marked as running" % tid)
+
         for x in self.rqdata.runtaskentries:
             if x not in self.tasks_covered and x not in self.tasks_notcovered:
                 logger.error("Task %s was never moved from the setscene queue" % x)
