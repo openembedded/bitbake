@@ -2307,6 +2307,9 @@ class RunQueueExecute:
             (mc, fn, taskname, taskfn) = split_tid_mcfn(tid)
             self.sqdata.stamps[tid] = bb.build.stampfile(taskname + "_setscene", self.rqdata.dataCaches[mc], taskfn, noextra=True)
 
+            if tid in self.stampcache:
+                del self.stampcache[tid]
+
             if tid in self.build_stamps:
                 del self.build_stamps[tid]
 
