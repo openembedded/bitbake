@@ -1736,6 +1736,7 @@ class RunQueueExecute:
         # We can't skip specified target tasks which aren't setscene tasks
         self.cantskip = set(self.rqdata.target_tids)
         self.cantskip.difference_update(self.rqdata.runq_setscene_tids)
+        self.cantskip.intersection_update(self.rqdata.runtaskentries)
 
         schedulers = self.get_schedulers()
         for scheduler in schedulers:
