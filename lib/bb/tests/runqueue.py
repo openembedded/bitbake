@@ -37,6 +37,7 @@ class RunQueueTests(unittest.TestCase):
                 env["BB_ENV_EXTRAWHITE"] = env["BB_ENV_EXTRAWHITE"] + " " + k
         try:
             output = subprocess.check_output(cmd, env=env, stderr=subprocess.STDOUT,universal_newlines=True, cwd=builddir)
+            print(output)
         except subprocess.CalledProcessError as e:
             self.fail("Command %s failed with %s" % (cmd, e.output))
         tasks = []
@@ -326,7 +327,7 @@ class RunQueueTests(unittest.TestCase):
             with open(tempdir + "/stamps/b1.do_install.taint", "w") as f:
                f.write("ed36d46a-2977-458a-b3de-eef885bc1817")
             cmd = ["bitbake", "e1"]
-            sstatevalid = "e1:do_package:cb47e017ab549d87aab614c0f49dcf969ff6414745909094f0af7e657cedc657"
+            sstatevalid = "e1:do_package:685e69a026b2f029483fdefe6a11e1e06641dd2a0f6f86e27b9b550f8f21229d"
             tasks = self.run_bitbakecmd(cmd, tempdir, sstatevalid, extraenv=extraenv, cleanup=True)
             expected = ['a1:package', 'a1:install', 'b1:package', 'b1:install', 'a1:populate_sysroot', 'b1:populate_sysroot',
                         'a1:package_write_ipk_setscene', 'b1:packagedata_setscene', 'b1:package_write_rpm_setscene',
@@ -354,14 +355,13 @@ class RunQueueTests(unittest.TestCase):
             with open(tempdir + "/stamps/b1.do_install.taint", "w") as f:
                f.write("ed36d46a-2977-458a-b3de-eef885bc1817")
             cmd = ["bitbake", "e1"]
-            sstatevalid = "e1:do_package:cb47e017ab549d87aab614c0f49dcf969ff6414745909094f0af7e657cedc657 e1:do_populate_sysroot:aa6a915229f04af429d3c6c59c303516c500650b7c48da8e07b20a53acd86c5f"
+            sstatevalid = "e1:do_package:685e69a026b2f029483fdefe6a11e1e06641dd2a0f6f86e27b9b550f8f21229d e1:do_populate_sysroot:ef7dc0e2dd55d0534e75cba50731ff42f949818b6f29a65d72bc05856e56711d"
             tasks = self.run_bitbakecmd(cmd, tempdir, sstatevalid, extraenv=extraenv, cleanup=True)
             expected = ['a1:package', 'a1:install', 'b1:package', 'b1:install', 'a1:populate_sysroot', 'b1:populate_sysroot',
                         'a1:package_write_ipk_setscene', 'b1:packagedata_setscene', 'b1:package_write_rpm_setscene',
                         'a1:package_write_rpm_setscene', 'b1:package_write_ipk_setscene', 'a1:packagedata_setscene',
                         'e1:package_setscene', 'e1:populate_sysroot_setscene', 'e1:build', 'e1:package_qa', 'e1:package_write_rpm', 'e1:package_write_ipk', 'e1:packagedata']
             self.assertEqual(set(tasks), set(expected))
-
 
     def test_hashserv_partial_match3(self):
         # e1:do_package is valid for a1 but not after b1
@@ -384,7 +384,7 @@ class RunQueueTests(unittest.TestCase):
             with open(tempdir + "/stamps/b1.do_install.taint", "w") as f:
                f.write("ed36d46a-2977-458a-b3de-eef885bc1817")
             cmd = ["bitbake", "e1", "-DD"]
-            sstatevalid = "e1:do_package:f9aa46d63cb63d70a09712b6bc7fab57e4966cf8e8b52ff5ad1ba23823aec7d4 e1:do_package:b710f6312ffed900b4b2761cc05538645f4ff3e7e0b70d688c70c0f3bcc2e1a2"
+            sstatevalid = "e1:do_package:af056eae12a733a6a8c4f4da8c6757e588e13565852c94e2aad4d953a3989c13 e1:do_package:a3677703db82b22d28d57c1820a47851dd780104580863f5bd32e66e003a779d"
             tasks = self.run_bitbakecmd(cmd, tempdir, sstatevalid, extraenv=extraenv, cleanup=True, slowtasks="e1:fetch b1:install")
             expected = ['a1:package', 'a1:install', 'b1:package', 'b1:install', 'a1:populate_sysroot', 'b1:populate_sysroot',
                         'a1:package_write_ipk_setscene', 'b1:packagedata_setscene', 'b1:package_write_rpm_setscene',
