@@ -1815,6 +1815,9 @@ class RunQueueExecute:
         if not self.rq.depvalidate:
             return False
 
+        # Must not edit parent data
+        taskdeps = set(taskdeps)
+
         taskdata = {}
         taskdeps.add(task)
         for dep in taskdeps:
