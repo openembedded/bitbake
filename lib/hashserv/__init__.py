@@ -14,6 +14,8 @@ import socketserver
 import queue
 import threading
 import signal
+import socket
+import struct
 from datetime import datetime
 
 logger = logging.getLogger('hashserv')
@@ -156,6 +158,10 @@ class ThreadedHTTPServer(HTTPServer):
     def sigterm_exception(self, signum, stackframe):
         self.server_close()
         os._exit(0)
+
+    def server_bind(self):
+        HTTPServer.server_bind(self)
+        self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_LINGER, struct.pack('ii', 1, 0))
 
     def process_request_thread(self):
         while not self.quit:
