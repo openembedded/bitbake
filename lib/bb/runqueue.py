@@ -1711,6 +1711,7 @@ class RunQueueExecute:
         self.stampcache = {}
 
         self.holdoff_tasks = set()
+        self.holdoff_need_update = True
         self.sqdone = False
 
         self.stats = RunQueueStats(len(self.rqdata.runtaskentries))
@@ -2057,6 +2058,8 @@ class RunQueueExecute:
                 self.rq.state = runQueueComplete
                 return True
 
+        self.update_holdofftasks()
+
         if self.cooker.configuration.setsceneonly:
             task = None
         else:
@@ -2194,6 +2197,9 @@ class RunQueueExecute:
         return taskdepdata
 
     def update_holdofftasks(self):
+
+        if not self.holdoff_need_update:
+            return
         self.holdoff_tasks = set()
 
         for tid in self.rqdata.runq_setscene_tids:
@@ -2204,6 +2210,8 @@ class RunQueueExecute:
             for dep in self.sqdata.sq_covered_tasks[tid]:
                 if dep not in self.runq_complete:
                     self.holdoff_tasks.add(dep)
+
+        self.holdoff_need_update = False
 
     def process_possible_migrations(self):
 
@@ -2324,7 +2332,7 @@ class RunQueueExecute:
             self.sqdone = False
 
         if changed:
-            self.update_holdofftasks()
+            self.holdoff_need_update = True
 
     def scenequeue_updatecounters(self, task, fail=False):
 
@@ -2373,7 +2381,7 @@ class RunQueueExecute:
         self.tasks_covered = covered
         self.tasks_notcovered = notcovered
 
-        self.update_holdofftasks()
+        self.holdoff_need_update = True
 
     def sq_task_completeoutright(self, task):
         """
