@@ -2283,6 +2283,7 @@ class RunQueueExecute:
                 continue
 
             self.pending_migrations.remove(tid)
+            changed = True
 
             if tid in self.tasks_scenequeue_done:
                 self.tasks_scenequeue_done.remove(tid)
