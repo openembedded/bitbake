@@ -2040,6 +2040,8 @@ class RunQueueExecute:
             if self.can_start_task():
                 return True
 
+        self.update_holdofftasks()
+
         if not self.sq_live and not self.sqdone and not self.sq_deferred and not self.updated_taskhash_queue and not self.holdoff_tasks:
             logger.info("Setscene tasks completed")
 
@@ -2057,8 +2059,6 @@ class RunQueueExecute:
                 # nothing to do
                 self.rq.state = runQueueComplete
                 return True
-
-        self.update_holdofftasks()
 
         if self.cooker.configuration.setsceneonly:
             task = None
@@ -2200,6 +2200,29 @@ class RunQueueExecute:
 
         if not self.holdoff_need_update:
             return
+
+        notcovered = set(self.scenequeue_notcovered)
+        notcovered |= self.cantskip
+        for tid in self.scenequeue_notcovered:
+            notcovered |= self.sqdata.sq_covered_tasks[tid]
+        notcovered |= self.sqdata.unskippable.difference(self.rqdata.runq_setscene_tids)
+        notcovered.intersection_update(self.tasks_scenequeue_done)
+
+        covered = set(self.scenequeue_covered)
+        for tid in self.scenequeue_covered:
+            covered |= self.sqdata.sq_covered_tasks[tid]
+        covered.difference_update(notcovered)
+        covered.intersection_update(self.tasks_scenequeue_done)
+
+        for tid in notcovered | covered:
+            if len(self.rqdata.runtaskentries[tid].depends) == 0:
+                self.setbuildable(tid)
+            elif self.rqdata.runtaskentries[tid].depends.issubset(self.runq_complete):
+                 self.setbuildable(tid)
+
+        self.tasks_covered = covered
+        self.tasks_notcovered = notcovered
+
         self.holdoff_tasks = set()
 
         for tid in self.rqdata.runq_setscene_tids:
@@ -2358,28 +2381,6 @@ class RunQueueExecute:
                     if self.rqdata.runtaskentries[dep].revdeps.issubset(self.tasks_scenequeue_done):
                         new.add(dep)
             next = new
-
-        notcovered = set(self.scenequeue_notcovered)
-        notcovered |= self.cantskip
-        for tid in self.scenequeue_notcovered:
-            notcovered |= self.sqdata.sq_covered_tasks[tid]
-        notcovered |= self.sqdata.unskippable.difference(self.rqdata.runq_setscene_tids)
-        notcovered.intersection_update(self.tasks_scenequeue_done)
-
-        covered = set(self.scenequeue_covered)
-        for tid in self.scenequeue_covered:
-            covered |= self.sqdata.sq_covered_tasks[tid]
-        covered.difference_update(notcovered)
-        covered.intersection_update(self.tasks_scenequeue_done)
-
-        for tid in notcovered | covered:
-            if len(self.rqdata.runtaskentries[tid].depends) == 0:
-                self.setbuildable(tid)
-            elif self.rqdata.runtaskentries[tid].depends.issubset(self.runq_complete):
-                 self.setbuildable(tid)
-
-        self.tasks_covered = covered
-        self.tasks_notcovered = notcovered
 
         self.holdoff_need_update = True
 
