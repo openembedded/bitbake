@@ -2160,12 +2160,11 @@ class RunQueueExecute:
 
         return True
 
-    def filtermcdeps(self, task, deps):
+    def filtermcdeps(self, task, mc, deps):
         ret = set()
-        mainmc = mc_from_tid(task)
         for dep in deps:
-            mc = mc_from_tid(dep)
-            if mc != mainmc:
+            thismc = mc_from_tid(dep)
+            if thismc != mc:
                 continue
             ret.add(dep)
         return ret
@@ -2174,9 +2173,10 @@ class RunQueueExecute:
     # as most code can't handle them
     def build_taskdepdata(self, task):
         taskdepdata = {}
+        mc = mc_from_tid(task)
         next = self.rqdata.runtaskentries[task].depends.copy()
         next.add(task)
-        next = self.filtermcdeps(task, next)
+        next = self.filtermcdeps(task, mc, next)
         while next:
             additional = []
             for revdep in next:
@@ -2186,7 +2186,7 @@ class RunQueueExecute:
                 provides = self.rqdata.dataCaches[mc].fn_provides[taskfn]
                 taskhash = self.rqdata.runtaskentries[revdep].hash
                 unihash = self.rqdata.runtaskentries[revdep].unihash
-                deps = self.filtermcdeps(task, deps)
+                deps = self.filtermcdeps(task, mc, deps)
                 taskdepdata[revdep] = [pn, taskname, fn, deps, provides, taskhash, unihash]
                 for revdep2 in deps:
                     if revdep2 not in taskdepdata:
