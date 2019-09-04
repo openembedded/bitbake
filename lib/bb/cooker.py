@@ -1852,6 +1852,7 @@ class CookerCollectFiles(object):
             (bbappend, filename) = b
             if (bbappend == f) or ('%' in bbappend and bbappend.startswith(f[:bbappend.index('%')])):
                 filelist.append(filename)
+        filelist.sort()
         return filelist
 
     def collection_priorities(self, pkgfns, d):
