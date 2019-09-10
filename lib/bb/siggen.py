@@ -91,6 +91,8 @@ class SignatureGenerator(object):
     def save_unitaskhashes(self):
         return
 
+    def set_setscene_tasks(self, setscene_tasks):
+        return
 
 class SignatureGeneratorBasic(SignatureGenerator):
     """
@@ -106,6 +108,7 @@ class SignatureGeneratorBasic(SignatureGenerator):
         self.taints = {}
         self.gendeps = {}
         self.lookupcache = {}
+        self.setscenetasks = {}
         self.basewhitelist = set((data.getVar("BB_HASHBASE_WHITELIST") or "").split())
         self.taskwhitelist = None
         self.init_rundepcheck(data)
@@ -150,6 +153,9 @@ class SignatureGeneratorBasic(SignatureGenerator):
         self.lookupcache[fn] = lookupcache
 
         return taskdeps
+
+    def set_setscene_tasks(self, setscene_tasks):
+        self.setscenetasks = setscene_tasks
 
     def finalise(self, fn, d, variant):
 
@@ -393,6 +399,10 @@ class SignatureGeneratorUniHashMixIn(object):
         import json
 
         taskhash = self.taskhash[tid]
+
+        # If its not a setscene task we can return
+        if self.setscenetasks and tid not in self.setscenetasks:
+            return taskhash
 
         key = self.__get_task_unihash_key(tid)
 
