@@ -1260,7 +1260,7 @@ class RunQueue:
             "buildname" : self.cfgData.getVar("BUILDNAME"),
             "date" : self.cfgData.getVar("DATE"),
             "time" : self.cfgData.getVar("TIME"),
-            "hashservport" : self.cooker.hashservport,
+            "hashservaddr" : self.cooker.hashservaddr,
         }
 
         worker.stdin.write(b"<cookerconfig>" + pickle.dumps(self.cooker.configuration) + b"</cookerconfig>")
@@ -2174,7 +2174,7 @@ class RunQueueExecute:
             ret.add(dep)
         return ret
 
-    # We filter out multiconfig dependencies from taskdepdata we pass to the tasks 
+    # We filter out multiconfig dependencies from taskdepdata we pass to the tasks
     # as most code can't handle them
     def build_taskdepdata(self, task):
         taskdepdata = {}
