@@ -46,7 +46,7 @@ layer, with the preferred version first. Note that skipped recipes that
 are overlayed will also be listed, with a " (skipped)" suffix.
 """
 
-        items_listed = self.list_recipes('Overlayed recipes', None, True, args.same_version, args.filenames, True, None)
+        items_listed = self.list_recipes('Overlayed recipes', None, True, args.same_version, args.filenames, False, True, None)
 
         # Check for overlayed .bbclass files
         classes = collections.defaultdict(list)
@@ -112,9 +112,9 @@ skipped recipes will also be listed, with a " (skipped)" suffix.
             title = 'Matching recipes:'
         else:
             title = 'Available recipes:'
-        self.list_recipes(title, args.pnspec, False, False, args.filenames, args.multiple, inheritlist)
+        self.list_recipes(title, args.pnspec, False, False, args.filenames, args.recipes_only, args.multiple, inheritlist)
 
-    def list_recipes(self, title, pnspec, show_overlayed_only, show_same_ver_only, show_filenames, show_multi_provider_only, inherits):
+    def list_recipes(self, title, pnspec, show_overlayed_only, show_same_ver_only, show_filenames, show_recipes_only, show_multi_provider_only, inherits):
         if inherits:
             bbpath = str(self.tinfoil.config_data.getVar('BBPATH'))
             for classname in inherits:
@@ -153,6 +153,10 @@ skipped recipes will also be listed, with a " (skipped)" suffix.
                     logger.plain("%s%s", f, skipped)
                 else:
                     logger.plain("  %s%s", f, skipped)
+            elif show_recipes_only:
+                if pn not in show_unique_pn:
+                    show_unique_pn.append(pn)
+                    logger.plain("%s%s", pn, skipped)
             else:
                 if ispref:
                     logger.plain("%s:", pn)
@@ -162,6 +166,7 @@ skipped recipes will also be listed, with a " (skipped)" suffix.
         cls_re = re.compile('classes/')
 
         preffiles = []
+        show_unique_pn = []
         items_listed = False
         for p in sorted(pkg_pn):
             if pnspec:
@@ -493,6 +498,7 @@ NOTE: .bbappend files can impact the dependencies.
 
         parser_show_recipes = self.add_command(sp, 'show-recipes', self.do_show_recipes)
         parser_show_recipes.add_argument('-f', '--filenames', help='instead of the default formatting, list filenames of higher priority recipes with the ones they overlay indented underneath', action='store_true')
+        parser_show_recipes.add_argument('-r', '--recipes-only', help='instead of the default formatting, list recipes only', action='store_true')
         parser_show_recipes.add_argument('-m', '--multiple', help='only list where multiple recipes (in the same layer or different layers) exist for the same recipe name', action='store_true')
         parser_show_recipes.add_argument('-i', '--inherits', help='only list recipes that inherit the named class(es) - separate multiple classes using , (without spaces)', metavar='CLASS', default='')
         parser_show_recipes.add_argument('pnspec', nargs='*', help='optional recipe name specification (wildcards allowed, enclose in quotes to avoid shell expansion)')
