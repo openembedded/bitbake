@@ -307,8 +307,5 @@ class RunQueueTests(unittest.TestCase):
                         'e1:package_setscene']
             self.assertEqual(set(tasks), set(expected))
             for i in expected:
-                if i in ["e1:package_setscene"]:
-                    self.assertEqual(tasks.count(i), 4, "%s not in task list four times" % i)
-                else:
-                    self.assertEqual(tasks.count(i), 1, "%s not in task list once" % i)
+                self.assertEqual(tasks.count(i), 1, "%s not in task list once" % i)
 

@@ -2301,6 +2301,10 @@ class RunQueueExecute:
                 continue
             if tid in self.runq_running:
                 continue
+            if tid in self.scenequeue_covered:
+                # Potentially risky, should we report this hash as a match?
+                logger.info("Already covered setscene for %s so ignoring rehash" % (tid))
+                continue
             if tid not in self.pending_migrations:
                 self.pending_migrations.add(tid)
 
