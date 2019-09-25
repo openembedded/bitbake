@@ -455,7 +455,11 @@ class SignatureGeneratorUniHashMixIn(object):
         report_taskdata = d.getVar('SSTATE_HASHEQUIV_REPORT_TASKDATA') == '1'
         tempdir = d.getVar('T')
         fn = d.getVar('BB_FILENAME')
-        key = fn + ':do_' + task + ':' + taskhash
+        tid = fn + ':do_' + task
+        key = tid + ':' + taskhash
+
+        if self.setscenetasks and tid not in self.setscenetasks:
+            return
 
         # Sanity checks
         cache_unihash = self.unitaskhashes.get(key, None)

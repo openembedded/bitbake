@@ -1162,6 +1162,8 @@ class RunQueueData:
 
         self.init_progress_reporter.next_stage()
 
+        bb.parse.siggen.set_setscene_tasks(self.runq_setscene_tids)
+
         # Iterate over the task list and call into the siggen code
         dealtwith = set()
         todeal = set(self.runtaskentries)
@@ -1173,7 +1175,6 @@ class RunQueueData:
                     self.prepare_task_hash(tid)
 
         bb.parse.siggen.writeout_file_checksum_cache()
-        bb.parse.siggen.set_setscene_tasks(self.runq_setscene_tids)
 
         #self.dump_data()
         return len(self.runtaskentries)
