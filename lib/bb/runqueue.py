@@ -1443,6 +1443,7 @@ class RunQueue:
                 self.state = runQueueComplete
             else:
                 self.state = runQueueSceneInit
+                bb.parse.siggen.save_unitaskhashes()
 
         if self.state is runQueueSceneInit:
             self.rqdata.init_progress_reporter.next_stage()
