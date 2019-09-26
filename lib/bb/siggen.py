@@ -386,7 +386,7 @@ class SignatureGeneratorUniHashMixIn(object):
     def __get_task_unihash_key(self, tid):
         # TODO: The key only *needs* to be the taskhash, the tid is just
         # convenient
-        return '%s:%s' % (tid, self.taskhash[tid])
+        return '%s:%s' % (tid.rsplit("/", 1)[1], self.taskhash[tid])
 
     def get_stampfile_hash(self, tid):
         if tid in self.taskhash:
@@ -457,7 +457,7 @@ class SignatureGeneratorUniHashMixIn(object):
         tempdir = d.getVar('T')
         fn = d.getVar('BB_FILENAME')
         tid = fn + ':do_' + task
-        key = tid + ':' + taskhash
+        key = tid.rsplit("/", 1)[1] + ':' + taskhash
 
         if self.setscenetasks and tid not in self.setscenetasks:
             return
