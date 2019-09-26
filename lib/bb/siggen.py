@@ -268,7 +268,7 @@ class SignatureGeneratorBasic(SignatureGenerator):
             sigfile = stampbase
             referencestamp = runtime[11:]
         elif runtime and tid in self.taskhash:
-            sigfile = stampbase + "." + task + ".sigdata" + "." + self.taskhash[tid]
+            sigfile = stampbase + "." + task + ".sigdata" + "." + self.get_unihash(tid)
         else:
             sigfile = stampbase + "." + task + ".sigbasedata" + "." + self.basehash[tid]
 
@@ -296,6 +296,7 @@ class SignatureGeneratorBasic(SignatureGenerator):
             for dep in data['runtaskdeps']:
                 data['runtaskhashes'][dep] = self.get_unihash(dep)
             data['taskhash'] = self.taskhash[tid]
+            data['unihash'] = self.get_unihash(tid)
 
         taint = self.read_taint(fn, task, referencestamp)
         if taint:
