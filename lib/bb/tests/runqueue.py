@@ -12,6 +12,7 @@ import os
 import tempfile
 import subprocess
 import sys
+import time
 
 #
 # TODO:
@@ -257,6 +258,8 @@ class RunQueueTests(unittest.TestCase):
                         'a1:package_write_ipk_setscene', 'a1:package_qa_setscene']
             self.assertEqual(set(tasks), set(expected))
 
+            self.shutdown(tempdir)
+
     @unittest.skipIf(sys.version_info < (3, 5, 0), 'Python 3.5 or later required')
     def test_hashserv_double(self):
         with tempfile.TemporaryDirectory(prefix="runqueuetest") as tempdir:
@@ -280,6 +283,7 @@ class RunQueueTests(unittest.TestCase):
                         'a1:package_write_rpm_setscene', 'b1:package_write_ipk_setscene', 'a1:packagedata_setscene']
             self.assertEqual(set(tasks), set(expected))
 
+            self.shutdown(tempdir)
 
     @unittest.skipIf(sys.version_info < (3, 5, 0), 'Python 3.5 or later required')
     def test_hashserv_multiple_setscene(self):
@@ -308,4 +312,12 @@ class RunQueueTests(unittest.TestCase):
             self.assertEqual(set(tasks), set(expected))
             for i in expected:
                 self.assertEqual(tasks.count(i), 1, "%s not in task list once" % i)
+
+            self.shutdown(tempdir)
+
+    def shutdown(self, tempdir):
+        # Wait for the hashserve socket to disappear else we'll see races with the tempdir cleanup
+        while os.path.exists(tempdir + "/hashserve.sock"):
+            time.sleep(0.5)
+
 
