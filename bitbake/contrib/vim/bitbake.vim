@@ -79,8 +79,14 @@ function GetPythonIndent(lnum)
             \ . " =~ '\\(Comment\\|Todo\\|String\\)$'",
             \ searchpair_stopline, searchpair_timeout)
     if parlnum > 0
-      let plindent = indent(parlnum)
-      let plnumstart = parlnum
+      if s:is_python_func_def(parlnum)
+        let parlnum = 0
+        let plindent = indent(plnum)
+        let plnumstart = plnum
+      else
+        let plindent = indent(parlnum)
+        let plnumstart = parlnum
+      endif
     else
       let plindent = indent(plnum)
       let plnumstart = plnum
@@ -98,22 +104,26 @@ function GetPythonIndent(lnum)
             \ . " =~ '\\(Comment\\|Todo\\|String\\)$'",
             \ searchpair_stopline, searchpair_timeout)
     if p > 0
-      if p == plnum
-        " When the start is inside parenthesis, only indent one 'shiftwidth'.
-        let pp = searchpair('(\|{\|\[', '', ')\|}\|\]', 'bW',
-            \ "line('.') < " . (a:lnum - s:maxoff) . " ? dummy :"
-            \ . " synIDattr(synID(line('.'), col('.'), 1), 'name')"
-            \ . " =~ '\\(Comment\\|Todo\\|String\\)$'",
-            \ searchpair_stopline, searchpair_timeout)
-        if pp > 0
-          return indent(plnum) + (exists("g:pyindent_nested_paren") ? eval(g:pyindent_nested_paren) : shiftwidth())
+        if s:is_python_func_def(p)
+          let p = 0
+        else
+          if p == plnum
+            " When the start is inside parenthesis, only indent one 'shiftwidth'.
+            let pp = searchpair('(\|{\|\[', '', ')\|}\|\]', 'bW',
+                \ "line('.') < " . (a:lnum - s:maxoff) . " ? dummy :"
+                \ . " synIDattr(synID(line('.'), col('.'), 1), 'name')"
+                \ . " =~ '\\(Comment\\|Todo\\|String\\)$'",
+                \ searchpair_stopline, searchpair_timeout)
+            if pp > 0
+              return indent(plnum) + (exists("g:pyindent_nested_paren") ? eval(g:pyindent_nested_paren) : shiftwidth())
+            endif
+            return indent(plnum) + (exists("g:pyindent_open_paren") ? eval(g:pyindent_open_paren) : (shiftwidth() * 2))
+          endif
+          if plnumstart == p
+            return indent(plnum)
+          endif
+          return plindent
         endif
-        return indent(plnum) + (exists("g:pyindent_open_paren") ? eval(g:pyindent_open_paren) : (shiftwidth() * 2))
-      endif
-      if plnumstart == p
-        return indent(plnum)
-      endif
-      return plindent
     endif
 
   endif
