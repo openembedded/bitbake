@@ -2,6 +2,10 @@ if exists("b:did_indent")
     finish
 endif
 
+if exists("*BitbakeIndent")
+    finish
+endif
+
 runtime! indent/sh.vim
 unlet b:did_indent
 
