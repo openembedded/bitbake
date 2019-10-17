@@ -319,6 +319,18 @@ function BitbakeIndent(lnum)
         return ret
     endif
 
+    " TODO: GetShIndent doesn't detect tasks prepended with 'fakeroot'
+    " Need to submit a patch upstream to Vim to provide an extension point.
+    " Unlike the Python indenter, the Sh indenter is way too large to copy and
+    " modify here.
+    if name == "bbShFuncRegion"
+        return GetShIndent()
+    endif
+
+    " TODO:
+    "   + heuristics for de-denting out of a bbPyDefRegion? e.g. when the user
+    "       types an obvious BB keyword like addhandler or addtask, or starts
+    "       writing a shell task. Maybe too hard to implement...
+
     return -1
-    "return s:pythonIndentExpr()
 endfunction
