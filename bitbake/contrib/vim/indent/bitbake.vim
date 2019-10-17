@@ -79,6 +79,8 @@ function GetPythonIndent(lnum)
             \ . " =~ '\\(Comment\\|Todo\\|String\\)$'",
             \ searchpair_stopline, searchpair_timeout)
     if parlnum > 0
+      " We may have found the opening brace of a BitBake Python task, e.g. 'python do_task {'
+      " If so, ignore it here - it will be handled later.
       if s:is_python_func_def(parlnum)
         let parlnum = 0
         let plindent = indent(plnum)
@@ -105,6 +107,13 @@ function GetPythonIndent(lnum)
             \ searchpair_stopline, searchpair_timeout)
     if p > 0
         if s:is_python_func_def(p)
+          " Handle the user actually trying to close a BitBake Python task
+          let line = getline(a:lnum)
+          if line =~ '^\s*}'
+              return -2
+          endif
+
+          " Otherwise ignore the brace
           let p = 0
         else
           if p == plnum
@@ -231,15 +240,27 @@ let b:did_indent = 1
 
 
 function BitbakeIndent(lnum)
+    if !has('syntax_items')
+        return -1
+    endif
+
     let stack = synstack(a:lnum, col("."))
     if len(stack) == 0
         return -1
     endif
 
     let name = synIDattr(stack[0], "name")
+    "echo name
 
     if index(["bbPyDefRegion", "bbPyFuncRegion"], name) != -1
         let ret = GetPythonIndent(a:lnum)
+        " Should always be indented by at least one shiftwidth; but allow
+        " return of -1 (defer to autoindent) or -2 (force indent to 0)
+        if ret == 0
+            return shiftwidth()
+        elseif ret == -2
+            return 0
+        endif
         return ret
     endif
 
