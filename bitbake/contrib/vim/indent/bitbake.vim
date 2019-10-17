@@ -12,7 +12,7 @@ unlet b:did_indent
 setlocal indentexpr=BitbakeIndent(v:lnum)
 setlocal autoindent nolisp
 
-function s:is_python_func_def(lnum)
+function s:is_bb_python_func_def(lnum)
     let stack = synstack(a:lnum, 1)
     if len(stack) == 0
         return 0
@@ -85,7 +85,7 @@ function GetPythonIndent(lnum)
     if parlnum > 0
       " We may have found the opening brace of a BitBake Python task, e.g. 'python do_task {'
       " If so, ignore it here - it will be handled later.
-      if s:is_python_func_def(parlnum)
+      if s:is_bb_python_func_def(parlnum)
         let parlnum = 0
         let plindent = indent(plnum)
         let plnumstart = plnum
@@ -180,6 +180,7 @@ function GetPythonIndent(lnum)
   endif
 
   " If the previous line was a stop-execution statement...
+  " TODO: utilize this logic to deindent when ending a bbPyDefRegion
   if getline(plnum) =~ '^\s*\(break\|continue\|raise\|return\|pass\|bb\.fatal\)\>'
     " See if the user has already dedented
     if indent(a:lnum) > indent(plnum) - shiftwidth()
@@ -258,7 +259,7 @@ function BitbakeIndent(lnum)
 
     if index(["bbPyDefRegion", "bbPyFuncRegion"], name) != -1
         let ret = GetPythonIndent(a:lnum)
-        " Should always be indented by at least one shiftwidth; but allow
+        " Should normally always be indented by at least one shiftwidth; but allow
         " return of -1 (defer to autoindent) or -2 (force indent to 0)
         if ret == 0
             return shiftwidth()
