@@ -1,3 +1,10 @@
+" Vim indent file
+" Language:             BitBake
+" Copyright:            Copyright (C) 2019 Agilent Technologies, Inc.
+" Maintainer:           Chris Laplante <chris.laplante@agilent.com>
+" License:              You may redistribute this under the same terms as Vim itself
+
+
 if exists("b:did_indent")
     finish
 endif
