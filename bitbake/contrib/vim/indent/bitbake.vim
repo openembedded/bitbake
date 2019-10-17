@@ -176,7 +176,7 @@ function GetPythonIndent(lnum)
   endif
 
   " If the previous line was a stop-execution statement...
-  if getline(plnum) =~ '^\s*\(break\|continue\|raise\|return\|pass\)\>'
+  if getline(plnum) =~ '^\s*\(break\|continue\|raise\|return\|pass\|bb\.fatal\)\>'
     " See if the user has already dedented
     if indent(a:lnum) > indent(plnum) - shiftwidth()
       " If not, recommend one dedent
