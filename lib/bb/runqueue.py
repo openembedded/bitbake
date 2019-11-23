@@ -2343,7 +2343,12 @@ class RunQueueExecute:
                 self.sq_buildable.remove(tid)
             if tid in self.sq_running:
                 self.sq_running.remove(tid)
-            if self.sqdata.sq_revdeps[tid].issubset(self.scenequeue_covered | self.scenequeue_notcovered):
+            harddepfail = False
+            for t in self.sqdata.sq_harddeps:
+                if tid in self.sqdata.sq_harddeps[t] and t in self.scenequeue_notcovered:
+                    harddepfail = True
+                    break
+            if not harddepfail and self.sqdata.sq_revdeps[tid].issubset(self.scenequeue_covered | self.scenequeue_notcovered):
                 if tid not in self.sq_buildable:
                     self.sq_buildable.add(tid)
             if len(self.sqdata.sq_revdeps[tid]) == 0:
@@ -2374,6 +2379,8 @@ class RunQueueExecute:
             update_scenequeue_data([tid], self.sqdata, self.rqdata, self.rq, self.cooker, self.stampcache, self, summary=False)
             if tid in self.sqdata.valid and not origvalid:
                 logger.info("Setscene task %s became valid" % tid)
+            if harddepfail:
+                self.sq_task_failoutright(tid)
 
         if changed:
             self.holdoff_need_update = True
