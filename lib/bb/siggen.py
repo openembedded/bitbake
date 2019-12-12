@@ -121,7 +121,7 @@ class SignatureGeneratorBasic(SignatureGenerator):
         else:
             self.checksum_cache = None
 
-        self.unihash_cache = bb.cache.SimpleCache("2")
+        self.unihash_cache = bb.cache.SimpleCache("1")
         self.unitaskhashes = self.unihash_cache.init_cache(data, "bb_unihashes.dat", {})
 
     def init_rundepcheck(self, data):
@@ -216,13 +216,7 @@ class SignatureGeneratorBasic(SignatureGenerator):
                 continue
             if dep not in self.taskhash:
                 bb.fatal("%s is not in taskhash, caller isn't calling in dependency order?" % dep)
-            # We bypass the fuction and go straight to the cache here
-            # as this was a performance bottleneck otherwise
-            if self.taskhash[dep] in self.unitaskhashes:
-                unihash = self.unitaskhashes[self.taskhash[dep]]
-            else:
-                unihash = self.get_unihash(dep)
-            data = data + unihash
+            data = data + self.get_unihash(dep)
             self.runtaskdeps[tid].append(dep)
 
         if task in dataCache.file_checksums[fn]:
@@ -393,19 +387,24 @@ class SignatureGeneratorUniHashMixIn(object):
             self._client = hashserv.create_client(self.server)
         return self._client
 
+    def __get_task_unihash_key(self, tid):
+        # TODO: The key only *needs* to be the taskhash, the tid is just
+        # convenient
+        return '%s:%s' % (tid.rsplit("/", 1)[1], self.taskhash[tid])
+
     def get_stampfile_hash(self, tid):
         if tid in self.taskhash:
             # If a unique hash is reported, use it as the stampfile hash. This
             # ensures that if a task won't be re-run if the taskhash changes,
             # but it would result in the same output hash
-            unihash = self.unitaskhashes.get(self.taskhash[tid], None)
+            unihash = self.unitaskhashes.get(self.__get_task_unihash_key(tid), None)
             if unihash is not None:
                 return unihash
 
         return super().get_stampfile_hash(tid)
 
     def set_unihash(self, tid, unihash):
-        self.unitaskhashes[self.taskhash[tid]] = unihash
+        self.unitaskhashes[self.__get_task_unihash_key(tid)] = unihash
 
     def get_unihash(self, tid):
         taskhash = self.taskhash[tid]
@@ -414,9 +413,11 @@ class SignatureGeneratorUniHashMixIn(object):
         if self.setscenetasks and tid not in self.setscenetasks:
             return taskhash
 
+        key = self.__get_task_unihash_key(tid)
+
         # TODO: This cache can grow unbounded. It probably only needs to keep
         # for each task
-        unihash = self.unitaskhashes.get(taskhash, None)
+        unihash = self.unitaskhashes.get(key, None)
         if unihash is not None:
             return unihash
 
@@ -448,7 +449,7 @@ class SignatureGeneratorUniHashMixIn(object):
         except hashserv.client.HashConnectionError as e:
             bb.warn('Error contacting Hash Equivalence Server %s: %s' % (self.server, str(e)))
 
-        self.unitaskhashes[taskhash] = unihash
+        self.unitaskhashes[key] = unihash
         return unihash
 
     def report_unihash(self, path, task, d):
@@ -466,7 +467,7 @@ class SignatureGeneratorUniHashMixIn(object):
             return
 
         # Sanity checks
-        cache_unihash = self.unitaskhashes.get(taskhash, None)
+        cache_unihash = self.unitaskhashes.get(key, None)
         if cache_unihash is None:
             bb.fatal('%s not in unihash cache. Please report this error' % key)
 
