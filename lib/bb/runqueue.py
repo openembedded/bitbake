@@ -1124,14 +1124,14 @@ class RunQueueData:
         self.init_progress_reporter.next_stage()
 
         # Iterate over the task list looking for tasks with a 'setscene' function
-        self.runq_setscene_tids = []
+        self.runq_setscene_tids = set()
         if not self.cooker.configuration.nosetscene:
             for tid in self.runtaskentries:
                 (mc, fn, taskname, _) = split_tid_mcfn(tid)
                 setscenetid = tid + "_setscene"
                 if setscenetid not in taskData[mc].taskentries:
                     continue
-                self.runq_setscene_tids.append(tid)
+                self.runq_setscene_tids.add(tid)
 
         self.init_progress_reporter.next_stage()
 
