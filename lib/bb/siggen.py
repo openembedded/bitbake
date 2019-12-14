@@ -40,6 +40,7 @@ class SignatureGenerator(object):
     def __init__(self, data):
         self.basehash = {}
         self.taskhash = {}
+        self.unihash = {}
         self.runtaskdeps = {}
         self.file_checksum_values = {}
         self.taints = {}
@@ -80,19 +81,19 @@ class SignatureGenerator(object):
         return
 
     def get_taskdata(self):
-        return (self.runtaskdeps, self.taskhash, self.file_checksum_values, self.taints, self.basehash, self.unitaskhashes, self.tidtopn, self.setscenetasks)
+        return (self.runtaskdeps, self.taskhash, self.unihash, self.file_checksum_values, self.taints, self.basehash, self.unitaskhashes, self.tidtopn, self.setscenetasks)
 
     def set_taskdata(self, data):
-        self.runtaskdeps, self.taskhash, self.file_checksum_values, self.taints, self.basehash, self.unitaskhashes, self.tidtopn, self.setscenetasks = data
+        self.runtaskdeps, self.taskhash, self.unihash, self.file_checksum_values, self.taints, self.basehash, self.unitaskhashes, self.tidtopn, self.setscenetasks = data
 
     def reset(self, data):
         self.__init__(data)
 
     def get_taskhashes(self):
-        return self.taskhash, self.unitaskhashes, self.tidtopn
+        return self.taskhash, self.unihash, self.unitaskhashes, self.tidtopn
 
     def set_taskhashes(self, hashes):
-        self.taskhash, self.unitaskhashes, self.tidtopn = hashes
+        self.taskhash, self.unihash, self.unitaskhashes, self.tidtopn = hashes
 
     def save_unitaskhashes(self):
         return
@@ -108,6 +109,7 @@ class SignatureGeneratorBasic(SignatureGenerator):
     def __init__(self, data):
         self.basehash = {}
         self.taskhash = {}
+        self.unihash = {}
         self.taskdeps = {}
         self.runtaskdeps = {}
         self.file_checksum_values = {}
@@ -256,7 +258,13 @@ class SignatureGeneratorBasic(SignatureGenerator):
 
         data = self.basehash[tid]
         for dep in self.runtaskdeps[tid]:
-            data = data + self.get_unihash(dep)
+            if dep in self.unihash:
+                if self.unihash[dep] is None:
+                    data = data + self.taskhash[dep]
+                else:
+                    data = data + self.unihash[dep]
+            else:
+                data = data + self.get_unihash(dep)
 
         for (f, cs) in self.file_checksum_values[tid]:
             if cs:
@@ -427,6 +435,7 @@ class SignatureGeneratorUniHashMixIn(object):
         (mc, fn, taskname, taskfn) = bb.runqueue.split_tid_mcfn(tid)
         key = mc + ":" + self.tidtopn[tid] + ":" + taskname
         self.unitaskhashes[key] = (self.taskhash[tid], unihash)
+        self.unihash[tid] = unihash
 
     def _get_unihash(self, tid, checkkey=None):
         if tid not in self.tidtopn:
@@ -447,12 +456,14 @@ class SignatureGeneratorUniHashMixIn(object):
 
         # If its not a setscene task we can return
         if self.setscenetasks and tid not in self.setscenetasks:
+            self.unihash[tid] = None
             return taskhash
 
         # TODO: This cache can grow unbounded. It probably only needs to keep
         # for each task
         unihash =  self._get_unihash(tid)
         if unihash is not None:
+            self.unihash[tid] = unihash
             return unihash
 
         # In the absence of being able to discover a unique hash from the
@@ -487,6 +498,7 @@ class SignatureGeneratorUniHashMixIn(object):
             bb.warn('Error contacting Hash Equivalence Server %s: %s' % (self.server, str(e)))
 
         self.set_unihash(tid, unihash)
+        self.unihash[tid] = unihash
         return unihash
 
     def report_unihash(self, path, task, d):
