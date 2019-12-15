@@ -1959,7 +1959,8 @@ class RunQueueExecute:
         """
 
         self.rq.read_workers()
-        self.process_possible_migrations()
+        if self.updated_taskhash_queue or self.pending_migrations:
+            self.process_possible_migrations()
 
         if not hasattr(self, "sorted_setscene_tids"):
             # Don't want to sort this set every execution
