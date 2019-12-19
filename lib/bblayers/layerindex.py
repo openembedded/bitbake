@@ -24,7 +24,7 @@ class LayerIndexPlugin(ActionPlugin):
     This class inherits ActionPlugin to get do_add_layer.
     """
 
-    def get_fetch_layer(self, fetchdir, url, subdir, fetch_layer):
+    def get_fetch_layer(self, fetchdir, url, subdir, fetch_layer, branch):
         layername = self.get_layer_name(url)
         if os.path.splitext(layername)[1] == '.git':
             layername = os.path.splitext(layername)[0]
@@ -32,9 +32,13 @@ class LayerIndexPlugin(ActionPlugin):
         layerdir = os.path.join(repodir, subdir)
         if not os.path.exists(repodir):
             if fetch_layer:
-                result = subprocess.call(['git', 'clone', url, repodir])
+                cmd = ['git', 'clone', '-b' , branch, url, repodir]
+                if not branch:
+                    # Branch really shouldn't be empty, but use the repo default if it is
+                    cmd = ['git', 'clone', url, repodir]
+                result = subprocess.call(cmd)
                 if result:
-                    logger.error("Failed to download %s" % url)
+                    logger.error("Failed to download %s (%s)" % (url, branch))
                     return None, None, None
                 else:
                     return subdir, layername, layerdir
@@ -171,7 +175,8 @@ class LayerIndexPlugin(ActionPlugin):
                 subdir, name, layerdir = self.get_fetch_layer(fetchdir,
                                                       layerBranch.layer.vcs_url,
                                                       layerBranch.vcs_subdir,
-                                                      not args.show_only)
+                                                      not args.show_only,
+                                                      layerBranch.actual_branch)
                 if not name:
                     # Error already shown
                     return 1
