@@ -28,6 +28,7 @@ import os
 from bb.fetch2 import URI
 from bb.fetch2 import FetchMethod
 import bb
+from bb.tests.support.httpserver import HTTPService
 
 def skipIfNoNetwork():
     if os.environ.get("BB_SKIP_NETTESTS") == "yes":
@@ -1109,27 +1110,46 @@ class FetchLatestVersionTest(FetcherTest):
     }
 
     test_wget_uris = {
+        #
         # packages with versions inside directory name
-        ("util-linux", "http://kernel.org/pub/linux/utils/util-linux/v2.23/util-linux-2.24.2.tar.bz2", "", "")
+        #
+        # http://kernel.org/pub/linux/utils/util-linux/v2.23/util-linux-2.24.2.tar.bz2
+        ("util-linux", "/pub/linux/utils/util-linux/v2.23/util-linux-2.24.2.tar.bz2", "", "")
             : "2.24.2",
-        ("enchant", "http://www.abisource.com/downloads/enchant/1.6.0/enchant-1.6.0.tar.gz", "", "")
+        # http://www.abisource.com/downloads/enchant/1.6.0/enchant-1.6.0.tar.gz
+        ("enchant", "/downloads/enchant/1.6.0/enchant-1.6.0.tar.gz", "", "")
             : "1.6.0",
-        ("cmake", "http://www.cmake.org/files/v2.8/cmake-2.8.12.1.tar.gz", "", "")
+        # http://www.cmake.org/files/v2.8/cmake-2.8.12.1.tar.gz
+        ("cmake", "/files/v2.8/cmake-2.8.12.1.tar.gz", "", "")
             : "2.8.12.1",
+        #
         # packages with versions only in current directory
-        ("eglic", "http://downloads.yoctoproject.org/releases/eglibc/eglibc-2.18-svnr23787.tar.bz2", "", "")
+        #
+        # http://downloads.yoctoproject.org/releases/eglibc/eglibc-2.18-svnr23787.tar.bz2
+        ("eglic", "/releases/eglibc/eglibc-2.18-svnr23787.tar.bz2", "", "")
             : "2.19",
-        ("gnu-config", "http://downloads.yoctoproject.org/releases/gnu-config/gnu-config-20120814.tar.bz2", "", "")
+        # http://downloads.yoctoproject.org/releases/gnu-config/gnu-config-20120814.tar.bz2
+        ("gnu-config", "/releases/gnu-config/gnu-config-20120814.tar.bz2", "", "")
             : "20120814",
+        #
         # packages with "99" in the name of possible version
-        ("pulseaudio", "http://freedesktop.org/software/pulseaudio/releases/pulseaudio-4.0.tar.xz", "", "")
+        #
+        # http://freedesktop.org/software/pulseaudio/releases/pulseaudio-4.0.tar.xz
+        ("pulseaudio", "/software/pulseaudio/releases/pulseaudio-4.0.tar.xz", "", "")
             : "5.0",
-        ("xserver-xorg", "http://xorg.freedesktop.org/releases/individual/xserver/xorg-server-1.15.1.tar.bz2", "", "")
+        # http://xorg.freedesktop.org/releases/individual/xserver/xorg-server-1.15.1.tar.bz2
+        ("xserver-xorg", "/releases/individual/xserver/xorg-server-1.15.1.tar.bz2", "", "")
             : "1.15.1",
+        #
         # packages with valid UPSTREAM_CHECK_URI and UPSTREAM_CHECK_REGEX
-        ("cups", "http://www.cups.org/software/1.7.2/cups-1.7.2-source.tar.bz2", "https://github.com/apple/cups/releases", "(?P<name>cups\-)(?P<pver>((\d+[\.\-_]*)+))\-source\.tar\.gz")
+        #
+        # http://www.cups.org/software/1.7.2/cups-1.7.2-source.tar.bz2
+        # https://github.com/apple/cups/releases
+        ("cups", "/software/1.7.2/cups-1.7.2-source.tar.bz2", "/apple/cups/releases", "(?P<name>cups\-)(?P<pver>((\d+[\.\-_]*)+))\-source\.tar\.gz")
             : "2.0.0",
-        ("db", "http://download.oracle.com/berkeley-db/db-5.3.21.tar.gz", "http://ftp.debian.org/debian/pool/main/d/db5.3/", "(?P<name>db5\.3_)(?P<pver>\d+(\.\d+)+).+\.orig\.tar\.xz")
+        # http://download.oracle.com/berkeley-db/db-5.3.21.tar.gz
+        # http://ftp.debian.org/debian/pool/main/d/db5.3/
+        ("db", "/berkeley-db/db-5.3.21.tar.gz", "/debian/pool/main/d/db5.3/", "(?P<name>db5\.3_)(?P<pver>\d+(\.\d+)+).+\.orig\.tar\.xz")
             : "5.3.10",
     }
 
@@ -1146,18 +1166,28 @@ class FetchLatestVersionTest(FetcherTest):
             r = bb.utils.vercmp_string(v, verstring)
             self.assertTrue(r == -1 or r == 0, msg="Package %s, version: %s <= %s" % (k[0], v, verstring))
 
-    @skipIfNoNetwork()
     def test_wget_latest_versionstring(self):
-        for k, v in self.test_wget_uris.items():
-            self.d.setVar("PN", k[0])
-            self.d.setVar("UPSTREAM_CHECK_URI", k[2])
-            self.d.setVar("UPSTREAM_CHECK_REGEX", k[3])
-            ud = bb.fetch2.FetchData(k[1], self.d)
-            pupver = ud.method.latest_versionstring(ud, self.d)
-            verstring = pupver[0]
-            self.assertTrue(verstring, msg="Could not find upstream version for %s" % k[0])
-            r = bb.utils.vercmp_string(v, verstring)
-            self.assertTrue(r == -1 or r == 0, msg="Package %s, version: %s <= %s" % (k[0], v, verstring))
+        testdata = os.path.dirname(os.path.abspath(__file__)) + "/fetch-testdata"
+        server = HTTPService(testdata)
+        server.start()
+        port = server.port
+        try:
+            for k, v in self.test_wget_uris.items():
+                self.d.setVar("PN", k[0])
+                checkuri = ""
+                if k[2]:
+                    checkuri = "http://localhost:%s/" % port + k[2]
+                self.d.setVar("UPSTREAM_CHECK_URI", checkuri)
+                self.d.setVar("UPSTREAM_CHECK_REGEX", k[3])
+                url = "http://localhost:%s/" % port + k[1]
+                ud = bb.fetch2.FetchData(url, self.d)
+                pupver = ud.method.latest_versionstring(ud, self.d)
+                verstring = pupver[0]
+                self.assertTrue(verstring, msg="Could not find upstream version for %s" % k[0])
+                r = bb.utils.vercmp_string(v, verstring)
+                self.assertTrue(r == -1 or r == 0, msg="Package %s, version: %s <= %s" % (k[0], v, verstring))
+        finally:
+            server.stop()
 
 
 class FetchCheckStatusTest(FetcherTest):
