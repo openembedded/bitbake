@@ -292,10 +292,9 @@ class PRServer(SimpleXMLRPCServer):
         logger.addHandler(streamhandler)
 
         # write pidfile
-        pid = str(os.getpid()) 
-        pf = open(self.pidfile, 'w')
-        pf.write("%s\n" % pid)
-        pf.close()
+        pid = str(os.getpid())
+        with open(self.pidfile, 'w') as pf:
+            pf.write("%s\n" % pid)
 
         self.work_forever()
         self.delpid()
@@ -353,9 +352,8 @@ def start_daemon(dbfile, host, port, logfile):
     ip = socket.gethostbyname(host)
     pidfile = PIDPREFIX % (ip, port)
     try:
-        pf = open(pidfile,'r')
-        pid = int(pf.readline().strip())
-        pf.close()
+        with open(pidfile) as pf:
+            pid = int(pf.readline().strip())
     except IOError:
         pid = None
 
