@@ -238,7 +238,7 @@ class ClearCase(FetchMethod):
 
         # Clean clearcase meta-data before tar
 
-        runfetchcmd('tar -czf "%s" .' % (ud.localpath), d, cleanup = [ud.localpath])
+        runfetchcmd('tar -czf "%s" .' % (ud.localpath), d, cleanup = [ud.localpath], workdir = ud.viewdir)
 
         # Clean up so we can create a new view next time
         self.clean(ud, d);
