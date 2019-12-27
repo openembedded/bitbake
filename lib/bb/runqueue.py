@@ -2302,8 +2302,9 @@ class RunQueueExecute:
                     remapped = True
                 elif tid in self.scenequeue_covered or tid in self.sq_live:
                     # Already ran this setscene task or it running. Report the new taskhash
-                    remapped = bb.parse.siggen.report_unihash_equiv(tid, newhash, origuni, newuni, self.rqdata.dataCaches)
+                    bb.parse.siggen.report_unihash_equiv(tid, newhash, origuni, newuni, self.rqdata.dataCaches)
                     logger.info("Already covered setscene for %s so ignoring rehash (remap)" % (tid))
+                    remapped = True
 
                 if not remapped:
                     #logger.debug(1, "Task %s hash changes: %s->%s %s->%s" % (tid, orighash, newhash, origuni, newuni))
