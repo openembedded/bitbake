@@ -515,6 +515,10 @@ class SignatureGeneratorUniHashMixIn(object):
         if self.setscenetasks and tid not in self.setscenetasks:
             return
 
+        # This can happen if locked sigs are in action. Detect and just abort
+        if taskhash != self.taskhash[tid]:
+            return
+
         # Sanity checks
         cache_unihash = self._get_unihash(tid, checkkey=taskhash)
         if cache_unihash is None:
