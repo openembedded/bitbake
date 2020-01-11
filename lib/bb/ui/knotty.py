@@ -477,7 +477,8 @@ def main(server, eventHandler, params, tf = TerminalFilter):
             if event is None:
                 if main.shutdown > 1:
                     break
-                termfilter.updateFooter()
+                if not parseprogress:
+                    termfilter.updateFooter()
                 event = eventHandler.waitEvent(0.25)
                 if event is None:
                     continue
@@ -539,6 +540,7 @@ def main(server, eventHandler, params, tf = TerminalFilter):
                     continue
                 if event.total == 0:
                     continue
+                termfilter.clearFooter()
                 parseprogress = new_progress("Parsing recipes", event.total).start()
                 continue
             if isinstance(event, bb.event.ParseProgress):
@@ -638,6 +640,7 @@ def main(server, eventHandler, params, tf = TerminalFilter):
             if isinstance(event, bb.event.ProcessStarted):
                 if params.options.quiet > 1:
                     continue
+                termfilter.clearFooter()
                 parseprogress = new_progress(event.processname, event.total)
                 parseprogress.start(False)
                 continue
