@@ -505,7 +505,7 @@ class Command(BaseCommand):
         default_release = Release.objects.get(id=1)
 
         # SANITY: if 'reconfig' but project does not exist (deleted externally), switch to 'import'
-        if ("reconfigure" == options['command']) and (None == project):
+        if ("reconfigure" == options['command']) and project is None:
             options['command'] = 'import'
 
         # 'Configure':

@@ -1081,7 +1081,7 @@ def try_mirrors(fetch, d, origud, mirrors, check = False):
 
     for index, uri in enumerate(uris):
         ret = try_mirror_url(fetch, origud, uds[index], ld, check)
-        if ret != False:
+        if ret:
             return ret
     return None
 
@@ -1351,7 +1351,7 @@ class FetchMethod(object):
         """
 
         # We cannot compute checksums for directories
-        if os.path.isdir(urldata.localpath) == True:
+        if os.path.isdir(urldata.localpath):
             return False
         if urldata.localpath.find("*") != -1:
             return False

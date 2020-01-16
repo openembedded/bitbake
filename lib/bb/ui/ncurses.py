@@ -238,7 +238,7 @@ class NCursesUI:
             if error:
                 print("Error running command '%s': %s" % (cmdline, error))
                 return
-            elif ret != True:
+            elif not ret:
                 print("Couldn't get default commandlind! %s" % ret)
                 return
         except xmlrpc.client.Fault as x:

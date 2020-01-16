@@ -671,7 +671,7 @@ class Git(FetchMethod):
 
             # search for version in the line
             tag = tagregex.search(tag_head)
-            if tag == None:
+            if tag is None:
                 continue
 
             tag = tag.group('pver')

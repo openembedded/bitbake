@@ -1204,7 +1204,7 @@ class BBCooker:
             for c in collection_list:
                 calc_layer_priority(c)
                 regex = self.data.getVar("BBFILE_PATTERN_%s" % c)
-                if regex == None:
+                if regex is None:
                     parselog.error("BBFILE_PATTERN_%s not defined" % c)
                     errors = True
                     continue
@@ -1310,7 +1310,7 @@ class BBCooker:
         self.parseConfiguration()
 
         # If we are told to do the None task then query the default task
-        if (task == None):
+        if task is None:
             task = self.configuration.cmd
         if not task.startswith("do_"):
             task = "do_%s" % task
@@ -1454,7 +1454,7 @@ class BBCooker:
         self.buildSetVars()
 
         # If we are told to do the None task then query the default task
-        if (task == None):
+        if task is None:
             task = self.configuration.cmd
 
         if not task.startswith("do_"):
@@ -1687,7 +1687,7 @@ class CookerCollectFiles(object):
     def calc_bbfile_priority( self, filename, matched = None ):
         for _, _, regex, pri in self.bbfile_config_priorities:
             if regex.match(filename):
-                if matched != None:
+                if matched is not None:
                     if not regex in matched:
                         matched.add(regex)
                 return pri

@@ -346,7 +346,7 @@ def set_UIHmask(handlerNum, level, debug_domains, mask):
 
 def getName(e):
     """Returns the name of a class or class instance"""
-    if getattr(e, "__name__", None) == None:
+    if getattr(e, "__name__", None) is None:
         return e.__class__.__name__
     else:
         return e.__name__

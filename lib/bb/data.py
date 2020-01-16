@@ -79,7 +79,7 @@ def expand(s, d, varname = None):
     return d.expand(s, varname)
 
 def expandKeys(alterdata, readdata = None):
-    if readdata == None:
+    if readdata is None:
         readdata = alterdata
 
     todolist = {}

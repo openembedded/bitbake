@@ -58,7 +58,7 @@ class SSH(FetchMethod):
     '''Class to fetch a module or modules via Secure Shell'''
 
     def supports(self, urldata, d):
-        return __pattern__.match(urldata.url) != None
+        return __pattern__.match(urldata.url) is not None
 
     def supports_checksum(self, urldata):
         return False

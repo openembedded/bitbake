@@ -1647,14 +1647,14 @@ class CustomImageRecipe(Recipe):
         """
         # Check if we're aldready up-to-date or not
         target = self.get_last_successful_built_target()
-        if target == None:
+        if target is None:
             # So we've never actually built this Custom recipe but what about
             # the recipe it's based on?
             target = \
                 Target.objects.filter(Q(build__outcome=Build.SUCCEEDED) &
                                       Q(build__project=self.project) &
                                       Q(target=self.base_recipe.name)).last()
-            if target == None:
+            if target is None:
                 return
 
         if target.build.completed_on == self.last_updated:

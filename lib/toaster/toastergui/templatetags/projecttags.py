@@ -212,7 +212,7 @@ def filtered_installedsize(size, installed_size):
     """If package.installed_size not null and not empty return it,
        else return package.size
     """
-    return size if (installed_size == 0) or (installed_size == "") or (installed_size == None) else installed_size
+    return size if (installed_size == 0) or (installed_size == "") or (installed_size is None) else installed_size
 
 @register.filter
 def filtered_packageversion(version, revision):
@@ -228,7 +228,7 @@ def filter_sizeovertotal(package_object, total_size):
         formatted nicely.
     """
     size = package_object.installed_size
-    if size == None or size == '':
+    if size is None or size == '':
         size = package_object.size
 
     return '{:.1%}'.format(float(size)/float(total_size))

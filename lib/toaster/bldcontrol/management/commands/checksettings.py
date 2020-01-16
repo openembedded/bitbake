@@ -78,7 +78,7 @@ class Command(BaseCommand):
                         template_conf = os.environ.get("TEMPLATECONF", "")
                         custom_xml_only = os.environ.get("CUSTOM_XML_ONLY")
 
-                        if ToasterSetting.objects.filter(name='CUSTOM_XML_ONLY').count() > 0 or (not custom_xml_only == None):
+                        if ToasterSetting.objects.filter(name='CUSTOM_XML_ONLY').count() > 0 or custom_xml_only is not None:
                             # only use the custom settings
                             pass
                         elif "poky" in template_conf:

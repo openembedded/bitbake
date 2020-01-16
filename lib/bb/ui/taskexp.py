@@ -200,7 +200,7 @@ def main(server, eventHandler, params):
         if error:
             print("Error running command '%s': %s" % (cmdline, error))
             return 1
-        elif ret != True:
+        elif not ret:
             print("Error running command '%s': returned %s" % (cmdline, ret))
             return 1
     except client.Fault as x:

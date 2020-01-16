@@ -65,7 +65,7 @@ class Command:
             # Can run synchronous commands straight away
             command_method = getattr(self.cmds_sync, command)
             if ro_only:
-                if not hasattr(command_method, 'readonly') or False == getattr(command_method, 'readonly'):
+                if not hasattr(command_method, 'readonly') or not getattr(command_method, 'readonly'):
                     return None, "Not able to execute not readonly commands in readonly mode"
             try:
                 self.cooker.process_inotify_updates()
