@@ -20,7 +20,6 @@ Usage in the recipe:
 """
 
 import os
-import sys
 import urllib.request, urllib.parse, urllib.error
 import json
 import subprocess

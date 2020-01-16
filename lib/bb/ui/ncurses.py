@@ -37,7 +37,7 @@
 
 
 import logging
-import os, sys, itertools, time, subprocess
+import os, sys, itertools, time
 
 try:
     import curses
@@ -46,7 +46,6 @@ except ImportError:
 
 import bb
 import xmlrpc.client
-from bb import ui
 from bb.ui import uihelper
 
 parsespin = itertools.cycle( r'|/-\\' )

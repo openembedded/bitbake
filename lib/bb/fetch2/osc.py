@@ -7,8 +7,6 @@ Based on the svn "Fetch" implementation.
 
 """
 
-import  os
-import  sys
 import logging
 import  bb
 from    bb.fetch2 import FetchMethod

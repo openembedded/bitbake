@@ -21,8 +21,8 @@ import bb.taskdata
 import bb.utils
 import bb.command
 import bb.remotedata
-from bb.cookerdata import CookerConfiguration, ConfigParameters
-from bb.main import setup_bitbake, BitBakeConfigParameters, BBMainException
+from bb.cookerdata import CookerConfiguration
+from bb.main import setup_bitbake, BitBakeConfigParameters
 import bb.fetch2
 
 

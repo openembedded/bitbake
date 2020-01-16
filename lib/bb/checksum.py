@@ -9,7 +9,6 @@ import glob
 import operator
 import os
 import stat
-import pickle
 import bb.utils
 import logging
 from bb.cache import MultiProcessCache

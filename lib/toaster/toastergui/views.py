@@ -20,7 +20,7 @@ from orm.models import TargetKernelFile, TargetSDKFile, Target_Image_File
 from orm.models import BitbakeVersion, CustomImageRecipe
 
 from django.core.urlresolvers import reverse, resolve
-from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.http import HttpResponseNotFound, JsonResponse
 from django.utils import timezone
@@ -664,7 +664,6 @@ def recipe_packages(request, build_id, recipe_id):
     _set_parameters_values(pagesize, orderby, request)
     return response
 
-from django.core.serializers.json import DjangoJSONEncoder
 from django.http import HttpResponse
 def xhr_dirinfo(request, build_id, target_id):
     top = request.GET.get('start', '/')
@@ -1340,7 +1339,7 @@ def json_build(request,build_id):
 
 import toastermain.settings
 
-from orm.models import Project, ProjectLayer, ProjectTarget, ProjectVariable
+from orm.models import Project, ProjectLayer, ProjectVariable
 from bldcontrol.models import  BuildEnvironment
 
 # we have a set of functions if we're in managed mode, or
@@ -1349,10 +1348,8 @@ from bldcontrol.models import  BuildEnvironment
 if True:
     from django.contrib.auth.models import User
     from django.contrib.auth import authenticate, login
-    from django.contrib.auth.decorators import login_required
 
-    from orm.models import LayerSource, ToasterSetting, Release, Machine, LayerVersionDependency
-    from bldcontrol.models import BuildRequest
+    from orm.models import LayerSource, ToasterSetting, Release
 
     import traceback
 

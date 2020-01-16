@@ -17,7 +17,6 @@
 #
 
 import os
-import sys
 import logging
 import pickle
 from collections import defaultdict

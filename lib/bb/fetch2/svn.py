@@ -11,8 +11,6 @@ BitBake 'Fetch' implementation for svn.
 # Based on functions from the base bb module, Copyright 2003 Holger Schurig
 
 import os
-import sys
-import logging
 import bb
 import re
 from   bb.fetch2 import FetchMethod

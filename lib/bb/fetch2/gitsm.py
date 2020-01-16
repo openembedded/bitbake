@@ -24,7 +24,6 @@ from   bb.fetch2.git import Git
 from   bb.fetch2 import runfetchcmd
 from   bb.fetch2 import logger
 from   bb.fetch2 import Fetch
-from   bb.fetch2 import BBFetchException
 
 class GitSM(Git):
     def supports(self, ud, d):

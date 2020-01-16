@@ -11,10 +11,8 @@ import sys
 import gi
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, Gdk, GObject
-from multiprocessing import Queue
 import threading
 from xmlrpc import client
-import time
 import bb
 import bb.event
 

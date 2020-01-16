@@ -2,11 +2,9 @@
 # SPDX-License-Identifier: GPL-2.0-only
 #
 
-from django.core.management.base import BaseCommand, CommandError
-from django.db import transaction
+from django.core.management.base import BaseCommand
 
 from django.core.management import call_command
-from bldcontrol.bbcontroller import getBuildEnvironmentController, ShellCmdException
 from bldcontrol.models import BuildRequest, BuildEnvironment, BRError
 from orm.models import ToasterSetting, Build, Layer
 

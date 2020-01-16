@@ -49,7 +49,6 @@ User credentials:
 #
 
 import os
-import sys
 import shutil
 import bb
 from   bb.fetch2 import FetchMethod

@@ -9,11 +9,7 @@
 # SPDX-License-Identifier: GPL-2.0-only
 #
 
-import re
-import string
-import logging
 import bb
-import itertools
 from bb import methodpool
 from bb.parse import logger
 

@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: GPL-2.0-only
 #
 
-from contextlib import closing
 import json
 import logging
 import socket

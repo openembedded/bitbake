@@ -31,12 +31,10 @@
 
 # ../bitbake/lib/toaster/manage.py buildimport --name=test --path=`pwd` --callback="" --command=import
 
-from django.core.management.base import BaseCommand, CommandError
-from django.core.exceptions import ObjectDoesNotExist
-from orm.models import ProjectManager, Project, Release, ProjectVariable
+from django.core.management.base import BaseCommand
+from orm.models import Project, Release, ProjectVariable
 from orm.models import Layer, Layer_Version, LayerSource, ProjectLayer
 from toastergui.api import scan_layer_content
-from django.db import OperationalError
 
 import os
 import re

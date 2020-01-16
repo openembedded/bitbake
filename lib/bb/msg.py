@@ -13,9 +13,7 @@ Message handling infrastructure for bitbake
 import sys
 import copy
 import logging
-import collections
 from itertools import groupby
-import warnings
 import bb
 import bb.event
 

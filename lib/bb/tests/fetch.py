@@ -9,7 +9,6 @@
 import unittest
 import hashlib
 import tempfile
-import subprocess
 import collections
 import os
 from bb.fetch2 import URI

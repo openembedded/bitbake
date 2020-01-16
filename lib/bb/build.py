@@ -15,7 +15,6 @@
 import os
 import sys
 import logging
-import shlex
 import glob
 import time
 import stat

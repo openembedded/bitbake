@@ -11,7 +11,6 @@ BitBake 'Fetch' implementation for perforce
 # Based on functions from the base bb module, Copyright 2003 Holger Schurig
 
 import os
-import logging
 import bb
 from   bb.fetch2 import FetchMethod
 from   bb.fetch2 import FetchError

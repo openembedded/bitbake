@@ -24,7 +24,6 @@ import fnmatch
 import traceback
 import errno
 import signal
-import ast
 import collections
 import copy
 from subprocess import getstatusoutput

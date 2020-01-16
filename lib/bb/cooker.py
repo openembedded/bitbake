@@ -10,7 +10,6 @@
 #
 
 import sys, os, glob, os.path, re, time
-import atexit
 import itertools
 import logging
 import multiprocessing
@@ -18,14 +17,11 @@ import sre_constants
 import threading
 from io import StringIO, UnsupportedOperation
 from contextlib import closing
-from functools import wraps
 from collections import defaultdict, namedtuple
 import bb, bb.exceptions, bb.command
 from bb import utils, data, parse, event, cache, providers, taskdata, runqueue, build
 import queue
 import signal
-import subprocess
-import errno
 import prserv.serv
 import pyinotify
 import json

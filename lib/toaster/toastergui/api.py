@@ -13,7 +13,6 @@ import logging
 import json
 import subprocess
 from collections import Counter
-from shutil import copyfile
 
 from orm.models import Project, ProjectTarget, Build, Layer_Version
 from orm.models import LayerVersionDependency, LayerSource, ProjectLayer
@@ -29,8 +28,6 @@ from django.core.urlresolvers import reverse
 from django.db.models import Q, F
 from django.db import Error
 from toastergui.templatetags.projecttags import filtered_filesizeformat
-from django.utils import timezone
-import pytz
 
 # development/debugging support
 verbose = 2

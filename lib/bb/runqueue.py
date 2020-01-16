@@ -12,14 +12,12 @@ Handles preparation and execution of a queue of tasks
 import copy
 import os
 import sys
-import signal
 import stat
-import fcntl
 import errno
 import logging
 import re
 import bb
-from bb import msg, data, event
+from bb import msg, event
 from bb import monitordisk
 import subprocess
 import pickle

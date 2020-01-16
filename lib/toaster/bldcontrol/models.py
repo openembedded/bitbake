@@ -4,9 +4,8 @@
 
 from __future__ import unicode_literals
 from django.db import models
-from django.core.validators import MaxValueValidator, MinValueValidator
 from django.utils.encoding import force_text
-from orm.models import Project, ProjectLayer, ProjectVariable, ProjectTarget, Build, Layer_Version
+from orm.models import Project, Build, Layer_Version
 
 import logging
 logger = logging.getLogger("toaster")

@@ -10,8 +10,7 @@ BitBake build tools.
 # SPDX-License-Identifier: GPL-2.0-only
 #
 
-import os, sys
-import warnings
+import sys
 import pickle
 import logging
 import atexit

@@ -6,7 +6,7 @@
 # SPDX-License-Identifier: GPL-2.0-only
 #
 
-from datetime import datetime, timedelta
+from datetime import timedelta
 from os.path import relpath
 import re
 from django import template

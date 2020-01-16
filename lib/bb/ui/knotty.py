@@ -12,7 +12,6 @@ from __future__ import division
 
 import os
 import sys
-import xmlrpc.client as xmlrpclib
 import logging
 import progressbar
 import signal

@@ -14,9 +14,7 @@ BitBake build tools.
 
 import re
 import tempfile
-import subprocess
 import os
-import logging
 import errno
 import bb
 import bb.progress
@@ -27,7 +25,6 @@ from   bb.fetch2 import FetchMethod
 from   bb.fetch2 import FetchError
 from   bb.fetch2 import logger
 from   bb.fetch2 import runfetchcmd
-from   bb.fetch2 import FetchConnectionCache
 from   bb.utils import export_proxies
 from   bs4 import BeautifulSoup
 from   bs4 import SoupStrainer
