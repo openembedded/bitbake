@@ -594,7 +594,9 @@ class Git(FetchMethod):
         """
         Return a unique key for the url
         """
-        return "git:" + ud.host + ud.path.replace('/', '.') + ud.unresolvedrev[name]
+        # Collapse adjacent slashes
+        slash_re = re.compile(r"/+")
+        return "git:" + ud.host + slash_re.sub(".", ud.path) + ud.unresolvedrev[name]
 
     def _lsremote(self, ud, d, search):
         """
