@@ -1025,6 +1025,43 @@ def filter(variable, checkvalues, d):
         checkvalues = set(checkvalues)
     return ' '.join(sorted(checkvalues & val))
 
+
+def get_referenced_vars(start_expr, d):
+    """
+    :return: names of vars referenced in start_expr (recursively), in quasi-BFS order (variables within the same level
+    are ordered arbitrarily)
+    """
+
+    seen = set()
+    ret = []
+
+    # The first entry in the queue is the unexpanded start expression
+    queue = collections.deque([start_expr])
+    # Subsequent entries will be variable names, so we need to track whether or not entry requires getVar
+    is_first = True
+
+    empty_data = bb.data.init()
+    while queue:
+        entry = queue.popleft()
+        if is_first:
+            # Entry is the start expression - no expansion needed
+            is_first = False
+            expression = entry
+        else:
+            # This is a variable name - need to get the value
+            expression = d.getVar(entry, False)
+            ret.append(entry)
+
+        # expandWithRefs is how we actually get the referenced variables in the expression. We call it using an empty
+        # data store because we only want the variables directly used in the expression. It returns a set, which is what
+        # dooms us to only ever be "quasi-BFS" rather than full BFS.
+        new_vars = empty_data.expandWithRefs(expression, None).references - set(seen)
+
+        queue.extend(new_vars)
+        seen.update(new_vars)
+    return ret
+
+
 def cpu_count():
     return multiprocessing.cpu_count()
 
