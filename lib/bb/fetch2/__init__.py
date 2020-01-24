@@ -1569,7 +1569,7 @@ class FetchMethod(object):
         """
         Try to use a mirror
         """
-        return try_mirrors(fetch, d, urldata, mirrors, check)
+        return bool(try_mirrors(fetch, d, urldata, mirrors, check))
 
     def checkstatus(self, fetch, urldata, d):
         """
@@ -1608,6 +1608,16 @@ class FetchMethod(object):
         versions and returning the highest match as a (version, revision) pair.
         """
         return ('', '')
+
+    def done(self, ud, d):
+        """
+        Is the download done ?
+        """
+        if os.path.exists(ud.localpath):
+            return True
+        if ud.localpath.find("*") != -1:
+            return True
+        return False
 
 class Fetch(object):
     def __init__(self, urls, d, cache = True, localonly = False, connection_cache = None):
@@ -1672,7 +1682,7 @@ class Fetch(object):
             ud = self.ud[u]
             ud.setup_localpath(self.d)
             m = ud.method
-            localpath = ""
+            done = False
 
             if ud.lockfile:
                 lf = bb.utils.lockfile(ud.lockfile)
@@ -1681,12 +1691,12 @@ class Fetch(object):
                 self.d.setVar("BB_NO_NETWORK", network)
 
                 if m.verify_donestamp(ud, self.d) and not m.need_update(ud, self.d):
-                    localpath = ud.localpath
+                    done = True
                 elif m.try_premirror(ud, self.d):
                     logger.debug(1, "Trying PREMIRRORS")
                     mirrors = mirror_from_string(self.d.getVar('PREMIRRORS'))
-                    localpath = m.try_mirrors(self, ud, self.d, mirrors)
-                    if localpath:
+                    done = m.try_mirrors(self, ud, self.d, mirrors)
+                    if done:
                         try:
                             # early checksum verification so that if the checksum of the premirror
                             # contents mismatch the fetcher can still try upstream and mirrors
@@ -1694,14 +1704,14 @@ class Fetch(object):
                         except ChecksumError as e:
                             logger.warning("Checksum failure encountered with premirror download of %s - will attempt other sources." % u)
                             logger.debug(1, str(e))
-                            localpath = ""
+                            done = False
 
                 if premirroronly:
                     self.d.setVar("BB_NO_NETWORK", "1")
 
                 firsterr = None
                 verified_stamp = m.verify_donestamp(ud, self.d)
-                if not localpath and (not verified_stamp or m.need_update(ud, self.d)):
+                if not done and (not verified_stamp or m.need_update(ud, self.d)):
                     try:
                         if not trusted_network(self.d, ud.url):
                             raise UntrustedUrl(ud.url)
@@ -1709,7 +1719,7 @@ class Fetch(object):
                         m.download(ud, self.d)
                         if hasattr(m, "build_mirror_data"):
                             m.build_mirror_data(ud, self.d)
-                        localpath = ud.localpath
+                        done = True
                         # early checksum verify, so that if checksum mismatched,
                         # fetcher still have chance to fetch from mirror
                         m.update_donestamp(ud, self.d)
@@ -1734,9 +1744,9 @@ class Fetch(object):
                             m.clean(ud, self.d)
                         logger.debug(1, "Trying MIRRORS")
                         mirrors = mirror_from_string(self.d.getVar('MIRRORS'))
-                        localpath = m.try_mirrors(self, ud, self.d, mirrors)
+                        done = m.try_mirrors(self, ud, self.d, mirrors)
 
-                if not localpath or ((not os.path.exists(localpath)) and localpath.find("*") == -1):
+                if not done or not m.done(ud, self.d):
                     if firsterr:
                         logger.error(str(firsterr))
                     raise FetchError("Unable to fetch URL from any source.", u)
