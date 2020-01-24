@@ -1379,6 +1379,18 @@ class FetchMethod(object):
         """
         return False
 
+    def verify_donestamp(self, ud, d):
+        """
+        Verify the donestamp file
+        """
+        return verify_donestamp(ud, d)
+
+    def update_donestamp(self, ud, d):
+        """
+        Update the donestamp file
+        """
+        update_stamp(ud, d)
+
     def _strip_leading_slashes(self, relpath):
         """
         Remove leading slash as os.path.join can't cope
@@ -1662,7 +1674,7 @@ class Fetch(object):
             try:
                 self.d.setVar("BB_NO_NETWORK", network)
 
-                if verify_donestamp(ud, self.d) and not m.need_update(ud, self.d):
+                if m.verify_donestamp(ud, self.d) and not m.need_update(ud, self.d):
                     localpath = ud.localpath
                 elif m.try_premirror(ud, self.d):
                     logger.debug(1, "Trying PREMIRRORS")
@@ -1672,7 +1684,7 @@ class Fetch(object):
                         try:
                             # early checksum verification so that if the checksum of the premirror
                             # contents mismatch the fetcher can still try upstream and mirrors
-                            update_stamp(ud, self.d)
+                            m.update_donestamp(ud, self.d)
                         except ChecksumError as e:
                             logger.warning("Checksum failure encountered with premirror download of %s - will attempt other sources." % u)
                             logger.debug(1, str(e))
@@ -1682,7 +1694,7 @@ class Fetch(object):
                     self.d.setVar("BB_NO_NETWORK", "1")
 
                 firsterr = None
-                verified_stamp = verify_donestamp(ud, self.d)
+                verified_stamp = m.verify_donestamp(ud, self.d)
                 if not localpath and (not verified_stamp or m.need_update(ud, self.d)):
                     try:
                         if not trusted_network(self.d, ud.url):
@@ -1694,7 +1706,7 @@ class Fetch(object):
                         localpath = ud.localpath
                         # early checksum verify, so that if checksum mismatched,
                         # fetcher still have chance to fetch from mirror
-                        update_stamp(ud, self.d)
+                        m.update_donestamp(ud, self.d)
 
                     except bb.fetch2.NetworkAccess:
                         raise
@@ -1723,7 +1735,7 @@ class Fetch(object):
                         logger.error(str(firsterr))
                     raise FetchError("Unable to fetch URL from any source.", u)
 
-                update_stamp(ud, self.d)
+                m.update_donestamp(ud, self.d)
 
             except IOError as e:
                 if e.errno in [errno.ESTALE]:
