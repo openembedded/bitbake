@@ -556,6 +556,20 @@ def sha1_file(filename):
     import hashlib
     return _hasher(hashlib.sha1(), filename)
 
+def sha384_file(filename):
+    """
+    Return the hex string representation of the SHA384 checksum of the filename
+    """
+    import hashlib
+    return _hasher(hashlib.sha384(), filename)
+
+def sha512_file(filename):
+    """
+    Return the hex string representation of the SHA512 checksum of the filename
+    """
+    import hashlib
+    return _hasher(hashlib.sha512(), filename)
+
 def preserved_envvars_exported():
     """Variables which are taken from the environment and placed in and exported
     from the metadata"""
