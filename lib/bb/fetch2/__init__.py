@@ -33,6 +33,8 @@ _checksum_cache = bb.checksum.FileChecksumCache()
 
 logger = logging.getLogger("BitBake.Fetcher")
 
+CHECKSUM_LIST = [ "md5", "sha256" ]
+
 class BBFetchException(Exception):
     """Class all fetch exceptions inherit from"""
     def __init__(self, message):
@@ -131,10 +133,9 @@ class NonLocalMethod(Exception):
         Exception.__init__(self)
 
 class MissingChecksumEvent(bb.event.Event):
-    def __init__(self, url, md5sum, sha256sum):
+    def __init__(self, url, **checksums):
         self.url = url
-        self.checksums = {'md5sum': md5sum,
-                          'sha256sum': sha256sum}
+        self.checksums = checksums
         bb.event.Event.__init__(self)
 
 
@@ -552,71 +553,82 @@ def verify_checksum(ud, d, precomputed={}):
     downloading. See https://bugzilla.yoctoproject.org/show_bug.cgi?id=5571.
     """
 
-    _MD5_KEY = "md5"
-    _SHA256_KEY = "sha256"
-
     if ud.ignore_checksums or not ud.method.supports_checksum(ud):
         return {}
 
-    if _MD5_KEY in precomputed:
-        md5data = precomputed[_MD5_KEY]
-    else:
-        md5data = bb.utils.md5_file(ud.localpath)
+    def compute_checksum_info(checksum_id):
+        checksum_name = getattr(ud, "%s_name" % checksum_id)
 
-    if _SHA256_KEY in precomputed:
-        sha256data = precomputed[_SHA256_KEY]
-    else:
-        sha256data = bb.utils.sha256_file(ud.localpath)
+        if checksum_id in precomputed:
+            checksum_data = precomputed[checksum_id]
+        else:
+            checksum_data = getattr(bb.utils, "%s_file" % checksum_id)(ud.localpath)
 
-    if ud.method.recommends_checksum(ud) and not ud.md5_expected and not ud.sha256_expected:
-        # If strict checking enabled and neither sum defined, raise error
+        checksum_expected = getattr(ud, "%s_expected" % checksum_id)
+
+        return {
+            "id": checksum_id,
+            "name": checksum_name,
+            "data": checksum_data,
+            "expected": checksum_expected
+        }
+
+    checksum_infos = []
+    for checksum_id in CHECKSUM_LIST:
+        checksum_infos.append(compute_checksum_info(checksum_id))
+
+    checksum_dict = {ci["id"] : ci["data"] for ci in checksum_infos}
+    checksum_event = {"%ssum" % ci["id"] : ci["data"] for ci in checksum_infos}
+
+    checksum_lines = ["SRC_URI[%s] = \"%s\"" % (ci["name"], ci["data"]) for ci in checksum_infos]
+
+    # If no checksum has been provided
+    if ud.method.recommends_checksum(ud) and all(ci["expected"] is None for ci in checksum_infos):
+        messages = []
         strict = d.getVar("BB_STRICT_CHECKSUM") or "0"
-        if strict == "1":
-            logger.error('No checksum specified for %s, please add at least one to the recipe:\n'
-                             'SRC_URI[%s] = "%s"\nSRC_URI[%s] = "%s"' %
-                             (ud.localpath, ud.md5_name, md5data,
-                              ud.sha256_name, sha256data))
-            raise NoChecksumError('Missing SRC_URI checksum', ud.url)
 
-        bb.event.fire(MissingChecksumEvent(ud.url, md5data, sha256data), d)
+        # If strict checking enabled and neither sum defined, raise error
+        if strict == "1":
+            messages.append("No checksum specified for '%s', please add at " \
+                            "least one to the recipe:" % ud.localpath)
+            messages.extend(checksum_lines)
+            logger.error("\n".join(messages))
+            raise NoChecksumError("Missing SRC_URI checksum", ud.url)
+
+        bb.event.fire(MissingChecksumEvent(ud.url, **checksum_event), d)
 
         if strict == "ignore":
-            return {
-                _MD5_KEY: md5data,
-                _SHA256_KEY: sha256data
-            }
+            return checksum_dict
 
         # Log missing sums so user can more easily add them
-        logger.warning('Missing md5 SRC_URI checksum for %s, consider adding to the recipe:\n'
-                       'SRC_URI[%s] = "%s"',
-                       ud.localpath, ud.md5_name, md5data)
-        logger.warning('Missing sha256 SRC_URI checksum for %s, consider adding to the recipe:\n'
-                       'SRC_URI[%s] = "%s"',
-                       ud.localpath, ud.sha256_name, sha256data)
+        messages.append("Missing checksum for '%s', consider adding at " \
+                        "least one to the recipe:" % ud.localpath)
+        messages.extend(checksum_lines)
+        logger.warning("\n".join(messages))
 
     # We want to alert the user if a checksum is defined in the recipe but
     # it does not match.
-    msg = ""
-    mismatch = False
-    if ud.md5_expected and ud.md5_expected != md5data:
-        msg = msg + "\nFile: '%s' has %s checksum %s when %s was expected" % (ud.localpath, 'md5', md5data, ud.md5_expected)
-        mismatch = True;
+    messages = []
+    messages.append("Checksum mismatch!")
+    bad_checksum = None
 
-    if ud.sha256_expected and ud.sha256_expected != sha256data:
-        msg = msg + "\nFile: '%s' has %s checksum %s when %s was expected" % (ud.localpath, 'sha256', sha256data, ud.sha256_expected)
-        mismatch = True;
+    for ci in checksum_infos:
+        if ci["expected"] and ci["expected"] != ci["data"]:
+            messages.append("File: '%s' has %s checksum %s when %s was " \
+                            "expected" % (ud.localpath, ci["id"], ci["data"], ci["expected"]))
+            bad_checksum = ci["data"]
 
-    if mismatch:
-        msg = msg + '\nIf this change is expected (e.g. you have upgraded to a new version without updating the checksums) then you can use these lines within the recipe:\nSRC_URI[%s] = "%s"\nSRC_URI[%s] = "%s"\nOtherwise you should retry the download and/or check with upstream to determine if the file has become corrupted or otherwise unexpectedly modified.\n' % (ud.md5_name, md5data, ud.sha256_name, sha256data)
+    if bad_checksum:
+        messages.append("If this change is expected (e.g. you have upgraded " \
+                        "to a new version without updating the checksums) " \
+                        "then you can use these lines within the recipe:")
+        messages.extend(checksum_lines)
+        messages.append("Otherwise you should retry the download and/or " \
+                        "check with upstream to determine if the file has " \
+                        "become corrupted or otherwise unexpectedly modified.")
+        raise ChecksumError("\n".join(messages), ud.url, bad_checksum)
 
-    if len(msg):
-        raise ChecksumError('Checksum mismatch!%s' % msg, ud.url, md5data)
-
-    return {
-        _MD5_KEY: md5data,
-        _SHA256_KEY: sha256data
-    }
-
+    return checksum_dict
 
 def verify_donestamp(ud, d, origud=None):
     """
@@ -1230,24 +1242,26 @@ class FetchData(object):
             self.pswd = self.parm["pswd"]
         self.setup = False
 
-        if "name" in self.parm:
-            self.md5_name = "%s.md5sum" % self.parm["name"]
-            self.sha256_name = "%s.sha256sum" % self.parm["name"]
-        else:
-            self.md5_name = "md5sum"
-            self.sha256_name = "sha256sum"
-        if self.md5_name in self.parm:
-            self.md5_expected = self.parm[self.md5_name]
-        elif self.type not in ["http", "https", "ftp", "ftps", "sftp", "s3"]:
-            self.md5_expected = None
-        else:
-            self.md5_expected = d.getVarFlag("SRC_URI", self.md5_name)
-        if self.sha256_name in self.parm:
-            self.sha256_expected = self.parm[self.sha256_name]
-        elif self.type not in ["http", "https", "ftp", "ftps", "sftp", "s3"]:
-            self.sha256_expected = None
-        else:
-            self.sha256_expected = d.getVarFlag("SRC_URI", self.sha256_name)
+        def configure_checksum(checksum_id):
+            if "name" in self.parm:
+                checksum_name = "%s.%ssum" % (self.parm["name"], checksum_id)
+            else:
+                checksum_name = "%ssum" % checksum_id
+
+            setattr(self, "%s_name" % checksum_id, checksum_name)
+
+            if checksum_name in self.parm:
+                checksum_expected = self.parm[checksum_name]
+            elif self.type not in ["http", "https", "ftp", "ftps", "sftp", "s3"]:
+                checksum_expected = None
+            else:
+                checksum_expected = d.getVarFlag("SRC_URI", checksum_name)
+
+            setattr(self, "%s_expected" % checksum_id, checksum_expected)
+
+        for checksum_id in CHECKSUM_LIST:
+            configure_checksum(checksum_id)
+
         self.ignore_checksums = False
 
         self.names = self.parm.get("name",'default').split(',')
