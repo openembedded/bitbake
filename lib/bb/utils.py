@@ -1611,3 +1611,29 @@ class LogCatcher(logging.Handler):
         self.messages.append(bb.build.logformatter.format(record))
     def contains(self, message):
         return (message in self.messages)
+
+def is_semver(version):
+    """
+        Is the version string following the semver semantic?
+
+        https://semver.org/spec/v2.0.0.html
+    """
+    regex = re.compile(
+    r"""
+    ^
+    (0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)
+    (?:-(
+        (?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)
+        (?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*
+    ))?
+    (?:\+(
+        [0-9a-zA-Z-]+
+        (?:\.[0-9a-zA-Z-]+)*
+    ))?
+    $
+    """, re.VERBOSE)
+
+    if regex.match(version) is None:
+        return False
+
+    return True
