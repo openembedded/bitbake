@@ -1565,6 +1565,12 @@ class FetchMethod(object):
         """
         return True
 
+    def try_mirrors(self, fetch, urldata, d, mirrors, check=False):
+        """
+        Try to use a mirror
+        """
+        return try_mirrors(fetch, d, urldata, mirrors, check)
+
     def checkstatus(self, fetch, urldata, d):
         """
         Check the status of a URL
@@ -1679,7 +1685,7 @@ class Fetch(object):
                 elif m.try_premirror(ud, self.d):
                     logger.debug(1, "Trying PREMIRRORS")
                     mirrors = mirror_from_string(self.d.getVar('PREMIRRORS'))
-                    localpath = try_mirrors(self, self.d, ud, mirrors, False)
+                    localpath = m.try_mirrors(self, ud, self.d, mirrors)
                     if localpath:
                         try:
                             # early checksum verification so that if the checksum of the premirror
@@ -1728,7 +1734,7 @@ class Fetch(object):
                             m.clean(ud, self.d)
                         logger.debug(1, "Trying MIRRORS")
                         mirrors = mirror_from_string(self.d.getVar('MIRRORS'))
-                        localpath = try_mirrors(self, self.d, ud, mirrors)
+                        localpath = m.try_mirrors(self, ud, self.d, mirrors)
 
                 if not localpath or ((not os.path.exists(localpath)) and localpath.find("*") == -1):
                     if firsterr:
@@ -1766,14 +1772,14 @@ class Fetch(object):
             logger.debug(1, "Testing URL %s", u)
             # First try checking uri, u, from PREMIRRORS
             mirrors = mirror_from_string(self.d.getVar('PREMIRRORS'))
-            ret = try_mirrors(self, self.d, ud, mirrors, True)
+            ret = m.try_mirrors(self, ud, self.d, mirrors, True)
             if not ret:
                 # Next try checking from the original uri, u
                 ret = m.checkstatus(self, ud, self.d)
                 if not ret:
                     # Finally, try checking uri, u, from MIRRORS
                     mirrors = mirror_from_string(self.d.getVar('MIRRORS'))
-                    ret = try_mirrors(self, self.d, ud, mirrors, True)
+                    ret = m.try_mirrors(self, ud, self.d, mirrors, True)
 
             if not ret:
                 raise FetchError("URL %s doesn't work" % u, u)
