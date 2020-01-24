@@ -33,7 +33,7 @@ _checksum_cache = bb.checksum.FileChecksumCache()
 
 logger = logging.getLogger("BitBake.Fetcher")
 
-CHECKSUM_LIST = [ "md5", "sha256" ]
+CHECKSUM_LIST = [ "md5", "sha256", "sha1", "sha384", "sha512" ]
 
 class BBFetchException(Exception):
     """Class all fetch exceptions inherit from"""
