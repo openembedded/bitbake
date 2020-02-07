@@ -1780,7 +1780,7 @@
                 </para>
 
                 <para>
-                    Bitbake normally issues a warning when building two
+                    BitBake normally issues a warning when building two
                     different recipes where each provides the same output.
                     This scenario is usually something the user does not
                     want.

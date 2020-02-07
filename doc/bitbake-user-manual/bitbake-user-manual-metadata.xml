@@ -5,7 +5,7 @@
     <title>Syntax and Operators</title>
 
     <para>
-        Bitbake files have their own syntax.
+        BitBake files have their own syntax.
         The syntax has similarities to several
         other languages but also has some unique features.
         This section describes the available syntax and operators
@@ -1414,7 +1414,7 @@
         </section>
 
         <section id='bitbake-style-python-functions-versus-python-functions'>
-            <title>Bitbake-Style Python Functions Versus Python Functions</title>
+            <title>BitBake-Style Python Functions Versus Python Functions</title>
 
             <para>
                 Following are some important differences between
@@ -1895,7 +1895,7 @@
             <para>
                 Sometimes, it is useful to be able to obtain information
                 from the original execution environment.
-                Bitbake saves a copy of the original environment into
+                BitBake saves a copy of the original environment into
                 a special variable named
                 <link linkend='var-bb-BB_ORIGENV'><filename>BB_ORIGENV</filename></link>.
             </para>
@@ -2616,7 +2616,7 @@
             <para>
                 It is often necessary to access variables in the
                 BitBake datastore using Python functions.
-                The Bitbake datastore has an API that allows you this
+                The BitBake datastore has an API that allows you this
                 access.
                 Here is a list of available operations:
             </para>

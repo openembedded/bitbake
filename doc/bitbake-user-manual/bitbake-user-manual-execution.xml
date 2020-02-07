@@ -113,7 +113,7 @@
         </para>
 
         <para>
-            Prior to parsing configuration files, Bitbake looks
+            Prior to parsing configuration files, BitBake looks
             at certain variables, including:
             <itemizedlist>
                 <listitem><para>
@@ -339,7 +339,7 @@
             <link linkend='var-bb-BB_HASHCONFIG_WHITELIST'><filename>BB_HASHCONFIG_WHITELIST</filename></link>)
             and then checking if the checksum matches.
             If that checksum matches what is in the cache and the recipe
-            and class files have not changed, Bitbake is able to use
+            and class files have not changed, BitBake is able to use
             the cache.
             BitBake then reloads the cached information about the recipe
             instead of reparsing it from scratch.
@@ -429,7 +429,7 @@
             The default
             <link linkend='var-bb-PREFERRED_PROVIDER'><filename>PREFERRED_PROVIDER</filename></link>
             is the provider with the same name as the target.
-            Bitbake iterates through each target it needs to build and
+            BitBake iterates through each target it needs to build and
             resolves them and their dependencies using this process.
         </para>
 
@@ -821,7 +821,7 @@
 
         <para>
             It is worth noting that BitBake's "-S" option lets you
-            debug Bitbake's processing of signatures.
+            debug BitBake's processing of signatures.
             The options passed to -S allow different debugging modes
             to be used, either using BitBake's own debug functions
             or possibly those defined in the metadata/signature handler
