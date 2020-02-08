@@ -1864,7 +1864,7 @@
                         accessing your <filename>$HOME/.ccache</filename>
                         directory.
                         The following command "whitelists" the environment variable
-                        <filename>CCACHE_DIR</filename> causing BitBack to allow that
+                        <filename>CCACHE_DIR</filename> causing BitBake to allow that
                         variable into the datastore:
                         <literallayout class='monospaced'>
      export BB_ENV_EXTRAWHITE="$BB_ENV_EXTRAWHITE CCACHE_DIR"
