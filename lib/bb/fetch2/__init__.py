@@ -499,6 +499,11 @@ def fetcher_init(d):
     srcrev_policy = d.getVar('BB_SRCREV_POLICY') or "clear"
     if srcrev_policy == "cache":
         logger.debug(1, "Keeping SRCREV cache due to cache policy of: %s", srcrev_policy)
+        # We still need to remove keys that are marked with "dontcache".
+        for key in list(revs.keys()):
+            if key.startswith("dontcache-"):
+                logger.debug(1, "Removing SRCREV key: %s" % key)
+                revs.pop(key)
     elif srcrev_policy == "clear":
         logger.debug(1, "Clearing SRCREV cache due to cache policy of: %s", srcrev_policy)
         revs.clear()
@@ -729,9 +734,8 @@ def subprocess_setup():
     signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 
 def get_autorev(d):
-    #  only not cache src rev in autorev case
-    if d.getVar('BB_SRCREV_POLICY') != "cache":
-        d.setVar('BB_DONT_CACHE', '1')
+    # Do not cache the srcrev in the autorev case
+    d.setVar('BB_DONT_CACHE', '1')
     return "AUTOINC"
 
 def get_srcrev(d, method_name='sortable_revision'):
@@ -1594,7 +1598,13 @@ class FetchMethod(object):
         return True, str(latest_rev)
 
     def generate_revision_key(self, ud, d, name):
-        return self._revision_key(ud, d, name)
+        key = self._revision_key(ud, d, name)
+        if d.getVar('BB_DONT_CACHE'):
+            # Mark the key so it can be removed on the next bitbake run even if
+            # BB_SRCREV_POLICY is "cache".
+            return "dontcache-%s" % key
+        else:
+            return key
 
     def latest_versionstring(self, ud, d):
         """
