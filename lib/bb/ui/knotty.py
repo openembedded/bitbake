@@ -590,6 +590,7 @@ def main(server, eventHandler, params, tf = TerminalFilter):
             if isinstance(event, bb.command.CommandExit):
                 if not return_value:
                     return_value = event.exitcode
+                main.shutdown = 2
                 continue
             if isinstance(event, (bb.command.CommandCompleted, bb.cooker.CookerExit)):
                 main.shutdown = 2
