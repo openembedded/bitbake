@@ -485,17 +485,22 @@ def fetcher_init(d):
     Called to initialize the fetchers once the configuration data is known.
     Calls before this must not hit the cache.
     """
+
+    revs = bb.persist_data.persist('BB_URI_HEADREVS', d)
+    try:
+        # fetcher_init is called multiple times, so make sure we only save the
+        # revs the first time it is called.
+        if not bb.fetch2.saved_headrevs:
+            bb.fetch2.saved_headrevs = dict(revs)
+    except:
+        pass
+
     # When to drop SCM head revisions controlled by user policy
     srcrev_policy = d.getVar('BB_SRCREV_POLICY') or "clear"
     if srcrev_policy == "cache":
         logger.debug(1, "Keeping SRCREV cache due to cache policy of: %s", srcrev_policy)
     elif srcrev_policy == "clear":
         logger.debug(1, "Clearing SRCREV cache due to cache policy of: %s", srcrev_policy)
-        revs = bb.persist_data.persist('BB_URI_HEADREVS', d)
-        try:
-            bb.fetch2.saved_headrevs = revs.items()
-        except:
-            pass
         revs.clear()
     else:
         raise FetchError("Invalid SRCREV cache policy of: %s" % srcrev_policy)
@@ -514,22 +519,12 @@ def fetcher_parse_done():
 
 def fetcher_compare_revisions(d):
     """
-    Compare the revisions in the persistant cache with current values and
-    return true/false on whether they've changed.
+    Compare the revisions in the persistent cache with the saved values from
+    when bitbake was started and return true if they have changed.
     """
 
-    data = bb.persist_data.persist('BB_URI_HEADREVS', d).items()
-    data2 = bb.fetch2.saved_headrevs
-
-    changed = False
-    for key in data:
-        if key not in data2 or data2[key] != data[key]:
-            logger.debug(1, "%s changed", key)
-            changed = True
-            return True
-        else:
-            logger.debug(2, "%s did not change", key)
-    return False
+    headrevs = dict(bb.persist_data.persist('BB_URI_HEADREVS', d))
+    return headrevs != bb.fetch2.saved_headrevs
 
 def mirror_from_string(data):
     mirrors = (data or "").replace('\\n',' ').split()
