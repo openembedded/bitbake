@@ -48,6 +48,9 @@ class SignatureGenerator(object):
     def get_unihash(self, task):
         return self.taskhash[task]
 
+    def postparsing_clean_cache(self):
+        return
+
     def get_taskhash(self, fn, task, deps, dataCache):
         return "0"
 
@@ -151,6 +154,14 @@ class SignatureGeneratorBasic(SignatureGenerator):
 
         for task in taskdeps:
             d.setVar("BB_BASEHASH_task-%s" % task, self.basehash[fn + "." + task])
+
+    def postparsing_clean_cache(self):
+        #
+        # After parsing we can remove some things from memory to reduce our memory footprint
+        #
+        self.gendeps = {}
+        self.lookupcache = {}
+        self.taskdeps = {}
 
     def rundep_check(self, fn, recipename, task, dep, depname, dataCache):
         # Return True if we should keep the dependency, False to drop it
