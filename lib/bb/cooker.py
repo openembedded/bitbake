@@ -1949,6 +1949,7 @@ class Parser(multiprocessing.Process):
 
     def parse(self, filename, appends):
         try:
+            origfilter = bb.event.LogHandler.filter
             # Record the filename we're parsing into any events generated
             def parse_filter(self, record):
                 record.taskpid = bb.event.worker_pid
@@ -1971,6 +1972,8 @@ class Parser(multiprocessing.Process):
         # a SystemExit event for example.
         except BaseException as exc:
             return True, ParsingFailure(exc, filename)
+        finally:
+            bb.event.LogHandler.filter = origfilter
 
 class CookerParser(object):
     def __init__(self, cooker, filelist, masked):
