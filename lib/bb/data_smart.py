@@ -607,6 +607,10 @@ class DataSmart(MutableMapping):
         """
         Rename the variable key to newkey
         """
+        if key == newkey:
+            bb.warn("Calling renameVar with equivalent keys (%s) is invalid" % key)
+            return
+
         if '_remote_data' in self.dict:
             connector = self.dict["_remote_data"]["_content"]
             res = connector.renameVar(key, newkey)
