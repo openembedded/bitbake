@@ -1944,7 +1944,8 @@ class Parser(multiprocessing.Process):
                 except IndexError:
                     break
                 result = self.parse(*job)
-
+                # Clear the siggen cache after parsing to control memory usage, its huge
+                bb.parse.siggen.postparsing_clean_cache()
             try:
                 self.results.put(result, timeout=0.25)
             except queue.Full:
