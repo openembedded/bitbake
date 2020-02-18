@@ -24,7 +24,7 @@ class LayerIndexPlugin(ActionPlugin):
     This class inherits ActionPlugin to get do_add_layer.
     """
 
-    def get_fetch_layer(self, fetchdir, url, subdir, fetch_layer, branch):
+    def get_fetch_layer(self, fetchdir, url, subdir, fetch_layer, branch, shallow=False):
         layername = self.get_layer_name(url)
         if os.path.splitext(layername)[1] == '.git':
             layername = os.path.splitext(layername)[0]
@@ -32,10 +32,12 @@ class LayerIndexPlugin(ActionPlugin):
         layerdir = os.path.join(repodir, subdir)
         if not os.path.exists(repodir):
             if fetch_layer:
-                cmd = ['git', 'clone', '-b' , branch, url, repodir]
-                if not branch:
-                    # Branch really shouldn't be empty, but use the repo default if it is
-                    cmd = ['git', 'clone', url, repodir]
+                cmd = ['git', 'clone']
+                if shallow:
+                    cmd.extend(['--depth', '1'])
+                if branch:
+                    cmd.extend(['-b' , branch])
+                cmd.extend([url, repodir])
                 result = subprocess.call(cmd)
                 if result:
                     logger.error("Failed to download %s (%s)" % (url, branch))
@@ -176,7 +178,8 @@ class LayerIndexPlugin(ActionPlugin):
                                                       layerBranch.layer.vcs_url,
                                                       layerBranch.vcs_subdir,
                                                       not args.show_only,
-                                                      layerBranch.actual_branch)
+                                                      layerBranch.actual_branch,
+                                                      args.shallow)
                 if not name:
                     # Error already shown
                     return 1
@@ -209,6 +212,7 @@ class LayerIndexPlugin(ActionPlugin):
         parser_layerindex_fetch = self.add_command(sp, 'layerindex-fetch', self.do_layerindex_fetch, parserecipes=False)
         parser_layerindex_fetch.add_argument('-n', '--show-only', help='show dependencies and do nothing else', action='store_true')
         parser_layerindex_fetch.add_argument('-b', '--branch', help='branch name to fetch')
+        parser_layerindex_fetch.add_argument('-s', '--shallow', help='do only shallow clones (--depth=1)', action='store_true')
         parser_layerindex_fetch.add_argument('-i', '--ignore', help='assume the specified layers do not need to be fetched/added (separate multiple layers with commas, no spaces)', metavar='LAYER')
         parser_layerindex_fetch.add_argument('layername', nargs='+', help='layer to fetch')
 
