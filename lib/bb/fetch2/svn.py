@@ -47,7 +47,7 @@ class Svn(FetchMethod):
         svndir = d.getVar("SVNDIR") or (d.getVar("DL_DIR") + "/svn")
         relpath = self._strip_leading_slashes(ud.path)
         ud.pkgdir = os.path.join(svndir, ud.host, relpath)
-        ud.moddir = os.path.join(ud.pkgdir, ud.module)
+        ud.moddir = os.path.join(ud.pkgdir, ud.path_spec)
         # Protects the repository from concurrent updates, e.g. from two
         # recipes fetching different revisions at the same time
         ud.svnlock = os.path.join(ud.pkgdir, "svn.lock")
