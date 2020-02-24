@@ -920,9 +920,11 @@ class RunQueueData:
             runq_build = {}
 
             for task in self.cooker.configuration.runall:
+                if not task.startswith("do_"):
+                    task = "do_{0}".format(task)
                 runall_tids = set()
                 for tid in list(self.runtaskentries):
-                    wanttid = fn_from_tid(tid) + ":do_%s" % task
+                    wanttid = "{0}:{1}".format(fn_from_tid(tid), task)
                     if wanttid in delcount:
                         self.runtaskentries[wanttid] = delcount[wanttid]
                     if wanttid in self.runtaskentries:
@@ -949,7 +951,9 @@ class RunQueueData:
             runq_build = {}
 
             for task in self.cooker.configuration.runonly:
-                runonly_tids = { k: v for k, v in self.runtaskentries.items() if taskname_from_tid(k) == "do_%s" % task }
+                if not task.startswith("do_"):
+                    task = "do_{0}".format(task)
+                runonly_tids = { k: v for k, v in self.runtaskentries.items() if taskname_from_tid(k) == task }
 
                 for tid in list(runonly_tids):
                     mark_active(tid,1)
