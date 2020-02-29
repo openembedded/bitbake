@@ -34,6 +34,7 @@ _checksum_cache = bb.checksum.FileChecksumCache()
 logger = logging.getLogger("BitBake.Fetcher")
 
 CHECKSUM_LIST = [ "md5", "sha256", "sha1", "sha384", "sha512" ]
+SHOWN_CHECKSUM_LIST = ["sha256"]
 
 class BBFetchException(Exception):
     """Class all fetch exceptions inherit from"""
@@ -580,7 +581,9 @@ def verify_checksum(ud, d, precomputed={}):
     checksum_dict = {ci["id"] : ci["data"] for ci in checksum_infos}
     checksum_event = {"%ssum" % ci["id"] : ci["data"] for ci in checksum_infos}
 
-    checksum_lines = ["SRC_URI[%s] = \"%s\"" % (ci["name"], ci["data"]) for ci in checksum_infos]
+    for ci in checksum_infos:
+        if ci["id"] in SHOWN_CHECKSUM_LIST:
+            checksum_lines = ["SRC_URI[%s] = \"%s\"" % (ci["name"], ci["data"])]
 
     # If no checksum has been provided
     if ud.method.recommends_checksum(ud) and all(ci["expected"] is None for ci in checksum_infos):
