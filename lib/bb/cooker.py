@@ -1023,16 +1023,16 @@ class BBCooker:
             bb.event.fire(bb.event.FilesMatchingFound(filepattern, matches), self.data)
 
     def findProviders(self, mc=''):
-        return bb.providers.findProviders(self.data, self.recipecaches[mc], self.recipecaches[mc].pkg_pn)
+        return bb.providers.findProviders(self.databuilder.mcdata[mc], self.recipecaches[mc], self.recipecaches[mc].pkg_pn)
 
     def findBestProvider(self, pn, mc=''):
         if pn in self.recipecaches[mc].providers:
             filenames = self.recipecaches[mc].providers[pn]
-            eligible, foundUnique = bb.providers.filterProviders(filenames, pn, self.data, self.recipecaches[mc])
+            eligible, foundUnique = bb.providers.filterProviders(filenames, pn, self.databuilder.mcdata[mc], self.recipecaches[mc])
             filename = eligible[0]
             return None, None, None, filename
         elif pn in self.recipecaches[mc].pkg_pn:
-            return bb.providers.findBestProvider(pn, self.data, self.recipecaches[mc], self.recipecaches[mc].pkg_pn)
+            return bb.providers.findBestProvider(pn, self.databuilder.mcdata[mc], self.recipecaches[mc], self.recipecaches[mc].pkg_pn)
         else:
             return None, None, None, None
 
