@@ -414,7 +414,11 @@ class CommandsSync:
     getAllAppends.readonly = True
 
     def findProviders(self, command, params):
-        return command.cooker.findProviders()
+        try:
+            mc = params[0]
+        except IndexError:
+            mc = ''
+        return command.cooker.findProviders(mc)
     findProviders.readonly = True
 
     def findBestProvider(self, command, params):
