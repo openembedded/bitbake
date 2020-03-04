@@ -127,12 +127,13 @@ class TinfoilCookerAdapter:
 
     class TinfoilRecipeCacheAdapter:
         """ cooker.recipecache adapter """
-        def __init__(self, tinfoil):
+        def __init__(self, tinfoil, mc=''):
             self.tinfoil = tinfoil
+            self.mc = mc
             self._cache = {}
 
         def get_pkg_pn_fn(self):
-            pkg_pn = defaultdict(list, self.tinfoil.run_command('getRecipes') or [])
+            pkg_pn = defaultdict(list, self.tinfoil.run_command('getRecipes', self.mc) or [])
             pkg_fn = {}
             for pn, fnlist in pkg_pn.items():
                 for fn in fnlist:
@@ -151,27 +152,27 @@ class TinfoilCookerAdapter:
                 self.get_pkg_pn_fn()
                 return self._cache[name]
             elif name == 'deps':
-                attrvalue = defaultdict(list, self.tinfoil.run_command('getRecipeDepends') or [])
+                attrvalue = defaultdict(list, self.tinfoil.run_command('getRecipeDepends', self.mc) or [])
             elif name == 'rundeps':
-                attrvalue = defaultdict(lambda: defaultdict(list), self.tinfoil.run_command('getRuntimeDepends') or [])
+                attrvalue = defaultdict(lambda: defaultdict(list), self.tinfoil.run_command('getRuntimeDepends', self.mc) or [])
             elif name == 'runrecs':
-                attrvalue = defaultdict(lambda: defaultdict(list), self.tinfoil.run_command('getRuntimeRecommends') or [])
+                attrvalue = defaultdict(lambda: defaultdict(list), self.tinfoil.run_command('getRuntimeRecommends', self.mc) or [])
             elif name == 'pkg_pepvpr':
-                attrvalue = self.tinfoil.run_command('getRecipeVersions') or {}
+                attrvalue = self.tinfoil.run_command('getRecipeVersions', self.mc) or {}
             elif name == 'inherits':
-                attrvalue = self.tinfoil.run_command('getRecipeInherits') or {}
+                attrvalue = self.tinfoil.run_command('getRecipeInherits', self.mc) or {}
             elif name == 'bbfile_priority':
-                attrvalue = self.tinfoil.run_command('getBbFilePriority') or {}
+                attrvalue = self.tinfoil.run_command('getBbFilePriority', self.mc) or {}
             elif name == 'pkg_dp':
-                attrvalue = self.tinfoil.run_command('getDefaultPreference') or {}
+                attrvalue = self.tinfoil.run_command('getDefaultPreference', self.mc) or {}
             elif name == 'fn_provides':
-                attrvalue = self.tinfoil.run_command('getRecipeProvides') or {}
+                attrvalue = self.tinfoil.run_command('getRecipeProvides', self.mc) or {}
             elif name == 'packages':
-                attrvalue = self.tinfoil.run_command('getRecipePackages') or {}
+                attrvalue = self.tinfoil.run_command('getRecipePackages', self.mc) or {}
             elif name == 'packages_dynamic':
-                attrvalue = self.tinfoil.run_command('getRecipePackagesDynamic') or {}
+                attrvalue = self.tinfoil.run_command('getRecipePackagesDynamic', self.mc) or {}
             elif name == 'rproviders':
-                attrvalue = self.tinfoil.run_command('getRProviders') or {}
+                attrvalue = self.tinfoil.run_command('getRProviders', self.mc) or {}
             else:
                 raise AttributeError("%s instance has no attribute '%s'" % (self.__class__.__name__, name))
 
@@ -182,8 +183,9 @@ class TinfoilCookerAdapter:
         self.tinfoil = tinfoil
         self.collection = self.TinfoilCookerCollectionAdapter(tinfoil)
         self.recipecaches = {}
-        # FIXME all machines
         self.recipecaches[''] = self.TinfoilRecipeCacheAdapter(tinfoil)
+        for mc in (tinfoil.config_data.getVar('BBMULTICONFIG') or '').split():
+            self.recipecaches[mc] = self.TinfoilRecipeCacheAdapter(tinfoil, mc)
         self._cache = {}
     def __getattr__(self, name):
         # Grab these only when they are requested since they aren't always used
@@ -501,11 +503,11 @@ class Tinfoil:
         """
         return OrderedDict(self.run_command('getSkippedRecipes'))
 
-    def get_all_providers(self):
-        return defaultdict(list, self.run_command('allProviders'))
+    def get_all_providers(self, mc=''):
+        return defaultdict(list, self.run_command('allProviders', mc))
 
-    def find_providers(self):
-        return self.run_command('findProviders')
+    def find_providers(self, mc=''):
+        return self.run_command('findProviders', mc)
 
     def find_best_provider(self, pn):
         return self.run_command('findBestProvider', pn)
