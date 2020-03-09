@@ -370,7 +370,11 @@ def _log_settings_from_server(server, observe_only):
     if error:
         logger.error("Unable to get the value of BB_CONSOLELOG variable: %s" % error)
         raise BaseException(error)
-    return includelogs, loglines, consolelogfile
+    logconfigfile, error = server.runCommand([cmd, "BB_LOGCONFIG"])
+    if error:
+        logger.error("Unable to get the value of BB_LOGCONFIG variable: %s" % error)
+        raise BaseException(error)
+    return includelogs, loglines, consolelogfile, logconfigfile
 
 _evt_list = [ "bb.runqueue.runQueueExitWait", "bb.event.LogExecTTY", "logging.LogRecord",
               "bb.build.TaskFailed", "bb.build.TaskBase", "bb.event.ParseStarted",
@@ -387,7 +391,87 @@ def main(server, eventHandler, params, tf = TerminalFilter):
     if not params.observe_only:
         params.updateToServer(server, os.environ.copy())
 
-    includelogs, loglines, consolelogfile = _log_settings_from_server(server, params.observe_only)
+    includelogs, loglines, consolelogfile, logconfigfile = _log_settings_from_server(server, params.observe_only)
+
+    loglevel, _ = bb.msg.constructLogOptions()
+
+    if params.options.quiet == 0:
+        console_loglevel = loglevel
+    elif params.options.quiet > 2:
+        console_loglevel = bb.msg.BBLogFormatter.ERROR
+    else:
+        console_loglevel = bb.msg.BBLogFormatter.WARNING
+
+    logconfig = {
+        "version": 1,
+        "handlers": {
+            "BitBake.console": {
+                "class": "logging.StreamHandler",
+                "formatter": "BitBake.consoleFormatter",
+                "level": console_loglevel,
+                "stream": "ext://sys.stdout",
+                "filters": ["BitBake.stdoutFilter"],
+            },
+            "BitBake.errconsole": {
+                "class": "logging.StreamHandler",
+                "formatter": "BitBake.consoleFormatter",
+                "level": loglevel,
+                "stream": "ext://sys.stderr",
+                "filters": ["BitBake.stderrFilter"],
+            },
+        },
+        "formatters": {
+            # This format instance will get color output enabled by the
+            # terminal
+            "BitBake.consoleFormatter" : {
+                "()": "bb.msg.BBLogFormatter",
+                "format": "%(levelname)s: %(message)s"
+            },
+            # The file log requires a separate instance so that it doesn't get
+            # color enabled
+            "BitBake.logfileFormatter": {
+                "()": "bb.msg.BBLogFormatter",
+                "format": "%(levelname)s: %(message)s"
+            }
+        },
+        "filters": {
+            "BitBake.stdoutFilter": {
+                "()": "bb.msg.LogFilterLTLevel",
+                "level": "ERROR"
+            },
+            "BitBake.stderrFilter": {
+                "()": "bb.msg.LogFilterGEQLevel",
+                "level": "ERROR"
+            }
+        },
+        "loggers": {
+            "BitBake": {
+                "level": loglevel,
+                "handlers": ["BitBake.console", "BitBake.errconsole"],
+            }
+        },
+        "disable_existing_loggers": False
+    }
+
+    # Enable the console log file if enabled
+    if consolelogfile and not params.options.show_environment and not params.options.show_versions:
+        logconfig["handlers"]["BitBake.consolelog"] ={
+            "class": "logging.FileHandler",
+            "formatter": "BitBake.logfileFormatter",
+            "level": "INFO",
+            "filename": consolelogfile,
+        }
+        logconfig["loggers"]["BitBake"]["handlers"].append("BitBake.consolelog")
+
+        bb.utils.mkdirhier(os.path.dirname(consolelogfile))
+        loglink = os.path.join(os.path.dirname(consolelogfile), 'console-latest.log')
+        bb.utils.remove(loglink)
+        try:
+           os.symlink(os.path.basename(consolelogfile), loglink)
+        except OSError:
+           pass
+
+    bb.msg.setLoggingConfig(logconfig, logconfigfile)
 
     if sys.stdin.isatty() and sys.stdout.isatty():
         log_exec_tty = True
@@ -396,44 +480,22 @@ def main(server, eventHandler, params, tf = TerminalFilter):
 
     helper = uihelper.BBUIHelper()
 
-    console = logging.StreamHandler(sys.stdout)
-    errconsole = logging.StreamHandler(sys.stderr)
-    format_str = "%(levelname)s: %(message)s"
-    format = bb.msg.BBLogFormatter(format_str)
-    if params.options.quiet == 0:
-        forcelevel = None
-    elif params.options.quiet > 2:
-        forcelevel = bb.msg.BBLogFormatter.ERROR
-    else:
-        forcelevel = bb.msg.BBLogFormatter.WARNING
-    bb.msg.addDefaultlogFilter(console, bb.msg.BBLogFilterStdOut, forcelevel)
-    bb.msg.addDefaultlogFilter(errconsole, bb.msg.BBLogFilterStdErr)
-    console.setFormatter(format)
-    errconsole.setFormatter(format)
-    if not bb.msg.has_console_handler(logger):
-        logger.addHandler(console)
-        logger.addHandler(errconsole)
+    # Look for the specially designated handlers which need to be passed to the
+    # terminal handler
+    console = None
+    errconsole = None
+    for h in logger.handlers:
+        name = getattr(h, '_name', None)
+        if name == 'BitBake.console':
+            console = h
+        elif name == 'BitBake.errconsole':
+            errconsole = h
 
     bb.utils.set_process_name("KnottyUI")
 
     if params.options.remote_server and params.options.kill_server:
         server.terminateServer()
         return
-
-    consolelog = None
-    if consolelogfile and not params.options.show_environment and not params.options.show_versions:
-        bb.utils.mkdirhier(os.path.dirname(consolelogfile))
-        conlogformat = bb.msg.BBLogFormatter(format_str)
-        consolelog = logging.FileHandler(consolelogfile)
-        bb.msg.addDefaultlogFilter(consolelog)
-        consolelog.setFormatter(conlogformat)
-        logger.addHandler(consolelog)
-        loglink = os.path.join(os.path.dirname(consolelogfile), 'console-latest.log')
-        bb.utils.remove(loglink)
-        try:
-           os.symlink(os.path.basename(consolelogfile), loglink)
-        except OSError:
-           pass
 
     llevel, debug_domains = bb.msg.constructLogOptions()
     server.runCommand(["setEventMask", server.getEventHandle(), llevel, debug_domains, _evt_list])
@@ -760,9 +822,5 @@ def main(server, eventHandler, params, tf = TerminalFilter):
         import errno
         if e.errno == errno.EPIPE:
             pass
-
-    if consolelog:
-        logger.removeHandler(consolelog)
-        consolelog.close()
 
     return return_value
