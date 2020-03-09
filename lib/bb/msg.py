@@ -135,6 +135,28 @@ class BBLogFilterStdOut(BBLogFilter):
             return True
         return False
 
+class LogFilterGEQLevel(logging.Filter):
+    def __init__(self, level):
+        self.strlevel = str(level)
+        self.level = stringToLevel(level)
+
+    def __repr__(self):
+        return "%s level >= %s (%d)" % (self.__class__.__name__, self.strlevel, self.level)
+
+    def filter(self, record):
+        return (record.levelno >= self.level)
+
+class LogFilterLTLevel(logging.Filter):
+    def __init__(self, level):
+        self.strlevel = str(level)
+        self.level = stringToLevel(level)
+
+    def __repr__(self):
+        return "%s level < %s (%d)" % (self.__class__.__name__, self.strlevel, self.level)
+
+    def filter(self, record):
+        return (record.levelno < self.level)
+
 # Message control functions
 #
 
@@ -174,6 +196,19 @@ def addDefaultlogFilter(handler, cls = BBLogFilter, forcelevel=None):
         level = forcelevel
 
     cls(handler, level, debug_domains)
+
+def stringToLevel(level):
+    try:
+        return int(level)
+    except ValueError:
+        pass
+
+    try:
+        return getattr(logging, level)
+    except AttributeError:
+        pass
+
+    return getattr(BBLogFormatter, level)
 
 #
 # Message handling functions
