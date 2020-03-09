@@ -119,22 +119,6 @@ class BBLogFilter(object):
             return True
         return False
 
-class BBLogFilterStdErr(BBLogFilter):
-    def filter(self, record):
-        if not BBLogFilter.filter(self, record):
-            return False
-        if record.levelno >= logging.ERROR:
-            return True
-        return False
-
-class BBLogFilterStdOut(BBLogFilter):
-    def filter(self, record):
-        if not BBLogFilter.filter(self, record):
-            return False
-        if record.levelno < logging.ERROR:
-            return True
-        return False
-
 class LogFilterGEQLevel(logging.Filter):
     def __init__(self, level):
         self.strlevel = str(level)
