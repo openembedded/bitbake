@@ -98,6 +98,9 @@ class BBLogFormatter(logging.Formatter):
     def enable_color(self):
         self.color_enabled = True
 
+    def __repr__(self):
+        return "%s fmt='%s' color=%s" % (self.__class__.__name__, self._fmt, "True" if self.color_enabled else "False")
+
 class BBLogFilter(object):
     def __init__(self, handler, level, debug_domains):
         self.stdlevel = level
