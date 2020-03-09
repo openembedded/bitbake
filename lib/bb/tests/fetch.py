@@ -1691,6 +1691,47 @@ class GitShallowTest(FetcherTest):
         # Verify the submodule is also shallow
         self.assertRevCount(1, cwd=os.path.join(self.gitdir, 'gitsubmodule'))
 
+    def test_shallow_submodule_mirrors(self):
+        self.add_empty_file('a')
+        self.add_empty_file('b')
+
+        smdir = os.path.join(self.tempdir, 'gitsubmodule')
+        bb.utils.mkdirhier(smdir)
+        self.git('init', cwd=smdir)
+        # Make this look like it was cloned from a remote...
+        self.git('config --add remote.origin.url "%s"' % smdir, cwd=smdir)
+        self.git('config --add remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"', cwd=smdir)
+        self.add_empty_file('asub', cwd=smdir)
+        self.add_empty_file('bsub', cwd=smdir)
+
+        self.git('submodule init', cwd=self.srcdir)
+        self.git('submodule add file://%s' % smdir, cwd=self.srcdir)
+        self.git('submodule update', cwd=self.srcdir)
+        self.git('commit -m submodule -a', cwd=self.srcdir)
+
+        uri = 'gitsm://%s;protocol=file;subdir=${S}' % self.srcdir
+
+        # Fetch once to generate the shallow tarball
+        fetcher, ud = self.fetch(uri)
+
+        # Set up the mirror
+        mirrordir = os.path.join(self.tempdir, 'mirror')
+        os.rename(self.dldir, mirrordir)
+        self.d.setVar('PREMIRRORS', 'gitsm://.*/.* file://%s/\n' % mirrordir)
+
+        # Fetch from the mirror
+        bb.utils.remove(self.dldir, recurse=True)
+        bb.utils.remove(self.gitdir, recurse=True)
+        self.fetch_and_unpack(uri)
+
+        # Verify the main repository is shallow
+        self.assertRevCount(1)
+
+        # Verify the gitsubmodule directory is present
+        assert os.listdir(os.path.join(self.gitdir, 'gitsubmodule'))
+
+        # Verify the submodule is also shallow
+        self.assertRevCount(1, cwd=os.path.join(self.gitdir, 'gitsubmodule'))
 
     if any(os.path.exists(os.path.join(p, 'git-annex')) for p in os.environ.get('PATH').split(':')):
         def test_shallow_annex(self):
