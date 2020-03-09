@@ -43,12 +43,13 @@ class BBLogger(Logger):
         Logger.__init__(self, name)
 
     def bbdebug(self, level, msg, *args, **kwargs):
+        loglevel = logging.DEBUG - level + 1
         if not bb.event.worker_pid:
-            if self.name in bb.msg.loggerDefaultDomains and level > (bb.msg.loggerDefaultDomains[self.name]):
+            if self.name in bb.msg.loggerDefaultDomains and loglevel > (bb.msg.loggerDefaultDomains[self.name]):
                 return
             if level > (bb.msg.loggerDefaultDebugLevel):
                 return
-        return self.log(logging.DEBUG - level + 1, msg, *args, **kwargs)
+        return self.log(loglevel, msg, *args, **kwargs)
 
     def plain(self, msg, *args, **kwargs):
         return self.log(logging.INFO + 1, msg, *args, **kwargs)
