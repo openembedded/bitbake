@@ -430,6 +430,11 @@ def main(server, eventHandler, params, tf = TerminalFilter):
     llevel, debug_domains = bb.msg.constructLogOptions()
     server.runCommand(["setEventMask", server.getEventHandle(), llevel, debug_domains, _evt_list])
 
+    # The logging_tree module is *extremely* helpful in debugging logging
+    # domains. Uncomment here to dump the logging tree when bitbake starts
+    #import logging_tree
+    #logging_tree.printout()
+
     universe = False
     if not params.observe_only:
         params.updateFromServer(server)
