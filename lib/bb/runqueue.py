@@ -27,6 +27,7 @@ import pprint
 
 bblogger = logging.getLogger("BitBake")
 logger = logging.getLogger("BitBake.RunQueue")
+hashequiv_logger = logging.getLogger("BitBake.RunQueue.HashEquiv")
 
 __find_sha256__ = re.compile( r'(?i)(?<![a-z0-9])[a-f0-9]{64}(?![a-z0-9])' )
 
@@ -2263,7 +2264,7 @@ class RunQueueExecute:
             self.updated_taskhash_queue.remove((tid, unihash))
 
             if unihash != self.rqdata.runtaskentries[tid].unihash:
-                logger.info("Task %s unihash changed to %s" % (tid, unihash))
+                hashequiv_logger.info("Task %s unihash changed to %s" % (tid, unihash))
                 self.rqdata.runtaskentries[tid].unihash = unihash
                 bb.parse.siggen.set_unihash(tid, unihash)
                 toprocess.add(tid)
@@ -2308,7 +2309,7 @@ class RunQueueExecute:
                 elif tid in self.scenequeue_covered or tid in self.sq_live:
                     # Already ran this setscene task or it running. Report the new taskhash
                     bb.parse.siggen.report_unihash_equiv(tid, newhash, origuni, newuni, self.rqdata.dataCaches)
-                    logger.info("Already covered setscene for %s so ignoring rehash (remap)" % (tid))
+                    hashequiv_logger.info("Already covered setscene for %s so ignoring rehash (remap)" % (tid))
                     remapped = True
 
                 if not remapped:
@@ -2327,7 +2328,7 @@ class RunQueueExecute:
             for mc in self.rq.fakeworker:
                 self.rq.fakeworker[mc].process.stdin.write(b"<newtaskhashes>" + pickle.dumps(bb.parse.siggen.get_taskhashes()) + b"</newtaskhashes>")
 
-            logger.debug(1, pprint.pformat("Tasks changed:\n%s" % (changed)))
+            hashequiv_logger.debug(1, pprint.pformat("Tasks changed:\n%s" % (changed)))
 
         for tid in changed:
             if tid not in self.rqdata.runq_setscene_tids:
@@ -2346,7 +2347,7 @@ class RunQueueExecute:
             # Check no tasks this covers are running
             for dep in self.sqdata.sq_covered_tasks[tid]:
                 if dep in self.runq_running and dep not in self.runq_complete:
-                    logger.debug(2, "Task %s is running which blocks setscene for %s from running" % (dep, tid))
+                    hashequiv_logger.debug(2, "Task %s is running which blocks setscene for %s from running" % (dep, tid))
                     valid = False
                     break
             if not valid:
@@ -2409,7 +2410,7 @@ class RunQueueExecute:
 
         for (tid, harddepfail, origvalid) in update_tasks:
             if tid in self.sqdata.valid and not origvalid:
-                logger.info("Setscene task %s became valid" % tid)
+                hashequiv_logger.info("Setscene task %s became valid" % tid)
             if harddepfail:
                 self.sq_task_failoutright(tid)
 
