@@ -1,0 +1,27 @@
+{
+    "version": 1,
+    "handlers": {
+        "autobuilderlog": {
+            "class": "logging.FileHandler",
+            "formatter": "logfileFormatter",
+            "level": "DEBUG",
+            "filename": "autobuilder.log",
+            "mode": "w"
+        }
+    },
+    "formatters": {
+            "logfileFormatter": {
+                "format": "%(name)s: %(levelname)s: %(message)s"
+            }
+    },
+    "loggers": {
+        "BitBake.SigGen.HashEquiv": {
+            "level": "VERBOSE",
+            "handlers": ["autobuilderlog"]
+        },
+        "BitBake.RunQueue.HashEquiv": {
+            "level": "VERBOSE",
+            "handlers": ["autobuilderlog"]
+        }
+    }
+}
