@@ -539,6 +539,17 @@
             </glossdef>
         </glossentry>
 
+        <glossentry id='var-bb-BB_LOGCONFIG'><glossterm>BB_LOGCONFIG</glossterm>
+            <glossdef>
+                <para>
+                    Specifies the name of a config file that contains the user
+                    logging configuration. See
+                    <link linkend="logging">Logging</link> for additional
+                    information
+                </para>
+            </glossdef>
+        </glossentry>
+
         <glossentry id='var-bb-BB_LOGFMT'><glossterm>BB_LOGFMT</glossterm>
             <glossdef>
                 <para>
