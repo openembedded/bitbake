@@ -522,7 +522,7 @@ def main(server, eventHandler, params, tf = TerminalFilter):
                         event.msg = taskinfo['title'] + ': ' + event.msg
                 if hasattr(event, 'fn'):
                     event.msg = event.fn + ': ' + event.msg
-                logger.handle(event)
+                logging.getLogger(event.name).handle(event)
                 continue
 
             if isinstance(event, bb.build.TaskFailedSilent):
