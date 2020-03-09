@@ -109,12 +109,11 @@ def pluralise(singular, plural, qty):
 
 
 class InteractConsoleLogFilter(logging.Filter):
-    def __init__(self, tf, format):
+    def __init__(self, tf):
         self.tf = tf
-        self.format = format
 
     def filter(self, record):
-        if record.levelno == self.format.NOTE and (record.msg.startswith("Running") or record.msg.startswith("recipe ")):
+        if record.levelno == bb.msg.BBLogFormatter.NOTE and (record.msg.startswith("Running") or record.msg.startswith("recipe ")):
             return False
         self.tf.clearFooter()
         return True
@@ -150,7 +149,7 @@ class TerminalFilter(object):
                 cr = (25, 80)
         return cr
 
-    def __init__(self, main, helper, console, errconsole, format, quiet):
+    def __init__(self, main, helper, console, errconsole, quiet):
         self.main = main
         self.helper = helper
         self.cuu = None
@@ -180,7 +179,16 @@ class TerminalFilter(object):
             termios.tcsetattr(fd, termios.TCSADRAIN, new)
             curses.setupterm()
             if curses.tigetnum("colors") > 2:
-                format.enable_color()
+                if console:
+                    try:
+                        console.formatter.enable_color()
+                    except AttributeError:
+                        pass
+                if errconsole:
+                    try:
+                        errconsole.formatter.enable_color()
+                    except AttributeError:
+                        pass
             self.ed = curses.tigetstr("ed")
             if self.ed:
                 self.cuu = curses.tigetstr("cuu")
@@ -197,9 +205,9 @@ class TerminalFilter(object):
             bb.note("Unable to use interactive mode for this terminal, using fallback")
             return
         if console:
-            console.addFilter(InteractConsoleLogFilter(self, format))
+            console.addFilter(InteractConsoleLogFilter(self))
         if errconsole:
-            errconsole.addFilter(InteractConsoleLogFilter(self, format))
+            errconsole.addFilter(InteractConsoleLogFilter(self))
 
         self.main_progress = None
 
@@ -469,7 +477,7 @@ def main(server, eventHandler, params, tf = TerminalFilter):
     printinterval = 5000
     lastprint = time.time()
 
-    termfilter = tf(main, helper, console, errconsole, format, params.options.quiet)
+    termfilter = tf(main, helper, console, errconsole, params.options.quiet)
     atexit.register(termfilter.finish)
 
     while True:
@@ -508,21 +516,21 @@ def main(server, eventHandler, params, tf = TerminalFilter):
             if isinstance(event, logging.LogRecord):
                 lastprint = time.time()
                 printinterval = 5000
-                if event.levelno >= format.ERROR:
+                if event.levelno >= bb.msg.BBLogFormatter.ERROR:
                     errors = errors + 1
                     return_value = 1
-                elif event.levelno == format.WARNING:
+                elif event.levelno == bb.msg.BBLogFormatter.WARNING:
                     warnings = warnings + 1
 
                 if event.taskpid != 0:
                     # For "normal" logging conditions, don't show note logs from tasks
                     # but do show them if the user has changed the default log level to
                     # include verbose/debug messages
-                    if event.levelno <= format.NOTE and (event.levelno < llevel or (event.levelno == format.NOTE and llevel != format.VERBOSE)):
+                    if event.levelno <= bb.msg.BBLogFormatter.NOTE and (event.levelno < llevel or (event.levelno == bb.msg.BBLogFormatter.NOTE and llevel != bb.msg.BBLogFormatter.VERBOSE)):
                         continue
 
                     # Prefix task messages with recipe/task
-                    if event.taskpid in helper.pidmap and event.levelno != format.PLAIN:
+                    if event.taskpid in helper.pidmap and event.levelno != bb.msg.BBLogFormatter.PLAIN:
                         taskinfo = helper.running_tasks[helper.pidmap[event.taskpid]]
                         event.msg = taskinfo['title'] + ': ' + event.msg
                 if hasattr(event, 'fn'):

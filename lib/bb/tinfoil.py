@@ -735,11 +735,9 @@ class Tinfoil:
                         console = handler
                     elif handler.stream == sys.stderr:
                         errconsole = handler
-            format_str = "%(levelname)s: %(message)s"
-            format = bb.msg.BBLogFormatter(format_str)
             helper.shutdown = 0
             parseprogress = None
-            termfilter = bb.ui.knotty.TerminalFilter(helper, helper, console, errconsole, format, quiet=self.quiet)
+            termfilter = bb.ui.knotty.TerminalFilter(helper, helper, console, errconsole, quiet=self.quiet)
             try:
                 while True:
                     try:
