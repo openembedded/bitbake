@@ -414,7 +414,7 @@ class BitbakeWorker(object):
 
     def handle_workerdata(self, data):
         self.workerdata = pickle.loads(data)
-        bb.msg.loggerDefaultDebugLevel = self.workerdata["logdefaultdebug"]
+        bb.msg.loggerDefaultLogLevel = self.workerdata["logdefaultlevel"]
         bb.msg.loggerDefaultVerbose = self.workerdata["logdefaultverbose"]
         bb.msg.loggerVerboseLogs = self.workerdata["logdefaultverboselogs"]
         bb.msg.loggerDefaultDomains = self.workerdata["logdefaultdomain"]

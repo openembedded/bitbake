@@ -135,7 +135,7 @@ class BBLogFilterStdOut(BBLogFilter):
 # Message control functions
 #
 
-loggerDefaultDebugLevel = 0
+loggerDefaultLogLevel = BBLogFormatter.NOTE
 loggerDefaultVerbose = False
 loggerVerboseLogs = False
 loggerDefaultDomains = {}
@@ -144,10 +144,16 @@ def init_msgconfig(verbose, debug, debug_domains=None):
     """
     Set default verbosity and debug levels config the logger
     """
-    bb.msg.loggerDefaultDebugLevel = debug
     bb.msg.loggerDefaultVerbose = verbose
     if verbose:
         bb.msg.loggerVerboseLogs = True
+
+    if debug:
+        bb.msg.loggerDefaultLogLevel = BBLogFormatter.DEBUG - debug + 1
+    elif verbose:
+        bb.msg.loggerDefaultLogLevel = BBLogFormatter.VERBOSE
+    else:
+        bb.msg.loggerDefaultLogLevel = BBLogFormatter.NOTE
 
     bb.msg.loggerDefaultDomains = {}
     if debug_domains:
@@ -156,17 +162,7 @@ def init_msgconfig(verbose, debug, debug_domains=None):
             bb.msg.loggerDefaultDomains["BitBake.%s" % domainarg] = logging.DEBUG - dlevel + 1
 
 def constructLogOptions():
-    debug = loggerDefaultDebugLevel
-    verbose = loggerDefaultVerbose
-
-    if debug:
-        level = BBLogFormatter.DEBUG - debug + 1
-    elif verbose:
-        level = BBLogFormatter.VERBOSE
-    else:
-        level = BBLogFormatter.NOTE
-
-    return level, loggerDefaultDomains
+    return loggerDefaultLogLevel, loggerDefaultDomains
 
 def addDefaultlogFilter(handler, cls = BBLogFilter, forcelevel=None):
     level, debug_domains = constructLogOptions()
