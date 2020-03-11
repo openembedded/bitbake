@@ -229,6 +229,53 @@ def has_console_handler(logger):
                 return True
     return False
 
+def mergeLoggingConfig(logconfig, userconfig):
+    logconfig = copy.deepcopy(logconfig)
+    userconfig = copy.deepcopy(userconfig)
+
+    # Merge config with the default config
+    if userconfig.get('version') != logconfig['version']:
+        raise BaseException("Bad user configuration version. Expected %r, got %r" % (logconfig['version'], userconfig.get('version')))
+
+    # Set some defaults to make merging easier
+    userconfig.setdefault("loggers", {})
+
+    # If a handler, formatter, or filter is defined in the user
+    # config, it will replace an existing one in the default config
+    for k in ("handlers", "formatters", "filters"):
+        logconfig.setdefault(k, {}).update(userconfig.get(k, {}))
+
+    seen_loggers = set()
+    for name, l in logconfig["loggers"].items():
+        # If the merge option is set, merge the handlers and
+        # filters. Otherwise, if it is False, this logger won't get
+        # add to the set of seen loggers and will replace the
+        # existing one
+        if l.get('bitbake_merge', True):
+            ulogger = userconfig["loggers"].setdefault(name, {})
+            ulogger.setdefault("handlers", [])
+            ulogger.setdefault("filters", [])
+
+            # Merge lists
+            l.setdefault("handlers", []).extend(ulogger["handlers"])
+            l.setdefault("filters", []).extend(ulogger["filters"])
+
+            # Replace other properties if present
+            if "level" in ulogger:
+                l["level"] = ulogger["level"]
+
+            if "propagate" in ulogger:
+                l["propagate"] = ulogger["propagate"]
+
+            seen_loggers.add(name)
+
+    # Add all loggers present in the user config, but not any that
+    # have already been processed
+    for name in set(userconfig["loggers"].keys()) - seen_loggers:
+        logconfig["loggers"][name] = userconfig["loggers"][name]
+
+    return logconfig
+
 def setLoggingConfig(defaultconfig, userconfigfile=None):
     logconfig = copy.deepcopy(defaultconfig)
 
@@ -244,47 +291,7 @@ def setLoggingConfig(defaultconfig, userconfigfile=None):
                 raise BaseException("Unrecognized file format: %s" % userconfigfile)
 
             if userconfig.get('bitbake_merge', True):
-                # Merge config with the default config
-                if userconfig.get('version') != logconfig['version']:
-                    raise BaseException("Bad user configuration version. Expected %r, got %r" % (logconfig['version'], userconfig.get('version')))
-
-                # Set some defaults to make merging easier
-                userconfig.setdefault("loggers", {})
-
-                # If a handler, formatter, or filter is defined in the user
-                # config, it will replace an existing one in the default config
-                for k in ("handlers", "formatters", "filters"):
-                    logconfig.setdefault(k, {}).update(userconfig.get(k, {}))
-
-                seen_loggers = set()
-                for name, l in logconfig["loggers"].items():
-                    # If the merge option is set, merge the handlers and
-                    # filters. Otherwise, if it is False, this logger won't get
-                    # add to the set of seen loggers and will replace the
-                    # existing one
-                    if l.get('bitbake_merge', True):
-                        ulogger = userconfig["loggers"].setdefault(name, {})
-                        ulogger.setdefault("handlers", [])
-                        ulogger.setdefault("filters", [])
-
-                        # Merge lists
-                        l.setdefault("handlers", []).extend(ulogger["handlers"])
-                        l.setdefault("filters", []).extend(ulogger["filters"])
-
-                        # Replace other properties if present
-                        if "level" in ulogger:
-                            l["level"] = ulogger["level"]
-
-                        if "propagate" in ulogger:
-                            l["propagate"] = ulogger["propagate"]
-
-                        seen_loggers.add(name)
-
-                # Add all loggers present in the user config, but not any that
-                # have already been processed
-                for name in set(userconfig["loggers"].keys()) - seen_loggers:
-                    logconfig["loggers"][name] = userconfig["loggers"][name]
-
+                logconfig = mergeLoggingConfig(logconfig, userconfig)
             else:
                 # Replace the entire default config
                 logconfig = userconfig
