@@ -2059,7 +2059,7 @@ class RunQueueExecute:
         self.update_holdofftasks()
 
         if not self.sq_live and not self.sqdone and not self.sq_deferred and not self.updated_taskhash_queue and not self.holdoff_tasks:
-            logger.info("Setscene tasks completed")
+            hashequiv_logger.verbose("Setscene tasks completed")
 
             err = self.summarise_scenequeue_errors()
             if err:
