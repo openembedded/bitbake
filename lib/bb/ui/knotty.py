@@ -419,6 +419,18 @@ def main(server, eventHandler, params, tf = TerminalFilter):
                 "stream": "ext://sys.stderr",
                 "filters": ["BitBake.stderrFilter"],
             },
+            # This handler can be used if specific loggers should print on
+            # the console at a lower severity than the default. It will
+            # display any messages sent to it that are lower than then
+            # BitBake.console logging level (so as to prevent duplication of
+            # messages). Nothing is attached to this handler by default
+            "BitBake.verbconsole": {
+                "class": "logging.StreamHandler",
+                "formatter": "BitBake.consoleFormatter",
+                "level": 1,
+                "stream": "ext://sys.stdout",
+                "filters": ["BitBake.verbconsoleFilter"],
+            },
         },
         "formatters": {
             # This format instance will get color output enabled by the
@@ -442,7 +454,11 @@ def main(server, eventHandler, params, tf = TerminalFilter):
             "BitBake.stderrFilter": {
                 "()": "bb.msg.LogFilterGEQLevel",
                 "level": "ERROR"
-            }
+            },
+            "BitBake.verbconsoleFilter": {
+                "()": "bb.msg.LogFilterLTLevel",
+                "level": console_loglevel
+            },
         },
         "loggers": {
             "BitBake": {
@@ -455,13 +471,49 @@ def main(server, eventHandler, params, tf = TerminalFilter):
 
     # Enable the console log file if enabled
     if consolelogfile and not params.options.show_environment and not params.options.show_versions:
-        logconfig["handlers"]["BitBake.consolelog"] ={
-            "class": "logging.FileHandler",
-            "formatter": "BitBake.logfileFormatter",
-            "level": "INFO",
-            "filename": consolelogfile,
-        }
-        logconfig["loggers"]["BitBake"]["handlers"].append("BitBake.consolelog")
+        logconfig = bb.msg.mergeLoggingConfig(logconfig, {
+                "version": 1,
+                "handlers" : {
+                    "BitBake.consolelog": {
+                        "class": "logging.FileHandler",
+                        "formatter": "BitBake.logfileFormatter",
+                        "level": loglevel,
+                        "filename": consolelogfile,
+                    },
+                    # Just like verbconsole, anything sent here will go to the
+                    # log file, unless it would go to BitBake.consolelog
+                    "BitBake.verbconsolelog" : {
+                        "class": "logging.FileHandler",
+                        "formatter": "BitBake.logfileFormatter",
+                        "level": 1,
+                        "filename": consolelogfile,
+                        "filters": ["BitBake.verbconsolelogFilter"],
+                    },
+                },
+                "filters": {
+                    "BitBake.verbconsolelogFilter": {
+                        "()": "bb.msg.LogFilterLTLevel",
+                        "level": loglevel,
+                    },
+                },
+                "loggers": {
+                    "BitBake": {
+                        "handlers": ["BitBake.consolelog"],
+                    },
+
+                    # Other interesting things that we want to keep an eye on
+                    # in the log files in case someone has an issue, but not
+                    # necessarily show to the user on the console
+                    "BitBake.SigGen.HashEquiv": {
+                        "level": "VERBOSE",
+                        "handlers": ["BitBake.verbconsolelog"],
+                    },
+                    "BitBake.RunQueue.HashEquiv": {
+                        "level": "VERBOSE",
+                        "handlers": ["BitBake.verbconsolelog"],
+                    }
+                }
+            })
 
         bb.utils.mkdirhier(os.path.dirname(consolelogfile))
         loglink = os.path.join(os.path.dirname(consolelogfile), 'console-latest.log')
