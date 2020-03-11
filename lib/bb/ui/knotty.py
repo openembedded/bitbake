@@ -823,4 +823,6 @@ def main(server, eventHandler, params, tf = TerminalFilter):
         if e.errno == errno.EPIPE:
             pass
 
+    bb.msg.cleanupLogging()
+
     return return_value

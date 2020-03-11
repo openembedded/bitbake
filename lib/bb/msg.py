@@ -320,3 +320,14 @@ def setLoggingConfig(defaultconfig, userconfigfile=None):
         # TODO: I don't think that setting the global log level should be necessary
         #if newlevel < bb.msg.loggerDefaultLogLevel:
         #    bb.msg.loggerDefaultLogLevel = newlevel
+
+def cleanupLogging():
+    # Iterate through all the handlers and close them if possible. Fixes
+    # 'Unclosed resource' warnings when bitbake exits, see
+    # https://bugs.python.org/issue23010
+    handlers = set()
+    for logger_iter in logging.Logger.manager.loggerDict.keys():
+        handlers.update(logging.getLogger(logger_iter).handlers)
+
+    for h in handlers:
+        h.close()
