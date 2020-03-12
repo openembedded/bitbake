@@ -149,7 +149,7 @@ class TerminalFilter(object):
                 cr = (25, 80)
         return cr
 
-    def __init__(self, main, helper, console, errconsole, quiet):
+    def __init__(self, main, helper, handlers, quiet):
         self.main = main
         self.helper = helper
         self.cuu = None
@@ -179,14 +179,9 @@ class TerminalFilter(object):
             termios.tcsetattr(fd, termios.TCSADRAIN, new)
             curses.setupterm()
             if curses.tigetnum("colors") > 2:
-                if console:
+                for h in handlers:
                     try:
-                        console.formatter.enable_color()
-                    except AttributeError:
-                        pass
-                if errconsole:
-                    try:
-                        errconsole.formatter.enable_color()
+                        h.formatter.enable_color()
                     except AttributeError:
                         pass
             self.ed = curses.tigetstr("ed")
@@ -204,10 +199,9 @@ class TerminalFilter(object):
             self.interactive = False
             bb.note("Unable to use interactive mode for this terminal, using fallback")
             return
-        if console:
-            console.addFilter(InteractConsoleLogFilter(self))
-        if errconsole:
-            errconsole.addFilter(InteractConsoleLogFilter(self))
+
+        for h in handlers:
+            h.addFilter(InteractConsoleLogFilter(self))
 
         self.main_progress = None
 
@@ -411,6 +405,9 @@ def main(server, eventHandler, params, tf = TerminalFilter):
                 "level": console_loglevel,
                 "stream": "ext://sys.stdout",
                 "filters": ["BitBake.stdoutFilter"],
+                ".": {
+                    "is_console": True,
+                },
             },
             "BitBake.errconsole": {
                 "class": "logging.StreamHandler",
@@ -418,6 +415,9 @@ def main(server, eventHandler, params, tf = TerminalFilter):
                 "level": loglevel,
                 "stream": "ext://sys.stderr",
                 "filters": ["BitBake.stderrFilter"],
+                ".": {
+                    "is_console": True,
+                },
             },
             # This handler can be used if specific loggers should print on
             # the console at a lower severity than the default. It will
@@ -430,6 +430,9 @@ def main(server, eventHandler, params, tf = TerminalFilter):
                 "level": 1,
                 "stream": "ext://sys.stdout",
                 "filters": ["BitBake.verbconsoleFilter"],
+                ".": {
+                    "is_console": True,
+                },
             },
         },
         "formatters": {
@@ -523,7 +526,7 @@ def main(server, eventHandler, params, tf = TerminalFilter):
         except OSError:
            pass
 
-    bb.msg.setLoggingConfig(logconfig, logconfigfile)
+    conf = bb.msg.setLoggingConfig(logconfig, logconfigfile)
 
     if sys.stdin.isatty() and sys.stdout.isatty():
         log_exec_tty = True
@@ -534,14 +537,7 @@ def main(server, eventHandler, params, tf = TerminalFilter):
 
     # Look for the specially designated handlers which need to be passed to the
     # terminal handler
-    console = None
-    errconsole = None
-    for h in logger.handlers:
-        name = getattr(h, '_name', None)
-        if name == 'BitBake.console':
-            console = h
-        elif name == 'BitBake.errconsole':
-            errconsole = h
+    console_handlers = [h for h in conf.config['handlers'].values() if getattr(h, 'is_console', False)]
 
     bb.utils.set_process_name("KnottyUI")
 
@@ -591,7 +587,7 @@ def main(server, eventHandler, params, tf = TerminalFilter):
     printinterval = 5000
     lastprint = time.time()
 
-    termfilter = tf(main, helper, console, errconsole, params.options.quiet)
+    termfilter = tf(main, helper, console_handlers, params.options.quiet)
     atexit.register(termfilter.finish)
 
     while True:
