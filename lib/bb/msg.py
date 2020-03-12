@@ -306,7 +306,8 @@ def setLoggingConfig(defaultconfig, userconfigfile=None):
         if "level" in l:
             l["level"] = bb.msg.stringToLevel(l["level"])
 
-    logging.config.dictConfig(logconfig)
+    conf = logging.config.dictConfigClass(logconfig)
+    conf.configure()
 
     # The user may have specified logging domains they want at a higher debug
     # level than the standard.
@@ -327,6 +328,8 @@ def setLoggingConfig(defaultconfig, userconfigfile=None):
         # TODO: I don't think that setting the global log level should be necessary
         #if newlevel < bb.msg.loggerDefaultLogLevel:
         #    bb.msg.loggerDefaultLogLevel = newlevel
+
+    return conf
 
 def cleanupLogging():
     # Iterate through all the handlers and close them if possible. Fixes
