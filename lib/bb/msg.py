@@ -330,14 +330,3 @@ def setLoggingConfig(defaultconfig, userconfigfile=None):
         #    bb.msg.loggerDefaultLogLevel = newlevel
 
     return conf
-
-def cleanupLogging():
-    # Iterate through all the handlers and close them if possible. Fixes
-    # 'Unclosed resource' warnings when bitbake exits, see
-    # https://bugs.python.org/issue23010
-    handlers = set()
-    for logger_iter in logging.Logger.manager.loggerDict.keys():
-        handlers.update(logging.getLogger(logger_iter).handlers)
-
-    for h in handlers:
-        h.close()
