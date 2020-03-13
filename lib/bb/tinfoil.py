@@ -725,19 +725,9 @@ class Tinfoil:
             # Borrowed from knotty, instead somewhat hackily we use the helper
             # as the object to store "shutdown" on
             helper = bb.ui.uihelper.BBUIHelper()
-            # We set up logging optionally in the constructor so now we need to
-            # grab the handlers to pass to TerminalFilter
-            console = None
-            errconsole = None
-            for handler in self.logger.handlers:
-                if isinstance(handler, logging.StreamHandler):
-                    if handler.stream == sys.stdout:
-                        console = handler
-                    elif handler.stream == sys.stderr:
-                        errconsole = handler
             helper.shutdown = 0
             parseprogress = None
-            termfilter = bb.ui.knotty.TerminalFilter(helper, helper, console, errconsole, quiet=self.quiet)
+            termfilter = bb.ui.knotty.TerminalFilter(helper, helper, self.logger.handlers, quiet=self.quiet)
             try:
                 while True:
                     try:
