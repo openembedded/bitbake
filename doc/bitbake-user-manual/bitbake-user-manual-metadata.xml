@@ -294,17 +294,20 @@
                 rather than when the variable is actually used:
                 <literallayout class='monospaced'>
      T = "123"
-     A := "${B} ${A} test ${T}"
+     A := "test ${T}"
      T = "456"
-     B = "${T} bval"
+     B := "${T} ${C}"
      C = "cval"
      C := "${C}append"
                 </literallayout>
                 In this example, <filename>A</filename> contains
-                "test 123" because <filename>${B}</filename> and
-                <filename>${A}</filename> at the time of parsing are undefined,
-                which leaves "test 123".
-                And, the variable <filename>C</filename>
+                "test 123", even though the final value of <filename>T</filename>
+                is "456".
+                The variable <filename>B</filename> will end up containing "456 cvalappend".
+                This is because references to undefined variables are preserved as is
+                during (immediate)expansion. This is in contrast to GNU Make, where undefined
+                variables expand to nothing.
+                The variable <filename>C</filename>
                 contains "cvalappend" since <filename>${C}</filename> immediately
                 expands to "cval".
             </para>
