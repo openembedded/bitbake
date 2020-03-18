@@ -976,7 +976,7 @@
                     <filename>False</filename>, that logger will be completely
                     replaced by user configuration. In this case, no other
                     rules will apply to that logger.
-                </listitem></para>
+                </para></listitem>
                 <listitem><para>
                     All user defined <filename>filter</filename> and
                     <filename>handlers</filename> properties for a given logger
@@ -987,7 +987,7 @@
                     configuration adds a filter called
                     <filename>BitBake.defaultFilter</filename>, both filters
                     will be applied to the logger
-                </listitem></para>
+                </para></listitem>
             </itemizedlist>
         </para>
 
