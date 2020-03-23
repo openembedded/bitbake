@@ -13,6 +13,7 @@ import sys
 import atexit
 import re
 from collections import OrderedDict, defaultdict
+from functools import partial
 
 import bb.cache
 import bb.cooker
@@ -44,66 +45,64 @@ class TinfoilUIException(Exception):
 class TinfoilCommandFailed(Exception):
     """Exception raised when run_command fails"""
 
+class TinfoilDataStoreConnectorVarHistory:
+    def __init__(self, tinfoil, dsindex):
+        self.tinfoil = tinfoil
+        self.dsindex = dsindex
+
+    def remoteCommand(self, cmd, *args, **kwargs):
+        return self.tinfoil.run_command('dataStoreConnectorVarHistCmd', self.dsindex, cmd, args, kwargs)
+
+    def __getattr__(self, name):
+        if not hasattr(bb.data_smart.VariableHistory, name):
+            raise AttributeError("VariableHistory has no such method %s" % name)
+
+        newfunc = partial(self.remoteCommand, name)
+        setattr(self, name, newfunc)
+        return newfunc
+
+class TinfoilDataStoreConnectorIncHistory:
+    def __init__(self, tinfoil, dsindex):
+        self.tinfoil = tinfoil
+        self.dsindex = dsindex
+
+    def remoteCommand(self, cmd, *args, **kwargs):
+        return self.tinfoil.run_command('dataStoreConnectorIncHistCmd', self.dsindex, cmd, args, kwargs)
+
+    def __getattr__(self, name):
+        if not hasattr(bb.data_smart.IncludeHistory, name):
+            raise AttributeError("IncludeHistory has no such method %s" % name)
+
+        newfunc = partial(self.remoteCommand, name)
+        setattr(self, name, newfunc)
+        return newfunc
+
 class TinfoilDataStoreConnector:
-    """Connector object used to enable access to datastore objects via tinfoil"""
+    """
+    Connector object used to enable access to datastore objects via tinfoil
+    Method calls are transmitted to the remote datastore for processing, if a datastore is
+    returned we return a connector object for the new store
+    """
 
     def __init__(self, tinfoil, dsindex):
         self.tinfoil = tinfoil
         self.dsindex = dsindex
-    def getVar(self, name):
-        value = self.tinfoil.run_command('dataStoreConnectorFindVar', self.dsindex, name)
-        overrides = None
-        if isinstance(value, dict):
-            if '_connector_origtype' in value:
-                value['_content'] = self.tinfoil._reconvert_type(value['_content'], value['_connector_origtype'])
-                del value['_connector_origtype']
-            if '_connector_overrides' in value:
-                overrides = value['_connector_overrides']
-                del value['_connector_overrides']
-        return value, overrides
-    def getKeys(self):
-        return set(self.tinfoil.run_command('dataStoreConnectorGetKeys', self.dsindex))
-    def getVarHistory(self, name):
-        return self.tinfoil.run_command('dataStoreConnectorGetVarHistory', self.dsindex, name)
-    def expandPythonRef(self, varname, expr, d):
-        ds = bb.remotedata.RemoteDatastores.transmit_datastore(d)
-        ret = self.tinfoil.run_command('dataStoreConnectorExpandPythonRef', ds, varname, expr)
+        self.varhistory = TinfoilDataStoreConnectorVarHistory(tinfoil, dsindex)
+        self.inchistory = TinfoilDataStoreConnectorIncHistory(tinfoil, dsindex)
+
+    def remoteCommand(self, cmd, *args, **kwargs):
+        ret = self.tinfoil.run_command('dataStoreConnectorCmd', self.dsindex, cmd, args, kwargs)
+        if isinstance(ret, bb.command.DataStoreConnectionHandle):
+            return TinfoilDataStoreConnector(self.tinfoil, ret.dsindex)
         return ret
-    def setVar(self, varname, value):
-        if self.dsindex is None:
-            self.tinfoil.run_command('setVariable', varname, value)
-        else:
-            # Not currently implemented - indicate that setting should
-            # be redirected to local side
-            return True
-    def setVarFlag(self, varname, flagname, value):
-        if self.dsindex is None:
-            self.tinfoil.run_command('dataStoreConnectorSetVarFlag', self.dsindex, varname, flagname, value)
-        else:
-            # Not currently implemented - indicate that setting should
-            # be redirected to local side
-            return True
-    def delVar(self, varname):
-        if self.dsindex is None:
-            self.tinfoil.run_command('dataStoreConnectorDelVar', self.dsindex, varname)
-        else:
-            # Not currently implemented - indicate that setting should
-            # be redirected to local side
-            return True
-    def delVarFlag(self, varname, flagname):
-        if self.dsindex is None:
-            self.tinfoil.run_command('dataStoreConnectorDelVar', self.dsindex, varname, flagname)
-        else:
-            # Not currently implemented - indicate that setting should
-            # be redirected to local side
-            return True
-    def renameVar(self, name, newname):
-        if self.dsindex is None:
-            self.tinfoil.run_command('dataStoreConnectorRenameVar', self.dsindex, name, newname)
-        else:
-            # Not currently implemented - indicate that setting should
-            # be redirected to local side
-            return True
+
+    def __getattr__(self, name):
+        if not hasattr(bb.data._dict_type, name):
+            raise AttributeError("Data store has no such method %s" % name)
+
+        newfunc = partial(self.remoteCommand, name)
+        setattr(self, name, newfunc)
+        return newfunc
 
 class TinfoilCookerAdapter:
     """
@@ -412,9 +411,7 @@ class Tinfoil:
                 self.run_actions(config_params)
                 self.recipes_parsed = True
 
-            self.config_data = bb.data.init()
-            connector = TinfoilDataStoreConnector(self, None)
-            self.config_data.setVar('_remote_data', connector)
+            self.config_data = TinfoilDataStoreConnector(self, 0)
             self.cooker = TinfoilCookerAdapter(self)
             self.cooker_data = self.cooker.recipecaches['']
         else:
@@ -842,9 +839,7 @@ class Tinfoil:
             newobj = origtype(obj)
 
         if isinstance(newobj, bb.command.DataStoreConnectionHandle):
-            connector = TinfoilDataStoreConnector(self, newobj.dsindex)
-            newobj = bb.data.init()
-            newobj.setVar('_remote_data', connector)
+            newobj = TinfoilDataStoreConnector(self, newobj.dsindex)
 
         return newobj
 
