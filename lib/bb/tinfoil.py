@@ -615,7 +615,7 @@ class Tinfoil:
         fn = self.get_recipe_file(pn)
         return self.parse_recipe_file(fn)
 
-    def parse_recipe_file(self, fn, appends=True, appendlist=None, config_data=None):
+    def parse_recipe_file(self, fn, appends=True, appendlist=None):
         """
         Parse the specified recipe file (with or without bbappends)
         and return a datastore object representing the environment
@@ -626,9 +626,6 @@ class Tinfoil:
             appends: True to apply bbappends, False otherwise
             appendlist: optional list of bbappend files to apply, if you
                         want to filter them
-            config_data: custom config datastore to use. NOTE: if you
-                         specify config_data then you cannot use a virtual
-                         specification for fn.
         """
         if self.tracking:
             # Enable history tracking just for the parse operation
@@ -636,11 +633,7 @@ class Tinfoil:
         try:
             if appends and appendlist == []:
                 appends = False
-            if config_data:
-                dctr = bb.remotedata.RemoteDatastores.transmit_datastore(config_data)
-                dscon = self.run_command('parseRecipeFile', fn, appends, appendlist, dctr)
-            else:
-                dscon = self.run_command('parseRecipeFile', fn, appends, appendlist)
+            dscon = self.run_command('parseRecipeFile', fn, appends, appendlist)
             if dscon:
                 return self._reconvert_type(dscon, 'DataStoreConnectionHandle')
             else:
