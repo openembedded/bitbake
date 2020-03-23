@@ -338,11 +338,12 @@ class VariableHistory(object):
                 lines.append(line)
         return lines
 
-    def get_variable_items_files(self, var, d):
+    def get_variable_items_files(self, var):
         """
         Use variable history to map items added to a list variable and
         the files in which they were added.
         """
+        d = self.dataroot
         history = self.variable(var)
         finalitems = (d.getVar(var) or '').split()
         filemap = {}
