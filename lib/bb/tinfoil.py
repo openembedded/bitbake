@@ -104,6 +104,11 @@ class TinfoilDataStoreConnector:
         setattr(self, name, newfunc)
         return newfunc
 
+    def __iter__(self):
+        keys = self.tinfoil.run_command('dataStoreConnectorCmd', self.dsindex, "keys", [], {})
+        for k in keys:
+            yield k
+
 class TinfoilCookerAdapter:
     """
     Provide an adapter for existing code that expects to access a cooker object via Tinfoil,
