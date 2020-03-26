@@ -133,7 +133,7 @@ def findPreferredProvider(pn, cfgData, dataCache, pkg_pn = None, item = None):
             preferred_r = None
 
         for file_set in pkg_pn:
-            for f in file_set:
+            for f in reversed(file_set):
                 pe, pv, pr = dataCache.pkg_pepvpr[f]
                 if preferredVersionMatch(pe, pv, pr, preferred_e, preferred_v, preferred_r):
                     preferred_file = f
