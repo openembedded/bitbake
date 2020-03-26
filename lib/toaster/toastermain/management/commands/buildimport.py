@@ -466,7 +466,6 @@ class Command(BaseCommand):
                     release_name = 'None' if not pl.layercommit.release else pl.layercommit.release.name
                     print(" AFTER :ProjectLayer=%s,%s,%s,%s" % (pl.layercommit.layer.name,release_name,pl.layercommit.branch,pl.layercommit.commit))
 
-
     def handle(self, *args, **options):
         project_name = options['name']
         project_path = options['path']
@@ -551,6 +550,7 @@ class Command(BaseCommand):
             # preset the mode and default image recipe
             project.set_variable(Project.PROJECT_SPECIFIC_ISNEW,Project.PROJECT_SPECIFIC_NEW)
             project.set_variable(Project.PROJECT_SPECIFIC_DEFAULTIMAGE,"core-image-minimal")
+
             # Assert any extended/custom actions or variables for new non-Toaster projects
             if not len(self.toaster_vars):
                 pass

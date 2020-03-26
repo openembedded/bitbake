@@ -44,7 +44,7 @@ def json(value, default = None):
     # it manually here
     return mark_safe(JsonLib.dumps(value, indent=2, default = default, ensure_ascii=False).replace('</', '<\\/'))
 
-@register.assignment_tag
+@register.simple_tag
 def query(qs, **kwargs):
     """ template tag which allows queryset filtering. Usage:
           {% query books author=author as mybooks %}
@@ -83,7 +83,7 @@ def divide(value, arg):
 def multiply(value, arg):
     return int(value) * int(arg)
 
-@register.assignment_tag
+@register.simple_tag
 def datecompute(delta, start = timezone.now()):
     return start + timedelta(delta)
 

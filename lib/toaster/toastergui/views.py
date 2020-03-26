@@ -19,7 +19,7 @@ from orm.models import Target_Installed_Package, Target_File
 from orm.models import TargetKernelFile, TargetSDKFile, Target_Image_File
 from orm.models import BitbakeVersion, CustomImageRecipe
 
-from django.core.urlresolvers import reverse, resolve
+from django.urls import reverse, resolve
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.http import HttpResponseNotFound, JsonResponse
@@ -352,7 +352,7 @@ def _get_parameters_values(request, default_count, default_order):
 # set cookies for parameters. this is usefull in case parameters are set
 # manually from the GET values of the link
 def _set_parameters_values(pagesize, orderby, request):
-    from django.core.urlresolvers import resolve
+    from django.urls import resolve
     current_url = resolve(request.path_info).url_name
     request.session['%s_count' % current_url] = pagesize
     request.session['%s_orderby' % current_url] =orderby
@@ -1364,8 +1364,8 @@ if True:
 
         template = "newproject.html"
         context = {
-            'email': request.user.email if request.user.is_authenticated() else '',
-            'username': request.user.username if request.user.is_authenticated() else '',
+            'email': request.user.email if request.user.is_authenticated else '',
+            'username': request.user.username if request.user.is_authenticated else '',
             'releases': Release.objects.order_by("description"),
         }
 
@@ -1391,7 +1391,7 @@ if True:
                     # set alert for missing fields
                     raise BadParameterException("Fields missing: %s" % ", ".join(missing))
 
-                if not request.user.is_authenticated():
+                if not request.user.is_authenticated:
                     user = authenticate(username = request.POST.get('username', '_anonuser'), password = 'nopass')
                     if user is None:
                         user = User.objects.create_user(username = request.POST.get('username', '_anonuser'), email = request.POST.get('email', ''), password = "nopass")
@@ -1438,8 +1438,8 @@ if True:
         project = Project.objects.get(pk=pid)
         template = "newproject_specific.html"
         context = {
-            'email': request.user.email if request.user.is_authenticated() else '',
-            'username': request.user.username if request.user.is_authenticated() else '',
+            'email': request.user.email if request.user.is_authenticated else '',
+            'username': request.user.username if request.user.is_authenticated else '',
             'releases': Release.objects.order_by("description"),
             'projectname': project.name,
             'project_pk': project.pk,
@@ -1469,7 +1469,7 @@ if True:
                     # set alert for missing fields
                     raise BadParameterException("Fields missing: %s" % ", ".join(missing))
 
-                if not request.user.is_authenticated():
+                if not request.user.is_authenticated:
                     user = authenticate(username = request.POST.get('username', '_anonuser'), password = 'nopass')
                     if user is None:
                         user = User.objects.create_user(username = request.POST.get('username', '_anonuser'), email = request.POST.get('email', ''), password = "nopass")

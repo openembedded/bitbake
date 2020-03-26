@@ -24,7 +24,7 @@ from bldcontrol import bbcontroller
 
 from django.http import HttpResponse, JsonResponse
 from django.views.generic import View
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.db.models import Q, F
 from django.db import Error
 from toastergui.templatetags.projecttags import filtered_filesizeformat
