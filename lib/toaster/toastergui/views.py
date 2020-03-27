@@ -1191,7 +1191,7 @@ def package_included_reverse_dependencies(request, build_id, target_id, package_
         return _redirect_parameters( 'package_included_reverse_dependencies', request.GET, mandatory_parameters, build_id = build_id, target_id = target_id, package_id = package_id)
     (filter_string, search_term, ordering_string) = _search_tuple(request, Package_File)
 
-    queryset = Package_Dependency.objects.select_related('depends_on__name', 'depends_on__size').filter(depends_on=package_id, target_id=target_id, dep_type=Package_Dependency.TYPE_TRDEPENDS)
+    queryset = Package_Dependency.objects.select_related('depends_on').filter(depends_on=package_id, target_id=target_id, dep_type=Package_Dependency.TYPE_TRDEPENDS)
     objects = _get_queryset(Package_Dependency, queryset, filter_string, search_term, ordering_string, 'package__name')
 
     package = Package.objects.get(pk=package_id)
