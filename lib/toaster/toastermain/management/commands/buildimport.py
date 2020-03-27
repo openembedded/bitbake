@@ -114,6 +114,15 @@ class Command(BaseCommand):
             help='command (configure,reconfigure,import)',
             )
 
+    def get_var(self, varname):
+        value = self.vars.get(varname, '')
+        if value:
+            varrefs = re.findall('\${([^}]*)}', value)
+            for ref in varrefs:
+                if ref in self.vars:
+                    value = value.replace('${%s}' % ref, self.vars[ref])
+        return value
+
     # Extract the bb variables from a conf file
     def scan_conf(self,fn):
         vars = self.vars
@@ -241,7 +250,7 @@ class Command(BaseCommand):
     # Apply table of all layer versions
     def extract_bblayers(self):
         # set up the constants
-        bblayer_str = self.vars['BBLAYERS']
+        bblayer_str = self.get_var('BBLAYERS')
         TOASTER_DIR = os.environ.get('TOASTER_DIR')
         INSTALL_CLONE_PREFIX = os.path.dirname(TOASTER_DIR) + "/"
         TOASTER_CLONE_PREFIX = TOASTER_DIR + "/_toaster_clones/"
@@ -421,6 +430,7 @@ class Command(BaseCommand):
 
     # Scan the project's conf files (if any)
     def scan_conf_variables(self,project_path):
+        self.vars['TOPDIR'] = project_path
         # scan the project's settings, add any new layers or variables
         if os.path.isfile("%s/conf/local.conf" % project_path):
             self.scan_conf("%s/conf/local.conf" % project_path)
