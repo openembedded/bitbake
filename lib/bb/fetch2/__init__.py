@@ -1631,8 +1631,11 @@ class Fetch(object):
 
         fn = d.getVar('FILE')
         mc = d.getVar('__BBMULTICONFIG') or ""
-        if cache and fn and mc + fn in urldata_cache:
-            self.ud = urldata_cache[mc + fn + str(id(d))]
+        key = None
+        if cache and fn:
+            key = mc + fn + str(id(d))
+        if key in urldata_cache:
+            self.ud = urldata_cache[key]
 
         for url in urls:
             if url not in self.ud:
@@ -1643,8 +1646,8 @@ class Fetch(object):
                         self.ud[url] = None
                         pass
 
-        if fn and cache:
-            urldata_cache[mc + fn + str(id(d))] = self.ud
+        if key:
+            urldata_cache[key] = self.ud
 
     def localpath(self, url):
         if url not in self.urls:
