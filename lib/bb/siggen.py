@@ -146,7 +146,7 @@ class SignatureGeneratorBasic(SignatureGenerator):
     def _build_data(self, fn, d):
 
         ignore_mismatch = ((d.getVar("BB_HASH_IGNORE_MISMATCH") or '') == '1')
-        tasklist, gendeps, lookupcache = bb.data.generate_dependencies(d)
+        tasklist, gendeps, lookupcache = bb.data.generate_dependencies(d, self.basewhitelist)
 
         taskdeps, basehash = bb.data.generate_dependency_hash(tasklist, gendeps, lookupcache, self.basewhitelist, fn)
 

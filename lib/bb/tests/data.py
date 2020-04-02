@@ -476,7 +476,7 @@ class Contains(unittest.TestCase):
 class TaskHash(unittest.TestCase):
     def test_taskhashes(self):
         def gettask_bashhash(taskname, d):
-            tasklist, gendeps, lookupcache = bb.data.generate_dependencies(d)
+            tasklist, gendeps, lookupcache = bb.data.generate_dependencies(d, set())
             taskdeps, basehash = bb.data.generate_dependency_hash(tasklist, gendeps, lookupcache, set(), "somefile")
             bb.warn(str(lookupcache))
             return basehash["somefile:" + taskname]
