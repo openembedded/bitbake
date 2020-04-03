@@ -617,7 +617,7 @@ class Tinfoil:
         fn = self.get_recipe_file(pn)
         return self.parse_recipe_file(fn)
 
-    def parse_recipe_file(self, fn, appends=True, appendlist=None):
+    def parse_recipe_file(self, fn, appends=True, appendlist=None, config_data=None):
         """
         Parse the specified recipe file (with or without bbappends)
         and return a datastore object representing the environment
@@ -635,7 +635,10 @@ class Tinfoil:
         try:
             if appends and appendlist == []:
                 appends = False
-            dscon = self.run_command('parseRecipeFile', fn, appends, appendlist)
+            if config_data:
+                 dscon = self.run_command('parseRecipeFile', fn, appends, appendlist, config_data.dsindex)
+            else:
+                dscon = self.run_command('parseRecipeFile', fn, appends, appendlist)
             if dscon:
                 return self._reconvert_type(dscon, 'DataStoreConnectionHandle')
             else:

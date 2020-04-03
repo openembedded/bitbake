@@ -499,8 +499,7 @@ class CommandsSync:
         appends = params[1]
         appendlist = params[2]
         if len(params) > 3:
-            config_data_dict = params[3]
-            config_data = command.remotedatastores.receive_datastore(config_data_dict)
+            config_data = command.remotedatastores[params[3]]
         else:
             config_data = None
 
