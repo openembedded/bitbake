@@ -1000,7 +1000,10 @@ class DataSmart(MutableMapping):
                 continue
 
             value = d.getVar(key, False) or ""
-            data.update({key:value})
+            if type(value) is type(self):
+                data.update({key:value.get_hash()})
+            else:
+                data.update({key:value})
 
             varflags = d.getVarFlags(key, internalflags = True)
             if not varflags:
