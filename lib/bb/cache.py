@@ -21,6 +21,7 @@ import logging
 import pickle
 from collections import defaultdict
 import bb.utils
+import re
 
 logger = logging.getLogger("BitBake.Cache")
 
@@ -369,6 +370,7 @@ class Cache(NoCache):
         self.data_fn = None
         self.cacheclean = True
         self.data_hash = data_hash
+        self.filelist_regex = re.compile(r'(?:(?<=:True)|(?<=:False))\s+')
 
         if self.cachedir in [None, '']:
             self.has_cache = False
@@ -607,20 +609,12 @@ class Cache(NoCache):
         if hasattr(info_array[0], 'file_checksums'):
             for _, fl in info_array[0].file_checksums.items():
                 fl = fl.strip()
-                while fl:
-                    # A .split() would be simpler but means spaces or colons in filenames would break
-                    a = fl.find(":True")
-                    b = fl.find(":False")
-                    if ((a < 0) and b) or ((b > 0) and (b < a)):
-                        f = fl[:b+6]
-                        fl = fl[b+7:]
-                    elif ((b < 0) and a) or ((a > 0) and (a < b)):
-                        f = fl[:a+5]
-                        fl = fl[a+6:]
-                    else:
-                        break
-                    fl = fl.strip()
-                    if "*" in f:
+                if not fl:
+                    continue
+                # Have to be careful about spaces and colons in filenames
+                flist = self.filelist_regex.split(fl)
+                for f in flist:
+                    if not f or "*" in f:
                         continue
                     f, exist = f.split(":")
                     if (exist == "True" and not os.path.exists(f)) or (exist == "False" and os.path.exists(f)):
