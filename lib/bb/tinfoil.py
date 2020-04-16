@@ -636,6 +636,7 @@ class Tinfoil:
             if appends and appendlist == []:
                 appends = False
             if config_data:
+                 config_data = bb.data.createCopy(config_data)
                  dscon = self.run_command('parseRecipeFile', fn, appends, appendlist, config_data.dsindex)
             else:
                 dscon = self.run_command('parseRecipeFile', fn, appends, appendlist)
