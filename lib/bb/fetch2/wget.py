@@ -300,6 +300,7 @@ class Wget(FetchMethod):
             # Some servers (FusionForge, as used on Alioth) require that the
             # optional Accept header is set.
             r.add_header("Accept", "*/*")
+            r.add_header("User-Agent", "Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9.2.12) Gecko/20101027 Ubuntu/9.10 (karmic) Firefox/3.6.12")
             def add_basic_auth(login_str, request):
                 '''Adds Basic auth to http request, pass in login:password as string'''
                 import base64
