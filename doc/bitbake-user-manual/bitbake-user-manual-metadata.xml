@@ -432,7 +432,7 @@
                 The variable <filename>FOO</filename> becomes
                 "&nbsp;&nbsp;789&nbsp;123456&nbsp;&nbsp;&nbsp;&nbsp;"
                 and <filename>FOO2</filename> becomes
-                "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;jkl&nbsp;&nbsp;abcdef&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;".
+                "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;abcdef&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;".
             </para>
 
             <para>
