@@ -19,7 +19,7 @@
 import os
 import logging
 import pickle
-from collections import defaultdict
+from collections import defaultdict, Mapping
 import bb.utils
 import re
 
@@ -27,8 +27,11 @@ logger = logging.getLogger("BitBake.Cache")
 
 __cache_version__ = "152"
 
-def getCacheFile(path, filename, data_hash):
-    return os.path.join(path, filename + "." + data_hash)
+def getCacheFile(path, filename, mc, data_hash):
+    mcspec = ''
+    if mc:
+        mcspec = ".%s" % mc
+    return os.path.join(path, filename + mcspec + "." + data_hash)
 
 # RecipeInfoCommon defines common data retrieving methods
 # from meta data for caches. CoreRecipeInfo as well as other
@@ -354,14 +357,14 @@ class Cache(NoCache):
     """
     BitBake Cache implementation
     """
-
-    def __init__(self, databuilder, data_hash, caches_array):
+    def __init__(self, databuilder, mc, data_hash, caches_array):
         super().__init__(databuilder)
         data = databuilder.data
 
         # Pass caches_array information into Cache Constructor
         # It will be used later for deciding whether we
         # need extra cache file dump/load support
+        self.mc = mc
         self.caches_array = caches_array
         self.cachedir = data.getVar("CACHE")
         self.clean = set()
@@ -379,7 +382,17 @@ class Cache(NoCache):
             return
 
         self.has_cache = True
-        self.cachefile = getCacheFile(self.cachedir, "bb_cache.dat", self.data_hash)
+
+    def getCacheFile(self, cachefile):
+        return getCacheFile(self.cachedir, cachefile, self.mc, self.data_hash)
+
+    def prepare_cache(self, progress):
+        if not self.has_cache:
+            return 0
+
+        loaded = 0
+
+        self.cachefile = self.getCacheFile("bb_cache.dat")
 
         logger.debug(1, "Cache dir: %s", self.cachedir)
         bb.utils.mkdirhier(self.cachedir)
@@ -387,18 +400,22 @@ class Cache(NoCache):
         cache_ok = True
         if self.caches_array:
             for cache_class in self.caches_array:
-                cachefile = getCacheFile(self.cachedir, cache_class.cachefile, self.data_hash)
+                cachefile = self.getCacheFile(cache_class.cachefile)
                 cache_ok = cache_ok and os.path.exists(cachefile)
                 cache_class.init_cacheData(self)
         if cache_ok:
-            self.load_cachefile()
+            loaded = self.load_cachefile(progress)
         elif os.path.isfile(self.cachefile):
             logger.info("Out of date cache found, rebuilding...")
         else:
             logger.debug(1, "Cache file %s not found, building..." % self.cachefile)
 
         # We don't use the symlink, its just for debugging convinience
-        symlink = os.path.join(self.cachedir, "bb_cache.dat")
+        if self.mc:
+            symlink = os.path.join(self.cachedir, "bb_cache.dat.%s" % self.mc)
+        else:
+            symlink = os.path.join(self.cachedir, "bb_cache.dat")
+
         if os.path.exists(symlink):
             bb.utils.remove(symlink)
         try:
@@ -406,21 +423,30 @@ class Cache(NoCache):
         except OSError:
             pass
 
-    def load_cachefile(self):
+        return loaded
+
+    def cachesize(self):
+        if not self.has_cache:
+            return 0
+
         cachesize = 0
+        for cache_class in self.caches_array:
+            cachefile = self.getCacheFile(cache_class.cachefile)
+            try:
+                with open(cachefile, "rb") as cachefile:
+                    cachesize += os.fstat(cachefile.fileno()).st_size
+            except FileNotFoundError:
+                pass
+
+        return cachesize
+
+    def load_cachefile(self, progress):
+        cachesize = self.cachesize()
         previous_progress = 0
         previous_percent = 0
 
-        # Calculate the correct cachesize of all those cache files
         for cache_class in self.caches_array:
-            cachefile = getCacheFile(self.cachedir, cache_class.cachefile, self.data_hash)
-            with open(cachefile, "rb") as cachefile:
-                cachesize += os.fstat(cachefile.fileno()).st_size
-
-        bb.event.fire(bb.event.CacheLoadStarted(cachesize), self.data)
-
-        for cache_class in self.caches_array:
-            cachefile = getCacheFile(self.cachedir, cache_class.cachefile, self.data_hash)
+            cachefile = self.getCacheFile(cache_class.cachefile)
             logger.debug(1, 'Loading cache file: %s' % cachefile)
             with open(cachefile, "rb") as cachefile:
                 pickled = pickle.Unpickler(cachefile)
@@ -460,23 +486,11 @@ class Cache(NoCache):
                         self.depends_cache[key] = [value]
                     # only fire events on even percentage boundaries
                     current_progress = cachefile.tell() + previous_progress
-                    if current_progress > cachesize:
-                        # we might have calculated incorrect total size because a file
-                        # might've been written out just after we checked its size
-                        cachesize = current_progress
-                    current_percent = 100 * current_progress / cachesize
-                    if current_percent > previous_percent:
-                        previous_percent = current_percent
-                        bb.event.fire(bb.event.CacheLoadProgress(current_progress, cachesize),
-                                      self.data)
+                    progress(cachefile.tell() + previous_progress)
 
                 previous_progress += current_progress
 
-        # Note: depends cache number is corresponding to the parsing file numbers.
-        # The same file has several caches, still regarded as one item in the cache
-        bb.event.fire(bb.event.CacheLoadCompleted(cachesize,
-                                                  len(self.depends_cache)),
-                      self.data)
+        return len(self.depends_cache)
 
     def parse(self, filename, appends):
         """Parse the specified filename, returning the recipe information"""
@@ -682,7 +696,7 @@ class Cache(NoCache):
 
         for cache_class in self.caches_array:
             cache_class_name = cache_class.__name__
-            cachefile = getCacheFile(self.cachedir, cache_class.cachefile, self.data_hash)
+            cachefile = self.getCacheFile(cache_class.cachefile)
             with open(cachefile, "wb") as f:
                 p = pickle.Pickler(f, pickle.HIGHEST_PROTOCOL)
                 p.dump(__cache_version__)
@@ -701,7 +715,7 @@ class Cache(NoCache):
         return bb.parse.cached_mtime_noerror(cachefile)
 
     def add_info(self, filename, info_array, cacheData, parsed=None, watcher=None):
-        if isinstance(info_array[0], CoreRecipeInfo) and (not info_array[0].skipped):
+        if cacheData is not None and isinstance(info_array[0], CoreRecipeInfo) and (not info_array[0].skipped):
             cacheData.add_from_recipeinfo(filename, info_array)
 
             if watcher:
@@ -726,6 +740,65 @@ class Cache(NoCache):
         for cache_class in self.caches_array:
             info_array.append(cache_class(realfn, data))
         self.add_info(file_name, info_array, cacheData, parsed)
+
+class MulticonfigCache(Mapping):
+    def __init__(self, databuilder, data_hash, caches_array):
+        def progress(p):
+            nonlocal current_progress
+            nonlocal previous_progress
+            nonlocal previous_percent
+            nonlocal cachesize
+
+            current_progress = previous_progress + p
+
+            if current_progress > cachesize:
+                # we might have calculated incorrect total size because a file
+                # might've been written out just after we checked its size
+                cachesize = current_progress
+            current_percent = 100 * current_progress / cachesize
+            if current_percent > previous_percent:
+                previous_percent = current_percent
+                bb.event.fire(bb.event.CacheLoadProgress(current_progress, cachesize),
+                                databuilder.data)
+
+
+        cachesize = 0
+        current_progress = 0
+        previous_progress = 0
+        previous_percent = 0
+        self.__caches = {}
+
+        for mc, mcdata in databuilder.mcdata.items():
+            self.__caches[mc] = Cache(databuilder, mc, data_hash, caches_array)
+
+            cachesize += self.__caches[mc].cachesize()
+
+        bb.event.fire(bb.event.CacheLoadStarted(cachesize), databuilder.data)
+        loaded = 0
+
+        for c in self.__caches.values():
+            loaded += c.prepare_cache(progress)
+            previous_progress = current_progress
+
+        # Note: depends cache number is corresponding to the parsing file numbers.
+        # The same file has several caches, still regarded as one item in the cache
+        bb.event.fire(bb.event.CacheLoadCompleted(cachesize, loaded), databuilder.data)
+
+    def __len__(self):
+        return len(self.__caches)
+
+    def __getitem__(self, key):
+        return self.__caches[key]
+
+    def __contains__(self, key):
+        return key in self.__caches
+
+    def __iter__(self):
+        for k in self.__caches:
+            yield k
+
+    def keys(self):
+        return self.__caches[key]
 
 
 def init(cooker):

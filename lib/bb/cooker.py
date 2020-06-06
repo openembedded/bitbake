@@ -541,8 +541,8 @@ class BBCooker:
 
         if fn:
             try:
-                bb_cache = bb.cache.Cache(self.databuilder, self.data_hash, self.caches_array)
-                envdata = bb_cache.loadDataFull(fn, self.collections[mc].get_file_appends(fn))
+                bb_caches = bb.cache.MulticonfigCache(self.databuilder, self.data_hash, self.caches_array)
+                envdata = bb_caches[mc].loadDataFull(fn, self.collections[mc].get_file_appends(fn))
             except Exception as e:
                 parselog.exception("Unable to read %s", fn)
                 raise
@@ -1328,9 +1328,9 @@ class BBCooker:
         self.buildSetVars()
         self.reset_mtime_caches()
 
-        bb_cache = bb.cache.Cache(self.databuilder, self.data_hash, self.caches_array)
+        bb_caches = bb.cache.MulticonfigCache(self.databuilder, self.data_hash, self.caches_array)
 
-        infos = bb_cache.parse(fn, self.collections[mc].get_file_appends(fn))
+        infos = bb_caches[mc].parse(fn, self.collections[mc].get_file_appends(fn))
         infos = dict(infos)
 
         fn = bb.cache.realfn2virtual(fn, cls, mc)
@@ -1968,7 +1968,7 @@ class Parser(multiprocessing.Process):
             except queue.Full:
                 pending.append(result)
 
-    def parse(self, filename, appends):
+    def parse(self, mc, cache, filename, appends):
         try:
             origfilter = bb.event.LogHandler.filter
             # Record the filename we're parsing into any events generated
@@ -1982,7 +1982,7 @@ class Parser(multiprocessing.Process):
             bb.event.set_class_handlers(self.handlers.copy())
             bb.event.LogHandler.filter = parse_filter
 
-            return True, self.bb_cache.parse(filename, appends)
+            return True, mc, cache.parse(filename, appends)
         except Exception as exc:
             tb = sys.exc_info()[2]
             exc.recipe = filename
@@ -2016,16 +2016,16 @@ class CookerParser(object):
         self.current = 0
         self.process_names = []
 
-        self.bb_cache = bb.cache.Cache(self.cfgbuilder, self.cfghash, cooker.caches_array)
+        self.bb_caches = bb.cache.MulticonfigCache(self.cfgbuilder, self.cfghash, cooker.caches_array)
         self.fromcache = set()
         self.willparse = set()
         for mc in self.cooker.multiconfigs:
             for filename in self.mcfilelist[mc]:
                 appends = self.cooker.collections[mc].get_file_appends(filename)
-                if not self.bb_cache.cacheValid(filename, appends):
-                    self.willparse.add((filename, appends))
+                if not self.bb_caches[mc].cacheValid(filename, appends):
+                    self.willparse.add((mc, self.bb_caches[mc], filename, appends))
                 else:
-                    self.fromcache.add((filename, appends))
+                    self.fromcache.add((mc, self.bb_caches[mc], filename, appends))
 
         self.total = len(self.fromcache) + len(self.willparse)
         self.toparse = len(self.willparse)
@@ -2043,7 +2043,6 @@ class CookerParser(object):
         if self.toparse:
             bb.event.fire(bb.event.ParseStarted(self.toparse), self.cfgdata)
             def init():
-                Parser.bb_cache = self.bb_cache
                 bb.utils.set_process_name(multiprocessing.current_process().name)
                 multiprocessing.util.Finalize(None, bb.codeparser.parser_cache_save, exitpriority=1)
                 multiprocessing.util.Finalize(None, bb.fetch.fetcher_parse_save, exitpriority=1)
@@ -2099,7 +2098,11 @@ class CookerParser(object):
             else:
                 process.join()
 
-        sync = threading.Thread(target=self.bb_cache.sync)
+        def sync_caches():
+            for c in self.bb_caches.values():
+                c.sync()
+
+        sync = threading.Thread(target=sync_caches)
         sync.start()
         multiprocessing.util.Finalize(None, sync.join, exitpriority=-100)
         bb.codeparser.parser_cache_savemerge()
@@ -2116,8 +2119,8 @@ class CookerParser(object):
             print("Processed parsing statistics saved to %s" % (pout))
 
     def load_cached(self):
-        for mc, filename, appends in self.fromcache:
-            cached, infos = self.bb_cache.load(mc, filename, appends)
+        for mc, cache, filename, appends in self.fromcache:
+            cached, infos = cache.load(filename, appends)
             yield not cached, mc, infos
 
     def parse_generator(self):
@@ -2196,8 +2199,13 @@ class CookerParser(object):
             if info_array[0].skipped:
                 self.skipped += 1
                 self.cooker.skiplist[virtualfn] = SkippedPackage(info_array[0])
-            (fn, cls, mc) = bb.cache.virtualfn2realfn(virtualfn)
-            self.bb_cache.add_info(virtualfn, info_array, self.cooker.recipecaches[mc],
+            (fn, cls, fnmc) = bb.cache.virtualfn2realfn(virtualfn)
+
+            if fnmc == mc:
+                cache = self.cooker.recipecaches[mc]
+            else:
+                cache = None
+            self.bb_caches[mc].add_info(virtualfn, info_array, cache,
                                         parsed=parsed, watcher = self.cooker.add_filewatch)
         return True
 
@@ -2207,6 +2215,6 @@ class CookerParser(object):
             to_reparse.add((mc, filename, self.cooker.collections[mc].get_file_appends(filename)))
 
         for mc, filename, appends in to_reparse:
-            infos = self.bb_cache.parse(filename, appends)
+            infos = self.bb_caches[mc].parse(filename, appends)
             for vfn, info_array in infos:
                 self.cooker.recipecaches[mc].add_from_recipeinfo(vfn, info_array)
