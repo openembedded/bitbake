@@ -328,7 +328,7 @@ class NoCache(object):
         bb_data = self.load_bbfile(virtualfn, appends, virtonly=True)
         return bb_data[virtual]
 
-    def load_bbfile(self, bbfile, appends, virtonly = False):
+    def load_bbfile(self, bbfile, appends, virtonly = False, mc=None):
         """
         Load and parse one .bb build file
         Return the data and whether parsing resulted in the file being skipped
@@ -340,6 +340,10 @@ class NoCache(object):
             bb_data.setVar("__ONLYFINALISE", virtual or "default")
             datastores = parse_recipe(bb_data, bbfile, appends, mc)
             return datastores
+
+        if mc is not None:
+            bb_data = self.databuilder.mcdata[mc].createCopy()
+            return parse_recipe(bb_data, bbfile, appends, mc)
 
         bb_data = self.data.createCopy()
         datastores = parse_recipe(bb_data, bbfile, appends)
@@ -500,7 +504,7 @@ class Cache(NoCache):
         """Parse the specified filename, returning the recipe information"""
         self.logger.debug(1, "Parsing %s", filename)
         infos = []
-        datastores = self.load_bbfile(filename, appends)
+        datastores = self.load_bbfile(filename, appends, mc=self.mc)
         depends = []
         variants = []
         # Process the "real" fn last so we can store variants list
@@ -720,8 +724,18 @@ class Cache(NoCache):
         return bb.parse.cached_mtime_noerror(cachefile)
 
     def add_info(self, filename, info_array, cacheData, parsed=None, watcher=None):
-        if cacheData is not None and isinstance(info_array[0], CoreRecipeInfo) and (not info_array[0].skipped):
-            cacheData.add_from_recipeinfo(filename, info_array)
+        if self.mc is not None:
+            (fn, cls, mc) = virtualfn2realfn(filename)
+            if mc:
+                self.logger.error("Unexpected multiconfig %s", virtualfn)
+                return
+
+            vfn = realfn2virtual(fn, cls, self.mc)
+        else:
+            vfn = filename
+
+        if isinstance(info_array[0], CoreRecipeInfo) and (not info_array[0].skipped):
+            cacheData.add_from_recipeinfo(vfn, info_array)
 
             if watcher:
                 watcher(info_array[0].file_depends)

@@ -2199,13 +2199,7 @@ class CookerParser(object):
             if info_array[0].skipped:
                 self.skipped += 1
                 self.cooker.skiplist[virtualfn] = SkippedPackage(info_array[0])
-            (fn, cls, fnmc) = bb.cache.virtualfn2realfn(virtualfn)
-
-            if fnmc == mc:
-                cache = self.cooker.recipecaches[mc]
-            else:
-                cache = None
-            self.bb_caches[mc].add_info(virtualfn, info_array, cache,
+            self.bb_caches[mc].add_info(virtualfn, info_array, self.cooker.recipecaches[mc],
                                         parsed=parsed, watcher = self.cooker.add_filewatch)
         return True
 
