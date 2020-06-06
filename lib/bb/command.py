@@ -232,7 +232,11 @@ class CommandsSync:
 
     def matchFile(self, command, params):
         fMatch = params[0]
-        return command.cooker.matchFile(fMatch)
+        try:
+            mc = params[0]
+        except IndexError:
+            mc = ''
+        return command.cooker.matchFile(fMatch, mc)
     matchFile.needconfig = False
 
     def getUIHandlerNum(self, command, params):
@@ -395,22 +399,38 @@ class CommandsSync:
     def getSkippedRecipes(self, command, params):
         # Return list sorted by reverse priority order
         import bb.cache
-        skipdict = OrderedDict(sorted(command.cooker.skiplist.items(),
-                                      key=lambda x: (-command.cooker.collection.calc_bbfile_priority(bb.cache.virtualfn2realfn(x[0])[0]), x[0])))
+        def sortkey(x):
+            vfn, _ = x
+            realfn, _, mc = bb.cache.virtualfn2realfn(vfn)
+            return (-command.cooker.collections[mc].calc_bbfile_priority(realfn), vfn)
+
+        skipdict = OrderedDict(sorted(command.cooker.skiplist.items(), key=sortkey))
         return list(skipdict.items())
     getSkippedRecipes.readonly = True
 
     def getOverlayedRecipes(self, command, params):
-        return list(command.cooker.collection.overlayed.items())
+        try:
+            mc = params[0]
+        except IndexError:
+            mc = ''
+        return list(command.cooker.collections[mc].overlayed.items())
     getOverlayedRecipes.readonly = True
 
     def getFileAppends(self, command, params):
         fn = params[0]
-        return command.cooker.collection.get_file_appends(fn)
+        try:
+            mc = params[1]
+        except IndexError:
+            mc = ''
+        return command.cooker.collections[mc].get_file_appends(fn)
     getFileAppends.readonly = True
 
     def getAllAppends(self, command, params):
-        return command.cooker.collection.bbappends
+        try:
+            mc = params[0]
+        except IndexError:
+            mc = ''
+        return command.cooker.collections[mc].bbappends
     getAllAppends.readonly = True
 
     def findProviders(self, command, params):
@@ -496,6 +516,7 @@ class CommandsSync:
         for the recipe.
         """
         fn = params[0]
+        mc = bb.runqueue.mc_from_tid(fn)
         appends = params[1]
         appendlist = params[2]
         if len(params) > 3:
@@ -507,7 +528,7 @@ class CommandsSync:
             if appendlist is not None:
                 appendfiles = appendlist
             else:
-                appendfiles = command.cooker.collection.get_file_appends(fn)
+                appendfiles = command.cooker.collections[mc].get_file_appends(fn)
         else:
             appendfiles = []
         # We are calling bb.cache locally here rather than on the server,
@@ -517,7 +538,7 @@ class CommandsSync:
         if config_data:
             # We have to use a different function here if we're passing in a datastore
             # NOTE: we took a copy above, so we don't do it here again
-            envdata = bb.cache.parse_recipe(config_data, fn, appendfiles)['']
+            envdata = bb.cache.parse_recipe(config_data, fn, appendfiles, mc)['']
         else:
             # Use the standard path
             parser = bb.cache.NoCache(command.cooker.databuilder)

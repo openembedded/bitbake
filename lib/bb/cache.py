@@ -623,7 +623,7 @@ class Cache(NoCache):
                         self.remove(fn)
                         return False
 
-        if appends != info_array[0].appends:
+        if tuple(appends) != tuple(info_array[0].appends):
             logger.debug(2, "Cache: appends for %s changed", fn)
             logger.debug(2, "%s to %s" % (str(appends), str(info_array[0].appends)))
             self.remove(fn)
