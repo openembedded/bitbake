@@ -464,14 +464,14 @@ class Cache(NoCache):
                     bitbake_ver = pickled.load()
                 except Exception:
                     self.logger.info('Invalid cache, rebuilding...')
-                    return
+                    return 0
 
                 if cache_ver != __cache_version__:
                     self.logger.info('Cache version mismatch, rebuilding...')
-                    return
+                    return 0
                 elif bitbake_ver != bb.__version__:
                     self.logger.info('Bitbake version mismatch, rebuilding...')
-                    return
+                    return 0
 
                 # Load the rest of the cache file
                 current_progress = 0
