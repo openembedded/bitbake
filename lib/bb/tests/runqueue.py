@@ -248,6 +248,36 @@ class RunQueueTests(unittest.TestCase):
             cmd = ["bitbake", "mc:mc1:fails-mc2", "mc:mc2:fails-mc1"]
             self.run_bitbakecmd(cmd, tempdir, "", extraenv=extraenv)
 
+    def test_multiconfig_mcdepends(self):
+        with tempfile.TemporaryDirectory(prefix="runqueuetest") as tempdir:
+            extraenv = {
+                "BBMULTICONFIG" : "mc1 mc2",
+                "BB_SIGNATURE_HANDLER" : "TestMulticonfigDepends",
+                "EXTRA_BBFILES": "${COREBASE}/recipes/fails-mc/*.bb",
+            }
+            tasks = self.run_bitbakecmd(["bitbake", "mc:mc1:f1"], tempdir, "", extraenv=extraenv, cleanup=True)
+            expected = ["mc1:f1:%s" % t for t in self.alltasks] + \
+                       ["mc2:a1:%s" % t for t in self.alltasks]
+            self.assertEqual(set(tasks), set(expected))
+
+            # A rebuild does nothing
+            tasks = self.run_bitbakecmd(["bitbake", "mc:mc1:f1"], tempdir, "", extraenv=extraenv, cleanup=True)
+            self.assertEqual(set(tasks), set())
+
+            # Test that a signature change in the dependent task causes
+            # mcdepends to rebuild
+            tasks = self.run_bitbakecmd(["bitbake", "mc:mc2:a1", "-c", "compile", "-f"], tempdir, "", extraenv=extraenv, cleanup=True)
+            expected = ["mc2:a1:compile"]
+            self.assertEqual(set(tasks), set(expected))
+
+            rerun_tasks = self.alltasks[:]
+            for x in ("fetch", "unpack", "patch", "prepare_recipe_sysroot", "configure", "compile"):
+                rerun_tasks.remove(x)
+            tasks = self.run_bitbakecmd(["bitbake", "mc:mc1:f1"], tempdir, "", extraenv=extraenv, cleanup=True)
+            expected = ["mc1:f1:%s" % t for t in rerun_tasks] + \
+                       ["mc2:a1:%s" % t for t in rerun_tasks]
+            self.assertEqual(set(tasks), set(expected))
+
     @unittest.skipIf(sys.version_info < (3, 5, 0), 'Python 3.5 or later required')
     def test_hashserv_single(self):
         with tempfile.TemporaryDirectory(prefix="runqueuetest") as tempdir:
