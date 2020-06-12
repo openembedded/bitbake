@@ -163,9 +163,6 @@ class GitSM(Git):
             try:
                 newfetch = Fetch([url], d, cache=False)
                 newfetch.download()
-                # Drop a nugget to add each of the srcrevs we've fetched (used by need_update)
-                runfetchcmd("%s config --add bitbake.srcrev %s" % \
-                            (ud.basecmd, ud.revisions[ud.names[0]]), d, workdir=workdir)
             except Exception as e:
                 logger.error('gitsm: submodule download failed: %s %s' % (type(e).__name__, str(e)))
                 raise
@@ -181,6 +178,9 @@ class GitSM(Git):
             shutil.rmtree(tmpdir)
         else:
             self.process_submodules(ud, ud.clonedir, download_submodule, d)
+            # Drop a nugget for the srcrev we've fetched (used by need_update)
+            runfetchcmd("%s config --add bitbake.srcrev %s" % \
+                        (ud.basecmd, ud.revisions[ud.names[0]]), d, workdir=ud.clonedir)
 
     def unpack(self, ud, destdir, d):
         def unpack_submodules(ud, url, module, modpath, workdir, d):
