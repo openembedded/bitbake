@@ -727,7 +727,7 @@ class Cache(NoCache):
         if self.mc is not None:
             (fn, cls, mc) = virtualfn2realfn(filename)
             if mc:
-                self.logger.error("Unexpected multiconfig %s", virtualfn)
+                self.logger.error("Unexpected multiconfig %s", filename)
                 return
 
             vfn = realfn2virtual(fn, cls, self.mc)
