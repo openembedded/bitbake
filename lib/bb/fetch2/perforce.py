@@ -17,6 +17,36 @@ from   bb.fetch2 import FetchError
 from   bb.fetch2 import logger
 from   bb.fetch2 import runfetchcmd
 
+class PerforceProgressHandler (bb.progress.BasicProgressHandler):
+    """
+    Implements basic progress information for perforce, based on the number of
+    files to be downloaded.
+
+    The p4 print command will print one line per file, therefore it can be used
+    to "count" the number of files already completed and give an indication of
+    the progress.
+    """
+    def __init__(self, d, num_files):
+        self._num_files = num_files
+        self._count = 0
+        super(PerforceProgressHandler, self).__init__(d)
+
+        # Send an initial progress event so the bar gets shown
+        self._fire_progress(-1)
+
+    def write(self, string):
+        self._count = self._count + 1
+
+        percent = int(100.0 * float(self._count) / float(self._num_files))
+
+        # In case something goes wrong, we try to preserve our sanity
+        if percent > 100:
+            percent = 100
+
+        self.update(percent)
+
+        super(PerforceProgressHandler, self).write(string)
+
 class Perforce(FetchMethod):
     """ Class to fetch from perforce repositories """
     def supports(self, ud, d):
@@ -150,10 +180,12 @@ class Perforce(FetchMethod):
         bb.utils.remove(ud.pkgdir, True)
         bb.utils.mkdirhier(ud.pkgdir)
 
+        progresshandler = PerforceProgressHandler(d, len(filelist))
+
         for afile in filelist:
             p4fetchcmd = self._buildp4command(ud, d, 'print', afile)
             bb.fetch2.check_network_access(d, p4fetchcmd, ud.url)
-            runfetchcmd(p4fetchcmd, d, workdir=ud.pkgdir)
+            runfetchcmd(p4fetchcmd, d, workdir=ud.pkgdir, log=progresshandler)
 
         runfetchcmd('tar -czf %s p4' % (ud.localpath), d, cleanup=[ud.localpath], workdir=ud.pkgdir)
 
