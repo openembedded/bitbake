@@ -1,6 +1,20 @@
 """
 BitBake 'Fetch' implementation for perforce
 
+Supported SRC_URI options are:
+
+- module
+   The top-level location to fetch while preserving the remote paths
+
+   The value of module can point to either a directory or a file. The result,
+   in both cases, is that the fetcher will preserve all file paths starting
+   from the module path. That is, the top-level directory in the module value
+   will also be the top-level directory in P4DIR.
+
+- remotepath
+   If the value "keep" is given, the full depot location of each file is
+   preserved in P4DIR. This option overrides the effect of the module option.
+
 """
 
 # Copyright (C) 2003, 2004  Chris Larson
@@ -88,14 +102,33 @@ class Perforce(FetchMethod):
             logger.debug(1, 'Determined P4PORT to be: %s' % ud.host)
             if not ud.host:
                 raise FetchError('Could not determine P4PORT from P4CONFIG')
-	
+
+        # Fetcher options
+        ud.module = ud.parm.get('module')
+        ud.keepremotepath = (ud.parm.get('remotepath', '') == 'keep')
+
         if ud.path.find('/...') >= 0:
             ud.pathisdir = True
         else:
             ud.pathisdir = False
 
+        # Avoid using the "/..." syntax in SRC_URI when a module value is given
+        if ud.pathisdir and ud.module:
+            raise FetchError('SRC_URI depot path cannot not end in /... when a module value is given')
+
         cleanedpath = ud.path.replace('/...', '').replace('/', '.')
         cleanedhost = ud.host.replace(':', '.')
+
+        # Merge the path and module into the final depot location
+        if ud.module:
+            if ud.module.find('/') == 0:
+                raise FetchError('module cannot begin with /')
+            ud.path = os.path.join(ud.path, ud.module)
+
+            # Append the module path to the local pkg name
+            cleanedmodule = ud.module.replace('/...', '').replace('/', '.')
+            cleanedpath += '--%s' % cleanedmodule
+
         ud.pkgdir = os.path.join(ud.dldir, cleanedhost, cleanedpath)
 
         ud.setup_revisions(d)
@@ -125,10 +158,20 @@ class Perforce(FetchMethod):
             pathnrev = '%s' % (ud.path)
 
         if depot_filename:
-            if ud.pathisdir: # Remove leading path to obtain filename
+            if ud.keepremotepath:
+                # preserve everything, remove the leading //
+                filename = depot_filename.lstrip('/')
+            elif ud.module:
+                # remove everything up to the module path
+                modulepath = ud.module.rstrip('/...')
+                filename = depot_filename[depot_filename.rfind(modulepath):]
+            elif ud.pathisdir:
+                # Remove leading (visible) path to obtain the filepath
                 filename = depot_filename[len(ud.path)-1:]
             else:
+                # Remove everything, except the filename
                 filename = depot_filename[depot_filename.rfind('/'):]
+
             filename = filename[:filename.find('#')] # Remove trailing '#rev'
 
         if command == 'changes':
