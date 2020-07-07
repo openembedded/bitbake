@@ -12,6 +12,7 @@ import sys
 try:
     import gi
     gi.require_version('Gtk', '3.0')
+    from gi.repository import Gtk, Gdk, GObject
 except ValueError:
     sys.exit("FATAL: Gtk version needs to be 3.0")
 except ImportError:
