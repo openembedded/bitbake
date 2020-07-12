@@ -243,7 +243,7 @@ class ProcessServer(multiprocessing.Process):
                 lock = bb.utils.lockfile(lockfile, shared=False, retry=False, block=True)
                 if lock:
                     # We hold the lock so we can remove the file (hide stale pid data)
-                    bb.utils.remove(lockfile)
+                    # via unlockfile.
                     bb.utils.unlockfile(lock)
                     return
 
