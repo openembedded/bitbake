@@ -1588,7 +1588,7 @@ class BBCooker:
             self.show_appends_with_no_recipes()
             self.handlePrefProviders()
             for mc in self.multiconfigs:
-                self.recipecaches[mc].bbfile_priority = self.collections[mc].collection_priorities(self.recipecaches[mc].pkg_fn, self.data)
+                self.recipecaches[mc].bbfile_priority = self.collections[mc].collection_priorities(self.recipecaches[mc].pkg_fn, self.parser.mcfilelist[mc], self.data)
             self.state = state.running
 
             # Send an event listing all stamps reachable after parsing
@@ -1704,14 +1704,11 @@ class CookerCollectFiles(object):
         # the shortest.  This allows nested layers to be properly evaluated.
         self.bbfile_config_priorities = sorted(priorities, key=lambda tup: tup[1], reverse=True)
 
-    def calc_bbfile_priority( self, filename, matched = None ):
+    def calc_bbfile_priority(self, filename):
         for _, _, regex, pri in self.bbfile_config_priorities:
             if regex.match(filename):
-                if matched is not None:
-                    if not regex in matched:
-                        matched.add(regex)
-                return pri
-        return 0
+                return pri, regex
+        return 0, None
 
     def get_bbfiles(self):
         """Get list of default .bb files by reading out the current directory"""
@@ -1744,7 +1741,7 @@ class CookerCollectFiles(object):
         config.setVar("BBFILES", " ".join(files))
 
         # Sort files by priority
-        files.sort( key=lambda fileitem: self.calc_bbfile_priority(fileitem) )
+        files.sort( key=lambda fileitem: self.calc_bbfile_priority(fileitem)[0] )
 
         if not len(files):
             files = self.get_bbfiles()
@@ -1866,39 +1863,62 @@ class CookerCollectFiles(object):
                 filelist.append(filename)
         return tuple(filelist)
 
-    def collection_priorities(self, pkgfns, d):
+    def collection_priorities(self, pkgfns, fns, d):
+        # Return the priorities of the entries in pkgfns
+        # Also check that all the regexes in self.bbfile_config_priorities are used
+        # (but to do that we need to ensure skipped recipes aren't counted, nor
+        # collections in BBFILE_PATTERN_IGNORE_EMPTY)
 
         priorities = {}
+        seen = set()
+        matched = set()
+
+        matched_regex = set()
+        unmatched_regex = set()
+        for _, _, regex, _ in self.bbfile_config_priorities:
+            unmatched_regex.add(regex)
 
         # Calculate priorities for each file
-        matched = set()
         for p in pkgfns:
             realfn, cls, mc = bb.cache.virtualfn2realfn(p)
-            priorities[p] = self.calc_bbfile_priority(realfn, matched)
+            priorities[p], regex = self.calc_bbfile_priority(realfn)
+            if regex in unmatched_regex:
+                matched_regex.add(regex)
+                unmatched_regex.remove(regex)
+            seen.add(realfn)
+            if regex:
+                matched.add(realfn)
 
-        unmatched = set()
-        for _, _, regex, pri in self.bbfile_config_priorities:
-            if not regex in matched:
-                unmatched.add(regex)
-
-        # Don't show the warning if the BBFILE_PATTERN did match .bbappend files
-        def find_bbappend_match(regex):
+        if unmatched_regex:
+            # Account for bbappend files
             for b in self.bbappends:
                 (bbfile, append) = b
-                if regex.match(append):
-                    # If the bbappend is matched by already "matched set", return False
-                    for matched_regex in matched:
-                        if matched_regex.match(append):
-                            return False
-                    return True
-            return False
+                seen.add(append)
 
-        for unmatch in unmatched.copy():
-            if find_bbappend_match(unmatch):
-                unmatched.remove(unmatch)
+            # Account for skipped recipes
+            seen.update(fns)
+
+            seen.difference_update(matched)
+
+            def already_matched(fn):
+                for regex in matched_regex:
+                    if regex.match(fn):
+                        return True
+                return False
+
+            for unmatch in unmatched_regex.copy():
+                for fn in seen:
+                    if unmatch.match(fn):
+                        # If the bbappend or file was already matched by another regex, skip it
+                        # e.g. for a layer within a layer, the outer regex could match, the inner
+                        # regex may match nothing and we should warn about that
+                        if already_matched(fn):
+                            continue
+                        unmatched_regex.remove(unmatch)
+                        break
 
         for collection, pattern, regex, _ in self.bbfile_config_priorities:
-            if regex in unmatched:
+            if regex in unmatched_regex:
                 if d.getVar('BBFILE_PATTERN_IGNORE_EMPTY_%s' % collection) != '1':
                     collectlog.warning("No bb files in %s matched BBFILE_PATTERN_%s '%s'" % (self.mc if self.mc else 'default',
                                                                                              collection, pattern))
