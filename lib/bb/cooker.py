@@ -626,6 +626,7 @@ class BBCooker:
         current = 0
         runlist = []
         for k in fulltargetlist:
+            origk = k
             mc = ""
             if k.startswith("mc:"):
                 mc = k.split(":")[1]
@@ -635,6 +636,10 @@ class BBCooker:
                 k2 = k.split(":do_")
                 k = k2[0]
                 ktask = k2[1]
+
+            if mc not in self.multiconfigs:
+                 bb.fatal("Multiconfig dependency %s depends on nonexistent multiconfig configuration named %s" % (origk, mc))
+
             taskdata[mc].add_provider(localdata[mc], self.recipecaches[mc], k)
             current += 1
             if not ktask.startswith("do_"):
@@ -670,7 +675,7 @@ class BBCooker:
                         l = k.split(':')
                         depmc = l[2]
                         if depmc not in self.multiconfigs:
-                            bb.fatal("Multiconfig dependency %s depends on nonexistent mc configuration %s" % (k,depmc))
+                            bb.fatal("Multiconfig dependency %s depends on nonexistent multiconfig configuration named configuration %s" % (k,depmc))
                         else:
                             logger.debug(1, "Adding providers for multiconfig dependency %s" % l[3])
                             taskdata[depmc].add_provider(localdata[depmc], self.recipecaches[depmc], l[3])
