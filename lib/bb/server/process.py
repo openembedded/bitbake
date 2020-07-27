@@ -47,6 +47,7 @@ class ProcessServer(multiprocessing.Process):
         self.next_heartbeat = time.time()
 
         self.event_handle = None
+        self.hadanyui = False
         self.haveui = False
         self.maxuiwait = 30
         self.xmlrpc = False
@@ -188,6 +189,7 @@ class ProcessServer(multiprocessing.Process):
                     self.command_channel_reply = writer
 
                     self.haveui = True
+                    self.hadanyui = True
 
                 except (EOFError, OSError):
                     disconnect_client(self, fds)
@@ -200,7 +202,7 @@ class ProcessServer(multiprocessing.Process):
             # If we don't see a UI connection within maxuiwait, its unlikely we're going to see
             # one. We have had issue with processes hanging indefinitely so timing out UI-less
             # servers is useful.
-            if not self.haveui and not self.timeout and (self.lastui + self.maxuiwait) < time.time():
+            if not self.hadanyui and not self.timeout and (self.lastui + self.maxuiwait) < time.time():
                 print("No UI connection within max timeout, exiting to avoid infinite loop.")
                 self.quit = True
 
