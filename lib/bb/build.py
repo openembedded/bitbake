@@ -398,7 +398,13 @@ exit $ret
 
     progress = d.getVarFlag(func, 'progress')
     if progress:
-        logfile = create_progress_handler(func, progress, logfile, d)
+        try:
+            logfile = create_progress_handler(func, progress, logfile, d)
+        except:
+            from traceback import format_exc
+            logger.error("Failed to create progress handler")
+            logger.error(format_exc())
+            raise
 
     fifobuffer = bytearray()
     def readfifo(data):
