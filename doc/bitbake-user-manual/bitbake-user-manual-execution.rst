@@ -20,7 +20,7 @@ Command <#bitbake-user-manual-command>`__" section.
 
    Prior to executing BitBake, you should take advantage of available
    parallel thread execution on your build host by setting the
-   ```BB_NUMBER_THREADS`` <#var-bb-BB_NUMBER_THREADS>`__ variable in
+   :term:`BB_NUMBER_THREADS` variable in
    your project's ``local.conf`` configuration file.
 
    A common method to determine this value for your build host is to run
@@ -52,7 +52,7 @@ data itself is of various types:
    together.
 
 The ``layer.conf`` files are used to construct key variables such as
-```BBPATH`` <#var-bb-BBPATH>`__ and ```BBFILES`` <#var-bb-BBFILES>`__.
+:term:`BBPATH` and :term:`BBFILES`.
 ``BBPATH`` is used to search for configuration and class files under the
 ``conf`` and ``classes`` directories, respectively. ``BBFILES`` is used
 to locate both recipe and recipe append files (``.bb`` and
@@ -67,15 +67,15 @@ directives.
 Prior to parsing configuration files, BitBake looks at certain
 variables, including:
 
--  ```BB_ENV_WHITELIST`` <#var-bb-BB_ENV_WHITELIST>`__
+-  :term:`BB_ENV_WHITELIST`
 
--  ```BB_ENV_EXTRAWHITE`` <#var-bb-BB_ENV_EXTRAWHITE>`__
+-  :term:`BB_ENV_EXTRAWHITE`
 
--  ```BB_PRESERVE_ENV`` <#var-bb-BB_PRESERVE_ENV>`__
+-  :term:`BB_PRESERVE_ENV`
 
--  ```BB_ORIGENV`` <#var-bb-BB_ORIGENV>`__
+-  :term:`BB_ORIGENV`
 
--  ```BITBAKE_UI`` <#var-bb-BITBAKE_UI>`__
+-  :term:`BITBAKE_UI`
 
 The first four variables in this list relate to how BitBake treats shell
 environment variables during task execution. By default, BitBake cleans
@@ -93,16 +93,16 @@ recipes and tasks that are executed.
 
 BitBake first searches the current working directory for an optional
 ``conf/bblayers.conf`` configuration file. This file is expected to
-contain a ```BBLAYERS`` <#var-bb-BBLAYERS>`__ variable that is a
+contain a :term:`BBLAYERS` variable that is a
 space-delimited list of 'layer' directories. Recall that if BitBake
 cannot find a ``bblayers.conf`` file, then it is assumed the user has
 set the ``BBPATH`` and ``BBFILES`` variables directly in the
 environment.
 
 For each directory (layer) in this list, a ``conf/layer.conf`` file is
-located and parsed with the ```LAYERDIR`` <#var-bb-LAYERDIR>`__ variable
+located and parsed with the :term:`LAYERDIR` variable
 being set to the directory where the layer was found. The idea is these
-files automatically set up ```BBPATH`` <#var-bb-BBPATH>`__ and other
+files automatically set up :term:`BBPATH` and other
 variables correctly for a given build directory.
 
 BitBake then expects to find the ``conf/bitbake.conf`` file somewhere in
@@ -125,7 +125,7 @@ responsible for getting that class is encountered.
 
 The ``base.bbclass`` file is always included. Other classes that are
 specified in the configuration using the
-```INHERIT`` <#var-bb-INHERIT>`__ variable are also included. BitBake
+:term:`INHERIT` variable are also included. BitBake
 searches for class files in a ``classes`` subdirectory under the paths
 in ``BBPATH`` in the same way as configuration files.
 
@@ -157,7 +157,7 @@ Locating and Parsing Recipes
 ============================
 
 During the configuration phase, BitBake will have set
-```BBFILES`` <#var-bb-BBFILES>`__. BitBake now uses it to construct a
+:term:`BBFILES`. BitBake now uses it to construct a
 list of recipes to parse, along with any append files (``.bbappend``) to
 apply. ``BBFILES`` is a space-separated list of available files and
 supports wildcards. An example would be: BBFILES =
@@ -174,13 +174,13 @@ various variables into the datastore.
 For each file, a fresh copy of the base configuration is made, then the
 recipe is parsed line by line. Any inherit statements cause BitBake to
 find and then parse class files (``.bbclass``) using
-```BBPATH`` <#var-bb-BBPATH>`__ as the search path. Finally, BitBake
+:term:`BBPATH` as the search path. Finally, BitBake
 parses in order any append files found in ``BBFILES``.
 
 One common convention is to use the recipe filename to define pieces of
 metadata. For example, in ``bitbake.conf`` the recipe name and version
-are used to set the variables ```PN`` <#var-bb-PN>`__ and
-```PV`` <#var-bb-PV>`__: PN =
+are used to set the variables :term:`PN` and
+:term:`PV`: PN =
 "${@bb.parse.BBHandler.vars_from_file(d.getVar('FILE', False),d)[0] or
 'defaultpkgname'}" PV =
 "${@bb.parse.BBHandler.vars_from_file(d.getVar('FILE', False),d)[1] or
@@ -201,7 +201,7 @@ and then reload it.
 Where possible, subsequent BitBake commands reuse this cache of recipe
 information. The validity of this cache is determined by first computing
 a checksum of the base configuration data (see
-```BB_HASHCONFIG_WHITELIST`` <#var-bb-BB_HASHCONFIG_WHITELIST>`__) and
+:term:`BB_HASHCONFIG_WHITELIST`) and
 then checking if the checksum matches. If that checksum matches what is
 in the cache and the recipe and class files have not changed, BitBake is
 able to use the cache. BitBake then reloads the cached information about
@@ -233,8 +233,8 @@ the recipe files have been parsed, BitBake starts to figure out how to
 build the target. BitBake looks through the ``PROVIDES`` list for each
 of the recipes. A ``PROVIDES`` list is the list of names by which the
 recipe can be known. Each recipe's ``PROVIDES`` list is created
-implicitly through the recipe's ```PN`` <#var-bb-PN>`__ variable and
-explicitly through the recipe's ```PROVIDES`` <#var-bb-PROVIDES>`__
+implicitly through the recipe's :term:`PN` variable and
+explicitly through the recipe's :term:`PROVIDES`
 variable, which is optional.
 
 When a recipe uses ``PROVIDES``, that recipe's functionality can be
@@ -259,7 +259,7 @@ A common example in which a target has multiple providers is
 recipe. Each machine often selects the best kernel provider by using a
 line similar to the following in the machine configuration file:
 PREFERRED_PROVIDER_virtual/kernel = "linux-yocto" The default
-```PREFERRED_PROVIDER`` <#var-bb-PREFERRED_PROVIDER>`__ is the provider
+:term:`PREFERRED_PROVIDER` is the provider
 with the same name as the target. BitBake iterates through each target
 it needs to build and resolves them and their dependencies using this
 process.
@@ -268,9 +268,9 @@ Understanding how providers are chosen is made complicated by the fact
 that multiple versions might exist for a given provider. BitBake
 defaults to the highest version of a provider. Version comparisons are
 made using the same method as Debian. You can use the
-```PREFERRED_VERSION`` <#var-bb-PREFERRED_VERSION>`__ variable to
+:term:`PREFERRED_VERSION` variable to
 specify a particular version. You can influence the order by using the
-```DEFAULT_PREFERENCE`` <#var-bb-DEFAULT_PREFERENCE>`__ variable.
+:term:`DEFAULT_PREFERENCE` variable.
 
 By default, files have a preference of "0". Setting
 ``DEFAULT_PREFERENCE`` to "-1" makes the recipe unlikely to be used
@@ -283,15 +283,15 @@ undergone sufficient testing to be considered stable.
 When there are multiple “versions” of a given recipe, BitBake defaults
 to selecting the most recent version, unless otherwise specified. If the
 recipe in question has a
-```DEFAULT_PREFERENCE`` <#var-bb-DEFAULT_PREFERENCE>`__ set lower than
+:term:`DEFAULT_PREFERENCE` set lower than
 the other recipes (default is 0), then it will not be selected. This
 allows the person or persons maintaining the repository of recipe files
 to specify their preference for the default selected version.
 Additionally, the user can specify their preferred version.
 
 If the first recipe is named ``a_1.1.bb``, then the
-```PN`` <#var-bb-PN>`__ variable will be set to “a”, and the
-```PV`` <#var-bb-PV>`__ variable will be set to 1.1.
+:term:`PN` variable will be set to “a”, and the
+:term:`PV` variable will be set to 1.1.
 
 Thus, if a recipe named ``a_1.2.bb`` exists, BitBake will choose 1.2 by
 default. However, if you define the following variable in a ``.conf``
@@ -326,8 +326,8 @@ Dependencies are defined through several variables. You can find
 information about variables BitBake uses in the `Variables
 Glossary <#ref-bb-variables-glos>`__ near the end of this manual. At a
 basic level, it is sufficient to know that BitBake uses the
-```DEPENDS`` <#var-bb-DEPENDS>`__ and
-```RDEPENDS`` <#var-bb-RDEPENDS>`__ variables when calculating
+:term:`DEPENDS` and
+:term:`RDEPENDS` variables when calculating
 dependencies.
 
 For more information on how BitBake handles dependencies, see the
@@ -345,7 +345,7 @@ section has more information on how BitBake chooses which task to
 execute next.
 
 The build now starts with BitBake forking off threads up to the limit
-set in the ```BB_NUMBER_THREADS`` <#var-bb-BB_NUMBER_THREADS>`__
+set in the :term:`BB_NUMBER_THREADS`
 variable. BitBake continues to fork threads as long as there are tasks
 ready to run, those tasks have all their dependencies met, and the
 thread threshold has not been exceeded.
@@ -354,7 +354,7 @@ It is worth noting that you can greatly speed up the build time by
 properly setting the ``BB_NUMBER_THREADS`` variable.
 
 As each task completes, a timestamp is written to the directory
-specified by the ```STAMP`` <#var-bb-STAMP>`__ variable. On subsequent
+specified by the :term:`STAMP` variable. On subsequent
 runs, BitBake looks in the build directory within ``tmp/stamps`` and
 does not rerun tasks that are already completed unless a timestamp is
 found to be invalid. Currently, invalid timestamps are only considered
@@ -386,7 +386,7 @@ Executing Tasks
 
 Tasks can be either a shell task or a Python task. For shell tasks,
 BitBake writes a shell script to
-``${``\ ```T`` <#var-bb-T>`__\ ``}/run.do_taskname.pid`` and then
+``${``\ :term:`T`\ ``}/run.do_taskname.pid`` and then
 executes the script. The generated shell script contains all the
 exported variables, and the shell functions with all variables expanded.
 Output from the shell script goes to the file
@@ -404,9 +404,9 @@ scheduler. It is possible to configure the scheduler and define custom
 implementations for specific use cases. For more information, see these
 variables that control the behavior:
 
--  ```BB_SCHEDULER`` <#var-bb-BB_SCHEDULER>`__
+-  :term:`BB_SCHEDULER`
 
--  ```BB_SCHEDULERS`` <#var-bb-BB_SCHEDULERS>`__
+-  :term:`BB_SCHEDULERS`
 
 It is possible to have functions run before and after a task's main
 function. This is done using the ``[prefuncs]`` and ``[postfuncs]``
@@ -432,7 +432,7 @@ changes because it should not affect the output for target packages. The
 simplistic approach for excluding the working directory is to set it to
 some fixed value and create the checksum for the "run" script. BitBake
 goes one step better and uses the
-```BB_HASHBASE_WHITELIST`` <#var-bb-BB_HASHBASE_WHITELIST>`__ variable
+:term:`BB_HASHBASE_WHITELIST` variable
 to define a list of variables that should never be included when
 generating the signatures.
 
@@ -508,7 +508,7 @@ behavior is unchanged from previous versions. ``OE-Core`` uses the
 version but adds the task hash to the stamp files. This results in any
 metadata change that changes the task hash, automatically causing the
 task to be run again. This removes the need to bump
-```PR`` <#var-bb-PR>`__ values, and changes to metadata automatically
+:term:`PR` values, and changes to metadata automatically
 ripple across the build.
 
 It is also worth noting that the end result of these signature
@@ -570,7 +570,7 @@ information is available, BitBake uses this information instead of
 running the main tasks.
 
 BitBake first calls the function defined by the
-```BB_HASHCHECK_FUNCTION`` <#var-bb-BB_HASHCHECK_FUNCTION>`__ variable
+:term:`BB_HASHCHECK_FUNCTION` variable
 with a list of tasks and corresponding hashes it wants to build. This
 function is designed to be fast and returns a list of the tasks for
 which it believes in can obtain artifacts.
@@ -586,13 +586,13 @@ or failure.
 As previously mentioned, an artifact can cover more than one task. For
 example, it is pointless to obtain a compiler if you already have the
 compiled binary. To handle this, BitBake calls the
-```BB_SETSCENE_DEPVALID`` <#var-bb-BB_SETSCENE_DEPVALID>`__ function for
+:term:`BB_SETSCENE_DEPVALID` function for
 each successful setscene task to know whether or not it needs to obtain
 the dependencies of that task.
 
 Finally, after all the setscene tasks have executed, BitBake calls the
 function listed in
-```BB_SETSCENE_VERIFY_FUNCTION2`` <#var-bb-BB_SETSCENE_VERIFY_FUNCTION2>`__
+:term:`BB_SETSCENE_VERIFY_FUNCTION2`
 with the list of tasks BitBake thinks has been "covered". The metadata
 can then ensure that this list is correct and can inform BitBake that it
 wants specific tasks to be run regardless of the setscene result.
@@ -607,7 +607,7 @@ In addition to the standard command line option to control how verbose
 builds are when execute, bitbake also supports user defined
 configuration of the `Python
 logging <https://docs.python.org/3/library/logging.html>`__ facilities
-through the ```BB_LOGCONFIG`` <#var-bb-BB_LOGCONFIG>`__ variable. This
+through the :term:`BB_LOGCONFIG` variable. This
 variable defines a json or yaml `logging
 configuration <https://docs.python.org/3/library/logging.config.html>`__
 that will be intelligently merged into the default configuration. The

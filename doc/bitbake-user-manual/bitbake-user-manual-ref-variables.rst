@@ -26,7 +26,7 @@ overview of their function and contents.
 .. glossary::
 
    ASSUME_PROVIDED
-      Lists recipe names (```PN`` <#var-bb-PN>`__ values) BitBake does not
+      Lists recipe names (:term:`PN` values) BitBake does not
       attempt to build. Instead, BitBake assumes these recipes have already
       been built.
 
@@ -45,7 +45,7 @@ overview of their function and contents.
       considerations surrounding this variable:
 
       -  This host list is only used if
-         ```BB_NO_NETWORK`` <#var-bb-BB_NO_NETWORK>`__ is either not set or
+         :term:`BB_NO_NETWORK` is either not set or
          set to "0".
 
       -  Limited support for the "``*``" wildcard character for matching
@@ -69,11 +69,11 @@ overview of their function and contents.
       -  Attempts to access networks not in the host list cause a failure.
 
       Using ``BB_ALLOWED_NETWORKS`` in conjunction with
-      ```PREMIRRORS`` <#var-bb-PREMIRRORS>`__ is very useful. Adding the
+      :term:`PREMIRRORS` is very useful. Adding the
       host you want to use to ``PREMIRRORS`` results in the source code
       being fetched from an allowed location and avoids raising an error
       when a host that is not allowed is in a
-      ```SRC_URI`` <#var-bb-SRC_URI>`__ statement. This is because the
+      :term:`SRC_URI` statement. This is because the
       fetcher does not attempt to use the host listed in ``SRC_URI`` after
       a successful fetch from the ``PREMIRRORS`` occurs.
 
@@ -113,7 +113,7 @@ overview of their function and contents.
       Stop the build after the currently executing tasks have finished when
       a threshold is broken. WARN: Issue a warning but continue the build
       when a threshold is broken. Subsequent warnings are issued as defined
-      by the `BB_DISKMON_WARNINTERVAL <#var-bb-BB_DISKMON_WARNINTERVAL>`__
+      by the :term:`BB_DISKMON_WARNINTERVAL`
       variable, which must be defined. <dir> is: Any directory you choose.
       You can specify one or more directories to monitor by separating the
       groupings with a space. If two directories are on the same device,
@@ -128,7 +128,7 @@ overview of their function and contents.
       WARN,${SSTATE_DIR},1G,100K" BB_DISKMON_DIRS =
       "STOPTASKS,${TMPDIR},1G" BB_DISKMON_DIRS = "ABORT,${TMPDIR},,100K"
       The first example works only if you also set the
-      ```BB_DISKMON_WARNINTERVAL`` <#var-bb-BB_DISKMON_WARNINTERVAL>`__
+      :term:`BB_DISKMON_WARNINTERVAL`
       variable. This example causes the build system to immediately abort
       when either the disk space in ``${TMPDIR}`` drops below 1 Gbyte or
       the available free inodes drops below 100 Kbytes. Because two
@@ -151,7 +151,7 @@ overview of their function and contents.
       Defines the disk space and free inode warning intervals.
 
       If you are going to use the ``BB_DISKMON_WARNINTERVAL`` variable, you
-      must also use the ```BB_DISKMON_DIRS`` <#var-bb-BB_DISKMON_DIRS>`__
+      must also use the :term:`BB_DISKMON_DIRS`
       variable and define its action as "WARN". During the build,
       subsequent warnings are issued each time disk space or number of free
       inodes further reduces by the respective interval.
@@ -182,10 +182,10 @@ overview of their function and contents.
       Specifies the internal whitelist of variables to allow through from
       the external environment into BitBake's datastore. If the value of
       this variable is not specified (which is the default), the following
-      list is used: ```BBPATH`` <#var-bb-BBPATH>`__,
-      ```BB_PRESERVE_ENV`` <#var-bb-BB_PRESERVE_ENV>`__,
-      ```BB_ENV_WHITELIST`` <#var-bb-BB_ENV_WHITELIST>`__, and
-      ```BB_ENV_EXTRAWHITE`` <#var-bb-BB_ENV_EXTRAWHITE>`__.
+      list is used: :term:`BBPATH`,
+      :term:`BB_PRESERVE_ENV`,
+      :term:`BB_ENV_WHITELIST`, and
+      :term:`BB_ENV_EXTRAWHITE`.
 
       .. note::
 
@@ -196,7 +196,7 @@ overview of their function and contents.
       Specifies an additional set of variables to allow through (whitelist)
       from the external environment into BitBake's datastore. This list of
       variables are on top of the internal list set in
-      ```BB_ENV_WHITELIST`` <#var-bb-BB_ENV_WHITELIST>`__.
+      :term:`BB_ENV_WHITELIST`.
 
       .. note::
 
@@ -205,9 +205,9 @@ overview of their function and contents.
 
    BB_FETCH_PREMIRRORONLY
       When set to "1", causes BitBake's fetcher module to only search
-      ```PREMIRRORS`` <#var-bb-PREMIRRORS>`__ for files. BitBake will not
-      search the main ```SRC_URI`` <#var-bb-SRC_URI>`__ or
-      ```MIRRORS`` <#var-bb-MIRRORS>`__.
+      :term:`PREMIRRORS` for files. BitBake will not
+      search the main :term:`SRC_URI` or
+      :term:`MIRRORS`.
 
    BB_FILENAME
       Contains the filename of the recipe that owns the currently running
@@ -256,7 +256,7 @@ overview of their function and contents.
 
    BB_GENERATE_MIRROR_TARBALLS
       Causes tarballs of the Git repositories, including the Git metadata,
-      to be placed in the ```DL_DIR`` <#var-bb-DL_DIR>`__ directory. Anyone
+      to be placed in the :term:`DL_DIR` directory. Anyone
       wishing to create a source mirror would want to enable this variable.
 
       For performance reasons, creating and placing tarballs of the Git
@@ -308,7 +308,7 @@ overview of their function and contents.
 
    BB_LOGFMT
       Specifies the name of the log files saved into
-      ``${``\ ```T`` <#var-bb-T>`__\ ``}``. By default, the ``BB_LOGFMT``
+      ``${``\ :term:`T`\ ``}``. By default, the ``BB_LOGFMT``
       variable is undefined and the log file names get created using the
       following form: log.{task}.{pid} If you want to force log files to
       take a specific name, you can set this variable in a configuration
@@ -318,7 +318,7 @@ overview of their function and contents.
       Allows BitBake to run at a specific priority (i.e. nice level).
       System permissions usually mean that BitBake can reduce its priority
       but not raise it again. See
-      ```BB_TASK_NICE_LEVEL`` <#var-bb-BB_TASK_NICE_LEVEL>`__ for
+      :term:`BB_TASK_NICE_LEVEL` for
       additional information.
 
    BB_NO_NETWORK
@@ -360,7 +360,7 @@ overview of their function and contents.
 
    BB_RUNFMT
       Specifies the name of the executable script files (i.e. run files)
-      saved into ``${``\ ```T`` <#var-bb-T>`__\ ``}``. By default, the
+      saved into ``${``\ :term:`T`\ ``}``. By default, the
       ``BB_RUNFMT`` variable is undefined and the run file names get
       created using the following form: run.{task}.{pid} If you want to
       force run files to take a specific name, you can set this variable in
@@ -390,7 +390,7 @@ overview of their function and contents.
       derived from the ``RunQueueScheduler`` class.
 
       For information how to select a scheduler, see the
-      ```BB_SCHEDULER`` <#var-bb-BB_SCHEDULER>`__ variable.
+      :term:`BB_SCHEDULER` variable.
 
    BB_SETSCENE_DEPVALID
       Specifies a function BitBake calls that determines whether BitBake
@@ -456,7 +456,7 @@ overview of their function and contents.
 
       -  *whitelist* - Identical to "full" mode except timestamp
          comparisons are made for recipes listed in the
-         ```BB_STAMP_WHITELIST`` <#var-bb-BB_STAMP_WHITELIST>`__ variable.
+         :term:`BB_STAMP_WHITELIST` variable.
 
       .. note::
 
@@ -466,7 +466,7 @@ overview of their function and contents.
    BB_STAMP_WHITELIST
       Lists files whose stamp file timestamps are compared when the stamp
       policy mode is set to "whitelist". For information on stamp policies,
-      see the ```BB_STAMP_POLICY`` <#var-bb-BB_STAMP_POLICY>`__ variable.
+      see the :term:`BB_STAMP_POLICY` variable.
 
    BB_STRICT_CHECKSUM
       Sets a more strict checksum mechanism for non-local URLs. Setting
@@ -555,7 +555,7 @@ overview of their function and contents.
          Internally, the ``BBCLASSEXTEND`` mechanism generates recipe
          variants by rewriting variable values and applying overrides such
          as ``_class-native``. For example, to generate a native version of
-         a recipe, a ```DEPENDS`` <#var-bb-DEPENDS>`__ on "foo" is
+         a recipe, a :term:`DEPENDS` on "foo" is
          rewritten to a ``DEPENDS`` on "foo-native".
 
          Even when using ``BBCLASSEXTEND``, the recipe is only parsed once.
@@ -580,7 +580,7 @@ overview of their function and contents.
 
    BBFILE_PATTERN
       Variable that expands to match files from
-      ```BBFILES`` <#var-bb-BBFILES>`__ in a particular layer. This
+      :term:`BBFILES` in a particular layer. This
       variable is used in the ``conf/layer.conf`` file and must be suffixed
       with the name of the specific layer (e.g.
       ``BBFILE_PATTERN_emenlow``).
@@ -593,7 +593,7 @@ overview of their function and contents.
       prioritize a layer against other layers that contain the same recipe
       - effectively letting you control the precedence for the multiple
       layers. The precedence established through this variable stands
-      regardless of a recipe's version (```PV`` <#var-bb-PV>`__ variable).
+      regardless of a recipe's version (:term:`PV` variable).
       For example, a layer that has a recipe with a higher ``PV`` value but
       for which the ``BBFILE_PRIORITY`` is set to have a lower precedence
       still has a lower precedence.
@@ -617,7 +617,7 @@ overview of their function and contents.
       software.
 
       When specifying recipe files, you can pattern match using Python's
-      ```glob`` <https://docs.python.org/3/library/glob.html>`__ syntax.
+      ```glob`https://docs.python.org/3/library/glob.html syntax.
       For details on the syntax, see the documentation by following the
       previous link.
 
@@ -630,7 +630,7 @@ overview of their function and contents.
       failed task.
 
    BBINCLUDELOGS_LINES
-      If ```BBINCLUDELOGS`` <#var-bb-BBINCLUDELOGS>`__ is set, specifies
+      If :term:`BBINCLUDELOGS` is set, specifies
       the maximum number of lines from the task log file to print when
       reporting a failed task. If you do not set ``BBINCLUDELOGS_LINES``,
       the entire log is printed.
@@ -662,7 +662,7 @@ overview of their function and contents.
       compiler. Consequently, the syntax follows Python's Regular
       Expression (re) syntax. The expressions are compared against the full
       paths to the files. For complete syntax information, see Python's
-      documentation at ` <http://docs.python.org/3/library/re.html#re>`__.
+      documentation at http://docs.python.org/3/library/re.html#re.
 
       The following example uses a complete regular expression to tell
       BitBake to ignore all recipe and recipe append files in the
@@ -718,7 +718,7 @@ overview of their function and contents.
    BBVERSIONS
       Allows a single recipe to build multiple versions of a project from a
       single recipe file. You also able to specify conditional metadata
-      using the ```OVERRIDES`` <#var-bb-OVERRIDES>`__ mechanism for a
+      using the :term:`OVERRIDES` mechanism for a
       single version or for an optionally named range of versions.
 
       For more information on ``BBVERSIONS``, see the "`Variants - Class
@@ -780,7 +780,7 @@ overview of their function and contents.
       "a" is configuring itself.
 
       For information on runtime dependencies, see the
-      ```RDEPENDS`` <#var-bb-RDEPENDS>`__ variable.
+      :term:`RDEPENDS` variable.
 
    DESCRIPTION
       A long description for the recipe.
@@ -790,7 +790,7 @@ overview of their function and contents.
       downloads. By default, ``DL_DIR`` gets files suitable for mirroring
       for everything except Git repositories. If you want tarballs of Git
       repositories, use the
-      ```BB_GENERATE_MIRROR_TARBALLS`` <#var-bb-BB_GENERATE_MIRROR_TARBALLS>`__
+      :term:`BB_GENERATE_MIRROR_TARBALLS`
       variable.
 
    EXCLUDE_FROM_WORLD
@@ -820,7 +820,7 @@ overview of their function and contents.
 
    FAKEROOTBASEENV
       Lists environment variables to set when executing the command defined
-      by ```FAKEROOTCMD`` <#var-bb-FAKEROOTCMD>`__ that starts the
+      by :term:`FAKEROOTCMD` that starts the
       bitbake-worker process in the fakeroot environment.
 
    FAKEROOTCMD
@@ -835,13 +835,13 @@ overview of their function and contents.
       Lists environment variables to set when running a task in the
       fakeroot environment. For additional information on environment
       variables and the fakeroot environment, see the
-      ```FAKEROOTBASEENV`` <#var-bb-FAKEROOTBASEENV>`__ variable.
+      :term:`FAKEROOTBASEENV` variable.
 
    FAKEROOTNOENV
       Lists environment variables to set when running a task that is not in
       the fakeroot environment. For additional information on environment
       variables and the fakeroot environment, see the
-      ```FAKEROOTENV`` <#var-bb-FAKEROOTENV>`__ variable.
+      :term:`FAKEROOTENV` variable.
 
    FETCHCMD
       Defines the command the BitBake fetcher module executes when running
@@ -888,7 +888,7 @@ overview of their function and contents.
       depends. Optionally, you can specify a specific layer version for a
       dependency by adding it to the end of the layer name with a colon,
       (e.g. "anotherlayer:3" to be compared against
-      ```LAYERVERSION`` <#var-bb-LAYERVERSION>`__\ ``_anotherlayer`` in
+      :term:`LAYERVERSION`\ ``_anotherlayer`` in
       this case). BitBake produces an error if any dependency is missing or
       the version numbers do not match exactly (if specified).
 
@@ -905,14 +905,14 @@ overview of their function and contents.
    LAYERDIR_RE
       When used inside the ``layer.conf`` configuration file, this variable
       provides the path of the current layer, escaped for use in a regular
-      expression (```BBFILE_PATTERN`` <#var-bb-BBFILE_PATTERN>`__). This
+      expression (:term:`BBFILE_PATTERN`). This
       variable is not available outside of ``layer.conf`` and references
       are expanded immediately when parsing of the file completes.
 
    LAYERVERSION
       Optionally specifies the version of a layer as a single number. You
       can use this variable within
-      ```LAYERDEPENDS`` <#var-bb-LAYERDEPENDS>`__ for another layer in
+      :term:`LAYERDEPENDS` for another layer in
       order to depend on a specific version of the layer.
 
       You use this variable in the ``conf/layer.conf`` file. You must also
@@ -926,7 +926,7 @@ overview of their function and contents.
       Specifies additional paths from which BitBake gets source code. When
       the build system searches for source code, it first tries the local
       download directory. If that location fails, the build system tries
-      locations defined by ```PREMIRRORS`` <#var-bb-PREMIRRORS>`__, the
+      locations defined by :term:`PREMIRRORS`, the
       upstream source, and then locations specified by ``MIRRORS`` in that
       order.
 
@@ -964,7 +964,7 @@ overview of their function and contents.
       optional modules that are found in other recipes.
       ``PACKAGES_DYNAMIC`` does not actually satisfy the dependencies, it
       only states that they should be satisfied. For example, if a hard,
-      runtime dependency (```RDEPENDS`` <#var-bb-RDEPENDS>`__) of another
+      runtime dependency (:term:`RDEPENDS`) of another
       package is satisfied during the build through the
       ``PACKAGES_DYNAMIC`` variable, but a package with the module name is
       never actually produced, then the other package will be broken.
@@ -995,7 +995,7 @@ overview of their function and contents.
       Determines which recipe should be given preference when multiple
       recipes provide the same item. You should always suffix the variable
       with the name of the provided item, and you should set it to the
-      ```PN`` <#var-bb-PN>`__ of the recipe to which you want to give
+      :term:`PN` of the recipe to which you want to give
       precedence. Some examples: PREFERRED_PROVIDER_virtual/kernel ?=
       "linux-yocto" PREFERRED_PROVIDER_virtual/xserver = "xserver-xf86"
       PREFERRED_PROVIDER_virtual/libgl ?= "mesa"
@@ -1004,7 +1004,7 @@ overview of their function and contents.
       Determines which recipe should be given preference for cases where
       multiple recipes provide the same item. Functionally,
       ``PREFERRED_PROVIDERS`` is identical to
-      ```PREFERRED_PROVIDER`` <#var-bb-PREFERRED_PROVIDER>`__. However, the
+      :term:`PREFERRED_PROVIDER`. However, the
       ``PREFERRED_PROVIDERS`` variable lets you define preferences for
       multiple situations using the following form: PREFERRED_PROVIDERS =
       "xxx:yyy aaa:bbb ..." This form is a convenient replacement for the
@@ -1014,8 +1014,8 @@ overview of their function and contents.
    PREFERRED_VERSION
       If there are multiple versions of recipes available, this variable
       determines which recipe should be given preference. You must always
-      suffix the variable with the ```PN`` <#var-bb-PN>`__ you want to
-      select, and you should set ```PV`` <#var-bb-PV>`__ accordingly for
+      suffix the variable with the :term:`PN` you want to
+      select, and you should set :term:`PV` accordingly for
       precedence.
 
       The ``PREFERRED_VERSION`` variable supports limited wildcard use
@@ -1038,7 +1038,7 @@ overview of their function and contents.
       the build system searches for source code, it first tries the local
       download directory. If that location fails, the build system tries
       locations defined by ``PREMIRRORS``, the upstream source, and then
-      locations specified by ```MIRRORS`` <#var-bb-MIRRORS>`__ in that
+      locations specified by :term:`MIRRORS` in that
       order.
 
       Typically, you would add a specific server for the build system to
@@ -1072,7 +1072,7 @@ overview of their function and contents.
       functionality (e.g. a Linux kernel). Recipes that provide the
       functionality in question list the virtual target in ``PROVIDES``.
       Recipes that depend on the functionality in question can include the
-      virtual target in ```DEPENDS`` <#var-bb-DEPENDS>`__ to leave the
+      virtual target in :term:`DEPENDS` to leave the
       choice of provider open.
 
       Conventionally, virtual targets have names on the form
@@ -1080,7 +1080,7 @@ overview of their function and contents.
       of the name and has no syntactical significance.
 
    PRSERV_HOST
-      The network based ```PR`` <#var-bb-PR>`__ service host and port.
+      The network based :term:`PR` service host and port.
 
       Following is an example of how the ``PRSERV_HOST`` variable is set:
       PRSERV_HOST = "localhost:0" You must set the variable if you want to
@@ -1114,7 +1114,7 @@ overview of their function and contents.
       greater of the package ``foo``: RDEPENDS_${PN} = "foo (>= 1.2)"
 
       For information on build-time dependencies, see the
-      ```DEPENDS`` <#var-bb-DEPENDS>`__ variable.
+      :term:`DEPENDS` variable.
 
    REPODIR
       The directory in which a local copy of a ``google-repo`` directory is
@@ -1163,7 +1163,7 @@ overview of their function and contents.
 
       -  *``file://`` -* Fetches files, which are usually files shipped
          with the metadata, from the local machine. The path is relative to
-         the ```FILESPATH`` <#var-bb-FILESPATH>`__ variable.
+         the :term:`FILESPATH` variable.
 
       -  *``bzr://`` -* Fetches files from a Bazaar revision control
          repository.
@@ -1227,9 +1227,9 @@ overview of their function and contents.
       identifier and not just a tag.
 
    SRCREV_FORMAT
-      Helps construct valid ```SRCREV`` <#var-bb-SRCREV>`__ values when
+      Helps construct valid :term:`SRCREV` values when
       multiple source controlled URLs are used in
-      ```SRC_URI`` <#var-bb-SRC_URI>`__.
+      :term:`SRC_URI`.
 
       The system needs help constructing these values under these
       circumstances. Each component in the ``SRC_URI`` is assigned a name
@@ -1247,7 +1247,7 @@ overview of their function and contents.
 
    STAMPCLEAN
       Specifies the base path used to create recipe stamp files. Unlike the
-      ```STAMP`` <#var-bb-STAMP>`__ variable, ``STAMPCLEAN`` can contain
+      :term:`STAMP` variable, ``STAMPCLEAN`` can contain
       wildcards to match the range of files a clean operation should
       remove. BitBake uses a clean operation to remove any other stamps it
       should be removing when creating a new stamp.

@@ -26,7 +26,7 @@ The code to execute the first part of this process, a fetch, looks
 something like the following: src_uri = (d.getVar('SRC_URI') or
 "").split() fetcher = bb.fetch2.Fetch(src_uri, d) fetcher.download()
 This code sets up an instance of the fetch class. The instance uses a
-space-separated list of URLs from the ```SRC_URI`` <#var-bb-SRC_URI>`__
+space-separated list of URLs from the :term:`SRC_URI`
 variable and then calls the ``download`` method to download the files.
 
 The instantiation of the fetch class is usually followed by: rootdir =
@@ -51,13 +51,13 @@ URLs by looking for source files in a specific search order:
 
 -  *Pre-mirror Sites:* BitBake first uses pre-mirrors to try and find
    source files. These locations are defined using the
-   ```PREMIRRORS`` <#var-bb-PREMIRRORS>`__ variable.
+   :term:`PREMIRRORS` variable.
 
 -  *Source URI:* If pre-mirrors fail, BitBake uses the original URL (e.g
    from ``SRC_URI``).
 
 -  *Mirror Sites:* If fetch failures occur, BitBake next uses mirror
-   locations as defined by the ```MIRRORS`` <#var-bb-MIRRORS>`__
+   locations as defined by the :term:`MIRRORS`
    variable.
 
 For each URL passed to the fetcher, the fetcher calls the submodule that
@@ -88,7 +88,7 @@ previous example does.
 Since network accesses are slow, BitBake maintains a cache of files
 downloaded from the network. Any source files that are not local (i.e.
 downloaded from the Internet) are placed into the download directory,
-which is specified by the ```DL_DIR`` <#var-bb-DL_DIR>`__ variable.
+which is specified by the :term:`DL_DIR` variable.
 
 File integrity is of key importance for reproducing builds. For
 non-local archive downloads, the fetcher code can verify SHA-256 and MD5
@@ -112,9 +112,9 @@ comparing a checksum for the file again.
    It is assumed that local storage is safe from data corruption. If
    this were not the case, there would be bigger issues to worry about.
 
-If ```BB_STRICT_CHECKSUM`` <#var-bb-BB_STRICT_CHECKSUM>`__ is set, any
+If :term:`BB_STRICT_CHECKSUM` is set, any
 download without a checksum triggers an error message. The
-```BB_NO_NETWORK`` <#var-bb-BB_NO_NETWORK>`__ variable can be used to
+:term:`BB_NO_NETWORK` variable can be used to
 make any attempted network access a fatal error, which is useful for
 checking that mirrors are complete as well as other things.
 
@@ -170,9 +170,9 @@ Local file fetcher (``file://``)
 This submodule handles URLs that begin with ``file://``. The filename
 you specify within the URL can be either an absolute or relative path to
 a file. If the filename is relative, the contents of the
-```FILESPATH`` <#var-bb-FILESPATH>`__ variable is used in the same way
+:term:`FILESPATH` variable is used in the same way
 ``PATH`` is used to find executables. If the file cannot be found, it is
-assumed that it is available in ```DL_DIR`` <#var-bb-DL_DIR>`__ by the
+assumed that it is available in :term:`DL_DIR` by the
 time the ``download()`` method is called.
 
 If you specify a directory, the entire directory is unpacked.
@@ -194,7 +194,7 @@ The executable and parameters used are specified by the
 fetcher supports a parameter "downloadfilename" that allows the name of
 the downloaded file to be specified. Specifying the name of the
 downloaded file is useful for avoiding collisions in
-```DL_DIR`` <#var-bb-DL_DIR>`__ when dealing with multiple files that
+:term:`DL_DIR` when dealing with multiple files that
 have the same name.
 
 Some example URLs are as follows: SRC_URI =
@@ -243,7 +243,7 @@ system. You can configure it using a number of different variables:
    special value of "now" causes the checkout to be updated on every
    build.
 
--  ```CVSDIR`` <#var-bb-CVSDIR>`__\ *:* Specifies where a temporary
+-  :term:`CVSDIR`\ *:* Specifies where a temporary
    checkout is saved. The location is often ``DL_DIR/cvs``.
 
 -  *``CVS_PROXY_HOST``:* The name to use as a "proxy=" parameter to the
@@ -269,14 +269,14 @@ The supported parameters are as follows:
    default, the TAG is empty.
 
 -  *"date":* Specifies a date. If no "date" is specified, the
-   ```SRCDATE`` <#var-bb-SRCDATE>`__ of the configuration is used to
+   :term:`SRCDATE` of the configuration is used to
    checkout a specific date. The special value of "now" causes the
    checkout to be updated on every build.
 
 -  *"localdir":* Used to rename the module. Effectively, you are
    renaming the output directory to which the module is unpacked. You
    are forcing the module into a special directory relative to
-   ```CVSDIR`` <#var-bb-CVSDIR>`__.
+   :term:`CVSDIR`.
 
 -  *"rsh"* Used in conjunction with the "method" parameter.
 
@@ -304,7 +304,7 @@ Subversion (SVN) Fetcher (``svn://``)
 This fetcher submodule fetches code from the Subversion source control
 system. The executable used is specified by ``FETCHCMD_svn``, which
 defaults to "svn". The fetcher's temporary working directory is set by
-```SVNDIR`` <#var-bb-SVNDIR>`__, which is usually ``DL_DIR/svn``.
+:term:`SVNDIR`, which is usually ``DL_DIR/svn``.
 
 The supported parameters are as follows:
 
@@ -345,7 +345,7 @@ Git Fetcher (``git://``)
 
 This fetcher submodule fetches code from the Git source control system.
 The fetcher works by creating a bare clone of the remote into
-```GITDIR`` <#var-bb-GITDIR>`__, which is usually ``DL_DIR/git2``. This
+:term:`GITDIR`, which is usually ``DL_DIR/git2``. This
 bare clone is then cloned into the work directory during the unpack
 stage when a specific tree is checked out. This is done using alternates
 and by reference to minimize the amount of duplicate data on the disk
@@ -416,7 +416,7 @@ Git Submodule Fetcher (``gitsm://``)
 
 This fetcher submodule inherits from the `Git fetcher <#git-fetcher>`__
 and extends that fetcher's behavior by fetching a repository's
-submodules. ```SRC_URI`` <#var-bb-SRC_URI>`__ is passed to the Git
+submodules. :term:`SRC_URI` is passed to the Git
 fetcher as described in the "`Git Fetcher
 (``git://``) <#git-fetcher>`__" section.
 
@@ -441,8 +441,8 @@ This fetcher submodule fetches code from a
 repository.
 
 To use this fetcher, make sure your recipe has proper
-```SRC_URI`` <#var-bb-SRC_URI>`__, ```SRCREV`` <#var-bb-SRCREV>`__, and
-```PV`` <#var-bb-PV>`__ settings. Here is an example: SRC_URI =
+:term:`SRC_URI`, :term:`SRCREV`, and
+:term:`PV` settings. Here is an example: SRC_URI =
 "ccrc://cc.example.org/ccrc;vob=/example_vob;module=/example_module"
 SRCREV = "EXAMPLE_CLEARCASE_TAG" PV = "${@d.getVar("SRCREV",
 False).replace("/", "+")}" The fetcher uses the ``rcleartool`` or
@@ -510,15 +510,15 @@ This fetcher submodule fetches code from the
 `Perforce <https://www.perforce.com/>`__ source control system. The
 executable used is specified by ``FETCHCMD_p4``, which defaults to "p4".
 The fetcher's temporary working directory is set by
-```P4DIR`` <#var-bb-P4DIR>`__, which defaults to "DL_DIR/p4".
+:term:`P4DIR`, which defaults to "DL_DIR/p4".
 The fetcher does not make use of a perforce client, instead it
 relies on ``p4 files`` to retrieve a list of
 files and ``p4 print`` to transfer the content
 of those files locally.
 
 To use this fetcher, make sure your recipe has proper
-```SRC_URI`` <#var-bb-SRC_URI>`__, ```SRCREV`` <#var-bb-SRCREV>`__, and
-```PV`` <#var-bb-PV>`__ values. The p4 executable is able to use the
+:term:`SRC_URI`, :term:`SRCREV`, and
+:term:`PV` values. The p4 executable is able to use the
 config file defined by your system's ``P4CONFIG`` environment variable
 in order to define the Perforce server URL and port, username, and
 password if you do not wish to keep those values in a recipe itself. If
@@ -584,8 +584,8 @@ Repo Fetcher (``repo://``)
 
 This fetcher submodule fetches code from ``google-repo`` source control
 system. The fetcher works by initiating and syncing sources of the
-repository into ```REPODIR`` <#var-bb-REPODIR>`__, which is usually
-```DL_DIR`` <#var-bb-DL_DIR>`__\ ``/repo``.
+repository into :term:`REPODIR`, which is usually
+:term:`DL_DIR`\ ``/repo``.
 
 This fetcher supports the following parameters:
 

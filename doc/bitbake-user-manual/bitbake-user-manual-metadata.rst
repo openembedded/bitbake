@@ -397,7 +397,7 @@ Among the variables commonly exported to the environment are ``CC`` and
 Conditional Syntax (Overrides)
 ==============================
 
-BitBake uses ```OVERRIDES`` <#var-bb-OVERRIDES>`__ to control what
+BitBake uses :term:`OVERRIDES` to control what
 variables are overridden after BitBake parses recipes and configuration
 files. This section describes how you can use ``OVERRIDES`` as
 conditional metadata, talks about key expansion in relationship to
@@ -463,7 +463,7 @@ variable.
 
    Internally, this is implemented by prepending the task (e.g.
    "task-compile:") to the value of
-   ```OVERRIDES`` <#var-bb-OVERRIDES>`__ for the local datastore of the
+   :term:`OVERRIDES` for the local datastore of the
    ``do_compile`` task.
 
    You can also use this syntax with other combinations (e.g.
@@ -549,7 +549,7 @@ directives.
 Locating Include and Class Files
 --------------------------------
 
-BitBake uses the ```BBPATH`` <#var-bb-BBPATH>`__ variable to locate
+BitBake uses the :term:`BBPATH` variable to locate
 needed include and class files. Additionally, BitBake searches the
 current directory for ``include`` and ``require`` directives.
 
@@ -680,7 +680,7 @@ directive from within each recipe: require foo.inc
 -----------------------------------
 
 When creating a configuration file (``.conf``), you can use the
-```INHERIT`` <#var-bb-INHERIT>`__ configuration directive to inherit a
+:term:`INHERIT` configuration directive to inherit a
 class. BitBake only supports this directive when used within a
 configuration file.
 
@@ -837,7 +837,7 @@ functions and regular Python functions defined with "def":
    Python functions, but not on regular Python functions.
 
 -  BitBake-style Python functions generate a separate
-   ``${``\ ```T`` <#var-bb-T>`__\ ``}/run.``\ function-name\ ``.``\ pid
+   ``${``\ :term:`T`\ ``}/run.``\ function-name\ ``.``\ pid
    script that is executed to run the function, and also generate a log
    file in ``${T}/log.``\ function-name\ ``.``\ pid if they are executed
    as tasks.
@@ -1090,8 +1090,8 @@ environment, you must take these two steps:
 
 1. Tell BitBake to load what you want from the environment into the
    datastore. You can do so through the
-   ```BB_ENV_WHITELIST`` <#var-bb-BB_ENV_WHITELIST>`__ and
-   ```BB_ENV_EXTRAWHITE`` <#var-bb-BB_ENV_EXTRAWHITE>`__ variables. For
+   :term:`BB_ENV_WHITELIST` and
+   :term:`BB_ENV_EXTRAWHITE` variables. For
    example, assume you want to prevent the build system from accessing
    your ``$HOME/.ccache`` directory. The following command "whitelists"
    the environment variable ``CCACHE_DIR`` causing BitBake to allow that
@@ -1117,7 +1117,7 @@ environment, you must take these two steps:
 Sometimes, it is useful to be able to obtain information from the
 original execution environment. BitBake saves a copy of the original
 environment into a special variable named
-```BB_ORIGENV`` <#var-bb-BB_ORIGENV>`__.
+:term:`BB_ORIGENV`.
 
 The ``BB_ORIGENV`` variable returns a datastore object that can be
 queried using the standard datastore operators such as
@@ -1149,12 +1149,12 @@ functionality of the task:
    recreated to empty them.
 
 -  *``[depends]``:* Controls inter-task dependencies. See the
-   ```DEPENDS`` <#var-bb-DEPENDS>`__ variable and the "`Inter-Task
+   :term:`DEPENDS` variable and the "`Inter-Task
    Dependencies <#inter-task-dependencies>`__" section for more
    information.
 
 -  *``[deptask]``:* Controls task build-time dependencies. See the
-   ```DEPENDS`` <#var-bb-DEPENDS>`__ variable and the "`Build
+   :term:`DEPENDS` variable and the "`Build
    Dependencies <#build-dependencies>`__" section for more information.
 
 -  *``[dirs]``:* Directories that should be created before the task
@@ -1189,7 +1189,7 @@ functionality of the task:
    your build host has a large number of cores but certain tasks need to
    be rate-limited due to various kinds of resource constraints (e.g. to
    avoid network throttling). ``number_threads`` works similarly to the
-   ```BB_NUMBER_THREADS`` <#var-bb-BB_NUMBER_THREADS>`__ variable but is
+   :term:`BB_NUMBER_THREADS` variable but is
    task-specific.
 
    Set the value globally. For example, the following makes sure the
@@ -1211,14 +1211,14 @@ functionality of the task:
 -  *``[prefuncs]``:* List of functions to call before the task executes.
 
 -  *``[rdepends]``:* Controls inter-task runtime dependencies. See the
-   ```RDEPENDS`` <#var-bb-RDEPENDS>`__ variable, the
-   ```RRECOMMENDS`` <#var-bb-RRECOMMENDS>`__ variable, and the
+   :term:`RDEPENDS` variable, the
+   :term:`RRECOMMENDS` variable, and the
    "`Inter-Task Dependencies <#inter-task-dependencies>`__" section for
    more information.
 
 -  *``[rdeptask]``:* Controls task runtime dependencies. See the
-   ```RDEPENDS`` <#var-bb-RDEPENDS>`__ variable, the
-   ```RRECOMMENDS`` <#var-bb-RRECOMMENDS>`__ variable, and the "`Runtime
+   :term:`RDEPENDS` variable, the
+   :term:`RRECOMMENDS` variable, and the "`Runtime
    Dependencies <#runtime-dependencies>`__" section for more
    information.
 
@@ -1227,8 +1227,8 @@ functionality of the task:
    dependencies.
 
 -  *``[recrdeptask]``:* Controls task recursive runtime dependencies.
-   See the ```RDEPENDS`` <#var-bb-RDEPENDS>`__ variable, the
-   ```RRECOMMENDS`` <#var-bb-RRECOMMENDS>`__ variable, and the
+   See the :term:`RDEPENDS` variable, the
+   :term:`RRECOMMENDS` variable, and the
    "`Recursive Dependencies <#recursive-dependencies>`__" section for
    more information.
 
@@ -1390,8 +1390,8 @@ Variants - Class Extension Mechanism
 BitBake supports two features that facilitate creating from a single
 recipe file multiple incarnations of that recipe file where all
 incarnations are buildable. These features are enabled through the
-```BBCLASSEXTEND`` <#var-bb-BBCLASSEXTEND>`__ and
-```BBVERSIONS`` <#var-bb-BBVERSIONS>`__ variables.
+:term:`BBCLASSEXTEND` and
+:term:`BBVERSIONS` variables.
 
 .. note::
 
@@ -1420,7 +1420,7 @@ incarnations are buildable. These features are enabled through the
 -  *``BBVERSIONS``:* This variable allows a single recipe to build
    multiple versions of a project from a single recipe file. You can
    also specify conditional metadata (using the
-   ```OVERRIDES`` <#var-bb-OVERRIDES>`__ mechanism) for a single
+   :term:`OVERRIDES` mechanism) for a single
    version, or an optionally named range of versions. Here is an
    example: BBVERSIONS = "1.0 2.0 git" SRC_URI_git =
    "git://someurl/somepath.git" BBVERSIONS = "1.0.[0-6]:1.0.0+ \\
@@ -1432,7 +1432,7 @@ incarnations are buildable. These features are enabled through the
    name is not only placed into overrides, but it is also made available
    for the metadata to use in the variable that defines the base recipe
    versions for use in ``file://`` search paths
-   (```FILESPATH`` <#var-bb-FILESPATH>`__).
+   (:term:`FILESPATH`).
 
 Dependencies
 ============
@@ -1491,7 +1491,7 @@ task depends on the completion of the ``do_printdate`` task.
 Build Dependencies
 ------------------
 
-BitBake uses the ```DEPENDS`` <#var-bb-DEPENDS>`__ variable to manage
+BitBake uses the :term:`DEPENDS` variable to manage
 build time dependencies. The ``[deptask]`` varflag for tasks signifies
 the task of each item listed in ``DEPENDS`` that must complete before
 that task can be executed. Here is an example: do_configure[deptask] =
@@ -1502,9 +1502,9 @@ execute.
 Runtime Dependencies
 --------------------
 
-BitBake uses the ```PACKAGES`` <#var-bb-PACKAGES>`__,
-```RDEPENDS`` <#var-bb-RDEPENDS>`__, and
-```RRECOMMENDS`` <#var-bb-RRECOMMENDS>`__ variables to manage runtime
+BitBake uses the :term:`PACKAGES`,
+:term:`RDEPENDS`, and
+:term:`RRECOMMENDS` variables to manage runtime
 dependencies.
 
 The ``PACKAGES`` variable lists runtime packages. Each of those packages
@@ -1670,7 +1670,7 @@ determine if a task needs to be run. This section describes the process.
 To help understand how BitBake does this, the section assumes an
 OpenEmbedded metadata-based example.
 
-These checksums are stored in ```STAMP`` <#var-bb-STAMP>`__. You can
+These checksums are stored in :term:`STAMP`. You can
 examine the checksums using the following BitBake command: $
 bitbake-dumpsigs This command returns the signature data in a readable
 format that allows you to examine the inputs used when the OpenEmbedded
@@ -1683,31 +1683,31 @@ Any changes to this variable would invalidate the stamp and cause the
 
 The following list describes related variables:
 
--  ```BB_HASHCHECK_FUNCTION`` <#var-bb-BB_HASHCHECK_FUNCTION>`__:
+-  :term:`BB_HASHCHECK_FUNCTION`:
    Specifies the name of the function to call during the "setscene" part
    of the task's execution in order to validate the list of task hashes.
 
--  ```BB_SETSCENE_DEPVALID`` <#var-bb-BB_SETSCENE_DEPVALID>`__:
+-  :term:`BB_SETSCENE_DEPVALID`:
    Specifies a function BitBake calls that determines whether BitBake
    requires a setscene dependency to be met.
 
--  ```BB_SETSCENE_VERIFY_FUNCTION2`` <#var-bb-BB_SETSCENE_VERIFY_FUNCTION2>`__:
+-  :term:`BB_SETSCENE_VERIFY_FUNCTION2`:
    Specifies a function to call that verifies the list of planned task
    execution before the main task execution happens.
 
--  ```BB_STAMP_POLICY`` <#var-bb-BB_STAMP_POLICY>`__: Defines the mode
+-  :term:`BB_STAMP_POLICY`: Defines the mode
    for comparing timestamps of stamp files.
 
--  ```BB_STAMP_WHITELIST`` <#var-bb-BB_STAMP_WHITELIST>`__: Lists stamp
+-  :term:`BB_STAMP_WHITELIST`: Lists stamp
    files that are looked at when the stamp policy is "whitelist".
 
--  ```BB_TASKHASH`` <#var-bb-BB_TASKHASH>`__: Within an executing task,
+-  :term:`BB_TASKHASH`: Within an executing task,
    this variable holds the hash of the task as returned by the currently
    enabled signature generator.
 
--  ```STAMP`` <#var-bb-STAMP>`__: The base path to create stamp files.
+-  :term:`STAMP`: The base path to create stamp files.
 
--  ```STAMPCLEAN`` <#var-bb-STAMPCLEAN>`__: Again, the base path to
+-  :term:`STAMPCLEAN`: Again, the base path to
    create stamp files but can use wildcards for matching a range of
    files for clean operations.
 
@@ -1718,10 +1718,10 @@ Support for wildcard use in variables varies depending on the context in
 which it is used. For example, some variables and file names allow
 limited use of wildcards through the "``%``" and "``*``" characters.
 Other variables or names support Python's
-```glob`` <https://docs.python.org/3/library/glob.html>`__ syntax,
-```fnmatch`` <https://docs.python.org/3/library/fnmatch.html#module-fnmatch>`__
+```glob`https://docs.python.org/3/library/glob.html syntax,
+```fnmatch`https://docs.python.org/3/library/fnmatch.html#module-fnmatch
 syntax, or
-```Regular Expression (re)`` <https://docs.python.org/3/library/re.html#re>`__
+```Regular Expression (re)`https://docs.python.org/3/library/re.html#re
 syntax.
 
 For variables that have wildcard suport, the documentation describes

@@ -513,7 +513,7 @@ the builds.
 Aside from separate configuration files for each target, you must also
 enable BitBake to perform multiple configuration builds. Enabling is
 accomplished by setting the
-```BBMULTICONFIG`` <#var-bb-BBMULTICONFIG>`__ variable in the
+:term:`BBMULTICONFIG` variable in the
 ``local.conf`` configuration file. As an example, suppose you had
 configuration files for ``target1`` and ``target2`` defined in the build
 directory. The following statement in the ``local.conf`` file both

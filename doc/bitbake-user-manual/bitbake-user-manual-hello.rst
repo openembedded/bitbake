@@ -73,7 +73,7 @@ While every attempt is made to explain what is happening during the
 example, the descriptions cannot cover everything. You can find further
 information throughout this manual. Also, you can actively participate
 in the
-` <http://lists.openembedded.org/mailman/listinfo/bitbake-devel>`__
+http://lists.openembedded.org/mailman/listinfo/bitbake-devel
 discussion mailing list about the BitBake build tool.
 
 .. note::
@@ -120,7 +120,7 @@ Following is the complete "Hello World" example.
     ``conf/bblayers.conf`` file is relevant.
 
     When you run BitBake, it begins looking for metadata files. The
-    ```BBPATH`` <#var-bb-BBPATH>`__ variable is what tells BitBake where
+    :term:`BBPATH` variable is what tells BitBake where
     to look for those files. ``BBPATH`` is not set and you need to set
     it. Without ``BBPATH``, BitBake cannot find any configuration files
     (``.conf``) or recipe files (``.bb``) at all. BitBake also cannot
@@ -168,17 +168,17 @@ Following is the complete "Hello World" example.
     recipe files. For this example, you need to create the file in your
     project directory and define some key BitBake variables. For more
     information on the ``bitbake.conf`` file, see
-    ` <http://git.openembedded.org/bitbake/tree/conf/bitbake.conf>`__.
+    http://git.openembedded.org/bitbake/tree/conf/bitbake.conf.
 
     Use the following commands to create the ``conf`` directory in the
     project directory: $ mkdir conf From within the ``conf`` directory,
     use some editor to create the ``bitbake.conf`` so that it contains
-    the following: `PN <#var-bb-PN>`__ =
+    the following: :term:`PN` =
     "${@bb.parse.BBHandler.vars_from_file(d.getVar('FILE', False),d)[0]
-    or 'defaultpkgname'}" TMPDIR = "${`TOPDIR <#var-bb-TOPDIR>`__}/tmp"
-    `CACHE <#var-bb-CACHE>`__ = "${TMPDIR}/cache"
-    `STAMP <#var-bb-STAMP>`__ = "${TMPDIR}/${PN}/stamps"
-    `T <#var-bb-T>`__ = "${TMPDIR}/${PN}/work" `B <#var-bb-B>`__ =
+    or 'defaultpkgname'}" TMPDIR = "${:term:`TOPDIR`}/tmp"
+    :term:`CACHE` = "${TMPDIR}/cache"
+    :term:`STAMP` = "${TMPDIR}/${PN}/stamps"
+    :term:`T` = "${TMPDIR}/${PN}/work" :term:`B` =
     "${TMPDIR}/${PN}"
 
     .. note::
@@ -287,9 +287,9 @@ Following is the complete "Hello World" example.
     and the ``conf`` directory: $ cd $HOME $ mkdir mylayer $ cd mylayer
     $ mkdir conf Move to the ``conf`` directory and create a
     ``layer.conf`` file that has the following: BBPATH .=
-    ":${`LAYERDIR <#var-bb-LAYERDIR>`__}" `BBFILES <#var-bb-BBFILES>`__
+    ":${:term:`LAYERDIR`}" :term:`BBFILES`
     += "${LAYERDIR}/*.bb"
-    `BBFILE_COLLECTIONS <#var-bb-BBFILE_COLLECTIONS>`__ += "mylayer"
+    :term:`BBFILE_COLLECTIONS` += "mylayer"
     `BBFILE_PATTERN_mylayer <#var-bb-BBFILE_PATTERN>`__ :=
     "^${LAYERDIR_RE}/" For information on these variables, click the
     links to go to the definitions in the glossary.
@@ -297,8 +297,8 @@ Following is the complete "Hello World" example.
     You need to create the recipe file next. Inside your layer at the
     top-level, use an editor and create a recipe file named
     ``printhello.bb`` that has the following:
-    `DESCRIPTION <#var-bb-DESCRIPTION>`__ = "Prints Hello World"
-    `PN <#var-bb-PN>`__ = 'printhello' `PV <#var-bb-PV>`__ = '1' python
+    :term:`DESCRIPTION` = "Prints Hello World"
+    :term:`PN` = 'printhello' :term:`PV` = '1' python
     do_build() { bb.plain("********************"); bb.plain("\* \*");
     bb.plain("\* Hello, World! \*"); bb.plain("\* \*");
     bb.plain("********************"); } The recipe file simply provides
