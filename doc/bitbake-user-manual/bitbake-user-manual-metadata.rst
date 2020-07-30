@@ -973,7 +973,7 @@ Tasks
 Tasks are BitBake execution units that make up the steps that BitBake
 can run for a given recipe. Tasks are only supported in recipes and
 classes (i.e. in ``.bb`` files and files included or inherited from
-``.bb`` files). By convention, tasks have names that start with "do_".
+``.bb`` files). By convention, tasks have names that start with "do\_".
 
 Promoting a Function to a Task
 ------------------------------
@@ -987,8 +987,8 @@ task and declare some dependencies: python do_printdate () { import time
 print time.strftime('%Y%m%d', time.gmtime()) } addtask printdate after
 do_fetch before do_build The first argument to ``addtask`` is the name
 of the function to promote to a task. If the name does not start with
-"do_", "do_" is implicitly added, which enforces the convention that all
-task names start with "do_".
+"do\_", "do\_" is implicitly added, which enforces the convention that all
+task names start with "do\_".
 
 In the previous example, the ``do_printdate`` task becomes a dependency
 of the ``do_build`` task, which is the default task (i.e. the task run
@@ -1030,7 +1030,7 @@ Additionally, the ``do_printdate`` task becomes dependent upon the
    -c
    NBSP
    task
-   command, you can omit the "do_" prefix as part of the task name.
+   command, you can omit the "do\_" prefix as part of the task name.
 
 You might wonder about the practical effects of using ``addtask``
 without specifying any dependencies as is done in the following example:
@@ -1714,10 +1714,10 @@ Support for wildcard use in variables varies depending on the context in
 which it is used. For example, some variables and file names allow
 limited use of wildcards through the "``%``" and "``*``" characters.
 Other variables or names support Python's
-```glob`https://docs.python.org/3/library/glob.html syntax,
-```fnmatch`https://docs.python.org/3/library/fnmatch.html#module-fnmatch
+`glob <https://docs.python.org/3/library/glob.html>`_ syntax,
+`fnmatch <https://docs.python.org/3/library/fnmatch.html#module-fnmatch>`_
 syntax, or
-```Regular Expression (re)`https://docs.python.org/3/library/re.html#re
+`Regular Expression (re) <https://docs.python.org/3/library/re.html#re>`_
 syntax.
 
 For variables that have wildcard suport, the documentation describes

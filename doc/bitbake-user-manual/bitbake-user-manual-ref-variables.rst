@@ -51,7 +51,7 @@ overview of their function and contents.
       -  Limited support for the "``*``" wildcard character for matching
          against the beginning of host names exists. For example, the
          following setting matches ``git.gnu.org``, ``ftp.gnu.org``, and
-         ``foo.git.gnu.org``. BB_ALLOWED_NETWORKS = "*.gnu.org"
+         ``foo.git.gnu.org``. BB_ALLOWED_NETWORKS = "\*.gnu.org"
 
          .. note::
 
@@ -368,7 +368,7 @@ overview of their function and contents.
 
    BB_RUNTASK
       Contains the name of the currently executing task. The value includes
-      the "do_" prefix. For example, if the currently executing task is
+      the "do\_" prefix. For example, if the currently executing task is
       ``do_config``, the value is "do_config".
 
    BB_SCHEDULER
@@ -617,7 +617,7 @@ overview of their function and contents.
       software.
 
       When specifying recipe files, you can pattern match using Python's
-      ```glob`https://docs.python.org/3/library/glob.html syntax.
+      `glob <https://docs.python.org/3/library/glob.html>`_ syntax.
       For details on the syntax, see the documentation by following the
       previous link.
 

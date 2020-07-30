@@ -287,7 +287,7 @@ Following is the complete "Hello World" example.
     $ mkdir conf Move to the ``conf`` directory and create a
     ``layer.conf`` file that has the following: BBPATH .=
     ":${:term:`LAYERDIR`}" :term:`BBFILES`
-    += "${LAYERDIR}/*.bb"
+    += "${LAYERDIR}/\*.bb"
     :term:`BBFILE_COLLECTIONS` += "mylayer"
     `BBFILE_PATTERN_mylayer <#var-bb-BBFILE_PATTERN>`__ :=
     "^${LAYERDIR_RE}/" For information on these variables, click the
