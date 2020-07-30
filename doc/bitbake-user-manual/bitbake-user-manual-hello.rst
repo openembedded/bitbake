@@ -79,8 +79,8 @@ discussion mailing list about the BitBake build tool.
 .. note::
 
    This example was inspired by and drew heavily from
-   Mailing List post - The BitBake equivalent of "Hello, World!"
-   .
+   `Mailing List post - The BitBake equivalent of "Hello, World!"
+   <http://www.mail-archive.com/yocto@yoctoproject.org/msg09379.html>`_.
 
 As stated earlier, the goal of this example is to eventually compile
 "Hello World". However, it is unknown what BitBake needs and what you
@@ -277,9 +277,8 @@ Following is the complete "Hello World" example.
 
     .. note::
 
-       You can find additional information on layers in the "
-       Layers
-       " section.
+       You can find additional information on layers in the
+       ":ref:`bitbake-user-manual/bitbake-user-manual-intro:Layers`" section.
 
     Minimally, you need a recipe file and a layer configuration file in
     your layer. The configuration file needs to be in the ``conf``

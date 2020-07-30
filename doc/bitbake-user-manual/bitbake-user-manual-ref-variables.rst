@@ -484,7 +484,7 @@ overview of their function and contents.
       .. note::
 
          This variable works similarly to the
-         BB_TASK_NICE_LEVEL
+         :term:`BB_TASK_NICE_LEVEL`
          variable except with a task's I/O priorities.
 
       Set the variable as follows: BB_TASK_IONICE_LEVEL = "class.prio" For
@@ -764,7 +764,7 @@ overview of their function and contents.
          The bias provided by
          DEFAULT_PREFERENCE
          is weak and is overridden by
-         BBFILE_PRIORITY
+         :term:`BBFILE_PRIORITY`
          if that variable is different between two layers that contain
          different versions of the same recipe.
 

@@ -639,7 +639,7 @@ definitions: include test_defs.inc
    directive does not produce an error when the file cannot be found.
    Consequently, it is recommended that if the file you are including is
    expected to exist, you should use
-   require
+   :ref:`require <require-inclusion>`
    instead of
    include
    . Doing so makes sure that an error is produced if the file cannot be
@@ -756,9 +756,7 @@ recipename do_foo: fourth
 .. note::
 
    Overrides and override-style operators can be applied to any shell
-   function, not just
-   tasks
-   .
+   function, not just :ref:`tasks <bitbake-user-manual/bitbake-user-manual-metadata:Tasks>`.
 
 You can use the ``bitbake -e`` recipename command to view the final
 assembled function after all overrides have been applied.
@@ -1009,9 +1007,7 @@ Additionally, the ``do_printdate`` task becomes dependent upon the
    after that initial run. If you want to force the task to always be
    rerun for experimentation purposes, you can make BitBake always
    consider the task "out-of-date" by using the
-   [
-   nostamp
-   ]
+   :ref:`[nostamp] <bitbake-user-manual/bitbake-user-manual-metadata:Variable Flags>`
    variable flag, as follows:
    ::
 
@@ -1082,7 +1078,7 @@ the build machine cannot influence the build.
    things exported or listed in its whitelist to ensure that the build
    environment is reproducible and consistent. You can prevent this
    "cleaning" by setting the
-   BB_PRESERVE_ENV
+   :term:`BB_PRESERVE_ENV`
    variable.
 
 Consequently, if you do want something to get passed into the build task
@@ -1397,11 +1393,11 @@ incarnations are buildable. These features are enabled through the
 
    The mechanism for this class extension is extremely specific to the
    implementation. Usually, the recipe's
-   PROVIDES
+   :term:`PROVIDES`
    ,
-   PN
+   :term:`PN`
    , and
-   DEPENDS
+   :term:`DEPENDS`
    variables would need to be modified by the extension class. For
    specific examples, see the OE-Core
    native
