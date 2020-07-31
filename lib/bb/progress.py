@@ -204,6 +204,7 @@ class MultiStageProgressReporter:
           value is considered to be out of stage_total, otherwise it should
           be a percentage value from 0 to 100.
         """
+        progress = None
         if self._stage_total:
             stage_progress = (float(stage_progress) / self._stage_total) * 100
         if self._stage < 0:
@@ -212,9 +213,10 @@ class MultiStageProgressReporter:
             progress = self._base_progress + (stage_progress * self._stage_weights[self._stage])
         else:
             progress = self._base_progress
-        if progress > 100:
-            progress = 100
-        self._fire_progress(progress)
+        if progress:
+            if progress > 100:
+                progress = 100
+            self._fire_progress(progress)
 
     def finish(self):
         if self._finished:
