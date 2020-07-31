@@ -248,19 +248,23 @@ underlying, similarly-named recipe files.
 
 When you name an append file, you can use the "``%``" wildcard character
 to allow for matching recipe names. For example, suppose you have an
-append file named as follows: busybox_1.21.%.bbappend That append file
+append file named as follows: ::
+
+  busybox_1.21.%.bbappend
+
+That append file
 would match any ``busybox_1.21.``\ x\ ``.bb`` version of the recipe. So,
-the append file would match the following recipe names:
-busybox_1.21.1.bb busybox_1.21.2.bb busybox_1.21.3.bb
+the append file would match the following recipe names: ::
+
+  busybox_1.21.1.bb
+  busybox_1.21.2.bb
+  busybox_1.21.3.bb
 
 .. note::
 
-   The use of the "
-   %
-   " character is limited in that it only works directly in front of the
-   .bbappend
-   portion of the append file's name. You cannot use the wildcard
-   character in any other location of the name.
+   The use of the " % " character is limited in that it only works directly in
+   front of the .bbappend portion of the append file's name. You cannot use the
+   wildcard character in any other location of the name.
 
 If the ``busybox`` recipe was updated to ``busybox_1.3.0.bb``, the
 append name would not match. However, if you named the append file
@@ -274,7 +278,7 @@ Obtaining BitBake
 
 You can obtain BitBake several different ways:
 
--  *Cloning BitBake:* Using Git to clone the BitBake source code
+-  **Cloning BitBake:** Using Git to clone the BitBake source code
    repository is the recommended method for obtaining BitBake. Cloning
    the repository makes it easy to get bug fixes and have access to
    stable branches and the master branch. Once you have cloned BitBake,
@@ -286,36 +290,42 @@ You can obtain BitBake several different ways:
    are using. The metadata is generally backwards compatible but not
    forward compatible.
 
-   Here is an example that clones the BitBake repository: $ git clone
-   git://git.openembedded.org/bitbake This command clones the BitBake
+   Here is an example that clones the BitBake repository: ::
+
+     $ git clone git://git.openembedded.org/bitbake
+
+   This command clones the BitBake
    Git repository into a directory called ``bitbake``. Alternatively,
    you can designate a directory after the ``git clone`` command if you
    want to call the new directory something other than ``bitbake``. Here
-   is an example that names the directory ``bbdev``: $ git clone
-   git://git.openembedded.org/bitbake bbdev
+   is an example that names the directory ``bbdev``: ::
 
--  *Installation using your Distribution Package Management System:*
+     $ git clone git://git.openembedded.org/bitbake bbdev
+
+-  **Installation using your Distribution Package Management System:**
    This method is not recommended because the BitBake version that is
    provided by your distribution, in most cases, is several releases
    behind a snapshot of the BitBake repository.
 
--  *Taking a snapshot of BitBake:* Downloading a snapshot of BitBake
+-  **Taking a snapshot of BitBake:** Downloading a snapshot of BitBake
    from the source code repository gives you access to a known branch or
    release of BitBake.
 
-   .. note::
+      .. note::
 
-      Cloning the Git repository, as described earlier, is the preferred
-      method for getting BitBake. Cloning the repository makes it easier
-      to update as patches are added to the stable branches.
+         Cloning the Git repository, as described earlier, is the preferred
+         method for getting BitBake. Cloning the repository makes it easier
+         to update as patches are added to the stable branches.
 
-   The following example downloads a snapshot of BitBake version 1.17.0:
-   $ wget
-   http://git.openembedded.org/bitbake/snapshot/bitbake-1.17.0.tar.gz $
-   tar zxpvf bitbake-1.17.0.tar.gz After extraction of the tarball using
+   The following example downloads a snapshot of BitBake version 1.17.0: ::
+
+     $ wget http://git.openembedded.org/bitbake/snapshot/bitbake-1.17.0.tar.gz
+     $ tar zxpvf bitbake-1.17.0.tar.gz
+
+   After extraction of the tarball using
    the tar utility, you have a directory entitled ``bitbake-1.17.0``.
 
--  *Using the BitBake that Comes With Your Build Checkout:* A final
+-  **Using the BitBake that Comes With Your Build Checkout:** A final
    possibility for getting a copy of BitBake is that it already comes
    with your checkout of a larger BitBake-based build system, such as
    Poky. Rather than manually checking out individual layers and gluing
@@ -337,75 +347,108 @@ execution examples.
 Usage and syntax
 ----------------
 
-Following is the usage and syntax for BitBake: $ bitbake -h Usage:
-bitbake [options] [recipename/target recipe:do_task ...] Executes the
-specified task (default is 'build') for a given set of target recipes
-(.bb files). It is assumed there is a conf/bblayers.conf available in
-cwd or in BBPATH which will provide the layer, BBFILES and other
-configuration information. Options: --version show program's version
-number and exit -h, --help show this help message and exit -b BUILDFILE,
---buildfile=BUILDFILE Execute tasks from a specific .bb recipe directly.
-WARNING: Does not handle any dependencies from other recipes. -k,
---continue Continue as much as possible after an error. While the target
-that failed and anything depending on it cannot be built, as much as
-possible will be built before stopping. -f, --force Force the specified
-targets/task to run (invalidating any existing stamp file). -c CMD,
---cmd=CMD Specify the task to execute. The exact options available
-depend on the metadata. Some examples might be 'compile' or
-'populate_sysroot' or 'listtasks' may give a list of the tasks
-available. -C INVALIDATE_STAMP, --clear-stamp=INVALIDATE_STAMP
-Invalidate the stamp for the specified task such as 'compile' and then
-run the default task for the specified target(s). -r PREFILE,
---read=PREFILE Read the specified file before bitbake.conf. -R POSTFILE,
---postread=POSTFILE Read the specified file after bitbake.conf. -v,
---verbose Enable tracing of shell tasks (with 'set -x'). Also print
-bb.note(...) messages to stdout (in addition to writing them to
-${T}/log.do_<task>). -D, --debug Increase the debug level. You can
-specify this more than once. -D sets the debug level to 1, where only
-bb.debug(1, ...) messages are printed to stdout; -DD sets the debug
-level to 2, where both bb.debug(1, ...) and bb.debug(2, ...) messages
-are printed; etc. Without -D, no debug messages are printed. Note that
--D only affects output to stdout. All debug messages are written to
-${T}/log.do_taskname, regardless of the debug level. -q, --quiet Output
-less log message data to the terminal. You can specify this more than
-once. -n, --dry-run Don't execute, just go through the motions. -S
-SIGNATURE_HANDLER, --dump-signatures=SIGNATURE_HANDLER Dump out the
-signature construction information, with no task execution. The
-SIGNATURE_HANDLER parameter is passed to the handler. Two common values
-are none and printdiff but the handler may define more/less. none means
-only dump the signature, printdiff means compare the dumped signature
-with the cached one. -p, --parse-only Quit after parsing the BB recipes.
--s, --show-versions Show current and preferred versions of all recipes.
--e, --environment Show the global or per-recipe environment complete
-with information about where variables were set/changed. -g, --graphviz
-Save dependency tree information for the specified targets in the dot
-syntax. -I EXTRA_ASSUME_PROVIDED, --ignore-deps=EXTRA_ASSUME_PROVIDED
-Assume these dependencies don't exist and are already provided
-(equivalent to ASSUME_PROVIDED). Useful to make dependency graphs more
-appealing -l DEBUG_DOMAINS, --log-domains=DEBUG_DOMAINS Show debug
-logging for the specified logging domains -P, --profile Profile the
-command and save reports. -u UI, --ui=UI The user interface to use
-(knotty, ncurses or taskexp - default knotty). --token=XMLRPCTOKEN
-Specify the connection token to be used when connecting to a remote
-server. --revisions-changed Set the exit code depending on whether
-upstream floating revisions have changed or not. --server-only Run
-bitbake without a UI, only starting a server (cooker) process. -B BIND,
---bind=BIND The name/address for the bitbake xmlrpc server to bind to.
--T SERVER_TIMEOUT, --idle-timeout=SERVER_TIMEOUT Set timeout to unload
-bitbake server due to inactivity, set to -1 means no unload, default:
-Environment variable BB_SERVER_TIMEOUT. --no-setscene Do not run any
-setscene tasks. sstate will be ignored and everything needed, built.
---setscene-only Only run setscene tasks, don't run any real tasks.
---remote-server=REMOTE_SERVER Connect to the specified server. -m,
---kill-server Terminate any running bitbake server. --observe-only
-Connect to a server as an observing-only client. --status-only Check the
-status of the remote bitbake server. -w WRITEEVENTLOG,
---write-log=WRITEEVENTLOG Writes the event log of the build to a bitbake
-event json file. Use '' (empty string) to assign the name automatically.
---runall=RUNALL Run the specified task for any recipe in the taskgraph
-of the specified target (even if it wouldn't otherwise have run).
---runonly=RUNONLY Run only the specified task within the taskgraph of
-the specified targets (and any task dependencies those tasks may have).
+Following is the usage and syntax for BitBake: ::
+
+   $ bitbake -h
+   Usage: bitbake [options] [recipename/target recipe:do_task ...]
+
+       Executes the specified task (default is 'build') for a given set of target recipes (.bb files).
+       It is assumed there is a conf/bblayers.conf available in cwd or in BBPATH which
+       will provide the layer, BBFILES and other configuration information.
+
+   Options:
+     --version             show program's version number and exit
+     -h, --help            show this help message and exit
+     -b BUILDFILE, --buildfile=BUILDFILE
+                           Execute tasks from a specific .bb recipe directly.
+                           WARNING: Does not handle any dependencies from other
+                           recipes.
+     -k, --continue        Continue as much as possible after an error. While the
+                           target that failed and anything depending on it cannot
+                           be built, as much as possible will be built before
+                           stopping.
+     -f, --force           Force the specified targets/task to run (invalidating
+                           any existing stamp file).
+     -c CMD, --cmd=CMD     Specify the task to execute. The exact options
+                           available depend on the metadata. Some examples might
+                           be 'compile' or 'populate_sysroot' or 'listtasks' may
+                           give a list of the tasks available.
+     -C INVALIDATE_STAMP, --clear-stamp=INVALIDATE_STAMP
+                           Invalidate the stamp for the specified task such as
+                           'compile' and then run the default task for the
+                           specified target(s).
+     -r PREFILE, --read=PREFILE
+                           Read the specified file before bitbake.conf.
+     -R POSTFILE, --postread=POSTFILE
+                           Read the specified file after bitbake.conf.
+     -v, --verbose         Enable tracing of shell tasks (with 'set -x'). Also
+                           print bb.note(...) messages to stdout (in addition to
+                           writing them to ${T}/log.do_&lt;task&gt;).
+     -D, --debug           Increase the debug level. You can specify this more
+                           than once. -D sets the debug level to 1, where only
+                           bb.debug(1, ...) messages are printed to stdout; -DD
+                           sets the debug level to 2, where both bb.debug(1, ...)
+                           and bb.debug(2, ...) messages are printed; etc.
+                           Without -D, no debug messages are printed. Note that
+                           -D only affects output to stdout. All debug messages
+                           are written to ${T}/log.do_taskname, regardless of the
+                           debug level.
+     -q, --quiet           Output less log message data to the terminal. You can
+                           specify this more than once.
+     -n, --dry-run         Don't execute, just go through the motions.
+     -S SIGNATURE_HANDLER, --dump-signatures=SIGNATURE_HANDLER
+                           Dump out the signature construction information, with
+                           no task execution. The SIGNATURE_HANDLER parameter is
+                           passed to the handler. Two common values are none and
+                           printdiff but the handler may define more/less. none
+                           means only dump the signature, printdiff means compare
+                           the dumped signature with the cached one.
+     -p, --parse-only      Quit after parsing the BB recipes.
+     -s, --show-versions   Show current and preferred versions of all recipes.
+     -e, --environment     Show the global or per-recipe environment complete
+                           with information about where variables were
+                           set/changed.
+     -g, --graphviz        Save dependency tree information for the specified
+                           targets in the dot syntax.
+     -I EXTRA_ASSUME_PROVIDED, --ignore-deps=EXTRA_ASSUME_PROVIDED
+                           Assume these dependencies don't exist and are already
+                           provided (equivalent to ASSUME_PROVIDED). Useful to
+                           make dependency graphs more appealing
+     -l DEBUG_DOMAINS, --log-domains=DEBUG_DOMAINS
+                           Show debug logging for the specified logging domains
+     -P, --profile         Profile the command and save reports.
+     -u UI, --ui=UI        The user interface to use (knotty, ncurses or taskexp
+                           - default knotty).
+     --token=XMLRPCTOKEN   Specify the connection token to be used when
+                           connecting to a remote server.
+     --revisions-changed   Set the exit code depending on whether upstream
+                           floating revisions have changed or not.
+     --server-only         Run bitbake without a UI, only starting a server
+                           (cooker) process.
+     -B BIND, --bind=BIND  The name/address for the bitbake xmlrpc server to bind
+                           to.
+     -T SERVER_TIMEOUT, --idle-timeout=SERVER_TIMEOUT
+                           Set timeout to unload bitbake server due to
+                           inactivity, set to -1 means no unload, default:
+                           Environment variable BB_SERVER_TIMEOUT.
+     --no-setscene         Do not run any setscene tasks. sstate will be ignored
+                           and everything needed, built.
+     --setscene-only       Only run setscene tasks, don't run any real tasks.
+     --remote-server=REMOTE_SERVER
+                           Connect to the specified server.
+     -m, --kill-server     Terminate any running bitbake server.
+     --observe-only        Connect to a server as an observing-only client.
+     --status-only         Check the status of the remote bitbake server.
+     -w WRITEEVENTLOG, --write-log=WRITEEVENTLOG
+                           Writes the event log of the build to a bitbake event
+                           json file. Use '' (empty string) to assign the name
+                           automatically.
+     --runall=RUNALL       Run the specified task for any recipe in the taskgraph
+                           of the specified target (even if it wouldn't otherwise
+                           have run).
+     --runonly=RUNONLY     Run only the specified task within the taskgraph of
+                           the specified targets (and any task dependencies those
+                           tasks may have).
 
 .. _bitbake-examples:
 
@@ -426,9 +469,13 @@ default task, which is "build”. BitBake obeys inter-task dependencies
 when doing so.
 
 The following command runs the build task, which is the default task, on
-the ``foo_1.0.bb`` recipe file: $ bitbake -b foo_1.0.bb The following
-command runs the clean task on the ``foo.bb`` recipe file: $ bitbake -b
-foo.bb -c clean
+the ``foo_1.0.bb`` recipe file: ::
+
+  $ bitbake -b foo_1.0.bb
+
+The following command runs the clean task on the ``foo.bb`` recipe file: ::
+
+  $ bitbake -b foo.bb -c clean
 
 .. note::
 
@@ -450,9 +497,15 @@ functionality, or when there are multiple versions of a recipe.
 The ``bitbake`` command, when not using "--buildfile" or "-b" only
 accepts a "PROVIDES". You cannot provide anything else. By default, a
 recipe file generally "PROVIDES" its "packagename" as shown in the
-following example: $ bitbake foo This next example "PROVIDES" the
+following example: ::
+
+  $ bitbake foo
+
+This next example "PROVIDES" the
 package name and also uses the "-c" option to tell BitBake to just
-execute the ``do_clean`` task: $ bitbake -c clean foo
+execute the ``do_clean`` task: ::
+
+  $ bitbake -c clean foo
 
 Executing a List of Task and Recipe Combinations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -461,8 +514,9 @@ The BitBake command line supports specifying different tasks for
 individual targets when you specify multiple targets. For example,
 suppose you had two targets (or recipes) ``myfirstrecipe`` and
 ``mysecondrecipe`` and you needed BitBake to run ``taskA`` for the first
-recipe and ``taskB`` for the second recipe: $ bitbake
-myfirstrecipe:do_taskA mysecondrecipe:do_taskB
+recipe and ``taskB`` for the second recipe: ::
+
+  $ bitbake myfirstrecipe:do_taskA mysecondrecipe:do_taskB
 
 Generating Dependency Graphs
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -474,10 +528,10 @@ You can convert these graphs into images using the ``dot`` tool from
 When you generate a dependency graph, BitBake writes two files to the
 current working directory:
 
--  *``task-depends.dot``:* Shows dependencies between tasks. These
+-  ``task-depends.dot``: Shows dependencies between tasks. These
    dependencies match BitBake's internal task execution list.
 
--  *``pn-buildlist``:* Shows a simple list of targets that are to be
+-  ``pn-buildlist``: Shows a simple list of targets that are to be
    built.
 
 To stop depending on common depends, use the "-I" depend option and
@@ -486,8 +540,11 @@ produce more readable graphs. This way, you can remove from the graph
 ``DEPENDS`` from inherited classes such as ``base.bbclass``.
 
 Here are two examples that create dependency graphs. The second example
-omits depends common in OpenEmbedded from the graph: $ bitbake -g foo $
-bitbake -g -I virtual/kernel -I eglibc foo
+omits depends common in OpenEmbedded from the graph: ::
+
+  $ bitbake -g foo
+
+  $ bitbake -g -I virtual/kernel -I eglibc foo
 
 Executing a Multiple Configuration Build
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -503,6 +560,9 @@ the build directory. The location for these multiconfig configuration
 files is specific. They must reside in the current build directory in a
 sub-directory of ``conf`` named ``multiconfig``. Following is an example
 for two separate targets:
+
+.. image:: figures/bb_multiconfig_files.png
+   :align: center
 
 The reason for this required file hierarchy is because the ``BBPATH``
 variable is not constructed until the layers are parsed. Consequently,
@@ -522,14 +582,19 @@ accomplished by setting the
 configuration files for ``target1`` and ``target2`` defined in the build
 directory. The following statement in the ``local.conf`` file both
 enables BitBake to perform multiple configuration builds and specifies
-the two extra multiconfigs: BBMULTICONFIG = "target1 target2"
+the two extra multiconfigs: ::
+
+  BBMULTICONFIG = "target1 target2"
 
 Once the target configuration files are in place and BitBake has been
 enabled to perform multiple configuration builds, use the following
-command form to start the builds: $ bitbake [mc:multiconfigname:]target
-[[[mc:multiconfigname:]target] ... ] Here is an example for two extra
-multiconfigs: ``target1`` and ``target2``: $ bitbake mc::target
-mc:target1:target mc:target2:target
+command form to start the builds: ::
+
+  $ bitbake [mc:multiconfigname:]target [[[mc:multiconfigname:]target] ... ]
+
+Here is an example for two extra multiconfigs: ``target1`` and ``target2``: ::
+
+  $ bitbake mc::target mc:target1:target mc:target2:target
 
 .. _bb-enabling-multiple-configuration-build-dependencies:
 
@@ -548,26 +613,37 @@ multiconfig.
 
 To enable dependencies in a multiple configuration build, you must
 declare the dependencies in the recipe using the following statement
-form: task_or_package[mcdepends] =
-"mc:from_multiconfig:to_multiconfig:recipe_name:task_on_which_to_depend"
+form: ::
+
+  task_or_package[mcdepends] = "mc:from_multiconfig:to_multiconfig:recipe_name:task_on_which_to_depend"
+
 To better show how to use this statement, consider an example with two
-multiconfigs: ``target1`` and ``target2``: image_task[mcdepends] =
-"mc:target1:target2:image2:rootfs_task" In this example, the
-from_multiconfig is "target1" and the to_multiconfig is "target2". The
+multiconfigs: ``target1`` and ``target2``: ::
+
+  image_task[mcdepends] = "mc:target1:target2:image2:rootfs_task"
+
+In this example, the
+``from_multiconfig`` is "target1" and the ``to_multiconfig`` is "target2". The
 task on which the image whose recipe contains image_task depends on the
 completion of the rootfs_task used to build out image2, which is
 associated with the "target2" multiconfig.
 
 Once you set up this dependency, you can build the "target1" multiconfig
-using a BitBake command as follows: $ bitbake mc:target1:image1 This
-command executes all the tasks needed to create image1 for the "target1"
+using a BitBake command as follows: ::
+
+  $ bitbake mc:target1:image1
+
+This command executes all the tasks needed to create ``image1`` for the "target1"
 multiconfig. Because of the dependency, BitBake also executes through
-the rootfs_task for the "target2" multiconfig build.
+the ``rootfs_task`` for the "target2" multiconfig build.
 
 Having a recipe depend on the root filesystem of another build might not
 seem that useful. Consider this change to the statement in the image1
-recipe: image_task[mcdepends] = "mc:target1:target2:image2:image_task"
-In this case, BitBake must create image2 for the "target2" build since
+recipe: ::
+
+  image_task[mcdepends] = "mc:target1:target2:image2:image_task"
+
+In this case, BitBake must create ``image2`` for the "target2" build since
 the "target1" build depends on it.
 
 Because "target1" and "target2" are enabled for multiple configuration

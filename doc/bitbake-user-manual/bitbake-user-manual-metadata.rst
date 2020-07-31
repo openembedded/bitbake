@@ -21,16 +21,28 @@ Basic Variable Setting
 
 The following example sets ``VARIABLE`` to "value". This assignment
 occurs immediately as the statement is parsed. It is a "hard"
-assignment. VARIABLE = "value" As expected, if you include leading or
-trailing spaces as part of an assignment, the spaces are retained:
-VARIABLE = " value" VARIABLE = "value " Setting ``VARIABLE`` to "" sets
+assignment. ::
+
+   VARIABLE = "value"
+
+As expected, if you include leading or
+trailing spaces as part of an assignment, the spaces are retained: ::
+
+   VARIABLE = " value"
+   VARIABLE = "value "
+
+Setting ``VARIABLE`` to "" sets
 it to an empty string, while setting the variable to " " sets it to a
-blank space (i.e. these are not the same values). VARIABLE = "" VARIABLE
-= " "
+blank space (i.e. these are not the same values). ::
+
+   VARIABLE = ""
+   VARIABLE = " "
 
 You can use single quotes instead of double quotes when setting a
 variable's value. Doing so allows you to use values that contain the
-double quote character: VARIABLE = 'I have a " in my value'
+double quote character: ::
+
+   VARIABLE = 'I have a " in my value'
 
 .. note::
 
@@ -65,7 +77,11 @@ occurs, you can use BitBake to check the actual value of the suspect
 variable. You can make these checks for both configuration and recipe
 level changes:
 
--  For configuration changes, use the following: $ bitbake -e This
+-  For configuration changes, use the following: ::
+
+      $ bitbake -e
+
+   This
    command displays variable values after the configuration files (i.e.
    ``local.conf``, ``bblayers.conf``, ``bitbake.conf`` and so forth)
    have been parsed.
@@ -75,33 +91,43 @@ level changes:
       Variables that are exported to the environment are preceded by the
       string "export" in the command's output.
 
--  For recipe changes, use the following: $ bitbake recipe -e \| grep
-   VARIABLE=" This command checks to see if the variable actually makes
+-  For recipe changes, use the following: ::
+
+      $ bitbake recipe -e \| grep VARIABLE="
+
+   This command checks to see if the variable actually makes
    it into a specific recipe.
 
 Line Joining
 ------------
 
-Outside of `functions <#functions>`__, BitBake joins any line ending in
+Outside of :ref:`functions <bitbake-user-manual/bitbake-user-manual-metadata:functions>`,
+BitBake joins any line ending in
 a backslash character ("\") with the following line before parsing
 statements. The most common use for the "\" character is to split
-variable assignments over multiple lines, as in the following example:
-FOO = "bar \\ baz \\ qaz" Both the "\" character and the newline
+variable assignments over multiple lines, as in the following example: ::
+
+   FOO = "bar \
+          baz \
+          qaz"
+
+Both the "\" character and the newline
 character that follow it are removed when joining lines. Thus, no
 newline characters end up in the value of ``FOO``.
 
 Consider this additional example where the two assignments both assign
-"barbaz" to ``FOO``: FOO = "barbaz" FOO = "bar\\ baz"
+"barbaz" to ``FOO``: ::
+
+   FOO = "barbaz"
+   FOO = "bar\
+   baz"
 
 .. note::
 
    BitBake does not interpret escape sequences like "\n" in variable
    values. For these to have an effect, the value must be passed to some
    utility that interprets escape sequences, such as
-   printf
-   or
-   echo -n
-   .
+   ``printf`` or ``echo -n``.
 
 Variable Expansion
 ------------------
@@ -109,32 +135,41 @@ Variable Expansion
 Variables can reference the contents of other variables using a syntax
 that is similar to variable expansion in Bourne shells. The following
 assignments result in A containing "aval" and B evaluating to
-"preavalpost". A = "aval" B = "pre${A}post"
+"preavalpost". ::
+
+   A = "aval"
+   B = "pre${A}post"
 
 .. note::
 
-   Unlike in Bourne shells, the curly braces are mandatory: Only
-   ${FOO}
-   and not
-   $FOO
-   is recognized as an expansion of
-   FOO
-   .
+   Unlike in Bourne shells, the curly braces are mandatory: Only ``${FOO}`` and not
+   ``$FOO`` is recognized as an expansion of ``FOO``.
 
 The "=" operator does not immediately expand variable references in the
 right-hand side. Instead, expansion is deferred until the variable
 assigned to is actually used. The result depends on the current values
 of the referenced variables. The following example should clarify this
-behavior: A = "${B} baz" B = "${C} bar" C = "foo" \*At this point, ${A}
-equals "foo bar baz"\* C = "qux" \*At this point, ${A} equals "qux bar
-baz"\* B = "norf" \*At this point, ${A} equals "norf baz"\* Contrast
-this behavior with the `immediate variable
-expansion <#immediate-variable-expansion>`__ operator (i.e. ":=").
+behavior: ::
+
+   A = "${B} baz"
+   B = "${C} bar"
+   C = "foo"
+   *At this point, ${A} equals "foo bar baz"*
+   C = "qux"
+   *At this point, ${A} equals "qux bar baz"*
+   B = "norf"
+   *At this point, ${A} equals "norf baz"\*
+
+Contrast this behavior with the
+:ref:`bitbake-user-manual/bitbake-user-manual-metadata:immediate variable
+expansion (:=)` operator.
 
 If the variable expansion syntax is used on a variable that does not
 exist, the string is kept as is. For example, given the following
 assignment, ``BAR`` expands to the literal string "${FOO}" as long as
-``FOO`` does not exist. BAR = "${FOO}"
+``FOO`` does not exist. ::
+
+   BAR = "${FOO}"
 
 Setting a default value (?=)
 ----------------------------
@@ -142,7 +177,11 @@ Setting a default value (?=)
 You can use the "?=" operator to achieve a "softer" assignment for a
 variable. This type of assignment allows you to define a variable if it
 is undefined when the statement is parsed, but to leave the value alone
-if the variable has a value. Here is an example: A ?= "aval" If ``A`` is
+if the variable has a value. Here is an example: ::
+
+   A ?= "aval"
+
+If ``A`` is
 set at the time this statement is parsed, the variable retains its
 value. However, if ``A`` is not set, the variable is set to "aval".
 
@@ -160,8 +199,12 @@ by using the "??=" operator. This assignment behaves identical to "?="
 except that the assignment is made at the end of the parsing process
 rather than immediately. Consequently, when multiple "??=" assignments
 exist, the last one is used. Also, any "=" or "?=" assignment will
-override the value set with "??=". Here is an example: A ??= "somevalue"
-A ??= "someothervalue" If ``A`` is set before the above statements are
+override the value set with "??=". Here is an example: ::
+
+   A ??= "somevalue"
+   A ??= "someothervalue"
+
+If ``A`` is set before the above statements are
 parsed, the variable retains its value. If ``A`` is not set, the
 variable is set to "someothervalue".
 
@@ -172,8 +215,15 @@ Immediate variable expansion (:=)
 ---------------------------------
 
 The ":=" operator results in a variable's contents being expanded
-immediately, rather than when the variable is actually used: T = "123" A
-:= "test ${T}" T = "456" B := "${T} ${C}" C = "cval" C := "${C}append"
+immediately, rather than when the variable is actually used: ::
+
+   T = "123"
+   A := "test ${T}"
+   T = "456"
+   B := "${T} ${C}"
+   C = "cval"
+   C := "${C}append"
+
 In this example, ``A`` contains "test 123", even though the final value
 of ``T`` is "456". The variable ``B`` will end up containing "456
 cvalappend". This is because references to undefined variables are
@@ -191,8 +241,14 @@ the "+=" and "=+" operators. These operators insert a space between the
 current value and prepended or appended value.
 
 These operators take immediate effect during parsing. Here are some
-examples: B = "bval" B += "additionaldata" C = "cval" C =+ "test" The
-variable ``B`` contains "bval additionaldata" and ``C`` contains "test
+examples: ::
+
+   B = "bval"
+   B += "additionaldata"
+   C = "cval"
+   C =+ "test"
+
+The variable ``B`` contains "bval additionaldata" and ``C`` contains "test
 cval".
 
 .. _appending-and-prepending-without-spaces:
@@ -204,8 +260,14 @@ If you want to append or prepend values without an inserted space, use
 the ".=" and "=." operators.
 
 These operators take immediate effect during parsing. Here are some
-examples: B = "bval" B .= "additionaldata" C = "cval" C =. "test" The
-variable ``B`` contains "bvaladditionaldata" and ``C`` contains
+examples: ::
+
+   B = "bval"
+   B .= "additionaldata"
+   C = "cval"
+   C =. "test"
+
+The variable ``B`` contains "bvaladditionaldata" and ``C`` contains
 "testcval".
 
 Appending and Prepending (Override Style Syntax)
@@ -216,9 +278,16 @@ style syntax. When you use this syntax, no spaces are inserted.
 
 These operators differ from the ":=", ".=", "=.", "+=", and "=+"
 operators in that their effects are applied at variable expansion time
-rather than being immediately applied. Here are some examples: B =
-"bval" B_append = " additional data" C = "cval" C_prepend = "additional
-data " D = "dval" D_append = "additional data" The variable ``B``
+rather than being immediately applied. Here are some examples: ::
+
+   B = "bval"
+   B_append = " additional data"
+   C = "cval"
+   C_prepend = "additional data "
+   D = "dval"
+   D_append = "additional data"
+
+The variable ``B``
 becomes "bval additional data" and ``C`` becomes "additional data cval".
 The variable ``D`` becomes "dvaladditional data".
 
@@ -227,9 +296,8 @@ The variable ``D`` becomes "dvaladditional data".
    You must control all spacing when you use the override syntax.
 
 It is also possible to append and prepend to shell functions and
-BitBake-style Python functions. See the "`Shell
-Functions <#shell-functions>`__" and "`BitBake-Style Python
-Functions <#bitbake-style-python-functions>`__ sections for examples.
+BitBake-style Python functions. See the ":ref:`bitbake-user-manual/bitbake-user-manual-metadata:shell functions`" and ":ref:`bitbake-user-manual/bitbake-user-manual-metadata:bitbake-style python functions`"
+sections for examples.
 
 .. _removing-override-style-syntax:
 
@@ -241,11 +309,20 @@ syntax. Specifying a value for removal causes all occurrences of that
 value to be removed from the variable.
 
 When you use this syntax, BitBake expects one or more strings.
-Surrounding spaces and spacing are preserved. Here is an example: FOO =
-"123 456 789 123456 123 456 123 456" FOO_remove = "123" FOO_remove =
-"456" FOO2 = " abc def ghi abcdef abc def abc def def" FOO2_remove = "
-\\ def \\ abc \\ ghi \\ " The variable ``FOO`` becomes
-"  789 123456    " and ``FOO2`` becomes "     abcdef      ".
+Surrounding spaces and spacing are preserved. Here is an example: ::
+
+   FOO = "123 456 789 123456 123 456 123 456"
+   FOO_remove = "123"
+   FOO_remove = "456"
+   FOO2 = " abc def ghi abcdef abc def abc def def"
+   FOO2_remove = "\
+       def \
+       abc \
+       ghi \
+       "
+
+The variable ``FOO`` becomes
+"  789 123456    " and ``FOO2`` becomes "    abcdef     ".
 
 Like "_append" and "_prepend", "_remove" is applied at variable
 expansion time.
@@ -257,105 +334,115 @@ An advantage of the override style operations "_append", "_prepend", and
 "_remove" as compared to the "+=" and "=+" operators is that the
 override style operators provide guaranteed operations. For example,
 consider a class ``foo.bbclass`` that needs to add the value "val" to
-the variable ``FOO``, and a recipe that uses ``foo.bbclass`` as follows:
-inherit foo FOO = "initial" If ``foo.bbclass`` uses the "+=" operator,
+the variable ``FOO``, and a recipe that uses ``foo.bbclass`` as follows: ::
+
+   inherit foo
+   FOO = "initial"
+
+If ``foo.bbclass`` uses the "+=" operator,
 as follows, then the final value of ``FOO`` will be "initial", which is
-not what is desired: FOO += "val" If, on the other hand, ``foo.bbclass``
+not what is desired: ::
+
+   FOO += "val"
+
+If, on the other hand, ``foo.bbclass``
 uses the "_append" operator, then the final value of ``FOO`` will be
-"initial val", as intended: FOO_append = " val"
+"initial val", as intended: ::
+
+   FOO_append = " val"
 
 .. note::
 
-   It is never necessary to use "+=" together with "_append". The
-   following sequence of assignments appends "barbaz" to
-   FOO
-   :
-   ::
+   It is never necessary to use "+=" together with "_append". The following
+   sequence of assignments appends "barbaz" to FOO: ::
 
-           FOO_append = "bar"
-           FOO_append = "baz"
-                          
+       FOO_append = "bar"
+       FOO_append = "baz"
+
 
    The only effect of changing the second assignment in the previous
    example to use "+=" would be to add a space before "baz" in the
    appended value (due to how the "+=" operator works).
 
 Another advantage of the override style operations is that you can
-combine them with other overrides as described in the "`Conditional
-Syntax (Overrides) <#conditional-syntax-overrides>`__" section.
+combine them with other overrides as described in the
+":ref:`bitbake-user-manual/bitbake-user-manual-metadata:conditional syntax (overrides)`" section.
 
 Variable Flag Syntax
 --------------------
 
 Variable flags are BitBake's implementation of variable properties or
 attributes. It is a way of tagging extra information onto a variable.
-You can find more out about variable flags in general in the "`Variable
-Flags <#variable-flags>`__" section.
+You can find more out about variable flags in general in the
+":ref:`bitbake-user-manual/bitbake-user-manual-metadata:variable flags`" section.
 
 You can define, append, and prepend values to variable flags. All the
 standard syntax operations previously mentioned work for variable flags
 except for override style syntax (i.e. "_prepend", "_append", and
 "_remove").
 
-Here are some examples showing how to set variable flags: FOO[a] = "abc"
-FOO[b] = "123" FOO[a] += "456" The variable ``FOO`` has two flags:
+Here are some examples showing how to set variable flags: ::
+
+   FOO[a] = "abc"
+   FOO[b] = "123"
+   FOO[a] += "456"
+
+The variable ``FOO`` has two flags:
 ``[a]`` and ``[b]``. The flags are immediately set to "abc" and "123",
 respectively. The ``[a]`` flag becomes "abc 456".
 
 No need exists to pre-define variable flags. You can simply start using
 them. One extremely common application is to attach some brief
-documentation to a BitBake variable as follows: CACHE[doc] = "The
-directory holding the cache of the metadata."
+documentation to a BitBake variable as follows: ::
+
+   CACHE[doc] = "The directory holding the cache of the metadata."
 
 Inline Python Variable Expansion
 --------------------------------
 
 You can use inline Python variable expansion to set variables. Here is
-an example: DATE = "${@time.strftime('%Y%m%d',time.gmtime())}" This
-example results in the ``DATE`` variable being set to the current date.
+an example: ::
+
+   DATE = "${@time.strftime('%Y%m%d',time.gmtime())}"
+
+This example results in the ``DATE`` variable being set to the current date.
 
 Probably the most common use of this feature is to extract the value of
 variables from BitBake's internal data dictionary, ``d``. The following
 lines select the values of a package name and its version number,
-respectively: PN =
-"${@bb.parse.BBHandler.vars_from_file(d.getVar('FILE', False),d)[0] or
-'defaultpkgname'}" PV =
-"${@bb.parse.BBHandler.vars_from_file(d.getVar('FILE', False),d)[1] or
-'1.0'}"
+respectively: ::
+
+   PN = "${@bb.parse.BBHandler.vars_from_file(d.getVar('FILE', False),d)[0] or 'defaultpkgname'}"
+   PV = "${@bb.parse.BBHandler.vars_from_file(d.getVar('FILE', False),d)[1] or '1.0'}"
 
 .. note::
 
-   Inline Python expressions work just like variable expansions insofar
-   as the "=" and ":=" operators are concerned. Given the following
-   assignment,
-   foo()
-   is called each time
-   FOO
-   is expanded:
-   ::
+   Inline Python expressions work just like variable expansions insofar as the
+   "=" and ":=" operators are concerned. Given the following assignment, foo()
+   is called each time FOO is expanded: ::
 
-           FOO = "${@foo()}"
-                          
+      FOO = "${@foo()}"
 
-   Contrast this with the following immediate assignment, where
-   foo()
-   is only called once, while the assignment is parsed:
-   ::
+   Contrast this with the following immediate assignment, where foo() is only
+   called once, while the assignment is parsed: ::
 
-           FOO := "${@foo()}"
-                          
+      FOO := "${@foo()}"
 
 For a different way to set variables with Python code during parsing,
-see the "`Anonymous Python Functions <#anonymous-python-functions>`__"
-section.
+see the
+":ref:`bitbake-user-manual/bitbake-user-manual-metadata:anonymous python functions`" section.
 
 Unsetting variables
 -------------------
 
 It is possible to completely remove a variable or a variable flag from
 BitBake's internal data dictionary by using the "unset" keyword. Here is
-an example: unset DATE unset do_fetch[noexec] These two statements
-remove the ``DATE`` and the ``do_fetch[noexec]`` flag.
+an example: ::
+
+   unset DATE
+   unset do_fetch[noexec]
+
+These two statements remove the ``DATE`` and the ``do_fetch[noexec]`` flag.
 
 Providing Pathnames
 -------------------
@@ -365,34 +452,40 @@ When specifying pathnames for use with BitBake, do not use the tilde
 cause BitBake to not recognize the path since BitBake does not expand
 this character in the same way a shell would.
 
-Instead, provide a fuller path as the following example illustrates:
-BBLAYERS ?= " \\ /home/scott-lenovo/LayerA \\ "
+Instead, provide a fuller path as the following example illustrates: ::
+
+   BBLAYERS ?= " \
+       /home/scott-lenovo/LayerA \
+   "
 
 Exporting Variables to the Environment
 ======================================
 
 You can export variables to the environment of running tasks by using
 the ``export`` keyword. For example, in the following example, the
-``do_foo`` task prints "value from the environment" when run: export
-ENV_VARIABLE ENV_VARIABLE = "value from the environment" do_foo() {
-bbplain "$ENV_VARIABLE" }
+``do_foo`` task prints "value from the environment" when run: ::
+
+   export ENV_VARIABLE
+   ENV_VARIABLE = "value from the environment"
+
+   do_foo() {
+       bbplain "$ENV_VARIABLE"
+   }
 
 .. note::
 
-   BitBake does not expand
-   $ENV_VARIABLE
-   in this case because it lacks the obligatory
-   {}
-   . Rather,
-   $ENV_VARIABLE
-   is expanded by the shell.
+   BitBake does not expand ``$ENV_VARIABLE`` in this case because it lacks the
+   obligatory ``{}`` . Rather, ``$ENV_VARIABLE`` is expanded by the shell.
 
 It does not matter whether ``export ENV_VARIABLE`` appears before or
 after assignments to ``ENV_VARIABLE``.
 
 It is also possible to combine ``export`` with setting a value for the
-variable. Here is an example: export ENV_VARIABLE = "variable-value" In
-the output of ``bitbake -e``, variables that are exported to the
+variable. Here is an example: ::
+
+   export ENV_VARIABLE = "variable-value"
+
+In the output of ``bitbake -e``, variables that are exported to the
 environment are preceded by "export".
 
 Among the variables commonly exported to the environment are ``CC`` and
@@ -425,42 +518,58 @@ variable.
    to satisfy conditions. Thus, if you have a variable that is
    conditional on “arm”, and “arm” is in ``OVERRIDES``, then the
    “arm”-specific version of the variable is used rather than the
-   non-conditional version. Here is an example: OVERRIDES =
-   "architecture:os:machine" TEST = "default" TEST_os = "osspecific"
-   TEST_nooverride = "othercondvalue" In this example, the ``OVERRIDES``
+   non-conditional version. Here is an example: ::
+
+      OVERRIDES = "architecture:os:machine"
+      TEST = "default"
+      TEST_os = "osspecific"
+      TEST_nooverride = "othercondvalue"
+
+   In this example, the ``OVERRIDES``
    variable lists three overrides: "architecture", "os", and "machine".
    The variable ``TEST`` by itself has a default value of "default". You
    select the os-specific version of the ``TEST`` variable by appending
-   the "os" override to the variable (i.e.\ ``TEST_os``).
+   the "os" override to the variable (i.e. ``TEST_os``).
 
    To better understand this, consider a practical example that assumes
    an OpenEmbedded metadata-based Linux kernel recipe file. The
    following lines from the recipe file first set the kernel branch
    variable ``KBRANCH`` to a default value, then conditionally override
-   that value based on the architecture of the build: KBRANCH =
-   "standard/base" KBRANCH_qemuarm = "standard/arm-versatile-926ejs"
-   KBRANCH_qemumips = "standard/mti-malta32" KBRANCH_qemuppc =
-   "standard/qemuppc" KBRANCH_qemux86 = "standard/common-pc/base"
-   KBRANCH_qemux86-64 = "standard/common-pc-64/base" KBRANCH_qemumips64
-   = "standard/mti-malta64"
+   that value based on the architecture of the build: ::
+
+      KBRANCH = "standard/base"
+      KBRANCH_qemuarm = "standard/arm-versatile-926ejs"
+      KBRANCH_qemumips = "standard/mti-malta32"
+      KBRANCH_qemuppc = "standard/qemuppc"
+      KBRANCH_qemux86 = "standard/common-pc/base"
+      KBRANCH_qemux86-64 = "standard/common-pc-64/base"
+      KBRANCH_qemumips64 = "standard/mti-malta64"
 
 -  *Appending and Prepending:* BitBake also supports append and prepend
    operations to variable values based on whether a specific item is
-   listed in ``OVERRIDES``. Here is an example: DEPENDS = "glibc
-   ncurses" OVERRIDES = "machine:local" DEPENDS_append_machine = "
-   libmad" In this example, ``DEPENDS`` becomes "glibc ncurses libmad".
+   listed in ``OVERRIDES``. Here is an example: ::
+
+      DEPENDS = "glibc ncurses"
+      OVERRIDES = "machine:local"
+      DEPENDS_append_machine = "libmad"
+
+   In this example, ``DEPENDS`` becomes "glibc ncurses libmad".
 
    Again, using an OpenEmbedded metadata-based kernel recipe file as an
    example, the following lines will conditionally append to the
-   ``KERNEL_FEATURES`` variable based on the architecture:
-   KERNEL_FEATURES_append = " ${KERNEL_EXTRA_FEATURES}"
-   KERNEL_FEATURES_append_qemux86=" cfg/sound.scc cfg/paravirt_kvm.scc"
-   KERNEL_FEATURES_append_qemux86-64=" cfg/sound.scc
-   cfg/paravirt_kvm.scc"
+   ``KERNEL_FEATURES`` variable based on the architecture: ::
+
+      KERNEL_FEATURES_append = " ${KERNEL_EXTRA_FEATURES}"
+      KERNEL_FEATURES_append_qemux86=" cfg/sound.scc cfg/paravirt_kvm.scc"
+      KERNEL_FEATURES_append_qemux86-64=" cfg/sound.scc cfg/paravirt_kvm.scc"
 
 -  *Setting a Variable for a Single Task:* BitBake supports setting a
-   variable just for the duration of a single task. Here is an example:
-   FOO_task-configure = "val 1" FOO_task-compile = "val 2" In the
+   variable just for the duration of a single task. Here is an example: ::
+
+      FOO_task-configure = "val 1"
+      FOO_task-compile = "val 2"
+
+   In the
    previous example, ``FOO`` has the value "val 1" while the
    ``do_configure`` task is executed, and the value "val 2" while the
    ``do_compile`` task is executed.
@@ -471,15 +580,21 @@ variable.
    ``do_compile`` task.
 
    You can also use this syntax with other combinations (e.g.
-   "``_prepend``") as shown in the following example:
-   EXTRA_OEMAKE_prepend_task-compile = "${PARALLEL_MAKE} "
+   "``_prepend``") as shown in the following example: ::
+
+      EXTRA_OEMAKE_prepend_task-compile = "${PARALLEL_MAKE} "
 
 Key Expansion
 -------------
 
 Key expansion happens when the BitBake datastore is finalized. To better
-understand this, consider the following example: A${B} = "X" B = "2" A2
-= "Y" In this case, after all the parsing is complete, BitBake expands
+understand this, consider the following example: ::
+
+   A${B} = "X"
+   B = "2"
+   A2 = "Y"
+
+In this case, after all the parsing is complete, BitBake expands
 ``${B}`` into "2". This expansion causes ``A2``, which was set to "Y"
 before the expansion, to become "X".
 
@@ -499,7 +614,13 @@ There is often confusion concerning the order in which overrides and
 various "append" operators take effect. Recall that an append or prepend
 operation using "_append" and "_prepend" does not result in an immediate
 assignment as would "+=", ".=", "=+", or "=.". Consider the following
-example: OVERRIDES = "foo" A = "Z" A_foo_append = "X" For this case,
+example: ::
+
+   OVERRIDES = "foo"
+   A = "Z"
+   A_foo_append = "X"
+
+For this case,
 ``A`` is unconditionally set to "Z" and "X" is unconditionally and
 immediately appended to the variable ``A_foo``. Because overrides have
 not been applied yet, ``A_foo`` is set to "X" due to the append and
@@ -510,24 +631,42 @@ Applying overrides, however, changes things. Since "foo" is listed in
 version, which is equal to "X". So effectively, ``A_foo`` replaces
 ``A``.
 
-This next example changes the order of the override and the append:
-OVERRIDES = "foo" A = "Z" A_append_foo = "X" For this case, before
+This next example changes the order of the override and the append: ::
+
+   OVERRIDES = "foo"
+   A = "Z"
+   A_append_foo = "X"
+
+For this case, before
 overrides are handled, ``A`` is set to "Z" and ``A_append_foo`` is set
 to "X". Once the override for "foo" is applied, however, ``A`` gets
 appended with "X". Consequently, ``A`` becomes "ZX". Notice that spaces
 are not appended.
 
 This next example has the order of the appends and overrides reversed
-back as in the first example: OVERRIDES = "foo" A = "Y" A_foo_append =
-"Z" A_foo_append = "X" For this case, before any overrides are resolved,
+back as in the first example: ::
+
+   OVERRIDES = "foo"
+   A = "Y"
+   A_foo_append = "Z"
+   A_foo_append = "X"
+
+For this case, before any overrides are resolved,
 ``A`` is set to "Y" using an immediate assignment. After this immediate
 assignment, ``A_foo`` is set to "Z", and then further appended with "X"
 leaving the variable set to "ZX". Finally, applying the override for
 "foo" results in the conditional variable ``A`` becoming "ZX" (i.e.
 ``A`` is replaced with ``A_foo``).
 
-This final example mixes in some varying operators: A = "1" A_append =
-"2" A_append = "3" A += "4" A .= "5" For this case, the type of append
+This final example mixes in some varying operators: ::
+
+   A = "1"
+   A_append = "2"
+   A_append = "3"
+   A += "4"
+   A .= "5"
+
+For this case, the type of append
 operators are affecting the order of assignments as BitBake passes
 through the code multiple times. Initially, ``A`` is set to "1 45"
 because of the three statements that use immediate operators. After
@@ -559,11 +698,7 @@ current directory for ``include`` and ``require`` directives.
 
 .. note::
 
-   The
-   BBPATH
-   variable is analogous to the environment variable
-   PATH
-   .
+   The BBPATH variable is analogous to the environment variable PATH .
 
 In order for include and class files to be found by BitBake, they need
 to be located in a "classes" subdirectory that can be found in
@@ -585,8 +720,11 @@ file and then have your recipe inherit that class file.
 
 As an example, your recipes could use the following directive to inherit
 an ``autotools.bbclass`` file. The class file would contain common
-functionality for using Autotools that could be shared across recipes:
-inherit autotools In this case, BitBake would search for the directory
+functionality for using Autotools that could be shared across recipes: ::
+
+   inherit autotools
+
+In this case, BitBake would search for the directory
 ``classes/autotools.bbclass`` in ``BBPATH``.
 
 .. note::
@@ -596,24 +734,42 @@ inherit autotools In this case, BitBake would search for the directory
 
 If you want to use the directive to inherit multiple classes, separate
 them with spaces. The following example shows how to inherit both the
-``buildhistory`` and ``rm_work`` classes: inherit buildhistory rm_work
+``buildhistory`` and ``rm_work`` classes: ::
+
+   inherit buildhistory rm_work
 
 An advantage with the inherit directive as compared to both the
-`include <#include-directive>`__ and `require <#require-inclusion>`__
+:ref:`include <bitbake-user-manual/bitbake-user-manual-metadata:\`\`include\`\` directive>` and :ref:`require <bitbake-user-manual/bitbake-user-manual-metadata:\`\`require\`\` directive>`
 directives is that you can inherit class files conditionally. You can
 accomplish this by using a variable expression after the ``inherit``
-statement. Here is an example: inherit ${VARNAME} If ``VARNAME`` is
+statement. Here is an example: ::
+
+   inherit ${VARNAME}
+
+If ``VARNAME`` is
 going to be set, it needs to be set before the ``inherit`` statement is
 parsed. One way to achieve a conditional inherit in this case is to use
-overrides: VARIABLE = "" VARIABLE_someoverride = "myclass"
+overrides: ::
 
-Another method is by using anonymous Python. Here is an example: python
-() { if condition == value: d.setVar('VARIABLE', 'myclass') else:
-d.setVar('VARIABLE', '') }
+   VARIABLE = ""
+   VARIABLE_someoverride = "myclass"
+
+Another method is by using anonymous Python. Here is an example: ::
+
+   python () {
+       if condition == value:
+           d.setVar('VARIABLE', 'myclass')
+       else:
+           d.setVar('VARIABLE', '')
+   }
 
 Alternatively, you could use an in-line Python expression in the
-following form: inherit ${@'classname' if condition else ''} inherit
-${@functionname(params)} In all cases, if the expression evaluates to an
+following form: ::
+
+   inherit ${@'classname' if condition else ''}
+   inherit ${@functionname(params)}
+
+In all cases, if the expression evaluates to an
 empty string, the statement does not trigger a syntax error because it
 becomes a no-op.
 
@@ -627,27 +783,24 @@ that if the path specified on the include line is a relative path,
 BitBake locates the first file it can find within ``BBPATH``.
 
 The include directive is a more generic method of including
-functionality as compared to the `inherit <#inherit-directive>`__
+functionality as compared to the :ref:`inherit <bitbake-user-manual/bitbake-user-manual-metadata:\`\`inherit\`\` directive>`
 directive, which is restricted to class (i.e. ``.bbclass``) files. The
 include directive is applicable for any other kind of shared or
 encapsulated functionality or configuration that does not suit a
 ``.bbclass`` file.
 
 As an example, suppose you needed a recipe to include some self-test
-definitions: include test_defs.inc
+definitions: ::
+
+   include test_defs.inc
 
 .. note::
 
-   The
-   include
-   directive does not produce an error when the file cannot be found.
-   Consequently, it is recommended that if the file you are including is
-   expected to exist, you should use
-   :ref:`require <require-inclusion>`
-   instead of
-   include
-   . Doing so makes sure that an error is produced if the file cannot be
-   found.
+   The include directive does not produce an error when the file cannot be
+   found.  Consequently, it is recommended that if the file you are including is
+   expected to exist, you should use :ref:`require <require-inclusion>` instead
+   of include . Doing so makes sure that an error is produced if the file cannot
+   be found.
 
 .. _require-inclusion:
 
@@ -662,12 +815,12 @@ the location of the directive.
 
 The require directive, like the include directive previously described,
 is a more generic method of including functionality as compared to the
-`inherit <#inherit-directive>`__ directive, which is restricted to class
+:ref:`inherit <bitbake-user-manual/bitbake-user-manual-metadata:\`\`inherit\`\` directive>` directive, which is restricted to class
 (i.e. ``.bbclass``) files. The require directive is applicable for any
 other kind of shared or encapsulated functionality or configuration that
 does not suit a ``.bbclass`` file.
 
-Similar to how BitBake handles ```include`` <#include-directive>`__, if
+Similar to how BitBake handles :ref:`include <bitbake-user-manual/bitbake-user-manual-metadata:\`\`include\`\` directive>`, if
 the path specified on the require line is a relative path, BitBake
 locates the first file it can find within ``BBPATH``.
 
@@ -678,7 +831,9 @@ include file named ``foo.inc`` that contains the common definitions
 needed to build "foo". You need to be sure ``foo.inc`` is located in the
 same directory as your two recipe files as well. Once these conditions
 are set up, you can share the functionality using a ``require``
-directive from within each recipe: require foo.inc
+directive from within each recipe: ::
+
+   require foo.inc
 
 ``INHERIT`` Configuration Directive
 -----------------------------------
@@ -689,7 +844,10 @@ class. BitBake only supports this directive when used within a
 configuration file.
 
 As an example, suppose you needed to inherit a class file called
-``abc.bbclass`` from a configuration file as follows: INHERIT += "abc"
+``abc.bbclass`` from a configuration file as follows: ::
+
+   INHERIT += "abc"
+
 This configuration directive causes the named class to be inherited at
 the point of the directive during parsing. As with the ``inherit``
 directive, the ``.bbclass`` file must be located in a "classes"
@@ -697,18 +855,16 @@ subdirectory in one of the directories specified in ``BBPATH``.
 
 .. note::
 
-   Because
-   .conf
-   files are parsed first during BitBake's execution, using
-   INHERIT
-   to inherit a class effectively inherits the class globally (i.e. for
+   Because .conf files are parsed first during BitBake's execution, using
+   INHERIT to inherit a class effectively inherits the class globally (i.e. for
    all recipes).
 
 If you want to use the directive to inherit multiple classes, you can
 provide them on the same line in the ``local.conf`` file. Use spaces to
 separate the classes. The following example shows how to inherit both
-the ``autotools`` and ``pkgconfig`` classes: INHERIT += "autotools
-pkgconfig"
+the ``autotools`` and ``pkgconfig`` classes: ::
+
+   INHERIT += "autotools pkgconfig"
 
 Functions
 =========
@@ -739,8 +895,13 @@ Shell Functions
 
 Functions written in shell script and executed either directly as
 functions, tasks, or both. They can also be called by other shell
-functions. Here is an example shell function definition: some_function
-() { echo "Hello World" } When you create these types of functions in
+functions. Here is an example shell function definition: ::
+
+   some_function () {
+       echo "Hello World"
+   }
+
+When you create these types of functions in
 your recipe or class files, you need to follow the shell programming
 rules. The scripts are executed by ``/bin/sh``, which may not be a bash
 shell but might be something such as ``dash``. You should not use
@@ -751,16 +912,36 @@ can also be applied to shell functions. Most commonly, this application
 would be used in a ``.bbappend`` file to modify functions in the main
 recipe. It can also be used to modify functions inherited from classes.
 
-As an example, consider the following: do_foo() { bbplain first fn }
-fn_prepend() { bbplain second } fn() { bbplain third } do_foo_append() {
-bbplain fourth } Running ``do_foo`` prints the following: recipename
-do_foo: first recipename do_foo: second recipename do_foo: third
-recipename do_foo: fourth
+As an example, consider the following: ::
+
+   do_foo() {
+       bbplain first
+       fn
+   }
+
+   fn_prepend() {
+       bbplain second
+   }
+
+   fn() {
+       bbplain third
+   }
+
+   do_foo_append() {
+       bbplain fourth
+   }
+
+Running ``do_foo`` prints the following: ::
+
+   recipename do_foo: first
+   recipename do_foo: second
+   recipename do_foo: third
+   recipename do_foo: fourth
 
 .. note::
 
    Overrides and override-style operators can be applied to any shell
-   function, not just :ref:`tasks <bitbake-user-manual/bitbake-user-manual-metadata:Tasks>`.
+   function, not just :ref:`tasks <bitbake-user-manual/bitbake-user-manual-metadata:tasks>`.
 
 You can use the ``bitbake -e`` recipename command to view the final
 assembled function after all overrides have been applied.
@@ -771,33 +952,50 @@ BitBake-Style Python Functions
 These functions are written in Python and executed by BitBake or other
 Python functions using ``bb.build.exec_func()``.
 
-An example BitBake function is: python some_python_function () {
-d.setVar("TEXT", "Hello World") print d.getVar("TEXT") } Because the
+An example BitBake function is: ::
+
+   python some_python_function () {
+       d.setVar("TEXT", "Hello World")
+       print d.getVar("TEXT")
+   }
+
+Because the
 Python "bb" and "os" modules are already imported, you do not need to
 import these modules. Also in these types of functions, the datastore
 ("d") is a global variable and is always automatically available.
 
 .. note::
 
-   Variable expressions (e.g.
-   ${X}
-   ) are no longer expanded within Python functions. This behavior is
-   intentional in order to allow you to freely set variable values to
-   expandable expressions without having them expanded prematurely. If
-   you do wish to expand a variable within a Python function, use
-   d.getVar("X")
-   . Or, for more complicated expressions, use
-   d.expand()
-   .
+   Variable expressions (e.g.  ``${X}`` ) are no longer expanded within Python
+   functions. This behavior is intentional in order to allow you to freely set
+   variable values to expandable expressions without having them expanded
+   prematurely. If you do wish to expand a variable within a Python function,
+   use ``d.getVar("X")`` . Or, for more complicated expressions, use ``d.expand()``.
 
 Similar to shell functions, you can also apply overrides and
 override-style operators to BitBake-style Python functions.
 
-As an example, consider the following: python do_foo_prepend() {
-bb.plain("first") } python do_foo() { bb.plain("second") } python
-do_foo_append() { bb.plain("third") } Running ``do_foo`` prints the
-following: recipename do_foo: first recipename do_foo: second recipename
-do_foo: third You can use the ``bitbake -e`` recipename command to view
+As an example, consider the following: ::
+
+   python do_foo_prepend() {
+       bb.plain("first")
+   }
+
+   python do_foo() {
+       bb.plain("second")
+   }
+
+   python do_foo_append() {
+       bb.plain("third")
+   }
+
+Running ``do_foo`` prints the following: ::
+
+   recipename do_foo: first
+   recipename do_foo: second
+   recipename do_foo: third
+
+You can use the ``bitbake -e`` recipename command to view
 the final assembled function after all overrides have been applied.
 
 Python Functions
@@ -806,10 +1004,18 @@ Python Functions
 These functions are written in Python and are executed by other Python
 code. Examples of Python functions are utility functions that you intend
 to call from in-line Python or from within other Python functions. Here
-is an example: def get_depends(d): if d.getVar('SOMECONDITION'): return
-"dependencywithcond" else: return "dependency" SOMECONDITION = "1"
-DEPENDS = "${@get_depends(d)}" This would result in ``DEPENDS``
-containing ``dependencywithcond``.
+is an example: ::
+
+   def get_depends(d):
+       if d.getVar('SOMECONDITION'):
+           return "dependencywithcond"
+       else:
+           return "dependency"
+
+   SOMECONDITION = "1"
+   DEPENDS = "${@get_depends(d)}"
+
+This would result in ``DEPENDS`` containing ``dependencywithcond``.
 
 Here are some things to know about Python functions:
 
@@ -827,15 +1033,15 @@ BitBake-Style Python Functions Versus Python Functions
 Following are some important differences between BitBake-style Python
 functions and regular Python functions defined with "def":
 
--  Only BitBake-style Python functions can be `tasks <#tasks>`__.
+-  Only BitBake-style Python functions can be :ref:`tasks <bitbake-user-manual/bitbake-user-manual-metadata:tasks>`.
 
 -  Overrides and override-style operators can only be applied to
    BitBake-style Python functions.
 
 -  Only regular Python functions can take arguments and return values.
 
--  `Variable flags <#variable-flags>`__ such as ``[dirs]``,
-   ``[cleandirs]``, and ``[lockfiles]`` can be used on BitBake-style
+-  :ref:`Variable flags <bitbake-user-manual/bitbake-user-manual-metadata:variable flags>` such as
+   ``[dirs]``, ``[cleandirs]``, and ``[lockfiles]`` can be used on BitBake-style
    Python functions, but not on regular Python functions.
 
 -  BitBake-style Python functions generate a separate
@@ -850,18 +1056,17 @@ functions and regular Python functions defined with "def":
 -  Regular Python functions are called with the usual Python syntax.
    BitBake-style Python functions are usually tasks and are called
    directly by BitBake, but can also be called manually from Python code
-   by using the ``bb.build.exec_func()`` function. Here is an example:
-   bb.build.exec_func("my_bitbake_style_function", d)
+   by using the ``bb.build.exec_func()`` function. Here is an example: ::
+
+      bb.build.exec_func("my_bitbake_style_function", d)
 
    .. note::
 
-      bb.build.exec_func()
-      can also be used to run shell functions from Python code. If you
-      want to run a shell function before a Python function within the
-      same task, then you can use a parent helper Python function that
-      starts by running the shell function with
-      bb.build.exec_func()
-      and then runs the Python code.
+      ``bb.build.exec_func()`` can also be used to run shell functions from Python
+      code. If you want to run a shell function before a Python function within
+      the same task, then you can use a parent helper Python function that
+      starts by running the shell function with ``bb.build.exec_func()`` and then
+      runs the Python code.
 
    To detect errors from functions executed with
    ``bb.build.exec_func()``, you can catch the ``bb.build.FuncFailed``
@@ -869,20 +1074,12 @@ functions and regular Python functions defined with "def":
 
    .. note::
 
-      Functions in metadata (recipes and classes) should not themselves
-      raise
-      bb.build.FuncFailed
-      . Rather,
-      bb.build.FuncFailed
-      should be viewed as a general indicator that the called function
-      failed by raising an exception. For example, an exception raised
-      by
-      bb.fatal()
-      will be caught inside
-      bb.build.exec_func()
-      , and a
-      bb.build.FuncFailed
-      will be raised in response.
+      Functions in metadata (recipes and classes) should not themselves raise
+      ``bb.build.FuncFailed``. Rather, ``bb.build.FuncFailed`` should be viewed as a
+      general indicator that the called function failed by raising an
+      exception. For example, an exception raised by ``bb.fatal()`` will be caught
+      inside ``bb.build.exec_func()``, and a ``bb.build.FuncFailed`` will be raised in
+      response.
 
 Due to their simplicity, you should prefer regular Python functions over
 BitBake-style Python functions unless you need a feature specific to
@@ -897,32 +1094,62 @@ Sometimes it is useful to set variables or perform other operations
 programmatically during parsing. To do this, you can define special
 Python functions, called anonymous Python functions, that run at the end
 of parsing. For example, the following conditionally sets a variable
-based on the value of another variable: python () { if
-d.getVar('SOMEVAR') == 'value': d.setVar('ANOTHERVAR', 'value2') } An
-equivalent way to mark a function as an anonymous function is to give it
+based on the value of another variable: ::
+
+   python () {
+       if d.getVar('SOMEVAR') == 'value':
+           d.setVar('ANOTHERVAR', 'value2')
+   }
+
+An equivalent way to mark a function as an anonymous function is to give it
 the name "__anonymous", rather than no name.
 
 Anonymous Python functions always run at the end of parsing, regardless
 of where they are defined. If a recipe contains many anonymous
 functions, they run in the same order as they are defined within the
-recipe. As an example, consider the following snippet: python () {
-d.setVar('FOO', 'foo 2') } FOO = "foo 1" python () { d.appendVar('BAR',
-' bar 2') } BAR = "bar 1" The previous example is conceptually
-equivalent to the following snippet: FOO = "foo 1" BAR = "bar 1" FOO =
-"foo 2" BAR += "bar 2" ``FOO`` ends up with the value "foo 2", and
+recipe. As an example, consider the following snippet: ::
+
+   python () {
+       d.setVar('FOO', 'foo 2')
+   }
+
+   FOO = "foo 1"
+
+   python () {
+       d.appendVar('BAR',' bar 2')
+   }
+
+   BAR = "bar 1"
+
+The previous example is conceptually
+equivalent to the following snippet: ::
+
+   FOO = "foo 1"
+   BAR = "bar 1"
+   FOO = "foo 2"
+   BAR += "bar 2"
+
+``FOO`` ends up with the value "foo 2", and
 ``BAR`` with the value "bar 1 bar 2". Just as in the second snippet, the
 values set for the variables within the anonymous functions become
 available to tasks, which always run after parsing.
 
 Overrides and override-style operators such as "``_append``" are applied
 before anonymous functions run. In the following example, ``FOO`` ends
-up with the value "foo from anonymous": FOO = "foo" FOO_append = " from
-outside" python () { d.setVar("FOO", "foo from anonymous") } For methods
-you can use with anonymous Python functions, see the "`Functions You Can
-Call From Within Python <#functions-you-can-call-from-within-python>`__"
+up with the value "foo from anonymous": ::
+
+   FOO = "foo"
+   FOO_append = " from outside"
+
+   python () {
+       d.setVar("FOO", "foo from anonymous")
+   }
+
+For methods
+you can use with anonymous Python functions, see the
+":ref:`bitbake-user-manual/bitbake-user-manual-metadata:functions you can call from within python`"
 section. For a different method to run Python code during parsing, see
-the "`Inline Python Variable
-Expansion <#inline-python-variable-expansion>`__" section.
+the ":ref:`bitbake-user-manual/bitbake-user-manual-metadata:inline python variable expansion`" section.
 
 Flexible Inheritance for Class Functions
 ----------------------------------------
@@ -946,24 +1173,43 @@ version of the function.
 
 To make use of this technique, you need the following things in place:
 
--  The class needs to define the function as follows:
-   classname\ ``_``\ functionname For example, if you have a class file
+-  The class needs to define the function as follows: ::
+
+      classname_functionname
+
+   For example, if you have a class file
    ``bar.bbclass`` and a function named ``do_foo``, the class must
-   define the function as follows: bar_do_foo
+   define the function as follows: ::
+
+      bar_do_foo
 
 -  The class needs to contain the ``EXPORT_FUNCTIONS`` statement as
-   follows: EXPORT_FUNCTIONS functionname For example, continuing with
+   follows: ::
+
+      EXPORT_FUNCTIONS functionname
+
+   For example, continuing with
    the same example, the statement in the ``bar.bbclass`` would be as
-   follows: EXPORT_FUNCTIONS do_foo
+   follows: ::
+
+      EXPORT_FUNCTIONS do_foo
 
 -  You need to call the function appropriately from within your recipe.
    Continuing with the same example, if your recipe needs to call the
    class version of the function, it should call ``bar_do_foo``.
    Assuming ``do_foo`` was a shell function and ``EXPORT_FUNCTIONS`` was
    used as above, the recipe's function could conditionally call the
-   class version of the function as follows: do_foo() { if [
-   somecondition ] ; then bar_do_foo else # Do something else fi } To
-   call your modified version of the function as defined in your recipe,
+   class version of the function as follows: ::
+
+      do_foo() {
+          if [ somecondition ] ; then
+              bar_do_foo
+          else
+              # Do something else
+          fi
+      }
+
+   To call your modified version of the function as defined in your recipe,
    call it as ``do_foo``.
 
 With these conditions met, your single recipe can freely choose between
@@ -982,14 +1228,20 @@ classes (i.e. in ``.bb`` files and files included or inherited from
 Promoting a Function to a Task
 ------------------------------
 
-Tasks are either `shell functions <#shell-functions>`__ or
-`BitBake-style Python functions <#bitbake-style-python-functions>`__
+Tasks are either :ref:`shell functions <bitbake-user-manual/bitbake-user-manual-metadata:shell functions>` or
+:ref:`BitBake-style Python functions <bitbake-user-manual/bitbake-user-manual-metadata:bitbake-style python functions>`
 that have been promoted to tasks by using the ``addtask`` command. The
 ``addtask`` command can also optionally describe dependencies between
 the task and other tasks. Here is an example that shows how to define a
-task and declare some dependencies: python do_printdate () { import time
-print time.strftime('%Y%m%d', time.gmtime()) } addtask printdate after
-do_fetch before do_build The first argument to ``addtask`` is the name
+task and declare some dependencies: ::
+
+   python do_printdate () {
+       import time
+       print time.strftime('%Y%m%d', time.gmtime())
+   }
+   addtask printdate after do_fetch before do_build
+
+The first argument to ``addtask`` is the name
 of the function to promote to a task. If the name does not start with
 "do\_", "do\_" is implicitly added, which enforces the convention that all
 task names start with "do\_".
@@ -1004,49 +1256,44 @@ Additionally, the ``do_printdate`` task becomes dependent upon the
 .. note::
 
    If you try out the previous example, you might see that the
-   do_printdate
+   ``do_printdate``
    task is only run the first time you build the recipe with the
-   bitbake
+   ``bitbake``
    command. This is because BitBake considers the task "up-to-date"
    after that initial run. If you want to force the task to always be
    rerun for experimentation purposes, you can make BitBake always
    consider the task "out-of-date" by using the
    :ref:`[nostamp] <bitbake-user-manual/bitbake-user-manual-metadata:Variable Flags>`
-   variable flag, as follows:
-   ::
+   variable flag, as follows: ::
 
-           do_printdate[nostamp] = "1"
-                          
+      do_printdate[nostamp] = "1"
 
    You can also explicitly run the task and provide the
-   -f
-   option as follows:
-   ::
+   -f option as follows: ::
 
-           $ bitbake recipe -c printdate -f
-                          
+      $ bitbake recipe -c printdate -f
 
-   When manually selecting a task to run with the
-   bitbake
-   NBSP
-   recipe
-   NBSP
-   -c
-   NBSP
-   task
-   command, you can omit the "do\_" prefix as part of the task name.
+   When manually selecting a task to run with the bitbake ``recipe
+   -c task`` command, you can omit the "do\_" prefix as part of the task
+   name.
 
 You might wonder about the practical effects of using ``addtask``
-without specifying any dependencies as is done in the following example:
-addtask printdate In this example, assuming dependencies have not been
+without specifying any dependencies as is done in the following example: ::
+
+   addtask printdate
+
+In this example, assuming dependencies have not been
 added through some other means, the only way to run the task is by
 explicitly selecting it with ``bitbake`` recipe ``-c printdate``. You
 can use the ``do_listtasks`` task to list all tasks defined in a recipe
-as shown in the following example: $ bitbake recipe -c listtasks For
-more information on task dependencies, see the
-"`Dependencies <#dependencies>`__" section.
+as shown in the following example: ::
 
-See the "`Variable Flags <#variable-flags>`__" section for information
+   $ bitbake recipe -c listtasks
+
+For more information on task dependencies, see the
+":ref:`bitbake-user-manual/bitbake-user-manual-execution:dependencies`" section.
+
+See the ":ref:`bitbake-user-manual/bitbake-user-manual-metadata:variable flags`" section for information
 on variable flags you can use with tasks.
 
 Deleting a Task
@@ -1054,8 +1301,11 @@ Deleting a Task
 
 As well as being able to add tasks, you can delete them. Simply use the
 ``deltask`` command to delete a task. For example, to delete the example
-task used in the previous sections, you would use: deltask printdate If
-you delete a task using the ``deltask`` command and the task has
+task used in the previous sections, you would use: ::
+
+   deltask printdate
+
+If you delete a task using the ``deltask`` command and the task has
 dependencies, the dependencies are not reconnected. For example, suppose
 you have three tasks named ``do_a``, ``do_b``, and ``do_c``.
 Furthermore, ``do_c`` is dependent on ``do_b``, which in turn is
@@ -1067,7 +1317,9 @@ to run before ``do_a``.
 
 If you want dependencies such as these to remain intact, use the
 ``[noexec]`` varflag to disable the task instead of using the
-``deltask`` command to delete it: do_b[noexec] = "1"
+``deltask`` command to delete it: ::
+
+   do_b[noexec] = "1"
 
 Passing Information Into the Build Task Environment
 ---------------------------------------------------
@@ -1081,30 +1333,31 @@ the build machine cannot influence the build.
    By default, BitBake cleans the environment to include only those
    things exported or listed in its whitelist to ensure that the build
    environment is reproducible and consistent. You can prevent this
-   "cleaning" by setting the
-   :term:`BB_PRESERVE_ENV`
-   variable.
+   "cleaning" by setting the :term:`BB_PRESERVE_ENV` variable.
 
 Consequently, if you do want something to get passed into the build task
 environment, you must take these two steps:
 
-1. Tell BitBake to load what you want from the environment into the
+#. Tell BitBake to load what you want from the environment into the
    datastore. You can do so through the
    :term:`BB_ENV_WHITELIST` and
    :term:`BB_ENV_EXTRAWHITE` variables. For
    example, assume you want to prevent the build system from accessing
    your ``$HOME/.ccache`` directory. The following command "whitelists"
    the environment variable ``CCACHE_DIR`` causing BitBake to allow that
-   variable into the datastore: export
-   BB_ENV_EXTRAWHITE="$BB_ENV_EXTRAWHITE CCACHE_DIR"
+   variable into the datastore: ::
 
-2. Tell BitBake to export what you have loaded into the datastore to the
+      export BB_ENV_EXTRAWHITE="$BB_ENV_EXTRAWHITE CCACHE_DIR"
+
+#. Tell BitBake to export what you have loaded into the datastore to the
    task environment of every running task. Loading something from the
    environment into the datastore (previous step) only makes it
    available in the datastore. To export it to the task environment of
    every running task, use a command similar to the following in your
    local configuration file ``local.conf`` or your distribution
-   configuration file: export CCACHE_DIR
+   configuration file: ::
+
+      export CCACHE_DIR
 
    .. note::
 
@@ -1116,15 +1369,17 @@ environment, you must take these two steps:
 
 Sometimes, it is useful to be able to obtain information from the
 original execution environment. BitBake saves a copy of the original
-environment into a special variable named
-:term:`BB_ORIGENV`.
+environment into a special variable named :term:`BB_ORIGENV`.
 
 The ``BB_ORIGENV`` variable returns a datastore object that can be
 queried using the standard datastore operators such as
 ``getVar(, False)``. The datastore object is useful, for example, to
-find the original ``DISPLAY`` variable. Here is an example: origenv =
-d.getVar("BB_ORIGENV", False) bar = origenv.getVar("BAR", False) The
-previous example returns ``BAR`` from the original execution
+find the original ``DISPLAY`` variable. Here is an example: ::
+
+   origenv = d.getVar("BB_ORIGENV", False)
+   bar = origenv.getVar("BAR", False)
+
+The previous example returns ``BAR`` from the original execution
 environment.
 
 Variable Flags
@@ -1132,71 +1387,70 @@ Variable Flags
 
 Variable flags (varflags) help control a task's functionality and
 dependencies. BitBake reads and writes varflags to the datastore using
-the following command forms: variable = d.getVarFlags("variable")
-self.d.setVarFlags("FOO", {"func": True})
+the following command forms: ::
+
+   variable = d.getVarFlags("variable")
+   self.d.setVarFlags("FOO", {"func": True})
 
 When working with varflags, the same syntax, with the exception of
 overrides, applies. In other words, you can set, append, and prepend
-varflags just like variables. See the "`Variable Flag
-Syntax <#variable-flag-syntax>`__" section for details.
+varflags just like variables. See the
+":ref:`bitbake-user-manual/bitbake-user-manual-metadata:variable flag syntax`" section for details.
 
 BitBake has a defined set of varflags available for recipes and classes.
 Tasks support a number of these flags which control various
 functionality of the task:
 
--  *``[cleandirs]``:* Empty directories that should be created before
+-  ``[cleandirs]``: Empty directories that should be created before
    the task runs. Directories that already exist are removed and
    recreated to empty them.
 
--  *``[depends]``:* Controls inter-task dependencies. See the
-   :term:`DEPENDS` variable and the "`Inter-Task
-   Dependencies <#inter-task-dependencies>`__" section for more
-   information.
+-  ``[depends]``: Controls inter-task dependencies. See the
+   :term:`DEPENDS` variable and the
+   ":ref:`bitbake-user-manual/bitbake-user-manual-metadata:inter-task
+   dependencies`" section for more information.
 
--  *``[deptask]``:* Controls task build-time dependencies. See the
-   :term:`DEPENDS` variable and the "`Build
-   Dependencies <#build-dependencies>`__" section for more information.
+-  ``[deptask]``: Controls task build-time dependencies. See the
+   :term:`DEPENDS` variable and the ":ref:`bitbake-user-manual/bitbake-user-manual-metadata:build dependencies`" section for more information.
 
--  *``[dirs]``:* Directories that should be created before the task
+-  ``[dirs]``: Directories that should be created before the task
    runs. Directories that already exist are left as is. The last
    directory listed is used as the current working directory for the
    task.
 
--  *``[lockfiles]``:* Specifies one or more lockfiles to lock while the
+-  ``[lockfiles]``: Specifies one or more lockfiles to lock while the
    task executes. Only one task may hold a lockfile, and any task that
    attempts to lock an already locked file will block until the lock is
    released. You can use this variable flag to accomplish mutual
    exclusion.
 
--  *``[noexec]``:* When set to "1", marks the task as being empty, with
+-  ``[noexec]``: When set to "1", marks the task as being empty, with
    no execution required. You can use the ``[noexec]`` flag to set up
    tasks as dependency placeholders, or to disable tasks defined
    elsewhere that are not needed in a particular recipe.
 
--  *``[nostamp]``:* When set to "1", tells BitBake to not generate a
+-  ``[nostamp]``: When set to "1", tells BitBake to not generate a
    stamp file for a task, which implies the task should always be
    executed.
 
-   .. note::
+   .. caution::
 
-      Any task that depends (possibly indirectly) on a
-      [nostamp]
-      task will always be executed as well. This can cause unnecessary
-      rebuilding if you are not careful.
+      Any task that depends (possibly indirectly) on a ``[nostamp]`` task will
+      always be executed as well. This can cause unnecessary rebuilding if you
+      are not careful.
 
--  *``[number_threads]``:* Limits tasks to a specific number of
+-  ``[number_threads]``: Limits tasks to a specific number of
    simultaneous threads during execution. This varflag is useful when
    your build host has a large number of cores but certain tasks need to
    be rate-limited due to various kinds of resource constraints (e.g. to
    avoid network throttling). ``number_threads`` works similarly to the
-   :term:`BB_NUMBER_THREADS` variable but is
-   task-specific.
+   :term:`BB_NUMBER_THREADS` variable but is task-specific.
 
    Set the value globally. For example, the following makes sure the
    ``do_fetch`` task uses no more than two simultaneous execution
    threads: do_fetch[number_threads] = "2"
 
-   .. note::
+   .. warning::
 
       -  Setting the varflag in individual recipes rather than globally
          can result in unpredictable behavior.
@@ -1205,59 +1459,59 @@ functionality of the task:
          the ``BB_NUMBER_THREADS`` variable causes ``number_threads`` to
          have no effect.
 
--  *``[postfuncs]``:* List of functions to call after the completion of
+-  ``[postfuncs]``: List of functions to call after the completion of
    the task.
 
--  *``[prefuncs]``:* List of functions to call before the task executes.
+-  ``[prefuncs]``: List of functions to call before the task executes.
 
--  *``[rdepends]``:* Controls inter-task runtime dependencies. See the
+-  ``[rdepends]``: Controls inter-task runtime dependencies. See the
    :term:`RDEPENDS` variable, the
    :term:`RRECOMMENDS` variable, and the
-   "`Inter-Task Dependencies <#inter-task-dependencies>`__" section for
+   ":ref:`bitbake-user-manual/bitbake-user-manual-metadata:inter-task dependencies`" section for
    more information.
 
--  *``[rdeptask]``:* Controls task runtime dependencies. See the
+-  ``[rdeptask]``: Controls task runtime dependencies. See the
    :term:`RDEPENDS` variable, the
-   :term:`RRECOMMENDS` variable, and the "`Runtime
-   Dependencies <#runtime-dependencies>`__" section for more
+   :term:`RRECOMMENDS` variable, and the
+   ":ref:`bitbake-user-manual/bitbake-user-manual-metadata:runtime dependencies`" section for more
    information.
 
--  *``[recideptask]``:* When set in conjunction with ``recrdeptask``,
+-  ``[recideptask]``: When set in conjunction with ``recrdeptask``,
    specifies a task that should be inspected for additional
    dependencies.
 
--  *``[recrdeptask]``:* Controls task recursive runtime dependencies.
+-  ``[recrdeptask]``: Controls task recursive runtime dependencies.
    See the :term:`RDEPENDS` variable, the
    :term:`RRECOMMENDS` variable, and the
-   "`Recursive Dependencies <#recursive-dependencies>`__" section for
+   ":ref:`bitbake-user-manual/bitbake-user-manual-metadata:recursive dependencies`" section for
    more information.
 
--  *``[stamp-extra-info]``:* Extra stamp information to append to the
+-  ``[stamp-extra-info]``: Extra stamp information to append to the
    task's stamp. As an example, OpenEmbedded uses this flag to allow
    machine-specific tasks.
 
--  *``[umask]``:* The umask to run the task under.
+-  ``[umask]``: The umask to run the task under.
 
 Several varflags are useful for controlling how signatures are
 calculated for variables. For more information on this process, see the
-"`Checksums (Signatures) <#checksums>`__" section.
+":ref:`bitbake-user-manual/bitbake-user-manual-execution:checksums (signatures)`" section.
 
--  *``[vardeps]``:* Specifies a space-separated list of additional
+-  ``[vardeps]``: Specifies a space-separated list of additional
    variables to add to a variable's dependencies for the purposes of
    calculating its signature. Adding variables to this list is useful,
    for example, when a function refers to a variable in a manner that
    does not allow BitBake to automatically determine that the variable
    is referred to.
 
--  *``[vardepsexclude]``:* Specifies a space-separated list of variables
+-  ``[vardepsexclude]``: Specifies a space-separated list of variables
    that should be excluded from a variable's dependencies for the
    purposes of calculating its signature.
 
--  *``[vardepvalue]``:* If set, instructs BitBake to ignore the actual
+-  ``[vardepvalue]``: If set, instructs BitBake to ignore the actual
    value of the variable and instead use the specified value when
    calculating the variable's signature.
 
--  *``[vardepvalueexclude]``:* Specifies a pipe-separated list of
+-  ``[vardepvalueexclude]``: Specifies a pipe-separated list of
    strings to exclude from the variable's value when calculating the
    variable's signature.
 
@@ -1272,12 +1526,18 @@ intent is to make it easy to do things like email notification on build
 failures.
 
 Following is an example event handler that prints the name of the event
-and the content of the ``FILE`` variable: addhandler
-myclass_eventhandler python myclass_eventhandler() { from bb.event
-import getName print("The name of the Event is %s" % getName(e))
-print("The file we run for is %s" % d.getVar('FILE')) }
-myclass_eventhandler[eventmask] = "bb.event.BuildStarted
-bb.event.BuildCompleted" In the previous example, an eventmask has been
+and the content of the ``FILE`` variable: ::
+
+   addhandler myclass_eventhandler
+   python myclass_eventhandler() {
+       from bb.event import getName
+       print("The name of the Event is %s" % getName(e))
+       print("The file we run for is %s" % d.getVar('FILE'))
+   }
+   myclass_eventhandler[eventmask] = "bb.event.BuildStarted
+   bb.event.BuildCompleted"
+
+In the previous example, an eventmask has been
 set so that the handler only sees the "BuildStarted" and
 "BuildCompleted" events. This event handler gets called every time an
 event matching the eventmask is triggered. A global variable "e" is
@@ -1365,21 +1625,13 @@ information from the BitBake server to other parts of BitBake such as
 user interfaces:
 
 -  ``bb.event.TreeDataPreparationStarted()``
-
 -  ``bb.event.TreeDataPreparationProgress()``
-
 -  ``bb.event.TreeDataPreparationCompleted()``
-
 -  ``bb.event.DepTreeGenerated()``
-
 -  ``bb.event.CoreBaseFilesFound()``
-
 -  ``bb.event.ConfigFilePathFound()``
-
 -  ``bb.event.FilesMatchingFound()``
-
 -  ``bb.event.ConfigFilesFound()``
-
 -  ``bb.event.TargetsTreeGenerated()``
 
 .. _variants-class-extension-mechanism:
@@ -1390,49 +1642,43 @@ Variants - Class Extension Mechanism
 BitBake supports two features that facilitate creating from a single
 recipe file multiple incarnations of that recipe file where all
 incarnations are buildable. These features are enabled through the
-:term:`BBCLASSEXTEND` and
-:term:`BBVERSIONS` variables.
+:term:`BBCLASSEXTEND` and :term:`BBVERSIONS` variables.
 
 .. note::
 
    The mechanism for this class extension is extremely specific to the
-   implementation. Usually, the recipe's
-   :term:`PROVIDES`
-   ,
-   :term:`PN`
-   , and
-   :term:`DEPENDS`
-   variables would need to be modified by the extension class. For
-   specific examples, see the OE-Core
-   native
-   ,
-   nativesdk
-   , and
-   multilib
-   classes.
+   implementation. Usually, the recipe's :term:`PROVIDES` , :term:`PN` , and
+   :term:`DEPENDS` variables would need to be modified by the extension
+   class. For specific examples, see the OE-Core native , nativesdk , and
+   multilib classes.
 
--  *``BBCLASSEXTEND``:* This variable is a space separated list of
+-  ``BBCLASSEXTEND``: This variable is a space separated list of
    classes used to "extend" the recipe for each variant. Here is an
    example that results in a second incarnation of the current recipe
    being available. This second incarnation will have the "native" class
-   inherited. BBCLASSEXTEND = "native"
+   inherited. ::
 
--  *``BBVERSIONS``:* This variable allows a single recipe to build
+      BBCLASSEXTEND = "native"
+
+-  ``BBVERSIONS``: This variable allows a single recipe to build
    multiple versions of a project from a single recipe file. You can
    also specify conditional metadata (using the
    :term:`OVERRIDES` mechanism) for a single
    version, or an optionally named range of versions. Here is an
-   example: BBVERSIONS = "1.0 2.0 git" SRC_URI_git =
-   "git://someurl/somepath.git" BBVERSIONS = "1.0.[0-6]:1.0.0+ \\
-   1.0.[7-9]:1.0.7+" SRC_URI_append_1.0.7+ =
-   "file://some_patch_which_the_new_versions_need.patch;patch=1" The
-   name of the range defaults to the original version of the recipe. For
-   example, in OpenEmbedded, the recipe file ``foo_1.0.0+.bb`` creates a
-   default name range of ``1.0.0+``. This is useful because the range
-   name is not only placed into overrides, but it is also made available
-   for the metadata to use in the variable that defines the base recipe
-   versions for use in ``file://`` search paths
-   (:term:`FILESPATH`).
+   example: ::
+
+      BBVERSIONS = "1.0 2.0 git"
+      SRC_URI_git = "git://someurl/somepath.git"
+
+      BBVERSIONS = "1.0.[0-6]:1.0.0+ 1.0.[7-9]:1.0.7+"
+      SRC_URI_append_1.0.7+ = "file://some_patch_which_the_new_versions_need.patch;patch=1"
+
+   The name of the range defaults to the original version of the recipe. For
+   example, in OpenEmbedded, the recipe file ``foo_1.0.0+.bb`` creates a default
+   name range of ``1.0.0+``. This is useful because the range name is not only
+   placed into overrides, but it is also made available for the metadata to use
+   in the variable that defines the base recipe versions for use in ``file://``
+   search paths (:term:`FILESPATH`).
 
 Dependencies
 ============
@@ -1462,8 +1708,11 @@ Dependencies Internal to the ``.bb`` File
 BitBake uses the ``addtask`` directive to manage dependencies that are
 internal to a given recipe file. You can use the ``addtask`` directive
 to indicate when a task is dependent on other tasks or when other tasks
-depend on that recipe. Here is an example: addtask printdate after
-do_fetch before do_build In this example, the ``do_printdate`` task
+depend on that recipe. Here is an example: ::
+
+   addtask printdate after do_fetch before do_build
+
+In this example, the ``do_printdate`` task
 depends on the completion of the ``do_fetch`` task, and the ``do_build``
 task depends on the completion of the ``do_printdate`` task.
 
@@ -1476,16 +1725,19 @@ task depends on the completion of the ``do_printdate`` task.
 
    -  The directive ``addtask mytask before do_configure`` causes
       ``do_mytask`` to run before ``do_configure`` runs. Be aware that
-      ``do_mytask`` still only runs if its `input
-      checksum <#checksums>`__ has changed since the last time it was
+      ``do_mytask`` still only runs if its :ref:`input
+      checksum <bitbake-user-manual/bitbake-user-manual-execution:checksums (signatures)>` has changed since the last time it was
       run. Changes to the input checksum of ``do_mytask`` also
       indirectly cause ``do_configure`` to run.
 
    -  The directive ``addtask mytask after do_configure`` by itself
       never causes ``do_mytask`` to run. ``do_mytask`` can still be run
-      manually as follows: $ bitbake recipe -c mytask Declaring
-      ``do_mytask`` as a dependency of some other task that is scheduled
-      to run also causes it to run. Regardless, the task runs after
+      manually as follows: ::
+
+         $ bitbake recipe -c mytask
+
+      Declaring ``do_mytask`` as a dependency of some other task that is
+      scheduled to run also causes it to run. Regardless, the task runs after
       ``do_configure``.
 
 Build Dependencies
@@ -1494,24 +1746,29 @@ Build Dependencies
 BitBake uses the :term:`DEPENDS` variable to manage
 build time dependencies. The ``[deptask]`` varflag for tasks signifies
 the task of each item listed in ``DEPENDS`` that must complete before
-that task can be executed. Here is an example: do_configure[deptask] =
-"do_populate_sysroot" In this example, the ``do_populate_sysroot`` task
+that task can be executed. Here is an example: ::
+
+   do_configure[deptask] = "do_populate_sysroot"
+
+In this example, the ``do_populate_sysroot`` task
 of each item in ``DEPENDS`` must complete before ``do_configure`` can
 execute.
 
 Runtime Dependencies
 --------------------
 
-BitBake uses the :term:`PACKAGES`,
-:term:`RDEPENDS`, and
-:term:`RRECOMMENDS` variables to manage runtime
-dependencies.
+BitBake uses the :term:`PACKAGES`, :term:`RDEPENDS`, and :term:`RRECOMMENDS`
+variables to manage runtime dependencies.
 
 The ``PACKAGES`` variable lists runtime packages. Each of those packages
 can have ``RDEPENDS`` and ``RRECOMMENDS`` runtime dependencies. The
 ``[rdeptask]`` flag for tasks is used to signify the task of each item
 runtime dependency which must have completed before that task can be
-executed. do_package_qa[rdeptask] = "do_packagedata" In the previous
+executed. ::
+
+   do_package_qa[rdeptask] = "do_packagedata"
+
+In the previous
 example, the ``do_packagedata`` task of each item in ``RDEPENDS`` must
 have completed before ``do_package_qa`` can execute.
 Although ``RDEPENDS`` contains entries from the
@@ -1531,14 +1788,18 @@ dependencies are discovered and added.
 
 The ``[recrdeptask]`` flag is most commonly used in high-level recipes
 that need to wait for some task to finish "globally". For example,
-``image.bbclass`` has the following: do_rootfs[recrdeptask] +=
-"do_packagedata" This statement says that the ``do_packagedata`` task of
+``image.bbclass`` has the following: ::
+
+   do_rootfs[recrdeptask] += "do_packagedata"
+
+This statement says that the ``do_packagedata`` task of
 the current recipe and all recipes reachable (by way of dependencies)
 from the image recipe must run before the ``do_rootfs`` task can run.
 
 BitBake allows a task to recursively depend on itself by
-referencing itself in the task list:
-do_a[recrdeptask] = "do_a do_b"
+referencing itself in the task list: ::
+
+   do_a[recrdeptask] = "do_a do_b"
 
 In the same way as before, this means that the ``do_a``
 and ``do_b`` tasks of the current recipe and all
@@ -1553,10 +1814,12 @@ Inter-Task Dependencies
 BitBake uses the ``[depends]`` flag in a more generic form to manage
 inter-task dependencies. This more generic form allows for
 inter-dependency checks for specific tasks rather than checks for the
-data in ``DEPENDS``. Here is an example: do_patch[depends] =
-"quilt-native:do_populate_sysroot" In this example, the
-``do_populate_sysroot`` task of the target ``quilt-native`` must have
-completed before the ``do_patch`` task can execute.
+data in ``DEPENDS``. Here is an example: ::
+
+   do_patch[depends] = "quilt-native:do_populate_sysroot"
+
+In this example, the ``do_populate_sysroot`` task of the target ``quilt-native``
+must have completed before the ``do_patch`` task can execute.
 
 The ``[rdepends]`` flag works in a similar way but takes targets in the
 runtime namespace instead of the build-time dependency namespace.
@@ -1575,83 +1838,58 @@ It is often necessary to access variables in the BitBake datastore using
 Python functions. The BitBake datastore has an API that allows you this
 access. Here is a list of available operations:
 
-+-----------------------------------+-----------------------------------+
-| *Operation*                       | *Description*                     |
-+===================================+===================================+
-| ``d.getVar("X", expand)``         | Returns the value of variable     |
-|                                   | "X". Using "expand=True" expands  |
-|                                   | the value. Returns "None" if the  |
-|                                   | variable "X" does not exist.      |
-+-----------------------------------+-----------------------------------+
-| ``d.setVar("X", "value")``        | Sets the variable "X" to "value". |
-+-----------------------------------+-----------------------------------+
-| ``d.appendVar("X", "value")``     | Adds "value" to the end of the    |
-|                                   | variable "X". Acts like           |
-|                                   | ``d.setVar("X", "value")`` if the |
-|                                   | variable "X" does not exist.      |
-+-----------------------------------+-----------------------------------+
-| ``d.prependVar("X", "value")``    | Adds "value" to the start of the  |
-|                                   | variable "X". Acts like           |
-|                                   | ``d.setVar("X", "value")`` if the |
-|                                   | variable "X" does not exist.      |
-+-----------------------------------+-----------------------------------+
-| ``d.delVar("X")``                 | Deletes the variable "X" from the |
-|                                   | datastore. Does nothing if the    |
-|                                   | variable "X" does not exist.      |
-+-----------------------------------+-----------------------------------+
-| ``d.renameVar("X", "Y")``         | Renames the variable "X" to "Y".  |
-|                                   | Does nothing if the variable "X"  |
-|                                   | does not exist.                   |
-+-----------------------------------+-----------------------------------+
-| ``                                | Returns the value of variable     |
-| d.getVarFlag("X", flag, expand)`` | "X". Using "expand=True" expands  |
-|                                   | the value. Returns "None" if      |
-|                                   | either the variable "X" or the    |
-|                                   | named flag does not exist.        |
-+-----------------------------------+-----------------------------------+
-| ``d                               | Sets the named flag for variable  |
-| .setVarFlag("X", flag, "value")`` | "X" to "value".                   |
-+-----------------------------------+-----------------------------------+
-| ``d.ap                            | Appends "value" to the named flag |
-| pendVarFlag("X", flag, "value")`` | on the variable "X". Acts like    |
-|                                   | ``d                               |
-|                                   | .setVarFlag("X", flag, "value")`` |
-|                                   | if the named flag does not exist. |
-+-----------------------------------+-----------------------------------+
-| ``d.pre                           | Prepends "value" to the named     |
-| pendVarFlag("X", flag, "value")`` | flag on the variable "X". Acts    |
-|                                   | like                              |
-|                                   | ``d                               |
-|                                   | .setVarFlag("X", flag, "value")`` |
-|                                   | if the named flag does not exist. |
-+-----------------------------------+-----------------------------------+
-| ``d.delVarFlag("X", flag)``       | Deletes the named flag on the     |
-|                                   | variable "X" from the datastore.  |
-+-----------------------------------+-----------------------------------+
-| ``d.setVarFlags("X", flagsdict)`` | Sets the flags specified in the   |
-|                                   | ``flagsdict()`` parameter.        |
-|                                   | ``setVarFlags`` does not clear    |
-|                                   | previous flags. Think of this     |
-|                                   | operation as ``addVarFlags``.     |
-+-----------------------------------+-----------------------------------+
-| ``d.getVarFlags("X")``            | Returns a ``flagsdict`` of the    |
-|                                   | flags for the variable "X".       |
-|                                   | Returns "None" if the variable    |
-|                                   | "X" does not exist.               |
-+-----------------------------------+-----------------------------------+
-| ``d.delVarFlags("X")``            | Deletes all the flags for the     |
-|                                   | variable "X". Does nothing if the |
-|                                   | variable "X" does not exist.      |
-+-----------------------------------+-----------------------------------+
-| ``d.expand(expression)``          | Expands variable references in    |
-|                                   | the specified string expression.  |
-|                                   | References to variables that do   |
-|                                   | not exist are left as is. For     |
-|                                   | example, ``d.expand("foo ${X}")`` |
-|                                   | expands to the literal string     |
-|                                   | "foo ${X}" if the variable "X"    |
-|                                   | does not exist.                   |
-+-----------------------------------+-----------------------------------+
+.. list-table::
+   :widths: auto
+   :header-rows: 1
+
+   * - *Operation*
+     - *Description*
+   * - ``d.getVar("X", expand)``
+     - Returns the value of variable "X". Using "expand=True" expands the
+       value. Returns "None" if the variable "X" does not exist.
+   * - ``d.setVar("X", "value")``
+     - Sets the variable "X" to "value"
+   * - ``d.appendVar("X", "value")``
+     - Adds "value" to the end of the variable "X". Acts like ``d.setVar("X",
+       "value")`` if the variable "X" does not exist.
+   * - ``d.prependVar("X", "value")``
+     - Adds "value" to the start of the variable "X". Acts like
+       ``d.setVar("X","value")`` if the variable "X" does not exist.
+   * - ``d.delVar("X")``
+     - Deletes the variable "X" from the datastore. Does nothing if the variable
+       "X" does not exist.
+   * - ``d.renameVar("X", "Y")``
+     - Renames the variable "X" to "Y". Does nothing if the variable "X" does
+       not exist.
+   * - ``d.getVarFlag("X", flag, expand)``
+     - Returns the value of variable "X". Using "expand=True" expands the
+       value. Returns "None" if either the variable "X" or the named flag does
+       not exist.
+   * - ``d.setVarFlag("X", flag, "value")``
+     - Sets the named flag for variable "X" to "value".
+   * - ``d.appendVarFlag("X", flag, "value")``
+     - Appends "value" to the named flag on the variable "X". Acts like
+       ``d.setVarFlag("X", flag, "value")`` if the named flag does not exist.
+   * - ``d.prependVarFlag("X", flag, "value")``
+     - Prepends "value" to the named flag on the variable "X". Acts like
+       ``d.setVarFlag("X", flag, "value")`` if the named flag does not exist.
+   * - ``d.delVarFlag("X", flag)``
+     - Deletes the named flag on the variable "X" from the datastore.
+   * - ``d.setVarFlags("X", flagsdict)``
+     - Sets the flags specified in the ``flagsdict()``
+       parameter. ``setVarFlags`` does not clear previous flags. Think of this
+       operation as ``addVarFlags``.
+   * - ``d.getVarFlags("X")``
+     - Returns a ``flagsdict`` of the flags for the variable "X". Returns "None"
+       if the variable "X" does not exist.
+   * - ``d.delVarFlags("X")``
+     - Deletes all the flags for the variable "X". Does nothing if the variable
+       "X" does not exist.
+   * - ``d.expand(expression)``
+     - Expands variable references in the specified string
+       expression. References to variables that do not exist are left as is. For
+       example, ``d.expand("foo ${X}")`` expands to the literal string "foo
+       ${X}" if the variable "X" does not exist.
 
 Other Functions
 ---------------
@@ -1671,8 +1909,11 @@ To help understand how BitBake does this, the section assumes an
 OpenEmbedded metadata-based example.
 
 These checksums are stored in :term:`STAMP`. You can
-examine the checksums using the following BitBake command: $
-bitbake-dumpsigs This command returns the signature data in a readable
+examine the checksums using the following BitBake command: ::
+
+   $ bitbake-dumpsigs
+
+This command returns the signature data in a readable
 format that allows you to examine the inputs used when the OpenEmbedded
 build system generates signatures. For example, using
 ``bitbake-dumpsigs`` allows you to examine the ``do_compile`` task's

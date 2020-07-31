@@ -55,9 +55,11 @@ overview of their function and contents.
       -  Limited support for the "``*``" wildcard character for matching
          against the beginning of host names exists. For example, the
          following setting matches ``git.gnu.org``, ``ftp.gnu.org``, and
-         ``foo.git.gnu.org``. BB_ALLOWED_NETWORKS = "\*.gnu.org"
+         ``foo.git.gnu.org``. ::
 
-         .. note::
+            BB_ALLOWED_NETWORKS = "\*.gnu.org"
+
+         .. important::
 
             The use of the "``*``" character only works at the beginning of
             a host name and it must be isolated from the remainder of the
@@ -111,26 +113,48 @@ overview of their function and contents.
       you to control the build based on these parameters.
 
       Disk space monitoring is disabled by default. When setting this
-      variable, use the following form: BB_DISKMON_DIRS =
-      "<action>,<dir>,<threshold> [...]" where: <action> is: ABORT:
-      Immediately abort the build when a threshold is broken. STOPTASKS:
-      Stop the build after the currently executing tasks have finished when
-      a threshold is broken. WARN: Issue a warning but continue the build
-      when a threshold is broken. Subsequent warnings are issued as defined
-      by the :term:`BB_DISKMON_WARNINTERVAL`
-      variable, which must be defined. <dir> is: Any directory you choose.
-      You can specify one or more directories to monitor by separating the
-      groupings with a space. If two directories are on the same device,
-      only the first directory is monitored. <threshold> is: Either the
-      minimum available disk space, the minimum number of free inodes, or
-      both. You must specify at least one. To omit one or the other, simply
-      omit the value. Specify the threshold using G, M, K for Gbytes,
-      Mbytes, and Kbytes, respectively. If you do not specify G, M, or K,
-      Kbytes is assumed by default. Do not use GB, MB, or KB.
+      variable, use the following form: ::
 
-      Here are some examples: BB_DISKMON_DIRS = "ABORT,${TMPDIR},1G,100K
-      WARN,${SSTATE_DIR},1G,100K" BB_DISKMON_DIRS =
-      "STOPTASKS,${TMPDIR},1G" BB_DISKMON_DIRS = "ABORT,${TMPDIR},,100K"
+         BB_DISKMON_DIRS = "<action>,<dir>,<threshold> [...]"
+
+         where:
+
+            <action> is:
+               ABORT:     Immediately abort the build when
+                          a threshold is broken.
+               STOPTASKS: Stop the build after the currently
+                          executing tasks have finished when
+                          a threshold is broken.
+               WARN:      Issue a warning but continue the
+                          build when a threshold is broken.
+                          Subsequent warnings are issued as
+                          defined by the
+                          BB_DISKMON_WARNINTERVAL variable,
+                          which must be defined.
+
+            <dir> is:
+               Any directory you choose. You can specify one or
+               more directories to monitor by separating the
+               groupings with a space.  If two directories are
+               on the same device, only the first directory
+               is monitored.
+
+            <threshold> is:
+               Either the minimum available disk space,
+               the minimum number of free inodes, or
+               both.  You must specify at least one.  To
+               omit one or the other, simply omit the value.
+               Specify the threshold using G, M, K for Gbytes,
+               Mbytes, and Kbytes, respectively. If you do
+               not specify G, M, or K, Kbytes is assumed by
+               default.  Do not use GB, MB, or KB.
+
+      Here are some examples: ::
+
+         BB_DISKMON_DIRS = "ABORT,${TMPDIR},1G,100K WARN,${SSTATE_DIR},1G,100K"
+         BB_DISKMON_DIRS = "STOPTASKS,${TMPDIR},1G"
+         BB_DISKMON_DIRS = "ABORT,${TMPDIR},,100K"
+
       The first example works only if you also set the
       :term:`BB_DISKMON_WARNINTERVAL`
       variable. This example causes the build system to immediately abort
@@ -166,16 +190,28 @@ overview of their function and contents.
       BB_DISKMON_WARNINTERVAL = "50M,5K"
 
       When specifying the variable in your configuration file, use the
-      following form: BB_DISKMON_WARNINTERVAL =
-      "<disk_space_interval>,<disk_inode_interval>" where:
-      <disk_space_interval> is: An interval of memory expressed in either
-      G, M, or K for Gbytes, Mbytes, or Kbytes, respectively. You cannot
-      use GB, MB, or KB. <disk_inode_interval> is: An interval of free
-      inodes expressed in either G, M, or K for Gbytes, Mbytes, or Kbytes,
-      respectively. You cannot use GB, MB, or KB.
+      following form: ::
 
-      Here is an example: BB_DISKMON_DIRS = "WARN,${SSTATE_DIR},1G,100K"
-      BB_DISKMON_WARNINTERVAL = "50M,5K" These variables cause BitBake to
+         BB_DISKMON_WARNINTERVAL = "<disk_space_interval>,<disk_inode_interval>"
+
+         where:
+
+            <disk_space_interval> is:
+               An interval of memory expressed in either
+               G, M, or K for Gbytes, Mbytes, or Kbytes,
+               respectively. You cannot use GB, MB, or KB.
+
+            <disk_inode_interval> is:
+               An interval of free inodes expressed in either
+               G, M, or K for Gbytes, Mbytes, or Kbytes,
+               respectively. You cannot use GB, MB, or KB.
+
+      Here is an example: ::
+
+         BB_DISKMON_DIRS = "WARN,${SSTATE_DIR},1G,100K"
+         BB_DISKMON_WARNINTERVAL = "50M,5K"
+
+      These variables cause BitBake to
       issue subsequent warnings each time the available disk space further
       reduces by 50 Mbytes or the number of free inodes further reduces by
       5 Kbytes in the ``${SSTATE_DIR}`` directory. Subsequent warnings
@@ -186,10 +222,8 @@ overview of their function and contents.
       Specifies the internal whitelist of variables to allow through from
       the external environment into BitBake's datastore. If the value of
       this variable is not specified (which is the default), the following
-      list is used: :term:`BBPATH`,
-      :term:`BB_PRESERVE_ENV`,
-      :term:`BB_ENV_WHITELIST`, and
-      :term:`BB_ENV_EXTRAWHITE`.
+      list is used: :term:`BBPATH`, :term:`BB_PRESERVE_ENV`,
+      :term:`BB_ENV_WHITELIST`, and :term:`BB_ENV_EXTRAWHITE`.
 
       .. note::
 
@@ -264,8 +298,9 @@ overview of their function and contents.
       wishing to create a source mirror would want to enable this variable.
 
       For performance reasons, creating and placing tarballs of the Git
-      repositories is not the default action by BitBake.
-      BB_GENERATE_MIRROR_TARBALLS = "1"
+      repositories is not the default action by BitBake. ::
+
+         BB_GENERATE_MIRROR_TARBALLS = "1"
 
    BB_HASHCONFIG_WHITELIST
       Lists variables that are excluded from base configuration checksum,
@@ -308,21 +343,25 @@ overview of their function and contents.
 
    BB_LOGCONFIG
       Specifies the name of a config file that contains the user logging
-      configuration. See `Logging <#logging>`__ for additional information
+      configuration. See
+      :ref:`bitbake-user-manual/bitbake-user-manual-execution:logging`
+      for additional information
 
    BB_LOGFMT
       Specifies the name of the log files saved into
       ``${``\ :term:`T`\ ``}``. By default, the ``BB_LOGFMT``
       variable is undefined and the log file names get created using the
-      following form: log.{task}.{pid} If you want to force log files to
-      take a specific name, you can set this variable in a configuration
-      file.
+      following form: ::
+
+         log.{task}.{pid}
+
+      If you want to force log files to take a specific name, you can set this
+      variable in a configuration file.
 
    BB_NICE_LEVEL
       Allows BitBake to run at a specific priority (i.e. nice level).
       System permissions usually mean that BitBake can reduce its priority
-      but not raise it again. See
-      :term:`BB_TASK_NICE_LEVEL` for
+      but not raise it again. See :term:`BB_TASK_NICE_LEVEL` for
       additional information.
 
    BB_NO_NETWORK
@@ -366,9 +405,12 @@ overview of their function and contents.
       Specifies the name of the executable script files (i.e. run files)
       saved into ``${``\ :term:`T`\ ``}``. By default, the
       ``BB_RUNFMT`` variable is undefined and the run file names get
-      created using the following form: run.{task}.{pid} If you want to
-      force run files to take a specific name, you can set this variable in
-      a configuration file.
+      created using the following form: ::
+
+         run.{task}.{pid}
+
+      If you want to force run files to take a specific name, you can set this
+      variable in a configuration file.
 
    BB_RUNTASK
       Contains the name of the currently executing task. The value includes
@@ -423,8 +465,9 @@ overview of their function and contents.
       generating checksum or dependency data for keys in the datastore, the
       flags set against that key are normally included in the checksum.
 
-      For more information on varflags, see the "`Variable
-      Flags <#variable-flags>`__" section.
+      For more information on varflags, see the
+      ":ref:`bitbake-user-manual/bitbake-user-manual-metadata:variable flags`"
+      section.
 
    BB_SIGNATURE_HANDLER
       Defines the name of the signature handler BitBake uses. The signature
@@ -487,32 +530,30 @@ overview of their function and contents.
 
       .. note::
 
-         This variable works similarly to the
-         :term:`BB_TASK_NICE_LEVEL`
+         This variable works similarly to the :term:`BB_TASK_NICE_LEVEL`
          variable except with a task's I/O priorities.
 
-      Set the variable as follows: BB_TASK_IONICE_LEVEL = "class.prio" For
-      class, the default value is "2", which is a best effort. You can use
+      Set the variable as follows: ::
+
+         BB_TASK_IONICE_LEVEL = "class.prio"
+
+      For *class*, the default value is "2", which is a best effort. You can use
       "1" for realtime and "3" for idle. If you want to use realtime, you
       must have superuser privileges.
 
-      For prio, you can use any value from "0", which is the highest
+      For *prio*, you can use any value from "0", which is the highest
       priority, to "7", which is the lowest. The default value is "4". You
       do not need any special privileges to use this range of priority
       values.
 
       .. note::
 
-         In order for your I/O priority settings to take effect, you need
-         the Completely Fair Queuing (CFQ) Scheduler selected for the
-         backing block device. To select the scheduler, use the following
-         command form where
-         device
-         is the device (e.g. sda, sdb, and so forth):
-         ::
+         In order for your I/O priority settings to take effect, you need the
+         Completely Fair Queuing (CFQ) Scheduler selected for the backing block
+         device. To select the scheduler, use the following command form where
+         device is the device (e.g. sda, sdb, and so forth): ::
 
-                  $ sudo sh -c “echo cfq > /sys/block/device/queu/scheduler
-
+            $ sudo sh -c “echo cfq > /sys/block/device/queu/scheduler
 
    BB_TASK_NICE_LEVEL
       Allows specific tasks to change their priority (i.e. nice level).
@@ -551,8 +592,10 @@ overview of their function and contents.
       To build a different variant of the recipe with a minimal amount of
       code, it usually is as simple as adding the variable to your recipe.
       Here are two examples. The "native" variants are from the
-      OpenEmbedded-Core metadata: BBCLASSEXTEND =+ "native nativesdk"
-      BBCLASSEXTEND =+ "multilib:multilib_name"
+      OpenEmbedded-Core metadata: ::
+
+         BBCLASSEXTEND =+ "native nativesdk"
+         BBCLASSEXTEND =+ "multilib:multilib_name"
 
       .. note::
 
@@ -612,9 +655,8 @@ overview of their function and contents.
 
       .. tip::
 
-         You can use the command
-         bitbake-layers show-layers
-         to list all configured layers along with their priorities.
+         You can use the command bitbake-layers show-layers to list all
+         configured layers along with their priorities.
 
    BBFILES
       A space-separated list of recipe files BitBake uses to build
@@ -642,11 +684,17 @@ overview of their function and contents.
    BBLAYERS
       Lists the layers to enable during the build. This variable is defined
       in the ``bblayers.conf`` configuration file in the build directory.
-      Here is an example: BBLAYERS = " \\ /home/scottrif/poky/meta \\
-      /home/scottrif/poky/meta-yocto \\ /home/scottrif/poky/meta-yocto-bsp
-      \\ /home/scottrif/poky/meta-mykernel \\ " This example enables four
-      layers, one of which is a custom, user-defined layer named
-      ``meta-mykernel``.
+      Here is an example: ::
+
+         BBLAYERS = " \
+             /home/scottrif/poky/meta \
+             /home/scottrif/poky/meta-yocto \
+             /home/scottrif/poky/meta-yocto-bsp \
+             /home/scottrif/poky/meta-mykernel \
+         "
+
+      This example enables four layers, one of which is a custom, user-defined
+      layer named ``meta-mykernel``.
 
    BBLAYERS_FETCH_DIR
       Sets the base location where layers are stored. This setting is used
@@ -670,13 +718,19 @@ overview of their function and contents.
 
       The following example uses a complete regular expression to tell
       BitBake to ignore all recipe and recipe append files in the
-      ``meta-ti/recipes-misc/`` directory: BBMASK = "meta-ti/recipes-misc/"
+      ``meta-ti/recipes-misc/`` directory: ::
+
+         BBMASK = "meta-ti/recipes-misc/"
+
       If you want to mask out multiple directories or recipes, you can
       specify multiple regular expression fragments. This next example
-      masks out multiple directories and individual recipes: BBMASK +=
-      "/meta-ti/recipes-misc/ meta-ti/recipes-ti/packagegroup/" BBMASK +=
-      "/meta-oe/recipes-support/" BBMASK += "/meta-foo/.*/openldap" BBMASK
-      += "opencv.*\.bbappend" BBMASK += "lzma"
+      masks out multiple directories and individual recipes: ::
+
+         BBMASK += "/meta-ti/recipes-misc/ meta-ti/recipes-ti/packagegroup/"
+         BBMASK += "/meta-oe/recipes-support/"
+         BBMASK += "/meta-foo/.*/openldap"
+         BBMASK += "opencv.*\.bbappend"
+         BBMASK += "lzma"
 
       .. note::
 
@@ -691,15 +745,18 @@ overview of their function and contents.
       ``conf/local.conf`` configuration file.
 
       As an example, the following line specifies three multiconfigs, each
-      having a separate configuration file: BBMULTIFONFIG = "configA
-      configB configC" Each configuration file you use must reside in the
+      having a separate configuration file: ::
+
+         BBMULTIFONFIG = "configA configB configC"
+
+      Each configuration file you use must reside in the
       build directory within a directory named ``conf/multiconfig`` (e.g.
       build_directory\ ``/conf/multiconfig/configA.conf``).
 
       For information on how to use ``BBMULTICONFIG`` in an environment
       that supports building targets with multiple configurations, see the
-      "`Executing a Multiple Configuration
-      Build <#executing-a-multiple-configuration-build>`__" section.
+      ":ref:`bitbake-user-manual/bitbake-user-manual-intro:executing a multiple configuration build`"
+      section.
 
    BBPATH
       Used by BitBake to locate class (``.bbclass``) and configuration
@@ -709,7 +766,11 @@ overview of their function and contents.
       If you run BitBake from a directory outside of the build directory,
       you must be sure to set ``BBPATH`` to point to the build directory.
       Set the variable as you would any environment variable and then run
-      BitBake: $ BBPATH="build_directory" $ export BBPATH $ bitbake target
+      BitBake: ::
+
+         $ BBPATH="build_directory"
+         $ export BBPATH
+         $ bitbake target
 
    BBSERVER
       Points to the server that runs memory-resident BitBake. The variable
@@ -725,8 +786,8 @@ overview of their function and contents.
       using the :term:`OVERRIDES` mechanism for a
       single version or for an optionally named range of versions.
 
-      For more information on ``BBVERSIONS``, see the "`Variants - Class
-      Extension Mechanism <#variants-class-extension-mechanism>`__"
+      For more information on ``BBVERSIONS``, see the
+      ":ref:`bitbake-user-manual/bitbake-user-manual-metadata:variants - class extension mechanism`"
       section.
 
    BITBAKE_UI
@@ -765,37 +826,35 @@ overview of their function and contents.
 
       .. note::
 
-         The bias provided by
-         DEFAULT_PREFERENCE
-         is weak and is overridden by
-         :term:`BBFILE_PRIORITY`
-         if that variable is different between two layers that contain
-         different versions of the same recipe.
+         The bias provided by DEFAULT_PREFERENCE is weak and is overridden by
+         :term:`BBFILE_PRIORITY` if that variable is different between two
+         layers that contain different versions of the same recipe.
 
    DEPENDS
       Lists a recipe's build-time dependencies (i.e. other recipe files).
 
       Consider this simple example for two recipes named "a" and "b" that
       produce similarly named packages. In this example, the ``DEPENDS``
-      statement appears in the "a" recipe: DEPENDS = "b" Here, the
-      dependency is such that the ``do_configure`` task for recipe "a"
-      depends on the ``do_populate_sysroot`` task of recipe "b". This means
-      anything that recipe "b" puts into sysroot is available when recipe
-      "a" is configuring itself.
+      statement appears in the "a" recipe: ::
 
-      For information on runtime dependencies, see the
-      :term:`RDEPENDS` variable.
+         DEPENDS = "b"
+
+      Here, the dependency is such that the ``do_configure`` task for recipe "a"
+      depends on the ``do_populate_sysroot`` task of recipe "b". This means
+      anything that recipe "b" puts into sysroot is available when recipe "a" is
+      configuring itself.
+
+      For information on runtime dependencies, see the :term:`RDEPENDS`
+      variable.
 
    DESCRIPTION
       A long description for the recipe.
 
    DL_DIR
       The central download directory used by the build process to store
-      downloads. By default, ``DL_DIR`` gets files suitable for mirroring
-      for everything except Git repositories. If you want tarballs of Git
-      repositories, use the
-      :term:`BB_GENERATE_MIRROR_TARBALLS`
-      variable.
+      downloads. By default, ``DL_DIR`` gets files suitable for mirroring for
+      everything except Git repositories. If you want tarballs of Git
+      repositories, use the :term:`BB_GENERATE_MIRROR_TARBALLS` variable.
 
    EXCLUDE_FROM_WORLD
       Directs BitBake to exclude a recipe from world builds (i.e.
@@ -808,13 +867,10 @@ overview of their function and contents.
 
       .. note::
 
-         Recipes added to
-         EXCLUDE_FROM_WORLD
-         may still be built during a world build in order to satisfy
-         dependencies of other recipes. Adding a recipe to
-         EXCLUDE_FROM_WORLD
-         only ensures that the recipe is not explicitly added to the list
-         of build targets in a world build.
+         Recipes added to ``EXCLUDE_FROM_WORLD`` may still be built during a world
+         build in order to satisfy dependencies of other recipes. Adding a
+         recipe to ``EXCLUDE_FROM_WORLD`` only ensures that the recipe is not
+         explicitly added to the list of build targets in a world build.
 
    FAKEROOT
       Contains the command to use when running a shell script in a fakeroot
@@ -883,8 +939,8 @@ overview of their function and contents.
       configuration and in each individual recipe. The OpenEmbedded build
       system ignores changes to ``INHERIT`` in individual recipes.
 
-      For more information on ``INHERIT``, see the "```INHERIT``
-      Configuration Directive <#inherit-configuration-directive>`__"
+      For more information on ``INHERIT``, see the
+      ":ref:`bitbake-user-manual/bitbake-user-manual-metadata:\`\`inherit\`\` configuration directive`"
       section.
 
    LAYERDEPENDS
@@ -953,8 +1009,9 @@ overview of their function and contents.
 
       Following is a simple example that uses an overrides list based on
       machine architectures: OVERRIDES = "arm:x86:mips:powerpc" You can
-      find information on how to use ``OVERRIDES`` in the "`Conditional
-      Syntax (Overrides) <#conditional-syntax-overrides>`__" section.
+      find information on how to use ``OVERRIDES`` in the
+      ":ref:`bitbake-user-manual/bitbake-user-manual-metadata:conditional syntax
+      (overrides)`" section.
 
    P4DIR
       The directory in which a local copy of a Perforce depot is stored
@@ -1000,20 +1057,26 @@ overview of their function and contents.
       recipes provide the same item. You should always suffix the variable
       with the name of the provided item, and you should set it to the
       :term:`PN` of the recipe to which you want to give
-      precedence. Some examples: PREFERRED_PROVIDER_virtual/kernel ?=
-      "linux-yocto" PREFERRED_PROVIDER_virtual/xserver = "xserver-xf86"
-      PREFERRED_PROVIDER_virtual/libgl ?= "mesa"
+      precedence. Some examples: ::
+
+         PREFERRED_PROVIDER_virtual/kernel ?= "linux-yocto"
+         PREFERRED_PROVIDER_virtual/xserver = "xserver-xf86"
+         PREFERRED_PROVIDER_virtual/libgl ?= "mesa"
 
    PREFERRED_PROVIDERS
       Determines which recipe should be given preference for cases where
       multiple recipes provide the same item. Functionally,
       ``PREFERRED_PROVIDERS`` is identical to
-      :term:`PREFERRED_PROVIDER`. However, the
-      ``PREFERRED_PROVIDERS`` variable lets you define preferences for
-      multiple situations using the following form: PREFERRED_PROVIDERS =
-      "xxx:yyy aaa:bbb ..." This form is a convenient replacement for the
-      following: PREFERRED_PROVIDER_xxx = "yyy" PREFERRED_PROVIDER_aaa =
-      "bbb"
+      :term:`PREFERRED_PROVIDER`. However, the ``PREFERRED_PROVIDERS`` variable
+      lets you define preferences for multiple situations using the following
+      form: ::
+
+         PREFERRED_PROVIDERS = "xxx:yyy aaa:bbb ..."
+
+      This form is a convenient replacement for the following: ::
+
+         PREFERRED_PROVIDER_xxx = "yyy"
+         PREFERRED_PROVIDER_aaa = "bbb"
 
    PREFERRED_VERSION
       If there are multiple versions of recipes available, this variable
@@ -1026,15 +1089,15 @@ overview of their function and contents.
       through the "``%``" character. You can use the character to match any
       number of characters, which can be useful when specifying versions
       that contain long revision numbers that potentially change. Here are
-      two examples: PREFERRED_VERSION_python = "2.7.3"
-      PREFERRED_VERSION_linux-yocto = "4.12%"
+      two examples: ::
 
-      .. note::
+         PREFERRED_VERSION_python = "2.7.3"
+         PREFERRED_VERSION_linux-yocto = "4.12%"
 
-         The use of the "
-         %
-         " character is limited in that it only works at the end of the
-         string. You cannot use the wildcard character in any other
+      .. important::
+
+         The use of the " % " character is limited in that it only works at the
+         end of the string. You cannot use the wildcard character in any other
          location of the string.
 
    PREMIRRORS
@@ -1042,19 +1105,21 @@ overview of their function and contents.
       the build system searches for source code, it first tries the local
       download directory. If that location fails, the build system tries
       locations defined by ``PREMIRRORS``, the upstream source, and then
-      locations specified by :term:`MIRRORS` in that
-      order.
+      locations specified by :term:`MIRRORS` in that order.
 
       Typically, you would add a specific server for the build system to
       attempt before any others by adding something like the following to
-      your configuration: PREMIRRORS_prepend = "\\ git://.*/.\*
-      http://www.yoctoproject.org/sources/ \\n \\ ftp://.*/.\*
-      http://www.yoctoproject.org/sources/ \\n \\ http://.*/.\*
-      http://www.yoctoproject.org/sources/ \\n \\ https://.*/.\*
-      http://www.yoctoproject.org/sources/ \\n" These changes cause the
-      build system to intercept Git, FTP, HTTP, and HTTPS requests and
-      direct them to the ``http://`` sources mirror. You can use
-      ``file://`` URLs to point to local directories or network shares as
+      your configuration: ::
+
+         PREMIRRORS_prepend = "\
+         git://.*/.* http://www.yoctoproject.org/sources/ \n \
+         ftp://.*/.* http://www.yoctoproject.org/sources/ \n \
+         http://.*/.* http://www.yoctoproject.org/sources/ \n \
+         https://.*/.* http://www.yoctoproject.org/sources/ \n"
+
+      These changes cause the build system to intercept Git, FTP, HTTP, and
+      HTTPS requests and direct them to the ``http://`` sources mirror. You can
+      use ``file://`` URLs to point to local directories or network shares as
       well.
 
    PROVIDES
@@ -1066,9 +1131,12 @@ overview of their function and contents.
       ``DEPENDS``.
 
       Consider the following example ``PROVIDES`` statement from a recipe
-      file ``libav_0.8.11.bb``: PROVIDES += "libpostproc" The ``PROVIDES``
-      statement results in the "libav" recipe also being known as
-      "libpostproc".
+      file ``libav_0.8.11.bb``: ::
+
+         PROVIDES += "libpostproc"
+
+      The ``PROVIDES`` statement results in the "libav" recipe also being known
+      as "libpostproc".
 
       In addition to providing recipes under alternate names, the
       ``PROVIDES`` mechanism is also used to implement virtual targets. A
@@ -1086,10 +1154,13 @@ overview of their function and contents.
    PRSERV_HOST
       The network based :term:`PR` service host and port.
 
-      Following is an example of how the ``PRSERV_HOST`` variable is set:
-      PRSERV_HOST = "localhost:0" You must set the variable if you want to
-      automatically start a local PR service. You can set ``PRSERV_HOST``
-      to other values to use a remote PR service.
+      Following is an example of how the ``PRSERV_HOST`` variable is set: ::
+
+         PRSERV_HOST = "localhost:0"
+
+      You must set the variable if you want to automatically start a local PR
+      service. You can set ``PRSERV_HOST`` to other values to use a remote PR
+      service.
 
    PV
       The version of the recipe.
@@ -1104,21 +1175,36 @@ overview of their function and contents.
       you should always use the variable in a form with an attached package
       name. For example, suppose you are building a development package
       that depends on the ``perl`` package. In this case, you would use the
-      following ``RDEPENDS`` statement: RDEPENDS_${PN}-dev += "perl" In the
-      example, the development package depends on the ``perl`` package.
-      Thus, the ``RDEPENDS`` variable has the ``${PN}-dev`` package name as
-      part of the variable.
+      following ``RDEPENDS`` statement: ::
+
+         RDEPENDS_${PN}-dev += "perl"
+
+      In the example, the development package depends on the ``perl`` package.
+      Thus, the ``RDEPENDS`` variable has the ``${PN}-dev`` package name as part
+      of the variable.
 
       BitBake supports specifying versioned dependencies. Although the
       syntax varies depending on the packaging format, BitBake hides these
       differences from you. Here is the general syntax to specify versions
-      with the ``RDEPENDS`` variable: RDEPENDS_${PN} = "package (operator
-      version)" For ``operator``, you can specify the following: = < > <=
-      >= For example, the following sets up a dependency on version 1.2 or
-      greater of the package ``foo``: RDEPENDS_${PN} = "foo (>= 1.2)"
+      with the ``RDEPENDS`` variable: ::
 
-      For information on build-time dependencies, see the
-      :term:`DEPENDS` variable.
+         RDEPENDS_${PN} = "package (operator version)"
+
+      For ``operator``, you can specify the following: ::
+
+         =
+         <
+         >
+         <=
+         >=
+
+      For example, the following sets up a dependency on version 1.2 or
+      greater of the package ``foo``: ::
+
+         RDEPENDS_${PN} = "foo (>= 1.2)"
+
+      For information on build-time dependencies, see the :term:`DEPENDS`
+      variable.
 
    REPODIR
       The directory in which a local copy of a ``google-repo`` directory is
@@ -1132,7 +1218,9 @@ overview of their function and contents.
 
       As with all package-controlling variables, you must always use the
       variable in conjunction with a package name override. Here is an
-      example: RPROVIDES_${PN} = "widget-abi-2"
+      example: ::
+
+         RPROVIDES_${PN} = "widget-abi-2"
 
    RRECOMMENDS
       A list of packages that extends the usability of a package being
@@ -1144,11 +1232,22 @@ overview of their function and contents.
       BitBake supports specifying versioned recommends. Although the syntax
       varies depending on the packaging format, BitBake hides these
       differences from you. Here is the general syntax to specify versions
-      with the ``RRECOMMENDS`` variable: RRECOMMENDS_${PN} = "package
-      (operator version)" For ``operator``, you can specify the following:
-      = < > <= >= For example, the following sets up a recommend on version
-      1.2 or greater of the package ``foo``: RRECOMMENDS_${PN} = "foo (>=
-      1.2)"
+      with the ``RRECOMMENDS`` variable: ::
+
+         RRECOMMENDS_${PN} = "package (operator version)"
+
+      For ``operator``, you can specify the following: ::
+
+         =
+         <
+         >
+         <=
+         >=
+
+      For example, the following sets up a recommend on version
+      1.2 or greater of the package ``foo``: ::
+
+         RRECOMMENDS_${PN} = "foo (>= 1.2)"
 
    SECTION
       The section in which packages should be categorized.
@@ -1165,56 +1264,56 @@ overview of their function and contents.
 
       The following list explains the available URI protocols:
 
-      -  *``file://`` -* Fetches files, which are usually files shipped
+      -  ``file://`` : Fetches files, which are usually files shipped
          with the metadata, from the local machine. The path is relative to
          the :term:`FILESPATH` variable.
 
-      -  *``bzr://`` -* Fetches files from a Bazaar revision control
+      -  ``bzr://`` : Fetches files from a Bazaar revision control
          repository.
 
-      -  *``git://`` -* Fetches files from a Git revision control
+      -  ``git://`` : Fetches files from a Git revision control
          repository.
 
-      -  *``osc://`` -* Fetches files from an OSC (OpenSUSE Build service)
+      -  ``osc://`` : Fetches files from an OSC (OpenSUSE Build service)
          revision control repository.
 
-      -  *``repo://`` -* Fetches files from a repo (Git) repository.
+      -  ``repo://`` : Fetches files from a repo (Git) repository.
 
-      -  *``http://`` -* Fetches files from the Internet using HTTP.
+      -  ``http://`` : Fetches files from the Internet using HTTP.
 
-      -  *``https://`` -* Fetches files from the Internet using HTTPS.
+      -  ``https://`` : Fetches files from the Internet using HTTPS.
 
-      -  *``ftp://`` -* Fetches files from the Internet using FTP.
+      -  ``ftp://`` : Fetches files from the Internet using FTP.
 
-      -  *``cvs://`` -* Fetches files from a CVS revision control
+      -  ``cvs://`` : Fetches files from a CVS revision control
          repository.
 
-      -  *``hg://`` -* Fetches files from a Mercurial (``hg``) revision
+      -  ``hg://`` : Fetches files from a Mercurial (``hg``) revision
          control repository.
 
-      -  *``p4://`` -* Fetches files from a Perforce (``p4``) revision
+      -  ``p4://`` : Fetches files from a Perforce (``p4``) revision
          control repository.
 
-      -  *``ssh://`` -* Fetches files from a secure shell.
+      -  ``ssh://`` : Fetches files from a secure shell.
 
-      -  *``svn://`` -* Fetches files from a Subversion (``svn``) revision
+      -  ``svn://`` : Fetches files from a Subversion (``svn``) revision
          control repository.
 
       Here are some additional options worth mentioning:
 
-      -  *``unpack`` -* Controls whether or not to unpack the file if it is
+      -  ``unpack`` : Controls whether or not to unpack the file if it is
          an archive. The default action is to unpack the file.
 
-      -  *``subdir`` -* Places the file (or extracts its contents) into the
+      -  ``subdir`` : Places the file (or extracts its contents) into the
          specified subdirectory. This option is useful for unusual tarballs
          or other archives that do not have their files already in a
          subdirectory within the archive.
 
-      -  *``name`` -* Specifies a name to be used for association with
+      -  ``name`` : Specifies a name to be used for association with
          ``SRC_URI`` checksums when you have more than one file specified
          in ``SRC_URI``.
 
-      -  *``downloadfilename`` -* Specifies the filename used when storing
+      -  ``downloadfilename`` : Specifies the filename used when storing
          the downloaded file.
 
    SRCDATE

@@ -16,9 +16,13 @@ data, or simply return information about the execution environment.
 
 This chapter describes BitBake's execution process from start to finish
 when you use it to create an image. The execution process is launched
-using the following command form: $ bitbake target For information on
-the BitBake command and its options, see "`The BitBake
-Command <#bitbake-user-manual-command>`__" section.
+using the following command form: ::
+
+  $ bitbake target
+
+For information on
+the BitBake command and its options, see ":ref:`The BitBake Command
+<bitbake-user-manual-command>`" section.
 
 .. note::
 
@@ -28,7 +32,11 @@ Command <#bitbake-user-manual-command>`__" section.
    your project's ``local.conf`` configuration file.
 
    A common method to determine this value for your build host is to run
-   the following: $ grep processor /proc/cpuinfo This command returns
+   the following: ::
+
+     $ grep processor /proc/cpuinfo
+
+   This command returns
    the number of processors, which takes into account hyper-threading.
    Thus, a quad-core build host with hyper-threading most likely shows
    eight processors, which is the value you would then assign to
@@ -46,12 +54,12 @@ to determine what layers BitBake needs to recognize, all necessary
 ``layer.conf`` files (one from each layer), and ``bitbake.conf``. The
 data itself is of various types:
 
--  *Recipes:* Details about particular pieces of software.
+-  **Recipes:** Details about particular pieces of software.
 
--  *Class Data:* An abstraction of common build information (e.g. how to
+-  **Class Data:** An abstraction of common build information (e.g. how to
    build a Linux kernel).
 
--  *Configuration Data:* Machine-specific settings, policy decisions,
+-  **Configuration Data:** Machine-specific settings, policy decisions,
    and so forth. Configuration data acts as the glue to bind everything
    together.
 
@@ -72,13 +80,9 @@ Prior to parsing configuration files, BitBake looks at certain
 variables, including:
 
 -  :term:`BB_ENV_WHITELIST`
-
 -  :term:`BB_ENV_EXTRAWHITE`
-
 -  :term:`BB_PRESERVE_ENV`
-
 -  :term:`BB_ORIGENV`
-
 -  :term:`BITBAKE_UI`
 
 The first four variables in this list relate to how BitBake treats shell
@@ -87,8 +91,8 @@ the environment variables and provides tight control over the shell
 execution environment. However, through the use of these first four
 variables, you can apply your control regarding the environment
 variables allowed to be used by BitBake in the shell during execution of
-tasks. See the "`Passing Information Into the Build Task
-Environment <#passing-information-into-the-build-task-environment>`__"
+tasks. See the
+":ref:`bitbake-user-manual/bitbake-user-manual-metadata:Passing Information Into the Build Task Environment`"
 section and the information about these variables in the variable
 glossary for more information on how they work and on how to use them.
 
@@ -118,8 +122,8 @@ Only variable definitions and include directives are allowed in BitBake
 ``.conf`` files. Some variables directly influence BitBake's behavior.
 These variables might have been set from the environment depending on
 the environment variables previously mentioned or set in the
-configuration files. The "`Variables
-Glossary <#ref-bb-variables-glos>`__" chapter presents a full list of
+configuration files. The ":ref:`bitbake-user-manual/bitbake-user-manual-ref-variables:Variables Glossary`"
+chapter presents a full list of
 variables.
 
 After parsing configuration files, BitBake uses its rudimentary
@@ -135,7 +139,11 @@ in ``BBPATH`` in the same way as configuration files.
 
 A good way to get an idea of the configuration files and the class files
 used in your execution environment is to run the following BitBake
-command: $ bitbake -e > mybb.log Examining the top of the ``mybb.log``
+command: ::
+
+  $ bitbake -e > mybb.log
+
+Examining the top of the ``mybb.log``
 shows you the many configuration files and class files used in your
 execution environment.
 
@@ -147,15 +155,28 @@ execution environment.
    pair of curly braces in a shell function, the closing curly brace
    must not be located at the start of the line without leading spaces.
 
-   Here is an example that causes BitBake to produce a parsing error:
-   fakeroot create_shar() { cat << "EOF" >
-   ${SDK_DEPLOY}/${TOOLCHAIN_OUTPUTNAME}.sh usage() { echo "test" ######
-   The following "}" at the start of the line causes a parsing error
-   ###### } EOF } Writing the recipe this way avoids the error: fakeroot
-   create_shar() { cat << "EOF" >
-   ${SDK_DEPLOY}/${TOOLCHAIN_OUTPUTNAME}.sh usage() { echo "test"
-   ######The following "}" with a leading space at the start of the line
-   avoids the error ###### } EOF }
+   Here is an example that causes BitBake to produce a parsing error: ::
+
+      fakeroot create_shar() {
+         cat << "EOF" > ${SDK_DEPLOY}/${TOOLCHAIN_OUTPUTNAME}.sh
+      usage()
+      {
+         echo "test"
+         ######  The following "}" at the start of the line causes a parsing error ######
+      }
+      EOF
+      }
+
+      Writing the recipe this way avoids the error:
+      fakeroot create_shar() {
+         cat << "EOF" > ${SDK_DEPLOY}/${TOOLCHAIN_OUTPUTNAME}.sh
+      usage()
+      {
+         echo "test"
+         ###### The following "}" with a leading space at the start of the line avoids the error ######
+       }
+      EOF
+      }
 
 Locating and Parsing Recipes
 ============================
@@ -164,16 +185,17 @@ During the configuration phase, BitBake will have set
 :term:`BBFILES`. BitBake now uses it to construct a
 list of recipes to parse, along with any append files (``.bbappend``) to
 apply. ``BBFILES`` is a space-separated list of available files and
-supports wildcards. An example would be: BBFILES =
-"/path/to/bbfiles/*.bb /path/to/appends/*.bbappend" BitBake parses each
+supports wildcards. An example would be: ::
+
+  BBFILES = "/path/to/bbfiles/*.bb /path/to/appends/*.bbappend"
+
+BitBake parses each
 recipe and append file located with ``BBFILES`` and stores the values of
 various variables into the datastore.
 
 .. note::
 
-   Append files are applied in the order they are encountered in
-   BBFILES
-   .
+   Append files are applied in the order they are encountered in BBFILES.
 
 For each file, a fresh copy of the base configuration is made, then the
 recipe is parsed line by line. Any inherit statements cause BitBake to
@@ -184,11 +206,12 @@ parses in order any append files found in ``BBFILES``.
 One common convention is to use the recipe filename to define pieces of
 metadata. For example, in ``bitbake.conf`` the recipe name and version
 are used to set the variables :term:`PN` and
-:term:`PV`: PN =
-"${@bb.parse.BBHandler.vars_from_file(d.getVar('FILE', False),d)[0] or
-'defaultpkgname'}" PV =
-"${@bb.parse.BBHandler.vars_from_file(d.getVar('FILE', False),d)[1] or
-'1.0'}" In this example, a recipe called "something_1.2.3.bb" would set
+:term:`PV`: ::
+
+   PN = "${@bb.parse.BBHandler.vars_from_file(d.getVar('FILE', False),d)[0] or 'defaultpkgname'}"
+   PV = "${@bb.parse.BBHandler.vars_from_file(d.getVar('FILE', False),d)[1] or '1.0'}"
+
+In this example, a recipe called "something_1.2.3.bb" would set
 ``PN`` to "something" and ``PV`` to "1.2.3".
 
 By the time parsing is complete for a recipe, BitBake has a list of
@@ -215,11 +238,13 @@ Recipe file collections exist to allow the user to have multiple
 repositories of ``.bb`` files that contain the same exact package. For
 example, one could easily use them to make one's own local copy of an
 upstream repository, but with custom modifications that one does not
-want upstream. Here is an example: BBFILES = "/stuff/openembedded/*/*.bb
-/stuff/openembedded.modified/*/*.bb" BBFILE_COLLECTIONS = "upstream
-local" BBFILE_PATTERN_upstream = "^/stuff/openembedded/"
-BBFILE_PATTERN_local = "^/stuff/openembedded.modified/"
-BBFILE_PRIORITY_upstream = "5" BBFILE_PRIORITY_local = "10"
+want upstream. Here is an example: ::
+
+  BBFILES = "/stuff/openembedded/*/*.bb /stuff/openembedded.modified/*/*.bb"
+  BBFILE_COLLECTIONS = "upstream local"
+  BBFILE_PATTERN_upstream = "^/stuff/openembedded/"
+  BBFILE_PATTERN_local = "^/stuff/openembedded.modified/"
+  BBFILE_PRIORITY_upstream = "5" BBFILE_PRIORITY_local = "10"
 
 .. note::
 
@@ -244,7 +269,11 @@ variable, which is optional.
 When a recipe uses ``PROVIDES``, that recipe's functionality can be
 found under an alternative name or names other than the implicit ``PN``
 name. As an example, suppose a recipe named ``keyboard_1.0.bb``
-contained the following: PROVIDES += "fullkeyboard" The ``PROVIDES``
+contained the following: ::
+
+  PROVIDES += "fullkeyboard"
+
+The ``PROVIDES``
 list for this recipe becomes "keyboard", which is implicit, and
 "fullkeyboard", which is explicit. Consequently, the functionality found
 in ``keyboard_1.0.bb`` can be found under two different names.
@@ -261,9 +290,11 @@ needs to prioritize providers by determining provider preferences.
 A common example in which a target has multiple providers is
 "virtual/kernel", which is on the ``PROVIDES`` list for each kernel
 recipe. Each machine often selects the best kernel provider by using a
-line similar to the following in the machine configuration file:
-PREFERRED_PROVIDER_virtual/kernel = "linux-yocto" The default
-:term:`PREFERRED_PROVIDER` is the provider
+line similar to the following in the machine configuration file: ::
+
+  PREFERRED_PROVIDER_virtual/kernel = "linux-yocto"
+
+The default :term:`PREFERRED_PROVIDER` is the provider
 with the same name as the target. BitBake iterates through each target
 it needs to build and resolves them and their dependencies using this
 process.
@@ -299,8 +330,9 @@ If the first recipe is named ``a_1.1.bb``, then the
 
 Thus, if a recipe named ``a_1.2.bb`` exists, BitBake will choose 1.2 by
 default. However, if you define the following variable in a ``.conf``
-file that BitBake parses, you can change that preference:
-PREFERRED_VERSION_a = "1.1"
+file that BitBake parses, you can change that preference: ::
+
+  PREFERRED_VERSION_a = "1.1"
 
 .. note::
 
@@ -312,7 +344,11 @@ PREFERRED_VERSION_a = "1.1"
    For example, in the OpenEmbedded codebase, there is a standard,
    versioned recipe file for BusyBox, ``busybox_1.22.1.bb``, but there
    is also a Git-based version, ``busybox_git.bb``, which explicitly
-   contains the line DEFAULT_PREFERENCE = "-1" to ensure that the
+   contains the line ::
+
+     DEFAULT_PREFERENCE = "-1"
+
+   to ensure that the
    numbered, stable version is always preferred unless the developer
    selects otherwise.
 
@@ -327,15 +363,16 @@ performance on multi-core systems, BitBake considers each task as an
 independent entity with its own set of dependencies.
 
 Dependencies are defined through several variables. You can find
-information about variables BitBake uses in the `Variables
-Glossary <#ref-bb-variables-glos>`__ near the end of this manual. At a
+information about variables BitBake uses in the
+:doc:`bitbake-user-manual-ref-variables` near the end of this manual. At a
 basic level, it is sufficient to know that BitBake uses the
 :term:`DEPENDS` and
 :term:`RDEPENDS` variables when calculating
 dependencies.
 
 For more information on how BitBake handles dependencies, see the
-"`Dependencies <#dependencies>`__" section.
+:ref:`bitbake-user-manual/bitbake-user-manual-metadata:Dependencies`
+section.
 
 .. _ref-bitbake-tasklist:
 
@@ -344,7 +381,8 @@ The Task List
 
 Based on the generated list of providers and the dependency information,
 BitBake can now calculate exactly what tasks it needs to run and in what
-order it needs to run them. The "`Executing Tasks <#executing-tasks>`__"
+order it needs to run them. The
+:ref:`bitbake-user-manual/bitbake-user-manual-execution:executing tasks`
 section has more information on how BitBake chooses which task to
 execute next.
 
@@ -371,8 +409,9 @@ The exact format of the stamps is partly configurable. In modern
 versions of BitBake, a hash is appended to the stamp so that if the
 configuration changes, the stamp becomes invalid and the task is
 automatically rerun. This hash, or signature used, is governed by the
-signature policy that is configured (see the "`Checksums
-(Signatures) <#checksums>`__" section for information). It is also
+signature policy that is configured (see the
+:ref:`bitbake-user-manual/bitbake-user-manual-execution:checksums (signatures)`
+section for information). It is also
 possible to append extra metadata to the stamp using the
 ``[stamp-extra-info]`` task flag. For example, OpenEmbedded uses this
 flag to make some tasks machine-specific.
@@ -383,7 +422,8 @@ flag to make some tasks machine-specific.
    created when these tasks are run. Consequently, "nostamp" tasks are
    always rerun.
 
-For more information on tasks, see the "`Tasks <#tasks>`__" section.
+For more information on tasks, see the
+:ref:`bitbake-user-manual/bitbake-user-manual-metadata:tasks` section.
 
 Executing Tasks
 ===============
@@ -457,14 +497,21 @@ to the task.
 
 Like the working directory case, situations exist where dependencies
 should be ignored. For these cases, you can instruct the build process
-to ignore a dependency by using a line like the following:
-PACKAGE_ARCHS[vardepsexclude] = "MACHINE" This example ensures that the
+to ignore a dependency by using a line like the following: ::
+
+  PACKAGE_ARCHS[vardepsexclude] = "MACHINE"
+
+This example ensures that the
 ``PACKAGE_ARCHS`` variable does not depend on the value of ``MACHINE``,
 even if it does reference it.
 
 Equally, there are cases where we need to add dependencies BitBake is
 not able to find. You can accomplish this by using a line like the
-following: PACKAGE_ARCHS[vardeps] = "MACHINE" This example explicitly
+following: ::
+
+  PACKAGE_ARCHS[vardeps] = "MACHINE"
+
+This example explicitly
 adds the ``MACHINE`` variable as a dependency for ``PACKAGE_ARCHS``.
 
 Consider a case with in-line Python, for example, where BitBake is not
@@ -488,13 +535,15 @@ configuration file, we can give BitBake some extra information to help
 it construct the basehash. The following statement effectively results
 in a list of global variable dependency excludes - variables never
 included in any checksum. This example uses variables from OpenEmbedded
-to help illustrate the concept: BB_HASHBASE_WHITELIST ?= "TMPDIR FILE
-PATH PWD BB_TASKHASH BBPATH DL_DIR \\ SSTATE_DIR THISDIR FILESEXTRAPATHS
-FILE_DIRNAME HOME LOGNAME SHELL \\ USER FILESPATH STAGING_DIR_HOST
-STAGING_DIR_TARGET COREBASE PRSERV_HOST \\ PRSERV_DUMPDIR
-PRSERV_DUMPFILE PRSERV_LOCKDOWN PARALLEL_MAKE \\ CCACHE_DIR
-EXTERNAL_TOOLCHAIN CCACHE CCACHE_DISABLE LICENSE_PATH SDKPKGSUFFIX" The
-previous example excludes the work directory, which is part of
+to help illustrate the concept: ::
+
+   BB_HASHBASE_WHITELIST ?= "TMPDIR FILE PATH PWD BB_TASKHASH BBPATH DL_DIR \
+       SSTATE_DIR THISDIR FILESEXTRAPATHS FILE_DIRNAME HOME LOGNAME SHELL \
+       USER FILESPATH STAGING_DIR_HOST STAGING_DIR_TARGET COREBASE PRSERV_HOST \
+       PRSERV_DUMPDIR PRSERV_DUMPFILE PRSERV_LOCKDOWN PARALLEL_MAKE \
+       CCACHE_DIR EXTERNAL_TOOLCHAIN CCACHE CCACHE_DISABLE LICENSE_PATH SDKPKGSUFFIX"
+
+The previous example excludes the work directory, which is part of
 ``TMPDIR``.
 
 The rules for deciding which hashes of dependent tasks to include
@@ -507,8 +556,11 @@ OpenEmbedded-Core uses: "OEBasic" and "OEBasicHash". By default, there
 is a dummy "noop" signature handler enabled in BitBake. This means that
 behavior is unchanged from previous versions. ``OE-Core`` uses the
 "OEBasicHash" signature handler by default through this setting in the
-``bitbake.conf`` file: BB_SIGNATURE_HANDLER ?= "OEBasicHash" The
-"OEBasicHash" ``BB_SIGNATURE_HANDLER`` is the same as the "OEBasic"
+``bitbake.conf`` file: ::
+
+  BB_SIGNATURE_HANDLER ?= "OEBasicHash"
+
+The "OEBasicHash" ``BB_SIGNATURE_HANDLER`` is the same as the "OEBasic"
 version but adds the task hash to the stamp files. This results in any
 metadata change that changes the task hash, automatically causing the
 task to be run again. This removes the need to bump
@@ -519,13 +571,13 @@ It is also worth noting that the end result of these signature
 generators is to make some dependency and hash information available to
 the build. This information includes:
 
--  ``BB_BASEHASH_task-``\ taskname: The base hashes for each task in the
+-  ``BB_BASEHASH_task-``\ *taskname*: The base hashes for each task in the
    recipe.
 
--  ``BB_BASEHASH_``\ filename\ ``:``\ taskname: The base hashes for each
+-  ``BB_BASEHASH_``\ *filename:taskname*: The base hashes for each
    dependent task.
 
--  ``BBHASHDEPS_``\ filename\ ``:``\ taskname: The task dependencies for
+-  ``BBHASHDEPS_``\ *filename:taskname*: The task dependencies for
    each task.
 
 -  ``BB_TASKHASH``: The hash of the currently running task.
@@ -547,8 +599,9 @@ where these two stamp trees diverge.
    It is likely that future versions of BitBake will provide other
    signature handlers triggered through additional "-S" parameters.
 
-You can find more information on checksum metadata in the "`Task
-Checksums and Setscene <#task-checksums-and-setscene>`__" section.
+You can find more information on checksum metadata in the
+:ref:`bitbake-user-manual/bitbake-user-manual-metadata:task checksums and setscene`
+section.
 
 Setscene
 ========
@@ -601,8 +654,9 @@ with the list of tasks BitBake thinks has been "covered". The metadata
 can then ensure that this list is correct and can inform BitBake that it
 wants specific tasks to be run regardless of the setscene result.
 
-You can find more information on setscene metadata in the "`Task
-Checksums and Setscene <#task-checksums-and-setscene>`__" section.
+You can find more information on setscene metadata in the
+:ref:`bitbake-user-manual/bitbake-user-manual-metadata:task checksums and setscene`
+section.
 
 Logging
 =======
@@ -648,11 +702,32 @@ logging configuration is merged using the following rules:
 
 As an example, consider the following user logging configuration file
 which logs all Hash Equivalence related messages of VERBOSE or higher to
-a file called ``hashequiv.log`` { "version": 1, "handlers": {
-"autobuilderlog": { "class": "logging.FileHandler", "formatter":
-"logfileFormatter", "level": "DEBUG", "filename": "hashequiv.log",
-"mode": "w" } }, "formatters": { "logfileFormatter": { "format":
-"%(name)s: %(levelname)s: %(message)s" } }, "loggers": {
-"BitBake.SigGen.HashEquiv": { "level": "VERBOSE", "handlers":
-["autobuilderlog"] }, "BitBake.RunQueue.HashEquiv": { "level":
-"VERBOSE", "handlers": ["autobuilderlog"] } } }
+a file called ``hashequiv.log`` ::
+
+   {
+       "version": 1,
+       "handlers": {
+           "autobuilderlog": {
+               "class": "logging.FileHandler",
+               "formatter": "logfileFormatter",
+               "level": "DEBUG",
+               "filename": "hashequiv.log",
+               "mode": "w"
+           }
+       },
+       "formatters": {
+               "logfileFormatter": {
+                   "format": "%(name)s: %(levelname)s: %(message)s"
+               }
+       },
+       "loggers": {
+           "BitBake.SigGen.HashEquiv": {
+               "level": "VERBOSE",
+               "handlers": ["autobuilderlog"]
+           },
+           "BitBake.RunQueue.HashEquiv": {
+               "level": "VERBOSE",
+               "handlers": ["autobuilderlog"]
+           }
+       }
+   }

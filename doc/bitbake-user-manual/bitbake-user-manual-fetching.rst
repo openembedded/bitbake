@@ -27,22 +27,28 @@ and unpacking the files is often optionally followed by patching.
 Patching, however, is not covered by this module.
 
 The code to execute the first part of this process, a fetch, looks
-something like the following: src_uri = (d.getVar('SRC_URI') or
-"").split() fetcher = bb.fetch2.Fetch(src_uri, d) fetcher.download()
+something like the following: ::
+
+   src_uri = (d.getVar('SRC_URI') or "").split()
+   fetcher = bb.fetch2.Fetch(src_uri, d)
+   fetcher.download()
+
 This code sets up an instance of the fetch class. The instance uses a
 space-separated list of URLs from the :term:`SRC_URI`
 variable and then calls the ``download`` method to download the files.
 
-The instantiation of the fetch class is usually followed by: rootdir =
-l.getVar('WORKDIR') fetcher.unpack(rootdir) This code unpacks the
-downloaded files to the specified by ``WORKDIR``.
+The instantiation of the fetch class is usually followed by: ::
+
+   rootdir = l.getVar('WORKDIR')
+   fetcher.unpack(rootdir)
+
+This code unpacks the downloaded files to the specified by ``WORKDIR``.
 
 .. note::
 
    For convenience, the naming in these examples matches the variables
    used by OpenEmbedded. If you want to see the above code in action,
-   examine the OpenEmbedded class file
-   base.bbclass
+   examine the OpenEmbedded class file ``base.bbclass``
    .
 
 The ``SRC_URI`` and ``WORKDIR`` variables are not hardcoded into the
@@ -61,30 +67,37 @@ URLs by looking for source files in a specific search order:
    from ``SRC_URI``).
 
 -  *Mirror Sites:* If fetch failures occur, BitBake next uses mirror
-   locations as defined by the :term:`MIRRORS`
-   variable.
+   locations as defined by the :term:`MIRRORS` variable.
 
 For each URL passed to the fetcher, the fetcher calls the submodule that
 handles that particular URL type. This behavior can be the source of
 some confusion when you are providing URLs for the ``SRC_URI`` variable.
-Consider the following two URLs:
-http://git.yoctoproject.org/git/poky;protocol=git
-git://git.yoctoproject.org/git/poky;protocol=http In the former case,
-the URL is passed to the ``wget`` fetcher, which does not understand
-"git". Therefore, the latter case is the correct form since the Git
+Consider the following two URLs: ::
+
+   http://git.yoctoproject.org/git/poky;protocol=git
+   git://git.yoctoproject.org/git/poky;protocol=http
+
+In the former case, the URL is passed to the ``wget`` fetcher, which does not
+understand "git". Therefore, the latter case is the correct form since the Git
 fetcher does know how to use HTTP as a transport.
 
-Here are some examples that show commonly used mirror definitions:
-PREMIRRORS ?= "\\ bzr://.*/.\* http://somemirror.org/sources/ \\n \\
-cvs://.*/.\* http://somemirror.org/sources/ \\n \\ git://.*/.\*
-http://somemirror.org/sources/ \\n \\ hg://.*/.\*
-http://somemirror.org/sources/ \\n \\ osc://.*/.\*
-http://somemirror.org/sources/ \\n \\ p4://.*/.\*
-http://somemirror.org/sources/ \\n \\ svn://.*/.\*
-http://somemirror.org/sources/ \\n" MIRRORS =+ "\\ ftp://.*/.\*
-http://somemirror.org/sources/ \\n \\ http://.*/.\*
-http://somemirror.org/sources/ \\n \\ https://.*/.\*
-http://somemirror.org/sources/ \\n" It is useful to note that BitBake
+Here are some examples that show commonly used mirror definitions: ::
+
+   PREMIRRORS ?= "\
+      bzr://.*/.\*  http://somemirror.org/sources/ \\n \
+      cvs://.*/.\*  http://somemirror.org/sources/ \\n \
+      git://.*/.\*  http://somemirror.org/sources/ \\n \
+      hg://.*/.\*   http://somemirror.org/sources/ \\n \
+      osc://.*/.\*  http://somemirror.org/sources/ \\n \
+      p4://.*/.\*   http://somemirror.org/sources/ \\n \
+     svn://.*/.\*   http://somemirror.org/sources/ \\n"
+
+   MIRRORS =+ "\
+      ftp://.*/.\*   http://somemirror.org/sources/ \\n \
+      http://.*/.\*  http://somemirror.org/sources/ \\n \
+      https://.*/.\* http://somemirror.org/sources/ \\n"
+
+It is useful to note that BitBake
 supports cross-URLs. It is possible to mirror a Git repository on an
 HTTP server as a tarball. This is what the ``git://`` mapping in the
 previous example does.
@@ -98,15 +111,24 @@ File integrity is of key importance for reproducing builds. For
 non-local archive downloads, the fetcher code can verify SHA-256 and MD5
 checksums to ensure the archives have been downloaded correctly. You can
 specify these checksums by using the ``SRC_URI`` variable with the
-appropriate varflags as follows: SRC_URI[md5sum] = "value"
-SRC_URI[sha256sum] = "value" You can also specify the checksums as
-parameters on the ``SRC_URI`` as shown below: SRC_URI =
-"http://example.com/foobar.tar.bz2;md5sum=4a8e0f237e961fd7785d19d07fdb994d"
+appropriate varflags as follows: ::
+
+   SRC_URI[md5sum] = "value"
+   SRC_URI[sha256sum] = "value"
+
+You can also specify the checksums as
+parameters on the ``SRC_URI`` as shown below: ::
+
+  SRC_URI = "http://example.com/foobar.tar.bz2;md5sum=4a8e0f237e961fd7785d19d07fdb994d"
+
 If multiple URIs exist, you can specify the checksums either directly as
 in the previous example, or you can name the URLs. The following syntax
-shows how you name the URIs: SRC_URI =
-"http://example.com/foobar.tar.bz2;name=foo" SRC_URI[foo.md5sum] =
-4a8e0f237e961fd7785d19d07fdb994d After a file has been downloaded and
+shows how you name the URIs: ::
+
+   SRC_URI = "http://example.com/foobar.tar.bz2;name=foo"
+   SRC_URI[foo.md5sum] = 4a8e0f237e961fd7785d19d07fdb994d
+
+After a file has been downloaded and
 has had its checksum checked, a ".done" stamp is placed in ``DL_DIR``.
 BitBake uses this stamp during subsequent builds to avoid downloading or
 comparing a checksum for the file again.
@@ -182,8 +204,10 @@ time the ``download()`` method is called.
 If you specify a directory, the entire directory is unpacked.
 
 Here are a couple of example URLs, the first relative and the second
-absolute: SRC_URI = "file://relativefile.patch" SRC_URI =
-"file:///Users/ich/very_important_software"
+absolute: ::
+
+   SRC_URI = "file://relativefile.patch"
+   SRC_URI = "file:///Users/ich/very_important_software"
 
 .. _http-ftp-fetcher:
 
@@ -201,10 +225,11 @@ downloaded file is useful for avoiding collisions in
 :term:`DL_DIR` when dealing with multiple files that
 have the same name.
 
-Some example URLs are as follows: SRC_URI =
-"http://oe.handhelds.org/not_there.aac" SRC_URI =
-"ftp://oe.handhelds.org/not_there_as_well.aac" SRC_URI =
-"ftp://you@oe.handhelds.org/home/you/secret.plan"
+Some example URLs are as follows: ::
+
+   SRC_URI = "http://oe.handhelds.org/not_there.aac"
+   SRC_URI = "ftp://oe.handhelds.org/not_there_as_well.aac"
+   SRC_URI = "ftp://you@oe.handhelds.org/home/you/secret.plan"
 
 .. note::
 
@@ -214,14 +239,14 @@ Some example URLs are as follows: SRC_URI =
    ::
 
            SRC_URI = "http://abc123.org/git/?p=gcc/gcc.git;a=snapshot;h=a5dd47"
-                      
+
 
    Such URLs should should be modified by replacing semi-colons with '&'
    characters:
    ::
 
            SRC_URI = "http://abc123.org/git/?p=gcc/gcc.git&a=snapshot&h=a5dd47"
-                      
+
 
    In most cases this should work. Treating semi-colons and '&' in
    queries identically is recommended by the World Wide Web Consortium
@@ -230,7 +255,7 @@ Some example URLs are as follows: SRC_URI =
    ::
 
            SRC_URI = "http://abc123.org/git/?p=gcc/gcc.git&a=snapshot&h=a5dd47;downloadfilename=myfile.bz2"
-                      
+
 
 .. _cvs-fetcher:
 
@@ -240,20 +265,20 @@ CVS fetcher (``(cvs://``)
 This submodule handles checking out files from the CVS version control
 system. You can configure it using a number of different variables:
 
--  *``FETCHCMD_cvs``:* The name of the executable to use when running
+-  :term:`FETCHCMD_cvs <FETCHCMD>`: The name of the executable to use when running
    the ``cvs`` command. This name is usually "cvs".
 
--  *``SRCDATE``:* The date to use when fetching the CVS source code. A
+-  :term:`SRCDATE`: The date to use when fetching the CVS source code. A
    special value of "now" causes the checkout to be updated on every
    build.
 
--  :term:`CVSDIR`\ *:* Specifies where a temporary
+-  :term:`CVSDIR`: Specifies where a temporary
    checkout is saved. The location is often ``DL_DIR/cvs``.
 
--  *``CVS_PROXY_HOST``:* The name to use as a "proxy=" parameter to the
+-  CVS_PROXY_HOST: The name to use as a "proxy=" parameter to the
    ``cvs`` command.
 
--  *``CVS_PROXY_PORT``:* The port number to use as a "proxyport="
+-  CVS_PROXY_PORT: The port number to use as a "proxyport="
    parameter to the ``cvs`` command.
 
 As well as the standard username and password URL syntax, you can also
@@ -282,7 +307,7 @@ The supported parameters are as follows:
    are forcing the module into a special directory relative to
    :term:`CVSDIR`.
 
--  *"rsh"* Used in conjunction with the "method" parameter.
+-  *"rsh":* Used in conjunction with the "method" parameter.
 
 -  *"scmdata":* Causes the CVS metadata to be maintained in the tarball
    the fetcher creates when set to "keep". The tarball is expanded into
@@ -296,9 +321,10 @@ The supported parameters are as follows:
 
 -  *"port":* The port to which the CVS server connects.
 
-Some example URLs are as follows: SRC_URI =
-"cvs://CVSROOT;module=mymodule;tag=some-version;method=ext" SRC_URI =
-"cvs://CVSROOT;module=mymodule;date=20060126;localdir=usethat"
+Some example URLs are as follows: ::
+
+   SRC_URI = "cvs://CVSROOT;module=mymodule;tag=some-version;method=ext"
+   SRC_URI = "cvs://CVSROOT;module=mymodule;date=20060126;localdir=usethat"
 
 .. _svn-fetcher:
 
@@ -337,10 +363,11 @@ The supported parameters are as follows:
    username is different than the username used in the main URL, which
    is passed to the subversion command.
 
-Following are three examples using svn: SRC_URI =
-"svn://myrepos/proj1;module=vip;protocol=http;rev=667" SRC_URI =
-"svn://myrepos/proj1;module=opie;protocol=svn+ssh" SRC_URI =
-"svn://myrepos/proj1;module=trunk;protocol=http;path_spec=${MY_DIR}/proj1"
+Following are three examples using svn: ::
+
+   SRC_URI = "svn://myrepos/proj1;module=vip;protocol=http;rev=667"
+   SRC_URI = "svn://myrepos/proj1;module=opie;protocol=svn+ssh"
+   SRC_URI = "svn://myrepos/proj1;module=trunk;protocol=http;path_spec=${MY_DIR}/proj1"
 
 .. _git-fetcher:
 
@@ -409,20 +436,22 @@ This fetcher supports the following parameters:
    parameter implies no branch and only works when the transfer protocol
    is ``file://``.
 
-Here are some example URLs: SRC_URI =
-"git://git.oe.handhelds.org/git/vip.git;tag=version-1" SRC_URI =
-"git://git.oe.handhelds.org/git/vip.git;protocol=http"
+Here are some example URLs: ::
+
+   SRC_URI = "git://git.oe.handhelds.org/git/vip.git;tag=version-1"
+   SRC_URI = "git://git.oe.handhelds.org/git/vip.git;protocol=http"
 
 .. _gitsm-fetcher:
 
 Git Submodule Fetcher (``gitsm://``)
 ------------------------------------
 
-This fetcher submodule inherits from the `Git fetcher <#git-fetcher>`__
-and extends that fetcher's behavior by fetching a repository's
-submodules. :term:`SRC_URI` is passed to the Git
-fetcher as described in the "`Git Fetcher
-(``git://``) <#git-fetcher>`__" section.
+This fetcher submodule inherits from the :ref:`Git
+fetcher<bitbake-user-manual/bitbake-user-manual-fetching:git fetcher
+(\`\`git://\`\`)>` and extends that fetcher's behavior by fetching a
+repository's submodules. :term:`SRC_URI` is passed to the Git fetcher as
+described in the :ref:`bitbake-user-manual/bitbake-user-manual-fetching:git
+fetcher (\`\`git://\`\`)` section.
 
 .. note::
 
@@ -446,42 +475,33 @@ repository.
 
 To use this fetcher, make sure your recipe has proper
 :term:`SRC_URI`, :term:`SRCREV`, and
-:term:`PV` settings. Here is an example: SRC_URI =
-"ccrc://cc.example.org/ccrc;vob=/example_vob;module=/example_module"
-SRCREV = "EXAMPLE_CLEARCASE_TAG" PV = "${@d.getVar("SRCREV",
-False).replace("/", "+")}" The fetcher uses the ``rcleartool`` or
+:term:`PV` settings. Here is an example: ::
+
+   SRC_URI = "ccrc://cc.example.org/ccrc;vob=/example_vob;module=/example_module"
+   SRCREV = "EXAMPLE_CLEARCASE_TAG"
+   PV = "${@d.getVar("SRCREV", False).replace("/", "+")}"
+
+The fetcher uses the ``rcleartool`` or
 ``cleartool`` remote client, depending on which one is available.
 
 Following are options for the ``SRC_URI`` statement:
 
--  *``vob``*: The name, which must include the prepending "/" character,
+-  *vob*: The name, which must include the prepending "/" character,
    of the ClearCase VOB. This option is required.
 
--  *``module``*: The module, which must include the prepending "/"
+-  *module*: The module, which must include the prepending "/"
    character, in the selected VOB.
 
    .. note::
 
-      The
-      module
-      and
-      vob
-      options are combined to create the
-      load
-      rule in the view config spec. As an example, consider the
-      vob
-      and
-      module
-      values from the
-      SRC_URI
-      statement at the start of this section. Combining those values
-      results in the following:
-      ::
+      The module and vob options are combined to create the load rule in the
+      view config spec. As an example, consider the vob and module values from
+      the SRC_URI statement at the start of this section. Combining those values
+      results in the following: ::
 
-              load /example_vob/example_module
-                                     
+         load /example_vob/example_module
 
--  *``proto``*: The protocol, which can be either ``http`` or ``https``.
+-  *proto*: The protocol, which can be either ``http`` or ``https``.
 
 By default, the fetcher creates a configuration specification. If you
 want this specification written to an area other than the default, use
@@ -490,11 +510,8 @@ the specification is written.
 
 .. note::
 
-   the
-   SRCREV
-   loses its functionality if you specify this variable. However,
-   SRCREV
-   is still used to label the archive after a fetch even though it does
+   the SRCREV loses its functionality if you specify this variable. However,
+   SRCREV is still used to label the archive after a fetch even though it does
    not define what is fetched.
 
 Here are a couple of other behaviors worth mentioning:
@@ -532,34 +549,36 @@ the server's URL and port number, and you can specify a username and
 password directly in your recipe within ``SRC_URI``.
 
 Here is an example that relies on ``P4CONFIG`` to specify the server URL
-and port, username, and password, and fetches the Head Revision: SRC_URI
-= "p4://example-depot/main/source/..." SRCREV = "${AUTOREV}" PV =
-"p4-${SRCPV}" S = "${WORKDIR}/p4"
+and port, username, and password, and fetches the Head Revision: ::
+
+   SRC_URI = "p4://example-depot/main/source/..."
+   SRCREV = "${AUTOREV}"
+   PV = "p4-${SRCPV}"
+   S = "${WORKDIR}/p4"
 
 Here is an example that specifies the server URL and port, username, and
-password, and fetches a Revision based on a Label: P4PORT =
-"tcp:p4server.example.net:1666" SRC_URI =
-"p4://user:passwd@example-depot/main/source/..." SRCREV = "release-1.0"
-PV = "p4-${SRCPV}" S = "${WORKDIR}/p4"
+password, and fetches a Revision based on a Label: ::
+
+   P4PORT = "tcp:p4server.example.net:1666"
+   SRC_URI = "p4://user:passwd@example-depot/main/source/..."
+   SRCREV = "release-1.0"
+   PV = "p4-${SRCPV}"
+   S = "${WORKDIR}/p4"
 
 .. note::
 
-   You should always set
-   S
-   to
-   "${WORKDIR}/p4"
-   in your recipe.
+   You should always set S to "${WORKDIR}/p4" in your recipe.
 
 By default, the fetcher strips the depot location from the local file paths. In
 the above example, the content of ``example-depot/main/source/`` will be placed
 in ``${WORKDIR}/p4``.  For situations where preserving parts of the remote depot
 paths locally is desirable, the fetcher supports two parameters:
 
-- **"module":**
+- *"module":*
     The top-level depot location or directory to fetch. The value of this
     parameter can also point to a single file within the depot, in which case
     the local file path will include the module path.
-- **"remotepath":**
+- *"remotepath":*
     When used with the value "``keep``", the fetcher will mirror the full depot
     paths locally for the specified location, even in combination with the
     ``module`` parameter.
@@ -589,7 +608,7 @@ Repo Fetcher (``repo://``)
 This fetcher submodule fetches code from ``google-repo`` source control
 system. The fetcher works by initiating and syncing sources of the
 repository into :term:`REPODIR`, which is usually
-:term:`DL_DIR`\ ``/repo``.
+``${DL_DIR}/repo``.
 
 This fetcher supports the following parameters:
 
@@ -600,10 +619,10 @@ This fetcher supports the following parameters:
 
 -  *"manifest":* Name of the manifest file (default: ``default.xml``).
 
-Here are some example URLs: SRC_URI =
-"repo://REPOROOT;protocol=git;branch=some_branch;manifest=my_manifest.xml"
-SRC_URI =
-"repo://REPOROOT;protocol=file;branch=some_branch;manifest=my_manifest.xml"
+Here are some example URLs: ::
+
+   SRC_URI = "repo://REPOROOT;protocol=git;branch=some_branch;manifest=my_manifest.xml"
+   SRC_URI = "repo://REPOROOT;protocol=file;branch=some_branch;manifest=my_manifest.xml"
 
 Other Fetchers
 --------------
