@@ -14,7 +14,8 @@ import bb.event
 import bb.build
 from bb.build import StdoutNoopContextManager
 
-class ProgressHandler(object):
+
+class ProgressHandler:
     """
     Base class that can pretend to be a file object well enough to be
     used to build objects to intercept console output and determine the
@@ -55,6 +56,7 @@ class ProgressHandler(object):
             self._lastevent = ts
             self._progress = progress
 
+
 class LineFilterProgressHandler(ProgressHandler):
     """
     A ProgressHandler variant that provides the ability to filter out
@@ -66,7 +68,7 @@ class LineFilterProgressHandler(ProgressHandler):
     """
     def __init__(self, d, outfile=None):
         self._linebuffer = ''
-        super(LineFilterProgressHandler, self).__init__(d, outfile)
+        super().__init__(d, outfile)
 
     def write(self, string):
         self._linebuffer += string
@@ -81,14 +83,15 @@ class LineFilterProgressHandler(ProgressHandler):
             if lbreakpos:
                 line = line[lbreakpos:]
             if self.writeline(line):
-                super(LineFilterProgressHandler, self).write(line)
+                super().write(line)
 
     def writeline(self, line):
         return True
 
+
 class BasicProgressHandler(ProgressHandler):
     def __init__(self, d, regex=r'(\d+)%', outfile=None):
-        super(BasicProgressHandler, self).__init__(d, outfile)
+        super().__init__(d, outfile)
         self._regex = re.compile(regex)
         # Send an initial progress event so the bar gets shown
         self._fire_progress(0)
@@ -98,11 +101,12 @@ class BasicProgressHandler(ProgressHandler):
         if percs:
             progress = int(percs[-1])
             self.update(progress)
-        super(BasicProgressHandler, self).write(string)
+        super().write(string)
+
 
 class OutOfProgressHandler(ProgressHandler):
     def __init__(self, d, regex, outfile=None):
-        super(OutOfProgressHandler, self).__init__(d, outfile)
+        super().__init__(d, outfile)
         self._regex = re.compile(regex)
         # Send an initial progress event so the bar gets shown
         self._fire_progress(0)
@@ -112,9 +116,10 @@ class OutOfProgressHandler(ProgressHandler):
         if nums:
             progress = (float(nums[-1][0]) / float(nums[-1][1])) * 100
             self.update(progress)
-        super(OutOfProgressHandler, self).write(string)
+        super().write(string)
 
-class MultiStageProgressReporter(object):
+
+class MultiStageProgressReporter:
     """
     Class which allows reporting progress without the caller
     having to know where they are in the overall sequence. Useful
@@ -230,6 +235,7 @@ class MultiStageProgressReporter(object):
                     out.append('Up to finish: %d' % stage_weight)
             bb.warn('Stage times:\n  %s' % '\n  '.join(out))
 
+
 class MultiStageProcessProgressReporter(MultiStageProgressReporter):
     """
     Version of MultiStageProgressReporter intended for use with
@@ -238,7 +244,7 @@ class MultiStageProcessProgressReporter(MultiStageProgressReporter):
     def __init__(self, d, processname, stage_weights, debug=False):
         self._processname = processname
         self._started = False
-        MultiStageProgressReporter.__init__(self, d, stage_weights, debug)
+        super().__init__(d, stage_weights, debug)
 
     def start(self):
         if not self._started:
@@ -255,13 +261,14 @@ class MultiStageProcessProgressReporter(MultiStageProgressReporter):
         MultiStageProgressReporter.finish(self)
         bb.event.fire(bb.event.ProcessFinished(self._processname), self._data)
 
+
 class DummyMultiStageProcessProgressReporter(MultiStageProgressReporter):
     """
     MultiStageProcessProgressReporter that takes the calls and does nothing
     with them (to avoid a bunch of "if progress_reporter:" checks)
     """
     def __init__(self):
-        MultiStageProcessProgressReporter.__init__(self, "", None, [])
+        super().__init__(None, [])
 
     def _fire_progress(self, taskprogress, rate=None):
         pass
