@@ -15,6 +15,25 @@ import bb.build
 from bb.build import StdoutNoopContextManager
 
 
+# from https://stackoverflow.com/a/14693789/221061
+ANSI_ESCAPE_REGEX = re.compile(r'\x1B\[[0-?]*[ -/]*[@-~]')
+
+
+def filter_color(string):
+    """
+    Filter ANSI escape codes out of |string|, return new string
+    """
+    return ANSI_ESCAPE_REGEX.sub('', string)
+
+
+def filter_color_n(string):
+    """
+    Filter ANSI escape codes out of |string|, returns tuple of
+    (new string, # of ANSI codes removed)
+    """
+    return ANSI_ESCAPE_REGEX.subn('', string)
+
+
 class ProgressHandler:
     """
     Base class that can pretend to be a file object well enough to be
@@ -82,7 +101,7 @@ class LineFilterProgressHandler(ProgressHandler):
             lbreakpos = line.rfind('\r') + 1
             if lbreakpos:
                 line = line[lbreakpos:]
-            if self.writeline(line):
+            if self.writeline(filter_color(line)):
                 super().write(line)
 
     def writeline(self, line):
@@ -97,7 +116,7 @@ class BasicProgressHandler(ProgressHandler):
         self._fire_progress(0)
 
     def write(self, string):
-        percs = self._regex.findall(string)
+        percs = self._regex.findall(filter_color(string))
         if percs:
             progress = int(percs[-1])
             self.update(progress)
@@ -112,7 +131,7 @@ class OutOfProgressHandler(ProgressHandler):
         self._fire_progress(0)
 
     def write(self, string):
-        nums = self._regex.findall(string)
+        nums = self._regex.findall(filter_color(string))
         if nums:
             progress = (float(nums[-1][0]) / float(nums[-1][1])) * 100
             self.update(progress)
