@@ -38,7 +38,7 @@ class ProcessServer():
     profile_filename = "profile.log"
     profile_processed_filename = "profile.log.processed"
 
-    def __init__(self, lock, sock, sockname):
+    def __init__(self, lock, sock, sockname, server_timeout, xmlrpcinterface):
         self.command_channel = False
         self.command_channel_reply = False
         self.quit = False
@@ -56,6 +56,9 @@ class ProcessServer():
         self.bitbake_lock = lock
         self.sock = sock
         self.sockname = sockname
+
+        self.server_timeout = server_timeout
+        self.xmlrpcinterface = xmlrpcinterface
 
     def register_idle_function(self, function, data):
         """Register a function to be called while the server is idle"""
@@ -466,7 +469,7 @@ class BitBakeServer(object):
         print(self.start_log_format % (os.getpid(), datetime.datetime.now().strftime(self.start_log_datetime_format)))
         sys.stdout.flush()
 
-        server = ProcessServer(self.bitbake_lock, self.sock, self.sockname)
+        server = ProcessServer(self.bitbake_lock, self.sock, self.sockname, self.configuration.server_timeout, self.configuration.xmlrpcinterface)
         os.close(self.readypipe)
         writer = ConnectionWriter(self.readypipein)
         try:
@@ -476,8 +479,6 @@ class BitBakeServer(object):
         writer.send("r")
         writer.close()
         server.cooker = self.cooker
-        server.server_timeout = self.configuration.server_timeout
-        server.xmlrpcinterface = self.configuration.xmlrpcinterface
         print("Started bitbake server pid %d" % os.getpid())
         sys.stdout.flush()
 
