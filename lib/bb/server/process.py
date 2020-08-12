@@ -467,11 +467,10 @@ class BitBakeServer(object):
         sys.stdout.flush()
 
         server = ProcessServer(self.bitbake_lock, self.sock, self.sockname)
-        self.configuration.setServerRegIdleCallback(server.register_idle_function)
         os.close(self.readypipe)
         writer = ConnectionWriter(self.readypipein)
         try:
-            self.cooker = bb.cooker.BBCooker(self.configuration, self.featureset)
+            self.cooker = bb.cooker.BBCooker(self.configuration, self.featureset, server.register_idle_function)
         except bb.BBHandledException:
             return None
         writer.send("r")
