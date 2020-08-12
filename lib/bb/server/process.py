@@ -247,6 +247,10 @@ class ProcessServer():
 
         self.cooker.post_serve()
 
+        # Flush logs before we release the lock
+        sys.stdout.flush()
+        sys.stderr.flush()
+
         # Finally release the lockfile but warn about other processes holding it open
         lock = self.bitbake_lock
         lockfile = lock.name
@@ -469,20 +473,25 @@ class BitBakeServer(object):
         print(self.start_log_format % (os.getpid(), datetime.datetime.now().strftime(self.start_log_datetime_format)))
         sys.stdout.flush()
 
-        server = ProcessServer(self.bitbake_lock, self.sock, self.sockname, self.configuration.server_timeout, self.configuration.xmlrpcinterface)
-        os.close(self.readypipe)
-        writer = ConnectionWriter(self.readypipein)
         try:
-            self.cooker = bb.cooker.BBCooker(self.configuration, self.featureset, server.register_idle_function)
-        except bb.BBHandledException:
-            return None
-        writer.send("r")
-        writer.close()
-        server.cooker = self.cooker
-        print("Started bitbake server pid %d" % os.getpid())
-        sys.stdout.flush()
+            server = ProcessServer(self.bitbake_lock, self.sock, self.sockname, self.configuration.server_timeout, self.configuration.xmlrpcinterface)
+            os.close(self.readypipe)
+            writer = ConnectionWriter(self.readypipein)
+            try:
+                self.cooker = bb.cooker.BBCooker(self.configuration, self.featureset, server.register_idle_function)
+            except bb.BBHandledException:
+                return None
+            writer.send("r")
+            writer.close()
+            server.cooker = self.cooker
+            print("Started bitbake server pid %d" % os.getpid())
+            sys.stdout.flush()
 
-        server.run()
+            server.run()
+        finally:
+            # Flush any ,essages/errors to the logfile before exit
+            sys.stdout.flush()
+            sys.stderr.flush()
 
 def connectProcessServer(sockname, featureset):
     # Connect to socket
