@@ -34,12 +34,11 @@ logger = logging.getLogger('BitBake')
 class ProcessTimeout(SystemExit):
     pass
 
-class ProcessServer(multiprocessing.Process):
+class ProcessServer():
     profile_filename = "profile.log"
     profile_processed_filename = "profile.log.processed"
 
     def __init__(self, lock, sock, sockname):
-        multiprocessing.Process.__init__(self)
         self.command_channel = False
         self.command_channel_reply = False
         self.quit = False
@@ -483,7 +482,7 @@ class BitBakeServer(object):
         print("Started bitbake server pid %d" % os.getpid())
         sys.stdout.flush()
 
-        server.start()
+        server.run()
 
 def connectProcessServer(sockname, featureset):
     # Connect to socket
