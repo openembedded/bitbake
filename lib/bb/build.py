@@ -318,6 +318,7 @@ bb_sh_exit_handler() {
 
 bb_bash_exit_handler() {
     ret=$?
+    { set +x; } > /dev/null
     trap "" DEBUG
     if [ "$ret" != 0 ]; then
         echo "WARNING: ${BASH_SOURCE[0]}:${__BITBAKE_LAST_LINE} exit $ret from '$1'"
@@ -353,8 +354,8 @@ case $BASH_VERSION in
     set -e
     ;;
 *)  trap 'bb_bash_exit_handler "$BASH_COMMAND"' 0
-    trap 'bb_bash_debug_handler' DEBUG
-    set -eE
+    trap '{ bb_bash_debug_handler; } 2>/dev/null' DEBUG
+    set -e
     shopt -s extdebug
     ;;
 esac
