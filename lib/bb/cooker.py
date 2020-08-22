@@ -2103,12 +2103,11 @@ class CookerParser(object):
                                             self.total)
 
             bb.event.fire(event, self.cfgdata)
-            for process in self.processes:
-                self.parser_quit.put(None)
-        else:
-            self.parser_quit.cancel_join_thread()
-            for process in self.processes:
-                self.parser_quit.put(None)
+
+        # Allow data left in the cancel queue to be discarded
+        self.parser_quit.cancel_join_thread()
+        for process in self.processes:
+            self.parser_quit.put(None)
 
         # Cleanup the queue before call process.join(), otherwise there might be
         # deadlocks.
@@ -2124,6 +2123,9 @@ class CookerParser(object):
                 process.terminate()
             else:
                 process.join()
+
+        self.parser_quit.close()
+        self.parser_quit.join_thread()
 
         def sync_caches():
             for c in self.bb_caches.values():
