@@ -58,10 +58,13 @@ class ConfigParameters(object):
     def updateToServer(self, server, environment):
         options = {}
         for o in ["abort", "force", "invalidate_stamp",
-                  "verbose", "debug", "dry_run", "dump_signatures",
+                  "debug", "dry_run", "dump_signatures",
                   "debug_domains", "extra_assume_provided", "profile",
                   "prefile", "postfile", "server_timeout"]:
             options[o] = getattr(self.options, o)
+
+        options['build_verbose_shell'] = self.options.verbose
+        options['build_verbose_stdout'] = self.options.verbose
 
         ret, error = server.runCommand(["updateConfig", options, environment, sys.argv])
         if error:
@@ -125,6 +128,8 @@ class CookerConfiguration(object):
         self.skipsetscene = False
         self.invalidate_stamp = False
         self.dump_signatures = []
+        self.build_verbose_shell = False
+        self.build_verbose_stdout = False
         self.dry_run = False
         self.tracking = False
         self.xmlrpcinterface = []

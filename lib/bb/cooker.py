@@ -411,11 +411,6 @@ class BBCooker:
             self.data.disableTracking()
 
     def parseConfiguration(self):
-        # Set log file verbosity
-        verboselogs = bb.utils.to_boolean(self.data.getVar("BB_VERBOSE_LOGS", False))
-        if verboselogs:
-            bb.msg.loggerVerboseLogs = True
-
         # Change nice level if we're asked to
         nice = self.data.getVar("BB_NICE_LEVEL")
         if nice:
