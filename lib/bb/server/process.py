@@ -58,6 +58,7 @@ class ProcessServer():
         self.sockname = sockname
 
         self.server_timeout = server_timeout
+        self.timeout = self.server_timeout
         self.xmlrpcinterface = xmlrpcinterface
 
     def register_idle_function(self, function, data):
@@ -71,21 +72,6 @@ class ProcessServer():
             self.xmlrpc = bb.server.xmlrpcserver.BitBakeXMLRPCServer(self.xmlrpcinterface, self.cooker, self)
 
             print("Bitbake XMLRPC server address: %s, server port: %s" % (self.xmlrpc.host, self.xmlrpc.port))
-
-        heartbeat_event = self.cooker.data.getVar('BB_HEARTBEAT_EVENT')
-        if heartbeat_event:
-            try:
-                self.heartbeat_seconds = float(heartbeat_event)
-            except:
-                bb.warn('Ignoring invalid BB_HEARTBEAT_EVENT=%s, must be a float specifying seconds.' % heartbeat_event)
-
-        self.timeout = self.server_timeout or self.cooker.data.getVar('BB_SERVER_TIMEOUT')
-        try:
-            if self.timeout:
-                self.timeout = float(self.timeout)
-        except:
-            bb.warn('Ignoring invalid BB_SERVER_TIMEOUT=%s, must be a float specifying seconds.' % self.timeout)
-
 
         try:
             self.bitbake_lock.seek(0)
@@ -129,6 +115,7 @@ class ProcessServer():
         fds = [self.sock]
         if self.xmlrpc:
             fds.append(self.xmlrpc)
+        seendata = False
         print("Entering server connection loop")
 
         def disconnect_client(self, fds):
@@ -228,6 +215,22 @@ class ProcessServer():
             if self.xmlrpc in ready:
                 self.xmlrpc.handle_requests()
 
+            if not seendata and hasattr(self.cooker, "data"):
+                heartbeat_event = self.cooker.data.getVar('BB_HEARTBEAT_EVENT')
+                if heartbeat_event:
+                    try:
+                        self.heartbeat_seconds = float(heartbeat_event)
+                    except:
+                        bb.warn('Ignoring invalid BB_HEARTBEAT_EVENT=%s, must be a float specifying seconds.' % heartbeat_event)
+
+                self.timeout = self.server_timeout or self.cooker.data.getVar('BB_SERVER_TIMEOUT')
+                try:
+                    if self.timeout:
+                        self.timeout = float(self.timeout)
+                except:
+                    bb.warn('Ignoring invalid BB_SERVER_TIMEOUT=%s, must be a float specifying seconds.' % self.timeout)
+                seendata = True
+
             ready = self.idle_commands(.1, fds)
 
         print("Exiting")
@@ -323,8 +326,9 @@ class ProcessServer():
             self.next_heartbeat += self.heartbeat_seconds
             if self.next_heartbeat <= now:
                 self.next_heartbeat = now + self.heartbeat_seconds
-            heartbeat = bb.event.HeartbeatEvent(now)
-            bb.event.fire(heartbeat, self.cooker.data)
+            if hasattr(self.cooker, "data"):
+                heartbeat = bb.event.HeartbeatEvent(now)
+                bb.event.fire(heartbeat, self.cooker.data)
         if nextsleep and now + nextsleep > self.next_heartbeat:
             # Shorten timeout so that we we wake up in time for
             # the heartbeat.

@@ -195,11 +195,6 @@ class BBCooker:
         self.hashserv = None
         self.hashservaddr = None
 
-        self.initConfigurationData()
-
-        bb.debug(1, "BBCooker parsed base configuration %s" % time.time())
-        sys.stdout.flush()
-
         self.inotify_modified_files = []
 
         def _process_inotify_updates(server, cooker, abort):
@@ -232,6 +227,13 @@ class BBCooker:
 
         bb.debug(1, "BBCooker startup complete %s" % time.time())
         sys.stdout.flush()
+
+    def init_configdata(self):
+        if not hasattr(self, "data"):
+            self.initConfigurationData()
+            bb.debug(1, "BBCooker parsed base configuration %s" % time.time())
+            sys.stdout.flush()
+            self.handlePRServ()
 
     def process_inotify_updates(self):
         for n in [self.confignotifier, self.notifier]:
@@ -318,7 +320,7 @@ class BBCooker:
         for feature in features:
             self.featureset.setFeature(feature)
         bb.debug(1, "Features set %s (was %s)" % (original_featureset, list(self.featureset)))
-        if (original_featureset != list(self.featureset)) and self.state != state.error:
+        if (original_featureset != list(self.featureset)) and self.state != state.error and hasattr(self, "data"):
             self.reset()
 
     def initConfigurationData(self):
@@ -1658,9 +1660,6 @@ class BBCooker:
         return pkgs_to_build
 
     def pre_serve(self):
-        # We now are in our own process so we can call this here.
-        # PRServ exits if its parent process exits
-        self.handlePRServ()
         return
 
     def post_serve(self):
