@@ -402,27 +402,11 @@ class BitBakeServer(object):
         self.bitbake_lock = lock
         self.readypipe, self.readypipein = os.pipe()
 
-        # Create server control socket
-        if os.path.exists(sockname):
-            os.unlink(sockname)
-
         # Place the log in the builddirectory alongside the lock file
         logfile = os.path.join(os.path.dirname(self.bitbake_lock.name), "bitbake-cookerdaemon.log")
 
-        self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        # AF_UNIX has path length issues so chdir here to workaround
-        cwd = os.getcwd()
-        try:
-            os.chdir(os.path.dirname(sockname))
-            self.sock.bind(os.path.basename(sockname))
-        finally:
-            os.chdir(cwd)
-        self.sock.listen(1)
-
-        os.set_inheritable(self.sock.fileno(), True)
         startdatetime = datetime.datetime.now()
         bb.daemonize.createDaemon(self._startServer, logfile)
-        self.sock.close()
         self.bitbake_lock.close()
         os.close(self.readypipein)
 
@@ -478,7 +462,21 @@ class BitBakeServer(object):
         sys.stdout.flush()
 
         try:
-            server = ProcessServer(self.bitbake_lock, self.sock, self.sockname, self.configuration.server_timeout, self.configuration.xmlrpcinterface)
+            # Create server control socket
+            if os.path.exists(self.sockname):
+                os.unlink(self.sockname)
+
+            sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            # AF_UNIX has path length issues so chdir here to workaround
+            cwd = os.getcwd()
+            try:
+                os.chdir(os.path.dirname(self.sockname))
+                sock.bind(os.path.basename(self.sockname))
+            finally:
+                os.chdir(cwd)
+            sock.listen(1)
+
+            server = ProcessServer(self.bitbake_lock, sock, self.sockname, self.configuration.server_timeout, self.configuration.xmlrpcinterface)
             os.close(self.readypipe)
             writer = ConnectionWriter(self.readypipein)
             try:
