@@ -60,7 +60,9 @@ class ConfigParameters(object):
         for o in ["abort", "force", "invalidate_stamp",
                   "dry_run", "dump_signatures",
                   "extra_assume_provided", "profile",
-                  "prefile", "postfile", "server_timeout"]:
+                  "prefile", "postfile", "server_timeout",
+                  "nosetscene", "setsceneonly", "skipsetscene",
+                  "runall", "runonly"]:
             options[o] = getattr(self.options, o)
 
         options['build_verbose_shell'] = self.options.verbose
