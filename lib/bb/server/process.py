@@ -38,7 +38,7 @@ class ProcessServer():
     profile_filename = "profile.log"
     profile_processed_filename = "profile.log.processed"
 
-    def __init__(self, lock, sock, sockname, server_timeout, xmlrpcinterface):
+    def __init__(self, lock, lockname, sock, sockname, server_timeout, xmlrpcinterface):
         self.command_channel = False
         self.command_channel_reply = False
         self.quit = False
@@ -54,6 +54,7 @@ class ProcessServer():
         self._idlefuns = {}
 
         self.bitbake_lock = lock
+        self.bitbake_lock_name = lockname
         self.sock = sock
         self.sockname = sockname
 
@@ -259,7 +260,7 @@ class ProcessServer():
 
         # Finally release the lockfile but warn about other processes holding it open
         lock = self.bitbake_lock
-        lockfile = lock.name
+        lockfile = self.bitbake_lock_name
         lock.close()
         lock = None
 
@@ -393,9 +394,10 @@ class BitBakeProcessServerConnection(object):
         self.connection.recv.close()
         return
 
+start_log_format = '--- Starting bitbake server pid %s at %s ---'
+start_log_datetime_format = '%Y-%m-%d %H:%M:%S.%f'
+
 class BitBakeServer(object):
-    start_log_format = '--- Starting bitbake server pid %s at %s ---'
-    start_log_datetime_format = '%Y-%m-%d %H:%M:%S.%f'
 
     def __init__(self, lock, sockname, featureset, server_timeout, xmlrpcinterface):
 
@@ -408,6 +410,7 @@ class BitBakeServer(object):
 
         # Place the log in the builddirectory alongside the lock file
         logfile = os.path.join(os.path.dirname(self.bitbake_lock.name), "bitbake-cookerdaemon.log")
+        self.logfile = logfile
 
         startdatetime = datetime.datetime.now()
         bb.daemonize.createDaemon(self._startServer, logfile)
@@ -429,7 +432,7 @@ class BitBakeServer(object):
             ready.close()
             bb.error("Unable to start bitbake server (%s)" % str(r))
             if os.path.exists(logfile):
-                logstart_re = re.compile(self.start_log_format % ('([0-9]+)', '([0-9-]+ [0-9:.]+)'))
+                logstart_re = re.compile(start_log_format % ('([0-9]+)', '([0-9-]+ [0-9:.]+)'))
                 started = False
                 lines = []
                 lastlines = []
@@ -441,7 +444,7 @@ class BitBakeServer(object):
                             lastlines.append(line)
                             res = logstart_re.match(line.rstrip())
                             if res:
-                                ldatetime = datetime.datetime.strptime(res.group(2), self.start_log_datetime_format)
+                                ldatetime = datetime.datetime.strptime(res.group(2), start_log_datetime_format)
                                 if ldatetime >= startdatetime:
                                     started = True
                                     lines.append(line)
@@ -462,42 +465,55 @@ class BitBakeServer(object):
         ready.close()
 
     def _startServer(self):
-        print(self.start_log_format % (os.getpid(), datetime.datetime.now().strftime(self.start_log_datetime_format)))
+        os.close(self.readypipe)
+        os.set_inheritable(self.bitbake_lock.fileno(), True)
+        os.set_inheritable(self.readypipein, True)
+        serverscript = os.path.realpath(os.path.dirname(__file__) + "/../../../bin/bitbake-server")
+        os.execl(serverscript, serverscript, "decafbad", str(self.bitbake_lock.fileno()), str(self.readypipein), self.logfile, self.bitbake_lock.name, self.sockname,  str(self.server_timeout), str(self.xmlrpcinterface[0]), str(self.xmlrpcinterface[1]))
+
+def execServer(lockfd, readypipeinfd, lockname, sockname, server_timeout, xmlrpcinterface):
+
+    import bb.cookerdata
+    import bb.cooker
+
+    print(start_log_format % (os.getpid(), datetime.datetime.now().strftime(start_log_datetime_format)))
+    sys.stdout.flush()
+
+    try:
+        bitbake_lock = os.fdopen(lockfd, "w")
+
+        # Create server control socket
+        if os.path.exists(sockname):
+            os.unlink(sockname)
+
+        sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        # AF_UNIX has path length issues so chdir here to workaround
+        cwd = os.getcwd()
+        try:
+            os.chdir(os.path.dirname(sockname))
+            sock.bind(os.path.basename(sockname))
+        finally:
+            os.chdir(cwd)
+        sock.listen(1)
+
+        server = ProcessServer(bitbake_lock, lockname, sock, sockname, server_timeout, xmlrpcinterface)
+        writer = ConnectionWriter(readypipeinfd)
+        try:
+            featureset = []
+            cooker = bb.cooker.BBCooker(featureset, server.register_idle_function)
+        except bb.BBHandledException:
+            return None
+        writer.send("r")
+        writer.close()
+        server.cooker = cooker
+        print("Started bitbake server pid %d" % os.getpid())
         sys.stdout.flush()
 
-        try:
-            # Create server control socket
-            if os.path.exists(self.sockname):
-                os.unlink(self.sockname)
-
-            sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-            # AF_UNIX has path length issues so chdir here to workaround
-            cwd = os.getcwd()
-            try:
-                os.chdir(os.path.dirname(self.sockname))
-                sock.bind(os.path.basename(self.sockname))
-            finally:
-                os.chdir(cwd)
-            sock.listen(1)
-
-            server = ProcessServer(self.bitbake_lock, sock, self.sockname, self.server_timeout, self.xmlrpcinterface)
-            os.close(self.readypipe)
-            writer = ConnectionWriter(self.readypipein)
-            try:
-                self.cooker = bb.cooker.BBCooker(self.featureset, server.register_idle_function)
-            except bb.BBHandledException:
-                return None
-            writer.send("r")
-            writer.close()
-            server.cooker = self.cooker
-            print("Started bitbake server pid %d" % os.getpid())
-            sys.stdout.flush()
-
-            server.run()
-        finally:
-            # Flush any ,essages/errors to the logfile before exit
-            sys.stdout.flush()
-            sys.stderr.flush()
+        server.run()
+    finally:
+        # Flush any ,essages/errors to the logfile before exit
+        sys.stdout.flush()
+        sys.stderr.flush()
 
 def connectProcessServer(sockname, featureset):
     # Connect to socket
