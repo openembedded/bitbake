@@ -25,6 +25,7 @@ import subprocess
 import errno
 import re
 import datetime
+import pickle
 import bb.server.xmlrpcserver
 from bb import daemonize
 from multiprocessing import queues

@@ -732,7 +732,7 @@ class Tinfoil:
                                 continue
                             if helper.eventHandler(event):
                                 if isinstance(event, bb.build.TaskFailedSilent):
-                                    logger.warning("Logfile for failed setscene task is %s" % event.logfile)
+                                    self.logger.warning("Logfile for failed setscene task is %s" % event.logfile)
                                 elif isinstance(event, bb.build.TaskFailed):
                                     bb.ui.knotty.print_event_log(event, includelogs, loglines, termfilter)
                                 continue

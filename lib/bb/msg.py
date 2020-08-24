@@ -14,6 +14,7 @@ import sys
 import copy
 import logging
 import logging.config
+import os
 from itertools import groupby
 import bb
 import bb.event
