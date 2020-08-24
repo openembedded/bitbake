@@ -150,6 +150,7 @@ class BBCooker:
 
     def __init__(self, configuration, featureSet=None, idleCallBackRegister=None):
         self.recipecaches = None
+        self.eventlog = None
         self.skiplist = {}
         self.featureset = CookerFeatures()
         if featureSet:
@@ -198,13 +199,6 @@ class BBCooker:
 
         bb.debug(1, "BBCooker parsed base configuration %s" % time.time())
         sys.stdout.flush()
-
-        # we log all events to a file if so directed
-        if self.configuration.writeeventlog:
-            # register the log file writer as UI Handler
-            writer = EventWriter(self, self.configuration.writeeventlog)
-            EventLogWriteHandler = namedtuple('EventLogWriteHandler', ['event'])
-            bb.event.register_UIHhandler(EventLogWriteHandler(writer))
 
         self.inotify_modified_files = []
 
@@ -448,6 +442,16 @@ class BBCooker:
                 clean = False
             if hasattr(self.configuration, o):
                 setattr(self.configuration, o, options[o])
+
+        if self.configuration.writeeventlog:
+            if self.eventlog and self.eventlog[0] != self.configuration.writeeventlog:
+                bb.event.unregister_UIHhandler(self.eventlog[1])
+            if not self.eventlog or self.eventlog[0] != self.configuration.writeeventlog:
+                # we log all events to a file if so directed
+                # register the log file writer as UI Handler
+                writer = EventWriter(self, self.configuration.writeeventlog)
+                EventLogWriteHandler = namedtuple('EventLogWriteHandler', ['event'])
+                self.eventlog = (self.configuration.writeeventlog, bb.event.register_UIHhandler(EventLogWriteHandler(writer)))
 
         bb.msg.loggerDefaultLogLevel = self.configuration.default_loglevel
         bb.msg.loggerDefaultDomains = self.configuration.debug_domains

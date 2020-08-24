@@ -62,7 +62,7 @@ class ConfigParameters(object):
                   "extra_assume_provided", "profile",
                   "prefile", "postfile", "server_timeout",
                   "nosetscene", "setsceneonly", "skipsetscene",
-                  "runall", "runonly"]:
+                  "runall", "runonly", "writeeventlog"]:
             options[o] = getattr(self.options, o)
 
         options['build_verbose_shell'] = self.options.verbose
