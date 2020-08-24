@@ -233,6 +233,9 @@ class ProcessServer():
 
             ready = self.idle_commands(.1, fds)
 
+        if len(threading.enumerate()) != 1:
+            print("More than one thread left?: " + str(threading.enumerate()))
+
         print("Exiting")
         # Remove the socket file so we don't get any more connections to avoid races
         try:
