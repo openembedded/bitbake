@@ -357,11 +357,11 @@ def bitbake_main(configParams, configuration):
 
     if "BBDEBUG" in os.environ:
         level = int(os.environ["BBDEBUG"])
-        if level > configuration.debug:
-            configuration.debug = level
+        if level > configParams.debug:
+            configParams.debug = level
 
-    bb.msg.init_msgconfig(configParams.verbose, configuration.debug,
-                          configuration.debug_domains)
+    bb.msg.init_msgconfig(configParams.verbose, configParams.debug,
+                          configParams.debug_domains)
 
     server_connection, ui_module = setup_bitbake(configParams, configuration)
     # No server connection

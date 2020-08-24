@@ -58,13 +58,15 @@ class ConfigParameters(object):
     def updateToServer(self, server, environment):
         options = {}
         for o in ["abort", "force", "invalidate_stamp",
-                  "debug", "dry_run", "dump_signatures",
-                  "debug_domains", "extra_assume_provided", "profile",
+                  "dry_run", "dump_signatures",
+                  "extra_assume_provided", "profile",
                   "prefile", "postfile", "server_timeout"]:
             options[o] = getattr(self.options, o)
 
         options['build_verbose_shell'] = self.options.verbose
         options['build_verbose_stdout'] = self.options.verbose
+        options['default_loglevel'] = bb.msg.loggerDefaultLogLevel
+        options['debug_domains'] = bb.msg.loggerDefaultDomains
 
         ret, error = server.runCommand(["updateConfig", options, environment, sys.argv])
         if error:
@@ -114,11 +116,11 @@ class CookerConfiguration(object):
     """
 
     def __init__(self):
-        self.debug_domains = []
+        self.debug_domains = bb.msg.loggerDefaultDomains
+        self.default_loglevel = bb.msg.loggerDefaultLogLevel
         self.extra_assume_provided = []
         self.prefile = []
         self.postfile = []
-        self.debug = 0
         self.cmd = None
         self.abort = True
         self.force = False

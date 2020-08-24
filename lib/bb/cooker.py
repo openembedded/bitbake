@@ -446,7 +446,12 @@ class BBCooker:
                 logger.debug(1, "Marking as dirty due to '%s' option change to '%s'" % (o, options[o]))
                 print("Marking as dirty due to '%s' option change to '%s'" % (o, options[o]))
                 clean = False
-            setattr(self.configuration, o, options[o])
+            if hasattr(self.configuration, o):
+                setattr(self.configuration, o, options[o])
+
+        bb.msg.loggerDefaultLogLevel = self.configuration.default_loglevel
+        bb.msg.loggerDefaultDomains = self.configuration.debug_domains
+
         for k in bb.utils.approved_variables():
             if k in environment and k not in self.configuration.env:
                 logger.debug(1, "Updating new environment variable %s to %s" % (k, environment[k]))
