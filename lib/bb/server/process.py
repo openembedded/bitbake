@@ -394,9 +394,10 @@ class BitBakeServer(object):
     start_log_format = '--- Starting bitbake server pid %s at %s ---'
     start_log_datetime_format = '%Y-%m-%d %H:%M:%S.%f'
 
-    def __init__(self, lock, sockname, configuration, featureset):
+    def __init__(self, lock, sockname, featureset, server_timeout, xmlrpcinterface):
 
-        self.configuration = configuration
+        self.server_timeout = server_timeout
+        self.xmlrpcinterface = xmlrpcinterface
         self.featureset = featureset
         self.sockname = sockname
         self.bitbake_lock = lock
@@ -476,11 +477,11 @@ class BitBakeServer(object):
                 os.chdir(cwd)
             sock.listen(1)
 
-            server = ProcessServer(self.bitbake_lock, sock, self.sockname, self.configuration.server_timeout, self.configuration.xmlrpcinterface)
+            server = ProcessServer(self.bitbake_lock, sock, self.sockname, self.server_timeout, self.xmlrpcinterface)
             os.close(self.readypipe)
             writer = ConnectionWriter(self.readypipein)
             try:
-                self.cooker = bb.cooker.BBCooker(self.configuration, self.featureset, server.register_idle_function)
+                self.cooker = bb.cooker.BBCooker(self.featureset, server.register_idle_function)
             except bb.BBHandledException:
                 return None
             writer.send("r")

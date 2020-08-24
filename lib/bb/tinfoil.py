@@ -22,7 +22,6 @@ import bb.taskdata
 import bb.utils
 import bb.command
 import bb.remotedata
-from bb.cookerdata import CookerConfiguration
 from bb.main import setup_bitbake, BitBakeConfigParameters
 import bb.fetch2
 
@@ -381,18 +380,13 @@ class Tinfoil:
         if not config_params:
             config_params = TinfoilConfigParameters(config_only=config_only, quiet=quiet)
 
-        cookerconfig = CookerConfiguration()
-        cookerconfig.setConfigParameters(config_params)
-
         if not config_only:
             # Disable local loggers because the UI module is going to set up its own
             for handler in self.localhandlers:
                 self.logger.handlers.remove(handler)
             self.localhandlers = []
 
-        self.server_connection, ui_module = setup_bitbake(config_params,
-                            cookerconfig,
-                            extrafeatures)
+        self.server_connection, ui_module = setup_bitbake(config_params, extrafeatures)
 
         self.ui_module = ui_module
 
