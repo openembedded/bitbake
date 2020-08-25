@@ -479,6 +479,10 @@ class BBCooker:
                 logger.debug(1, "Updating environment variable %s from %s to %s" % (k, self.configuration.env[k], environment[k]))
                 self.configuration.env[k] = environment[k]
                 clean = False
+
+        # Now update all the variables not in the datastore to match
+        self.configuration.env = environment
+
         if not clean:
             logger.debug(1, "Base environment change, triggering reparse")
             self.reset()
