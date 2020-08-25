@@ -433,20 +433,6 @@ def fileslocked(files):
         for lock in locks:
             bb.utils.unlockfile(lock)
 
-@contextmanager
-def timeout(seconds):
-    def timeout_handler(signum, frame):
-        pass
-
-    original_handler = signal.signal(signal.SIGALRM, timeout_handler)
-
-    try:
-        signal.alarm(seconds)
-        yield
-    finally:
-        signal.alarm(0)
-        signal.signal(signal.SIGALRM, original_handler)
-
 def lockfile(name, shared=False, retry=True, block=False):
     """
     Use the specified file as a lock file, return when the lock has
