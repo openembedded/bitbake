@@ -266,34 +266,37 @@ class ProcessServer():
         lock = None
 
         while not lock:
-            with bb.utils.timeout(3):
-                lock = bb.utils.lockfile(lockfile, shared=False, retry=False, block=True)
-                if lock:
-                    # We hold the lock so we can remove the file (hide stale pid data)
-                    # via unlockfile.
-                    bb.utils.unlockfile(lock)
-                    return
-
-                if not lock:
-                    # Some systems may not have lsof available
-                    procs = None
+            i = 0
+            lock = None
+            while not lock and i < 30:
+                time.sleep(0.1)
+                _, lock = bb.utils.lockfile(lockfile, shared=False, retry=False, block=False)
+                i += 1
+            if lock:
+                # We hold the lock so we can remove the file (hide stale pid data)
+                # via unlockfile.
+                bb.utils.unlockfile(lock)
+                return
+            if not lock:
+                # Some systems may not have lsof available
+                procs = None
+                try:
+                    procs = subprocess.check_output(["lsof", '-w', lockfile], stderr=subprocess.STDOUT)
+                except OSError as e:
+                    if e.errno != errno.ENOENT:
+                        raise
+                if procs is None:
+                    # Fall back to fuser if lsof is unavailable
                     try:
-                        procs = subprocess.check_output(["lsof", '-w', lockfile], stderr=subprocess.STDOUT)
+                        procs = subprocess.check_output(["fuser", '-v', lockfile], stderr=subprocess.STDOUT)
                     except OSError as e:
                         if e.errno != errno.ENOENT:
                             raise
-                    if procs is None:
-                        # Fall back to fuser if lsof is unavailable
-                        try:
-                            procs = subprocess.check_output(["fuser", '-v', lockfile], stderr=subprocess.STDOUT)
-                        except OSError as e:
-                            if e.errno != errno.ENOENT:
-                                raise
 
-                    msg = "Delaying shutdown due to active processes which appear to be holding bitbake.lock"
-                    if procs:
-                        msg += ":\n%s" % str(procs)
-                    print(msg)
+                msg = "Delaying shutdown due to active processes which appear to be holding bitbake.lock"
+                if procs:
+                    msg += ":\n%s" % str(procs)
+                print(msg)
 
     def idle_commands(self, delay, fds=None):
         nextsleep = delay
