@@ -602,8 +602,8 @@ class FetcherLocalTest(FetcherTest):
         self.assertEqual(tree, ['a', 'dir/c'])
 
     def test_local_wildcard(self):
-        tree = self.fetchUnpack(['file://a', 'file://dir/*'])
-        self.assertEqual(tree, ['a',  'dir/c', 'dir/d', 'dir/subdir/e'])
+        with self.assertRaises(bb.fetch2.ParameterError):
+            tree = self.fetchUnpack(['file://a', 'file://dir/*'])
 
     def test_local_dir(self):
         tree = self.fetchUnpack(['file://a', 'file://dir'])
