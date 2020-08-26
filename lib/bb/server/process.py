@@ -270,7 +270,7 @@ class ProcessServer():
             lock = None
             while not lock and i < 30:
                 time.sleep(0.1)
-                _, lock = bb.utils.lockfile(lockfile, shared=False, retry=False, block=False)
+                lock = bb.utils.lockfile(lockfile, shared=False, retry=False, block=False)
                 i += 1
             if lock:
                 # We hold the lock so we can remove the file (hide stale pid data)
