@@ -3,13 +3,14 @@
 #
 # Copyright (C) 2006 Tim Ansell
 #
-#Please Note:
+# Please Note:
 # Be careful when using mutable types (ie Dict and Lists) - operations involving these are SLOW.
 # Assign a file to __warn__ to get warnings about slow operations.
 #
 
 
 import copy
+
 ImmutableTypes = (
     bool,
     complex,
@@ -22,8 +23,10 @@ ImmutableTypes = (
 
 MUTABLE = "__mutable__"
 
+
 class COWMeta(type):
     pass
+
 
 class COWDictMeta(COWMeta):
     __warn__ = False
@@ -33,12 +36,15 @@ class COWDictMeta(COWMeta):
     def __str__(cls):
         # FIXME: I have magic numbers!
         return "<COWDict Level: %i Current Keys: %i>" % (cls.__count__, len(cls.__dict__) - 3)
+
     __repr__ = __str__
 
     def cow(cls):
         class C(cls):
             __count__ = cls.__count__ + 1
+
         return C
+
     copy = cow
     __call__ = cow
 
@@ -70,8 +76,9 @@ class COWDictMeta(COWMeta):
         return value
 
     __getmarker__ = []
+
     def __getreadonly__(cls, key, default=__getmarker__):
-        """\
+        """
         Get a value (even if mutable) which you promise not to change.
         """
         return cls.__getitem__(key, default, True)
@@ -138,24 +145,29 @@ class COWDictMeta(COWMeta):
 
     def iterkeys(cls):
         return cls.iter("keys")
+
     def itervalues(cls, readonly=False):
         if not cls.__warn__ is False and cls.__hasmutable__ and readonly is False:
-            print("Warning: If you arn't going to change any of the values call with True.", file=cls.__warn__)
+            print("Warning: If you aren't going to change any of the values call with True.", file=cls.__warn__)
         return cls.iter("values", readonly)
+
     def iteritems(cls, readonly=False):
         if not cls.__warn__ is False and cls.__hasmutable__ and readonly is False:
-            print("Warning: If you arn't going to change any of the values call with True.", file=cls.__warn__)
+            print("Warning: If you aren't going to change any of the values call with True.", file=cls.__warn__)
         return cls.iter("items", readonly)
+
 
 class COWSetMeta(COWDictMeta):
     def __str__(cls):
         # FIXME: I have magic numbers!
-        return "<COWSet Level: %i Current Keys: %i>" % (cls.__count__, len(cls.__dict__) -3)
+        return "<COWSet Level: %i Current Keys: %i>" % (cls.__count__, len(cls.__dict__) - 3)
+
     __repr__ = __str__
 
     def cow(cls):
         class C(cls):
             __count__ = cls.__count__ + 1
+
         return C
 
     def add(cls, value):
@@ -173,11 +185,13 @@ class COWSetMeta(COWDictMeta):
     def iteritems(cls):
         raise TypeError("sets don't have 'items'")
 
+
 # These are the actual classes you use!
-class COWDictBase(object, metaclass = COWDictMeta):
+class COWDictBase(metaclass=COWDictMeta):
     __count__ = 0
 
-class COWSetBase(object, metaclass = COWSetMeta):
+
+class COWSetBase(metaclass=COWSetMeta):
     __count__ = 0
 
 if __name__ == "__main__":
