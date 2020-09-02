@@ -300,13 +300,13 @@ class CookerDataBuilder(object):
 
             self.data_hash = data_hash.hexdigest()
         except (SyntaxError, bb.BBHandledException):
-            raise bb.BBHandledException
+            raise bb.BBHandledException()
         except bb.data_smart.ExpansionError as e:
             logger.error(str(e))
-            raise bb.BBHandledException
+            raise bb.BBHandledException()
         except Exception:
             logger.exception("Error parsing configuration files")
-            raise bb.BBHandledException
+            raise bb.BBHandledException()
 
         # Create a copy so we can reset at a later date when UIs disconnect
         self.origdata = self.data
