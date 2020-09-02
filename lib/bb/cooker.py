@@ -352,7 +352,7 @@ class BBCooker:
                 self.caches_array.append(getattr(module, cache_name))
             except ImportError as exc:
                 logger.critical("Unable to import extra RecipeInfo '%s' from '%s': %s" % (cache_name, module_name, exc))
-                sys.exit("FATAL: Failed to import extra cache class '%s'." % cache_name)
+                raise bb.BBHandledException()
 
         self.databuilder = bb.cookerdata.CookerDataBuilder(self.configuration, False)
         self.databuilder.parseBaseConfiguration()
@@ -1127,7 +1127,7 @@ class BBCooker:
             from bb import shell
         except ImportError:
             parselog.exception("Interactive mode not available")
-            sys.exit(1)
+            raise bb.BBHandledException()
         else:
             shell.start( self )
 

@@ -164,7 +164,7 @@ def catch_parse_error(func):
             import traceback
             parselog.critical(traceback.format_exc())
             parselog.critical("Unable to parse %s: %s" % (fn, exc))
-            sys.exit(1)
+            raise bb.BBHandledException()
         except bb.data_smart.ExpansionError as exc:
             import traceback
 
@@ -176,10 +176,10 @@ def catch_parse_error(func):
                 if not fn.startswith(bbdir):
                     break
             parselog.critical("Unable to parse %s" % fn, exc_info=(exc_class, exc, tb))
-            sys.exit(1)
+            raise bb.BBHandledException()
         except bb.parse.ParseError as exc:
             parselog.critical(str(exc))
-            sys.exit(1)
+            raise bb.BBHandledException()
     return wrapped
 
 @catch_parse_error
@@ -355,7 +355,7 @@ class CookerDataBuilder(object):
                 for layer in broken_layers:
                     parselog.critical("   %s", layer)
                 parselog.critical("Please check BBLAYERS in %s" % (layerconf))
-                sys.exit(1)
+                raise bb.BBHandledException()
 
             for layer in layers:
                 parselog.debug(2, "Adding layer %s", layer)
@@ -427,7 +427,7 @@ class CookerDataBuilder(object):
             handlerfn = data.getVarFlag(var, "filename", False)
             if not handlerfn:
                 parselog.critical("Undefined event handler function '%s'" % var)
-                sys.exit(1)
+                raise bb.BBHandledException()
             handlerln = int(data.getVarFlag(var, "lineno", False))
             bb.event.register(var, data.getVar(var, False),  (data.getVarFlag(var, "eventmask") or "").split(), handlerfn, handlerln)
 
