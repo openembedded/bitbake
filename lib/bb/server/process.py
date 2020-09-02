@@ -368,7 +368,7 @@ class ServerCommunicator():
         ret, exc = self.recv.get()
         # Should probably turn all exceptions in exc back into exceptions?
         # For now, at least handle BBHandledException
-        if exc and "BBHandledException" in exc:
+        if exc and ("BBHandledException" in exc or "SystemExit" in exc):
             raise bb.BBHandledException()
         return ret, exc
 
