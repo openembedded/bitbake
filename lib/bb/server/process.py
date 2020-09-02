@@ -348,7 +348,12 @@ class ServerCommunicator():
             logger.info("No reply from server in 30s")
             if not self.recv.poll(30):
                 raise ProcessTimeout("Timeout while waiting for a reply from the bitbake server (60s)")
-        return self.recv.get()
+        ret, exc = self.recv.get()
+        # Should probably turn all exceptions in exc back into exceptions?
+        # For now, at least handle BBHandledException
+        if exc and "BBHandledException" in exc:
+            raise bb.BBHandledException()
+        return ret, exc
 
     def updateFeatureSet(self, featureset):
         _, error = self.runCommand(["setFeatures", featureset])
