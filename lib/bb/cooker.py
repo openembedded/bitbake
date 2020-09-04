@@ -2147,7 +2147,7 @@ class CookerParser(object):
             for c in self.bb_caches.values():
                 c.sync()
 
-        sync = threading.Thread(target=sync_caches)
+        sync = threading.Thread(target=sync_caches, name="SyncThread")
         self.syncthread = sync
         sync.start()
         bb.codeparser.parser_cache_savemerge()
