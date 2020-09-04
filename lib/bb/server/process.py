@@ -266,6 +266,17 @@ class ProcessServer():
         # Finally release the lockfile but warn about other processes holding it open
         lock = self.bitbake_lock
         lockfile = self.bitbake_lock_name
+
+        def get_lock_contents(lockfile):
+            try:
+                with open(lockfile, "r") as f:
+                    return f.readlines()
+            except FileNotFoundError:
+                return None
+
+        lockcontents = get_lock_contents(lockfile)
+        serverlog("Original lockfile contents: " + str(lockcontents))
+
         lock.close()
         lock = None
 
@@ -273,14 +284,22 @@ class ProcessServer():
             i = 0
             lock = None
             while not lock and i < 30:
-                time.sleep(0.1)
                 lock = bb.utils.lockfile(lockfile, shared=False, retry=False, block=False)
+                if not lock:
+                    newlockcontents = get_lock_contents(lockfile)
+                    if newlockcontents != lockcontents:
+                        # A new server was started, the lockfile contents changed, we can exit
+                        serverlog("Lockfile now contains different contents, exiting: " + str(newlockcontents))
+                        return
+                    time.sleep(0.1)
                 i += 1
             if lock:
                 # We hold the lock so we can remove the file (hide stale pid data)
                 # via unlockfile.
                 bb.utils.unlockfile(lock)
+                serverlog("Exiting as we could obtain the lock")
                 return
+
             if not lock:
                 # Some systems may not have lsof available
                 procs = None
