@@ -286,6 +286,9 @@ class ProcessServer():
                 procs = None
                 try:
                     procs = subprocess.check_output(["lsof", '-w', lockfile], stderr=subprocess.STDOUT)
+                except subprocess.CalledProcessError:
+                    # File was deleted?
+                    continue
                 except OSError as e:
                     if e.errno != errno.ENOENT:
                         raise
@@ -293,6 +296,9 @@ class ProcessServer():
                     # Fall back to fuser if lsof is unavailable
                     try:
                         procs = subprocess.check_output(["fuser", '-v', lockfile], stderr=subprocess.STDOUT)
+                    except subprocess.CalledProcessError:
+                        # File was deleted?
+                        continue
                     except OSError as e:
                         if e.errno != errno.ENOENT:
                             raise
