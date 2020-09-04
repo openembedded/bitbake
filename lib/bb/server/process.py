@@ -295,7 +295,7 @@ class ProcessServer():
 
                 msg = "Delaying shutdown due to active processes which appear to be holding bitbake.lock"
                 if procs:
-                    msg += ":\n%s" % str(procs)
+                    msg += ":\n%s" % str(procs.decode("utf-8"))
                 print(msg)
 
     def idle_commands(self, delay, fds=None):
