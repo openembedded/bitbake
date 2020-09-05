@@ -36,7 +36,7 @@ class ProcessTimeout(SystemExit):
     pass
 
 def serverlog(msg):
-    print(msg)
+    print(str(os.getpid()) + " " +  datetime.datetime.now().strftime('%H:%M:%S.%f') + " " + msg)
     sys.stdout.flush()
 
 class ProcessServer():
@@ -480,7 +480,7 @@ class BitBakeServer(object):
                             lines.append(line)
                         else:
                             lastlines.append(line)
-                            res = logstart_re.match(line.rstrip())
+                            res = logstart_re.search(line.rstrip())
                             if res:
                                 ldatetime = datetime.datetime.strptime(res.group(2), start_log_datetime_format)
                                 if ldatetime >= startdatetime:
