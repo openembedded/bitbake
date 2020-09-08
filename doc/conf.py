@@ -32,6 +32,11 @@ copyright = '2004-%s, Richard Purdie, Chris Larson, and Phil Blundell' \
     % datetime.datetime.now().year
 author = 'Richard Purdie, Chris Larson, and Phil Blundell'
 
+# external links and substitutions
+extlinks = {
+    'yocto_docs': ('https://docs.yoctoproject.org%s', None),
+    'oe_lists': ('https://lists.openembedded.org%s', None),
+}
 
 # -- General configuration ---------------------------------------------------
 
@@ -40,6 +45,7 @@ author = 'Richard Purdie, Chris Larson, and Phil Blundell'
 # ones.
 extensions = [
     'sphinx.ext.autosectionlabel',
+    'sphinx.ext.extlinks',
 ]
 autosectionlabel_prefix_document = True
 
