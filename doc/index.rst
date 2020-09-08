@@ -22,6 +22,7 @@ BitBake User Manual
    :hidden:
 
    genindex
+   releases
 
 ----
 
