@@ -1,3 +1,5 @@
+.. SPDX-License-Identifier: CC-BY-2.5
+
 ========
 Overview
 ========
