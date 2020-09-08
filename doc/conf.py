@@ -16,6 +16,15 @@
 
 import datetime
 
+current_version = "dev"
+
+# String used in sidebar
+version = 'Version: ' + current_version
+if current_version == 'dev':
+    version = 'Version: Current Development'
+# Version seen in documentation_options.js and hence in js switchers code
+release = current_version
+
 # -- Project information -----------------------------------------------------
 
 project = 'Bitbake'
@@ -67,6 +76,7 @@ html_static_path = ['sphinx-static']
 
 # Add customm CSS and JS files
 html_css_files = ['theme_overrides.css']
+html_js_files = ['switchers.js']
 
 # Hide 'Created using Sphinx' text
 html_show_sphinx = False
