@@ -4,6 +4,8 @@
 File Download Support
 =====================
 
+|
+
 BitBake's fetch module is a standalone piece of library code that deals
 with the intricacies of downloading source code and files from remote
 systems. Fetching source code is one of the cornerstones of building

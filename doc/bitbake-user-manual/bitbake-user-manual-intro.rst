@@ -4,6 +4,8 @@
 Overview
 ========
 
+|
+
 Welcome to the BitBake User Manual. This manual provides information on
 the BitBake tool. The information attempts to be as independent as
 possible regarding systems that use BitBake, such as OpenEmbedded and

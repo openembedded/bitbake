@@ -4,6 +4,8 @@
 Variables Glossary
 ==================
 
+|
+
 This chapter lists common variables used by BitBake and gives an
 overview of their function and contents.
 

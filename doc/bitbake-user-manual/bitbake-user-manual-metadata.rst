@@ -4,6 +4,8 @@
 Syntax and Operators
 ====================
 
+|
+
 BitBake files have their own syntax. The syntax has similarities to
 several other languages but also has some unique features. This section
 describes the available syntax and operators as well as provides

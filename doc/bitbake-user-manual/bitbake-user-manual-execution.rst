@@ -4,6 +4,8 @@
 Execution
 =========
 
+|
+
 The primary purpose for running BitBake is to produce some kind of
 output such as a single installable package, a kernel, a software
 development kit, or even a full, board-specific bootable Linux image,
