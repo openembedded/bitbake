@@ -65,8 +65,14 @@ html_theme = 'sphinx_rtd_theme'
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['sphinx-static']
 
-html_context = {
-    'css_files': [
-        '_static/theme_overrides.css',
-    ],
-}
+# Add customm CSS and JS files
+html_css_files = ['theme_overrides.css']
+
+# Hide 'Created using Sphinx' text
+html_show_sphinx = False
+
+# Add 'Last updated' on each page
+html_last_updated_fmt = '%b %d, %Y'
+
+# Remove the trailing 'dot' in section numbers
+html_secnumber_suffix = " "
