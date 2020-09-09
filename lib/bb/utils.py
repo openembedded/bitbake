@@ -1071,21 +1071,20 @@ def process_profilelog(fn, pout = None):
     # Either call with a list of filenames and set pout or a filename and optionally pout.
     if not pout:
         pout = fn + '.processed'
-    pout = open(pout, 'w')
-   
-    import pstats
-    if isinstance(fn, list):
-        p = pstats.Stats(*fn, stream=pout)
-    else:
-        p = pstats.Stats(fn, stream=pout)
-    p.sort_stats('time')
-    p.print_stats()
-    p.print_callers()
-    p.sort_stats('cumulative')
-    p.print_stats()
 
-    pout.flush()
-    pout.close()  
+    with open(pout, 'w') as pout:
+        import pstats
+        if isinstance(fn, list):
+            p = pstats.Stats(*fn, stream=pout)
+        else:
+            p = pstats.Stats(fn, stream=pout)
+        p.sort_stats('time')
+        p.print_stats()
+        p.print_callers()
+        p.sort_stats('cumulative')
+        p.print_stats()
+
+        pout.flush()
 
 #
 # Was present to work around multiprocessing pool bugs in python < 2.7.3
