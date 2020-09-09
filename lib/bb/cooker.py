@@ -1761,10 +1761,10 @@ class CookerCollectFiles(object):
         collectlog.debug(1, "collecting .bb files")
 
         files = (config.getVar( "BBFILES") or "").split()
-        config.setVar("BBFILES", " ".join(files))
 
         # Sort files by priority
         files.sort( key=lambda fileitem: self.calc_bbfile_priority(fileitem)[0] )
+        config.setVar("BBFILES_PRIORITIZED", " ".join(files))
 
         if not len(files):
             files = self.get_bbfiles()
