@@ -180,12 +180,12 @@
       var current_version = DOCUMENTATION_OPTIONS.VERSION;
       // Assume manuals before 3.2 are using old docbook mega-manual
       if (ver_compare(current_version, "3.2") < 0) {
-        var new_url = docroot + "/mega-manual/mega-manual.html";
+        var new_url = docroot + "mega-manual/mega-manual.html";
       } else {
-        var new_url = docroot + "/singleindex.html";
+        var new_url = docroot + "singleindex.html";
       }
     } else {
-      var new_url = url.replace("/singleindex.html", "/index.html")
+      var new_url = url.replace("singleindex.html", "index.html")
     }
 
     if (new_url != url) {
