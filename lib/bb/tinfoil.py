@@ -806,18 +806,22 @@ class Tinfoil:
         prepare() has been called, or use a with... block when you create
         the tinfoil object which will ensure that it gets called.
         """
-        if self.server_connection:
-            self.run_command('clientComplete')
-            _server_connections.remove(self.server_connection)
-            bb.event.ui_queue = []
-            self.server_connection.terminate()
-            self.server_connection = None
+        try:
+            if self.server_connection:
+                try:
+                    self.run_command('clientComplete')
+                finally:
+                    _server_connections.remove(self.server_connection)
+                    bb.event.ui_queue = []
+                    self.server_connection.terminate()
+                    self.server_connection = None
 
-        # Restore logging handlers to how it looked when we started
-        if self.oldhandlers:
-            for handler in self.logger.handlers:
-                if handler not in self.oldhandlers:
-                    self.logger.handlers.remove(handler)
+        finally:
+            # Restore logging handlers to how it looked when we started
+            if self.oldhandlers:
+                for handler in self.logger.handlers:
+                    if handler not in self.oldhandlers:
+                        self.logger.handlers.remove(handler)
 
     def _reconvert_type(self, obj, origtypename):
         """
