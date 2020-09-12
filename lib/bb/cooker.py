@@ -1703,8 +1703,9 @@ class BBCooker:
         self.finishcommand()
         self.extraconfigdata = {}
         self.command.reset()
-        self.databuilder.reset()
-        self.data = self.databuilder.data
+        if hasattr(self, "data"):
+           self.databuilder.reset()
+           self.data = self.databuilder.data
         self.parsecache_valid = False
         self.baseconfig_valid = False
 
