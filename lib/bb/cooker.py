@@ -2093,6 +2093,7 @@ class CookerParser(object):
             def init():
                 signal.signal(signal.SIGTERM, signal.SIG_DFL)
                 signal.signal(signal.SIGHUP, signal.SIG_DFL)
+                signal.signal(signal.SIGINT, signal.SIG_IGN)
                 bb.utils.set_process_name(multiprocessing.current_process().name)
                 multiprocessing.util.Finalize(None, bb.codeparser.parser_cache_save, exitpriority=1)
                 multiprocessing.util.Finalize(None, bb.fetch.fetcher_parse_save, exitpriority=1)
