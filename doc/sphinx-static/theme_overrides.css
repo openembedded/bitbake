@@ -115,12 +115,21 @@ h6 {
     }
 
     /* Admonition should be gray, not blue or green */
-    .rst-content .note .admonition-title, .rst-content .tip .admonition-title {
+    .rst-content .note .admonition-title,
+    .rst-content .tip .admonition-title,
+    .rst-content .warning .admonition-title,
+    .rst-content .caution .admonition-title,
+    .rst-content .important .admonition-title {
         background: #f0f0f2;
         color: #00557D;
 
     }
-    .rst-content .note, .rst-content .tip  {
+
+    .rst-content .note,
+    .rst-content .tip,
+    .rst-content .important,
+    .rst-content .warning,
+    .rst-content .caution  {
         background: #f0f0f2;
     }
 
