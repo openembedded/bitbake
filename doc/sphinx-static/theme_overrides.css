@@ -74,6 +74,10 @@ h6 {
   font-weight: bold;
 }
 
+em {
+  font-weight: bold;
+}
+
 .pre {
   font-size: medium;
   font-family: Courier, monospace;
