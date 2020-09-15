@@ -74,6 +74,11 @@ h6 {
   font-weight: bold;
 }
 
+.pre {
+  font-size: medium;
+  font-family: Courier, monospace;
+}
+
 .wy-nav-content a {
   text-decoration: underline;
   color: #444;
