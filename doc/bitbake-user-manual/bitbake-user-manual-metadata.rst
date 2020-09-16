@@ -1962,7 +1962,7 @@ Other variables or names support Python's
 `glob <https://docs.python.org/3/library/glob.html>`_ syntax,
 `fnmatch <https://docs.python.org/3/library/fnmatch.html#module-fnmatch>`_
 syntax, or
-`Regular Expression (re) <https://docs.python.org/3/library/re.html#re>`_
+`Regular Expression (re) <https://docs.python.org/3/library/re.html>`_
 syntax.
 
 For variables that have wildcard suport, the documentation describes
