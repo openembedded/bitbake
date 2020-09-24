@@ -599,6 +599,7 @@ class FetcherLocalTest(FetcherTest):
         touch(os.path.join(self.localsrcdir, 'dir', 'd'))
         os.makedirs(os.path.join(self.localsrcdir, 'dir', 'subdir'))
         touch(os.path.join(self.localsrcdir, 'dir', 'subdir', 'e'))
+        touch(os.path.join(self.localsrcdir, r'backslash\x2dsystemd-unit.device'))
         self.d.setVar("FILESPATH", self.localsrcdir)
 
     def fetchUnpack(self, uris):
@@ -615,6 +616,10 @@ class FetcherLocalTest(FetcherTest):
     def test_local(self):
         tree = self.fetchUnpack(['file://a', 'file://dir/c'])
         self.assertEqual(tree, ['a', 'dir/c'])
+
+    def test_local_backslash(self):
+        tree = self.fetchUnpack([r'file://backslash\x2dsystemd-unit.device'])
+        self.assertEqual(tree, [r'backslash\x2dsystemd-unit.device'])
 
     def test_local_wildcard(self):
         with self.assertRaises(bb.fetch2.ParameterError):
