@@ -720,7 +720,7 @@ class DataSmart(MutableMapping):
         if ':' in var:
             override = var[var.rfind(':')+1:]
             shortvar = var[:var.rfind(':')]
-            while override and override.islower():
+            while override and __override_regexp__.match(override):
                 try:
                     if shortvar in self.overridedata:
                         # Force CoW by recreating the list first
