@@ -1461,6 +1461,10 @@ class FetchMethod(object):
                 cmd = '7z x -so %s | tar x --no-same-owner -f -' % file
             elif file.endswith('.7z'):
                 cmd = '7za x -y %s 1>/dev/null' % file
+            elif file.endswith('.tzst') or file.endswith('.tar.zst'):
+                cmd = 'zstd --decompress --stdout %s | tar x --no-same-owner -f -' % file
+            elif file.endswith('.zst'):
+                cmd = 'zstd --decompress --stdout %s > %s' % (file, efile)
             elif file.endswith('.zip') or file.endswith('.jar'):
                 try:
                     dos = bb.utils.to_boolean(urldata.parm.get('dos'), False)
