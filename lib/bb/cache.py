@@ -814,10 +814,6 @@ class MulticonfigCache(Mapping):
         for k in self.__caches:
             yield k
 
-    def keys(self):
-        return self.__caches[key]
-
-
 def init(cooker):
     """
     The Objective: Cache the minimum amount of data possible yet get to the
