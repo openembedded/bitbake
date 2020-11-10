@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: GPL-2.0-only
 #
 
+import asyncio
 from contextlib import closing
 import re
 import sqlite3
@@ -111,5 +112,17 @@ def create_client(addr):
         c.connect_unix(*a)
     else:
         c.connect_tcp(*a)
+
+    return c
+
+async def create_async_client(addr):
+    from . import client
+    c = client.AsyncClient()
+
+    (typ, a) = parse_address(addr)
+    if typ == ADDR_TYPE_UNIX:
+        await c.connect_unix(*a)
+    else:
+        await c.connect_tcp(*a)
 
     return c
