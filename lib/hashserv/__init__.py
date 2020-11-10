@@ -22,6 +22,24 @@ ADDR_TYPE_TCP = 1
 # is necessary
 DEFAULT_MAX_CHUNK = 32 * 1024
 
+TABLE_DEFINITION = (
+    ("method", "TEXT NOT NULL"),
+    ("outhash", "TEXT NOT NULL"),
+    ("taskhash", "TEXT NOT NULL"),
+    ("unihash", "TEXT NOT NULL"),
+    ("created", "DATETIME"),
+
+    # Optional fields
+    ("owner", "TEXT"),
+    ("PN", "TEXT"),
+    ("PV", "TEXT"),
+    ("PR", "TEXT"),
+    ("task", "TEXT"),
+    ("outhash_siginfo", "TEXT"),
+)
+
+TABLE_COLUMNS = tuple(name for name, _ in TABLE_DEFINITION)
+
 def setup_database(database, sync=True):
     db = sqlite3.connect(database)
     db.row_factory = sqlite3.Row
@@ -30,23 +48,10 @@ def setup_database(database, sync=True):
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS tasks_v2 (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                method TEXT NOT NULL,
-                outhash TEXT NOT NULL,
-                taskhash TEXT NOT NULL,
-                unihash TEXT NOT NULL,
-                created DATETIME,
-
-                -- Optional fields
-                owner TEXT,
-                PN TEXT,
-                PV TEXT,
-                PR TEXT,
-                task TEXT,
-                outhash_siginfo TEXT,
-
+                %s
                 UNIQUE(method, outhash, taskhash)
                 )
-            ''')
+            ''' % " ".join("%s %s," % (name, typ) for name, typ in TABLE_DEFINITION))
         cursor.execute('PRAGMA journal_mode = WAL')
         cursor.execute('PRAGMA synchronous = %s' % ('NORMAL' if sync else 'OFF'))
 
@@ -89,10 +94,10 @@ def chunkify(msg, max_chunk):
         yield "\n"
 
 
-def create_server(addr, dbname, *, sync=True):
+def create_server(addr, dbname, *, sync=True, upstream=None):
     from . import server
     db = setup_database(dbname, sync=sync)
-    s = server.Server(db)
+    s = server.Server(db, upstream=upstream)
 
     (typ, a) = parse_address(addr)
     if typ == ADDR_TYPE_UNIX:

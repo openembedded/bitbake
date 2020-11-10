@@ -178,17 +178,15 @@ class AsyncClient(object):
         await self._set_mode(self.MODE_NORMAL)
         return await self.send_message({"reset-stats": None})
 
+    async def backfill_wait(self):
+        await self._set_mode(self.MODE_NORMAL)
+        return (await self.send_message({"backfill-wait": None}))["tasks"]
+
 
 class Client(object):
     def __init__(self):
         self.client = AsyncClient()
         self.loop = asyncio.new_event_loop()
-
-        def get_wrapper(self, downcall):
-            def wrapper(*args, **kwargs):
-                return self.loop.run_until_complete(downcall(*args, **kwargs))
-
-            return wrapper
 
         for call in (
             "connect_tcp",
@@ -200,9 +198,16 @@ class Client(object):
             "get_taskhash",
             "get_stats",
             "reset_stats",
+            "backfill_wait",
         ):
             downcall = getattr(self.client, call)
-            setattr(self, call, get_wrapper(self, downcall))
+            setattr(self, call, self._get_downcall_wrapper(downcall))
+
+    def _get_downcall_wrapper(self, downcall):
+        def wrapper(*args, **kwargs):
+            return self.loop.run_until_complete(downcall(*args, **kwargs))
+
+        return wrapper
 
     @property
     def max_chunk(self):
