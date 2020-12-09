@@ -213,7 +213,7 @@ class Client(object):
         cwd = os.getcwd()
         try:
             os.chdir(os.path.dirname(path))
-            self.loop.run_until_complete(self.client.connect_unix(path))
+            self.loop.run_until_complete(self.client.connect_unix(os.path.basename(path)))
             self.loop.run_until_complete(self.client.connect())
         finally:
             os.chdir(cwd)
