@@ -698,13 +698,7 @@ class FetcherLocalTest(FetcherTest):
         # Fetch and check revision
         self.d.setVar("SRCREV", "AUTOINC")
         url = "git://" + src_dir + ";protocol=file;usehead=1;name=newName"
-        try:
-            fetcher = bb.fetch.Fetch([url], self.d)
-        except Exception:
-            # TODO: We currently expect this test to fail. Drop the try and
-            # assert when usehead has been fixed.
-            return
-        self.assertEqual(1, 0)
+        fetcher = bb.fetch.Fetch([url], self.d)
         fetcher.download()
         fetcher.unpack(self.unpackdir)
         stdout = bb.process.run("git rev-parse HEAD",
