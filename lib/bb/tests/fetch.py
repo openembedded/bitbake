@@ -871,6 +871,10 @@ class FetcherNetworkTest(FetcherTest):
 
     @skipIfNoNetwork()
     def test_gitfetch_usehead(self):
+        # Since self.gitfetcher() sets SRCREV we expect this to override
+        # `usehead=1' and instead fetch the specified SRCREV. See
+        # test_local_gitfetch_usehead() for a positive use of the usehead
+        # feature.
         url = "git://git.openembedded.org/bitbake;usehead=1"
         self.assertRaises(bb.fetch.ParameterError, self.gitfetcher, url, url)
 
