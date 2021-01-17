@@ -582,7 +582,7 @@ class Build(models.Model):
         note that this is the actual list of extensions stored on Target objects
         for this build, and not the value of IMAGE_FSTYPES.
 
-        Returns comma-separated string, e.g. "vmdk, ext4"
+        Returns comma-separated string, e.g. "vmdk, vhd, vhdx, ext4"
         """
         extensions = []
 
@@ -969,7 +969,7 @@ class Target_Image_File(models.Model):
         'ext3', 'ext3.gz', 'ext4', 'ext4.gz', 'f2fs', 'hddimg', 'iso', 'jffs2',
         'jffs2.sum', 'multiubi', 'squashfs', 'squashfs-lz4', 'squashfs-lzo',
         'squashfs-xz', 'tar', 'tar.bz2', 'tar.gz', 'tar.lz4', 'tar.xz', 'ubi',
-        'ubifs', 'wic', 'wic.bz2', 'wic.gz', 'wic.lzma'
+        'ubifs', "vhd", 'vhdx', 'wic', 'wic.bz2', 'wic.gz', 'wic.lzma'
     }
 
     target = models.ForeignKey(Target, on_delete=models.CASCADE)
