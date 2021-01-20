@@ -52,6 +52,12 @@ class WgetProgressHandler(bb.progress.LineFilterProgressHandler):
 
 
 class Wget(FetchMethod):
+
+    # CDNs like CloudFlare may do a 'browser integrity test' which can fail
+    # with the standard wget/urllib User-Agent, so pretend to be a modern
+    # browser.
+    user_agent = "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:84.0) Gecko/20100101 Firefox/84.0"
+
     """Class to fetch urls via 'wget'"""
     def supports(self, ud, d):
         """
@@ -297,7 +303,7 @@ class Wget(FetchMethod):
             # Some servers (FusionForge, as used on Alioth) require that the
             # optional Accept header is set.
             r.add_header("Accept", "*/*")
-            r.add_header("User-Agent", "Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9.2.12) Gecko/20101027 Ubuntu/9.10 (karmic) Firefox/3.6.12")
+            r.add_header("User-Agent", self.user_agent)
             def add_basic_auth(login_str, request):
                 '''Adds Basic auth to http request, pass in login:password as string'''
                 import base64
@@ -401,9 +407,8 @@ class Wget(FetchMethod):
         """
         f = tempfile.NamedTemporaryFile()
         with tempfile.TemporaryDirectory(prefix="wget-index-") as workdir, tempfile.NamedTemporaryFile(dir=workdir, prefix="wget-listing-") as f:
-            agent = "Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9.2.12) Gecko/20101027 Ubuntu/9.10 (karmic) Firefox/3.6.12"
             fetchcmd = self.basecmd
-            fetchcmd += " -O " + f.name + " --user-agent='" + agent + "' '" + uri + "'"
+            fetchcmd += " -O " + f.name + " --user-agent='" + self.user_agent + "' '" + uri + "'"
             try:
                 self._runwget(ud, d, fetchcmd, True, workdir=workdir)
                 fetchresult = f.read()
