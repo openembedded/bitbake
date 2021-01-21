@@ -119,6 +119,7 @@ class Perforce(FetchMethod):
         cleanedpath = ud.path.replace('/...', '').replace('/', '.')
         cleanedhost = ud.host.replace(':', '.')
 
+        cleanedmodule = ""
         # Merge the path and module into the final depot location
         if ud.module:
             if ud.module.find('/') == 0:
@@ -133,7 +134,7 @@ class Perforce(FetchMethod):
 
         ud.setup_revisions(d)
 
-        ud.localfile = d.expand('%s_%s_%s.tar.gz' % (cleanedhost, cleanedpath, ud.revision))
+        ud.localfile = d.expand('%s_%s_%s_%s.tar.gz' % (cleanedhost, cleanedpath, cleandedmodule, ud.revision))
 
     def _buildp4command(self, ud, d, command, depot_filename=None):
         """
