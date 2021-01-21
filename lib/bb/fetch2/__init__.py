@@ -290,7 +290,7 @@ class URI(object):
 
     def _param_str_split(self, string, elmdelim, kvdelim="="):
         ret = collections.OrderedDict()
-        for k, v in [x.split(kvdelim, 1) for x in string.split(elmdelim)]:
+        for k, v in [x.split(kvdelim, 1) for x in string.split(elmdelim) if x]:
             ret[k] = v
         return ret
 
