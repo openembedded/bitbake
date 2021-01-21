@@ -87,6 +87,25 @@ class URITest(unittest.TestCase):
             },
             'relative': False
         },
+        # Check that trailing semicolons are handled correctly
+        "http://www.example.org/index.html?qparam1=qvalue1;param2=value2;" : {
+            'uri': 'http://www.example.org/index.html?qparam1=qvalue1;param2=value2',
+            'scheme': 'http',
+            'hostname': 'www.example.org',
+            'port': None,
+            'hostport': 'www.example.org',
+            'path': '/index.html',
+            'userinfo': '',
+            'username': '',
+            'password': '',
+            'params': {
+                'param2': 'value2'
+            },
+            'query': {
+                'qparam1': 'qvalue1'
+            },
+            'relative': False
+        },
         "http://www.example.com:8080/index.html" : {
             'uri': 'http://www.example.com:8080/index.html',
             'scheme': 'http',
