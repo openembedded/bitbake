@@ -509,7 +509,7 @@ class Git(FetchMethod):
         if self._contains_lfs(ud, d, destdir):
             if need_lfs and not self._find_git_lfs(d):
                 raise bb.fetch2.FetchError("Repository %s has LFS content, install git-lfs on host to download (or set lfs=0 to ignore it)" % (repourl))
-            else:
+            elif not need_lfs:
                 bb.note("Repository %s has LFS content but it is not being fetched" % (repourl))
 
         if not ud.nocheckout:
