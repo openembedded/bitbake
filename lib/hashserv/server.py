@@ -112,6 +112,9 @@ class Stats(object):
 class ClientError(Exception):
     pass
 
+class ServerError(Exception):
+    pass
+
 def insert_task(cursor, data, ignore=False):
     keys = sorted(data.keys())
     query = '''INSERT%s INTO tasks_v2 (%s) VALUES (%s)''' % (
@@ -138,7 +141,7 @@ class ServerClient(object):
     FAST_QUERY = 'SELECT taskhash, method, unihash FROM tasks_v2 WHERE method=:method AND taskhash=:taskhash ORDER BY created ASC LIMIT 1'
     ALL_QUERY =  'SELECT *                         FROM tasks_v2 WHERE method=:method AND taskhash=:taskhash ORDER BY created ASC LIMIT 1'
 
-    def __init__(self, reader, writer, db, request_stats, backfill_queue, upstream):
+    def __init__(self, reader, writer, db, request_stats, backfill_queue, upstream, read_only):
         self.reader = reader
         self.writer = writer
         self.db = db
@@ -149,14 +152,18 @@ class ServerClient(object):
 
         self.handlers = {
             'get': self.handle_get,
-            'report': self.handle_report,
-            'report-equiv': self.handle_equivreport,
             'get-stream': self.handle_get_stream,
             'get-stats': self.handle_get_stats,
-            'reset-stats': self.handle_reset_stats,
             'chunk-stream': self.handle_chunk,
-            'backfill-wait': self.handle_backfill_wait,
         }
+
+        if not read_only:
+            self.handlers.update({
+                'report': self.handle_report,
+                'report-equiv': self.handle_equivreport,
+                'reset-stats': self.handle_reset_stats,
+                'backfill-wait': self.handle_backfill_wait,
+            })
 
     async def process_requests(self):
         if self.upstream is not None:
@@ -455,7 +462,10 @@ class ServerClient(object):
 
 
 class Server(object):
-    def __init__(self, db, loop=None, upstream=None):
+    def __init__(self, db, loop=None, upstream=None, read_only=False):
+        if upstream and read_only:
+            raise ServerError("Read-only hashserv cannot pull from an upstream server")
+
         self.request_stats = Stats()
         self.db = db
 
@@ -467,6 +477,7 @@ class Server(object):
             self.close_loop = False
 
         self.upstream = upstream
+        self.read_only = read_only
 
         self._cleanup_socket = None
 
@@ -510,7 +521,7 @@ class Server(object):
     async def handle_client(self, reader, writer):
         # writer.transport.set_write_buffer_limits(0)
         try:
-            client = ServerClient(reader, writer, self.db, self.request_stats, self.backfill_queue, self.upstream)
+            client = ServerClient(reader, writer, self.db, self.request_stats, self.backfill_queue, self.upstream, self.read_only)
             await client.process_requests()
         except Exception as e:
             import traceback
