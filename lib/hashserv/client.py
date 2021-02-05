@@ -99,7 +99,7 @@ class AsyncClient(object):
             l = await get_line()
 
             m = json.loads(l)
-            if "chunk-stream" in m:
+            if m and "chunk-stream" in m:
                 lines = []
                 while True:
                     l = (await get_line()).rstrip("\n")
