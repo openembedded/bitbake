@@ -170,6 +170,12 @@ class AsyncClient(object):
             {"get": {"taskhash": taskhash, "method": method, "all": all_properties}}
         )
 
+    async def get_outhash(self, method, outhash, taskhash):
+        await self._set_mode(self.MODE_NORMAL)
+        return await self.send_message(
+            {"get-outhash": {"outhash": outhash, "taskhash": taskhash, "method": method}}
+        )
+
     async def get_stats(self):
         await self._set_mode(self.MODE_NORMAL)
         return await self.send_message({"get-stats": None})

@@ -152,6 +152,20 @@ async def copy_outhash_from_upstream(client, db, method, outhash, taskhash):
 class ServerClient(object):
     FAST_QUERY = 'SELECT taskhash, method, unihash FROM tasks_v2 WHERE method=:method AND taskhash=:taskhash ORDER BY created ASC LIMIT 1'
     ALL_QUERY =  'SELECT *                         FROM tasks_v2 WHERE method=:method AND taskhash=:taskhash ORDER BY created ASC LIMIT 1'
+    OUTHASH_QUERY = '''
+        -- Find tasks with a matching outhash (that is, tasks that
+        -- are equivalent)
+        SELECT * FROM tasks_v2 WHERE method=:method AND outhash=:outhash
+
+        -- If there is an exact match on the taskhash, return it.
+        -- Otherwise return the oldest matching outhash of any
+        -- taskhash
+        ORDER BY CASE WHEN taskhash=:taskhash THEN 1 ELSE 2 END,
+            created ASC
+
+        -- Only return one row
+        LIMIT 1
+        '''
 
     def __init__(self, reader, writer, db, request_stats, backfill_queue, upstream, read_only):
         self.reader = reader
@@ -164,6 +178,7 @@ class ServerClient(object):
 
         self.handlers = {
             'get': self.handle_get,
+            'get-outhash': self.handle_get_outhash,
             'get-stream': self.handle_get_stream,
             'get-stats': self.handle_get_stats,
             'chunk-stream': self.handle_chunk,
@@ -301,6 +316,21 @@ class ServerClient(object):
 
         self.write_message(d)
 
+    async def handle_get_outhash(self, request):
+        with closing(self.db.cursor()) as cursor:
+            cursor.execute(self.OUTHASH_QUERY,
+                           {k: request[k] for k in ('method', 'outhash', 'taskhash')})
+
+            row = cursor.fetchone()
+
+        if row is not None:
+            logger.debug('Found equivalent outhash %s -> %s', (row['outhash'], row['unihash']))
+            d = {k: row[k] for k in row.keys()}
+        else:
+            d = None
+
+        self.write_message(d)
+
     async def handle_get_stream(self, request):
         self.write_message('ok')
 
@@ -354,20 +384,8 @@ class ServerClient(object):
 
     async def handle_report(self, data):
         with closing(self.db.cursor()) as cursor:
-            cursor.execute('''
-                -- Find tasks with a matching outhash (that is, tasks that
-                -- are equivalent)
-                SELECT taskhash, method, unihash FROM tasks_v2 WHERE method=:method AND outhash=:outhash
-
-                -- If there is an exact match on the taskhash, return it.
-                -- Otherwise return the oldest matching outhash of any
-                -- taskhash
-                ORDER BY CASE WHEN taskhash=:taskhash THEN 1 ELSE 2 END,
-                    created ASC
-
-                -- Only return one row
-                LIMIT 1
-                ''', {k: data[k] for k in ('method', 'outhash', 'taskhash')})
+            cursor.execute(self.OUTHASH_QUERY,
+                           {k: data[k] for k in ('method', 'outhash', 'taskhash')})
 
             row = cursor.fetchone()
 
