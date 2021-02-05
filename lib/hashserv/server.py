@@ -130,6 +130,18 @@ async def copy_from_upstream(client, db, method, taskhash):
         d = {k: v for k, v in d.items() if k in TABLE_COLUMNS}
         keys = sorted(d.keys())
 
+        with closing(db.cursor()) as cursor:
+            insert_task(cursor, d)
+            db.commit()
+
+    return d
+
+async def copy_outhash_from_upstream(client, db, method, outhash, taskhash):
+    d = await client.get_outhash(method, outhash, taskhash)
+    if d is not None:
+        # Filter out unknown columns
+        d = {k: v for k, v in d.items() if k in TABLE_COLUMNS}
+        keys = sorted(d.keys())
 
         with closing(db.cursor()) as cursor:
             insert_task(cursor, d)
@@ -358,6 +370,14 @@ class ServerClient(object):
                 ''', {k: data[k] for k in ('method', 'outhash', 'taskhash')})
 
             row = cursor.fetchone()
+
+            if row is None and self.upstream_client:
+                # Try upstream
+                row = await copy_outhash_from_upstream(self.upstream_client,
+                                                       self.db,
+                                                       data['method'],
+                                                       data['outhash'],
+                                                       data['taskhash'])
 
             # If no matching outhash was found, or one *was* found but it
             # wasn't an exact match on the taskhash, a new entry for this

@@ -246,6 +246,18 @@ class HashEquivalenceCommonTests(object):
         self.assertClientGetHash(side_client, taskhash4, unihash4)
         self.assertClientGetHash(self.client, taskhash4, None)
 
+        # Test that reporting a unihash in the downstream is able to find a
+        # match which was previously reported to the upstream server
+        taskhash5 = '35788efcb8dfb0a02659d81cf2bfd695fb30faf9'
+        outhash5 = '2765d4a5884be49b28601445c2760c5f21e7e5c0ee2b7e3fce98fd7e5970796f'
+        unihash5 = 'f46d3fbb439bd9b921095da657a4de906510d2cd'
+        result = self.client.report_unihash(taskhash5, self.METHOD, outhash5, unihash5)
+
+        taskhash6 = '35788efcb8dfb0a02659d81cf2bfd695fb30fafa'
+        unihash6 = 'f46d3fbb439bd9b921095da657a4de906510d2ce'
+        result = down_client.report_unihash(taskhash6, self.METHOD, outhash5, unihash6)
+        self.assertEqual(result['unihash'], unihash5, 'Server failed to copy unihash from upstream')
+
     def test_ro_server(self):
         (ro_client, ro_server) = self.start_server(dbpath=self.server.dbpath, read_only=True)
 
