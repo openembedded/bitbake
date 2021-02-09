@@ -60,7 +60,7 @@ def inherit(files, fn, lineno, d):
                 file = abs_fn
 
         if not file in __inherit_cache:
-            logger.debug(1, "Inheriting %s (from %s:%d)" % (file, fn, lineno))
+            logger.debug("Inheriting %s (from %s:%d)" % (file, fn, lineno))
             __inherit_cache.append( file )
             d.setVar('__inherit_cache', __inherit_cache)
             include(fn, file, lineno, d, "inherit")

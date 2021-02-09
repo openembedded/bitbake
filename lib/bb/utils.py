@@ -609,7 +609,7 @@ def filter_environment(good_vars):
     os.environ["LC_ALL"] = "en_US.UTF-8"
 
     if removed_vars:
-        logger.debug(1, "Removed the following variables from the environment: %s", ", ".join(removed_vars.keys()))
+        logger.debug("Removed the following variables from the environment: %s", ", ".join(removed_vars.keys()))
 
     return removed_vars
 
@@ -1613,12 +1613,12 @@ def export_proxies(d):
 
 def load_plugins(logger, plugins, pluginpath):
     def load_plugin(name):
-        logger.debug(1, 'Loading plugin %s' % name)
+        logger.debug('Loading plugin %s' % name)
         spec = importlib.machinery.PathFinder.find_spec(name, path=[pluginpath] )
         if spec:
             return spec.loader.load_module()
 
-    logger.debug(1, 'Loading plugins from %s...' % pluginpath)
+    logger.debug('Loading plugins from %s...' % pluginpath)
 
     expanded = (glob.glob(os.path.join(pluginpath, '*' + ext))
                 for ext in python_extensions)

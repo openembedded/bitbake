@@ -169,7 +169,7 @@ def fork_off_task(cfg, data, databuilder, workerdata, fn, task, taskname, taskha
         fakedirs = (workerdata["fakerootdirs"][fn] or "").split()
         for p in fakedirs:
             bb.utils.mkdirhier(p)
-        logger.debug(2, 'Running %s:%s under fakeroot, fakedirs: %s' %
+        logger.debug2('Running %s:%s under fakeroot, fakedirs: %s' %
                         (fn, taskname, ', '.join(fakedirs)))
     else:
         envvars = (workerdata["fakerootnoenv"][fn] or "").split()

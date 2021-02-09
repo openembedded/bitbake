@@ -88,7 +88,7 @@ class Wget(FetchMethod):
 
         progresshandler = WgetProgressHandler(d)
 
-        logger.debug(2, "Fetching %s using command '%s'" % (ud.url, command))
+        logger.debug2("Fetching %s using command '%s'" % (ud.url, command))
         bb.fetch2.check_network_access(d, command, ud.url)
         runfetchcmd(command + ' --progress=dot -v', d, quiet, log=progresshandler, workdir=workdir)
 
@@ -326,11 +326,11 @@ class Wget(FetchMethod):
                 pass
         except urllib.error.URLError as e:
             if try_again:
-                logger.debug(2, "checkstatus: trying again")
+                logger.debug2("checkstatus: trying again")
                 return self.checkstatus(fetch, ud, d, False)
             else:
                 # debug for now to avoid spamming the logs in e.g. remote sstate searches
-                logger.debug(2, "checkstatus() urlopen failed: %s" % e)
+                logger.debug2("checkstatus() urlopen failed: %s" % e)
                 return False
         return True
 
