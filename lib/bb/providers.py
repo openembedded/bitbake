@@ -249,7 +249,6 @@ def _filterProviders(providers, item, cfgData, dataCache):
         eligible.append(preferred_versions[pn][1])
 
     if not eligible:
-        logger.error("no eligible providers for %s", item)
         return eligible
 
     # If pn == item, give it a slight default preference
