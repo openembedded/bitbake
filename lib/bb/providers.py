@@ -250,7 +250,7 @@ def _filterProviders(providers, item, cfgData, dataCache):
 
     if len(eligible) == 0:
         logger.error("no eligible providers for %s", item)
-        return 0
+        return eligible
 
     # If pn == item, give it a slight default preference
     # This means PREFERRED_PROVIDER_foobar defaults to foobar if available
