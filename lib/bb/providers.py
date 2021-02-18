@@ -48,7 +48,6 @@ def findProviders(cfgData, dataCache, pkg_pn = None):
 
     return (latest_versions, preferred_versions)
 
-
 def allProviders(dataCache):
     """
     Find all providers for each pn
@@ -58,7 +57,6 @@ def allProviders(dataCache):
         ver = dataCache.pkg_pepvpr[fn]
         all_providers[pn].append((ver, fn))
     return all_providers
-
 
 def sortPriorities(pn, dataCache, pkg_pn = None):
     """
@@ -189,7 +187,6 @@ def findLatestProvider(pn, cfgData, dataCache, file_set):
 
     return (latest, latest_f)
 
-
 def findBestProvider(pn, cfgData, dataCache, pkg_pn = None, item = None):
     """
     If there is a PREFERRED_VERSION, find the highest-priority bbfile
@@ -208,7 +205,6 @@ def findBestProvider(pn, cfgData, dataCache, pkg_pn = None, item = None):
         preferred_ver = latest
 
     return (latest, latest_f, preferred_ver, preferred_file)
-
 
 def _filterProviders(providers, item, cfgData, dataCache):
     """
@@ -264,7 +260,6 @@ def _filterProviders(providers, item, cfgData, dataCache):
         eligible = [fn] + eligible
 
     return eligible
-
 
 def filterProviders(providers, item, cfgData, dataCache):
     """
@@ -386,7 +381,6 @@ def getRuntimeProviders(dataCache, rdepend):
             logger.debug("Assuming %s is a dynamic package, but it may not exist" % rdepend)
 
     return rproviders
-
 
 def buildWorldTargetList(dataCache, task=None):
     """
