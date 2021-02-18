@@ -256,10 +256,13 @@ def _filterProviders(providers, item, cfgData, dataCache):
 
     logger.debug("providers for %s are: %s", item, list(sorted(pkg_pn.keys())))
 
-    # First add PREFERRED_VERSIONS
+    # First add REQUIRED_VERSIONS or PREFERRED_VERSIONS
     for pn in sorted(pkg_pn):
         sortpkg_pn[pn] = sortPriorities(pn, dataCache, pkg_pn)
-        preferred_versions[pn] = findPreferredProvider(pn, cfgData, dataCache, sortpkg_pn[pn], item)
+        preferred_ver, preferred_file, required = findPreferredProvider(pn, cfgData, dataCache, sortpkg_pn[pn], item)
+        if required and preferred_file is None:
+            return eligible
+        preferred_versions[pn] = (preferred_ver, preferred_file)
         if preferred_versions[pn][1]:
             eligible.append(preferred_versions[pn][1])
 
