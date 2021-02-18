@@ -1071,10 +1071,16 @@ class BBCooker:
         if pn in self.recipecaches[mc].providers:
             filenames = self.recipecaches[mc].providers[pn]
             eligible, foundUnique = bb.providers.filterProviders(filenames, pn, self.databuilder.mcdata[mc], self.recipecaches[mc])
-            filename = eligible[0]
+            if eligible is not None:
+                filename = eligible[0]
+            else:
+                filename = None
             return None, None, None, filename
         elif pn in self.recipecaches[mc].pkg_pn:
-            return bb.providers.findBestProvider(pn, self.databuilder.mcdata[mc], self.recipecaches[mc], self.recipecaches[mc].pkg_pn)
+            (latest, latest_f, preferred_ver, preferred_file, required) = bb.providers.findBestProvider(pn, self.databuilder.mcdata[mc], self.recipecaches[mc], self.recipecaches[mc].pkg_pn)
+            if required and preferred_file is None:
+                return None, None, None, None
+            return (latest, latest_f, preferred_ver, preferred_file)
         else:
             return None, None, None, None
 
