@@ -502,22 +502,30 @@ class BBCooker:
 
     def showVersions(self):
 
-        (latest_versions, preferred_versions) = self.findProviders()
+        (latest_versions, preferred_versions, required) = self.findProviders()
 
-        logger.plain("%-35s %25s %25s", "Recipe Name", "Latest Version", "Preferred Version")
-        logger.plain("%-35s %25s %25s\n", "===========", "==============", "=================")
+        logger.plain("%-35s %25s %25s %25s", "Recipe Name", "Latest Version", "Preferred Version", "Required Version")
+        logger.plain("%-35s %25s %25s %25s\n", "===========", "==============", "=================", "================")
 
         for p in sorted(self.recipecaches[''].pkg_pn):
-            pref = preferred_versions[p]
+            preferred = preferred_versions[p]
             latest = latest_versions[p]
+            requiredstr = ""
+            preferredstr = ""
+            if required[p]:
+                if preferred[0] is not None:
+                    requiredstr = preferred[0][0] + ":" + preferred[0][1] + '-' + preferred[0][2]
+                else:
+                    bb.fatal("REQUIRED_VERSION of package %s not available" % p)
+            else:
+                preferredstr = preferred[0][0] + ":" + preferred[0][1] + '-' + preferred[0][2]
 
-            prefstr = pref[0][0] + ":" + pref[0][1] + '-' + pref[0][2]
             lateststr = latest[0][0] + ":" + latest[0][1] + "-" + latest[0][2]
 
-            if pref == latest:
-                prefstr = ""
+            if preferred == latest:
+                preferredstr = ""
 
-            logger.plain("%-35s %25s %25s", p, lateststr, prefstr)
+            logger.plain("%-35s %25s %25s %25s", p, lateststr, preferredstr, requiredstr)
 
     def showEnvironment(self, buildfile=None, pkgs_to_build=None):
         """

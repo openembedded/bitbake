@@ -38,15 +38,17 @@ def findProviders(cfgData, dataCache, pkg_pn = None):
     localdata = data.createCopy(cfgData)
     bb.data.expandKeys(localdata)
 
+    required = {}
     preferred_versions = {}
     latest_versions = {}
 
     for pn in pkg_pn:
-        (last_ver, last_file, pref_ver, pref_file) = findBestProvider(pn, localdata, dataCache, pkg_pn)
+        (last_ver, last_file, pref_ver, pref_file, req) = findBestProvider(pn, localdata, dataCache, pkg_pn)
         preferred_versions[pn] = (pref_ver, pref_file)
         latest_versions[pn] = (last_ver, last_file)
+        required[pn] = req
 
-    return (latest_versions, preferred_versions)
+    return (latest_versions, preferred_versions, required)
 
 def allProviders(dataCache):
     """
@@ -221,16 +223,16 @@ def findBestProvider(pn, cfgData, dataCache, pkg_pn = None, item = None):
     """
 
     sortpkg_pn = sortPriorities(pn, dataCache, pkg_pn)
-    # Find the highest priority provider with a PREFERRED_VERSION set
-    (preferred_ver, preferred_file) = findPreferredProvider(pn, cfgData, dataCache, sortpkg_pn, item)
+    # Find the highest priority provider with a REQUIRED_VERSION or PREFERRED_VERSION set
+    (preferred_ver, preferred_file, required) = findPreferredProvider(pn, cfgData, dataCache, sortpkg_pn, item)
     # Find the latest version of the highest priority provider
     (latest, latest_f) = findLatestProvider(pn, cfgData, dataCache, sortpkg_pn[0])
 
-    if preferred_file is None:
+    if not required and preferred_file is None:
         preferred_file = latest_f
         preferred_ver = latest
 
-    return (latest, latest_f, preferred_ver, preferred_file)
+    return (latest, latest_f, preferred_ver, preferred_file, required)
 
 def _filterProviders(providers, item, cfgData, dataCache):
     """
