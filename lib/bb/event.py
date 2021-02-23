@@ -238,6 +238,10 @@ def register(name, handler, mask=None, filename=None, lineno=None, data=None):
 
     # already registered
     if name in _handlers:
+        if data:
+            bbhands_mc = (data.getVar("__BBHANDLERS_MC") or [])
+            bbhands_mc.append(name)
+            data.setVar("__BBHANDLERS_MC", bbhands_mc)
         return AlreadyRegistered
 
     if handler is not None:
