@@ -1303,6 +1303,8 @@ overview of their function and contents.
       -  ``svn://`` : Fetches files from a Subversion (``svn``) revision
          control repository.
 
+      -  ``az://`` : Fetches files from an Azure Storage account using HTTPS.
+
       Here are some additional options worth mentioning:
 
       -  ``unpack`` : Controls whether or not to unpack the file if it is
