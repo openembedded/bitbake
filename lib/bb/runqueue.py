@@ -1934,6 +1934,10 @@ class RunQueueExecute:
             logger.error("Scenequeue had holdoff tasks: %s" % pprint.pformat(self.holdoff_tasks))
             err = True
 
+        for tid in self.scenequeue_covered.intersection(self.scenequeue_notcovered):
+            # No task should end up in both covered and uncovered, that is a bug.
+            logger.error("Setscene task %s in both covered and notcovered." % tid)
+
         for tid in self.rqdata.runq_setscene_tids:
             if tid not in self.scenequeue_covered and tid not in self.scenequeue_notcovered:
                 err = True
