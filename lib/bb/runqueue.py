@@ -2421,6 +2421,9 @@ class RunQueueExecute:
 
         for dep in sorted(self.sqdata.sq_deps[task]):
             if fail and task in self.sqdata.sq_harddeps and dep in self.sqdata.sq_harddeps[task]:
+                if dep in self.scenequeue_covered or dep in self.scenequeue_notcovered:
+                    # dependency could be already processed, e.g. noexec setscene task
+                    continue
                 logger.debug(2, "%s was unavailable and is a hard dependency of %s so skipping" % (task, dep))
                 self.sq_task_failoutright(dep)
                 continue
