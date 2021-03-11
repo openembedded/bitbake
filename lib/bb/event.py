@@ -118,7 +118,7 @@ def fire_class_handlers(event, d):
             if _eventfilter:
                 if not _eventfilter(name, handler, event, d):
                     continue
-            if d and not name in (d.getVar("__BBHANDLERS_MC") or set()):
+            if d is not None and not name in (d.getVar("__BBHANDLERS_MC") or set()):
                 continue
             execute_handler(name, handler, event, d)
 
