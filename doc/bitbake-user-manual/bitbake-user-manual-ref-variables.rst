@@ -270,45 +270,6 @@ overview of their function and contents.
       ``my-recipe.bb`` is executing, the ``BB_FILENAME`` variable contains
       "/foo/path/my-recipe.bb".
 
-   :term:`BBFILES_DYNAMIC`
-      Activates content depending on presence of identified layers.  You
-      identify the layers by the collections that the layers define.
-
-      Use the ``BBFILES_DYNAMIC`` variable to avoid ``.bbappend`` files whose
-      corresponding ``.bb`` file is in a layer that attempts to modify other
-      layers through ``.bbappend`` but does not want to introduce a hard
-      dependency on those other layers.
-
-      Additionally you can prefix the rule with "!" to add ``.bbappend`` and
-      ``.bb`` files in case a layer is not present.  Use this avoid hard
-      dependency on those other layers.
-
-      Use the following form for ``BBFILES_DYNAMIC``: ::
-
-         collection_name:filename_pattern
-
-      The following example identifies two collection names and two filename
-      patterns: ::
-
-         BBFILES_DYNAMIC += "\
-             clang-layer:${LAYERDIR}/bbappends/meta-clang/*/*/*.bbappend \
-             core:${LAYERDIR}/bbappends/openembedded-core/meta/*/*/*.bbappend \
-         "
-
-      When the collection name is prefixed with "!" it will add the file pattern in case
-      the layer is absent: ::
-
-         BBFILES_DYNAMIC += "\
-             !clang-layer:${LAYERDIR}/backfill/meta-clang/*/*/*.bb \
-         "
-
-      This next example shows an error message that occurs because invalid
-      entries are found, which cause parsing to abort: ::
-
-         ERROR: BBFILES_DYNAMIC entries must be of the form {!}<collection name>:<filename pattern>, not:
-         /work/my-layer/bbappends/meta-security-isafw/*/*/*.bbappend
-         /work/my-layer/bbappends/openembedded-core/meta/*/*/*.bbappend
-
    :term:`BB_GENERATE_MIRROR_TARBALLS`
       Causes tarballs of the Git repositories, including the Git metadata,
       to be placed in the :term:`DL_DIR` directory. Anyone
@@ -683,6 +644,45 @@ overview of their function and contents.
       `glob <https://docs.python.org/3/library/glob.html>`_ syntax.
       For details on the syntax, see the documentation by following the
       previous link.
+
+   :term:`BBFILES_DYNAMIC`
+      Activates content depending on presence of identified layers.  You
+      identify the layers by the collections that the layers define.
+
+      Use the ``BBFILES_DYNAMIC`` variable to avoid ``.bbappend`` files whose
+      corresponding ``.bb`` file is in a layer that attempts to modify other
+      layers through ``.bbappend`` but does not want to introduce a hard
+      dependency on those other layers.
+
+      Additionally you can prefix the rule with "!" to add ``.bbappend`` and
+      ``.bb`` files in case a layer is not present.  Use this avoid hard
+      dependency on those other layers.
+
+      Use the following form for ``BBFILES_DYNAMIC``: ::
+
+         collection_name:filename_pattern
+
+      The following example identifies two collection names and two filename
+      patterns: ::
+
+         BBFILES_DYNAMIC += "\
+             clang-layer:${LAYERDIR}/bbappends/meta-clang/*/*/*.bbappend \
+             core:${LAYERDIR}/bbappends/openembedded-core/meta/*/*/*.bbappend \
+         "
+
+      When the collection name is prefixed with "!" it will add the file pattern in case
+      the layer is absent: ::
+
+         BBFILES_DYNAMIC += "\
+             !clang-layer:${LAYERDIR}/backfill/meta-clang/*/*/*.bb \
+         "
+
+      This next example shows an error message that occurs because invalid
+      entries are found, which cause parsing to abort: ::
+
+         ERROR: BBFILES_DYNAMIC entries must be of the form {!}<collection name>:<filename pattern>, not:
+         /work/my-layer/bbappends/meta-security-isafw/*/*/*.bbappend
+         /work/my-layer/bbappends/openembedded-core/meta/*/*/*.bbappend
 
    :term:`BBINCLUDED`
       Contains a space-separated list of all of all files that BitBake's
