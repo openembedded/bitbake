@@ -2781,6 +2781,20 @@ def build_scenequeue_data(sqdata, rqdata, rq, cooker, stampcache, sqrq):
 
     update_scenequeue_data(sqdata.sq_revdeps, sqdata, rqdata, rq, cooker, stampcache, sqrq, summary=True)
 
+    # Compute a list of 'stale' sstate tasks where the current hash does not match the one
+    # in any stamp files. Pass the list out to metadata as an event.
+    found = {}
+    for tid in rqdata.runq_setscene_tids:
+        (mc, fn, taskname, taskfn) = split_tid_mcfn(tid)
+        stamps = bb.build.find_stale_stamps(taskname, rqdata.dataCaches[mc], taskfn)
+        if stamps:
+            if mc not in found:
+                found[mc] = {}
+            found[mc][tid] = stamps
+    for mc in found:
+        event = bb.event.StaleSetSceneTasks(found[mc])
+        bb.event.fire(event, cooker.databuilder.mcdata[mc])
+
 def update_scenequeue_data(tids, sqdata, rqdata, rq, cooker, stampcache, sqrq, summary=True):
 
     tocheck = set()

@@ -670,6 +670,17 @@ class ReachableStamps(Event):
         Event.__init__(self)
         self.stamps = stamps
 
+class StaleSetSceneTasks(Event):
+    """
+    An event listing setscene tasks which are 'stale' and will
+    be rerun. The metadata may use to clean up stale data.
+    tasks is a mapping of tasks and matching stale stamps.
+    """
+
+    def __init__(self, tasks):
+        Event.__init__(self)
+        self.tasks = tasks
+
 class FilesMatchingFound(Event):
     """
     Event when a list of files matching the supplied pattern has
