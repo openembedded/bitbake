@@ -1296,6 +1296,17 @@ For more information on task dependencies, see the
 See the ":ref:`bitbake-user-manual/bitbake-user-manual-metadata:variable flags`" section for information
 on variable flags you can use with tasks.
 
+.. note::
+
+   While it's infrequent, it's possible to define multiple tasks as
+   dependencies when calling ``addtask``. For example, here's a snippet
+   from the OpenEmbedded class file ``package_tar.bbclass``::
+
+     addtask package_write_tar before do_build after do_packagedata do_package
+
+   Note how the ``package_write_tar`` task has to wait until both of
+   ``do_packagedata`` and ``do_package`` complete.
+
 Deleting a Task
 ---------------
 
