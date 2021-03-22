@@ -1580,7 +1580,7 @@ might have an interest in viewing:
    events when each of the workers parse the base configuration or if
    the server changes configuration and reparses. Any given datastore
    only has one such event executed against it, however. If
-   ```BB_INVALIDCONF`` <#>`__ is set in the datastore by the event
+   :term:`BB_INVALIDCONF` is set in the datastore by the event
    handler, the configuration is reparsed and a new event triggered,
    allowing the metadata to update configuration.
 
