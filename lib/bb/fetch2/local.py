@@ -98,4 +98,3 @@ class Local(FetchMethod):
 
     def clean(self, urldata, d):
         return
-

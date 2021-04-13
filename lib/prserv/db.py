@@ -36,9 +36,9 @@ class PRTable(object):
         self.nohist = nohist
         self.dirty = False
         if nohist:
-            self.table = "%s_nohist" % table 
+            self.table = "%s_nohist" % table
         else:
-            self.table = "%s_hist" % table 
+            self.table = "%s_hist" % table
 
         self._execute("CREATE TABLE IF NOT EXISTS %s \
                     (version TEXT NOT NULL, \
@@ -96,7 +96,7 @@ class PRTable(object):
     def _getValueNohist(self, version, pkgarch, checksum):
         data = self._execute("SELECT value FROM %s \
                             WHERE version=? AND pkgarch=? AND checksum=? AND \
-                            value >= (select max(value) from %s where version=? AND pkgarch=?);" 
+                            value >= (select max(value) from %s where version=? AND pkgarch=?);"
                             % (self.table, self.table),
                             (version, pkgarch, checksum, version, pkgarch))
         row = data.fetchone()
@@ -129,7 +129,7 @@ class PRTable(object):
             return self._getValueHist(version, pkgarch, checksum)
 
     def _importHist(self, version, pkgarch, checksum, value):
-        val = None 
+        val = None
         data = self._execute("SELECT value FROM %s WHERE version=? AND pkgarch=? AND checksum=?;" % self.table,
                            (version, pkgarch, checksum))
         row = data.fetchone()
@@ -160,7 +160,7 @@ class PRTable(object):
         except sqlite3.IntegrityError as exc:
             #already have the record, try to update
             try:
-                self._execute("UPDATE %s SET value=? WHERE version=? AND pkgarch=? AND checksum=? AND value<?"  
+                self._execute("UPDATE %s SET value=? WHERE version=? AND pkgarch=? AND checksum=? AND value<?"
                               % (self.table),
                                (value, version, pkgarch, checksum, value))
             except sqlite3.IntegrityError as exc:
@@ -184,7 +184,7 @@ class PRTable(object):
 
     def export(self, version, pkgarch, checksum, colinfo):
         metainfo = {}
-        #column info 
+        #column info
         if colinfo:
             metainfo['tbl_name'] = self.table
             metainfo['core_ver'] = prserv.__version__
@@ -280,4 +280,4 @@ class PRData(object):
         if tblname in self._tables:
             del self._tables[tblname]
         logger.info("drop table %s" % (tblname))
-        self.connection.execute("DROP TABLE IF EXISTS %s;" % tblname) 
+        self.connection.execute("DROP TABLE IF EXISTS %s;" % tblname)

@@ -47,7 +47,7 @@ def infer_caller_details(loginfo, parent=False, varval=True):
     if not loginfo:
         loginfo['ignore'] = True
         return
-    # Infer caller's likely values for variable (var) and value (value), 
+    # Infer caller's likely values for variable (var) and value (value),
     # to reduce clutter in the rest of the code.
     above = None
 
@@ -759,7 +759,7 @@ class DataSmart(MutableMapping):
                 if o:
                     for o2 in o.split("_"):
                         if not o2 in self.overrides:
-                            match = False                            
+                            match = False
                 if match:
                     value = value + r
 
@@ -773,7 +773,7 @@ class DataSmart(MutableMapping):
                 if o:
                     for o2 in o.split("_"):
                         if not o2 in self.overrides:
-                            match = False                            
+                            match = False
                 if match:
                     value = r + value
 
@@ -790,7 +790,7 @@ class DataSmart(MutableMapping):
                 if o:
                     for o2 in o.split("_"):
                         if not o2 in self.overrides:
-                            match = False                            
+                            match = False
                 if match:
                     removes.add(r)
 
@@ -948,7 +948,7 @@ class DataSmart(MutableMapping):
         deleted = set()
         overrides = set()
 
-        def keylist(d):        
+        def keylist(d):
             klist = set()
             for key in d:
                 if key in ["_data"]:

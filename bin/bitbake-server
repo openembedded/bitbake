@@ -51,4 +51,3 @@ handler = bb.event.LogHandler()
 logger.addHandler(handler)
 
 bb.server.process.execServer(lockfd, readypipeinfd, lockname, sockname, timeout, xmlrpcinterface)
-

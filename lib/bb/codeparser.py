@@ -68,7 +68,7 @@ class SetCache(object):
         self.setcache = {}
 
     def internSet(self, items):
-        
+
         new = []
         for i in items:
             new.append(sys.intern(i))
@@ -105,7 +105,7 @@ class pythonCacheLine(object):
         return hash(l)
 
     def __repr__(self):
-        return " ".join([str(self.refs), str(self.execs), str(self.contains)]) 
+        return " ".join([str(self.refs), str(self.execs), str(self.contains)])
 
 
 class shellCacheLine(object):

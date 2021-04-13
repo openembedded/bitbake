@@ -64,4 +64,3 @@ class RemoteDatastores:
         if idx in self.locked:
             raise Exception('Tried to release locked datastore %d' % idx)
         del self.datastores[idx]
-

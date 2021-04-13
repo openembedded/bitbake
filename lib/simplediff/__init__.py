@@ -25,7 +25,7 @@ def diff(old, new):
         old     the old list of immutable, comparable values (ie. a list
                 of strings)
         new     the new list of immutable, comparable values
-   
+
     Returns:
         A list of pairs, with the first part of the pair being one of three
         strings ('-', '+', '=') and the second part being a list of values from
@@ -59,7 +59,7 @@ def diff(old, new):
 
     # Find the largest substring common to old and new.
     # We use a dynamic programming approach here.
-    # 
+    #
     # We iterate over each value in the `new` list, calling the
     # index `inew`. At each iteration, `overlap[i]` is the
     # length of the largest suffix of `old[:i]` equal to a suffix
@@ -195,4 +195,3 @@ def check_diff(old, new):
     assert old == _old, 'Expected %s, got %s' % (old, _old)
     _new = [val for (a, vals) in result if (a in '=+') for val in vals]
     assert new == _new, 'Expected %s, got %s' % (new, _new)
-

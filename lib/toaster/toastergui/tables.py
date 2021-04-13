@@ -1612,4 +1612,3 @@ class DistrosTable(ToasterTable):
                         filter_name="in_current_project",
                         static_data_name="add-del-layers",
                         static_data_template='{% include "distro_btn.html" %}')
-

@@ -31,4 +31,3 @@ class LayersTest(unittest.TestCase):
             print("Not cleaning up %s. Please remove manually." % self.tempdir)
         else:
             bb.utils.prunedir(self.tempdir)
-

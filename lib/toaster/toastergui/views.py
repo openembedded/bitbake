@@ -1988,4 +1988,3 @@ if True:
                 return toaster_render(request, "unavailable_artifact.html")
         except (ObjectDoesNotExist, IOError):
             return toaster_render(request, "unavailable_artifact.html")
-

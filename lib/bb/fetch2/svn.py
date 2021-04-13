@@ -172,7 +172,7 @@ class Svn(FetchMethod):
 
         bb.utils.remove(ud.localpath)
         bb.utils.remove(ud.moddir, True)
-        
+
     def supports_srcrev(self):
         return True
 

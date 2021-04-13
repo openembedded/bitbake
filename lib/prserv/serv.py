@@ -174,7 +174,7 @@ class PRServer(SimpleXMLRPCServer):
 
     def work_forever(self,):
         self.quitflag = False
-        # This timeout applies to the poll in TCPServer, we need the select 
+        # This timeout applies to the poll in TCPServer, we need the select
         # below to wake on our quit pipe closing. We only ever call into handle_request
         # if there is data there.
         self.timeout = 0.01
@@ -224,14 +224,14 @@ class PRServer(SimpleXMLRPCServer):
             pid = os.fork()
             if pid > 0:
                 os.waitpid(pid, 0)
-                #parent return instead of exit to give control 
+                #parent return instead of exit to give control
                 return pid
         except OSError as e:
             raise Exception("%s [%d]" % (e.strerror, e.errno))
 
         os.setsid()
         """
-        fork again to make sure the daemon is not session leader, 
+        fork again to make sure the daemon is not session leader,
         which prevents it from acquiring controlling terminal
         """
         try:
@@ -500,7 +500,7 @@ def auto_start(d):
         connection.ping()
         realhost, realport = connection.getinfo()
         return str(realhost) + ":" + str(realport)
-        
+
     except Exception:
         logger.critical("PRservice %s:%d not available" % (host, port))
         raise PRServiceConfigError

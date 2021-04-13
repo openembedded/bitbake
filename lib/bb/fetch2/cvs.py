@@ -156,4 +156,3 @@ class Cvs(FetchMethod):
 
         bb.utils.remove(ud.pkgdir, True)
         bb.utils.remove(ud.localpath)
-

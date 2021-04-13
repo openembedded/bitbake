@@ -145,4 +145,3 @@ class BitBakeXMLRPCServerCommands():
         if self.server.parent.haveui:
             self.server.connection_token = None
             self.server.parent.haveui = False
-

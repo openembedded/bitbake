@@ -48,4 +48,3 @@ class IndexPlugin():
 
     def store_index(self, uri, index):
         raise NotImplementedError('store_index is not implemented')
-

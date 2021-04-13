@@ -50,7 +50,7 @@ def clean_context():
 
 def get_context():
     return _context
-    
+
 
 def set_context(ctx):
     _context = ctx
@@ -222,8 +222,8 @@ def explode_dep_versions2(s, *, sort=True):
             inversion = True
             # This list is based on behavior and supported comparisons from deb, opkg and rpm.
             #
-            # Even though =<, <<, ==, !=, =>, and >> may not be supported, 
-            # we list each possibly valid item. 
+            # Even though =<, <<, ==, !=, =>, and >> may not be supported,
+            # we list each possibly valid item.
             # The build system is responsible for validation of what it supports.
             if i.startswith(('<=', '=<', '<<', '==', '!=', '>=', '=>', '>>')):
                 lastcmp = i[0:2]
@@ -362,7 +362,7 @@ def _print_exception(t, value, tb, realfile, text, context):
         exception = traceback.format_exception_only(t, value)
         error.append('Error executing a python function in %s:\n' % realfile)
 
-        # Strip 'us' from the stack (better_exec call) unless that was where the 
+        # Strip 'us' from the stack (better_exec call) unless that was where the
         # error came from
         if tb.tb_next is not None:
             tb = tb.tb_next
@@ -755,9 +755,9 @@ def prunedir(topdir, ionice=False):
 
 
 def prune_suffix(var, suffixes, d):
-    """ 
+    """
     See if var ends with any of the suffixes listed and
-    remove it if found 
+    remove it if found
     """
     for suffix in suffixes:
         if suffix and var.endswith(suffix):
@@ -1017,9 +1017,9 @@ def umask(new_mask):
 
 
 def to_boolean(string, default=None):
-    """ 
+    """
     Check input string and return boolean value True/False/None
-    depending upon the checks 
+    depending upon the checks
     """
     if not string:
         return default
