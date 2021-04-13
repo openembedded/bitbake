@@ -7,7 +7,13 @@ BitBake Utility Functions
 # SPDX-License-Identifier: GPL-2.0-only
 #
 
-import re, fcntl, os, string, stat, shutil, time
+import re
+import fcntl
+import os
+import string
+import stat
+import shutil
+import time
 import sys
 import errno
 import logging

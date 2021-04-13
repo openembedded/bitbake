@@ -256,7 +256,9 @@ class GitSM(Git):
             runfetchcmd("%s submodule update --recursive --no-fetch" % (ud.basecmd), d, quiet=True, workdir=ud.destdir)
 
     def implicit_urldata(self, ud, d):
-        import shutil, subprocess, tempfile
+        import shutil
+        import subprocess
+        import tempfile
 
         urldata = []
         def add_submodule(ud, url, module, modpath, workdir, d):

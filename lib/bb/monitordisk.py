@@ -4,7 +4,9 @@
 # SPDX-License-Identifier: GPL-2.0-only
 #
 
-import os, logging, re
+import os
+import logging
+import re
 import bb
 logger = logging.getLogger("BitBake.Monitor")
 

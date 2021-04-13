@@ -11,7 +11,11 @@ server and queue them for the UI to process. This process must be used to avoid
 client/server deadlocks.
 """
 
-import collections, logging, pickle, socket, threading
+import collections
+import logging
+import pickle
+import socket
+import threading
 from xmlrpc.server import SimpleXMLRPCServer, SimpleXMLRPCRequestHandler
 
 import bb

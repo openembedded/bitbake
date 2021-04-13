@@ -26,7 +26,8 @@ import sys
 import codegen
 import logging
 import bb.pysh as pysh
-import bb.utils, bb.data
+import bb.utils
+import bb.data
 import hashlib
 from itertools import chain
 from bb.pysh import pyshyacc, pyshlex

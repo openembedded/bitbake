@@ -17,7 +17,9 @@ The aws tool must be correctly installed and configured prior to use.
 
 import os
 import bb
-import urllib.request, urllib.parse, urllib.error
+import urllib.request
+import urllib.parse
+import urllib.error
 from bb.fetch2 import FetchMethod
 from bb.fetch2 import FetchError
 from bb.fetch2 import runfetchcmd

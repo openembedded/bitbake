@@ -2,8 +2,11 @@
 # SPDX-License-Identifier: GPL-2.0-only
 #
 
-import os,sys,logging
-import signal, time
+import os
+import sys
+import logging
+import signal
+import time
 from xmlrpc.server import SimpleXMLRPCServer, SimpleXMLRPCRequestHandler
 import threading
 import queue

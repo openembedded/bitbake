@@ -12,8 +12,12 @@
 # SPDX-License-Identifier: GPL-2.0-only
 #
 
-import re, bb, os
-import bb.build, bb.utils, bb.data_smart
+import re
+import bb
+import os
+import bb.build
+import bb.utils
+import bb.data_smart
 
 from . import ConfHandler
 from .. import resolve_file, ast, logger, ParseError

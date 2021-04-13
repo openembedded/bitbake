@@ -34,7 +34,11 @@
 __version__    = "3.3"
 __tabversion__ = "3.2"       # Version of table file used
 
-import re, sys, types, copy, os
+import re
+import sys
+import types
+import copy
+import os
 
 # This tuple contains known string types
 try:

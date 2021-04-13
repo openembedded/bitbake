@@ -16,11 +16,15 @@ BitBake build tools.
 #
 # Based on functions from the base bb module, Copyright 2003 Holger Schurig
 
-import copy, re, sys, traceback
+import copy
+import re
+import sys
+import traceback
 from collections import MutableMapping
 import logging
 import hashlib
-import bb, bb.codeparser
+import bb
+import bb.codeparser
 from bb   import utils
 from bb.COW  import COWDictBase
 
