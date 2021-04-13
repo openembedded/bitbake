@@ -188,7 +188,7 @@ class ClearCase(FetchMethod):
 
     def _remove_view(self, ud, d):
         if os.path.exists(ud.viewdir):
-            cmd = self._build_ccase_command(ud, 'rmview');
+            cmd = self._build_ccase_command(ud, 'rmview')
             logger.info("cleaning up [VOB=%s label=%s view=%s]", ud.vob, ud.label, ud.viewname)
             bb.fetch2.check_network_access(d, cmd, ud.url)
             output = runfetchcmd(cmd, d, workdir=ud.ccasedir)
@@ -226,7 +226,7 @@ class ClearCase(FetchMethod):
                 raise e
 
         # Set configspec: Setting the configspec effectively fetches the files as defined in the configspec
-        cmd = self._build_ccase_command(ud, 'setcs');
+        cmd = self._build_ccase_command(ud, 'setcs')
         logger.info("fetching data [VOB=%s label=%s view=%s]", ud.vob, ud.label, ud.viewname)
         bb.fetch2.check_network_access(d, cmd, ud.url)
         output = runfetchcmd(cmd, d, workdir=ud.viewdir)
@@ -240,7 +240,7 @@ class ClearCase(FetchMethod):
         runfetchcmd('tar -czf "%s" .' % (ud.localpath), d, cleanup = [ud.localpath], workdir = ud.viewdir)
 
         # Clean up so we can create a new view next time
-        self.clean(ud, d);
+        self.clean(ud, d)
 
     def clean(self, ud, d):
         self._remove_view(ud, d)

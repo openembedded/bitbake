@@ -408,7 +408,7 @@ layerBranches set.  If not, they are effectively blank.'''
                                               version=deplayerbranch.version
                                           )
                         if rdeplayerbranch != deplayerbranch:
-                                logger.debug('Replaced %s:%s:%s with %s:%s:%s' % \
+                                logger.debug('Replaced %s:%s:%s with %s:%s:%s' %
                                       (deplayerbranch.index.config['DESCRIPTION'],
                                        deplayerbranch.branch.name,
                                        deplayerbranch.layer.name,

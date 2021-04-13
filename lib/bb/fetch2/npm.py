@@ -185,8 +185,8 @@ class Npm(FetchMethod):
                     raise FetchError(error.get("summary"), ud.url)
 
                 if ud.version == "latest":
-                    bb.warn("The npm package %s is using the latest " \
-                            "version available. This could lead to " \
+                    bb.warn("The npm package %s is using the latest "
+                            "version available. This could lead to "
                             "non-reproducible builds." % pkgver)
                 elif ud.version != view.get("version"):
                     raise ParameterError("Invalid 'version' parameter", ud.url)

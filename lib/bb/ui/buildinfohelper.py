@@ -1689,7 +1689,7 @@ class BuildInfoHelper(object):
         task_artifacts = task_vars['artifacts']
 
         if task_name in ['do_populate_sdk', 'do_populate_sdk_ext']:
-            targets = [target for target in self.internal_state['targets'] \
+            targets = [target for target in self.internal_state['targets']
                 if target.task == task_name[3:]]
             if not targets:
                 logger.warning("scan_task_artifacts: SDK targets not found: %s\n", task_name)
@@ -1876,7 +1876,7 @@ class BuildInfoHelper(object):
                         image_target)
 
                 if similar_target:
-                    logger.info('image artifacts for target %s cloned from ' \
+                    logger.info('image artifacts for target %s cloned from '
                         'target %s' % (image_target.pk, similar_target.pk))
                     self.orm_wrapper.clone_image_artifacts(similar_target,
                         image_target)
@@ -1886,7 +1886,7 @@ class BuildInfoHelper(object):
         Return targets which could generate SDK artifacts, i.e.
         "do_populate_sdk" and "do_populate_sdk_ext".
         """
-        return [target for target in self.internal_state['targets'] \
+        return [target for target in self.internal_state['targets']
             if target.task in ['populate_sdk', 'populate_sdk_ext']]
 
     def scan_sdk_artifacts(self, event):
@@ -1976,7 +1976,7 @@ class BuildInfoHelper(object):
                     self.orm_wrapper.get_similar_target_with_sdk_files(
                         sdk_target)
                 if similar_target:
-                    logger.info('SDK artifacts for target %s cloned from ' \
+                    logger.info('SDK artifacts for target %s cloned from '
                         'target %s' % (sdk_target.pk, similar_target.pk))
                     self.orm_wrapper.clone_sdk_artifacts(similar_target,
                         sdk_target)

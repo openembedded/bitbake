@@ -44,7 +44,8 @@ class PackageDepView(Gtk.TreeView):
     def _filter(self, model, iter, data):
         this_type = model[iter][COL_DEP_TYPE]
         package = model[iter][COL_DEP_PARENT]
-        if this_type != self.dep_type: return False
+        if this_type != self.dep_type:
+            return False
         return package == self.current
 
     def set_current_package(self, package):

@@ -349,7 +349,7 @@ def bitbake_main(configParams, configuration):
 
     if configParams.server_only and configParams.remote_server:
             raise BBMainException("FATAL: The '--server-only' option conflicts with %s.\n" %
-                                  ("the BBSERVER environment variable" if "BBSERVER" in os.environ \
+                                  ("the BBSERVER environment variable" if "BBSERVER" in os.environ
                                    else "the '--remote-server' option"))
 
     if configParams.observe_only and not (configParams.remote_server or configParams.bind):

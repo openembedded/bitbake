@@ -53,7 +53,7 @@ class Hg(FetchMethod):
             ud.proto = "hg"
 
         # Create paths to mercurial checkouts
-        hgsrcname = '%s_%s_%s' % (ud.module.replace('/', '.'), \
+        hgsrcname = '%s_%s_%s' % (ud.module.replace('/', '.'),
                             ud.host, ud.path.replace('/', '.'))
         mirrortarball = 'hg_%s.tar.gz' % hgsrcname
         ud.fullmirror = os.path.join(d.getVar("DL_DIR"), mirrortarball)
@@ -115,7 +115,7 @@ class Hg(FetchMethod):
         if command == "info":
             return "%s identify -i %s://%s/%s" % (ud.basecmd, proto, hgroot, ud.module)
 
-        options = [];
+        options = []
 
         # Don't specify revision for the fetch; clone the entire repo.
         # This avoids an issue if the specified revision is a tag, because

@@ -42,5 +42,6 @@ try:
 except NameError:
    def any(iterator):
       for item in iterator:
-         if item: return True
+         if item:
+           return True
       return False

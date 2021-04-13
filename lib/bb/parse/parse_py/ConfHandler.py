@@ -189,7 +189,7 @@ def feeder(lineno, s, fn, statements):
         ast.handleUnsetFlag(statements, fn, lineno, m)
         return
 
-    raise ParseError("unparsed line: '%s'" % s, fn, lineno);
+    raise ParseError("unparsed line: '%s'" % s, fn, lineno)
 
 # Add us to the handlers list
 from bb.parse import handlers

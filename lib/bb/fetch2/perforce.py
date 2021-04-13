@@ -79,7 +79,7 @@ class Perforce(FetchMethod):
 
         path = ud.url.split('://')[1]
         path = path.split(';')[0]
-        delim = path.find('@');
+        delim = path.find('@')
         if delim != -1:
             (ud.user, ud.pswd) = path.split('@')[0].split(':')
             ud.path = path.split('@')[1]

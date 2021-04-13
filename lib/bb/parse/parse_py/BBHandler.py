@@ -83,7 +83,8 @@ def get_statements(filename, absolute_filename, base_name):
             while True:
                 lineno = lineno + 1
                 s = f.readline()
-                if not s: break
+                if not s:
+                    break
                 s = s.rstrip()
                 feeder(lineno, s, filename, base_name, statements)
 

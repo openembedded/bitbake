@@ -500,14 +500,14 @@ class LocalhostBEController(BuildEnvironmentController):
         if not is_merged_attr:
             self._shellcmd(['%s bash -c \"(TOASTER_BRBE="%s" BBSERVER="0.0.0.0:%s" '
                         '%s %s -u toasterui  --read %s --read %s --token="" >>%s 2>&1;'
-                        'BITBAKE_UI="knotty" BBSERVER=0.0.0.0:%s %s -m)&\"' \
+                        'BITBAKE_UI="knotty" BBSERVER=0.0.0.0:%s %s -m)&\"'
                         % (env_clean, brbe, self.be.bbport, local_bitbake, bbtargets, confpath, toasterlayers, log,
                         self.be.bbport, bitbake,)],
                         builddir, nowait=True)
         else:
             self._shellcmd(['%s bash -c \"(TOASTER_BRBE="%s" BBSERVER="0.0.0.0:%s" '
                         '%s %s -u toasterui  --token="" >>%s 2>&1;'
-                        'BITBAKE_UI="knotty" BBSERVER=0.0.0.0:%s %s -m)&\"' \
+                        'BITBAKE_UI="knotty" BBSERVER=0.0.0.0:%s %s -m)&\"'
                         % (env_clean, brbe, self.be.bbport, local_bitbake, bbtargets, log,
                         self.be.bbport, bitbake,)],
                         builddir, nowait=True)

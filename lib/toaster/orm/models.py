@@ -206,7 +206,7 @@ class Project(models.Model):
         try:
             return self.projectvariable_set.get(name="MACHINE").value
         except (ProjectVariable.DoesNotExist,IndexError):
-            return None;
+            return None
 
     def get_number_of_builds(self):
         """Return the number of builds which have ended"""
@@ -307,7 +307,7 @@ class Project(models.Model):
         try:
             return self.projectvariable_set.get(name="DEFAULT_IMAGE").value
         except (ProjectVariable.DoesNotExist,IndexError):
-            return None;
+            return None
 
     def get_is_new(self):
         return self.get_variable(Project.PROJECT_SPECIFIC_ISNEW)
@@ -613,8 +613,8 @@ class Build(models.Model):
         return list(set(re.split(r' {1,}', image_fstypes)))
 
     def get_sorted_target_list(self):
-        tgts = Target.objects.filter(build_id = self.id).order_by( 'target' );
-        return( tgts );
+        tgts = Target.objects.filter(build_id = self.id).order_by( 'target' )
+        return( tgts )
 
     def get_recipes(self):
         """
@@ -761,7 +761,7 @@ class Build(models.Model):
         as Build states, but really we just want to know the state of the build.
         """
         if self.is_cancelling():
-            return 'Cancelling';
+            return 'Cancelling'
         elif self.is_queued():
             return 'Queued'
         elif self.is_cloning():
@@ -906,8 +906,8 @@ class Target(models.Model):
 
         # filter out any image files whose suffixes aren't in the
         # IMAGE_FSTYPES suffixes variable for this target's build
-        image_files = [target_image_file \
-            for target_image_file in target.target_image_file_set.all() \
+        image_files = [target_image_file
+            for target_image_file in target.target_image_file_set.all()
             if target_image_file.suffix in image_fstypes]
 
         for image_file in image_files:
