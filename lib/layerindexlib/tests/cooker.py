@@ -86,7 +86,7 @@ class LayerIndexCookerTest(LayersTest):
                   ('openembedded-layer', True),
                   ('notpresent', False)]
 
-        for collection,result in tests:
+        for collection, result in tests:
             _check(collection, result)
 
     def test_find_layerbranch(self):
@@ -105,6 +105,6 @@ class LayerIndexCookerTest(LayersTest):
                   ('openembedded-layer', True),
                   ('notpresent', False)]
 
-        for collection,result in tests:
+        for collection, result in tests:
             _check(collection, result)
 

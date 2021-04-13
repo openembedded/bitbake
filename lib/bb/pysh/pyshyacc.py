@@ -778,6 +778,6 @@ def visit_commands(cmds, callable):
     SimpleCommand instances.
     """
     if isinstance(cmds, (tuple, list)):
-        map(lambda c: visit_commands(c,callable), cmds)
+        map(lambda c: visit_commands(c, callable), cmds)
     elif isinstance(cmds, (Pipeline, SimpleCommand)):
         callable(cmds)

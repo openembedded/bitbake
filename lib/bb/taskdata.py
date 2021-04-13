@@ -476,7 +476,7 @@ class TaskData:
         for tid in self.taskentries:
             for (idepend, idependtask) in self.taskentries[tid].idepends:
                 if idepend == target:
-                    fn = tid.rsplit(":",1)[0]
+                    fn = tid.rsplit(":", 1)[0]
                     self.fail_fn(fn, missing_list)
 
         if self.abort and target in self.external_targets:
@@ -501,7 +501,7 @@ class TaskData:
         for tid in self.taskentries:
             for (idepend, idependtask) in self.taskentries[tid].irdepends:
                 if idepend == target:
-                    fn = tid.rsplit(":",1)[0]
+                    fn = tid.rsplit(":", 1)[0]
                     self.fail_fn(fn, missing_list)
 
     def add_unresolved(self, cfgData, dataCache):

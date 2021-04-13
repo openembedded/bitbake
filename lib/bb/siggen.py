@@ -286,8 +286,8 @@ class SignatureGeneratorBasic(SignatureGenerator):
                 checksums = self.checksum_cache.get_checksums(dataCaches[mc].file_checksums[fn][task], recipename, self.localdirsexclude)
             else:
                 checksums = bb.fetch2.get_file_checksums(dataCaches[mc].file_checksums[fn][task], recipename, self.localdirsexclude)
-            for (f,cs) in checksums:
-                self.file_checksum_values[tid].append((f,cs))
+            for (f, cs) in checksums:
+                self.file_checksum_values[tid].append((f, cs))
 
         taskdep = dataCaches[mc].task_deps[fn]
         if 'nostamp' in taskdep and task in taskdep['nostamp']:
@@ -372,7 +372,7 @@ class SignatureGeneratorBasic(SignatureGenerator):
 
         if runtime and tid in self.taskhash:
             data['runtaskdeps'] = self.runtaskdeps[tid]
-            data['file_checksum_values'] = [(os.path.basename(f), cs) for f,cs in self.file_checksum_values[tid]]
+            data['file_checksum_values'] = [(os.path.basename(f), cs) for f, cs in self.file_checksum_values[tid]]
             data['runtaskhashes'] = {}
             for dep in data['runtaskdeps']:
                 data['runtaskhashes'][dep] = self.get_unihash(dep)

@@ -141,7 +141,7 @@ class ProcessServer():
                 self.lastui = time.time()
                 self.cooker.clientComplete()
                 self.haveui = False
-            ready = select.select(fds,[],[],0)[0]
+            ready = select.select(fds, [], [], 0)[0]
             if newconnections:
                 serverlog("Starting new client")
                 conn = newconnections.pop(-1)
@@ -154,7 +154,7 @@ class ProcessServer():
         self.lastui = time.time()
         while not self.quit:
             if self.sock in ready:
-                while select.select([self.sock],[],[],0)[0]:
+                while select.select([self.sock], [], [], 0)[0]:
                     controllersock, address = self.sock.accept()
                     if self.controllersock:
                         serverlog("Queuing %s (%s)" % (str(ready), str(newconnections)))
@@ -377,12 +377,12 @@ class ProcessServer():
             if self.xmlrpc:
                 nextsleep = self.xmlrpc.get_timeout(nextsleep)
             try:
-                return select.select(fds,[],[],nextsleep)[0]
+                return select.select(fds, [], [], nextsleep)[0]
             except InterruptedError:
                 # Ignore EINTR
                 return []
         else:
-            return select.select(fds,[],[],0)[0]
+            return select.select(fds, [], [], 0)[0]
 
 
 class ServerCommunicator():

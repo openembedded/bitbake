@@ -44,7 +44,7 @@ class LXMLTreeBuilderSmokeTest(SoupTest, HTMLTreeBuilderSmokeTest):
     # test if an old version of lxml is installed.
 
     @skipIf(
-        not LXML_PRESENT or LXML_VERSION < (2,3,5,0),
+        not LXML_PRESENT or LXML_VERSION < (2, 3, 5, 0),
         "Skipping doctype test for old version of lxml to avoid segfault.")
     def test_empty_doctype(self):
         soup = self.soup("<!DOCTYPE>")

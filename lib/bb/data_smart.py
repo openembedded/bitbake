@@ -1005,9 +1005,9 @@ class DataSmart(MutableMapping):
 
             value = d.getVar(key, False) or ""
             if type(value) is type(self):
-                data.update({key:value.get_hash()})
+                data.update({key: value.get_hash()})
             else:
-                data.update({key:value})
+                data.update({key: value})
 
             varflags = d.getVarFlags(key, internalflags=True, expand=["vardepvalue"])
             if not varflags:
@@ -1015,16 +1015,16 @@ class DataSmart(MutableMapping):
             for f in varflags:
                 if f == "_content":
                     continue
-                data.update({'%s[%s]' % (key, f):varflags[f]})
+                data.update({'%s[%s]' % (key, f): varflags[f]})
 
         for key in ["__BBTASKS", "__BBANONFUNCS", "__BBHANDLERS"]:
             bb_list = d.getVar(key, False) or []
-            data.update({key:str(bb_list)})
+            data.update({key: str(bb_list)})
 
             if key == "__BBANONFUNCS":
                 for i in bb_list:
                     value = d.getVar(i, False) or ""
-                    data.update({i:value})
+                    data.update({i: value})
 
         data_str = str([(k, data[k]) for k in sorted(data.keys())])
         return hashlib.sha256(data_str.encode("utf-8")).hexdigest()

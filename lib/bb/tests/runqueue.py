@@ -37,7 +37,7 @@ class RunQueueTests(unittest.TestCase):
                 env[k] = extraenv[k]
                 env["BB_ENV_EXTRAWHITE"] = env["BB_ENV_EXTRAWHITE"] + " " + k
         try:
-            output = subprocess.check_output(cmd, env=env, stderr=subprocess.STDOUT,universal_newlines=True, cwd=builddir)
+            output = subprocess.check_output(cmd, env=env, stderr=subprocess.STDOUT, universal_newlines=True, cwd=builddir)
             print(output)
         except subprocess.CalledProcessError as e:
             self.fail("Command %s failed with %s" % (cmd, e.output))

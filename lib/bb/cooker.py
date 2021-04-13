@@ -651,7 +651,7 @@ class BBCooker:
         if not defaulttask_explicit and defaulttask_implicit != '':
             fulltargetlist.append(defaulttask_implicit)
 
-        bb.debug(1,"Target list: %s" % (str(fulltargetlist)))
+        bb.debug(1, "Target list: %s" % (str(fulltargetlist)))
         taskdata = {}
         localdata = {}
 
@@ -712,7 +712,7 @@ class BBCooker:
                         l = k.split(':')
                         depmc = l[2]
                         if depmc not in self.multiconfigs:
-                            bb.fatal("Multiconfig dependency %s depends on nonexistent multiconfig configuration named configuration %s" % (k,depmc))
+                            bb.fatal("Multiconfig dependency %s depends on nonexistent multiconfig configuration named configuration %s" % (k, depmc))
                         else:
                             logger.debug("Adding providers for multiconfig dependency %s" % l[3])
                             taskdata[depmc].add_provider(localdata[depmc], self.recipecaches[depmc], l[3])
@@ -1167,7 +1167,7 @@ class BBCooker:
             collection_list = collections.split()
             min_prio = 0
             for c in collection_list:
-                bb.debug(1,'Processing %s in collection list' % (c))
+                bb.debug(1, 'Processing %s in collection list' % (c))
 
                 # Get collection priority if defined explicitly
                 priority = self.data.getVar("BBFILE_PRIORITY_%s" % c)
@@ -1232,15 +1232,15 @@ class BBCooker:
                                     except bb.utils.VersionStringException as vse:
                                         bb.fatal('Error parsing LAYERRECOMMENDS_%s: %s' % (c, str(vse)))
                                     if not res:
-                                        parselog.debug(3,"Layer '%s' recommends version %s of layer '%s', but version %s is currently enabled in your configuration. Check that you are using the correct matching versions/branches of these two layers.", c, opstr, rec, layerver)
+                                        parselog.debug(3, "Layer '%s' recommends version %s of layer '%s', but version %s is currently enabled in your configuration. Check that you are using the correct matching versions/branches of these two layers.", c, opstr, rec, layerver)
                                         continue
                                 else:
-                                    parselog.debug(3,"Layer '%s' recommends version %s of layer '%s', which exists in your configuration but does not specify a version. Check that you are using the correct matching versions/branches of these two layers.", c, opstr, rec)
+                                    parselog.debug(3, "Layer '%s' recommends version %s of layer '%s', which exists in your configuration but does not specify a version. Check that you are using the correct matching versions/branches of these two layers.", c, opstr, rec)
                                     continue
-                            parselog.debug(3,"Layer '%s' recommends layer '%s', so we are adding it", c, rec)
+                            parselog.debug(3, "Layer '%s' recommends layer '%s', so we are adding it", c, rec)
                             collection_depends[c].append(rec)
                         else:
-                            parselog.debug(3,"Layer '%s' recommends layer '%s', but this layer is not enabled in your configuration", c, rec)
+                            parselog.debug(3, "Layer '%s' recommends layer '%s', but this layer is not enabled in your configuration", c, rec)
 
             # Recursively work out collection priorities based on dependencies
             def calc_layer_priority(collection):
@@ -2127,7 +2127,7 @@ class CookerParser(object):
             self.parser_quit = multiprocessing.Queue(maxsize=self.num_processes)
             self.result_queue = multiprocessing.Queue()
 
-            def chunkify(lst,n):
+            def chunkify(lst, n):
                 return [lst[i::n] for i in range(n)]
             self.jobs = chunkify(list(self.willparse), self.num_processes)
 

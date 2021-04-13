@@ -72,7 +72,7 @@ unset B[flag]
         f = self.parsehelper(self.unsettest)
         d = bb.parse.handle(f.name, self.d)['']
         self.assertEqual(d.getVar("A"), None)
-        self.assertEqual(d.getVarFlag("A","flag"), None)
+        self.assertEqual(d.getVarFlag("A", "flag"), None)
         self.assertEqual(d.getVar("B"), "2")
 
     exporttest = """

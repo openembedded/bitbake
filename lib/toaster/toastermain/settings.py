@@ -249,7 +249,7 @@ FRESH_ENABLED = False
 if os.environ.get('TOASTER_DEVEL', None) is not None:
     try:
         import fresh
-        MIDDLEWARE = ["fresh.middleware.FreshMiddleware",] + MIDDLEWARE
+        MIDDLEWARE = ["fresh.middleware.FreshMiddleware", ] + MIDDLEWARE
         INSTALLED_APPS = INSTALLED_APPS + ('fresh',)
         FRESH_ENABLED = True
     except:
@@ -260,9 +260,9 @@ if os.environ.get('TOASTER_DEVEL', None) is not None:
     try:
         import debug_toolbar
         import debug_panel
-        MIDDLEWARE = ['debug_panel.middleware.DebugPanelMiddleware',] + MIDDLEWARE
+        MIDDLEWARE = ['debug_panel.middleware.DebugPanelMiddleware', ] + MIDDLEWARE
         #MIDDLEWARE = MIDDLEWARE + ['debug_toolbar.middleware.DebugToolbarMiddleware',]
-        INSTALLED_APPS = INSTALLED_APPS + ('debug_toolbar','debug_panel',)
+        INSTALLED_APPS = INSTALLED_APPS + ('debug_toolbar', 'debug_panel',)
         DEBUG_PANEL_ENABLED = True
 
         # this cache backend will be used by django-debug-panel

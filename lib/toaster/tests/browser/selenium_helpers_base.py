@@ -25,7 +25,7 @@ from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from selenium.common.exceptions import NoSuchElementException, \
         StaleElementReferenceException, TimeoutException
 
-def create_selenium_driver(cls,browser='chrome'):
+def create_selenium_driver(cls, browser='chrome'):
     # set default browser string based on env (if available)
     env_browser = os.environ.get('TOASTER_TESTS_BROWSER')
     if env_browser:
@@ -52,7 +52,7 @@ def create_selenium_driver(cls,browser='chrome'):
         driver = webdriver.Remote(remote_hub,
                                   webdriver.DesiredCapabilities.FIREFOX.copy())
 
-        driver.get("http://%s:%s" % (cls.server_thread.host,cls.server_thread.port))
+        driver.get("http://%s:%s" % (cls.server_thread.host, cls.server_thread.port))
         return driver
     else:
         msg = 'Selenium driver for browser %s is not available' % browser

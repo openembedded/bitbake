@@ -76,7 +76,7 @@ class ConfigParameters(object):
 
     def parseActions(self):
         # Parse any commandline into actions
-        action = {'action':None, 'msg':None}
+        action = {'action': None, 'msg': None}
         if self.options.show_environment:
             if 'world' in self.options.pkgs_to_build:
                 action['msg'] = "'world' is not a valid target for --environment."
@@ -149,7 +149,7 @@ class CookerConfiguration(object):
             state[key] = getattr(self, key)
         return state
 
-    def __setstate__(self,state):
+    def __setstate__(self, state):
         for k in state:
             setattr(self, k, state[k])
 
@@ -431,7 +431,7 @@ class CookerDataBuilder(object):
             handlerln = int(data.getVarFlag(var, "lineno", False))
             bb.event.register(var, data.getVar(var, False), (data.getVarFlag(var, "eventmask") or "").split(), handlerfn, handlerln, data)
 
-        data.setVar('BBINCLUDED',bb.parse.get_file_depends(data))
+        data.setVar('BBINCLUDED', bb.parse.get_file_depends(data))
 
         return data
 

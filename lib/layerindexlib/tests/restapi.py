@@ -79,14 +79,14 @@ class LayerIndexWebRestApiTest(LayersTest):
                type == 'layerItems' or \
                type in self.layerindex.indexes[0].config['local']:
                 continue
-            for id in getattr(self.layerindex.indexes[0],type):
+            for id in getattr(self.layerindex.indexes[0], type):
                 self.logger.debug("type %s" % (type))
 
                 self.assertTrue(id in getattr(reload.indexes[0], type), msg="Id number missing from reloaded data")
 
-                self.logger.debug("%s ? %s" % (getattr(self.layerindex.indexes[0],type)[id], getattr(reload.indexes[0], type)[id]))
+                self.logger.debug("%s ? %s" % (getattr(self.layerindex.indexes[0], type)[id], getattr(reload.indexes[0], type)[id]))
 
-                self.assertEqual(getattr(self.layerindex.indexes[0],type)[id], getattr(reload.indexes[0], type)[id], msg="reloaded data does not match original")
+                self.assertEqual(getattr(self.layerindex.indexes[0], type)[id], getattr(reload.indexes[0], type)[id], msg="reloaded data does not match original")
 
     @skipIfNoNetwork()
     def test_dependency_resolution(self):
@@ -142,7 +142,7 @@ class LayerIndexWebRestApiTest(LayersTest):
                   ('openembedded-layer', True),
                   ('notpresent', False)]
 
-        for collection,result in tests:
+        for collection, result in tests:
             _check(collection, result)
 
     @skipIfNoNetwork()
@@ -166,6 +166,6 @@ class LayerIndexWebRestApiTest(LayersTest):
                   ('meta-oe', True),
                   ('notpresent', False)]
 
-        for collection,result in tests:
+        for collection, result in tests:
             _check(collection, result)
 

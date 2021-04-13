@@ -31,8 +31,8 @@ try:
 except ImportError as e:
     LXML_PRESENT = False
 
-PYTHON_2_PRE_2_7 = (sys.version_info < (2,7))
-PYTHON_3_PRE_3_2 = (sys.version_info[0] == 3 and sys.version_info < (3,2))
+PYTHON_2_PRE_2_7 = (sys.version_info < (2, 7))
+PYTHON_3_PRE_3_2 = (sys.version_info[0] == 3 and sys.version_info < (3, 2))
 
 class TestConstructor(SoupTest):
 

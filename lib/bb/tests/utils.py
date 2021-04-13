@@ -269,7 +269,7 @@ do_functionname() {
     command2 ${VAL3} ${VAL4}
 }
 """
-        self._testeditfile({'MULTILINE': (['d1','d2','d3'], None, 4, False),
+        self._testeditfile({'MULTILINE': (['d1', 'd2', 'd3'], None, 4, False),
                         'MULTILINE3': ('nowsingle', None, 4, True),
                         'NOTPRESENT': (['a', 'b'], None, 4, False)}, newfile2, dummyvars=['NOTPRESENT'])
 

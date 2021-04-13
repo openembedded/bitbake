@@ -29,7 +29,7 @@ class PersistDataTest(unittest.TestCase):
         self.stress_count = 10000
         self.thread_count = 5
 
-        for k,v in self.items.items():
+        for k, v in self.items.items():
             self.data[k] = v
 
     def tearDown(self):

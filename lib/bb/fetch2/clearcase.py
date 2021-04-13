@@ -196,7 +196,7 @@ class ClearCase(FetchMethod):
 
     def need_update(self, ud, d):
         if ("LATEST" in ud.label) or (ud.customspec and "LATEST" in ud.customspec):
-            ud.identifier += "-%s" % d.getVar("DATETIME",d, True)
+            ud.identifier += "-%s" % d.getVar("DATETIME", d, True)
             return True
         if os.path.exists(ud.localpath):
             return False

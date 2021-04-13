@@ -98,9 +98,9 @@ def is_name(s):
     return _RE_NAME.search(s) is not None
 
 def find_chars(seq, chars):
-    for i,v in enumerate(seq):
+    for i, v in enumerate(seq):
         if v in chars:
-            return i,v
+            return i, v
     return -1, None
 
 class WordLexer:
@@ -265,7 +265,7 @@ class WordLexer:
                     result[-1] = buf[0]
                     read = 1
                 else:
-                    for read,c in enumerate(buf):
+                    for read, c in enumerate(buf):
                         if c not in self.NAME_CHARSET:
                             break
                     else:
@@ -279,7 +279,7 @@ class WordLexer:
                     result[:] = ['', result[0], '']
                 else:
                     result += [''] 
-                return read,True
+                return read, True
         
         sep = result[0]    
         if sep == '$(':
@@ -446,7 +446,7 @@ class HereDocLexer:
         while 1:
             #Look for first unescaped newline. Quotes may be ignored
             escaped = False
-            for i,c in enumerate(self._buffer):
+            for i, c in enumerate(self._buffer):
                 if escaped:
                     escaped = False
                 elif c == '\\':

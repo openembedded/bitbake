@@ -110,7 +110,7 @@ def objtojson(obj):
             elif isinstance(d[di], int) and hasattr(obj, "get_%s_display" % di):
                 nd[di] = getattr(obj, "get_%s_display" % di)()
         return nd
-    elif isinstance(obj, type(lambda x:x)):
+    elif isinstance(obj, type(lambda x: x)):
         import inspect
         return inspect.getsourcelines(obj)[0]
     else:
@@ -125,10 +125,10 @@ def _lv_to_dict(prj, x=None):
 
     return {"id": x.pk,
             "name": x.layer.name,
-            "tooltip": "%s | %s" % (x.layer.vcs_url,x.get_vcs_reference()),
+            "tooltip": "%s | %s" % (x.layer.vcs_url, x.get_vcs_reference()),
             "detail": "(%s" % x.layer.vcs_url + (")" if x.release is None else " | " + x.get_vcs_reference() + ")"),
             "giturl": x.layer.vcs_url,
-            "layerdetailurl": reverse('layerdetails', args=(prj.id,x.pk)),
+            "layerdetailurl": reverse('layerdetails', args=(prj.id, x.pk)),
             "revision": x.get_vcs_reference(),
            }
 
@@ -144,7 +144,7 @@ def _build_page_range(paginator, index=1):
 
     page.page_range = [page.number]
     crt_range = 0
-    for i in range(1,5):
+    for i in range(1, 5):
         if (page.number + i) <= paginator.num_pages:
             page.page_range = page.page_range + [page.number + i]
             crt_range += 1
@@ -327,7 +327,7 @@ def _get_queryset(model, queryset, filter_string, search_term, ordering_string, 
 
     if ordering_string:
         column, order = ordering_string.split(':')
-        if column == re.sub('-','',ordering_secondary):
+        if column == re.sub('-', '', ordering_secondary):
             ordering_secondary = ''
         if order.lower() == DESCENDING:
             column = '-' + column
@@ -358,7 +358,7 @@ def _set_parameters_values(pagesize, orderby, request):
     request.session['%s_orderby' % current_url] = orderby
 
 # date range: normalize GUI's dd/mm/yyyy to date object
-def _normalize_input_date(date_str,default):
+def _normalize_input_date(date_str, default):
     date_str = re.sub('/', '-', date_str)
     # accept dd/mm/yyyy to d/m/yy
     try:
@@ -378,25 +378,25 @@ def _normalize_input_date(date_str,default):
 def _modify_date_range_filter(filter_string):
     # was the date range radio button selected?
     if 0 > filter_string.find('_daterange'):
-        return filter_string,''
+        return filter_string, ''
     # normalize GUI dates to database format
-    filter_string = filter_string.replace('_daterange','').replace(':','!')
+    filter_string = filter_string.replace('_daterange', '').replace(':', '!')
     filter_list = filter_string.split('!')
     if 4 != len(filter_list):
         return filter_string
     today = timezone.localtime(timezone.now())
     date_id = filter_list[1]
-    date_from = _normalize_input_date(filter_list[2],today)
-    date_to = _normalize_input_date(filter_list[3],today)
+    date_from = _normalize_input_date(filter_list[2], today)
+    date_to = _normalize_input_date(filter_list[3], today)
     # swap dates if manually set dates are out of order
     if date_to < date_from:
-        date_to,date_from = date_from,date_to
+        date_to, date_from = date_from, date_to
     # convert to strings, make 'date_to' inclusive by moving to begining of next day
     date_from_str = date_from.strftime("%Y-%m-%d")
     date_to_str = (date_to + timedelta(days=1)).strftime("%Y-%m-%d")
     filter_string = filter_list[0] + '!' + filter_list[1] + ':' + date_from_str + '!' + date_to_str
-    daterange_selected = re.sub('__.*','', date_id)
-    return filter_string,daterange_selected
+    daterange_selected = re.sub('__.*', '', date_id)
+    return filter_string, daterange_selected
 
 def _add_daterange_context(queryset_all, request, daterange_list):
     # calculate the exact begining of local today and yesterday
@@ -404,22 +404,22 @@ def _add_daterange_context(queryset_all, request, daterange_list):
     yesterday_begin = today_begin - timedelta(days=1)
     # add daterange persistent
     context_date = {}
-    context_date['last_date_from'] = request.GET.get('last_date_from',timezone.localtime(timezone.now()).strftime("%d/%m/%Y"))
-    context_date['last_date_to'] = request.GET.get('last_date_to',context_date['last_date_from'])
+    context_date['last_date_from'] = request.GET.get('last_date_from', timezone.localtime(timezone.now()).strftime("%d/%m/%Y"))
+    context_date['last_date_to'] = request.GET.get('last_date_to', context_date['last_date_from'])
     # calculate the date ranges, avoid second sort for 'created'
     # fetch the respective max range from the database
     context_date['daterange_filter'] = ''
     for key in daterange_list:
         queryset_key = queryset_all.order_by(key)
         try:
-            context_date['dateMin_' + key] = timezone.localtime(getattr(queryset_key.first(),key)).strftime("%d/%m/%Y")
+            context_date['dateMin_' + key] = timezone.localtime(getattr(queryset_key.first(), key)).strftime("%d/%m/%Y")
         except AttributeError:
             context_date['dateMin_' + key] = timezone.localtime(timezone.now())
         try:
-            context_date['dateMax_' + key] = timezone.localtime(getattr(queryset_key.last(),key)).strftime("%d/%m/%Y")
+            context_date['dateMax_' + key] = timezone.localtime(getattr(queryset_key.last(), key)).strftime("%d/%m/%Y")
         except AttributeError:
             context_date['dateMax_' + key] = timezone.localtime(timezone.now())
-    return context_date,today_begin,yesterday_begin
+    return context_date, today_begin, yesterday_begin
 
 
 ##
@@ -457,8 +457,8 @@ def builddashboard(request, build_id):
         # Chunk the query to avoid "too many SQL variables" error
         package_set = t.target_installed_package_set.all()
         package_set_len = len(package_set)
-        for ps_start in range(0,package_set_len,500):
-            ps_stop = min(ps_start + 500,package_set_len)
+        for ps_start in range(0, package_set_len, 500):
+            ps_stop = min(ps_start + 500, package_set_len)
             for package in Package.objects.filter(id__in=[x.package_id for x in package_set[ps_start:ps_stop]]):
                 pkgsz = pkgsz + package.size
                 if package.installed_name:
@@ -543,10 +543,10 @@ def task(request, build_id, task_id):
     task_object = tasks_list[0]
     dependencies = sorted(
         _find_task_dep(task_object),
-        key=lambda t:'%s_%s %s' % (t.recipe.name, t.recipe.version, t.task_name))
+        key=lambda t: '%s_%s %s' % (t.recipe.name, t.recipe.version, t.task_name))
     reverse_dependencies = sorted(
         _find_task_revdep(task_object),
-        key=lambda t:'%s_%s %s' % (t.recipe.name, t.recipe.version, t.task_name))
+        key=lambda t: '%s_%s %s' % (t.recipe.name, t.recipe.version, t.task_name))
     coveredBy = ''
     if (task_object.outcome == Task.OUTCOME_COVERED):
 #        _list = generateCoveredList( task )
@@ -564,7 +564,7 @@ def task(request, build_id, task_id):
     v = variables.filter(variable_name='SSTATE_MIRRORS')
     if (v.count() > 0):
         for mirror in v[0].variable_value.split('\\n'):
-            s = re.sub('.* ','',mirror.strip(' \t\n\r'))
+            s = re.sub('.* ', '', mirror.strip(' \t\n\r'))
             if len(s):
                 uri_list.append(s)
 
@@ -634,27 +634,27 @@ def recipe_packages(request, build_id, recipe_id):
     package_count = queryset.count()
     queryset = _get_queryset(Package, queryset, filter_string, search_term, ordering_string, 'name')
 
-    packages = _build_page_range(Paginator(queryset, pagesize),request.GET.get('page', 1))
+    packages = _build_page_range(Paginator(queryset, pagesize), request.GET.get('page', 1))
 
     context = {
             'build': Build.objects.get(pk=build_id),
             'recipe': recipe_object,
             'objects': packages,
             'object_count': package_count,
-            'tablecols':[
+            'tablecols': [
                 {
-                    'name':'Package',
-                    'orderfield': _get_toggle_order(request,"name"),
-                    'ordericon': _get_toggle_order_icon(request,"name"),
+                    'name': 'Package',
+                    'orderfield': _get_toggle_order(request, "name"),
+                    'ordericon': _get_toggle_order_icon(request, "name"),
                     'orderkey': "name",
                 },
                 {
-                    'name':'Version',
+                    'name': 'Version',
                 },
                 {
-                    'name':'Size',
-                    'orderfield': _get_toggle_order(request,"size", True),
-                    'ordericon': _get_toggle_order_icon(request,"size"),
+                    'name': 'Size',
+                    'orderfield': _get_toggle_order(request, "size", True),
+                    'ordericon': _get_toggle_order_icon(request, "size"),
                     'orderkey': 'size',
                     'dclass': 'sizecol span2',
                 },
@@ -828,8 +828,8 @@ def configuration(request, build_id):
                                            .values_list('variable_name', 'variable_value'))
     build = Build.objects.get(pk=build_id)
     context.update({'objectname': 'configuration',
-                    'object_search_display':'variables',
-                    'filter_search_display':'variables',
+                    'object_search_display': 'variables',
+                    'filter_search_display': 'variables',
                     'build': build,
                     'project': build.project,
                     'targets': Target.objects.filter(build=build_id)})
@@ -849,10 +849,10 @@ def configvars(request, build_id):
         return _redirect_parameters('configvars', request.GET, mandatory_parameters, build_id=build_id)
 
     queryset = Variable.objects.filter(build=build_id).exclude(variable_name__istartswith='B_').exclude(variable_name__istartswith='do_')
-    queryset_with_search = _get_queryset(Variable, queryset, None, search_term, ordering_string, 'variable_name').exclude(variable_value='',vhistory__file_name__isnull=True)
+    queryset_with_search = _get_queryset(Variable, queryset, None, search_term, ordering_string, 'variable_name').exclude(variable_value='', vhistory__file_name__isnull=True)
     queryset = _get_queryset(Variable, queryset, filter_string, search_term, ordering_string, 'variable_name')
     # remove records where the value is empty AND there are no history files
-    queryset = queryset.exclude(variable_value='',vhistory__file_name__isnull=True)
+    queryset = queryset.exclude(variable_value='', vhistory__file_name__isnull=True)
 
     variables = _build_page_range(Paginator(queryset, pagesize), request.GET.get('page', 1))
 
@@ -866,27 +866,27 @@ def configvars(request, build_id):
         file_filter += 'conf/distro/'
     if filter_string.find('/bitbake.conf') > 0:
         file_filter += '/bitbake.conf'
-    build_dir = re.sub("/tmp/log/.*","",Build.objects.get(pk=build_id).cooker_log_path)
+    build_dir = re.sub("/tmp/log/.*", "", Build.objects.get(pk=build_id).cooker_log_path)
 
     build = Build.objects.get(pk=build_id)
 
     context = {
                 'objectname': 'configvars',
-                'object_search_display':'BitBake variables',
-                'filter_search_display':'variables',
+                'object_search_display': 'BitBake variables',
+                'filter_search_display': 'variables',
                 'file_filter': file_filter,
                 'build': build,
                 'project': build.project,
                 'objects': variables,
-                'total_count':queryset_with_search.count(),
+                'total_count': queryset_with_search.count(),
                 'default_orderby': 'variable_name:+',
-                'search_term':search_term,
+                'search_term': search_term,
             # Specifies the display of columns for the table, appearance in "Edit columns" box, toggling default show/hide, and specifying filters for columns
                 'tablecols': [
                 {'name': 'Variable',
                  'qhelp': "BitBake is a generic task executor that considers a list of tasks with dependencies and handles metadata that consists of variables in a certain format that get passed to the tasks",
                  'orderfield': _get_toggle_order(request, "variable_name"),
-                 'ordericon':_get_toggle_order_icon(request, "variable_name"),
+                 'ordericon': _get_toggle_order_icon(request, "variable_name"),
                 },
                 {'name': 'Value',
                  'qhelp': "The value assigned to the variable",
@@ -899,11 +899,11 @@ def configvars(request, build_id):
                     'class': 'vhistory__file_name',
                     'label': 'Show:',
                     'options': [
-                               ('Local configuration variables', 'vhistory__file_name__contains:' + build_dir + '/conf/',queryset_with_search.filter(vhistory__file_name__contains=build_dir + '/conf/').count(), 'Select this filter to see variables set by the <code>local.conf</code> and <code>bblayers.conf</code> configuration files inside the <code>/build/conf/</code> directory'),
-                               ('Machine configuration variables', 'vhistory__file_name__contains:conf/machine/',queryset_with_search.filter(vhistory__file_name__contains='conf/machine').count(), 'Select this filter to see variables set by the configuration file(s) inside your layers <code>/conf/machine/</code> directory'),
-                               ('Distro configuration variables', 'vhistory__file_name__contains:conf/distro/',queryset_with_search.filter(vhistory__file_name__contains='conf/distro').count(), 'Select this filter to see variables set by the configuration file(s) inside your layers <code>/conf/distro/</code> directory'),
-                               ('Layer configuration variables', 'vhistory__file_name__contains:conf/layer.conf',queryset_with_search.filter(vhistory__file_name__contains='conf/layer.conf').count(), 'Select this filter to see variables set by the <code>layer.conf</code> configuration file inside your layers'),
-                               ('bitbake.conf variables', 'vhistory__file_name__contains:/bitbake.conf',queryset_with_search.filter(vhistory__file_name__contains='/bitbake.conf').count(), 'Select this filter to see variables set by the <code>bitbake.conf</code> configuration file'),
+                               ('Local configuration variables', 'vhistory__file_name__contains:' + build_dir + '/conf/', queryset_with_search.filter(vhistory__file_name__contains=build_dir + '/conf/').count(), 'Select this filter to see variables set by the <code>local.conf</code> and <code>bblayers.conf</code> configuration files inside the <code>/build/conf/</code> directory'),
+                               ('Machine configuration variables', 'vhistory__file_name__contains:conf/machine/', queryset_with_search.filter(vhistory__file_name__contains='conf/machine').count(), 'Select this filter to see variables set by the configuration file(s) inside your layers <code>/conf/machine/</code> directory'),
+                               ('Distro configuration variables', 'vhistory__file_name__contains:conf/distro/', queryset_with_search.filter(vhistory__file_name__contains='conf/distro').count(), 'Select this filter to see variables set by the configuration file(s) inside your layers <code>/conf/distro/</code> directory'),
+                               ('Layer configuration variables', 'vhistory__file_name__contains:conf/layer.conf', queryset_with_search.filter(vhistory__file_name__contains='conf/layer.conf').count(), 'Select this filter to see variables set by the <code>layer.conf</code> configuration file inside your layers'),
+                               ('bitbake.conf variables', 'vhistory__file_name__contains:/bitbake.conf', queryset_with_search.filter(vhistory__file_name__contains='/bitbake.conf').count(), 'Select this filter to see variables set by the <code>bitbake.conf</code> configuration file'),
                                ]
                              },
                 },
@@ -1071,16 +1071,16 @@ def package_built_detail(request, build_id, package_id):
             'package': package,
             'dependency_count': _get_package_dependency_count(package, -1, False),
             'objects': paths,
-            'tablecols':[
+            'tablecols': [
                 {
-                    'name':'File',
+                    'name': 'File',
                     'orderfield': _get_toggle_order(request, "path"),
-                    'ordericon':_get_toggle_order_icon(request, "path"),
+                    'ordericon': _get_toggle_order_icon(request, "path"),
                 },
                 {
-                    'name':'Size',
+                    'name': 'Size',
                     'orderfield': _get_toggle_order(request, "size", True),
-                    'ordericon':_get_toggle_order_icon(request, "size"),
+                    'ordericon': _get_toggle_order_icon(request, "size"),
                     'dclass': 'sizecol span2',
                 },
             ]
@@ -1137,16 +1137,16 @@ def package_included_detail(request, build_id, target_id, package_id):
             'reverse_count': _get_package_reverse_dep_count(package, target_id),
             'dependency_count': _get_package_dependency_count(package, target_id, True),
             'objects': paths,
-            'tablecols':[
+            'tablecols': [
                 {
-                    'name':'File',
+                    'name': 'File',
                     'orderfield': _get_toggle_order(request, "path"),
-                    'ordericon':_get_toggle_order_icon(request, "path"),
+                    'ordericon': _get_toggle_order_icon(request, "path"),
                 },
                 {
-                    'name':'Size',
+                    'name': 'Size',
                     'orderfield': _get_toggle_order(request, "size", True),
-                    'ordericon':_get_toggle_order_icon(request, "size"),
+                    'ordericon': _get_toggle_order_icon(request, "size"),
                     'dclass': 'sizecol span2',
                 },
             ]
@@ -1209,17 +1209,17 @@ def package_included_reverse_dependencies(request, build_id, target_id, package_
             'objects': objects,
             'reverse_count': _get_package_reverse_dep_count(package, target_id),
             'dependency_count': _get_package_dependency_count(package, target_id, True),
-            'tablecols':[
+            'tablecols': [
                 {
-                    'name':'Package',
+                    'name': 'Package',
                     'orderfield': _get_toggle_order(request, "package__name"),
                     'ordericon': _get_toggle_order_icon(request, "package__name"),
                 },
                 {
-                    'name':'Version',
+                    'name': 'Version',
                 },
                 {
-                    'name':'Size',
+                    'name': 'Size',
                     'orderfield': _get_toggle_order(request, "package__size", True),
                     'ordericon': _get_toggle_order_icon(request, "package__size"),
                     'dclass': 'sizecol span2',
@@ -1255,7 +1255,7 @@ def managedcontextprocessor(request):
 # REST-based API calls to return build/building status to external Toaster
 # managers and aggregators via JSON
 
-def _json_build_status(build_id,extend):
+def _json_build_status(build_id, extend):
     build_stat = None
     try:
         build = Build.objects.get(pk=build_id)
@@ -1269,7 +1269,7 @@ def _json_build_status(build_id,extend):
         target = Target.objects.get(build=build)
         if target:
             if target.task:
-                build_stat['target'] = '%s:%s' % (target.target,target.task)
+                build_stat['target'] = '%s:%s' % (target.target, target.task)
             else:
                 build_stat['target'] = '%s' % (target.target)
         else:
@@ -1284,15 +1284,15 @@ def _json_build_status(build_id,extend):
             now = timezone.now()
             timediff = now - build.started_on
             build_stat['seconds'] = '%.3f' % timediff.total_seconds()
-            build_stat['clone'] = '%d:%d' % (build.repos_cloned,build.repos_to_clone)
-            build_stat['parse'] = '%d:%d' % (build.recipes_parsed,build.recipes_to_parse)
+            build_stat['clone'] = '%d:%d' % (build.repos_cloned, build.repos_to_clone)
+            build_stat['parse'] = '%d:%d' % (build.recipes_parsed, build.recipes_to_parse)
             tf = Task.objects.filter(build=build)
             tfc = tf.count()
             if tfc > 0:
                 tfd = tf.exclude(order__isnull=True).count()
             else:
                 tfd = 0
-            build_stat['task'] = '%d:%d' % (tfd,tfc)
+            build_stat['task'] = '%d:%d' % (tfd, tfc)
         else:
             build_stat['outcome'] = build.get_outcome_text()
             timediff = build.completed_on - build.started_on
@@ -1317,7 +1317,7 @@ def json_builds(request):
     try:
         builds = Build.objects.exclude(outcome=Build.IN_PROGRESS).order_by("-started_on")
         for build in builds:
-            build_table.append(_json_build_status(build.id,False))
+            build_table.append(_json_build_status(build.id, False))
     except Exception as e:
         build_table = str(e)
     return JsonResponse({'builds': build_table, 'count': len(builds)})
@@ -1328,13 +1328,13 @@ def json_building(request):
     try:
         builds = Build.objects.filter(outcome=Build.IN_PROGRESS).order_by("-started_on")
         for build in builds:
-            build_table.append(_json_build_status(build.id,False))
+            build_table.append(_json_build_status(build.id, False))
     except Exception as e:
         build_table = str(e)
     return JsonResponse({'building': build_table, 'count': len(builds)})
 
-def json_build(request,build_id):
-    return JsonResponse({'build': _json_build_status(build_id,True)})
+def json_build(request, build_id):
+    return JsonResponse({'build': _json_build_status(build_id, True)})
 
 
 import toastermain.settings
@@ -1507,8 +1507,8 @@ if True:
         if '1' == os.environ.get('TOASTER_PROJECTSPECIFIC'):
             if request.GET:
                 #Example:request.GET=<QueryDict: {'setMachine': ['qemuarm']}>
-                params = urlencode(request.GET).replace('%5B%27','').replace('%27%5D','')
-                return redirect("%s?%s" % (reverse(project_specific, args=(project.pk,)),params))
+                params = urlencode(request.GET).replace('%5B%27', '').replace('%27%5D', '')
+                return redirect("%s?%s" % (reverse(project_specific, args=(project.pk,)), params))
             else:
                 return redirect(reverse(project_specific, args=(project.pk,)))
         context = {"project": project}
@@ -1520,13 +1520,13 @@ if True:
 
         # Are we refreshing from a successful project specific update clone?
         if Project.PROJECT_SPECIFIC_CLONING_SUCCESS == project.get_variable(Project.PROJECT_SPECIFIC_STATUS):
-            return redirect(reverse(landing_specific,args=(project.pk,)))
+            return redirect(reverse(landing_specific, args=(project.pk,)))
 
         context = {
             "project": project,
             "is_new": project.get_variable(Project.PROJECT_SPECIFIC_ISNEW),
             "default_image_recipe": project.get_variable(Project.PROJECT_SPECIFIC_DEFAULTIMAGE),
-            "mru": Build.objects.all().filter(project=project,outcome=Build.IN_PROGRESS),
+            "mru": Build.objects.all().filter(project=project, outcome=Build.IN_PROGRESS),
             }
         if project.build_set.filter(outcome=Build.IN_PROGRESS).count() > 0:
             context['build_in_progress_none_completed'] = True
@@ -1551,21 +1551,21 @@ if True:
             # perform callback at this last moment if defined, in case Toaster gets shutdown next
             default_target = project.get_variable(Project.PROJECT_SPECIFIC_DEFAULTIMAGE)
             if callback:
-                callback = callback.replace("<IMAGE>",default_target)
+                callback = callback.replace("<IMAGE>", default_target)
         if "cancel" == cmnd:
             if callback:
-                callback = callback.replace("<IMAGE>","none")
-                callback = callback.replace("--update","--cancel")
+                callback = callback.replace("<IMAGE>", "none")
+                callback = callback.replace("--update", "--cancel")
         # perform callback at this last moment if defined, in case this Toaster gets shutdown next
         ret = ''
         if callback:
             ret = os.system('bash -c "%s"' % callback)
-            project.set_variable(Project.PROJECT_SPECIFIC_CALLBACK,'')
+            project.set_variable(Project.PROJECT_SPECIFIC_CALLBACK, '')
         # Delete the temp project specific variables
-        project.set_variable(Project.PROJECT_SPECIFIC_ISNEW,'')
-        project.set_variable(Project.PROJECT_SPECIFIC_STATUS,Project.PROJECT_SPECIFIC_NONE)
+        project.set_variable(Project.PROJECT_SPECIFIC_ISNEW, '')
+        project.set_variable(Project.PROJECT_SPECIFIC_STATUS, Project.PROJECT_SPECIFIC_NONE)
         # WORKAROUND: Release this workaround flag
-        project.set_variable('INTERNAL_PROJECT_SPECIFIC_SKIPRELEASE','')
+        project.set_variable('INTERNAL_PROJECT_SPECIFIC_SKIPRELEASE', '')
 
     # Shows the final landing page for project specific update
     def landing_specific(request, pid):
@@ -1641,7 +1641,7 @@ if True:
                 if layer_versions.count() < 1:
                     retval.append(project)
 
-            return response({"error":"ok",
+            return response({"error": "ok",
                              "rows": [_lv_to_dict(prj) for y in [x.layercommit for x in retval]]
                             })
 
@@ -1684,7 +1684,7 @@ if True:
                 pt = ProjectVariable.objects.get(pk=int(t)).delete()
 
             # return all project settings, filter out blacklist and elsewhere-managed variables
-            vars_managed,vars_fstypes,vars_blacklist = get_project_configvars_context()
+            vars_managed, vars_fstypes, vars_blacklist = get_project_configvars_context()
             configvars_query = ProjectVariable.objects.filter(project_id=pid).all()
             for var in vars_managed:
                 configvars_query = configvars_query.exclude(name=var)
@@ -1723,7 +1723,7 @@ if True:
             return HttpResponse(json.dumps(return_data), content_type="application/json")
 
         except Exception as e:
-            return HttpResponse(json.dumps({"error":str(e) + "\n" + traceback.format_exc()}), content_type="application/json")
+            return HttpResponse(json.dumps({"error": str(e) + "\n" + traceback.format_exc()}), content_type="application/json")
 
 
     def customrecipe_download(request, pid, recipe_id):
@@ -1782,15 +1782,15 @@ if True:
         }
 
         vars_blacklist = {
-            'PARALLEL_MAKE','BB_NUMBER_THREADS',
-            'BB_DISKMON_DIRS','BB_NUMBER_THREADS','CVS_PROXY_HOST','CVS_PROXY_PORT',
-            'PARALLEL_MAKE','TMPDIR',
-            'all_proxy','ftp_proxy','http_proxy ','https_proxy'
+            'PARALLEL_MAKE', 'BB_NUMBER_THREADS',
+            'BB_DISKMON_DIRS', 'BB_NUMBER_THREADS', 'CVS_PROXY_HOST', 'CVS_PROXY_PORT',
+            'PARALLEL_MAKE', 'TMPDIR',
+            'all_proxy', 'ftp_proxy', 'http_proxy ', 'https_proxy'
             }
 
         vars_fstypes = Target_Image_File.SUFFIXES
 
-        return(vars_managed,sorted(vars_fstypes),vars_blacklist)
+        return(vars_managed, sorted(vars_fstypes), vars_blacklist)
 
     def projectconf(request, pid):
 
@@ -1800,7 +1800,7 @@ if True:
             return HttpResponseNotFound("<h1>Project id " + pid + " is unavailable</h1>")
 
         # remove blacklist and externally managed varaibles from this list
-        vars_managed,vars_fstypes,vars_blacklist = get_project_configvars_context()
+        vars_managed, vars_fstypes, vars_blacklist = get_project_configvars_context()
         configvars = ProjectVariable.objects.filter(project_id=pid).all()
         for var in vars_managed:
             configvars = configvars.exclude(name=var)

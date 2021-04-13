@@ -320,7 +320,7 @@ class BitBakeConfigParameters(cookerdata.ConfigParameters):
                 #Checking that the port is a number and is a ':' delimited value
                 (host, port) = options.bind.split(':')
                 port = int(port)
-            except (ValueError,IndexError):
+            except (ValueError, IndexError):
                 raise BBMainException("FATAL: Malformed host:port bind parameter")
             options.xmlrpcinterface = (host, port)
         else:

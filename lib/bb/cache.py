@@ -66,7 +66,7 @@ class RecipeInfoCommon(object):
         out_dict = dict((var, metadata.getVarFlag(var, flag))
                     for var in varlist)
         if squash:
-            return dict((k,v) for (k,v) in out_dict.items() if v)
+            return dict((k, v) for (k, v) in out_dict.items() if v)
         else:
             return out_dict
 
@@ -89,7 +89,7 @@ class CoreRecipeInfo(RecipeInfoCommon):
 
         self.provides = self.depvar('PROVIDES', metadata)
         self.rprovides = self.depvar('RPROVIDES', metadata)
-        self.pn = self.getvar('PN', metadata) or bb.parse.vars_from_file(filename,metadata)[0]
+        self.pn = self.getvar('PN', metadata) or bb.parse.vars_from_file(filename, metadata)[0]
         self.packages = self.listvar('PACKAGES', metadata)
         if not self.packages:
             self.packages.append(self.pn)
@@ -930,7 +930,7 @@ class MultiProcessCache(object):
         bb.utils.unlockfile(glf)
 
     def merge_data(self, source, dest):
-        for j in range(0,len(dest)):
+        for j in range(0, len(dest)):
             for h in source[j]:
                 if h not in dest[j]:
                     dest[j][h] = source[j][h]

@@ -634,7 +634,7 @@ class RunQueueData:
                 deptask = mcdependency[4]
                 if mc == frommc:
                     fn = taskData[mcdep].build_targets[pn][0]
-                    newdep = '%s:%s' % (fn,deptask)
+                    newdep = '%s:%s' % (fn, deptask)
                     taskData[mc].taskentries[tid].tdepends.append(newdep)
 
         for mc in taskData:
@@ -938,7 +938,7 @@ class RunQueueData:
                         runall_tids.add(wanttid)
 
                 for tid in list(runall_tids):
-                    mark_active(tid,1)
+                    mark_active(tid, 1)
                     if self.cooker.configuration.force:
                         invalidate_task(tid, False)
 
@@ -963,7 +963,7 @@ class RunQueueData:
                 runonly_tids = {k: v for k, v in self.runtaskentries.items() if taskname_from_tid(k) == task}
 
                 for tid in list(runonly_tids):
-                    mark_active(tid,1)
+                    mark_active(tid, 1)
                     if self.cooker.configuration.force:
                         invalidate_task(tid, False)
 

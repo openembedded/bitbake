@@ -159,15 +159,15 @@ class XhrProjectUpdate(View):
         """
 
         project = Project.objects.get(pk=kwargs['pid'])
-        logger.debug("ProjectUpdateCallback:project.pk=%d,project.builddir=%s" % (project.pk,project.builddir))
+        logger.debug("ProjectUpdateCallback:project.pk=%d,project.builddir=%s" % (project.pk, project.builddir))
 
         if 'do_update' in request.POST:
 
             # Extract any default image recipe
             if 'default_image' in request.POST:
-                project.set_variable(Project.PROJECT_SPECIFIC_DEFAULTIMAGE,str(request.POST['default_image']))
+                project.set_variable(Project.PROJECT_SPECIFIC_DEFAULTIMAGE, str(request.POST['default_image']))
             else:
-                project.set_variable(Project.PROJECT_SPECIFIC_DEFAULTIMAGE,'')
+                project.set_variable(Project.PROJECT_SPECIFIC_DEFAULTIMAGE, '')
 
             logger.debug("ProjectUpdateCallback:Chain to the build request")
 
@@ -207,8 +207,8 @@ class XhrSetDefaultImageUrl(View):
         # set any default image recipe
         if 'targets' in request.POST:
             default_target = str(request.POST['targets'])
-            project.set_variable(Project.PROJECT_SPECIFIC_DEFAULTIMAGE,default_target)
-            logger.debug("XhrSetDefaultImageUrl,project.pk=%d,project.builddir=%s" % (project.pk,project.builddir))
+            project.set_variable(Project.PROJECT_SPECIFIC_DEFAULTIMAGE, default_target)
+            logger.debug("XhrSetDefaultImageUrl,project.pk=%d,project.builddir=%s" % (project.pk, project.builddir))
             return error_response('ok')
 
         logger.warning("ERROR:XhrSetDefaultImageUrl")
@@ -232,18 +232,18 @@ class XhrSetDefaultImageUrl(View):
 #    then the Layer record is deleted to remove orphans
 #
 
-def scan_layer_content(layer,layer_version):
+def scan_layer_content(layer, layer_version):
     # if this is a local layer directory, we can immediately scan its content
     if layer.local_source_dir:
         try:
             # recipes-*/*/*.bb
-            cmd = '%s %s' % ('ls', os.path.join(layer.local_source_dir,'recipes-*/*/*.bb'))
-            recipes_list = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE,stderr=subprocess.STDOUT).stdout.read()
+            cmd = '%s %s' % ('ls', os.path.join(layer.local_source_dir, 'recipes-*/*/*.bb'))
+            recipes_list = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout.read()
             recipes_list = recipes_list.decode("utf-8").strip()
             if recipes_list and 'No such' not in recipes_list:
                 for recipe in recipes_list.split('\n'):
                     recipe_path = recipe[recipe.rfind('recipes-'):]
-                    recipe_name = recipe[recipe.rfind('/') + 1:].replace('.bb','')
+                    recipe_name = recipe[recipe.rfind('/') + 1:].replace('.bb', '')
                     recipe_ver = recipe_name.rfind('_')
                     if recipe_ver > 0:
                         recipe_name = recipe_name[0:recipe_ver]
@@ -254,7 +254,7 @@ def scan_layer_content(layer,layer_version):
                         )
                         if created:
                             ro.file_path = recipe_path
-                            ro.summary = 'Recipe %s from layer %s' % (recipe_name,layer.name)
+                            ro.summary = 'Recipe %s from layer %s' % (recipe_name, layer.name)
                             ro.description = ro.summary
                         ro.save()
 
@@ -413,7 +413,7 @@ class XhrLayer(View):
             if ('local_source_dir' in layer_data):
                 # Local layer can be shared across projects. They have no 'release'
                 # and are not included in get_all_compatible_layer_versions() above
-                layer,created = Layer.objects.get_or_create(name=layer_data['name'])
+                layer, created = Layer.objects.get_or_create(name=layer_data['name'])
                 _log("Local Layer created=%s" % created)
             else:
                 layer = Layer.objects.create(name=layer_data['name'])
@@ -457,7 +457,7 @@ class XhrLayer(View):
                              layer_dep.get_detailspage_url(project.pk)})
 
             # Scan the layer's content and update components
-            scan_layer_content(layer,layer_version)
+            scan_layer_content(layer, layer_version)
 
         except Layer_Version.DoesNotExist:
             return error_response("layer-dep-not-found")
@@ -1167,7 +1167,7 @@ class XhrProject(View):
             _log("LAYER_ORPHAN_CHECK:Check for orphaned layers")
             for layer in project_local_layer_list:
                 layer_refs = Layer_Version.objects.filter(layer=layer)
-                _log("LAYER_ORPHAN_CHECK:Ref Count for '%s' = %d" % (layer.name,len(layer_refs)))
+                _log("LAYER_ORPHAN_CHECK:Ref Count for '%s' = %d" % (layer.name, len(layer_refs)))
                 if 0 == len(layer_refs):
                     _log("LAYER_ORPHAN_CHECK:DELETE orpahned '%s'" % (layer.name))
                     Layer.objects.filter(pk=layer.id).delete()

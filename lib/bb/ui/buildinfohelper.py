@@ -207,7 +207,7 @@ class ORMWrapper(object):
         return result
 
     def update_build_stats_and_outcome(self, build, errors, warnings, taskfailures):
-        assert isinstance(build,Build)
+        assert isinstance(build, Build)
         assert isinstance(errors, int)
         assert isinstance(warnings, int)
 
@@ -476,7 +476,7 @@ class ORMWrapper(object):
         tf_obj.save()
 
         # insert directories, ordered by name depth
-        for d in sorted(dirs, key=lambda x:len(x[-1].split("/"))):
+        for d in sorted(dirs, key=lambda x: len(x[-1].split("/"))):
             (user, group, size) = d[1:4]
             permission = d[0][1:]
             path = d[4].lstrip(".")
@@ -649,7 +649,7 @@ class ORMWrapper(object):
         pattern_lib = re.compile(r'.*\-suffix(\d*)?$')
         pattern_ko = re.compile(r'^kernel-module-.*')
         for p in packagedict:
-            for (px,deptype) in packagedict[p]['depends']:
+            for (px, deptype) in packagedict[p]['depends']:
                 if deptype == 'depends':
                     tdeptype = Package_Dependency.TYPE_TRDEPENDS
                 elif deptype == 'recommends':
@@ -990,7 +990,7 @@ class BuildInfoHelper(object):
             pathRE = pathRE[:-1]
 
         p = re.compile(pathRE)
-        path = re.sub(r'[$^]',r'',pathRE)
+        path = re.sub(r'[$^]', r'', pathRE)
         # Heuristics: we always match recipe to the deepest layer path in
         # the discovered layers
         for lvo in sorted(self.orm_wrapper.layer_version_objects,
@@ -1067,7 +1067,7 @@ class BuildInfoHelper(object):
 
         for t in self.internal_state['targets']:
             buildname = self.internal_state['build'].build_name
-            pe, pv = task_object.recipe.version.split(":",1)
+            pe, pv = task_object.recipe.version.split(":", 1)
             if len(pe) > 0:
                 package = task_object.recipe.name + "-" + pe + "_" + pv
             else:
@@ -1149,7 +1149,7 @@ class BuildInfoHelper(object):
             be = BuildEnvironment.objects.get(pk=be_id)
             path_prefixes.append(be.builddir)
 
-        for layer in sorted(self.orm_wrapper.layer_version_objects, key=lambda x:len(x.local_path), reverse=True):
+        for layer in sorted(self.orm_wrapper.layer_version_objects, key=lambda x: len(x.local_path), reverse=True):
             path_prefixes.append(layer.local_path)
 
         # we strip the prefixes
@@ -1272,7 +1272,7 @@ class BuildInfoHelper(object):
                 candidates = [x for x in self.internal_state['taskdata'].keys() if x.endswith(identifier)]
                 if len(candidates) == 1:
                     identifier = candidates[0]
-                elif len(candidates) > 1 and hasattr(event,'_package'):
+                elif len(candidates) > 1 and hasattr(event, '_package'):
                     if 'native-' in event._package:
                         identifier = 'native:' + identifier
                     if 'nativesdk-' in event._package:
@@ -1286,7 +1286,7 @@ class BuildInfoHelper(object):
         realtaskfile = ":".join(identifierlist[0:len(identifierlist) - 1])
         recipe_information = self._get_recipe_information_from_taskfile(realtaskfile)
         recipe = self.orm_wrapper.get_update_recipe_object(recipe_information, True)
-        task_information = self._get_task_information(event,recipe)
+        task_information = self._get_task_information(event, recipe)
 
         task_information['outcome'] = self.internal_state['taskdata'][identifier]['outcome']
 
@@ -1331,7 +1331,7 @@ class BuildInfoHelper(object):
             mevent = MockEvent()
             mevent.taskname = taskname
             mevent.taskhash = taskhash
-            task_information = self._get_task_information(mevent,recipe)
+            task_information = self._get_task_information(mevent, recipe)
 
             task_information['start_time'] = timezone.now()
             task_information['outcome'] = Task.OUTCOME_NA
@@ -1349,7 +1349,7 @@ class BuildInfoHelper(object):
             mevent = MockEvent()
             mevent.taskname = taskname
             mevent.taskhash = taskhash
-            task_information = self._get_task_information(mevent,recipe)
+            task_information = self._get_task_information(mevent, recipe)
 
             task_information['path_to_sstate_obj'] = sstatefile
 
@@ -1602,7 +1602,7 @@ class BuildInfoHelper(object):
         mockevent.lineno = -1
         self.store_log_event(mockevent)
 
-    def store_log_event(self, event,cli_backlog=True):
+    def store_log_event(self, event, cli_backlog=True):
         self._ensure_build()
 
         if event.levelno < formatter.WARNING:
@@ -1621,7 +1621,7 @@ class BuildInfoHelper(object):
                 tempevent = self.internal_state['backlog'].pop()
                 logger.debug("buildinfohelper: Saving stored event %s "
                              % tempevent)
-                self.store_log_event(tempevent,cli_backlog)
+                self.store_log_event(tempevent, cli_backlog)
             else:
                 logger.info("buildinfohelper: All events saved")
                 del self.internal_state['backlog']
@@ -1987,7 +1987,7 @@ class BuildInfoHelper(object):
             # we save missed events in the database for the current build
             tempevent = self.internal_state['backlog'].pop()
             # Do not skip command line build events
-            self.store_log_event(tempevent,False)
+            self.store_log_event(tempevent, False)
 
         if not connection.features.autocommits_when_autocommit_is_off:
             transaction.set_autocommit(True)

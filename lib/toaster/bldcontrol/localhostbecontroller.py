@@ -38,7 +38,7 @@ class LocalhostBEController(BuildEnvironmentController):
         self.pokydirname = None
         self.islayerset = False
 
-    def _shellcmd(self, command, cwd=None, nowait=False,env=None):
+    def _shellcmd(self, command, cwd=None, nowait=False, env=None):
         if cwd is None:
             cwd = self.be.sourcedir
         if env is None:
@@ -48,7 +48,7 @@ class LocalhostBEController(BuildEnvironmentController):
         p = subprocess.Popen(command, cwd=cwd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
         if nowait:
             return
-        (out,err) = p.communicate()
+        (out, err) = p.communicate()
         p.wait()
         if p.returncode:
             if len(err) == 0:
@@ -73,7 +73,7 @@ class LocalhostBEController(BuildEnvironmentController):
         #logger.debug("localhostbecontroller: using HEAD checkout in %s" % local_checkout_path)
         return local_checkout_path
 
-    def setCloneStatus(self,bitbake,status,total,current,repo_name):
+    def setCloneStatus(self, bitbake, status, total, current, repo_name):
         bitbake.req.build.repos_cloned = current
         bitbake.req.build.repos_to_clone = total
         bitbake.req.build.progress_item = repo_name
@@ -111,12 +111,12 @@ class LocalhostBEController(BuildEnvironmentController):
             # If we have local layers then we don't need clone them
             # For local layers giturl will be empty
             if not layer.giturl:
-                nongitlayerlist.append("%03d:%s" % (layer_index,layer.local_source_dir))
+                nongitlayerlist.append("%03d:%s" % (layer_index, layer.local_source_dir))
                 continue
 
             if not (layer.giturl, layer.commit) in gitrepos:
                 gitrepos[(layer.giturl, layer.commit)] = []
-            gitrepos[(layer.giturl, layer.commit)].append((layer.name,layer.dirpath,layer_index))
+            gitrepos[(layer.giturl, layer.commit)].append((layer.name, layer.dirpath, layer_index))
             layer_index += 1
 
 
@@ -130,7 +130,7 @@ class LocalhostBEController(BuildEnvironmentController):
         cached_layers = {}
 
         try:
-            for remotes in self._shellcmd("git remote -v", self.be.sourcedir,env=git_env).split("\n"):
+            for remotes in self._shellcmd("git remote -v", self.be.sourcedir, env=git_env).split("\n"):
                 try:
                     remote = remotes.split("\t")[1].split(" ")[0]
                     if remote not in cached_layers:
@@ -147,9 +147,9 @@ class LocalhostBEController(BuildEnvironmentController):
         # 3. checkout the repositories
         clone_count = 0
         clone_total = len(gitrepos.keys())
-        self.setCloneStatus(bitbake,'Started',clone_total,clone_count,'')
+        self.setCloneStatus(bitbake, 'Started', clone_total, clone_count, '')
         for giturl, commit in gitrepos.keys():
-            self.setCloneStatus(bitbake,'progress',clone_total,clone_count,gitrepos[(giturl, commit)][0][0])
+            self.setCloneStatus(bitbake, 'progress', clone_total, clone_count, gitrepos[(giturl, commit)][0][0])
             clone_count += 1
 
             localdirname = os.path.join(self.be.sourcedir, self.getGitCloneDirectory(giturl, commit))
@@ -159,7 +159,7 @@ class LocalhostBEController(BuildEnvironmentController):
             if os.path.exists(localdirname):
                 try:
                     localremotes = self._shellcmd("git remote -v",
-                                                  localdirname,env=git_env)
+                                                  localdirname, env=git_env)
                     # NOTE: this nice-to-have check breaks when using git remaping to get past firewall
                     #       Re-enable later with .gitconfig remapping checks
                     #if not giturl in localremotes and commit != 'HEAD':
@@ -172,18 +172,18 @@ class LocalhostBEController(BuildEnvironmentController):
             else:
                 if giturl in cached_layers:
                     logger.debug("localhostbecontroller git-copying %s to %s" % (cached_layers[giturl], localdirname))
-                    self._shellcmd("git clone \"%s\" \"%s\"" % (cached_layers[giturl], localdirname),env=git_env)
-                    self._shellcmd("git remote remove origin", localdirname,env=git_env)
-                    self._shellcmd("git remote add origin \"%s\"" % giturl, localdirname,env=git_env)
+                    self._shellcmd("git clone \"%s\" \"%s\"" % (cached_layers[giturl], localdirname), env=git_env)
+                    self._shellcmd("git remote remove origin", localdirname, env=git_env)
+                    self._shellcmd("git remote add origin \"%s\"" % giturl, localdirname, env=git_env)
                 else:
                     logger.debug("localhostbecontroller: cloning %s in %s" % (giturl, localdirname))
-                    self._shellcmd('git clone "%s" "%s"' % (giturl, localdirname),env=git_env)
+                    self._shellcmd('git clone "%s" "%s"' % (giturl, localdirname), env=git_env)
 
             # branch magic name "HEAD" will inhibit checkout
             if commit != "HEAD":
                 logger.debug("localhostbecontroller: checking out commit %s to %s " % (commit, localdirname))
                 ref = commit if re.match('^[a-fA-F0-9]+$', commit) else 'origin/%s' % commit
-                self._shellcmd('git fetch && git reset --hard "%s"' % ref, localdirname,env=git_env)
+                self._shellcmd('git fetch && git reset --hard "%s"' % ref, localdirname, env=git_env)
 
             # take the localdirname as poky dir if we can find the oe-init-build-env
             if self.pokydirname is None and os.path.exists(os.path.join(localdirname, "oe-init-build-env")):
@@ -193,7 +193,7 @@ class LocalhostBEController(BuildEnvironmentController):
                 # make sure we have a working bitbake
                 if not os.path.exists(os.path.join(self.pokydirname, 'bitbake')):
                     logger.debug("localhostbecontroller: checking bitbake into the poky dirname %s " % self.pokydirname)
-                    self._shellcmd("git clone -b \"%s\" \"%s\" \"%s\" " % (bitbake.commit, bitbake.giturl, os.path.join(self.pokydirname, 'bitbake')),env=git_env)
+                    self._shellcmd("git clone -b \"%s\" \"%s\" \"%s\" " % (bitbake.commit, bitbake.giturl, os.path.join(self.pokydirname, 'bitbake')), env=git_env)
 
             # verify our repositories
             for name, dirpath, index in gitrepos[(giturl, commit)]:
@@ -203,9 +203,9 @@ class LocalhostBEController(BuildEnvironmentController):
                     raise BuildSetupException("Cannot find layer git path '%s' in checked out repository '%s:%s'. Aborting." % (localdirpath, giturl, commit))
 
                 if name != "bitbake":
-                    layerlist.append("%03d:%s" % (index,localdirpath.rstrip("/")))
+                    layerlist.append("%03d:%s" % (index, localdirpath.rstrip("/")))
 
-        self.setCloneStatus(bitbake,'complete',clone_total,clone_count,'')
+        self.setCloneStatus(bitbake, 'complete', clone_total, clone_count, '')
         logger.debug("localhostbecontroller: current layer list %s " % pformat(layerlist))
 
         # Resolve self.pokydirname if not resolved yet, consider the scenario
@@ -217,9 +217,9 @@ class LocalhostBEController(BuildEnvironmentController):
             else:
                 # Alternatively, scan local layers for relative "oe-init-build-env" location
                 for layer in layers:
-                    if os.path.exists(os.path.join(layer.layer_version.layer.local_source_dir,"..","oe-init-build-env")):
+                    if os.path.exists(os.path.join(layer.layer_version.layer.local_source_dir, "..", "oe-init-build-env")):
                         logger.debug("localhostbecontroller, setting pokydirname to %s" % (layer.layer_version.layer.local_source_dir))
-                        self.pokydirname = os.path.join(layer.layer_version.layer.local_source_dir,"..")
+                        self.pokydirname = os.path.join(layer.layer_version.layer.local_source_dir, "..")
                         break
                 else:
                     logger.error("pokydirname is not set, you will run into trouble!")
@@ -235,7 +235,7 @@ class LocalhostBEController(BuildEnvironmentController):
                     customrecipe, layers)
 
                 if os.path.isdir(custom_layer_path):
-                    layerlist.append("%03d:%s" % (layer_index,custom_layer_path))
+                    layerlist.append("%03d:%s" % (layer_index, custom_layer_path))
 
             except CustomImageRecipe.DoesNotExist:
                 continue  # not a custom recipe, skip
@@ -338,11 +338,11 @@ class LocalhostBEController(BuildEnvironmentController):
         # init build environment
         try:
             custom_script = ToasterSetting.objects.get(name="CUSTOM_BUILD_INIT_SCRIPT").value
-            custom_script = custom_script.replace("%BUILDDIR%",builddir)
-            self._shellcmd("bash -c 'source %s'" % (custom_script),env=git_env)
+            custom_script = custom_script.replace("%BUILDDIR%", builddir)
+            self._shellcmd("bash -c 'source %s'" % (custom_script), env=git_env)
         except ToasterSetting.DoesNotExist:
             self._shellcmd("bash -c 'source %s %s'" % (oe_init, builddir),
-                       self.be.sourcedir,env=git_env)
+                       self.be.sourcedir, env=git_env)
 
         # update bblayers.conf
         if not is_merged_attr:
@@ -366,7 +366,7 @@ class LocalhostBEController(BuildEnvironmentController):
                 content = bblayers.readlines()
             do_write = True
             was_toaster = False
-            with open(bblconfpath,'w') as bblayers:
+            with open(bblconfpath, 'w') as bblayers:
                 for line in content:
                     #line = line.strip('\n')
                     if 'TOASTER_CONFIG_PROLOG' in line:
@@ -392,7 +392,7 @@ class LocalhostBEController(BuildEnvironmentController):
                 content = f.readlines()
             do_write = True
             was_toaster = False
-            with open(bbconfpath,'w') as conf:
+            with open(bbconfpath, 'w') as conf:
                 for line in content:
                     #line = line.strip('\n')
                     if 'TOASTER_CONFIG_PROLOG' in line:
@@ -423,7 +423,7 @@ class LocalhostBEController(BuildEnvironmentController):
                 bitbake.req.build.outcome = Build.SUCCEEDED
                 bitbake.req.build.save()
                 # Update the project status
-                bitbake.req.project.set_variable(Project.PROJECT_SPECIFIC_STATUS,Project.PROJECT_SPECIFIC_CLONING_SUCCESS)
+                bitbake.req.project.set_variable(Project.PROJECT_SPECIFIC_STATUS, Project.PROJECT_SPECIFIC_CLONING_SUCCESS)
                 signal_runbuilds()
                 return
 
@@ -443,7 +443,7 @@ class LocalhostBEController(BuildEnvironmentController):
             else:
                 logger.error("Looks like Bitbake is not available, please fix your environment")
 
-        toasterlayers = os.path.join(builddir,"conf/toaster-bblayers.conf")
+        toasterlayers = os.path.join(builddir, "conf/toaster-bblayers.conf")
         if not is_merged_attr:
             self._shellcmd('%s bash -c \"source %s %s; BITBAKE_UI="knotty" %s --read %s --read %s '
                            '--server-only -B 0.0.0.0:0\"' % (env_clean, oe_init,
