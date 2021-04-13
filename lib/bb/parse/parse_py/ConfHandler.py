@@ -17,7 +17,7 @@ import os
 import bb.utils
 from bb.parse import ParseError, resolve_file, ast, logger, handle
 
-__config_regexp__  = re.compile( r"""
+__config_regexp__  = re.compile(r"""
     ^
     (?P<exp>export\s+)?
     (?P<var>[a-zA-Z0-9\-_+.${}/~]+?)
@@ -41,11 +41,11 @@ __config_regexp__  = re.compile( r"""
     (?P=apo)
     $
     """, re.X)
-__include_regexp__ = re.compile( r"include\s+(.+)" )
-__require_regexp__ = re.compile( r"require\s+(.+)" )
-__export_regexp__ = re.compile( r"export\s+([a-zA-Z0-9\-_+.${}/~]+)$" )
-__unset_regexp__ = re.compile( r"unset\s+([a-zA-Z0-9\-_+.${}/~]+)$" )
-__unset_flag_regexp__ = re.compile( r"unset\s+([a-zA-Z0-9\-_+.${}/~]+)\[([a-zA-Z0-9\-_+.]+)\]$" )
+__include_regexp__ = re.compile(r"include\s+(.+)")
+__require_regexp__ = re.compile(r"require\s+(.+)")
+__export_regexp__ = re.compile(r"export\s+([a-zA-Z0-9\-_+.${}/~]+)$")
+__unset_regexp__ = re.compile(r"unset\s+([a-zA-Z0-9\-_+.${}/~]+)$")
+__unset_flag_regexp__ = re.compile(r"unset\s+([a-zA-Z0-9\-_+.${}/~]+)\[([a-zA-Z0-9\-_+.]+)\]$")
 
 def init(data):
     topdir = data.getVar('TOPDIR', False)
@@ -136,7 +136,7 @@ def handle(fn, data, include):
             while s[-1] == '\\':
                 s2 = f.readline().rstrip()
                 lineno = lineno + 1
-                if (not s2 or s2 and s2[0] != "#") and s[0] == "#" :
+                if (not s2 or s2 and s2[0] != "#") and s[0] == "#":
                     bb.fatal("There is a confusing multiline, partially commented expression on line %s of file %s (%s).\nPlease clarify whether this is all a comment or should be parsed." % (lineno, fn, s))
                 s = s[:-1] + s2
             # skip comments

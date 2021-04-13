@@ -43,7 +43,7 @@ DATABASES = {
 # for the database lock to be  released
 # https://docs.djangoproject.com/en/1.6/ref/databases/#database-is-locked-errors
 if 'sqlite' in DATABASES['default']['ENGINE']:
-    DATABASES['default']['OPTIONS'] = { 'timeout': 20 }
+    DATABASES['default']['OPTIONS'] = {'timeout': 20}
 
 # Update as of django 1.8.16 release, the '*' is needed to allow us to connect while running
 # on hosts without explicitly setting the fqdn for the toaster server.
@@ -326,7 +326,7 @@ LOGGING = {
         }
     },
     'loggers': {
-        'toaster' : {
+        'toaster': {
             'handlers': ['console'],
             'level': 'DEBUG',
         },

@@ -26,14 +26,14 @@ from .ConfHandler import include, init
 # For compatibility
 bb.deprecate_import(__name__, "bb.parse", ["vars_from_file"])
 
-__func_start_regexp__    = re.compile(r"(((?P<py>python(?=(\s|\()))|(?P<fr>fakeroot(?=\s)))\s*)*(?P<func>[\w\.\-\+\{\}\$]+)?\s*\(\s*\)\s*{$" )
-__inherit_regexp__       = re.compile(r"inherit\s+(.+)" )
-__export_func_regexp__   = re.compile(r"EXPORT_FUNCTIONS\s+(.+)" )
+__func_start_regexp__    = re.compile(r"(((?P<py>python(?=(\s|\()))|(?P<fr>fakeroot(?=\s)))\s*)*(?P<func>[\w\.\-\+\{\}\$]+)?\s*\(\s*\)\s*{$")
+__inherit_regexp__       = re.compile(r"inherit\s+(.+)")
+__export_func_regexp__   = re.compile(r"EXPORT_FUNCTIONS\s+(.+)")
 __addtask_regexp__       = re.compile(r"addtask\s+(?P<func>\w+)\s*((before\s*(?P<before>((.*(?=after))|(.*))))|(after\s*(?P<after>((.*(?=before))|(.*)))))*")
 __deltask_regexp__       = re.compile(r"deltask\s+(.+)")
-__addhandler_regexp__    = re.compile(r"addhandler\s+(.+)" )
-__def_regexp__           = re.compile(r"def\s+(\w+).*:" )
-__python_func_regexp__   = re.compile(r"(\s+.*)|(^$)|(^#)" )
+__addhandler_regexp__    = re.compile(r"addhandler\s+(.+)")
+__def_regexp__           = re.compile(r"def\s+(\w+).*:")
+__python_func_regexp__   = re.compile(r"(\s+.*)|(^$)|(^#)")
 __python_tab_regexp__    = re.compile(r" *\t")
 
 __infunc__ = []
@@ -65,7 +65,7 @@ def inherit(files, fn, lineno, d):
 
         if not file in __inherit_cache:
             logger.debug("Inheriting %s (from %s:%d)" % (file, fn, lineno))
-            __inherit_cache.append( file )
+            __inherit_cache.append(file)
             d.setVar('__inherit_cache', __inherit_cache)
             include(fn, file, lineno, d, "inherit")
             __inherit_cache = d.getVar('__inherit_cache', False) or []
@@ -133,7 +133,7 @@ def handle(fn, d, include):
     except bb.parse.SkipRecipe:
         d.setVar("__SKIPPED", True)
         if include == 0:
-            return { "" : d }
+            return {"": d}
 
     if __infunc__:
         raise ParseError("Shell function %s is never closed" % __infunc__[0], __infunc__[1], __infunc__[2])
@@ -240,7 +240,7 @@ def feeder(lineno, s, fn, root, statements, eof=False):
 
         # Check and warn for having task with exprssion as part of task name
         for te in taskexpression:
-            if any( ( "%s_" % keyword ) in te for keyword in bb.data_smart.__setvar_keyword__ ):
+            if any(("%s_" % keyword) in te for keyword in bb.data_smart.__setvar_keyword__):
                 raise ParseError("Task name '%s' contains a keyword which is not recommended/supported.\nPlease rename the task not to include the keyword.\n%s" % (te, ("\n".join(map(str, bb.data_smart.__setvar_keyword__)))), fn)
         ast.handleAddTask(statements, fn, lineno, m)
         return

@@ -367,34 +367,34 @@ class EventsCodes:
     # constants, but we also get nice human-friendly text mappings to do lookups
     # against as well, for free:
     FLAG_COLLECTIONS = {'OP_FLAGS': {
-        'IN_ACCESS'        : 0x00000001,  # File was accessed
-        'IN_MODIFY'        : 0x00000002,  # File was modified
-        'IN_ATTRIB'        : 0x00000004,  # Metadata changed
-        'IN_CLOSE_WRITE'   : 0x00000008,  # Writable file was closed
-        'IN_CLOSE_NOWRITE' : 0x00000010,  # Unwritable file closed
-        'IN_OPEN'          : 0x00000020,  # File was opened
-        'IN_MOVED_FROM'    : 0x00000040,  # File was moved from X
-        'IN_MOVED_TO'      : 0x00000080,  # File was moved to Y
-        'IN_CREATE'        : 0x00000100,  # Subfile was created
-        'IN_DELETE'        : 0x00000200,  # Subfile was deleted
-        'IN_DELETE_SELF'   : 0x00000400,  # Self (watched item itself)
+        'IN_ACCESS': 0x00000001,  # File was accessed
+        'IN_MODIFY': 0x00000002,  # File was modified
+        'IN_ATTRIB': 0x00000004,  # Metadata changed
+        'IN_CLOSE_WRITE': 0x00000008,  # Writable file was closed
+        'IN_CLOSE_NOWRITE': 0x00000010,  # Unwritable file closed
+        'IN_OPEN': 0x00000020,  # File was opened
+        'IN_MOVED_FROM': 0x00000040,  # File was moved from X
+        'IN_MOVED_TO': 0x00000080,  # File was moved to Y
+        'IN_CREATE': 0x00000100,  # Subfile was created
+        'IN_DELETE': 0x00000200,  # Subfile was deleted
+        'IN_DELETE_SELF': 0x00000400,  # Self (watched item itself)
                                           # was deleted
-        'IN_MOVE_SELF'     : 0x00000800,  # Self (watched item itself) was moved
+        'IN_MOVE_SELF': 0x00000800,  # Self (watched item itself) was moved
         },
                         'EVENT_FLAGS': {
-        'IN_UNMOUNT'       : 0x00002000,  # Backing fs was unmounted
-        'IN_Q_OVERFLOW'    : 0x00004000,  # Event queued overflowed
-        'IN_IGNORED'       : 0x00008000,  # File was ignored
+        'IN_UNMOUNT': 0x00002000,  # Backing fs was unmounted
+        'IN_Q_OVERFLOW': 0x00004000,  # Event queued overflowed
+        'IN_IGNORED': 0x00008000,  # File was ignored
         },
                         'SPECIAL_FLAGS': {
-        'IN_ONLYDIR'       : 0x01000000,  # only watch the path if it is a
+        'IN_ONLYDIR': 0x01000000,  # only watch the path if it is a
                                           # directory
-        'IN_DONT_FOLLOW'   : 0x02000000,  # don't follow a symlink
-        'IN_EXCL_UNLINK'   : 0x04000000,  # exclude events on unlinked objects
-        'IN_MASK_ADD'      : 0x20000000,  # add to the mask of an already
+        'IN_DONT_FOLLOW': 0x02000000,  # don't follow a symlink
+        'IN_EXCL_UNLINK': 0x04000000,  # exclude events on unlinked objects
+        'IN_MASK_ADD': 0x20000000,  # add to the mask of an already
                                           # existing watch
-        'IN_ISDIR'         : 0x40000000,  # event occurred against dir
-        'IN_ONESHOT'       : 0x80000000,  # only send event once
+        'IN_ISDIR': 0x40000000,  # event occurred against dir
+        'IN_ONESHOT': 0x80000000,  # only send event once
         },
                         }
 
@@ -1315,7 +1315,7 @@ class Notifier:
                                     locale.getpreferredencoding()))
             os.close(fd_pid)
             # Register unlink function
-            atexit.register(lambda : os.unlink(pid_file))
+            atexit.register(lambda: os.unlink(pid_file))
 
     def _sleep(self, ref_time):
         # Only consider sleeping if read_freq is > 0

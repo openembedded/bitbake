@@ -53,7 +53,7 @@ from bb.ui import uihelper
 
 logger = logging.getLogger(__name__)
 
-parsespin = itertools.cycle( r'|/-\\' )
+parsespin = itertools.cycle(r'|/-\\')
 
 X = 0
 Y = 1
@@ -68,9 +68,9 @@ class NCursesUI:
     """
     class Window:
         """Base Window Class"""
-        def __init__( self, x, y, width, height, fg=curses.COLOR_BLACK, bg=curses.COLOR_WHITE ):
-            self.win = curses.newwin( height, width, y, x )
-            self.dimensions = ( x, y, width, height )
+        def __init__(self, x, y, width, height, fg=curses.COLOR_BLACK, bg=curses.COLOR_WHITE):
+            self.win = curses.newwin(height, width, y, x)
+            self.dimensions = (x, y, width, height)
             """
             if curses.has_colors():
                 color = 1
@@ -83,41 +83,41 @@ class NCursesUI:
             self.setScrolling()
             self.win.noutrefresh()
 
-        def erase( self ):
+        def erase(self):
             self.win.erase()
 
-        def setScrolling( self, b=True ):
-            self.win.scrollok( b )
-            self.win.idlok( b )
+        def setScrolling(self, b=True):
+            self.win.scrollok(b)
+            self.win.idlok(b)
 
-        def setBoxed( self ):
+        def setBoxed(self):
             self.boxed = True
             self.win.box()
             self.win.noutrefresh()
 
-        def setText( self, x, y, text, *args ):
-            self.win.addstr( y, x, text, *args )
+        def setText(self, x, y, text, *args):
+            self.win.addstr(y, x, text, *args)
             self.win.noutrefresh()
 
-        def appendText( self, text, *args ):
-            self.win.addstr( text, *args )
+        def appendText(self, text, *args):
+            self.win.addstr(text, *args)
             self.win.noutrefresh()
 
-        def drawHline( self, y ):
-            self.win.hline( y, 0, curses.ACS_HLINE, self.dimensions[WIDTH] )
+        def drawHline(self, y):
+            self.win.hline(y, 0, curses.ACS_HLINE, self.dimensions[WIDTH])
             self.win.noutrefresh()
 
-    class DecoratedWindow( Window ):
+    class DecoratedWindow(Window):
         """Base class for windows with a box and a title bar"""
-        def __init__( self, title, x, y, width, height, fg=curses.COLOR_BLACK, bg=curses.COLOR_WHITE ):
-            NCursesUI.Window.__init__( self, x+1, y+3, width-2, height-4, fg, bg )
-            self.decoration = NCursesUI.Window( x, y, width, height, fg, bg )
+        def __init__(self, title, x, y, width, height, fg=curses.COLOR_BLACK, bg=curses.COLOR_WHITE):
+            NCursesUI.Window.__init__(self, x+1, y+3, width-2, height-4, fg, bg)
+            self.decoration = NCursesUI.Window(x, y, width, height, fg, bg)
             self.decoration.setBoxed()
-            self.decoration.win.hline( 2, 1, curses.ACS_HLINE, width-2 )
-            self.setTitle( title )
+            self.decoration.win.hline(2, 1, curses.ACS_HLINE, width-2)
+            self.setTitle(title)
 
-        def setTitle( self, title ):
-            self.decoration.setText( 1, 1, title.center( self.dimensions[WIDTH]-2 ), curses.A_BOLD )
+        def setTitle(self, title):
+            self.decoration.setText(1, 1, title.center(self.dimensions[WIDTH]-2), curses.A_BOLD)
 
     #-------------------------------------------------------------------------#
 #    class TitleWindow( Window ):
@@ -134,54 +134,54 @@ class NCursesUI:
 #            self.setText( 1, 2, credit.center( self.dimensions[WIDTH]-2 ), curses.A_BOLD )
 
     #-------------------------------------------------------------------------#
-    class ThreadActivityWindow( DecoratedWindow ):
+    class ThreadActivityWindow(DecoratedWindow):
     #-------------------------------------------------------------------------#
         """Thread Activity Window"""
-        def __init__( self, x, y, width, height ):
-            NCursesUI.DecoratedWindow.__init__( self, "Thread Activity", x, y, width, height )
+        def __init__(self, x, y, width, height):
+            NCursesUI.DecoratedWindow.__init__(self, "Thread Activity", x, y, width, height)
 
-        def setStatus( self, thread, text ):
-            line = "%02d: %s" % ( thread, text )
+        def setStatus(self, thread, text):
+            line = "%02d: %s" % (thread, text)
             width = self.dimensions[WIDTH]
-            if ( len(line) > width ):
+            if (len(line) > width):
                 line = line[:width-3] + "..."
             else:
-                line = line.ljust( width )
-            self.setText( 0, thread, line )
+                line = line.ljust(width)
+            self.setText(0, thread, line)
 
     #-------------------------------------------------------------------------#
-    class MainWindow( DecoratedWindow ):
+    class MainWindow(DecoratedWindow):
     #-------------------------------------------------------------------------#
         """Main Window"""
-        def __init__( self, x, y, width, height ):
+        def __init__(self, x, y, width, height):
             self.StatusPosition = width - MAXSTATUSLENGTH
-            NCursesUI.DecoratedWindow.__init__( self, None, x, y, width, height )
+            NCursesUI.DecoratedWindow.__init__(self, None, x, y, width, height)
             curses.nl()
 
-        def setTitle( self, title ):
+        def setTitle(self, title):
             title = "BitBake %s" % bb.__version__
-            self.decoration.setText( 2, 1, title, curses.A_BOLD )
-            self.decoration.setText( self.StatusPosition - 8, 1, "Status:", curses.A_BOLD )
+            self.decoration.setText(2, 1, title, curses.A_BOLD)
+            self.decoration.setText(self.StatusPosition - 8, 1, "Status:", curses.A_BOLD)
 
         def setStatus(self, status):
             while len(status) < MAXSTATUSLENGTH:
                 status = status + " "
-            self.decoration.setText( self.StatusPosition, 1, status, curses.A_BOLD )
+            self.decoration.setText(self.StatusPosition, 1, status, curses.A_BOLD)
 
 
     #-------------------------------------------------------------------------#
-    class ShellOutputWindow( DecoratedWindow ):
+    class ShellOutputWindow(DecoratedWindow):
     #-------------------------------------------------------------------------#
         """Interactive Command Line Output"""
-        def __init__( self, x, y, width, height ):
-            NCursesUI.DecoratedWindow.__init__( self, "Command Line Window", x, y, width, height )
+        def __init__(self, x, y, width, height):
+            NCursesUI.DecoratedWindow.__init__(self, "Command Line Window", x, y, width, height)
 
     #-------------------------------------------------------------------------#
-    class ShellInputWindow( Window ):
+    class ShellInputWindow(Window):
     #-------------------------------------------------------------------------#
         """Interactive Command Line Input"""
-        def __init__( self, x, y, width, height ):
-            NCursesUI.Window.__init__( self, x, y, width, height )
+        def __init__(self, x, y, width, height):
+            NCursesUI.Window.__init__(self, x, y, width, height)
 
 # put that to the top again from curses.textpad import Textbox
 #            self.textbox = Textbox( self.win )
@@ -202,8 +202,8 @@ class NCursesUI:
 
         main_left = 0
         main_top = 0
-        main_height = ( height // 3 * 2 )
-        main_width = ( width // 3 ) * 2
+        main_height = (height // 3 * 2)
+        main_width = (width // 3) * 2
         clo_left = main_left
         clo_top = main_top + main_height
         clo_height = height - main_height - main_top - 1
@@ -218,11 +218,11 @@ class NCursesUI:
         thread_width = width - main_width
 
         #tw = self.TitleWindow( 0, 0, width, main_top )
-        mw = self.MainWindow( main_left, main_top, main_width, main_height )
-        taw = self.ThreadActivityWindow( thread_left, thread_top, thread_width, thread_height )
-        clo = self.ShellOutputWindow( clo_left, clo_top, clo_width, clo_height )
-        cli = self.ShellInputWindow( cli_left, cli_top, cli_width, cli_height )
-        cli.setText( 0, 0, "BB>" )
+        mw = self.MainWindow(main_left, main_top, main_width, main_height)
+        taw = self.ThreadActivityWindow(thread_left, thread_top, thread_width, thread_height)
+        clo = self.ShellOutputWindow(clo_left, clo_top, clo_width, clo_height)
+        cli = self.ShellInputWindow(cli_left, cli_top, cli_width, cli_height)
+        cli.setText(0, 0, "BB>")
 
         mw.setStatus("Idle")
 
@@ -268,22 +268,22 @@ class NCursesUI:
                 if isinstance(event, bb.event.CacheLoadProgress):
                     x = event.current
                     y = self.parse_total
-                    mw.setStatus("Loading Cache:   %s [%2d %%]" % ( next(parsespin), x*100/y ) )
+                    mw.setStatus("Loading Cache:   %s [%2d %%]" % (next(parsespin), x*100/y))
                 if isinstance(event, bb.event.CacheLoadCompleted):
                     mw.setStatus("Idle")
                     mw.appendText("Loaded %d entries from dependency cache.\n"
-                                % ( event.num_entries))
+                                % (event.num_entries))
 
                 if isinstance(event, bb.event.ParseStarted):
                     self.parse_total = event.total
                 if isinstance(event, bb.event.ParseProgress):
                     x = event.current
                     y = self.parse_total
-                    mw.setStatus("Parsing Recipes: %s [%2d %%]" % ( next(parsespin), x*100/y ) )
+                    mw.setStatus("Parsing Recipes: %s [%2d %%]" % (next(parsespin), x*100/y))
                 if isinstance(event, bb.event.ParseCompleted):
                     mw.setStatus("Idle")
                     mw.appendText("Parsing finished. %d cached, %d parsed, %d skipped, %d masked.\n"
-                                % ( event.cached, event.parsed, event.skipped, event.masked ))
+                                % (event.cached, event.parsed, event.skipped, event.masked))
 
 #                if isinstance(event, bb.build.TaskFailed):
 #                    if event.logfile:

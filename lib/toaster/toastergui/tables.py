@@ -317,12 +317,12 @@ class RecipesTable(ToasterTable):
         super(RecipesTable, self).__init__(*args, **kwargs)
         self.empty_state = "Toaster has no recipe information. To generate recipe information you need to run a build."
 
-    build_col = { 'title' : "Build",
-            'help_text' : "Before building a recipe, you might need to add the corresponding layer to your project",
-            'hideable' : False,
-            'filter_name' : "in_current_project",
-            'static_data_name' : "add-del-layers",
-            'static_data_template' : '{% include "recipe_btn.html" %}'}
+    build_col = {'title': "Build",
+            'help_text': "Before building a recipe, you might need to add the corresponding layer to your project",
+            'hideable': False,
+            'filter_name': "in_current_project",
+            'static_data_name': "add-del-layers",
+            'static_data_template': '{% include "recipe_btn.html" %}'}
     if '1' == os.environ.get('TOASTER_PROJECTSPECIFIC'):
             build_col['static_data_template'] = '{% include "recipe_add_btn.html" %}'
 
@@ -696,10 +696,10 @@ class PackagesTable(ToasterTable):
         packages = self.create_package_list(recipe, project.pk)
 
         context.update({'project': project,
-                        'recipe' : recipe,
+                        'recipe': recipe,
                         'packages': packages,
-                        'approx_pkg_size' : packages.aggregate(Sum('size')),
-                        'in_project' : in_project,
+                        'approx_pkg_size': packages.aggregate(Sum('size')),
+                        'in_project': in_project,
                        })
 
         return context

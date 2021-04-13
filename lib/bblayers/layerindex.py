@@ -36,7 +36,7 @@ class LayerIndexPlugin(ActionPlugin):
                 if shallow:
                     cmd.extend(['--depth', '1'])
                 if branch:
-                    cmd.extend(['-b' , branch])
+                    cmd.extend(['-b', branch])
                 cmd.extend([url, repodir])
                 result = subprocess.call(cmd)
                 if result:

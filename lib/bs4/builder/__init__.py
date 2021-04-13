@@ -228,7 +228,7 @@ class HTMLTreeBuilder(TreeBuilder):
     """
 
     preserve_whitespace_tags = set(['pre', 'textarea'])
-    empty_element_tags = set(['br' , 'hr', 'input', 'img', 'meta',
+    empty_element_tags = set(['br', 'hr', 'input', 'img', 'meta',
                               'spacer', 'link', 'frame', 'base'])
 
     # The HTML standard defines these attributes as containing a
@@ -239,20 +239,20 @@ class HTMLTreeBuilder(TreeBuilder):
     # a list of values if possible. Upon output, the list will be
     # converted back into a string.
     cdata_list_attributes = {
-        "*" : ['class', 'accesskey', 'dropzone'],
-        "a" : ['rel', 'rev'],
-        "link" :  ['rel', 'rev'],
-        "td" : ["headers"],
-        "th" : ["headers"],
-        "td" : ["headers"],
-        "form" : ["accept-charset"],
-        "object" : ["archive"],
+        "*": ['class', 'accesskey', 'dropzone'],
+        "a": ['rel', 'rev'],
+        "link":  ['rel', 'rev'],
+        "td": ["headers"],
+        "th": ["headers"],
+        "td": ["headers"],
+        "form": ["accept-charset"],
+        "object": ["archive"],
 
         # These are HTML5 specific, as are *.accesskey and *.dropzone above.
-        "area" : ["rel"],
-        "icon" : ["sizes"],
-        "iframe" : ["sandbox"],
-        "output" : ["for"],
+        "area": ["rel"],
+        "icon": ["sizes"],
+        "iframe": ["sandbox"],
+        "output": ["for"],
         }
 
     def set_up_substitutions(self, tag):

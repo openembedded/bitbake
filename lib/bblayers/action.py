@@ -150,7 +150,7 @@ build results (as the layer priority order has effectively changed).
                         if of.startswith(layer):
                             overlayed.add(of)
 
-            logger.plain('Copying files from %s...' % layer )
+            logger.plain('Copying files from %s...' % layer)
             for root, dirs, files in os.walk(layer):
                 if '.git' in dirs:
                     dirs.remove('.git')
@@ -160,7 +160,7 @@ build results (as the layer priority order has effectively changed).
                 for f1 in files:
                     f1full = os.sep.join([root, f1])
                     if f1full in overlayed:
-                        logger.plain('  Skipping overlayed file %s' % f1full )
+                        logger.plain('  Skipping overlayed file %s' % f1full)
                     else:
                         ext = os.path.splitext(f1)[1]
                         if ext != '.bbappend':
@@ -169,7 +169,7 @@ build results (as the layer priority order has effectively changed).
                             bb.utils.mkdirhier(os.path.dirname(fdest))
                             if os.path.exists(fdest):
                                 if f1 == 'layer.conf' and root.endswith('/conf'):
-                                    logger.plain('  Skipping layer config file %s' % f1full )
+                                    logger.plain('  Skipping layer config file %s' % f1full)
                                     continue
                                 else:
                                     logger.warning('Overwriting file %s', fdest)

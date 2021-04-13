@@ -40,7 +40,7 @@ class LXMLTreeBuilderForXML(TreeBuilder):
 
     # This namespace mapping is specified in the XML Namespace
     # standard.
-    DEFAULT_NSMAPS = {'http://www.w3.org/XML/1998/namespace' : "xml"}
+    DEFAULT_NSMAPS = {'http://www.w3.org/XML/1998/namespace': "xml"}
 
     def default_parser(self, encoding):
         # This can either return a parser object or a class, which

@@ -588,7 +588,7 @@ class ORMWrapper(object):
             built_recipe = recipes[pkgpnmap[p]['PN']]
 
             if built_package:
-                packagedict[p]['object'], created = Package.objects.get_or_create( build=build_obj, name=searchname )
+                packagedict[p]['object'], created = Package.objects.get_or_create(build=build_obj, name=searchname)
                 recipe = built_recipe
             else:
                 packagedict[p]['object'], created = \
@@ -629,13 +629,13 @@ class ORMWrapper(object):
                     packagefile_objects = []
                     for targetpath in pkgpnmap[p]['FILES_INFO']:
                         targetfilesize = pkgpnmap[p]['FILES_INFO'][targetpath]
-                        packagefile_objects.append(Package_File( package=packagedict[p]['object'],
+                        packagefile_objects.append(Package_File(package=packagedict[p]['object'],
                             path=targetpath,
                             size=targetfilesize))
                     if len(packagefile_objects):
                         Package_File.objects.bulk_create(packagefile_objects)
                 except KeyError as e:
-                    errormsg += "  stpi: Key error, package %s key %s \n" % ( p, e )
+                    errormsg += "  stpi: Key error, package %s key %s \n" % (p, e)
 
             # save disk installed size
             packagedict[p]['object'].installed_size = packagedict[p]['size']
@@ -731,8 +731,8 @@ class ORMWrapper(object):
             pname = package_info['OPKGN']
 
         if built_package:
-            bp_object, _ = Package.objects.get_or_create( build=build_obj,
-                                                         name=pname )
+            bp_object, _ = Package.objects.get_or_create(build=build_obj,
+                                                         name=pname)
             recipe = built_recipe
         else:
             bp_object, created = \
@@ -763,9 +763,9 @@ class ORMWrapper(object):
         # save any attached file information
         packagefile_objects = []
         for path in package_info['FILES_INFO']:
-            packagefile_objects.append(Package_File( package=bp_object,
+            packagefile_objects.append(Package_File(package=bp_object,
                                         path=path,
-                                        size=package_info['FILES_INFO'][path] ))
+                                        size=package_info['FILES_INFO'][path]))
         if len(packagefile_objects):
             Package_File.objects.bulk_create(packagefile_objects)
 
@@ -785,27 +785,27 @@ class ORMWrapper(object):
         # save soft dependency information
         if 'RDEPENDS' in package_info and package_info['RDEPENDS']:
             for p in bb.utils.explode_deps(package_info['RDEPENDS']):
-                packagedeps_objs.append(Package_Dependency(  package=bp_object,
+                packagedeps_objs.append(Package_Dependency(package=bp_object,
                     depends_on=_po_byname(p), dep_type=Package_Dependency.TYPE_RDEPENDS))
         if 'RPROVIDES' in package_info and package_info['RPROVIDES']:
             for p in bb.utils.explode_deps(package_info['RPROVIDES']):
-                packagedeps_objs.append(Package_Dependency(  package=bp_object,
+                packagedeps_objs.append(Package_Dependency(package=bp_object,
                     depends_on=_po_byname(p), dep_type=Package_Dependency.TYPE_RPROVIDES))
         if 'RRECOMMENDS' in package_info and package_info['RRECOMMENDS']:
             for p in bb.utils.explode_deps(package_info['RRECOMMENDS']):
-                packagedeps_objs.append(Package_Dependency(  package=bp_object,
+                packagedeps_objs.append(Package_Dependency(package=bp_object,
                     depends_on=_po_byname(p), dep_type=Package_Dependency.TYPE_RRECOMMENDS))
         if 'RSUGGESTS' in package_info and package_info['RSUGGESTS']:
             for p in bb.utils.explode_deps(package_info['RSUGGESTS']):
-                packagedeps_objs.append(Package_Dependency(  package=bp_object,
+                packagedeps_objs.append(Package_Dependency(package=bp_object,
                     depends_on=_po_byname(p), dep_type=Package_Dependency.TYPE_RSUGGESTS))
         if 'RREPLACES' in package_info and package_info['RREPLACES']:
             for p in bb.utils.explode_deps(package_info['RREPLACES']):
-                packagedeps_objs.append(Package_Dependency(  package=bp_object,
+                packagedeps_objs.append(Package_Dependency(package=bp_object,
                     depends_on=_po_byname(p), dep_type=Package_Dependency.TYPE_RREPLACES))
         if 'RCONFLICTS' in package_info and package_info['RCONFLICTS']:
             for p in bb.utils.explode_deps(package_info['RCONFLICTS']):
-                packagedeps_objs.append(Package_Dependency(  package=bp_object,
+                packagedeps_objs.append(Package_Dependency(package=bp_object,
                     depends_on=_po_byname(p), dep_type=Package_Dependency.TYPE_RCONFLICTS))
 
         if len(packagedeps_objs) > 0:
@@ -833,7 +833,7 @@ class ORMWrapper(object):
                 value = vardump[k]['v']
                 if value is None:
                     value = ''
-                variable_obj = Variable.objects.create( build=build_obj,
+                variable_obj = Variable.objects.create(build=build_obj,
                     variable_name=k,
                     variable_value=value,
                     description=desc)
@@ -841,7 +841,7 @@ class ORMWrapper(object):
                 varhist_objects = []
                 for vh in vardump[k]['history']:
                     if not 'documentation.conf' in vh['file']:
-                        varhist_objects.append(VariableHistory( variable=variable_obj,
+                        varhist_objects.append(VariableHistory(variable=variable_obj,
                                 file_name=vh['file'],
                                 line_number=vh['line'],
                                 operation=vh['op']))
@@ -1533,7 +1533,7 @@ class BuildInfoHelper(object):
                     dep = _save_a_task(taskdep)
                 else:
                     dep = tasks[taskdep]
-                taskdeps_objects.append(Task_Dependency( task=target, depends_on=dep ))
+                taskdeps_objects.append(Task_Dependency(task=target, depends_on=dep))
         Task_Dependency.objects.bulk_create(taskdeps_objects)
 
         if len(errormsg) > 0:

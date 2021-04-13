@@ -40,7 +40,7 @@ def diagnose(data):
             from lxml import etree
             print("Found lxml version %s" % ".".join(map(str,etree.LXML_VERSION)))
         except ImportError as e:
-            print (
+            print(
                 "lxml is not installed or couldn't be imported.")
 
 
@@ -49,7 +49,7 @@ def diagnose(data):
             import html5lib
             print("Found html5lib version %s" % html5lib.__version__)
         except ImportError as e:
-            print (
+            print(
                 "html5lib is not installed or couldn't be imported.")
 
     if hasattr(data, 'read'):
@@ -205,7 +205,7 @@ def profile(num_elements=100000, parser="lxml"):
 
     data = rdoc(num_elements)
     vars = dict(bs4=bs4, data=data, parser=parser)
-    cProfile.runctx('bs4.BeautifulSoup(data, parser)' , vars, vars, filename)
+    cProfile.runctx('bs4.BeautifulSoup(data, parser)', vars, vars, filename)
 
     stats = pstats.Stats(filename)
     # stats.strip_dirs()

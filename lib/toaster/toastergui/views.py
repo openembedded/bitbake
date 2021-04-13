@@ -81,7 +81,7 @@ def landing(request):
     if num_builds > 0:
         return redirect(reverse('all-builds'), permanent=False)
 
-    context = {'lvs_nos' : Layer_Version.objects.all().count()}
+    context = {'lvs_nos': Layer_Version.objects.all().count()}
 
     return toaster_render(request, 'landing.html', context)
 
@@ -99,7 +99,7 @@ def objtojson(obj):
         return str(obj)
     elif type(obj).__name__ == "RelatedManager":
         return [x.pk for x in obj.all()]
-    elif hasattr( obj, '__dict__') and isinstance(obj, Model):
+    elif hasattr(obj, '__dict__') and isinstance(obj, Model):
         d = obj.__dict__
         nd = dict(d)
         for di in d.keys():
@@ -110,11 +110,11 @@ def objtojson(obj):
             elif isinstance(d[di], int) and hasattr(obj, "get_%s_display" % di):
                 nd[di] = getattr(obj, "get_%s_display" % di)()
         return nd
-    elif isinstance( obj, type(lambda x:x)):
+    elif isinstance(obj, type(lambda x:x)):
         import inspect
         return inspect.getsourcelines(obj)[0]
     else:
-        raise TypeError("Unserializable object %s (%s) of type %s" % ( obj, dir(obj), type(obj)))
+        raise TypeError("Unserializable object %s (%s) of type %s" % (obj, dir(obj), type(obj)))
 
 
 def _lv_to_dict(prj, x=None):
@@ -128,8 +128,8 @@ def _lv_to_dict(prj, x=None):
             "tooltip": "%s | %s" % (x.layer.vcs_url,x.get_vcs_reference()),
             "detail": "(%s" % x.layer.vcs_url + (")" if x.release is None else " | "+x.get_vcs_reference()+")"),
             "giturl": x.layer.vcs_url,
-            "layerdetailurl" : reverse('layerdetails', args=(prj.id,x.pk)),
-            "revision" : x.get_vcs_reference(),
+            "layerdetailurl": reverse('layerdetails', args=(prj.id,x.pk)),
+            "revision": x.get_vcs_reference(),
            }
 
 
@@ -146,7 +146,7 @@ def _build_page_range(paginator, index=1):
     crt_range = 0
     for i in range(1,5):
         if (page.number + i) <= paginator.num_pages:
-            page.page_range = page.page_range + [ page.number + i]
+            page.page_range = page.page_range + [page.number + i]
             crt_range +=1
         if (page.number - i) > 0:
             page.page_range =  [page.number -i] + page.page_range
@@ -214,12 +214,12 @@ def __get_q_for_val(name, value):
         value = value[3:]
         if value == 'None':
             value = None
-        kwargs = { name : value }
+        kwargs = {name: value}
         return ~Q(**kwargs)
     else:
         if value == 'None':
             value = None
-        kwargs = { name : value }
+        kwargs = {name: value}
         return Q(**kwargs)
 
 def _get_filtering_query(filter_string):
@@ -405,7 +405,7 @@ def _add_daterange_context(queryset_all, request, daterange_list):
     # add daterange persistent
     context_date = {}
     context_date['last_date_from'] = request.GET.get('last_date_from',timezone.localtime(timezone.now()).strftime("%d/%m/%Y"))
-    context_date['last_date_to'  ] = request.GET.get('last_date_to'  ,context_date['last_date_from'])
+    context_date['last_date_to'] = request.GET.get('last_date_to',context_date['last_date_from'])
     # calculate the date ranges, avoid second sort for 'created'
     # fetch the respective max range from the database
     context_date['daterange_filter']=''
@@ -427,14 +427,14 @@ def _add_daterange_context(queryset_all, request, daterange_list):
 # Each build may contain multiple targets and each target
 # may generate multiple image files. display them all.
 #
-def builddashboard( request, build_id ):
+def builddashboard(request, build_id):
     template = "builddashboard.html"
-    if Build.objects.filter( pk=build_id ).count( ) == 0 :
-        return redirect( builds )
-    build = Build.objects.get( pk=build_id )
-    layerVersionId = Layer_Version.objects.filter( build=build_id )
-    recipeCount = Recipe.objects.filter( layer_version__id__in=layerVersionId ).count( )
-    tgts = Target.objects.filter( build_id=build_id ).order_by( 'target' )
+    if Build.objects.filter(pk=build_id).count() == 0:
+        return redirect(builds)
+    build = Build.objects.get(pk=build_id)
+    layerVersionId = Layer_Version.objects.filter(build=build_id)
+    recipeCount = Recipe.objects.filter(layer_version__id__in=layerVersionId).count()
+    tgts = Target.objects.filter(build_id=build_id).order_by('target')
 
     # set up custom target list with computed package and image data
     targets = []
@@ -499,64 +499,64 @@ def builddashboard( request, build_id ):
     #
 
     packageCount = 0
-    packages = Package.objects.filter( build_id=build_id )
+    packages = Package.objects.filter(build_id=build_id)
     for p in packages:
-        if ( p.installed_name ):
+        if (p.installed_name):
             packageCount = packageCount + 1
 
-    logmessages = list(LogMessage.objects.filter( build=build_id ))
+    logmessages = list(LogMessage.objects.filter(build=build_id))
 
     context = {
-            'build'           : build,
-            'project'         : build.project,
-            'hasArtifacts'    : has_artifacts,
-            'ntargets'        : ntargets,
-            'targets'         : targets,
-            'recipecount'     : recipeCount,
-            'packagecount'    : packageCount,
-            'logmessages'     : logmessages,
+            'build': build,
+            'project': build.project,
+            'hasArtifacts': has_artifacts,
+            'ntargets': ntargets,
+            'targets': targets,
+            'recipecount': recipeCount,
+            'packagecount': packageCount,
+            'logmessages': logmessages,
     }
-    return toaster_render( request, template, context )
+    return toaster_render(request, template, context)
 
 
 
-def generateCoveredList2( revlist=None ):
+def generateCoveredList2(revlist=None):
     if not revlist:
         revlist = []
-    covered_list =  [ x for x in revlist if x.outcome == Task.OUTCOME_COVERED ]
+    covered_list =  [x for x in revlist if x.outcome == Task.OUTCOME_COVERED]
     while len(covered_list):
-        revlist =  [ x for x in revlist if x.outcome != Task.OUTCOME_COVERED ]
+        revlist =  [x for x in revlist if x.outcome != Task.OUTCOME_COVERED]
         if len(revlist) > 0:
             return revlist
 
         newlist = _find_task_revdep_list(covered_list)
 
         revlist = list(set(revlist + newlist))
-        covered_list =  [ x for x in revlist if x.outcome == Task.OUTCOME_COVERED ]
+        covered_list =  [x for x in revlist if x.outcome == Task.OUTCOME_COVERED]
     return revlist
 
-def task( request, build_id, task_id ):
+def task(request, build_id, task_id):
     template = "task.html"
-    tasks_list = Task.objects.filter( pk=task_id )
-    if tasks_list.count( ) == 0:
-        return redirect( builds )
-    task_object = tasks_list[ 0 ]
+    tasks_list = Task.objects.filter(pk=task_id)
+    if tasks_list.count() == 0:
+        return redirect(builds)
+    task_object = tasks_list[0]
     dependencies = sorted(
-        _find_task_dep( task_object ),
+        _find_task_dep(task_object),
         key=lambda t:'%s_%s %s'%(t.recipe.name, t.recipe.version, t.task_name))
     reverse_dependencies = sorted(
-        _find_task_revdep( task_object ),
-        key=lambda t:'%s_%s %s'%( t.recipe.name, t.recipe.version, t.task_name ))
+        _find_task_revdep(task_object),
+        key=lambda t:'%s_%s %s'%(t.recipe.name, t.recipe.version, t.task_name))
     coveredBy = ''
-    if ( task_object.outcome == Task.OUTCOME_COVERED ):
+    if (task_object.outcome == Task.OUTCOME_COVERED):
 #        _list = generateCoveredList( task )
-        coveredBy = sorted(generateCoveredList2( _find_task_revdep( task_object ) ), key=lambda x: x.recipe.name)
+        coveredBy = sorted(generateCoveredList2(_find_task_revdep(task_object)), key=lambda x: x.recipe.name)
     log_head = ''
     log_body = ''
     if task_object.outcome == task_object.OUTCOME_FAILED:
         pass
 
-    uri_list= [ ]
+    uri_list= []
     variables = Variable.objects.filter(build=build_id)
     v=variables.filter(variable_name='SSTATE_DIR')
     if v.count() > 0:
@@ -569,30 +569,30 @@ def task( request, build_id, task_id ):
                 uri_list.append(s)
 
     context = {
-            'build'           : Build.objects.filter( pk=build_id )[ 0 ],
-            'object'          : task_object,
-            'task'            : task_object,
-            'covered_by'      : coveredBy,
-            'deps'            : dependencies,
-            'rdeps'           : reverse_dependencies,
-            'log_head'        : log_head,
-            'log_body'        : log_body,
-            'showing_matches' : False,
-            'uri_list'        : uri_list,
+            'build': Build.objects.filter(pk=build_id)[0],
+            'object': task_object,
+            'task': task_object,
+            'covered_by': coveredBy,
+            'deps': dependencies,
+            'rdeps': reverse_dependencies,
+            'log_head': log_head,
+            'log_body': log_body,
+            'showing_matches': False,
+            'uri_list': uri_list,
             'task_in_tasks_table_pg':  int(task_object.order / 25) + 1
     }
-    if request.GET.get( 'show_matches', "" ):
-        context[ 'showing_matches' ] = True
-        context[ 'matching_tasks' ] = Task.objects.filter(
-            sstate_checksum=task_object.sstate_checksum ).filter(
+    if request.GET.get('show_matches', ""):
+        context['showing_matches'] = True
+        context['matching_tasks'] = Task.objects.filter(
+            sstate_checksum=task_object.sstate_checksum).filter(
             build__completed_on__lt=task_object.build.completed_on).exclude(
             order__isnull=True).exclude(outcome=Task.OUTCOME_NA).order_by('-build__completed_on')
 
-    return toaster_render( request, template, context )
+    return toaster_render(request, template, context)
 
 def recipe(request, build_id, recipe_id, active_tab="1"):
     template = "recipe.html"
-    if Recipe.objects.filter(pk=recipe_id).count() == 0 :
+    if Recipe.objects.filter(pk=recipe_id).count() == 0:
         return redirect(builds)
 
     recipe_object = Recipe.objects.get(pk=recipe_id)
@@ -601,32 +601,32 @@ def recipe(request, build_id, recipe_id, active_tab="1"):
     tasks_list  = Task.objects.filter(recipe_id=recipe_id, build_id=build_id).exclude(order__isnull=True).exclude(task_name__endswith='_setscene').exclude(outcome=Task.OUTCOME_NA)
     package_count = Package.objects.filter(recipe_id=recipe_id).filter(build_id=build_id).filter(size__gte=0).count()
 
-    if active_tab != '1' and active_tab != '3' and active_tab != '4' :
+    if active_tab != '1' and active_tab != '3' and active_tab != '4':
         active_tab = '1'
     tab_states = {'1': '', '3': '', '4': ''}
     tab_states[active_tab] = 'active'
 
     context = {
-            'build'   : Build.objects.get(pk=build_id),
-            'object'  : recipe_object,
-            'layer_version' : layer_version,
-            'layer'   : layer,
-            'tasks'   : tasks_list,
-            'package_count' : package_count,
-            'tab_states' : tab_states,
+            'build': Build.objects.get(pk=build_id),
+            'object': recipe_object,
+            'layer_version': layer_version,
+            'layer': layer,
+            'tasks': tasks_list,
+            'package_count': package_count,
+            'tab_states': tab_states,
     }
     return toaster_render(request, template, context)
 
 def recipe_packages(request, build_id, recipe_id):
     template = "recipe_packages.html"
-    if Recipe.objects.filter(pk=recipe_id).count() == 0 :
+    if Recipe.objects.filter(pk=recipe_id).count() == 0:
         return redirect(builds)
 
     (pagesize, orderby) = _get_parameters_values(request, 10, 'name:+')
-    mandatory_parameters = { 'count': pagesize,  'page' : 1, 'orderby': orderby }
-    retval = _verify_parameters( request.GET, mandatory_parameters )
+    mandatory_parameters = {'count': pagesize,  'page': 1, 'orderby': orderby}
+    retval = _verify_parameters(request.GET, mandatory_parameters)
     if retval:
-        return _redirect_parameters( 'recipe_packages', request.GET, mandatory_parameters, build_id=build_id, recipe_id=recipe_id)
+        return _redirect_parameters('recipe_packages', request.GET, mandatory_parameters, build_id=build_id, recipe_id=recipe_id)
     (filter_string, search_term, ordering_string) = _search_tuple(request, Package)
 
     recipe_object = Recipe.objects.get(pk=recipe_id)
@@ -637,10 +637,10 @@ def recipe_packages(request, build_id, recipe_id):
     packages = _build_page_range(Paginator(queryset, pagesize),request.GET.get('page', 1))
 
     context = {
-            'build'   : Build.objects.get(pk=build_id),
-            'recipe'  : recipe_object,
-            'objects'  : packages,
-            'object_count' : package_count,
+            'build': Build.objects.get(pk=build_id),
+            'recipe': recipe_object,
+            'objects': packages,
+            'object_count': package_count,
             'tablecols':[
                 {
                     'name':'Package',
@@ -681,13 +681,13 @@ from toastergui.templatetags.projecttags import filtered_filesizeformat
 import os
 def _get_dir_entries(build_id, target_id, start):
     node_str = {
-        Target_File.ITYPE_REGULAR   : '-',
-        Target_File.ITYPE_DIRECTORY : 'd',
-        Target_File.ITYPE_SYMLINK   : 'l',
-        Target_File.ITYPE_SOCKET    : 's',
-        Target_File.ITYPE_FIFO      : 'p',
-        Target_File.ITYPE_CHARACTER : 'c',
-        Target_File.ITYPE_BLOCK     : 'b',
+        Target_File.ITYPE_REGULAR: '-',
+        Target_File.ITYPE_DIRECTORY: 'd',
+        Target_File.ITYPE_SYMLINK: 'l',
+        Target_File.ITYPE_SOCKET: 's',
+        Target_File.ITYPE_FIFO: 'p',
+        Target_File.ITYPE_CHARACTER: 'c',
+        Target_File.ITYPE_BLOCK: 'b',
     }
     response = []
     objects  = Target_File.objects.filter(target__exact=target_id, directory__path=start)
@@ -746,8 +746,8 @@ def _get_dir_entries(build_id, target_id, start):
             traceback.print_exc()
 
     # sort by directories first, then by name
-    rsorted = sorted(response, key=lambda entry :  entry['name'])
-    rsorted = sorted(rsorted, key=lambda entry :  entry['isdir'], reverse=True)
+    rsorted = sorted(response, key=lambda entry:  entry['name'])
+    rsorted = sorted(rsorted, key=lambda entry:  entry['isdir'], reverse=True)
     return json.dumps(rsorted, cls=LazyEncoder).replace('</', '<\\/')
 
 def dirinfo(request, build_id, target_id, file_path=None):
@@ -773,7 +773,7 @@ def dirinfo(request, build_id, target_id, file_path=None):
 
     build = Build.objects.get(pk=build_id)
 
-    context = { 'build': build,
+    context = {'build': build,
                 'project': build.project,
                 'target': Target.objects.get(pk=target_id),
                 'packages_sum': packages_sum['installed_size__sum'],
@@ -839,14 +839,14 @@ def configuration(request, build_id):
 def configvars(request, build_id):
     template = 'configvars.html'
     (pagesize, orderby) = _get_parameters_values(request, 100, 'variable_name:+')
-    mandatory_parameters = { 'count': pagesize,  'page' : 1, 'orderby' : orderby, 'filter' : 'description__regex:.+' }
-    retval = _verify_parameters( request.GET, mandatory_parameters )
+    mandatory_parameters = {'count': pagesize,  'page': 1, 'orderby': orderby, 'filter': 'description__regex:.+'}
+    retval = _verify_parameters(request.GET, mandatory_parameters)
     (filter_string, search_term, ordering_string) = _search_tuple(request, Variable)
     if retval:
         # if new search, clear the default filter
         if search_term and len(search_term):
             mandatory_parameters['filter']=''
-        return _redirect_parameters( 'configvars', request.GET, mandatory_parameters, build_id=build_id)
+        return _redirect_parameters('configvars', request.GET, mandatory_parameters, build_id=build_id)
 
     queryset = Variable.objects.filter(build=build_id).exclude(variable_name__istartswith='B_').exclude(variable_name__istartswith='do_')
     queryset_with_search =  _get_queryset(Variable, queryset, None, search_term, ordering_string, 'variable_name').exclude(variable_value='',vhistory__file_name__isnull=True)
@@ -877,12 +877,12 @@ def configvars(request, build_id):
                 'file_filter': file_filter,
                 'build': build,
                 'project': build.project,
-                'objects' : variables,
+                'objects': variables,
                 'total_count':queryset_with_search.count(),
-                'default_orderby' : 'variable_name:+',
+                'default_orderby': 'variable_name:+',
                 'search_term':search_term,
             # Specifies the display of columns for the table, appearance in "Edit columns" box, toggling default show/hide, and specifying filters for columns
-                'tablecols' : [
+                'tablecols': [
                 {'name': 'Variable',
                  'qhelp': "BitBake is a generic task executor that considers a list of tasks with dependencies and handles metadata that consists of variables in a certain format that get passed to the tasks",
                  'orderfield': _get_toggle_order(request, "variable_name"),
@@ -893,12 +893,12 @@ def configvars(request, build_id):
                 },
                 {'name': 'Set in file',
                  'qhelp': "The last configuration file that touched the variable value",
-                 'clclass': 'file', 'hidden' : 0,
-                 'orderkey' : 'vhistory__file_name',
-                 'filter' : {
-                    'class' : 'vhistory__file_name',
+                 'clclass': 'file', 'hidden': 0,
+                 'orderkey': 'vhistory__file_name',
+                 'filter': {
+                    'class': 'vhistory__file_name',
                     'label': 'Show:',
-                    'options' : [
+                    'options': [
                                ('Local configuration variables', 'vhistory__file_name__contains:'+build_dir+'/conf/',queryset_with_search.filter(vhistory__file_name__contains=build_dir+'/conf/').count(), 'Select this filter to see variables set by the <code>local.conf</code> and <code>bblayers.conf</code> configuration files inside the <code>/build/conf/</code> directory'),
                                ('Machine configuration variables', 'vhistory__file_name__contains:conf/machine/',queryset_with_search.filter(vhistory__file_name__contains='conf/machine').count(), 'Select this filter to see variables set by the configuration file(s) inside your layers <code>/conf/machine/</code> directory'),
                                ('Distro configuration variables', 'vhistory__file_name__contains:conf/distro/',queryset_with_search.filter(vhistory__file_name__contains='conf/distro').count(), 'Select this filter to see variables set by the configuration file(s) inside your layers <code>/conf/distro/</code> directory'),
@@ -909,12 +909,12 @@ def configvars(request, build_id):
                 },
                 {'name': 'Description',
                  'qhelp': "A brief explanation of the variable",
-                 'clclass': 'description', 'hidden' : 0,
+                 'clclass': 'description', 'hidden': 0,
                  'dclass': "span4",
-                 'filter' : {
-                    'class' : 'description',
+                 'filter': {
+                    'class': 'description',
                     'label': 'Show:',
-                    'options' : [
+                    'options': [
                                ('Variables with description', 'description__regex:.+', queryset_with_search.filter(description__regex='.+').count(), 'We provide descriptions for the most common BitBake variables. The list of descriptions lives in <code>meta/conf/documentation.conf</code>'),
                                ]
                             },
@@ -933,7 +933,7 @@ def bfile(request, build_id, package_id):
     context = {
         'build': build,
         'project': build.project,
-        'objects' : files
+        'objects': files
     }
     return toaster_render(request, template, context)
 
@@ -964,53 +964,53 @@ def _get_package_dependencies(package_id, target_id=INVALID_KEY):
     other_deps = []
     other_depends_types = OTHER_DEPENDS_BASE
 
-    if target_id != INVALID_KEY :
+    if target_id != INVALID_KEY:
         rdepends_type = Package_Dependency.TYPE_TRDEPENDS
         other_depends_types +=  [Package_Dependency.TYPE_TRECOMMENDS]
-    else :
+    else:
         rdepends_type = Package_Dependency.TYPE_RDEPENDS
         other_depends_types += [Package_Dependency.TYPE_RRECOMMENDS]
 
     package = Package.objects.get(pk=package_id)
-    if target_id != INVALID_KEY :
+    if target_id != INVALID_KEY:
         alldeps = package.package_dependencies_source.filter(target_id__exact=target_id)
-    else :
+    else:
         alldeps = package.package_dependencies_source.all()
     for idep in alldeps:
         dep_package = Package.objects.get(pk=idep.depends_on_id)
         dep_entry = Package_Dependency.DEPENDS_DICT[idep.dep_type]
-        if dep_package.version == '' :
+        if dep_package.version == '':
             version = ''
-        else :
+        else:
             version = dep_package.version + "-" + dep_package.revision
         installed = False
-        if target_id != INVALID_KEY :
+        if target_id != INVALID_KEY:
             if Target_Installed_Package.objects.filter(target_id__exact=target_id, package_id__exact=dep_package.id).count() > 0:
                 installed = True
         dep =   {
-                'name' : dep_package.name,
-                'version' : version,
-                'size' : dep_package.size,
-                'dep_type' : idep.dep_type,
-                'dep_type_display' : dep_entry[0].capitalize(),
-                'dep_type_help' : dep_entry[1] % (dep_package.name, package.name),
-                'depends_on_id' : dep_package.id,
-                'installed' : installed,
+                'name': dep_package.name,
+                'version': version,
+                'size': dep_package.size,
+                'dep_type': idep.dep_type,
+                'dep_type_display': dep_entry[0].capitalize(),
+                'dep_type_help': dep_entry[1] % (dep_package.name, package.name),
+                'depends_on_id': dep_package.id,
+                'installed': installed,
                 }
 
         if target_id != INVALID_KEY:
                 dep['alias'] = _get_package_alias(dep_package)
 
-        if idep.dep_type == rdepends_type :
+        if idep.dep_type == rdepends_type:
             runtime_deps.append(dep)
-        elif idep.dep_type in other_depends_types :
+        elif idep.dep_type in other_depends_types:
             other_deps.append(dep)
 
     rdep_sorted = sorted(runtime_deps, key=lambda k: k['name'])
     odep_sorted = sorted(
             sorted(other_deps, key=lambda k: k['name']),
             key=lambda k: k['dep_type'])
-    retvalues = {'runtime_deps' : rdep_sorted, 'other_deps' : odep_sorted}
+    retvalues = {'runtime_deps': rdep_sorted, 'other_deps': odep_sorted}
     return retvalues
 
 # Return the count of packages dependent on package for this target_id image
@@ -1021,10 +1021,10 @@ def _get_package_reverse_dep_count(package, target_id):
 # Use one of the two RDEPENDS types, either TRDEPENDS if the package was
 # installed, or else RDEPENDS if only built.
 def _get_package_dependency_count(package, target_id, is_installed):
-    if is_installed :
+    if is_installed:
         return package.package_dependencies_source.filter(target_id__exact=target_id,
             dep_type__exact=Package_Dependency.TYPE_TRDEPENDS).count()
-    else :
+    else:
         return package.package_dependencies_source.filter(dep_type__exact=Package_Dependency.TYPE_RDEPENDS).count()
 
 def _get_package_alias(package):
@@ -1050,16 +1050,16 @@ def _get_fullpackagespec(package):
 
 def package_built_detail(request, build_id, package_id):
     template = "package_built_detail.html"
-    if Build.objects.filter(pk=build_id).count() == 0 :
+    if Build.objects.filter(pk=build_id).count() == 0:
         return redirect(builds)
 
     # follow convention for pagination w/ search although not used for this view
     queryset = Package_File.objects.filter(package_id__exact=package_id)
     (pagesize, orderby) = _get_parameters_values(request, 25, 'path:+')
-    mandatory_parameters = { 'count': pagesize,  'page' : 1, 'orderby' : orderby }
-    retval = _verify_parameters( request.GET, mandatory_parameters )
+    mandatory_parameters = {'count': pagesize,  'page': 1, 'orderby': orderby}
+    retval = _verify_parameters(request.GET, mandatory_parameters)
     if retval:
-        return _redirect_parameters( 'package_built_detail', request.GET, mandatory_parameters, build_id=build_id, package_id=package_id)
+        return _redirect_parameters('package_built_detail', request.GET, mandatory_parameters, build_id=build_id, package_id=package_id)
 
     (filter_string, search_term, ordering_string) = _search_tuple(request, Package_File)
     paths = _get_queryset(Package_File, queryset, filter_string, search_term, ordering_string, 'path')
@@ -1067,10 +1067,10 @@ def package_built_detail(request, build_id, package_id):
     package = Package.objects.get(pk=package_id)
     package.fullpackagespec = _get_fullpackagespec(package)
     context = {
-            'build' : Build.objects.get(pk=build_id),
-            'package' : package,
-            'dependency_count' : _get_package_dependency_count(package, -1, False),
-            'objects' : paths,
+            'build': Build.objects.get(pk=build_id),
+            'package': package,
+            'dependency_count': _get_package_dependency_count(package, -1, False),
+            'objects': paths,
             'tablecols':[
                 {
                     'name':'File',
@@ -1094,33 +1094,33 @@ def package_built_detail(request, build_id, package_id):
 
 def package_built_dependencies(request, build_id, package_id):
     template = "package_built_dependencies.html"
-    if Build.objects.filter(pk=build_id).count() == 0 :
+    if Build.objects.filter(pk=build_id).count() == 0:
          return redirect(builds)
 
     package = Package.objects.get(pk=package_id)
     package.fullpackagespec = _get_fullpackagespec(package)
     dependencies = _get_package_dependencies(package_id)
     context = {
-            'build' : Build.objects.get(pk=build_id),
-            'package' : package,
-            'runtime_deps' : dependencies['runtime_deps'],
-            'other_deps' :   dependencies['other_deps'],
-            'dependency_count' : _get_package_dependency_count(package, -1,  False)
+            'build': Build.objects.get(pk=build_id),
+            'package': package,
+            'runtime_deps': dependencies['runtime_deps'],
+            'other_deps':   dependencies['other_deps'],
+            'dependency_count': _get_package_dependency_count(package, -1,  False)
     }
     return toaster_render(request, template, context)
 
 
 def package_included_detail(request, build_id, target_id, package_id):
     template = "package_included_detail.html"
-    if Build.objects.filter(pk=build_id).count() == 0 :
+    if Build.objects.filter(pk=build_id).count() == 0:
         return redirect(builds)
 
     # follow convention for pagination w/ search although not used for this view
     (pagesize, orderby) = _get_parameters_values(request, 25, 'path:+')
-    mandatory_parameters = { 'count': pagesize,  'page' : 1, 'orderby' : orderby }
-    retval = _verify_parameters( request.GET, mandatory_parameters )
+    mandatory_parameters = {'count': pagesize,  'page': 1, 'orderby': orderby}
+    retval = _verify_parameters(request.GET, mandatory_parameters)
     if retval:
-        return _redirect_parameters( 'package_included_detail', request.GET, mandatory_parameters, build_id=build_id, target_id=target_id, package_id=package_id)
+        return _redirect_parameters('package_included_detail', request.GET, mandatory_parameters, build_id=build_id, target_id=target_id, package_id=package_id)
     (filter_string, search_term, ordering_string) = _search_tuple(request, Package_File)
 
     queryset = Package_File.objects.filter(package_id__exact=package_id)
@@ -1131,11 +1131,11 @@ def package_included_detail(request, build_id, target_id, package_id):
     package.alias = _get_package_alias(package)
     target = Target.objects.get(pk=target_id)
     context = {
-            'build' : Build.objects.get(pk=build_id),
-            'target'  : target,
-            'package' : package,
-            'reverse_count' : _get_package_reverse_dep_count(package, target_id),
-            'dependency_count' : _get_package_dependency_count(package, target_id, True),
+            'build': Build.objects.get(pk=build_id),
+            'target': target,
+            'package': package,
+            'reverse_count': _get_package_reverse_dep_count(package, target_id),
+            'dependency_count': _get_package_dependency_count(package, target_id, True),
             'objects': paths,
             'tablecols':[
                 {
@@ -1159,7 +1159,7 @@ def package_included_detail(request, build_id, target_id, package_id):
 
 def package_included_dependencies(request, build_id, target_id, package_id):
     template = "package_included_dependencies.html"
-    if Build.objects.filter(pk=build_id).count() == 0 :
+    if Build.objects.filter(pk=build_id).count() == 0:
         return redirect(builds)
 
     package = Package.objects.get(pk=package_id)
@@ -1169,26 +1169,26 @@ def package_included_dependencies(request, build_id, target_id, package_id):
 
     dependencies = _get_package_dependencies(package_id, target_id)
     context = {
-            'build' : Build.objects.get(pk=build_id),
-            'package' : package,
-            'target' : target,
-            'runtime_deps' : dependencies['runtime_deps'],
-            'other_deps' :   dependencies['other_deps'],
-            'reverse_count' : _get_package_reverse_dep_count(package, target_id),
-            'dependency_count' : _get_package_dependency_count(package, target_id, True)
+            'build': Build.objects.get(pk=build_id),
+            'package': package,
+            'target': target,
+            'runtime_deps': dependencies['runtime_deps'],
+            'other_deps':   dependencies['other_deps'],
+            'reverse_count': _get_package_reverse_dep_count(package, target_id),
+            'dependency_count': _get_package_dependency_count(package, target_id, True)
     }
     return toaster_render(request, template, context)
 
 def package_included_reverse_dependencies(request, build_id, target_id, package_id):
     template = "package_included_reverse_dependencies.html"
-    if Build.objects.filter(pk=build_id).count() == 0 :
+    if Build.objects.filter(pk=build_id).count() == 0:
         return redirect(builds)
 
     (pagesize, orderby) = _get_parameters_values(request, 25, 'package__name:+')
-    mandatory_parameters = { 'count': pagesize,  'page' : 1, 'orderby': orderby }
-    retval = _verify_parameters( request.GET, mandatory_parameters )
+    mandatory_parameters = {'count': pagesize,  'page': 1, 'orderby': orderby}
+    retval = _verify_parameters(request.GET, mandatory_parameters)
     if retval:
-        return _redirect_parameters( 'package_included_reverse_dependencies', request.GET, mandatory_parameters, build_id=build_id, target_id=target_id, package_id=package_id)
+        return _redirect_parameters('package_included_reverse_dependencies', request.GET, mandatory_parameters, build_id=build_id, target_id=target_id, package_id=package_id)
     (filter_string, search_term, ordering_string) = _search_tuple(request, Package_File)
 
     queryset = Package_Dependency.objects.select_related('depends_on').filter(depends_on=package_id, target_id=target_id, dep_type=Package_Dependency.TYPE_TRDEPENDS)
@@ -1203,12 +1203,12 @@ def package_included_reverse_dependencies(request, build_id, target_id, package_
             o.package.version += '-' + o.package.revision
         o.alias = _get_package_alias(o.package)
     context = {
-            'build' : Build.objects.get(pk=build_id),
-            'package' : package,
-            'target' : target,
-            'objects' : objects,
-            'reverse_count' : _get_package_reverse_dep_count(package, target_id),
-            'dependency_count' : _get_package_dependency_count(package, target_id, True),
+            'build': Build.objects.get(pk=build_id),
+            'package': package,
+            'target': target,
+            'objects': objects,
+            'reverse_count': _get_package_reverse_dep_count(package, target_id),
+            'dependency_count': _get_package_dependency_count(package, target_id, True),
             'tablecols':[
                 {
                     'name':'Package',
@@ -1246,9 +1246,9 @@ def managedcontextprocessor(request):
     ret = {
         "projects": projects,
         "non_cli_projects": projects.exclude(is_default=True),
-        "DEBUG" : toastermain.settings.DEBUG,
+        "DEBUG": toastermain.settings.DEBUG,
         "TOASTER_BRANCH": toastermain.settings.TOASTER_BRANCH,
-        "TOASTER_REVISION" : toastermain.settings.TOASTER_REVISION,
+        "TOASTER_REVISION": toastermain.settings.TOASTER_REVISION,
     }
     return ret
 
@@ -1258,7 +1258,7 @@ def managedcontextprocessor(request):
 def _json_build_status(build_id,extend):
     build_stat = None
     try:
-        build = Build.objects.get( pk=build_id )
+        build = Build.objects.get(pk=build_id)
         build_stat = {}
         build_stat['id'] = build.id
         build_stat['name'] = build.build_name
@@ -1266,7 +1266,7 @@ def _json_build_status(build_id,extend):
         build_stat['distro'] = build.distro
         build_stat['start'] = build.started_on
         # look up target name
-        target= Target.objects.get( build=build )
+        target= Target.objects.get(build=build)
         if target:
             if target.task:
                 build_stat['target'] = '%s:%s' % (target.target,target.task)
@@ -1275,7 +1275,7 @@ def _json_build_status(build_id,extend):
         else:
             build_stat['target'] = ''
         # look up project name
-        project = Project.objects.get( build=build )
+        project = Project.objects.get(build=build)
         if project:
             build_stat['project'] = project.name
         else:
@@ -1320,7 +1320,7 @@ def json_builds(request):
             build_table.append(_json_build_status(build.id,False))
     except Exception as e:
         build_table = str(e)
-    return JsonResponse({'builds' : build_table, 'count' : len(builds)})
+    return JsonResponse({'builds': build_table, 'count': len(builds)})
 
 def json_building(request):
     build_table = []
@@ -1331,10 +1331,10 @@ def json_building(request):
             build_table.append(_json_build_status(build.id,False))
     except Exception as e:
         build_table = str(e)
-    return JsonResponse({'building' : build_table, 'count' : len(builds)})
+    return JsonResponse({'building': build_table, 'count': len(builds)})
 
 def json_build(request,build_id):
-    return JsonResponse({'build' : _json_build_status(build_id,True)})
+    return JsonResponse({'build': _json_build_status(build_id,True)})
 
 
 import toastermain.settings
@@ -1360,7 +1360,7 @@ if True:
     # new project
     def newproject(request):
         if not project_enable:
-            return redirect( landing )
+            return redirect(landing)
 
         template = "newproject.html"
         context = {
@@ -1409,7 +1409,7 @@ if True:
                     prj.merged_attr = True
                     prj.save()
                 else:
-                    release = Release.objects.get(pk=request.POST.get('projectversion', None ))
+                    release = Release.objects.get(pk=request.POST.get('projectversion', None))
                     prj = Project.objects.create_project(name=request.POST['projectname'], release=release)
                     prj.user_id = request.user.pk
                     if 'mergeattr' == request.POST.get('mergeattr', ''):
@@ -1433,7 +1433,7 @@ if True:
     # new project
     def newproject_specific(request, pid):
         if not project_enable:
-            return redirect( landing )
+            return redirect(landing)
 
         project = Project.objects.get(pk=pid)
         template = "newproject_specific.html"
@@ -1481,7 +1481,7 @@ if True:
                 if ptype == "analysis":
                     release = None
                 else:
-                    release = Release.objects.get(pk=request.POST.get('projectversion', None ))
+                    release = Release.objects.get(pk=request.POST.get('projectversion', None))
 
                 prj = Project.objects.create_project(name=request.POST['projectname'], release=release, existing_project=project)
                 prj.user_id = request.user.pk
@@ -1524,9 +1524,9 @@ if True:
 
         context = {
             "project": project,
-            "is_new" : project.get_variable(Project.PROJECT_SPECIFIC_ISNEW),
-            "default_image_recipe" : project.get_variable(Project.PROJECT_SPECIFIC_DEFAULTIMAGE),
-            "mru" : Build.objects.all().filter(project=project,outcome=Build.IN_PROGRESS),
+            "is_new": project.get_variable(Project.PROJECT_SPECIFIC_ISNEW),
+            "default_image_recipe": project.get_variable(Project.PROJECT_SPECIFIC_DEFAULTIMAGE),
+            "mru": Build.objects.all().filter(project=project,outcome=Build.IN_PROGRESS),
             }
         if project.build_set.filter(outcome=Build.IN_PROGRESS).count() > 0:
             context['build_in_progress_none_completed'] = True
@@ -1646,7 +1646,7 @@ if True:
                             })
 
         except Exception as e:
-            return response({"error": str(e) })
+            return response({"error": str(e)})
 
     def xhr_configvaredit(request, pid):
         try:
@@ -1720,7 +1720,7 @@ if True:
             except ProjectVariable.DoesNotExist:
                 pass
 
-            return HttpResponse(json.dumps( return_data ), content_type="application/json")
+            return HttpResponse(json.dumps(return_data), content_type="application/json")
 
         except Exception as e:
             return HttpResponse(json.dumps({"error":str(e) + "\n" + traceback.format_exc()}), content_type="application/json")

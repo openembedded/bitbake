@@ -141,15 +141,15 @@ class PageElement(object):
     # an XML document, all tags will be given the same treatment.
 
     HTML_FORMATTERS = {
-        "html" : HTMLAwareEntitySubstitution.substitute_html,
-        "minimal" : HTMLAwareEntitySubstitution.substitute_xml,
-        None : None
+        "html": HTMLAwareEntitySubstitution.substitute_html,
+        "minimal": HTMLAwareEntitySubstitution.substitute_xml,
+        None: None
         }
 
     XML_FORMATTERS = {
-        "html" : EntitySubstitution.substitute_html,
-        "minimal" : EntitySubstitution.substitute_xml,
-        None : None
+        "html": EntitySubstitution.substitute_html,
+        "minimal": EntitySubstitution.substitute_xml,
+        None: None
         }
 
     def format_string(self, s, formatter='minimal'):

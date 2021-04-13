@@ -34,15 +34,15 @@ class BBLogFormatter(logging.Formatter):
     CRITICAL = logging.CRITICAL
 
     levelnames = {
-        DEBUG3   : 'DEBUG',
-        DEBUG2   : 'DEBUG',
-        DEBUG   : 'DEBUG',
+        DEBUG3: 'DEBUG',
+        DEBUG2: 'DEBUG',
+        DEBUG: 'DEBUG',
         VERBOSE: 'NOTE',
-        NOTE    : 'NOTE',
-        PLAIN  : '',
+        NOTE: 'NOTE',
+        PLAIN: '',
         VERBNOTE: 'NOTE',
-        WARNING : 'WARNING',
-        ERROR   : 'ERROR',
+        WARNING: 'WARNING',
+        ERROR: 'ERROR',
         CRITICAL: 'ERROR',
     }
 
@@ -50,15 +50,15 @@ class BBLogFormatter(logging.Formatter):
     BASECOLOR, BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE = list(range(29,38))
 
     COLORS = {
-        DEBUG3  : CYAN,
-        DEBUG2  : CYAN,
-        DEBUG   : CYAN,
-        VERBOSE : BASECOLOR,
-        NOTE    : BASECOLOR,
-        PLAIN   : BASECOLOR,
+        DEBUG3: CYAN,
+        DEBUG2: CYAN,
+        DEBUG: CYAN,
+        VERBOSE: BASECOLOR,
+        NOTE: BASECOLOR,
+        PLAIN: BASECOLOR,
         VERBNOTE: BASECOLOR,
-        WARNING : YELLOW,
-        ERROR   : RED,
+        WARNING: YELLOW,
+        ERROR: RED,
         CRITICAL: RED,
     }
 

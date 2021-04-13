@@ -135,7 +135,7 @@ class EventWriter:
             name = "%s.%s" % (event.__module__, event.__class__.__name__)
             if name in ("bb.event.BuildStarted", "bb.cooker.CookerExit"):
                 with open(self.eventfile, "w") as f:
-                    f.write("%s\n" % json.dumps({ "allvariables" : self.cooker.getAllKeysWithFlags(["doc", "func"])}))
+                    f.write("%s\n" % json.dumps({"allvariables": self.cooker.getAllKeysWithFlags(["doc", "func"])}))
 
                 self.file_inited = True
 
@@ -1146,7 +1146,7 @@ class BBCooker:
         tree = self.generatePkgDepTreeData(pkgs, 'build')
         bb.event.fire(bb.event.TargetsTreeGenerated(tree), self.data)
 
-    def interactiveMode( self ):
+    def interactiveMode(self):
         """Drop off into a shell"""
         try:
             from bb import shell
@@ -1154,7 +1154,7 @@ class BBCooker:
             parselog.exception("Interactive mode not available")
             raise bb.BBHandledException()
         else:
-            shell.start( self )
+            shell.start(self)
 
 
     def handleCollections(self, collections):
@@ -1551,8 +1551,8 @@ class BBCooker:
                 v = self.data.getVar(k, expand)
                 if not k.startswith("__") and not isinstance(v, bb.data_smart.DataSmart):
                     dump[k] = {
-    'v' : str(v) ,
-    'history' : self.data.varhistory.variable(k),
+    'v': str(v),
+    'history': self.data.varhistory.variable(k),
                     }
                     for d in flaglist:
                         if flags and d in flags:
@@ -1596,7 +1596,7 @@ class BBCooker:
 
         if self.state != state.parsing and not self.parsecache_valid:
             bb.parse.siggen.reset(self.data)
-            self.parseConfiguration ()
+            self.parseConfiguration()
             if CookerFeatures.SEND_SANITYEVENTS in self.featureset:
                 for mc in self.multiconfigs:
                     bb.event.fire(bb.event.SanityCheck(False), self.databuilder.mcdata[mc])
@@ -1787,10 +1787,10 @@ class CookerCollectFiles(object):
 
         collectlog.debug(1, "collecting .bb files")
 
-        files = (config.getVar( "BBFILES") or "").split()
+        files = (config.getVar("BBFILES") or "").split()
 
         # Sort files by priority
-        files.sort( key=lambda fileitem: self.calc_bbfile_priority(fileitem)[0] )
+        files.sort(key=lambda fileitem: self.calc_bbfile_priority(fileitem)[0])
         config.setVar("BBFILES_PRIORITIZED", " ".join(files))
 
         if not len(files):

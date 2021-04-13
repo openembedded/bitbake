@@ -32,9 +32,9 @@ class BBUIHelper:
         if isinstance(event, bb.build.TaskStarted):
             tid = event._fn + ":" + event._task
             if event._mc != "default":
-                self.running_tasks[tid] = { 'title' : "mc:%s:%s %s" % (event._mc, event._package, event._task), 'starttime' : time.time(), 'pid' : event.pid }
+                self.running_tasks[tid] = {'title': "mc:%s:%s %s" % (event._mc, event._package, event._task), 'starttime': time.time(), 'pid': event.pid}
             else:
-                self.running_tasks[tid] = { 'title' : "%s %s" % (event._package, event._task), 'starttime' : time.time(), 'pid' : event.pid }
+                self.running_tasks[tid] = {'title': "%s %s" % (event._package, event._task), 'starttime': time.time(), 'pid': event.pid}
             self.running_pids.append(tid)
             self.pidmap[event.pid] = tid
             self.needUpdate = True
@@ -48,7 +48,7 @@ class BBUIHelper:
         elif isinstance(event, bb.build.TaskFailed):
             tid = event._fn + ":" + event._task
             removetid(event.pid, tid)
-            self.failed_tasks.append( { 'title' : "%s %s" % (event._package, event._task)})
+            self.failed_tasks.append({'title': "%s %s" % (event._package, event._task)})
         elif isinstance(event, bb.runqueue.runQueueTaskStarted):
             self.tasknumber_current = event.stats.completed + event.stats.active + event.stats.failed + 1
             self.tasknumber_total = event.stats.total

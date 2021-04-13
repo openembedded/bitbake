@@ -370,7 +370,7 @@ def _log_settings_from_server(server, observe_only):
         raise BaseException(error)
     return includelogs, loglines, consolelogfile, logconfigfile
 
-_evt_list = [ "bb.runqueue.runQueueExitWait", "bb.event.LogExecTTY", "logging.LogRecord",
+_evt_list = ["bb.runqueue.runQueueExitWait", "bb.event.LogExecTTY", "logging.LogRecord",
               "bb.build.TaskFailed", "bb.build.TaskBase", "bb.event.ParseStarted",
               "bb.event.ParseProgress", "bb.event.ParseCompleted", "bb.event.CacheLoadStarted",
               "bb.event.CacheLoadProgress", "bb.event.CacheLoadCompleted", "bb.command.CommandFailed",
@@ -451,7 +451,7 @@ def main(server, eventHandler, params, tf=TerminalFilter):
         "formatters": {
             # This format instance will get color output enabled by the
             # terminal
-            "BitBake.consoleFormatter" : {
+            "BitBake.consoleFormatter": {
                 "()": "bb.msg.BBLogFormatter",
                 "format": "%(levelname)s: %(message)s"
             },
@@ -489,7 +489,7 @@ def main(server, eventHandler, params, tf=TerminalFilter):
     if consolelogfile and not params.options.show_environment and not params.options.show_versions:
         logconfig = bb.msg.mergeLoggingConfig(logconfig, {
                 "version": 1,
-                "handlers" : {
+                "handlers": {
                     "BitBake.consolelog": {
                         "class": "logging.FileHandler",
                         "formatter": "BitBake.logfileFormatter",
@@ -498,7 +498,7 @@ def main(server, eventHandler, params, tf=TerminalFilter):
                     },
                     # Just like verbconsole, anything sent here will go to the
                     # log file, unless it would go to BitBake.consolelog
-                    "BitBake.verbconsolelog" : {
+                    "BitBake.verbconsolelog": {
                         "class": "logging.FileHandler",
                         "formatter": "BitBake.logfileFormatter",
                         "level": 1,
@@ -695,7 +695,7 @@ def main(server, eventHandler, params, tf=TerminalFilter):
                 parseprogress = None
                 if params.options.quiet == 0:
                     print(("Parsing of %d .bb files complete (%d cached, %d parsed). %d targets, %d skipped, %d masked, %d errors."
-                        % ( event.total, event.cached, event.parsed, event.virtuals, event.skipped, event.masked, event.errors)))
+                        % (event.total, event.cached, event.parsed, event.virtuals, event.skipped, event.masked, event.errors)))
                 continue
 
             if isinstance(event, bb.event.CacheLoadStarted):

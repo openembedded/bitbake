@@ -141,14 +141,14 @@ urlpatterns = [
 
         url(r'^project/(?P<pid>\d+)/layer/(?P<layerid>\d+)/recipes/$',
             tables.LayerRecipesTable.as_view(template_name="generic-toastertable-page.html"),
-            { 'table_name': tables.LayerRecipesTable.__name__.lower(),
-              'title' : 'All recipes in layer' },
+            {'table_name': tables.LayerRecipesTable.__name__.lower(),
+              'title': 'All recipes in layer'},
              name=tables.LayerRecipesTable.__name__.lower()),
 
         url(r'^project/(?P<pid>\d+)/layer/(?P<layerid>\d+)/machines/$',
             tables.LayerMachinesTable.as_view(template_name="generic-toastertable-page.html"),
-            { 'table_name': tables.LayerMachinesTable.__name__.lower(),
-              'title' : 'All machines in layer' },
+            {'table_name': tables.LayerMachinesTable.__name__.lower(),
+              'title': 'All machines in layer'},
             name=tables.LayerMachinesTable.__name__.lower()),
 
 

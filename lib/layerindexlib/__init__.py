@@ -459,14 +459,14 @@ This function is used to implement debugging and provide the user info.
             if not hasattr(lix, object):
                 continue
 
-            logger.plain ('')
-            logger.plain ('Index: %s' % lix.config['DESCRIPTION'])
+            logger.plain('')
+            logger.plain('Index: %s' % lix.config['DESCRIPTION'])
 
             output = []
 
             if object == 'branches':
-                logger.plain ('%s %s %s' % ('{:26}'.format('branch'), '{:34}'.format('description'), '{:22}'.format('bitbake branch')))
-                logger.plain ('{:-^80}'.format(""))
+                logger.plain('%s %s %s' % ('{:26}'.format('branch'), '{:34}'.format('description'), '{:22}'.format('bitbake branch')))
+                logger.plain('{:-^80}'.format(""))
                 for branchid in lix.branches:
                     output.append('%s %s %s' % (
                                   '{:26}'.format(lix.branches[branchid].name),
@@ -474,26 +474,26 @@ This function is used to implement debugging and provide the user info.
                                   '{:22}'.format(lix.branches[branchid].bitbake_branch)
                                  ))
                 for line in sorted(output):
-                    logger.plain (line)
+                    logger.plain(line)
 
                 continue
 
             if object == 'layerItems':
-                logger.plain ('%s %s' % ('{:26}'.format('layer'), '{:34}'.format('description')))
-                logger.plain ('{:-^80}'.format(""))
+                logger.plain('%s %s' % ('{:26}'.format('layer'), '{:34}'.format('description')))
+                logger.plain('{:-^80}'.format(""))
                 for layerid in lix.layerItems:
                     output.append('%s %s' % (
                                   '{:26}'.format(lix.layerItems[layerid].name),
                                   '{:34}'.format(lix.layerItems[layerid].summary)
                                  ))
                 for line in sorted(output):
-                    logger.plain (line)
+                    logger.plain(line)
 
                 continue
 
             if object == 'layerBranches':
-                logger.plain ('%s %s %s' % ('{:26}'.format('layer'), '{:34}'.format('description'), '{:19}'.format('collection:version')))
-                logger.plain ('{:-^80}'.format(""))
+                logger.plain('%s %s %s' % ('{:26}'.format('layer'), '{:34}'.format('description'), '{:19}'.format('collection:version')))
+                logger.plain('{:-^80}'.format(""))
                 for layerbranchid in lix.layerBranches:
                     output.append('%s %s %s' % (
                                   '{:26}'.format(lix.layerBranches[layerbranchid].layer.name),
@@ -504,13 +504,13 @@ This function is used to implement debugging and provide the user info.
                                                 )
                                  ))
                 for line in sorted(output):
-                    logger.plain (line)
+                    logger.plain(line)
 
                 continue
 
             if object == 'layerDependencies':
-                logger.plain ('%s %s %s %s' % ('{:19}'.format('branch'), '{:26}'.format('layer'), '{:11}'.format('dependency'), '{:26}'.format('layer')))
-                logger.plain ('{:-^80}'.format(""))
+                logger.plain('%s %s %s %s' % ('{:19}'.format('branch'), '{:26}'.format('layer'), '{:11}'.format('dependency'), '{:26}'.format('layer')))
+                logger.plain('{:-^80}'.format(""))
                 for layerDependency in lix.layerDependencies:
                     if not lix.layerDependencies[layerDependency].dependency_layerBranch:
                         continue
@@ -522,13 +522,13 @@ This function is used to implement debugging and provide the user info.
                                   '{:26}'.format(lix.layerDependencies[layerDependency].dependency_layerBranch.layer.name)
                                  ))
                 for line in sorted(output):
-                    logger.plain (line)
+                    logger.plain(line)
 
                 continue
 
             if object == 'recipes':
-                logger.plain ('%s %s %s' % ('{:20}'.format('recipe'), '{:10}'.format('version'), 'layer'))
-                logger.plain ('{:-^80}'.format(""))
+                logger.plain('%s %s %s' % ('{:20}'.format('recipe'), '{:10}'.format('version'), 'layer'))
+                logger.plain('{:-^80}'.format(""))
                 output = []
                 for recipe in lix.recipes:
                     output.append('%s %s %s' % (
@@ -537,13 +537,13 @@ This function is used to implement debugging and provide the user info.
                                   lix.recipes[recipe].layer.name
                                  ))
                 for line in sorted(output):
-                    logger.plain (line)
+                    logger.plain(line)
 
                 continue
 
             if object == 'machines':
-                logger.plain ('%s %s %s' % ('{:24}'.format('machine'), '{:34}'.format('description'), '{:19}'.format('layer')))
-                logger.plain ('{:-^80}'.format(""))
+                logger.plain('%s %s %s' % ('{:24}'.format('machine'), '{:34}'.format('description'), '{:19}'.format('layer')))
+                logger.plain('{:-^80}'.format(""))
                 for machine in lix.machines:
                     output.append('%s %s %s' % (
                                   '{:24}'.format(lix.machines[machine].name),
@@ -551,13 +551,13 @@ This function is used to implement debugging and provide the user info.
                                   '{:19}'.format(lix.machines[machine].layerbranch.layer.name)
                                  ))
                 for line in sorted(output):
-                    logger.plain (line)
+                    logger.plain(line)
 
                 continue
 
             if object == 'distros':
-                logger.plain ('%s %s %s' % ('{:24}'.format('distro'), '{:34}'.format('description'), '{:19}'.format('layer')))
-                logger.plain ('{:-^80}'.format(""))
+                logger.plain('%s %s %s' % ('{:24}'.format('distro'), '{:34}'.format('description'), '{:19}'.format('layer')))
+                logger.plain('{:-^80}'.format(""))
                 for distro in lix.distros:
                     output.append('%s %s %s' % (
                                   '{:24}'.format(lix.distros[distro].name),
@@ -565,11 +565,11 @@ This function is used to implement debugging and provide the user info.
                                   '{:19}'.format(lix.distros[distro].layerbranch.layer.name)
                                  ))
                 for line in sorted(output):
-                    logger.plain (line)
+                    logger.plain(line)
 
                 continue
 
-        logger.plain ('')
+        logger.plain('')
 
 
 # This class holds a single layer index instance

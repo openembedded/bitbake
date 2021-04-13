@@ -44,10 +44,10 @@ class TableFilter(object):
         # add the "all" pseudo-filter action, which just selects the whole
         # queryset
         filter_actions.append({
-            'action_name' : 'all',
-            'title' : 'All',
+            'action_name': 'all',
+            'title': 'All',
             'type': 'toggle',
-            'count' : queryset.count()
+            'count': queryset.count()
         })
 
         # add other filter actions

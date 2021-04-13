@@ -39,7 +39,7 @@ class VerCmpString(unittest.TestCase):
         self.assertTrue(result > 0)
 
     def test_explode_dep_versions(self):
-        correctresult = {"foo" : ["= 1.10"]}
+        correctresult = {"foo": ["= 1.10"]}
         result = bb.utils.explode_dep_versions2("foo (= 1.10)")
         self.assertEqual(result, correctresult)
         result = bb.utils.explode_dep_versions2("foo (=1.10)")

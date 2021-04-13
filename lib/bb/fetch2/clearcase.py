@@ -104,7 +104,7 @@ class ClearCase(FetchMethod):
 
         ud.server     = "%s://%s%s" % (ud.proto, ud.host, ud.path)
 
-        ud.identifier = "clearcase-%s%s-%s" % ( ud.vob.replace("/", ""),
+        ud.identifier = "clearcase-%s%s-%s" % (ud.vob.replace("/", ""),
                                                 ud.module.replace("/", "."),
                                                 ud.label.replace("/", "."))
 

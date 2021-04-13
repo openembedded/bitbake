@@ -140,8 +140,8 @@ class RunQueueTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix="runqueuetest") as tempdir:
             cmd = ["bitbake", "a1"]
             extraenv = {
-                "BB_SETSCENE_ENFORCE" : "1",
-                "BB_SETSCENE_ENFORCE_WHITELIST" : "a1:do_package_write_rpm a1:do_build"
+                "BB_SETSCENE_ENFORCE": "1",
+                "BB_SETSCENE_ENFORCE_WHITELIST": "a1:do_package_write_rpm a1:do_build"
             }
             sstatevalid = "a1:do_package a1:do_package_qa a1:do_packagedata a1:do_package_write_ipk a1:do_populate_lic a1:do_populate_sysroot"
             tasks = self.run_bitbakecmd(cmd, tempdir, sstatevalid, extraenv=extraenv)
@@ -216,8 +216,8 @@ class RunQueueTests(unittest.TestCase):
     def test_multiconfig_setscene_optimise(self):
         with tempfile.TemporaryDirectory(prefix="runqueuetest") as tempdir:
             extraenv = {
-                "BBMULTICONFIG" : "mc-1 mc_2",
-                "BB_SIGNATURE_HANDLER" : "basic"
+                "BBMULTICONFIG": "mc-1 mc_2",
+                "BB_SIGNATURE_HANDLER": "basic"
             }
             cmd = ["bitbake", "b1", "mc:mc-1:b1", "mc:mc_2:b1"]
             setscenetasks = ['package_write_ipk_setscene', 'package_write_rpm_setscene', 'packagedata_setscene',
@@ -241,8 +241,8 @@ class RunQueueTests(unittest.TestCase):
         # doesn't parse
         with tempfile.TemporaryDirectory(prefix="runqueuetest") as tempdir:
             extraenv = {
-                "BBMULTICONFIG" : "mc-1 mc_2",
-                "BB_SIGNATURE_HANDLER" : "basic",
+                "BBMULTICONFIG": "mc-1 mc_2",
+                "BB_SIGNATURE_HANDLER": "basic",
                 "EXTRA_BBFILES": "${COREBASE}/recipes/fails-mc/*.bb",
             }
             cmd = ["bitbake", "mc:mc-1:fails-mc2", "mc:mc_2:fails-mc1"]
@@ -251,8 +251,8 @@ class RunQueueTests(unittest.TestCase):
     def test_multiconfig_mcdepends(self):
         with tempfile.TemporaryDirectory(prefix="runqueuetest") as tempdir:
             extraenv = {
-                "BBMULTICONFIG" : "mc-1 mc_2",
-                "BB_SIGNATURE_HANDLER" : "TestMulticonfigDepends",
+                "BBMULTICONFIG": "mc-1 mc_2",
+                "BB_SIGNATURE_HANDLER": "TestMulticonfigDepends",
                 "EXTRA_BBFILES": "${COREBASE}/recipes/fails-mc/*.bb",
             }
             tasks = self.run_bitbakecmd(["bitbake", "mc:mc-1:f1"], tempdir, "", extraenv=extraenv, cleanup=True)
@@ -282,8 +282,8 @@ class RunQueueTests(unittest.TestCase):
     def test_hashserv_single(self):
         with tempfile.TemporaryDirectory(prefix="runqueuetest") as tempdir:
             extraenv = {
-                "BB_HASHSERVE" : "auto",
-                "BB_SIGNATURE_HANDLER" : "TestEquivHash"
+                "BB_HASHSERVE": "auto",
+                "BB_SIGNATURE_HANDLER": "TestEquivHash"
             }
             cmd = ["bitbake", "a1", "b1"]
             setscenetasks = ['package_write_ipk_setscene', 'package_write_rpm_setscene', 'packagedata_setscene',
@@ -308,8 +308,8 @@ class RunQueueTests(unittest.TestCase):
     def test_hashserv_double(self):
         with tempfile.TemporaryDirectory(prefix="runqueuetest") as tempdir:
             extraenv = {
-                "BB_HASHSERVE" : "auto",
-                "BB_SIGNATURE_HANDLER" : "TestEquivHash"
+                "BB_HASHSERVE": "auto",
+                "BB_SIGNATURE_HANDLER": "TestEquivHash"
             }
             cmd = ["bitbake", "a1", "b1", "e1"]
             setscenetasks = ['package_write_ipk_setscene', 'package_write_rpm_setscene', 'packagedata_setscene',
@@ -334,8 +334,8 @@ class RunQueueTests(unittest.TestCase):
         # Runs e1:do_package_setscene twice
         with tempfile.TemporaryDirectory(prefix="runqueuetest") as tempdir:
             extraenv = {
-                "BB_HASHSERVE" : "auto",
-                "BB_SIGNATURE_HANDLER" : "TestEquivHash"
+                "BB_HASHSERVE": "auto",
+                "BB_SIGNATURE_HANDLER": "TestEquivHash"
             }
             cmd = ["bitbake", "a1", "b1", "e1"]
             setscenetasks = ['package_write_ipk_setscene', 'package_write_rpm_setscene', 'packagedata_setscene',
