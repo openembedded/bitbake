@@ -70,7 +70,7 @@ class state:
 
 
 class SkippedPackage:
-    def __init__(self, info = None, reason = None):
+    def __init__(self, info=None, reason=None):
         self.pn = None
         self.skipreason = None
         self.provides = None
@@ -1587,7 +1587,7 @@ class BBCooker:
 
         if self.state in (state.shutdown, state.forceshutdown, state.error):
             if hasattr(self.parser, 'shutdown'):
-                self.parser.shutdown(clean=False, force = True)
+                self.parser.shutdown(clean=False, force=True)
                 self.parser.final_cleanup()
             raise bb.BBHandledException()
 
@@ -1707,7 +1707,7 @@ class BBCooker:
         if hasattr(self, "data"):
             bb.event.fire(CookerExit(), self.data)
 
-    def shutdown(self, force = False):
+    def shutdown(self, force=False):
         if force:
             self.state = state.forceshutdown
         else:
@@ -2193,7 +2193,7 @@ class CookerParser(object):
                     profiles.append(logfile)
 
             pout = "profile-parse.log.processed"
-            bb.utils.process_profilelog(profiles, pout = pout)
+            bb.utils.process_profilelog(profiles, pout=pout)
             print("Processed parsing statistics saved to %s" % (pout))
 
     def final_cleanup(self):
@@ -2282,7 +2282,7 @@ class CookerParser(object):
                 self.skipped += 1
                 self.cooker.skiplist[virtualfn] = SkippedPackage(info_array[0])
             self.bb_caches[mc].add_info(virtualfn, info_array, self.cooker.recipecaches[mc],
-                                        parsed=parsed, watcher = self.cooker.add_filewatch)
+                                        parsed=parsed, watcher=self.cooker.add_filewatch)
         return True
 
     def reparse(self, filename):

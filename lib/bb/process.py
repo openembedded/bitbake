@@ -37,7 +37,7 @@ class NotFoundError(CmdError):
         return CmdError.__str__(self) + ": command not found"
 
 class ExecutionError(CmdError):
-    def __init__(self, command, exitcode, stdout = None, stderr = None):
+    def __init__(self, command, exitcode, stdout=None, stderr=None):
         CmdError.__init__(self, command)
         self.exitcode = exitcode
         self.stdout = stdout

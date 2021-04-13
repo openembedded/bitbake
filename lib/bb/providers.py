@@ -26,7 +26,7 @@ class NoRProvider(bb.BBHandledException):
 class MultipleRProvider(bb.BBHandledException):
     """Exception raised when multiple providers of a runtime dependency can be found"""
 
-def findProviders(cfgData, dataCache, pkg_pn = None):
+def findProviders(cfgData, dataCache, pkg_pn=None):
     """
     Convenience function to get latest and preferred providers in pkg_pn
     """
@@ -60,7 +60,7 @@ def allProviders(dataCache):
         all_providers[pn].append((ver, fn))
     return all_providers
 
-def sortPriorities(pn, dataCache, pkg_pn = None):
+def sortPriorities(pn, dataCache, pkg_pn=None):
     """
     Reorder pkg_pn by file priority and default preference
     """
@@ -115,7 +115,7 @@ def preferredVersionMatch(pe, pv, pr, preferred_e, preferred_v, preferred_r):
                 return True
     return False
 
-def findPreferredProvider(pn, cfgData, dataCache, pkg_pn = None, item = None):
+def findPreferredProvider(pn, cfgData, dataCache, pkg_pn=None, item=None):
     """
     Find the first provider in pkg_pn with REQUIRED_VERSION or PREFERRED_VERSION set.
     """
@@ -215,7 +215,7 @@ def findLatestProvider(pn, cfgData, dataCache, file_set):
 
     return (latest, latest_f)
 
-def findBestProvider(pn, cfgData, dataCache, pkg_pn = None, item = None):
+def findBestProvider(pn, cfgData, dataCache, pkg_pn=None, item=None):
     """
     If there is a PREFERRED_VERSION, find the highest-priority bbfile
     providing that version.  If not, find the latest version provided by

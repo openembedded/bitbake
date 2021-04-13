@@ -201,7 +201,7 @@ class Command(BaseCommand):
 
     # Update the scanned project variables
     def update_project_vars(self,project,name):
-        pv, create = ProjectVariable.objects.get_or_create(project = project, name = name)
+        pv, create = ProjectVariable.objects.get_or_create(project=project, name=name)
         if (not name in self.vars.keys()) or (not self.vars[name]):
             self.vars[name] = pv.value
         else:
@@ -375,7 +375,7 @@ class Command(BaseCommand):
                     try:
                         layer_name_base = os.path.basename(layer_path)
                         _log("Layer_lookup: try '%s','%s'" % (layer_name_base,layer_path))
-                        layer = Layer.objects.get(name=layer_name_base,local_source_dir = layer_path)
+                        layer = Layer.objects.get(name=layer_name_base,local_source_dir=layer_path)
                         # Found! Attach layer_version and ProjectLayer
                         layer_version = Layer_Version.objects.create(
                             layer=layer,
@@ -460,7 +460,7 @@ class Command(BaseCommand):
 
             # Assert found Toaster vars
             for var in self.toaster_vars.keys():
-                pv, create = ProjectVariable.objects.get_or_create(project = project, name = var)
+                pv, create = ProjectVariable.objects.get_or_create(project=project, name=var)
                 pv.value = self.toaster_vars[var]
                 _log("* Add/update Toaster var '%s' = '%s'" % (pv.name,pv.value))
                 pv.save()

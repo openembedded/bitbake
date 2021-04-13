@@ -68,18 +68,18 @@ def landing(request):
     # in build mode, we redirect to the command-line builds page
     # if there are any builds for the default (cli builds) project
     default_project = Project.objects.get_or_create_default_project()
-    default_project_builds = Build.objects.filter(project = default_project)
+    default_project_builds = Build.objects.filter(project=default_project)
 
     # we only redirect to projects page if there is a user-generated project
     num_builds = Build.objects.all().count()
-    user_projects = Project.objects.filter(is_default = False)
+    user_projects = Project.objects.filter(is_default=False)
     has_user_project = user_projects.count() > 0
 
     if num_builds == 0 and has_user_project:
-        return redirect(reverse('all-projects'), permanent = False)
+        return redirect(reverse('all-projects'), permanent=False)
 
     if num_builds > 0:
-        return redirect(reverse('all-builds'), permanent = False)
+        return redirect(reverse('all-builds'), permanent=False)
 
     context = {'lvs_nos' : Layer_Version.objects.all().count()}
 
@@ -117,7 +117,7 @@ def objtojson(obj):
         raise TypeError("Unserializable object %s (%s) of type %s" % ( obj, dir(obj), type(obj)))
 
 
-def _lv_to_dict(prj, x = None):
+def _lv_to_dict(prj, x=None):
     if x is None:
         def wrapper(x):
             return _lv_to_dict(prj, x)
@@ -133,7 +133,7 @@ def _lv_to_dict(prj, x = None):
            }
 
 
-def _build_page_range(paginator, index = 1):
+def _build_page_range(paginator, index=1):
     try:
         page = paginator.page(index)
     except PageNotAnInteger:
@@ -178,7 +178,7 @@ def _redirect_parameters(view, g, mandatory_parameters, *args, **kwargs):
         if not i in params:
             params[i] = unquote(str(mandatory_parameters[i]))
 
-    return redirect(url + "?%s" % urlencode(params), permanent = False, **kwargs)
+    return redirect(url + "?%s" % urlencode(params), permanent=False, **kwargs)
 
 class RedirectException(Exception):
     def __init__(self, view, g, mandatory_parameters, *args, **kwargs):
@@ -241,7 +241,7 @@ def _get_filtering_query(filter_string):
 
     return and_query
 
-def _get_toggle_order(request, orderkey, toggle_reverse = False):
+def _get_toggle_order(request, orderkey, toggle_reverse=False):
     if toggle_reverse:
         return "%s:+" % orderkey if request.GET.get('orderby', "") == "%s:-" % orderkey else "%s:-" % orderkey
     else:
@@ -431,10 +431,10 @@ def builddashboard( request, build_id ):
     template = "builddashboard.html"
     if Build.objects.filter( pk=build_id ).count( ) == 0 :
         return redirect( builds )
-    build = Build.objects.get( pk = build_id )
-    layerVersionId = Layer_Version.objects.filter( build = build_id )
-    recipeCount = Recipe.objects.filter( layer_version__id__in = layerVersionId ).count( )
-    tgts = Target.objects.filter( build_id = build_id ).order_by( 'target' )
+    build = Build.objects.get( pk=build_id )
+    layerVersionId = Layer_Version.objects.filter( build=build_id )
+    recipeCount = Recipe.objects.filter( layer_version__id__in=layerVersionId ).count( )
+    tgts = Target.objects.filter( build_id=build_id ).order_by( 'target' )
 
     # set up custom target list with computed package and image data
     targets = []
@@ -459,13 +459,13 @@ def builddashboard( request, build_id ):
         package_set_len = len(package_set)
         for ps_start in range(0,package_set_len,500):
             ps_stop = min(ps_start+500,package_set_len)
-            for package in Package.objects.filter(id__in = [x.package_id for x in package_set[ps_start:ps_stop]]):
+            for package in Package.objects.filter(id__in=[x.package_id for x in package_set[ps_start:ps_stop]]):
                 pkgsz = pkgsz + package.size
                 if package.installed_name:
                     npkg = npkg + 1
         elem['npkg'] = npkg
         elem['pkgsz'] = pkgsz
-        ti = Target_Image_File.objects.filter(target_id = t.id)
+        ti = Target_Image_File.objects.filter(target_id=t.id)
         for i in ti:
             ndx = i.file_name.rfind('/')
             if ndx < 0:
@@ -499,12 +499,12 @@ def builddashboard( request, build_id ):
     #
 
     packageCount = 0
-    packages = Package.objects.filter( build_id = build_id )
+    packages = Package.objects.filter( build_id=build_id )
     for p in packages:
         if ( p.installed_name ):
             packageCount = packageCount + 1
 
-    logmessages = list(LogMessage.objects.filter( build = build_id ))
+    logmessages = list(LogMessage.objects.filter( build=build_id ))
 
     context = {
             'build'           : build,
@@ -520,7 +520,7 @@ def builddashboard( request, build_id ):
 
 
 
-def generateCoveredList2( revlist = None ):
+def generateCoveredList2( revlist=None ):
     if not revlist:
         revlist = []
     covered_list =  [ x for x in revlist if x.outcome == Task.OUTCOME_COVERED ]
@@ -550,7 +550,7 @@ def task( request, build_id, task_id ):
     coveredBy = ''
     if ( task_object.outcome == Task.OUTCOME_COVERED ):
 #        _list = generateCoveredList( task )
-        coveredBy = sorted(generateCoveredList2( _find_task_revdep( task_object ) ), key = lambda x: x.recipe.name)
+        coveredBy = sorted(generateCoveredList2( _find_task_revdep( task_object ) ), key=lambda x: x.recipe.name)
     log_head = ''
     log_body = ''
     if task_object.outcome == task_object.OUTCOME_FAILED:
@@ -569,7 +569,7 @@ def task( request, build_id, task_id ):
                 uri_list.append(s)
 
     context = {
-            'build'           : Build.objects.filter( pk = build_id )[ 0 ],
+            'build'           : Build.objects.filter( pk=build_id )[ 0 ],
             'object'          : task_object,
             'task'            : task_object,
             'covered_by'      : coveredBy,
@@ -598,8 +598,8 @@ def recipe(request, build_id, recipe_id, active_tab="1"):
     recipe_object = Recipe.objects.get(pk=recipe_id)
     layer_version = Layer_Version.objects.get(pk=recipe_object.layer_version_id)
     layer  = Layer.objects.get(pk=layer_version.layer_id)
-    tasks_list  = Task.objects.filter(recipe_id = recipe_id, build_id = build_id).exclude(order__isnull=True).exclude(task_name__endswith='_setscene').exclude(outcome=Task.OUTCOME_NA)
-    package_count = Package.objects.filter(recipe_id = recipe_id).filter(build_id = build_id).filter(size__gte=0).count()
+    tasks_list  = Task.objects.filter(recipe_id=recipe_id, build_id=build_id).exclude(order__isnull=True).exclude(task_name__endswith='_setscene').exclude(outcome=Task.OUTCOME_NA)
+    package_count = Package.objects.filter(recipe_id=recipe_id).filter(build_id=build_id).filter(size__gte=0).count()
 
     if active_tab != '1' and active_tab != '3' and active_tab != '4' :
         active_tab = '1'
@@ -626,11 +626,11 @@ def recipe_packages(request, build_id, recipe_id):
     mandatory_parameters = { 'count': pagesize,  'page' : 1, 'orderby': orderby }
     retval = _verify_parameters( request.GET, mandatory_parameters )
     if retval:
-        return _redirect_parameters( 'recipe_packages', request.GET, mandatory_parameters, build_id = build_id, recipe_id = recipe_id)
+        return _redirect_parameters( 'recipe_packages', request.GET, mandatory_parameters, build_id=build_id, recipe_id=recipe_id)
     (filter_string, search_term, ordering_string) = _search_tuple(request, Package)
 
     recipe_object = Recipe.objects.get(pk=recipe_id)
-    queryset = Package.objects.filter(recipe_id = recipe_id).filter(build_id = build_id).filter(size__gte=0)
+    queryset = Package.objects.filter(recipe_id=recipe_id).filter(build_id=build_id).filter(size__gte=0)
     package_count = queryset.count()
     queryset = _get_queryset(Package, queryset, filter_string, search_term, ordering_string, 'name')
 
@@ -667,7 +667,7 @@ def recipe_packages(request, build_id, recipe_id):
 from django.http import HttpResponse
 def xhr_dirinfo(request, build_id, target_id):
     top = request.GET.get('start', '/')
-    return HttpResponse(_get_dir_entries(build_id, target_id, top), content_type = "application/json")
+    return HttpResponse(_get_dir_entries(build_id, target_id, top), content_type="application/json")
 
 from django.utils.functional import Promise
 from django.utils.encoding import force_text
@@ -790,7 +790,7 @@ def _find_task_dep(task_object):
 
 def _find_task_revdep(task_object):
     tdeps = Task_Dependency.objects.filter(depends_on=task_object).filter(task__order__gt=0)
-    tdeps = tdeps.exclude(task__outcome = Task.OUTCOME_NA).select_related("task", "task__recipe", "task__build")
+    tdeps = tdeps.exclude(task__outcome=Task.OUTCOME_NA).select_related("task", "task__recipe", "task__build")
 
     # exclude self-dependencies to prevent infinite dependency loop
     # in generateCoveredList2()
@@ -846,7 +846,7 @@ def configvars(request, build_id):
         # if new search, clear the default filter
         if search_term and len(search_term):
             mandatory_parameters['filter']=''
-        return _redirect_parameters( 'configvars', request.GET, mandatory_parameters, build_id = build_id)
+        return _redirect_parameters( 'configvars', request.GET, mandatory_parameters, build_id=build_id)
 
     queryset = Variable.objects.filter(build=build_id).exclude(variable_name__istartswith='B_').exclude(variable_name__istartswith='do_')
     queryset_with_search =  _get_queryset(Variable, queryset, None, search_term, ordering_string, 'variable_name').exclude(variable_value='',vhistory__file_name__isnull=True)
@@ -928,7 +928,7 @@ def configvars(request, build_id):
 
 def bfile(request, build_id, package_id):
     template = 'bfile.html'
-    files = Package_File.objects.filter(package = package_id)
+    files = Package_File.objects.filter(package=package_id)
     build = Build.objects.get(pk=build_id)
     context = {
         'build': build,
@@ -959,7 +959,7 @@ the RRECOMMENDS or TRECOMMENDS value.
 The lists are built in the sort order specified for the package runtime
 dependency views.
 """
-def _get_package_dependencies(package_id, target_id = INVALID_KEY):
+def _get_package_dependencies(package_id, target_id=INVALID_KEY):
     runtime_deps = []
     other_deps = []
     other_depends_types = OTHER_DEPENDS_BASE
@@ -973,7 +973,7 @@ def _get_package_dependencies(package_id, target_id = INVALID_KEY):
 
     package = Package.objects.get(pk=package_id)
     if target_id != INVALID_KEY :
-        alldeps = package.package_dependencies_source.filter(target_id__exact = target_id)
+        alldeps = package.package_dependencies_source.filter(target_id__exact=target_id)
     else :
         alldeps = package.package_dependencies_source.all()
     for idep in alldeps:
@@ -985,7 +985,7 @@ def _get_package_dependencies(package_id, target_id = INVALID_KEY):
             version = dep_package.version + "-" + dep_package.revision
         installed = False
         if target_id != INVALID_KEY :
-            if Target_Installed_Package.objects.filter(target_id__exact = target_id, package_id__exact = dep_package.id).count() > 0:
+            if Target_Installed_Package.objects.filter(target_id__exact=target_id, package_id__exact=dep_package.id).count() > 0:
                 installed = True
         dep =   {
                 'name' : dep_package.name,
@@ -1015,17 +1015,17 @@ def _get_package_dependencies(package_id, target_id = INVALID_KEY):
 
 # Return the count of packages dependent on package for this target_id image
 def _get_package_reverse_dep_count(package, target_id):
-    return package.package_dependencies_target.filter(target_id__exact=target_id, dep_type__exact = Package_Dependency.TYPE_TRDEPENDS).count()
+    return package.package_dependencies_target.filter(target_id__exact=target_id, dep_type__exact=Package_Dependency.TYPE_TRDEPENDS).count()
 
 # Return the count of the packages that this package_id is dependent on.
 # Use one of the two RDEPENDS types, either TRDEPENDS if the package was
 # installed, or else RDEPENDS if only built.
 def _get_package_dependency_count(package, target_id, is_installed):
     if is_installed :
-        return package.package_dependencies_source.filter(target_id__exact = target_id,
-            dep_type__exact = Package_Dependency.TYPE_TRDEPENDS).count()
+        return package.package_dependencies_source.filter(target_id__exact=target_id,
+            dep_type__exact=Package_Dependency.TYPE_TRDEPENDS).count()
     else :
-        return package.package_dependencies_source.filter(dep_type__exact = Package_Dependency.TYPE_RDEPENDS).count()
+        return package.package_dependencies_source.filter(dep_type__exact=Package_Dependency.TYPE_RDEPENDS).count()
 
 def _get_package_alias(package):
     alias = package.installed_name
@@ -1059,7 +1059,7 @@ def package_built_detail(request, build_id, package_id):
     mandatory_parameters = { 'count': pagesize,  'page' : 1, 'orderby' : orderby }
     retval = _verify_parameters( request.GET, mandatory_parameters )
     if retval:
-        return _redirect_parameters( 'package_built_detail', request.GET, mandatory_parameters, build_id = build_id, package_id = package_id)
+        return _redirect_parameters( 'package_built_detail', request.GET, mandatory_parameters, build_id=build_id, package_id=package_id)
 
     (filter_string, search_term, ordering_string) = _search_tuple(request, Package_File)
     paths = _get_queryset(Package_File, queryset, filter_string, search_term, ordering_string, 'path')
@@ -1120,7 +1120,7 @@ def package_included_detail(request, build_id, target_id, package_id):
     mandatory_parameters = { 'count': pagesize,  'page' : 1, 'orderby' : orderby }
     retval = _verify_parameters( request.GET, mandatory_parameters )
     if retval:
-        return _redirect_parameters( 'package_included_detail', request.GET, mandatory_parameters, build_id = build_id, target_id = target_id, package_id = package_id)
+        return _redirect_parameters( 'package_included_detail', request.GET, mandatory_parameters, build_id=build_id, target_id=target_id, package_id=package_id)
     (filter_string, search_term, ordering_string) = _search_tuple(request, Package_File)
 
     queryset = Package_File.objects.filter(package_id__exact=package_id)
@@ -1188,7 +1188,7 @@ def package_included_reverse_dependencies(request, build_id, target_id, package_
     mandatory_parameters = { 'count': pagesize,  'page' : 1, 'orderby': orderby }
     retval = _verify_parameters( request.GET, mandatory_parameters )
     if retval:
-        return _redirect_parameters( 'package_included_reverse_dependencies', request.GET, mandatory_parameters, build_id = build_id, target_id = target_id, package_id = package_id)
+        return _redirect_parameters( 'package_included_reverse_dependencies', request.GET, mandatory_parameters, build_id=build_id, target_id=target_id, package_id=package_id)
     (filter_string, search_term, ordering_string) = _search_tuple(request, Package_File)
 
     queryset = Package_Dependency.objects.select_related('depends_on').filter(depends_on=package_id, target_id=target_id, dep_type=Package_Dependency.TYPE_TRDEPENDS)
@@ -1258,7 +1258,7 @@ def managedcontextprocessor(request):
 def _json_build_status(build_id,extend):
     build_stat = None
     try:
-        build = Build.objects.get( pk = build_id )
+        build = Build.objects.get( pk=build_id )
         build_stat = {}
         build_stat['id'] = build.id
         build_stat['name'] = build.build_name
@@ -1266,7 +1266,7 @@ def _json_build_status(build_id,extend):
         build_stat['distro'] = build.distro
         build_stat['start'] = build.started_on
         # look up target name
-        target= Target.objects.get( build = build )
+        target= Target.objects.get( build=build )
         if target:
             if target.task:
                 build_stat['target'] = '%s:%s' % (target.target,target.task)
@@ -1275,7 +1275,7 @@ def _json_build_status(build_id,extend):
         else:
             build_stat['target'] = ''
         # look up project name
-        project = Project.objects.get( build = build )
+        project = Project.objects.get( build=build )
         if project:
             build_stat['project'] = project.name
         else:
@@ -1286,7 +1286,7 @@ def _json_build_status(build_id,extend):
             build_stat['seconds']='%.3f' % timediff.total_seconds()
             build_stat['clone']='%d:%d' % (build.repos_cloned,build.repos_to_clone)
             build_stat['parse']='%d:%d' % (build.recipes_parsed,build.recipes_to_parse)
-            tf = Task.objects.filter(build = build)
+            tf = Task.objects.filter(build=build)
             tfc = tf.count()
             if tfc > 0:
                 tfd = tf.exclude(order__isnull=True).count()
@@ -1298,7 +1298,7 @@ def _json_build_status(build_id,extend):
             timediff = build.completed_on - build.started_on
             build_stat['seconds']='%.3f' % timediff.total_seconds()
             build_stat['stop'] = build.completed_on
-            messages = LogMessage.objects.all().filter(build = build)
+            messages = LogMessage.objects.all().filter(build=build)
             errors = len(messages.filter(level=LogMessage.ERROR) |
                  messages.filter(level=LogMessage.EXCEPTION) |
                  messages.filter(level=LogMessage.CRITICAL))
@@ -1370,7 +1370,7 @@ if True:
         }
 
         try:
-            context['defaultbranch'] = ToasterSetting.objects.get(name = "DEFAULT_RELEASE").value
+            context['defaultbranch'] = ToasterSetting.objects.get(name="DEFAULT_RELEASE").value
         except ToasterSetting.DoesNotExist:
             pass
 
@@ -1392,11 +1392,11 @@ if True:
                     raise BadParameterException("Fields missing: %s" % ", ".join(missing))
 
                 if not request.user.is_authenticated:
-                    user = authenticate(username = request.POST.get('username', '_anonuser'), password = 'nopass')
+                    user = authenticate(username=request.POST.get('username', '_anonuser'), password='nopass')
                     if user is None:
-                        user = User.objects.create_user(username = request.POST.get('username', '_anonuser'), email = request.POST.get('email', ''), password = "nopass")
+                        user = User.objects.create_user(username=request.POST.get('username', '_anonuser'), email=request.POST.get('email', ''), password="nopass")
 
-                        user = authenticate(username = user.username, password = 'nopass')
+                        user = authenticate(username=user.username, password='nopass')
                     login(request, user)
 
                 #  save the project
@@ -1405,12 +1405,12 @@ if True:
                         raise BadParameterException("Bad path or missing 'conf' directory (%s)" % request.POST['importdir'])
                     from django.core import management
                     management.call_command('buildimport', '--command=import', '--name=%s' % request.POST['projectname'], '--path=%s' % request.POST['importdir'], interactive=False)
-                    prj = Project.objects.get(name = request.POST['projectname'])
+                    prj = Project.objects.get(name=request.POST['projectname'])
                     prj.merged_attr = True
                     prj.save()
                 else:
-                    release = Release.objects.get(pk = request.POST.get('projectversion', None ))
-                    prj = Project.objects.create_project(name = request.POST['projectname'], release = release)
+                    release = Release.objects.get(pk=request.POST.get('projectversion', None ))
+                    prj = Project.objects.create_project(name=request.POST['projectname'], release=release)
                     prj.user_id = request.user.pk
                     if 'mergeattr' == request.POST.get('mergeattr', ''):
                         prj.merged_attr = True
@@ -1450,7 +1450,7 @@ if True:
             return redirect(reverse(project_specific, args=(project.pk,)))
 
         try:
-            context['defaultbranch'] = ToasterSetting.objects.get(name = "DEFAULT_RELEASE").value
+            context['defaultbranch'] = ToasterSetting.objects.get(name="DEFAULT_RELEASE").value
         except ToasterSetting.DoesNotExist:
             pass
 
@@ -1470,20 +1470,20 @@ if True:
                     raise BadParameterException("Fields missing: %s" % ", ".join(missing))
 
                 if not request.user.is_authenticated:
-                    user = authenticate(username = request.POST.get('username', '_anonuser'), password = 'nopass')
+                    user = authenticate(username=request.POST.get('username', '_anonuser'), password='nopass')
                     if user is None:
-                        user = User.objects.create_user(username = request.POST.get('username', '_anonuser'), email = request.POST.get('email', ''), password = "nopass")
+                        user = User.objects.create_user(username=request.POST.get('username', '_anonuser'), email=request.POST.get('email', ''), password="nopass")
 
-                        user = authenticate(username = user.username, password = 'nopass')
+                        user = authenticate(username=user.username, password='nopass')
                     login(request, user)
 
                 #  save the project
                 if ptype == "analysis":
                     release = None
                 else:
-                    release = Release.objects.get(pk = request.POST.get('projectversion', None ))
+                    release = Release.objects.get(pk=request.POST.get('projectversion', None ))
 
-                prj = Project.objects.create_project(name = request.POST['projectname'], release = release, existing_project = project)
+                prj = Project.objects.create_project(name=request.POST['projectname'], release=release, existing_project=project)
                 prj.user_id = request.user.pk
                 prj.save()
                 return redirect(reverse(project_specific, args=(prj.pk,)) + "?notify=new-project")
@@ -1620,7 +1620,7 @@ if True:
         """ returns layer versions that would be deleted on the new
         release__pk """
         try:
-            prj = Project.objects.get(pk = pid)
+            prj = Project.objects.get(pk=pid)
             new_release_id = request.GET['new_release_id']
 
             # If we're already on this project do nothing
@@ -1630,11 +1630,11 @@ if True:
             retval = []
 
             for project in prj.projectlayer_set.all():
-                release = Release.objects.get(pk = new_release_id)
+                release = Release.objects.get(pk=new_release_id)
 
                 layer_versions = prj.get_all_compatible_layer_versions()
-                layer_versions = layer_versions.filter(release = release)
-                layer_versions = layer_versions.filter(layer__name = project.layercommit.layer.name)
+                layer_versions = layer_versions.filter(release=release)
+                layer_versions = layer_versions.filter(layer__name=project.layercommit.layer.name)
 
                 # there is no layer_version with the new release id,
                 # and the same name
@@ -1650,7 +1650,7 @@ if True:
 
     def xhr_configvaredit(request, pid):
         try:
-            prj = Project.objects.get(id = pid)
+            prj = Project.objects.get(id=pid)
             # There are cases where user can add variables which hold values
             # like http://, file:/// etc. In such case a simple split(":")
             # would fail. One example is SSTATE_MIRRORS variable. So we use
@@ -1665,7 +1665,7 @@ if True:
                     variable = t
                     value = ""
 
-                pt, created = ProjectVariable.objects.get_or_create(project = prj, name = variable, value = value)
+                pt, created = ProjectVariable.objects.get_or_create(project=prj, name=variable, value=value)
             # change conf variables
             if 'configvarChange' in request.POST:
                 t=request.POST['configvarChange'].strip()
@@ -1675,55 +1675,55 @@ if True:
                     variable = t
                     value = ""
 
-                pt, created = ProjectVariable.objects.get_or_create(project = prj, name = variable)
+                pt, created = ProjectVariable.objects.get_or_create(project=prj, name=variable)
                 pt.value=value
                 pt.save()
             # remove conf variables
             if 'configvarDel' in request.POST:
                 t=request.POST['configvarDel'].strip()
-                pt = ProjectVariable.objects.get(pk = int(t)).delete()
+                pt = ProjectVariable.objects.get(pk=int(t)).delete()
 
             # return all project settings, filter out blacklist and elsewhere-managed variables
             vars_managed,vars_fstypes,vars_blacklist = get_project_configvars_context()
-            configvars_query = ProjectVariable.objects.filter(project_id = pid).all()
+            configvars_query = ProjectVariable.objects.filter(project_id=pid).all()
             for var in vars_managed:
-                configvars_query = configvars_query.exclude(name = var)
+                configvars_query = configvars_query.exclude(name=var)
             for var in vars_blacklist:
-                configvars_query = configvars_query.exclude(name = var)
+                configvars_query = configvars_query.exclude(name=var)
 
             return_data = {
                 "error": "ok",
                 'configvars': [(x.name, x.value, x.pk) for x in configvars_query]
                }
             try:
-                return_data['distro'] = ProjectVariable.objects.get(project = prj, name = "DISTRO").value,
+                return_data['distro'] = ProjectVariable.objects.get(project=prj, name="DISTRO").value,
             except ProjectVariable.DoesNotExist:
                 pass
             try:
-                return_data['dl_dir'] = ProjectVariable.objects.get(project = prj, name = "DL_DIR").value,
+                return_data['dl_dir'] = ProjectVariable.objects.get(project=prj, name="DL_DIR").value,
             except ProjectVariable.DoesNotExist:
                 pass
             try:
-                return_data['fstypes'] = ProjectVariable.objects.get(project = prj, name = "IMAGE_FSTYPES").value,
+                return_data['fstypes'] = ProjectVariable.objects.get(project=prj, name="IMAGE_FSTYPES").value,
             except ProjectVariable.DoesNotExist:
                 pass
             try:
-                return_data['image_install_append'] = ProjectVariable.objects.get(project = prj, name = "IMAGE_INSTALL_append").value,
+                return_data['image_install_append'] = ProjectVariable.objects.get(project=prj, name="IMAGE_INSTALL_append").value,
             except ProjectVariable.DoesNotExist:
                 pass
             try:
-                return_data['package_classes'] = ProjectVariable.objects.get(project = prj, name = "PACKAGE_CLASSES").value,
+                return_data['package_classes'] = ProjectVariable.objects.get(project=prj, name="PACKAGE_CLASSES").value,
             except ProjectVariable.DoesNotExist:
                 pass
             try:
-                return_data['sstate_dir'] = ProjectVariable.objects.get(project = prj, name = "SSTATE_DIR").value,
+                return_data['sstate_dir'] = ProjectVariable.objects.get(project=prj, name="SSTATE_DIR").value,
             except ProjectVariable.DoesNotExist:
                 pass
 
-            return HttpResponse(json.dumps( return_data ), content_type = "application/json")
+            return HttpResponse(json.dumps( return_data ), content_type="application/json")
 
         except Exception as e:
-            return HttpResponse(json.dumps({"error":str(e) + "\n" + traceback.format_exc()}), content_type = "application/json")
+            return HttpResponse(json.dumps({"error":str(e) + "\n" + traceback.format_exc()}), content_type="application/json")
 
 
     def customrecipe_download(request, pid, recipe_id):
@@ -1795,17 +1795,17 @@ if True:
     def projectconf(request, pid):
 
         try:
-            prj = Project.objects.get(id = pid)
+            prj = Project.objects.get(id=pid)
         except Project.DoesNotExist:
             return HttpResponseNotFound("<h1>Project id " + pid + " is unavailable</h1>")
 
         # remove blacklist and externally managed varaibles from this list
         vars_managed,vars_fstypes,vars_blacklist = get_project_configvars_context()
-        configvars = ProjectVariable.objects.filter(project_id = pid).all()
+        configvars = ProjectVariable.objects.filter(project_id=pid).all()
         for var in vars_managed:
-            configvars = configvars.exclude(name = var)
+            configvars = configvars.exclude(name=var)
         for var in vars_blacklist:
-            configvars = configvars.exclude(name = var)
+            configvars = configvars.exclude(name=var)
 
         context = {
             'project':          prj,
@@ -1816,48 +1816,48 @@ if True:
         }
 
         try:
-            context['distro'] =  ProjectVariable.objects.get(project = prj, name = "DISTRO").value
+            context['distro'] =  ProjectVariable.objects.get(project=prj, name="DISTRO").value
             context['distro_defined'] = "1"
         except ProjectVariable.DoesNotExist:
             pass
         try:
-            if ProjectVariable.objects.get(project = prj, name = "DL_DIR").value == "${TOPDIR}/../downloads":
-                be = BuildEnvironment.objects.get(pk = str(1))
+            if ProjectVariable.objects.get(project=prj, name="DL_DIR").value == "${TOPDIR}/../downloads":
+                be = BuildEnvironment.objects.get(pk=str(1))
                 dl_dir = os.path.join(dirname(be.builddir), "downloads")
                 context['dl_dir'] =  dl_dir
-                pv, created = ProjectVariable.objects.get_or_create(project = prj, name = "DL_DIR")
+                pv, created = ProjectVariable.objects.get_or_create(project=prj, name="DL_DIR")
                 pv.value = dl_dir
                 pv.save()
             else:
-                context['dl_dir'] = ProjectVariable.objects.get(project = prj, name = "DL_DIR").value
+                context['dl_dir'] = ProjectVariable.objects.get(project=prj, name="DL_DIR").value
             context['dl_dir_defined'] = "1"
         except (ProjectVariable.DoesNotExist, BuildEnvironment.DoesNotExist):
             pass
         try:
-            context['fstypes'] =  ProjectVariable.objects.get(project = prj, name = "IMAGE_FSTYPES").value
+            context['fstypes'] =  ProjectVariable.objects.get(project=prj, name="IMAGE_FSTYPES").value
             context['fstypes_defined'] = "1"
         except ProjectVariable.DoesNotExist:
             pass
         try:
-            context['image_install_append'] =  ProjectVariable.objects.get(project = prj, name = "IMAGE_INSTALL_append").value
+            context['image_install_append'] =  ProjectVariable.objects.get(project=prj, name="IMAGE_INSTALL_append").value
             context['image_install_append_defined'] = "1"
         except ProjectVariable.DoesNotExist:
             pass
         try:
-            context['package_classes'] =  ProjectVariable.objects.get(project = prj, name = "PACKAGE_CLASSES").value
+            context['package_classes'] =  ProjectVariable.objects.get(project=prj, name="PACKAGE_CLASSES").value
             context['package_classes_defined'] = "1"
         except ProjectVariable.DoesNotExist:
             pass
         try:
-            if ProjectVariable.objects.get(project = prj, name = "SSTATE_DIR").value == "${TOPDIR}/../sstate-cache":
-                be = BuildEnvironment.objects.get(pk = str(1))
+            if ProjectVariable.objects.get(project=prj, name="SSTATE_DIR").value == "${TOPDIR}/../sstate-cache":
+                be = BuildEnvironment.objects.get(pk=str(1))
                 sstate_dir = os.path.join(dirname(be.builddir), "sstate-cache")
                 context['sstate_dir'] = sstate_dir
-                pv, created = ProjectVariable.objects.get_or_create(project = prj, name = "SSTATE_DIR")
+                pv, created = ProjectVariable.objects.get_or_create(project=prj, name="SSTATE_DIR")
                 pv.value = sstate_dir
                 pv.save()
             else:
-                context['sstate_dir'] = ProjectVariable.objects.get(project = prj, name = "SSTATE_DIR").value
+                context['sstate_dir'] = ProjectVariable.objects.get(project=prj, name="SSTATE_DIR").value
             context['sstate_dir_defined'] = "1"
         except (ProjectVariable.DoesNotExist, BuildEnvironment.DoesNotExist):
             pass
@@ -1878,7 +1878,7 @@ if True:
             response_file_name = "cooker.log"
 
         elif artifact_type == "imagefile":
-            file_name = Target_Image_File.objects.get(target__build = build, pk = artifact_id).file_name
+            file_name = Target_Image_File.objects.get(target__build=build, pk=artifact_id).file_name
 
         elif artifact_type == "targetkernelartifact":
             target = TargetKernelFile.objects.get(pk=artifact_id)
@@ -1889,16 +1889,16 @@ if True:
             file_name = target.file_name
 
         elif artifact_type == "licensemanifest":
-            file_name = Target.objects.get(build = build, pk = artifact_id).license_manifest_path
+            file_name = Target.objects.get(build=build, pk=artifact_id).license_manifest_path
 
         elif artifact_type == "packagemanifest":
-            file_name = Target.objects.get(build = build, pk = artifact_id).package_manifest_path
+            file_name = Target.objects.get(build=build, pk=artifact_id).package_manifest_path
 
         elif artifact_type == "tasklogfile":
-            file_name = Task.objects.get(build = build, pk = artifact_id).logfile
+            file_name = Task.objects.get(build=build, pk=artifact_id).logfile
 
         elif artifact_type == "logmessagefile":
-            file_name = LogMessage.objects.get(build = build, pk = artifact_id).pathname
+            file_name = LogMessage.objects.get(build=build, pk=artifact_id).pathname
 
         if file_name and not response_file_name:
             response_file_name = os.path.basename(file_name)
@@ -1913,7 +1913,7 @@ if True:
         response_file_name = None
 
         try:
-            build = Build.objects.get(pk = build_id)
+            build = Build.objects.get(pk=build_id)
             file_name, response_file_name = _file_names_for_artifact(
                 build, artifact_type, artifact_id
             )
@@ -1922,7 +1922,7 @@ if True:
                 fsock = open(file_name, "rb")
                 content_type = MimeTypeFinder.get_mimetype(file_name)
 
-                response = HttpResponse(fsock, content_type = content_type)
+                response = HttpResponse(fsock, content_type=content_type)
 
                 disposition = "attachment; filename=" + response_file_name
                 response["Content-Disposition"] = disposition

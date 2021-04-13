@@ -146,7 +146,7 @@ class TestFindAllBasicNamespaces(TreeTest):
     def test_find_by_namespaced_name(self):
         soup = self.soup('<mathml:msqrt>4</mathml:msqrt><a svg:fill="red">')
         self.assertEqual("4", soup.find("mathml:msqrt").string)
-        self.assertEqual("a", soup.find(attrs= { "svg:fill" : "red" }).name)
+        self.assertEqual("a", soup.find(attrs={ "svg:fill" : "red" }).name)
 
 
 class TestFindAllByName(TreeTest):
@@ -1417,7 +1417,7 @@ class TestSubstitutions(SoupTest):
     def test_formatter_custom(self):
         markup = "<b>&lt;foo&gt;</b><b>bar</b>"
         soup = self.soup(markup)
-        decoded = soup.decode(formatter = lambda x: x.upper())
+        decoded = soup.decode(formatter=lambda x: x.upper())
         # Instead of normal entity conversion code, the custom
         # callable is called on every string.
         self.assertEqual(
@@ -1469,7 +1469,7 @@ class TestSubstitutions(SoupTest):
 
     def test_prettify_accepts_formatter(self):
         soup = BeautifulSoup("<html><body>foo</body></html>", 'html.parser')
-        pretty = soup.prettify(formatter = lambda x: x.upper())
+        pretty = soup.prettify(formatter=lambda x: x.upper())
         self.assertTrue("FOO" in pretty)
 
     def test_prettify_outputs_unicode_by_default(self):

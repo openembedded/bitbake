@@ -155,7 +155,7 @@ class TableFilterActionDay(TableFilterAction):
     YESTERDAY = 'yesterday'
 
     def __init__(self, name, title, field, day,
-    query_helper = TableFilterQueryHelper()):
+    query_helper=TableFilterQueryHelper()):
         """
         field: (string) the datetime field to filter by
         day: (string) "today" or "yesterday"
@@ -198,7 +198,7 @@ class TableFilterActionDateRange(TableFilterAction):
     """
 
     def __init__(self, name, title, field,
-    query_helper = TableFilterQueryHelper()):
+    query_helper=TableFilterQueryHelper()):
         """
         field: (string) the field to find the max/min range from in the queryset
         """

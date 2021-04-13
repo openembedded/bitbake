@@ -401,10 +401,10 @@ class RunQueueData:
     def get_task_unihash(self, tid):
         return self.runtaskentries[tid].unihash
 
-    def get_user_idstring(self, tid, task_name_suffix = ""):
+    def get_user_idstring(self, tid, task_name_suffix=""):
         return tid + task_name_suffix
 
-    def get_short_user_idstring(self, task, task_name_suffix = ""):
+    def get_short_user_idstring(self, task, task_name_suffix=""):
         (mc, fn, taskname, taskfn) = split_tid_mcfn(task)
         pn = self.dataCaches[mc].pkg_fn[taskfn]
         taskname = taskname_from_tid(task) + task_name_suffix
@@ -1237,7 +1237,7 @@ class RunQueue:
         self.worker = {}
         self.fakeworker = {}
 
-    def _start_worker(self, mc, fakeroot = False, rqexec = None):
+    def _start_worker(self, mc, fakeroot=False, rqexec=None):
         logger.debug("Starting bitbake-worker")
         magic = "decafbad"
         if self.cooker.configuration.profile:
@@ -1334,7 +1334,7 @@ class RunQueue:
             fds.append(self.fakeworker[mc].pipe.input)
         return fds
 
-    def check_stamp_task(self, tid, taskname = None, recurse = False, cache = None):
+    def check_stamp_task(self, tid, taskname=None, recurse=False, cache=None):
         def get_timestamp(f):
             try:
                 if not os.access(f, os.F_OK):
@@ -1555,7 +1555,7 @@ class RunQueue:
             self.state = runQueueComplete
             raise
 
-    def finish_runqueue(self, now = False):
+    def finish_runqueue(self, now=False):
         if not self.rqexe:
             self.state = runQueueComplete
             return
@@ -2043,7 +2043,7 @@ class RunQueueExecute:
         if task is not None:
             (mc, fn, taskname, taskfn) = split_tid_mcfn(task)
             taskname = taskname + "_setscene"
-            if self.rq.check_stamp_task(task, taskname_from_tid(task), recurse = True, cache=self.stampcache):
+            if self.rq.check_stamp_task(task, taskname_from_tid(task), recurse=True, cache=self.stampcache):
                 logger.debug2('Stamp for underlying task %s is current, so skipping setscene variant', task)
                 self.sq_task_failoutright(task)
                 return True
@@ -2812,7 +2812,7 @@ def check_setscene_stamps(tid, rqdata, rq, stampcache, noexecstamp=False):
         logger.debug2('Setscene stamp current for task %s', tid)
         return False, True
 
-    if rq.check_stamp_task(tid, taskname, recurse = True, cache=stampcache):
+    if rq.check_stamp_task(tid, taskname, recurse=True, cache=stampcache):
         logger.debug2('Normal stamp current for task %s', tid)
         return False, True
 

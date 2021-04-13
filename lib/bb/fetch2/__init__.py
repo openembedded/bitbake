@@ -73,7 +73,7 @@ class MalformedUrl(BBFetchException):
 
 class FetchError(BBFetchException):
     """General fetcher exception when something happens incorrectly"""
-    def __init__(self, message, url = None):
+    def __init__(self, message, url=None):
         if url:
             msg = "Fetcher failure for URL: '%s'. %s" % (url, message)
         else:
@@ -84,7 +84,7 @@ class FetchError(BBFetchException):
 
 class ChecksumError(FetchError):
     """Exception when mismatched checksum encountered"""
-    def __init__(self, message, url = None, checksum = None):
+    def __init__(self, message, url=None, checksum=None):
         self.checksum = checksum
         FetchError.__init__(self, message, url)
 
@@ -975,7 +975,7 @@ def rename_bad_checksum(ud, suffix):
         bb.warn("Renaming %s to %s failed, grep movefile in log.do_fetch to see why" % (ud.localpath, new_localpath))
 
 
-def try_mirror_url(fetch, origud, ud, ld, check = False):
+def try_mirror_url(fetch, origud, ud, ld, check=False):
     # Return of None or a value means we're finished
     # False means try another url
 
@@ -1075,7 +1075,7 @@ def ensure_symlink(target, link_name):
             pass
 
 
-def try_mirrors(fetch, d, origud, mirrors, check = False):
+def try_mirrors(fetch, d, origud, mirrors, check=False):
     """
     Try to use a mirrored version of the sources.
     This method will be automatically called before the fetchers go.
@@ -1183,7 +1183,7 @@ def get_checksum_file_list(d):
     Returns the resolved local paths of all local file entries in
     SRC_URI as a space-separated string
     """
-    fetch = Fetch([], d, cache = False, localonly = True)
+    fetch = Fetch([], d, cache=False, localonly=True)
 
     dl_dir = d.getVar('DL_DIR')
     filelist = []
@@ -1218,7 +1218,7 @@ class FetchData(object):
     """
     A class which represents the fetcher state for a given URI.
     """
-    def __init__(self, url, d, localonly = False):
+    def __init__(self, url, d, localonly=False):
         # localpath is the location of a downloaded result. If not set, the file is local.
         self.donestamp = None
         self.needdonestamp = True
@@ -1616,7 +1616,7 @@ class FetchMethod(object):
         return []
 
 class Fetch(object):
-    def __init__(self, urls, d, cache = True, localonly = False, connection_cache = None):
+    def __init__(self, urls, d, cache=True, localonly=False, connection_cache=None):
         if localonly and cache:
             raise Exception("bb.fetch2.Fetch.__init__: cannot set cache and localonly at same time")
 

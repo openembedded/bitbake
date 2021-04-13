@@ -39,7 +39,7 @@ class TaskData:
     """
     BitBake Task Data implementation
     """
-    def __init__(self, abort = True, skiplist = None, allowincomplete = False):
+    def __init__(self, abort=True, skiplist=None, allowincomplete=False):
         self.build_targets = {}
         self.run_targets = {}
 

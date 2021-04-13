@@ -98,7 +98,7 @@ class TaskSucceeded(TaskBase):
 class TaskFailed(TaskBase):
     """Task execution failed"""
 
-    def __init__(self, task, fn, logfile, metadata, errprinted = False):
+    def __init__(self, task, fn, logfile, metadata, errprinted=False):
         self.errprinted = errprinted
         super(TaskFailed, self).__init__(task, fn, logfile, metadata)
 
@@ -179,7 +179,7 @@ class StdoutNoopContextManager:
         return sys.stdout.name
 
 
-def exec_func(func, d, dirs = None):
+def exec_func(func, d, dirs=None):
     """Execute a BB 'function'"""
 
     try:
@@ -730,7 +730,7 @@ def _exec_task(fn, task, d, quieterr):
 
     return 0
 
-def exec_task(fn, task, d, profile = False):
+def exec_task(fn, task, d, profile=False):
     try:
         quieterr = False
         if d.getVarFlag(task, "quieterrors", False) is not None:
@@ -824,7 +824,7 @@ def stamp_cleanmask_internal(taskname, d, file_name):
 
     return [cleanmask, cleanmask.replace(taskflagname, taskflagname + "_setscene")]
 
-def make_stamp(task, d, file_name = None):
+def make_stamp(task, d, file_name=None):
     """
     Creates/updates a stamp for a given task
     (d can be a data dict or dataCache)
@@ -871,7 +871,7 @@ def find_stale_stamps(task, d, file_name=None):
             found.append(name)
     return found
 
-def del_stamp(task, d, file_name = None):
+def del_stamp(task, d, file_name=None):
     """
     Removes a stamp for a given task
     (d can be a data dict or dataCache)
@@ -879,7 +879,7 @@ def del_stamp(task, d, file_name = None):
     stamp = stamp_internal(task, d, file_name)
     bb.utils.remove(stamp)
 
-def write_taint(task, d, file_name = None):
+def write_taint(task, d, file_name=None):
     """
     Creates a "taint" file which will force the specified task and its
     dependents to be re-run the next time by influencing the value of its
@@ -897,7 +897,7 @@ def write_taint(task, d, file_name = None):
     with open(taintfn, 'w') as taintf:
         taintf.write(str(uuid.uuid4()))
 
-def stampfile(taskname, d, file_name = None, noextra=False):
+def stampfile(taskname, d, file_name=None, noextra=False):
     """
     Return the stamp for a given task
     (d can be a data dict or dataCache)

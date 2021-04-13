@@ -34,7 +34,7 @@ class QueryPlugin(LayerPlugin):
             layername = self.get_layer_name(layerdir)
             logger.plain("%s  %s  %d" % (layername.ljust(20), layerdir.ljust(40), pri))
 
-    def version_str(self, pe, pv, pr = None):
+    def version_str(self, pe, pv, pr=None):
         verstr = "%s" % pv
         if pr:
             verstr = "%s-%s" % (verstr, pr)
@@ -309,7 +309,7 @@ Lists recipes with the bbappends that apply to them as subitems.
                     for f in self.tinfoil.cooker.skiplist.keys()]
         return self.show_appends_output(filenames, None, " (skipped)")
 
-    def show_appends_output(self, filenames, best_filename, name_suffix = ''):
+    def show_appends_output(self, filenames, best_filename, name_suffix=''):
         appended, missing = self.get_appends_for_files(filenames)
         if appended:
             for basename, appends in appended:

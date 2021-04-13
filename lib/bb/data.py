@@ -46,7 +46,7 @@ def init():
     """Return a new object representing the Bitbake data"""
     return _dict_type()
 
-def init_db(parent = None):
+def init_db(parent=None):
     """Return a new object representing the Bitbake data,
     optionally based on an existing object"""
     if parent is not None:
@@ -76,11 +76,11 @@ def keys(d):
 __expand_var_regexp__ = re.compile(r"\${[^{}]+}")
 __expand_python_regexp__ = re.compile(r"\${@.+?}")
 
-def expand(s, d, varname = None):
+def expand(s, d, varname=None):
     """Variable expansion using the data store"""
     return d.expand(s, varname)
 
-def expandKeys(alterdata, readdata = None):
+def expandKeys(alterdata, readdata=None):
     if readdata is None:
         readdata = alterdata
 
@@ -111,13 +111,13 @@ def inheritFromOS(d, savedenv, permitted):
     for s in savedenv.keys():
         if s in permitted:
             try:
-                d.setVar(s, savedenv.getVar(s), op = 'from env')
+                d.setVar(s, savedenv.getVar(s), op='from env')
                 if s in exportlist:
-                    d.setVarFlag(s, "export", True, op = 'auto env export')
+                    d.setVarFlag(s, "export", True, op='auto env export')
             except TypeError:
                 pass
 
-def emit_var(var, o=sys.__stdout__, d = init(), all=False):
+def emit_var(var, o=sys.__stdout__, d=init(), all=False):
     """Emit a variable to be sourced by a shell."""
     func = d.getVarFlag(var, "func", False)
     if d.getVarFlag(var, 'python', False) and func:
@@ -185,7 +185,7 @@ def emit_var(var, o=sys.__stdout__, d = init(), all=False):
     o.write('%s="%s"\n' % (varExpanded, alter))
     return False
 
-def emit_env(o=sys.__stdout__, d = init(), all=False):
+def emit_env(o=sys.__stdout__, d=init(), all=False):
     """Emits all items in the data store in a format such that it can be sourced by a shell."""
 
     isfunc = lambda key: bool(d.getVarFlag(key, "func", False))
@@ -212,7 +212,7 @@ def exported_vars(d):
         if value is not None:
             yield key, str(value)
 
-def emit_func(func, o=sys.__stdout__, d = init()):
+def emit_func(func, o=sys.__stdout__, d=init()):
     """Emits all items in the data store in a format such that it can be sourced by a shell."""
 
     keys = (key for key in d.keys() if not key.startswith("__") and not d.getVarFlag(key, "func", False))
@@ -239,10 +239,10 @@ _functionfmt = """
 def {function}(d):
 {body}"""
 
-def emit_func_python(func, o=sys.__stdout__, d = init()):
+def emit_func_python(func, o=sys.__stdout__, d=init()):
     """Emits all items in the data store in a format such that it can be sourced by a shell."""
 
-    def write_func(func, o, call = False):
+    def write_func(func, o, call=False):
         body = d.getVar(func, False)
         if not body.startswith("def"):
             body = _functionfmt.format(function=func, body=body)
@@ -272,7 +272,7 @@ def emit_func_python(func, o=sys.__stdout__, d = init()):
 
 def update_data(d):
     """Performs final steps upon the datastore, including application of overrides"""
-    d.finalize(parent = True)
+    d.finalize(parent=True)
 
 def build_dependencies(key, keys, shelldeps, varflagsexcl, d):
     deps = set()

@@ -304,7 +304,7 @@ def _print_trace(body, line):
             error.append('     %.4d:%s' % (i, body[i-1].rstrip()))
     return error
 
-def better_compile(text, file, realfile, mode = "exec", lineno = 0):
+def better_compile(text, file, realfile, mode="exec", lineno=0):
     """
     A better compile method. This method
     will print the offending lines.
@@ -393,7 +393,7 @@ def _print_exception(t, value, tb, realfile, text, context):
     finally:
         logger.error("\n".join(error))
 
-def better_exec(code, context, text = None, realfile = "<code>", pythonexception=False):
+def better_exec(code, context, text=None, realfile="<code>", pythonexception=False):
     """
     Similiar to better_compile, better_exec will
     print the lines that are responsible for the
@@ -424,7 +424,7 @@ def better_exec(code, context, text = None, realfile = "<code>", pythonexception
 def simple_exec(code, context):
     exec(code, get_context(), context)
 
-def better_eval(source, locals, extraglobals = None):
+def better_eval(source, locals, extraglobals=None):
     ctx = get_context()
     if extraglobals:
         ctx = copy.copy(ctx)
@@ -736,7 +736,7 @@ def mkdirhier(directory):
         if e.errno != errno.EEXIST or not os.path.isdir(directory):
             raise e
 
-def movefile(src, dest, newmtime = None, sstat = None):
+def movefile(src, dest, newmtime=None, sstat=None):
     """Moves a file from src to dest, preserving all permissions and
     attributes; mtime will be preserved even when moving across
     filesystems.  Returns true on success and false on failure. Move is
@@ -829,7 +829,7 @@ def movefile(src, dest, newmtime = None, sstat = None):
         newmtime = sstat[stat.ST_MTIME]
     return newmtime
 
-def copyfile(src, dest, newmtime = None, sstat = None):
+def copyfile(src, dest, newmtime=None, sstat=None):
     """
     Copies a file from src to dest, preserving all permissions and
     attributes; mtime will be preserved even when moving across
@@ -909,7 +909,7 @@ def copyfile(src, dest, newmtime = None, sstat = None):
         newmtime = sstat[stat.ST_MTIME]
     return newmtime
 
-def break_hardlinks(src, sstat = None):
+def break_hardlinks(src, sstat=None):
     """
     Ensures src is the only hardlink to this file.  Other hardlinks,
     if any, are not affected (other than in their st_nlink value, of
@@ -926,7 +926,7 @@ def break_hardlinks(src, sstat = None):
         return True
     return copyfile(src, src, sstat=sstat)
 
-def which(path, item, direction = 0, history = False, executable=False):
+def which(path, item, direction=0, history=False, executable=False):
     """
     Locate `item` in the list of paths `path` (colon separated string like $PATH).
     If `direction` is non-zero then the list is reversed.
@@ -1114,7 +1114,7 @@ def cpu_count():
 def nonblockingfd(fd):
     fcntl.fcntl(fd, fcntl.F_SETFL, fcntl.fcntl(fd, fcntl.F_GETFL) | os.O_NONBLOCK)
 
-def process_profilelog(fn, pout = None):
+def process_profilelog(fn, pout=None):
     # Either call with a list of filenames and set pout or a filename and optionally pout.
     if not pout:
         pout = fn + '.processed'

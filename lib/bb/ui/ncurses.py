@@ -86,7 +86,7 @@ class NCursesUI:
         def erase( self ):
             self.win.erase()
 
-        def setScrolling( self, b = True ):
+        def setScrolling( self, b=True ):
             self.win.scrollok( b )
             self.win.idlok( b )
 

@@ -3086,7 +3086,7 @@ class ParserReflect(object):
 
 def yacc(method='LALR', debug=yaccdebug, module=None, tabmodule=tab_module, start=None, 
          check_recursion=1, optimize=0, write_tables=1, debugfile=debug_file,outputdir='',
-         debuglog=None, errorlog = None, picklefile=None):
+         debuglog=None, errorlog=None, picklefile=None):
 
     global parse                 # Reference to the parsing method of the last built parser
 

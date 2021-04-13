@@ -389,7 +389,7 @@ def drain_events_errorhandling(eventHandler):
         if isinstance(event, logging.LogRecord):
             logger.handle(event)
 
-def main(server, eventHandler, params, tf = TerminalFilter):
+def main(server, eventHandler, params, tf=TerminalFilter):
 
     try:
         if not params.observe_only:

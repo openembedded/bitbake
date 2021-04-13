@@ -70,7 +70,7 @@ class PRServer(SimpleXMLRPCServer):
         self.quitpipein, self.quitpipeout = os.pipe()
 
         self.requestqueue = queue.Queue()
-        self.handlerthread = threading.Thread(target = self.process_request_thread)
+        self.handlerthread = threading.Thread(target=self.process_request_thread)
         self.handlerthread.daemon = False
 
     def process_request_thread(self):
