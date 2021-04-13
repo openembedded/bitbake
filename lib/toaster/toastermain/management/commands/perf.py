@@ -16,7 +16,7 @@ from django.conf import settings
 
 
 class Command(BaseCommand):
-    help    = "Test the response time for all toaster urls"
+    help = "Test the response time for all toaster urls"
 
     def handle(self, *args, **options):
         root_urlconf = __import__(settings.ROOT_URLCONF)

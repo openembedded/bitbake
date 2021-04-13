@@ -35,7 +35,7 @@ def _log(msg):
     if 1 == verbose:
         print(msg)
     elif 2 == verbose:
-        f1=open('/tmp/toaster.log', 'a')
+        f1 = open('/tmp/toaster.log', 'a')
         f1.write("|" + msg + "|\n")
         f1.close()
 
@@ -243,7 +243,7 @@ def scan_layer_content(layer,layer_version):
             if recipes_list and 'No such' not in recipes_list:
                 for recipe in recipes_list.split('\n'):
                     recipe_path = recipe[recipe.rfind('recipes-'):]
-                    recipe_name = recipe[recipe.rfind('/')+1:].replace('.bb','')
+                    recipe_name = recipe[recipe.rfind('/') + 1:].replace('.bb','')
                     recipe_ver = recipe_name.rfind('_')
                     if recipe_ver > 0:
                         recipe_name = recipe_name[0:recipe_ver]
@@ -801,7 +801,7 @@ class XhrCustomRecipePackages(View):
             rev_deps.append(pkg)
             if (self._traverse_dependents(pkg["pk"], rev_deps,
                                           all_current_packages,
-                                          tree_level+1)):
+                                          tree_level + 1)):
                 return True
 
         return False
@@ -1078,7 +1078,7 @@ class XhrProject(View):
         for i, freqtartget in enumerate(freqtargets):
             target, count = freqtartget
             try:
-                target_next, count_next = freqtargets[i+1]
+                target_next, count_next = freqtargets[i + 1]
                 if count == count_next and target > target_next:
                     switch = target
                     continue

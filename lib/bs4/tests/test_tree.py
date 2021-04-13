@@ -154,7 +154,7 @@ class TestFindAllByName(TreeTest):
 
     def setUp(self):
         super(TreeTest, self).setUp()
-        self.tree =  self.soup("""<a>First tag.</a>
+        self.tree = self.soup("""<a>First tag.</a>
                                   <b>Second tag.</b>
                                   <c>Third <a>Nested tag.</a> tag.</c>""")
 

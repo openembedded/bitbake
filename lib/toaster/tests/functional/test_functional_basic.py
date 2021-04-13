@@ -34,41 +34,41 @@ class FuntionalTestBasic(SeleniumFunctionalTestCase):
         self.wait_until_visible('#projectstable')
         self.find_element_by_link_text_in_table('projectstable', 'selenium-project').click()
         self.assertTrue(self.element_exists('#config-nav'),'Configuration Tab does not exist')
-        project_URL=self.get_URL()
-        self.driver.find_element_by_xpath('//a[@href="'+project_URL+'"]').click()
+        project_URL = self.get_URL()
+        self.driver.find_element_by_xpath('//a[@href="' + project_URL + '"]').click()
 
         try:
-            self.driver.find_element_by_xpath("//*[@id='config-nav']/ul/li/a[@href="+'"'+project_URL+'customimages/"'+"]").click()
+            self.driver.find_element_by_xpath("//*[@id='config-nav']/ul/li/a[@href=" + '"' + project_URL + 'customimages/"' + "]").click()
             self.assertTrue(re.search("Custom images",self.driver.find_element_by_xpath("//div[@class='col-md-10']").text),'Custom images information is not loading properly')
         except:
             self.fail(msg='No Custom images tab available')
 
         try:
-            self.driver.find_element_by_xpath("//*[@id='config-nav']/ul/li/a[@href="+'"'+project_URL+'images/"'+"]").click()
+            self.driver.find_element_by_xpath("//*[@id='config-nav']/ul/li/a[@href=" + '"' + project_URL + 'images/"' + "]").click()
             self.assertTrue(re.search("Compatible image recipes",self.driver.find_element_by_xpath("//div[@class='col-md-10']").text),'The Compatible image recipes information is not loading properly')
         except:
             self.fail(msg='No Compatible image tab available')
 
         try:
-            self.driver.find_element_by_xpath("//*[@id='config-nav']/ul/li/a[@href="+'"'+project_URL+'softwarerecipes/"'+"]").click()
+            self.driver.find_element_by_xpath("//*[@id='config-nav']/ul/li/a[@href=" + '"' + project_URL + 'softwarerecipes/"' + "]").click()
             self.assertTrue(re.search("Compatible software recipes",self.driver.find_element_by_xpath("//div[@class='col-md-10']").text),'The Compatible software recipe information is not loading properly')
         except:
             self.fail(msg='No Compatible software recipe tab available')
 
         try:
-            self.driver.find_element_by_xpath("//*[@id='config-nav']/ul/li/a[@href="+'"'+project_URL+'machines/"'+"]").click()
+            self.driver.find_element_by_xpath("//*[@id='config-nav']/ul/li/a[@href=" + '"' + project_URL + 'machines/"' + "]").click()
             self.assertTrue(re.search("Compatible machines",self.driver.find_element_by_xpath("//div[@class='col-md-10']").text),'The Compatible machine information is not loading properly')
         except:
             self.fail(msg='No Compatible machines tab available')
 
         try:
-            self.driver.find_element_by_xpath("//*[@id='config-nav']/ul/li/a[@href="+'"'+project_URL+'layers/"'+"]").click()
+            self.driver.find_element_by_xpath("//*[@id='config-nav']/ul/li/a[@href=" + '"' + project_URL + 'layers/"' + "]").click()
             self.assertTrue(re.search("Compatible layers",self.driver.find_element_by_xpath("//div[@class='col-md-10']").text),'The Compatible layer information is not loading properly')
         except:
             self.fail(msg='No Compatible layers tab available')
 
         try:
-            self.driver.find_element_by_xpath("//*[@id='config-nav']/ul/li/a[@href="+'"'+project_URL+'configuration"'+"]").click()
+            self.driver.find_element_by_xpath("//*[@id='config-nav']/ul/li/a[@href=" + '"' + project_URL + 'configuration"' + "]").click()
             self.assertTrue(re.search("Bitbake variables",self.driver.find_element_by_xpath("//div[@class='col-md-10']").text),'The Bitbake variables information is not loading properly')
         except:
             self.fail(msg='No Bitbake variables tab available')
@@ -76,10 +76,10 @@ class FuntionalTestBasic(SeleniumFunctionalTestCase):
 #   testcase (1516)
     def test_review_configuration_information(self):
         self.get('')
-        self.driver.find_element_by_xpath("//div[@id='global-nav']/ul/li/a[@href="+'"'+'/toastergui/projects/'+'"'+"]").click()
+        self.driver.find_element_by_xpath("//div[@id='global-nav']/ul/li/a[@href=" + '"' + '/toastergui/projects/' + '"' + "]").click()
         self.wait_until_visible('#projectstable')
         self.find_element_by_link_text_in_table('projectstable', 'selenium-project').click()
-        project_URL=self.get_URL()
+        project_URL = self.get_URL()
 
         try:
            self.assertTrue(self.element_exists('#machine-section'),'Machine section for the project configuration page does not exist')
@@ -121,7 +121,7 @@ class FuntionalTestBasic(SeleniumFunctionalTestCase):
 #   testcase (1517)
     def test_verify_machine_information(self):
         self.get('')
-        self.driver.find_element_by_xpath("//div[@id='global-nav']/ul/li/a[@href="+'"'+'/toastergui/projects/'+'"'+"]").click()
+        self.driver.find_element_by_xpath("//div[@id='global-nav']/ul/li/a[@href=" + '"' + '/toastergui/projects/' + '"' + "]").click()
         self.wait_until_visible('#projectstable')
         self.find_element_by_link_text_in_table('projectstable', 'selenium-project').click()
 
@@ -138,14 +138,14 @@ class FuntionalTestBasic(SeleniumFunctionalTestCase):
 #   testcase (1518)
     def test_verify_most_built_recipes_information(self):
         self.get('')
-        self.driver.find_element_by_xpath("//div[@id='global-nav']/ul/li/a[@href="+'"'+'/toastergui/projects/'+'"'+"]").click()
+        self.driver.find_element_by_xpath("//div[@id='global-nav']/ul/li/a[@href=" + '"' + '/toastergui/projects/' + '"' + "]").click()
         self.wait_until_visible('#projectstable')
         self.find_element_by_link_text_in_table('projectstable', 'selenium-project').click()
-        project_URL=self.get_URL()
+        project_URL = self.get_URL()
 
         try:
             self.assertTrue(re.search("You haven't built any recipes yet",self.driver.find_element_by_id("no-most-built").text),'Default message of no builds is not present')
-            self.driver.find_element_by_xpath("//div[@id='no-most-built']/p/a[@href="+'"'+project_URL+'images/"'+"]").click()
+            self.driver.find_element_by_xpath("//div[@id='no-most-built']/p/a[@href=" + '"' + project_URL + 'images/"' + "]").click()
             self.assertTrue(re.search("Compatible image recipes",self.driver.find_element_by_xpath("//div[@class='col-md-10']").text),'The Choose a recipe to build link  is not working  properly')
         except:
             self.fail(msg='No Most built information in project detail page')
@@ -153,7 +153,7 @@ class FuntionalTestBasic(SeleniumFunctionalTestCase):
 #   testcase (1519)
     def test_verify_project_release_information(self):
         self.get('')
-        self.driver.find_element_by_xpath("//div[@id='global-nav']/ul/li/a[@href="+'"'+'/toastergui/projects/'+'"'+"]").click()
+        self.driver.find_element_by_xpath("//div[@id='global-nav']/ul/li/a[@href=" + '"' + '/toastergui/projects/' + '"' + "]").click()
         self.wait_until_visible('#projectstable')
         self.find_element_by_link_text_in_table('projectstable', 'selenium-project').click()
 
@@ -165,10 +165,10 @@ class FuntionalTestBasic(SeleniumFunctionalTestCase):
 #   testcase (1520)
     def test_verify_layer_information(self):
         self.get('')
-        self.driver.find_element_by_xpath("//div[@id='global-nav']/ul/li/a[@href="+'"'+'/toastergui/projects/'+'"'+"]").click()
+        self.driver.find_element_by_xpath("//div[@id='global-nav']/ul/li/a[@href=" + '"' + '/toastergui/projects/' + '"' + "]").click()
         self.wait_until_visible('#projectstable')
         self.find_element_by_link_text_in_table('projectstable', 'selenium-project').click()
-        project_URL=self.get_URL()
+        project_URL = self.get_URL()
 
         try:
            self.driver.find_element_by_xpath("//div[@id='layer-container']")
@@ -189,39 +189,39 @@ class FuntionalTestBasic(SeleniumFunctionalTestCase):
            self.driver.find_element_by_xpath("//input[@id='layer-add-input']")
            self.driver.find_element_by_xpath("//button[@id='add-layer-btn']")
            self.driver.find_element_by_xpath("//div[@id='layer-container']/form[@class='form-inline']/p/a[@id='view-compatible-layers']")
-           self.driver.find_element_by_xpath("//div[@id='layer-container']/form[@class='form-inline']/p/a[@href="+'"'+project_URL+'importlayer"'+"]")
+           self.driver.find_element_by_xpath("//div[@id='layer-container']/form[@class='form-inline']/p/a[@href=" + '"' + project_URL + 'importlayer"' + "]")
         except:
             self.fail(msg='No Layer information in project detail page')
 
 #   testcase (1521)
     def test_verify_project_detail_links(self):
         self.get('')
-        self.driver.find_element_by_xpath("//div[@id='global-nav']/ul/li/a[@href="+'"'+'/toastergui/projects/'+'"'+"]").click()
+        self.driver.find_element_by_xpath("//div[@id='global-nav']/ul/li/a[@href=" + '"' + '/toastergui/projects/' + '"' + "]").click()
         self.wait_until_visible('#projectstable')
         self.find_element_by_link_text_in_table('projectstable', 'selenium-project').click()
-        project_URL=self.get_URL()
+        project_URL = self.get_URL()
 
-        self.driver.find_element_by_xpath("//div[@id='project-topbar']/ul[@class='nav nav-tabs']/li[@id='topbar-configuration-tab']/a[@href="+'"'+project_URL+'"'+"]").click()
-        self.assertTrue(re.search("Configuration",self.driver.find_element_by_xpath("//div[@id='project-topbar']/ul[@class='nav nav-tabs']/li[@id='topbar-configuration-tab']/a[@href="+'"'+project_URL+'"'+"]").text), 'Configuration tab in project topbar is misspelled')
+        self.driver.find_element_by_xpath("//div[@id='project-topbar']/ul[@class='nav nav-tabs']/li[@id='topbar-configuration-tab']/a[@href=" + '"' + project_URL + '"' + "]").click()
+        self.assertTrue(re.search("Configuration",self.driver.find_element_by_xpath("//div[@id='project-topbar']/ul[@class='nav nav-tabs']/li[@id='topbar-configuration-tab']/a[@href=" + '"' + project_URL + '"' + "]").text), 'Configuration tab in project topbar is misspelled')
 
         try:
-            self.driver.find_element_by_xpath("//div[@id='project-topbar']/ul[@class='nav nav-tabs']/li/a[@href="+'"'+project_URL+'builds/"'+"]").click()
-            self.assertTrue(re.search("Builds",self.driver.find_element_by_xpath("//div[@id='project-topbar']/ul[@class='nav nav-tabs']/li/a[@href="+'"'+project_URL+'builds/"'+"]").text), 'Builds tab in project topbar is misspelled')
+            self.driver.find_element_by_xpath("//div[@id='project-topbar']/ul[@class='nav nav-tabs']/li/a[@href=" + '"' + project_URL + 'builds/"' + "]").click()
+            self.assertTrue(re.search("Builds",self.driver.find_element_by_xpath("//div[@id='project-topbar']/ul[@class='nav nav-tabs']/li/a[@href=" + '"' + project_URL + 'builds/"' + "]").text), 'Builds tab in project topbar is misspelled')
             self.driver.find_element_by_xpath("//div[@id='empty-state-projectbuildstable']")
         except:
             self.fail(msg='Builds tab information is not present')
 
         try:
-            self.driver.find_element_by_xpath("//div[@id='project-topbar']/ul[@class='nav nav-tabs']/li/a[@href="+'"'+project_URL+'importlayer"'+"]").click()
-            self.assertTrue(re.search("Import layer",self.driver.find_element_by_xpath("//div[@id='project-topbar']/ul[@class='nav nav-tabs']/li/a[@href="+'"'+project_URL+'importlayer"'+"]").text), 'Import layer tab in project topbar is misspelled')
+            self.driver.find_element_by_xpath("//div[@id='project-topbar']/ul[@class='nav nav-tabs']/li/a[@href=" + '"' + project_URL + 'importlayer"' + "]").click()
+            self.assertTrue(re.search("Import layer",self.driver.find_element_by_xpath("//div[@id='project-topbar']/ul[@class='nav nav-tabs']/li/a[@href=" + '"' + project_URL + 'importlayer"' + "]").text), 'Import layer tab in project topbar is misspelled')
             self.driver.find_element_by_xpath("//fieldset[@id='repo-select']")
             self.driver.find_element_by_xpath("//fieldset[@id='git-repo']")
         except:
             self.fail(msg='Import layer tab not loading properly')
 
         try:
-            self.driver.find_element_by_xpath("//div[@id='project-topbar']/ul[@class='nav nav-tabs']/li/a[@href="+'"'+project_URL+'newcustomimage/"'+"]").click()
-            self.assertTrue(re.search("New custom image",self.driver.find_element_by_xpath("//div[@id='project-topbar']/ul[@class='nav nav-tabs']/li/a[@href="+'"'+project_URL+'newcustomimage/"'+"]").text), 'New custom image tab in project topbar is misspelled')
+            self.driver.find_element_by_xpath("//div[@id='project-topbar']/ul[@class='nav nav-tabs']/li/a[@href=" + '"' + project_URL + 'newcustomimage/"' + "]").click()
+            self.assertTrue(re.search("New custom image",self.driver.find_element_by_xpath("//div[@id='project-topbar']/ul[@class='nav nav-tabs']/li/a[@href=" + '"' + project_URL + 'newcustomimage/"' + "]").text), 'New custom image tab in project topbar is misspelled')
             self.assertTrue(re.search("Select the image recipe you want to customise",self.driver.find_element_by_xpath("//div[@class='col-md-12']/h2").text),'The new custom image tab is not loading correctly')
         except:
             self.fail(msg='New custom image tab not loading properly')

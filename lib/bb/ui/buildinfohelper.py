@@ -289,7 +289,7 @@ class ORMWrapper(object):
             object_changed = True
 
             outcome_task_setscene = Task.objects.get(task_executed=True, build=task_object.build,
-                                    recipe=task_object.recipe, task_name=task_object.task_name+"_setscene").outcome
+                                    recipe=task_object.recipe, task_name=task_object.task_name + "_setscene").outcome
             if outcome_task_setscene == Task.OUTCOME_SUCCESS:
                 task_object.sstate_result = Task.SSTATE_RESTORED
                 object_changed = True
@@ -341,7 +341,7 @@ class ORMWrapper(object):
         # then we are wholly responsible for the data
         # and therefore we return the 'real' recipe rather than the build
         # history copy of the recipe.
-        if  recipe_information['layer_version'].build is not None and \
+        if recipe_information['layer_version'].build is not None and \
             recipe_information['layer_version'].build.project == \
                 Project.objects.get_or_create_default_project():
             return recipe
@@ -990,7 +990,7 @@ class BuildInfoHelper(object):
             pathRE = pathRE[:-1]
 
         p = re.compile(pathRE)
-        path=re.sub(r'[$^]',r'',pathRE)
+        path = re.sub(r'[$^]',r'',pathRE)
         # Heuristics: we always match recipe to the deepest layer path in
         # the discovered layers
         for lvo in sorted(self.orm_wrapper.layer_version_objects,
@@ -1161,7 +1161,7 @@ class BuildInfoHelper(object):
                         for pp in path_prefixes:
                             if abs_file_name.startswith(pp + "/"):
                                 # preserve layer name in relative path
-                                vh['file']=abs_file_name[pp.rfind("/")+1:]
+                                vh['file'] = abs_file_name[pp.rfind("/") + 1:]
                                 break
 
         # save the variables
@@ -1283,7 +1283,7 @@ class BuildInfoHelper(object):
 
         assert identifier in self.internal_state['taskdata']
         identifierlist = identifier.split(":")
-        realtaskfile = ":".join(identifierlist[0:len(identifierlist)-1])
+        realtaskfile = ":".join(identifierlist[0:len(identifierlist) - 1])
         recipe_information = self._get_recipe_information_from_taskfile(realtaskfile)
         recipe = self.orm_wrapper.get_update_recipe_object(recipe_information, True)
         task_information = self._get_task_information(event,recipe)
@@ -1684,7 +1684,7 @@ class BuildInfoHelper(object):
         'do_populate_sdk_ext'. The first two will be implemented later.
         """
         task_vars = BuildInfoHelper._get_data_from_event(event)
-        task_name = task_vars['task'][task_vars['task'].find(':')+1:]
+        task_name = task_vars['task'][task_vars['task'].find(':') + 1:]
         task_artifacts = task_vars['artifacts']
 
         if task_name in ['do_populate_sdk', 'do_populate_sdk_ext']:

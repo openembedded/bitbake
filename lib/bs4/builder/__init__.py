@@ -241,7 +241,7 @@ class HTMLTreeBuilder(TreeBuilder):
     cdata_list_attributes = {
         "*": ['class', 'accesskey', 'dropzone'],
         "a": ['rel', 'rev'],
-        "link":  ['rel', 'rev'],
+        "link": ['rel', 'rev'],
         "td": ["headers"],
         "th": ["headers"],
         "td": ["headers"],

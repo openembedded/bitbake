@@ -207,10 +207,10 @@ if major == 3 and minor == 2 and not CONSTRUCTOR_TAKES_STRICT:
 
         # Now parse the data between i+1 and j into a tag and attrs
         attrs = []
-        match = tagfind.match(rawdata, i+1)
+        match = tagfind.match(rawdata, i + 1)
         assert match, 'unexpected call to parse_starttag()'
         k = match.end()
-        self.lasttag = tag = rawdata[i+1:k].lower()
+        self.lasttag = tag = rawdata[i + 1:k].lower()
         while k < endpos:
             if self.strict:
                 m = attrfind.match(rawdata, k)

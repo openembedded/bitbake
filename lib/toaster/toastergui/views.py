@@ -126,7 +126,7 @@ def _lv_to_dict(prj, x=None):
     return {"id": x.pk,
             "name": x.layer.name,
             "tooltip": "%s | %s" % (x.layer.vcs_url,x.get_vcs_reference()),
-            "detail": "(%s" % x.layer.vcs_url + (")" if x.release is None else " | "+x.get_vcs_reference()+")"),
+            "detail": "(%s" % x.layer.vcs_url + (")" if x.release is None else " | " + x.get_vcs_reference() + ")"),
             "giturl": x.layer.vcs_url,
             "layerdetailurl": reverse('layerdetails', args=(prj.id,x.pk)),
             "revision": x.get_vcs_reference(),
@@ -138,7 +138,7 @@ def _build_page_range(paginator, index=1):
         page = paginator.page(index)
     except PageNotAnInteger:
         page = paginator.page(1)
-    except  EmptyPage:
+    except EmptyPage:
         page = paginator.page(paginator.num_pages)
 
 
@@ -147,10 +147,10 @@ def _build_page_range(paginator, index=1):
     for i in range(1,5):
         if (page.number + i) <= paginator.num_pages:
             page.page_range = page.page_range + [page.number + i]
-            crt_range +=1
+            crt_range += 1
         if (page.number - i) > 0:
-            page.page_range =  [page.number -i] + page.page_range
-            crt_range +=1
+            page.page_range = [page.number - i] + page.page_range
+            crt_range += 1
         if crt_range == 4:
             break
     return page
@@ -186,7 +186,7 @@ class RedirectException(Exception):
         self.view = view
         self.g = g
         self.mandatory_parameters = mandatory_parameters
-        self.oargs  = args
+        self.oargs = args
         self.okwargs = kwargs
 
     def get_redirect_response(self):
@@ -248,9 +248,9 @@ def _get_toggle_order(request, orderkey, toggle_reverse=False):
         return "%s:-" % orderkey if request.GET.get('orderby', "") == "%s:+" % orderkey else "%s:+" % orderkey
 
 def _get_toggle_order_icon(request, orderkey):
-    if request.GET.get('orderby', "") == "%s:+"%orderkey:
+    if request.GET.get('orderby', "") == "%s:+" % orderkey:
         return "down"
-    elif request.GET.get('orderby', "") == "%s:-"%orderkey:
+    elif request.GET.get('orderby', "") == "%s:-" % orderkey:
         return "up"
     else:
         return None
@@ -328,7 +328,7 @@ def _get_queryset(model, queryset, filter_string, search_term, ordering_string, 
     if ordering_string:
         column, order = ordering_string.split(':')
         if column == re.sub('-','',ordering_secondary):
-            ordering_secondary=''
+            ordering_secondary = ''
         if order.lower() == DESCENDING:
             column = '-' + column
         if ordering_secondary:
@@ -355,11 +355,11 @@ def _set_parameters_values(pagesize, orderby, request):
     from django.urls import resolve
     current_url = resolve(request.path_info).url_name
     request.session['%s_count' % current_url] = pagesize
-    request.session['%s_orderby' % current_url] =orderby
+    request.session['%s_orderby' % current_url] = orderby
 
 # date range: normalize GUI's dd/mm/yyyy to date object
 def _normalize_input_date(date_str,default):
-    date_str=re.sub('/', '-', date_str)
+    date_str = re.sub('/', '-', date_str)
     # accept dd/mm/yyyy to d/m/yy
     try:
         date_in = datetime.strptime(date_str, "%d-%m-%Y")
@@ -377,7 +377,7 @@ def _normalize_input_date(date_str,default):
 # "completed_on__gte!completed_on__lt:2015-03-01!2015-03-02"
 def _modify_date_range_filter(filter_string):
     # was the date range radio button selected?
-    if 0 >  filter_string.find('_daterange'):
+    if 0 > filter_string.find('_daterange'):
         return filter_string,''
     # normalize GUI dates to database format
     filter_string = filter_string.replace('_daterange','').replace(':','!')
@@ -389,12 +389,12 @@ def _modify_date_range_filter(filter_string):
     date_from = _normalize_input_date(filter_list[2],today)
     date_to = _normalize_input_date(filter_list[3],today)
     # swap dates if manually set dates are out of order
-    if  date_to < date_from:
+    if date_to < date_from:
         date_to,date_from = date_from,date_to
     # convert to strings, make 'date_to' inclusive by moving to begining of next day
     date_from_str = date_from.strftime("%Y-%m-%d")
-    date_to_str = (date_to+timedelta(days=1)).strftime("%Y-%m-%d")
-    filter_string=filter_list[0]+'!'+filter_list[1]+':'+date_from_str+'!'+date_to_str
+    date_to_str = (date_to + timedelta(days=1)).strftime("%Y-%m-%d")
+    filter_string = filter_list[0] + '!' + filter_list[1] + ':' + date_from_str + '!' + date_to_str
     daterange_selected = re.sub('__.*','', date_id)
     return filter_string,daterange_selected
 
@@ -408,17 +408,17 @@ def _add_daterange_context(queryset_all, request, daterange_list):
     context_date['last_date_to'] = request.GET.get('last_date_to',context_date['last_date_from'])
     # calculate the date ranges, avoid second sort for 'created'
     # fetch the respective max range from the database
-    context_date['daterange_filter']=''
+    context_date['daterange_filter'] = ''
     for key in daterange_list:
         queryset_key = queryset_all.order_by(key)
         try:
-            context_date['dateMin_'+key]=timezone.localtime(getattr(queryset_key.first(),key)).strftime("%d/%m/%Y")
+            context_date['dateMin_' + key] = timezone.localtime(getattr(queryset_key.first(),key)).strftime("%d/%m/%Y")
         except AttributeError:
-            context_date['dateMin_'+key]=timezone.localtime(timezone.now())
+            context_date['dateMin_' + key] = timezone.localtime(timezone.now())
         try:
-            context_date['dateMax_'+key]=timezone.localtime(getattr(queryset_key.last(),key)).strftime("%d/%m/%Y")
+            context_date['dateMax_' + key] = timezone.localtime(getattr(queryset_key.last(),key)).strftime("%d/%m/%Y")
         except AttributeError:
-            context_date['dateMax_'+key]=timezone.localtime(timezone.now())
+            context_date['dateMax_' + key] = timezone.localtime(timezone.now())
     return context_date,today_begin,yesterday_begin
 
 
@@ -458,7 +458,7 @@ def builddashboard(request, build_id):
         package_set = t.target_installed_package_set.all()
         package_set_len = len(package_set)
         for ps_start in range(0,package_set_len,500):
-            ps_stop = min(ps_start+500,package_set_len)
+            ps_stop = min(ps_start + 500,package_set_len)
             for package in Package.objects.filter(id__in=[x.package_id for x in package_set[ps_start:ps_stop]]):
                 pkgsz = pkgsz + package.size
                 if package.installed_name:
@@ -523,16 +523,16 @@ def builddashboard(request, build_id):
 def generateCoveredList2(revlist=None):
     if not revlist:
         revlist = []
-    covered_list =  [x for x in revlist if x.outcome == Task.OUTCOME_COVERED]
+    covered_list = [x for x in revlist if x.outcome == Task.OUTCOME_COVERED]
     while len(covered_list):
-        revlist =  [x for x in revlist if x.outcome != Task.OUTCOME_COVERED]
+        revlist = [x for x in revlist if x.outcome != Task.OUTCOME_COVERED]
         if len(revlist) > 0:
             return revlist
 
         newlist = _find_task_revdep_list(covered_list)
 
         revlist = list(set(revlist + newlist))
-        covered_list =  [x for x in revlist if x.outcome == Task.OUTCOME_COVERED]
+        covered_list = [x for x in revlist if x.outcome == Task.OUTCOME_COVERED]
     return revlist
 
 def task(request, build_id, task_id):
@@ -543,10 +543,10 @@ def task(request, build_id, task_id):
     task_object = tasks_list[0]
     dependencies = sorted(
         _find_task_dep(task_object),
-        key=lambda t:'%s_%s %s'%(t.recipe.name, t.recipe.version, t.task_name))
+        key=lambda t:'%s_%s %s' % (t.recipe.name, t.recipe.version, t.task_name))
     reverse_dependencies = sorted(
         _find_task_revdep(task_object),
-        key=lambda t:'%s_%s %s'%(t.recipe.name, t.recipe.version, t.task_name))
+        key=lambda t:'%s_%s %s' % (t.recipe.name, t.recipe.version, t.task_name))
     coveredBy = ''
     if (task_object.outcome == Task.OUTCOME_COVERED):
 #        _list = generateCoveredList( task )
@@ -556,15 +556,15 @@ def task(request, build_id, task_id):
     if task_object.outcome == task_object.OUTCOME_FAILED:
         pass
 
-    uri_list= []
+    uri_list = []
     variables = Variable.objects.filter(build=build_id)
-    v=variables.filter(variable_name='SSTATE_DIR')
+    v = variables.filter(variable_name='SSTATE_DIR')
     if v.count() > 0:
         uri_list.append(v[0].variable_value)
-    v=variables.filter(variable_name='SSTATE_MIRRORS')
+    v = variables.filter(variable_name='SSTATE_MIRRORS')
     if (v.count() > 0):
         for mirror in v[0].variable_value.split('\\n'):
-            s=re.sub('.* ','',mirror.strip(' \t\n\r'))
+            s = re.sub('.* ','',mirror.strip(' \t\n\r'))
             if len(s):
                 uri_list.append(s)
 
@@ -579,7 +579,7 @@ def task(request, build_id, task_id):
             'log_body': log_body,
             'showing_matches': False,
             'uri_list': uri_list,
-            'task_in_tasks_table_pg':  int(task_object.order / 25) + 1
+            'task_in_tasks_table_pg': int(task_object.order / 25) + 1
     }
     if request.GET.get('show_matches', ""):
         context['showing_matches'] = True
@@ -597,8 +597,8 @@ def recipe(request, build_id, recipe_id, active_tab="1"):
 
     recipe_object = Recipe.objects.get(pk=recipe_id)
     layer_version = Layer_Version.objects.get(pk=recipe_object.layer_version_id)
-    layer  = Layer.objects.get(pk=layer_version.layer_id)
-    tasks_list  = Task.objects.filter(recipe_id=recipe_id, build_id=build_id).exclude(order__isnull=True).exclude(task_name__endswith='_setscene').exclude(outcome=Task.OUTCOME_NA)
+    layer = Layer.objects.get(pk=layer_version.layer_id)
+    tasks_list = Task.objects.filter(recipe_id=recipe_id, build_id=build_id).exclude(order__isnull=True).exclude(task_name__endswith='_setscene').exclude(outcome=Task.OUTCOME_NA)
     package_count = Package.objects.filter(recipe_id=recipe_id).filter(build_id=build_id).filter(size__gte=0).count()
 
     if active_tab != '1' and active_tab != '3' and active_tab != '4':
@@ -623,7 +623,7 @@ def recipe_packages(request, build_id, recipe_id):
         return redirect(builds)
 
     (pagesize, orderby) = _get_parameters_values(request, 10, 'name:+')
-    mandatory_parameters = {'count': pagesize,  'page': 1, 'orderby': orderby}
+    mandatory_parameters = {'count': pagesize, 'page': 1, 'orderby': orderby}
     retval = _verify_parameters(request.GET, mandatory_parameters)
     if retval:
         return _redirect_parameters('recipe_packages', request.GET, mandatory_parameters, build_id=build_id, recipe_id=recipe_id)
@@ -690,7 +690,7 @@ def _get_dir_entries(build_id, target_id, start):
         Target_File.ITYPE_BLOCK: 'b',
     }
     response = []
-    objects  = Target_File.objects.filter(target__exact=target_id, directory__path=start)
+    objects = Target_File.objects.filter(target__exact=target_id, directory__path=start)
     target_packages = Target_Installed_Package.objects.filter(target__exact=target_id).values_list('package_id', flat=True)
     for o in objects:
         # exclude root inode '/'
@@ -723,7 +723,7 @@ def _get_dir_entries(build_id, target_id, start):
                         resolved_path = tf.path
                         resolved_id = tf.sym_target_id
 
-                    thisfile=Package_File.objects.all().filter(path__exact=resolved_path, package_id__in=target_packages)
+                    thisfile = Package_File.objects.all().filter(path__exact=resolved_path, package_id__in=target_packages)
                     if thisfile.count():
                         p = Package.objects.get(pk=thisfile[0].package_id)
                         entry['installed_package'] = p.installed_name
@@ -746,8 +746,8 @@ def _get_dir_entries(build_id, target_id, start):
             traceback.print_exc()
 
     # sort by directories first, then by name
-    rsorted = sorted(response, key=lambda entry:  entry['name'])
-    rsorted = sorted(rsorted, key=lambda entry:  entry['isdir'], reverse=True)
+    rsorted = sorted(response, key=lambda entry: entry['name'])
+    rsorted = sorted(rsorted, key=lambda entry: entry['isdir'], reverse=True)
     return json.dumps(rsorted, cls=LazyEncoder).replace('</', '<\\/')
 
 def dirinfo(request, build_id, target_id, file_path=None):
@@ -839,17 +839,17 @@ def configuration(request, build_id):
 def configvars(request, build_id):
     template = 'configvars.html'
     (pagesize, orderby) = _get_parameters_values(request, 100, 'variable_name:+')
-    mandatory_parameters = {'count': pagesize,  'page': 1, 'orderby': orderby, 'filter': 'description__regex:.+'}
+    mandatory_parameters = {'count': pagesize, 'page': 1, 'orderby': orderby, 'filter': 'description__regex:.+'}
     retval = _verify_parameters(request.GET, mandatory_parameters)
     (filter_string, search_term, ordering_string) = _search_tuple(request, Variable)
     if retval:
         # if new search, clear the default filter
         if search_term and len(search_term):
-            mandatory_parameters['filter']=''
+            mandatory_parameters['filter'] = ''
         return _redirect_parameters('configvars', request.GET, mandatory_parameters, build_id=build_id)
 
     queryset = Variable.objects.filter(build=build_id).exclude(variable_name__istartswith='B_').exclude(variable_name__istartswith='do_')
-    queryset_with_search =  _get_queryset(Variable, queryset, None, search_term, ordering_string, 'variable_name').exclude(variable_value='',vhistory__file_name__isnull=True)
+    queryset_with_search = _get_queryset(Variable, queryset, None, search_term, ordering_string, 'variable_name').exclude(variable_value='',vhistory__file_name__isnull=True)
     queryset = _get_queryset(Variable, queryset, filter_string, search_term, ordering_string, 'variable_name')
     # remove records where the value is empty AND there are no history files
     queryset = queryset.exclude(variable_value='',vhistory__file_name__isnull=True)
@@ -857,7 +857,7 @@ def configvars(request, build_id):
     variables = _build_page_range(Paginator(queryset, pagesize), request.GET.get('page', 1))
 
     # show all matching files (not just the last one)
-    file_filter= search_term + ":"
+    file_filter = search_term + ":"
     if filter_string.find('/conf/') > 0:
         file_filter += 'conf/(local|bblayers).conf'
     if filter_string.find('conf/machine/') > 0:
@@ -866,7 +866,7 @@ def configvars(request, build_id):
         file_filter += 'conf/distro/'
     if filter_string.find('/bitbake.conf') > 0:
         file_filter += '/bitbake.conf'
-    build_dir=re.sub("/tmp/log/.*","",Build.objects.get(pk=build_id).cooker_log_path)
+    build_dir = re.sub("/tmp/log/.*","",Build.objects.get(pk=build_id).cooker_log_path)
 
     build = Build.objects.get(pk=build_id)
 
@@ -899,7 +899,7 @@ def configvars(request, build_id):
                     'class': 'vhistory__file_name',
                     'label': 'Show:',
                     'options': [
-                               ('Local configuration variables', 'vhistory__file_name__contains:'+build_dir+'/conf/',queryset_with_search.filter(vhistory__file_name__contains=build_dir+'/conf/').count(), 'Select this filter to see variables set by the <code>local.conf</code> and <code>bblayers.conf</code> configuration files inside the <code>/build/conf/</code> directory'),
+                               ('Local configuration variables', 'vhistory__file_name__contains:' + build_dir + '/conf/',queryset_with_search.filter(vhistory__file_name__contains=build_dir + '/conf/').count(), 'Select this filter to see variables set by the <code>local.conf</code> and <code>bblayers.conf</code> configuration files inside the <code>/build/conf/</code> directory'),
                                ('Machine configuration variables', 'vhistory__file_name__contains:conf/machine/',queryset_with_search.filter(vhistory__file_name__contains='conf/machine').count(), 'Select this filter to see variables set by the configuration file(s) inside your layers <code>/conf/machine/</code> directory'),
                                ('Distro configuration variables', 'vhistory__file_name__contains:conf/distro/',queryset_with_search.filter(vhistory__file_name__contains='conf/distro').count(), 'Select this filter to see variables set by the configuration file(s) inside your layers <code>/conf/distro/</code> directory'),
                                ('Layer configuration variables', 'vhistory__file_name__contains:conf/layer.conf',queryset_with_search.filter(vhistory__file_name__contains='conf/layer.conf').count(), 'Select this filter to see variables set by the <code>layer.conf</code> configuration file inside your layers'),
@@ -966,7 +966,7 @@ def _get_package_dependencies(package_id, target_id=INVALID_KEY):
 
     if target_id != INVALID_KEY:
         rdepends_type = Package_Dependency.TYPE_TRDEPENDS
-        other_depends_types +=  [Package_Dependency.TYPE_TRECOMMENDS]
+        other_depends_types += [Package_Dependency.TYPE_TRECOMMENDS]
     else:
         rdepends_type = Package_Dependency.TYPE_RDEPENDS
         other_depends_types += [Package_Dependency.TYPE_RRECOMMENDS]
@@ -987,7 +987,7 @@ def _get_package_dependencies(package_id, target_id=INVALID_KEY):
         if target_id != INVALID_KEY:
             if Target_Installed_Package.objects.filter(target_id__exact=target_id, package_id__exact=dep_package.id).count() > 0:
                 installed = True
-        dep =   {
+        dep = {
                 'name': dep_package.name,
                 'version': version,
                 'size': dep_package.size,
@@ -1036,7 +1036,7 @@ def _get_package_alias(package):
 
 def _get_fullpackagespec(package):
     r = package.name
-    version_good = package.version is not None and  package.version != ''
+    version_good = package.version is not None and package.version != ''
     revision_good = package.revision is not None and package.revision != ''
     if version_good or revision_good:
         r += '_'
@@ -1056,7 +1056,7 @@ def package_built_detail(request, build_id, package_id):
     # follow convention for pagination w/ search although not used for this view
     queryset = Package_File.objects.filter(package_id__exact=package_id)
     (pagesize, orderby) = _get_parameters_values(request, 25, 'path:+')
-    mandatory_parameters = {'count': pagesize,  'page': 1, 'orderby': orderby}
+    mandatory_parameters = {'count': pagesize, 'page': 1, 'orderby': orderby}
     retval = _verify_parameters(request.GET, mandatory_parameters)
     if retval:
         return _redirect_parameters('package_built_detail', request.GET, mandatory_parameters, build_id=build_id, package_id=package_id)
@@ -1104,8 +1104,8 @@ def package_built_dependencies(request, build_id, package_id):
             'build': Build.objects.get(pk=build_id),
             'package': package,
             'runtime_deps': dependencies['runtime_deps'],
-            'other_deps':   dependencies['other_deps'],
-            'dependency_count': _get_package_dependency_count(package, -1,  False)
+            'other_deps': dependencies['other_deps'],
+            'dependency_count': _get_package_dependency_count(package, -1, False)
     }
     return toaster_render(request, template, context)
 
@@ -1117,7 +1117,7 @@ def package_included_detail(request, build_id, target_id, package_id):
 
     # follow convention for pagination w/ search although not used for this view
     (pagesize, orderby) = _get_parameters_values(request, 25, 'path:+')
-    mandatory_parameters = {'count': pagesize,  'page': 1, 'orderby': orderby}
+    mandatory_parameters = {'count': pagesize, 'page': 1, 'orderby': orderby}
     retval = _verify_parameters(request.GET, mandatory_parameters)
     if retval:
         return _redirect_parameters('package_included_detail', request.GET, mandatory_parameters, build_id=build_id, target_id=target_id, package_id=package_id)
@@ -1173,7 +1173,7 @@ def package_included_dependencies(request, build_id, target_id, package_id):
             'package': package,
             'target': target,
             'runtime_deps': dependencies['runtime_deps'],
-            'other_deps':   dependencies['other_deps'],
+            'other_deps': dependencies['other_deps'],
             'reverse_count': _get_package_reverse_dep_count(package, target_id),
             'dependency_count': _get_package_dependency_count(package, target_id, True)
     }
@@ -1185,7 +1185,7 @@ def package_included_reverse_dependencies(request, build_id, target_id, package_
         return redirect(builds)
 
     (pagesize, orderby) = _get_parameters_values(request, 25, 'package__name:+')
-    mandatory_parameters = {'count': pagesize,  'page': 1, 'orderby': orderby}
+    mandatory_parameters = {'count': pagesize, 'page': 1, 'orderby': orderby}
     retval = _verify_parameters(request.GET, mandatory_parameters)
     if retval:
         return _redirect_parameters('package_included_reverse_dependencies', request.GET, mandatory_parameters, build_id=build_id, target_id=target_id, package_id=package_id)
@@ -1266,7 +1266,7 @@ def _json_build_status(build_id,extend):
         build_stat['distro'] = build.distro
         build_stat['start'] = build.started_on
         # look up target name
-        target= Target.objects.get(build=build)
+        target = Target.objects.get(build=build)
         if target:
             if target.task:
                 build_stat['target'] = '%s:%s' % (target.target,target.task)
@@ -1283,20 +1283,20 @@ def _json_build_status(build_id,extend):
         if Build.IN_PROGRESS == build.outcome:
             now = timezone.now()
             timediff = now - build.started_on
-            build_stat['seconds']='%.3f' % timediff.total_seconds()
-            build_stat['clone']='%d:%d' % (build.repos_cloned,build.repos_to_clone)
-            build_stat['parse']='%d:%d' % (build.recipes_parsed,build.recipes_to_parse)
+            build_stat['seconds'] = '%.3f' % timediff.total_seconds()
+            build_stat['clone'] = '%d:%d' % (build.repos_cloned,build.repos_to_clone)
+            build_stat['parse'] = '%d:%d' % (build.recipes_parsed,build.recipes_to_parse)
             tf = Task.objects.filter(build=build)
             tfc = tf.count()
             if tfc > 0:
                 tfd = tf.exclude(order__isnull=True).count()
             else:
                 tfd = 0
-            build_stat['task']='%d:%d' % (tfd,tfc)
+            build_stat['task'] = '%d:%d' % (tfd,tfc)
         else:
             build_stat['outcome'] = build.get_outcome_text()
             timediff = build.completed_on - build.started_on
-            build_stat['seconds']='%.3f' % timediff.total_seconds()
+            build_stat['seconds'] = '%.3f' % timediff.total_seconds()
             build_stat['stop'] = build.completed_on
             messages = LogMessage.objects.all().filter(build=build)
             errors = len(messages.filter(level=LogMessage.ERROR) |
@@ -1340,7 +1340,7 @@ def json_build(request,build_id):
 import toastermain.settings
 
 from orm.models import Project, ProjectLayer, ProjectVariable
-from bldcontrol.models import  BuildEnvironment
+from bldcontrol.models import BuildEnvironment
 
 # we have a set of functions if we're in managed mode, or
 # a default "page not available" simple functions for interactive mode
@@ -1658,7 +1658,7 @@ if True:
             max_split = 1
             # add conf variables
             if 'configvarAdd' in request.POST:
-                t=request.POST['configvarAdd'].strip()
+                t = request.POST['configvarAdd'].strip()
                 if ":" in t:
                     variable, value = t.split(":", max_split)
                 else:
@@ -1668,7 +1668,7 @@ if True:
                 pt, created = ProjectVariable.objects.get_or_create(project=prj, name=variable, value=value)
             # change conf variables
             if 'configvarChange' in request.POST:
-                t=request.POST['configvarChange'].strip()
+                t = request.POST['configvarChange'].strip()
                 if ":" in t:
                     variable, value = t.split(":", max_split)
                 else:
@@ -1676,11 +1676,11 @@ if True:
                     value = ""
 
                 pt, created = ProjectVariable.objects.get_or_create(project=prj, name=variable)
-                pt.value=value
+                pt.value = value
                 pt.save()
             # remove conf variables
             if 'configvarDel' in request.POST:
-                t=request.POST['configvarDel'].strip()
+                t = request.POST['configvarDel'].strip()
                 pt = ProjectVariable.objects.get(pk=int(t)).delete()
 
             # return all project settings, filter out blacklist and elsewhere-managed variables
@@ -1781,7 +1781,7 @@ if True:
             'MACHINE', 'BBLAYERS'
         }
 
-        vars_blacklist  = {
+        vars_blacklist = {
             'PARALLEL_MAKE','BB_NUMBER_THREADS',
             'BB_DISKMON_DIRS','BB_NUMBER_THREADS','CVS_PROXY_HOST','CVS_PROXY_PORT',
             'PARALLEL_MAKE','TMPDIR',
@@ -1808,15 +1808,15 @@ if True:
             configvars = configvars.exclude(name=var)
 
         context = {
-            'project':          prj,
-            'configvars':       configvars,
-            'vars_managed':     vars_managed,
-            'vars_fstypes':     vars_fstypes,
-            'vars_blacklist':   vars_blacklist,
+            'project': prj,
+            'configvars': configvars,
+            'vars_managed': vars_managed,
+            'vars_fstypes': vars_fstypes,
+            'vars_blacklist': vars_blacklist,
         }
 
         try:
-            context['distro'] =  ProjectVariable.objects.get(project=prj, name="DISTRO").value
+            context['distro'] = ProjectVariable.objects.get(project=prj, name="DISTRO").value
             context['distro_defined'] = "1"
         except ProjectVariable.DoesNotExist:
             pass
@@ -1824,7 +1824,7 @@ if True:
             if ProjectVariable.objects.get(project=prj, name="DL_DIR").value == "${TOPDIR}/../downloads":
                 be = BuildEnvironment.objects.get(pk=str(1))
                 dl_dir = os.path.join(dirname(be.builddir), "downloads")
-                context['dl_dir'] =  dl_dir
+                context['dl_dir'] = dl_dir
                 pv, created = ProjectVariable.objects.get_or_create(project=prj, name="DL_DIR")
                 pv.value = dl_dir
                 pv.save()
@@ -1834,17 +1834,17 @@ if True:
         except (ProjectVariable.DoesNotExist, BuildEnvironment.DoesNotExist):
             pass
         try:
-            context['fstypes'] =  ProjectVariable.objects.get(project=prj, name="IMAGE_FSTYPES").value
+            context['fstypes'] = ProjectVariable.objects.get(project=prj, name="IMAGE_FSTYPES").value
             context['fstypes_defined'] = "1"
         except ProjectVariable.DoesNotExist:
             pass
         try:
-            context['image_install_append'] =  ProjectVariable.objects.get(project=prj, name="IMAGE_INSTALL_append").value
+            context['image_install_append'] = ProjectVariable.objects.get(project=prj, name="IMAGE_INSTALL_append").value
             context['image_install_append_defined'] = "1"
         except ProjectVariable.DoesNotExist:
             pass
         try:
-            context['package_classes'] =  ProjectVariable.objects.get(project=prj, name="PACKAGE_CLASSES").value
+            context['package_classes'] = ProjectVariable.objects.get(project=prj, name="PACKAGE_CLASSES").value
             context['package_classes_defined'] = "1"
         except ProjectVariable.DoesNotExist:
             pass

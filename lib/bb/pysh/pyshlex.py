@@ -51,7 +51,7 @@ _OPERATORS = dict([
 def make_partial_ops():
     partials = {}
     for k in _OPERATORS:
-        for i in range(1, len(k)+1):
+        for i in range(1, len(k) + 1):
             partials[k[:i]] = None
     return partials  
 
@@ -158,7 +158,7 @@ class WordLexer:
                 # here-documents
                 delim = '"'
             else:
-                if len(self._stack)<=1:
+                if len(self._stack) <= 1:
                     return True
                 delim = self._stack[-2][0]
             
@@ -174,13 +174,13 @@ class WordLexer:
             raise NeedMore()
         result[-1] += ''.join(buf[:pos])
         result += ["'"]
-        return pos+1, True
+        return pos + 1, True
         
     def _parse_bquote(self, buf, result, eof):
         if not buf:
             raise NeedMore()
             
-        if buf[0]=='\n':
+        if buf[0] == '\n':
             #Remove line continuations
             result[:] = ['', '', '']
         elif self._is_escapable(buf[0]):
@@ -188,7 +188,7 @@ class WordLexer:
             result += ['']
         else:
             #Keep as such
-            result[:] = ['', '\\'+buf[0], '']
+            result[:] = ['', '\\' + buf[0], '']
         
         return 1, True
         
@@ -196,13 +196,13 @@ class WordLexer:
         if not buf:
             raise NeedMore()
         pos, sep = find_chars(buf, '$\\`"')
-        if pos==-1:
+        if pos == -1:
             raise NeedMore()
             
         result[-1] += ''.join(buf[:pos])
-        if sep=='"':
+        if sep == '"':
             result += ['"']
-            return pos+1, True
+            return pos + 1, True
         else:
             #Keep everything until the separator and defer processing
             return pos, False
@@ -219,9 +219,9 @@ class WordLexer:
             raise NeedMore()
             
         result[-1] += ''.join(buf[:pos])
-        if (result[0]=='$(' and sep==')') or (result[0]=='`' and sep=='`'):
+        if (result[0] == '$(' and sep == ')') or (result[0] == '`' and sep == '`'):
             result += [sep]
-            return pos+1, True
+            return pos + 1, True
         else:
             return pos, False
             
@@ -230,34 +230,34 @@ class WordLexer:
             raise NeedMore()
             
         pos, sep = find_chars(buf, '$\\`"\'}')
-        if pos==-1:
+        if pos == -1:
             raise NeedMore()
             
         result[-1] += ''.join(buf[:pos])
-        if sep=='}':
+        if sep == '}':
             result += [sep]
-            return pos+1, True
+            return pos + 1, True
         else:
             return pos, False
             
     def _parse_dollar(self, buf, result, eof):
         sep = result[0]
-        if sep=='$':            
+        if sep == '$':            
             if not buf:
                 #TODO: handle empty $
                 raise NeedMore()
-            if buf[0]=='(':
-                if len(buf)==1:
+            if buf[0] == '(':
+                if len(buf) == 1:
                     raise NeedMore()
                     
-                if buf[1]=='(':
+                if buf[1] == '(':
                     result[0] = '$(('
                     buf[:2] = []
                 else:
                     result[0] = '$('
                     buf[:1] = []
                 
-            elif buf[0]=='{':
+            elif buf[0] == '{':
                 result[0] = '${'
                 buf[:1] = []
             else:
@@ -282,9 +282,9 @@ class WordLexer:
                 return read,True
         
         sep = result[0]    
-        if sep=='$(':
+        if sep == '$(':
             parsefunc = self._parse_command
-        elif sep=='${':
+        elif sep == '${':
             parsefunc = self._parse_parameter
         else:
             raise NotImplementedError(sep)
@@ -308,15 +308,15 @@ class WordLexer:
                 recurse = False
                 
             result = stack[-1]
-            if result[0]=="'":
+            if result[0] == "'":
                 parsefunc = self._parse_squote
-            elif result[0]=='\\':
+            elif result[0] == '\\':
                 parsefunc = self._parse_bquote
-            elif result[0]=='"':
+            elif result[0] == '"':
                 parsefunc = self._parse_dquote
-            elif result[0]=='`':
+            elif result[0] == '`':
                 parsefunc = self._parse_command
-            elif result[0][0]=='$':
+            elif result[0][0] == '$':
                 parsefunc = self._parse_dollar
             else:
                 raise NotImplementedError()
@@ -325,7 +325,7 @@ class WordLexer:
                 
             buf[:read] = []
             if closed:
-                if len(stack)>1:
+                if len(stack) > 1:
                     #Merge in parent expression
                     parsed = stack.pop()
                     stack[-1] += [parsed]
@@ -344,7 +344,7 @@ def normalize_wordtree(wtree):
         for part in wtree[1:-1]:
             if isinstance(part, list):
                 part = normalize(part)
-                if part[0]=='':
+                if part[0] == '':
                     #Move the part content back at current level
                     result += part[1:-1]
                     continue
@@ -372,7 +372,7 @@ def make_wordtree(token, here_document=False):
     
     while 1:
         pos, sep = find_chars(remaining, delimiters)
-        if pos==-1:
+        if pos == -1:
             tree += [remaining, '']
             return normalize_wordtree(tree)
         tree.append(remaining[:pos])
@@ -449,14 +449,14 @@ class HereDocLexer:
             for i,c in enumerate(self._buffer):
                 if escaped:
                     escaped = False
-                elif c=='\\':
+                elif c == '\\':
                     escaped = True
-                elif c=='\n':
+                elif c == '\n':
                     break
             else:
                 i = -1
                     
-            if i==-1 or self._buffer[i]!='\n':
+            if i == -1 or self._buffer[i] != '\n':
                 if not eof:
                     raise NeedMore()
                 #No more data, maybe the last line is closing delimiter
@@ -466,16 +466,16 @@ class HereDocLexer:
             else:
                 line = ''.join(self._buffer[:i])
                 eol = self._buffer[i]
-                self._buffer[:i+1] = []
+                self._buffer[:i + 1] = []
             
-            if self._op=='<<-':
+            if self._op == '<<-':
                 line = line.lstrip('\t')
                 
-            if line==self._delim:
+            if line == self._delim:
                 break
                 
             self._token += [line, eol]
-            if i==-1:
+            if i == -1:
                 break
     
 class Token:
@@ -489,9 +489,9 @@ class Token:
         
     def __getitem__(self, key):
         #Behave like a two elements tuple
-        if key==0:
+        if key == 0:
             return self.type
-        if key==1:
+        if key == 1:
             return self.value
         raise IndexError(key)
                
@@ -502,15 +502,15 @@ class HereDoc:
         self.name = name
         self.pendings = []
                
-TK_COMMA        = 'COMMA'
-TK_AMPERSAND    = 'AMP'
-TK_OP           = 'OP'
-TK_TOKEN        = 'TOKEN'
-TK_COMMENT      = 'COMMENT'
-TK_NEWLINE      = 'NEWLINE' 
-TK_IONUMBER     = 'IO_NUMBER'
-TK_ASSIGNMENT   = 'ASSIGNMENT_WORD'
-TK_HERENAME     = 'HERENAME'
+TK_COMMA = 'COMMA'
+TK_AMPERSAND = 'AMP'
+TK_OP = 'OP'
+TK_TOKEN = 'TOKEN'
+TK_COMMENT = 'COMMENT'
+TK_NEWLINE = 'NEWLINE' 
+TK_IONUMBER = 'IO_NUMBER'
+TK_ASSIGNMENT = 'ASSIGNMENT_WORD'
+TK_HERENAME = 'HERENAME'
 
 class Lexer:
     """Main lexer.
@@ -534,12 +534,12 @@ class Lexer:
     #       - The here-document is being delimited by self._herelexer. Once it is done
     #           the content is pushed in front of the pending token list then all these
     #           tokens are pushed once again.
-    ST_NORMAL       = 'ST_NORMAL'
-    ST_OP           = 'ST_OP'
-    ST_BACKSLASH    = 'ST_BACKSLASH'
-    ST_QUOTED       = 'ST_QUOTED'
-    ST_COMMENT      = 'ST_COMMENT'
-    ST_HEREDOC      = 'ST_HEREDOC'
+    ST_NORMAL = 'ST_NORMAL'
+    ST_OP = 'ST_OP'
+    ST_BACKSLASH = 'ST_BACKSLASH'
+    ST_QUOTED = 'ST_QUOTED'
+    ST_COMMENT = 'ST_COMMENT'
+    ST_HEREDOC = 'ST_HEREDOC'
     
     #Match end of backquote strings
     RE_BACKQUOTE_END = re.compile(r'(?<!\\)(`)')
@@ -579,7 +579,7 @@ class Lexer:
         
     def _parse(self, eof):            
         while self._state:
-            if self._pos>=len(self._input):
+            if self._pos >= len(self._input):
                 if not eof:
                     raise NeedMore()
                 elif self._state not in (self.ST_OP, self.ST_QUOTED, self.ST_HEREDOC):
@@ -590,15 +590,15 @@ class Lexer:
                     #Let the sublexer handle the eof themselves
                     pass
                 
-            if self._state==self.ST_NORMAL:
+            if self._state == self.ST_NORMAL:
                 self._parse_normal()
-            elif self._state==self.ST_COMMENT:
+            elif self._state == self.ST_COMMENT:
                 self._parse_comment()
-            elif self._state==self.ST_OP:
+            elif self._state == self.ST_OP:
                 self._parse_op(eof)
-            elif self._state==self.ST_QUOTED:
+            elif self._state == self.ST_QUOTED:
                 self._parse_quoted(eof)
-            elif self._state==self.ST_HEREDOC:
+            elif self._state == self.ST_HEREDOC:
                 self._parse_heredoc(eof)
             else:
                 assert False, "Unknown state " + str(self._state)
@@ -608,7 +608,7 @@ class Lexer:
                 
     def _parse_normal(self):
         c = self._input[self._pos]
-        if c=='\n':
+        if c == '\n':
             self._push_token(c)
             self._token = c
             self._type = TK_NEWLINE
@@ -631,7 +631,7 @@ class Lexer:
         elif self._token:
             self._token += c
             self._pos += 1
-        elif c=='#':
+        elif c == '#':
             self._state = self.ST_COMMENT
             self._type = TK_COMMENT
             self._pos += 1
@@ -643,7 +643,7 @@ class Lexer:
         assert self._token
         
         while 1:
-            if self._pos>=len(self._input):
+            if self._pos >= len(self._input):
                 if not eof:
                     raise NeedMore()
                 c = ''
@@ -663,11 +663,11 @@ class Lexer:
                 
     def _parse_comment(self):
         while 1:
-            if self._pos>=len(self._input):
+            if self._pos >= len(self._input):
                 raise NeedMore()
                 
             c = self._input[self._pos]
-            if c=='\n':
+            if c == '\n':
                 #End of comment, do not consume the end of line
                 self._state = self.ST_NORMAL
                 break
@@ -680,7 +680,7 @@ class Lexer:
         if not self._wordlexer:
             self._wordlexer = WordLexer()
         
-        if self._pos<len(self._input):
+        if self._pos < len(self._input):
              #Transfer input queue character into the subparser
             input = self._input[self._pos:]
             self._pos += len(input)
@@ -700,7 +700,7 @@ class Lexer:
         if self._herelexer is None:
             self._herelexer = HereDocLexer(self._heredoc.op, self._heredoc.name)
         
-        if self._pos<len(self._input):
+        if self._pos < len(self._input):
              #Transfer input queue character into the subparser
             input = self._input[self._pos:]
             self._pos += len(input)
@@ -728,14 +728,14 @@ class Lexer:
         if self._heredoc.op is not None:
             if self._heredoc.name is None:
                 #Here-document name
-                if self._type!=TK_TOKEN:
+                if self._type != TK_TOKEN:
                     raise ShellSyntaxError("expecting here-document name, got '%s'" % self._token)
                 self._heredoc.name = unquote_wordtree(make_wordtree(self._token))
                 self._type = TK_HERENAME
             else:
                 #Capture all tokens until the newline starting the here-document
-                if self._type==TK_NEWLINE:
-                    assert self._state==self.ST_NORMAL
+                if self._type == TK_NEWLINE:
+                    assert self._state == self.ST_NORMAL
                     self._state = self.ST_HEREDOC    
                 
                 self._heredoc.pendings.append((self._token, self._type, delim))    
@@ -749,7 +749,7 @@ class Lexer:
         # reach the section below.
                     
         #Check operators
-        if self._type==TK_OP:
+        if self._type == TK_OP:
             #False positive because of partial op matching
             op = is_op(self._token)
             if not op:
@@ -766,7 +766,7 @@ class Lexer:
                     assert self._heredoc.op is None
                     self._heredoc.op = self._token
                 
-        if self._type==TK_TOKEN:            
+        if self._type == TK_TOKEN:            
             if '=' in self._token and not delim:
                 if self._token.startswith('='):
                     #Token is a WORD... a TOKEN that is.
@@ -781,7 +781,7 @@ class Lexer:
             else:
                 reserved = get_reserved(self._token)
                 if reserved is not None:
-                    if reserved=='In' and self._for_count!=2:
+                    if reserved == 'In' and self._for_count != 2:
                         #Sorry, not a reserved word after all
                         pass
                     else:
@@ -791,11 +791,11 @@ class Lexer:
                 elif are_digits(self._token) and delim in ('<', '>'):
                     #Detect IO_NUMBER
                     self._type = TK_IONUMBER
-                elif self._token==';':
+                elif self._token == ';':
                     self._type = TK_COMMA
-                elif self._token=='&':
+                elif self._token == '&':
                     self._type = TK_AMPERSAND
-        elif self._type==TK_COMMENT:
+        elif self._type == TK_COMMENT:
             #Comments are not part of sh grammar, ignore them
             self._token = ''
             self._type = TK_TOKEN
@@ -805,7 +805,7 @@ class Lexer:
             #Track token count in 'For' expression to detect 'In' reserved words.
             #Can only be in third position, no need to go beyond
             self._for_count += 1
-            if self._for_count==3:
+            if self._for_count == 3:
                 self._for_count = None
                 
         self.on_token((self._token, self._type))
@@ -858,7 +858,7 @@ class PLYLexer(Lexer):
         
     #PLY compliant interface
     def token(self):
-        if self._current>=len(self._tokens):
+        if self._current >= len(self._tokens):
             return None
         t = self._tokens[self._current]
         self._current += 1

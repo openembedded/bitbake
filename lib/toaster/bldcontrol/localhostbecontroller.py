@@ -42,7 +42,7 @@ class LocalhostBEController(BuildEnvironmentController):
         if cwd is None:
             cwd = self.be.sourcedir
         if env is None:
-            env=os.environ.copy()
+            env = os.environ.copy()
 
         logger.debug("lbc_shellcmd: (%s) %s" % (cwd, command))
         p = subprocess.Popen(command, cwd=cwd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
@@ -74,9 +74,9 @@ class LocalhostBEController(BuildEnvironmentController):
         return local_checkout_path
 
     def setCloneStatus(self,bitbake,status,total,current,repo_name):
-        bitbake.req.build.repos_cloned=current
-        bitbake.req.build.repos_to_clone=total
-        bitbake.req.build.progress_item=repo_name
+        bitbake.req.build.repos_cloned = current
+        bitbake.req.build.repos_to_clone = total
+        bitbake.req.build.progress_item = repo_name
         bitbake.req.build.save()
 
     def setLayers(self, bitbake, layers, targets):
@@ -145,8 +145,8 @@ class LocalhostBEController(BuildEnvironmentController):
         logger.info("Using pre-checked out source for layer %s", cached_layers)
 
         # 3. checkout the repositories
-        clone_count=0
-        clone_total=len(gitrepos.keys())
+        clone_count = 0
+        clone_total = len(gitrepos.keys())
         self.setCloneStatus(bitbake,'Started',clone_total,clone_count,'')
         for giturl, commit in gitrepos.keys():
             self.setCloneStatus(bitbake,'progress',clone_total,clone_count,gitrepos[(giturl, commit)][0][0])

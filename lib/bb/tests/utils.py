@@ -639,7 +639,7 @@ class GetReferencedVars(unittest.TestCase):
         # Now test the order of the layers
         start = 0
         for i, expected_layer in enumerate(expected_layers):
-            got_layer = set(vars[start:len(expected_layer)+start])
+            got_layer = set(vars[start:len(expected_layer) + start])
             start += len(expected_layer)
             self.assertSetEqual(got_layer, expected_layer)
 

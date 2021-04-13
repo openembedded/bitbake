@@ -36,10 +36,10 @@ import pickle
 import codecs
 import hashserv
 
-logger      = logging.getLogger("BitBake")
-collectlog  = logging.getLogger("BitBake.Collection")
-buildlog    = logging.getLogger("BitBake.Build")
-parselog    = logging.getLogger("BitBake.Parsing")
+logger = logging.getLogger("BitBake")
+collectlog = logging.getLogger("BitBake.Collection")
+buildlog = logging.getLogger("BitBake.Build")
+parselog = logging.getLogger("BitBake.Parsing")
 providerlog = logging.getLogger("BitBake.Provider")
 
 class NoSpecificMatch(bb.BBHandledException):
@@ -91,7 +91,7 @@ class CookerFeatures(object):
     _feature_list = [HOB_EXTRA_CACHES, BASEDATASTORE_TRACKING, SEND_SANITYEVENTS] = list(range(3))
 
     def __init__(self):
-        self._features=set()
+        self._features = set()
 
     def setFeature(self, f):
         # validate we got a request for a feature we support
@@ -782,7 +782,7 @@ class BBCooker:
             (mc, fn, taskname, taskfn) = bb.runqueue.split_tid_mcfn(tid)
             pn = self.recipecaches[mc].pkg_fn[taskfn]
             pn = self.add_mc_prefix(mc, pn)
-            version  = "%s:%s-%s" % self.recipecaches[mc].pkg_pepvpr[taskfn]
+            version = "%s:%s-%s" % self.recipecaches[mc].pkg_pepvpr[taskfn]
             if pn not in depend_tree["pn"]:
                 depend_tree["pn"][pn] = {}
                 depend_tree["pn"][pn]["filename"] = taskfn
@@ -883,7 +883,7 @@ class BBCooker:
             if pn not in depend_tree["pn"]:
                 depend_tree["pn"][pn] = {}
                 depend_tree["pn"][pn]["filename"] = taskfn
-                version  = "%s:%s-%s" % self.recipecaches[mc].pkg_pepvpr[taskfn]
+                version = "%s:%s-%s" % self.recipecaches[mc].pkg_pepvpr[taskfn]
                 depend_tree["pn"][pn]["version"] = version
                 rdepends = self.recipecaches[mc].rundeps[taskfn]
                 rrecs = self.recipecaches[mc].runrecs[taskfn]

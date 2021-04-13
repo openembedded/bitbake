@@ -179,10 +179,10 @@ skipped recipes will also be listed, with a " (skipped)" suffix.
         items_listed = False
         for p in sorted(pkg_pn):
             if pnspec:
-                found=False
+                found = False
                 for pnm in pnspec:
                     if fnmatch.fnmatch(p, pnm):
-                        found=True
+                        found = True
                         break
                 if not found:
                     continue
@@ -279,10 +279,10 @@ Lists recipes with the bbappends that apply to them as subitems.
         appends = False
         for pn in pnlist:
             if args.pnspec:
-                found=False
+                found = False
                 for pnm in args.pnspec:
                     if fnmatch.fnmatch(pn, pnm):
-                        found=True
+                        found = True
                         break
                 if not found:
                     continue
@@ -457,10 +457,10 @@ NOTE: .bbappend files can impact the dependencies.
                             while line:
                                 m, keyword = self.match_require_include(line)
                                 # Only bbclass has the "inherit xxx" here.
-                                bbclass=""
+                                bbclass = ""
                                 if not m and f.endswith(".bbclass"):
                                     m, keyword = self.match_inherit(line)
-                                    bbclass=".bbclass"
+                                    bbclass = ".bbclass"
                                 # Find a 'require/include xxxx'
                                 if m:
                                     self.print_cross_files(bbpath, keyword, layername, f, m.group(1) + bbclass, args.filenames, ignore_layers)
@@ -476,7 +476,7 @@ NOTE: .bbappend files can impact the dependencies.
                 if not show_filenames:
                     f = self.remove_layer_prefix(f)
                     needed_file = self.remove_layer_prefix(needed_file)
-                logger.plain("%s %s %s" %(f, keyword, needed_file))
+                logger.plain("%s %s %s" % (f, keyword, needed_file))
 
     def match_inherit(self, line):
         """Match the inherit xxx line"""

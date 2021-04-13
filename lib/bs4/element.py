@@ -400,7 +400,7 @@ class PageElement(object):
         if isinstance(successor, PageElement):
             successor.extract()
         index = parent.index(self)
-        parent.insert(index+1, successor)
+        parent.insert(index + 1, successor)
 
     def find_next(self, name=None, attrs={}, text=None, **kwargs):
         """Returns the first item that matches the given criteria and
@@ -601,7 +601,7 @@ class PageElement(object):
         """
         value = self.get(value, default)
         if isinstance(value, list) or isinstance(value, tuple):
-            value =" ".join(value)
+            value = " ".join(value)
         return value
 
     def _tag_name_matches_and(self, function, tag_name):
@@ -996,7 +996,7 @@ class Tag(PageElement):
                     tag_name, tag_name))
             return self.find(tag_name)
         # We special case contents to avoid recursion.
-        elif not tag.startswith("__") and not tag=="contents":
+        elif not tag.startswith("__") and not tag == "contents":
             return self.find(tag)
         raise AttributeError(
             "'%s' object has no attribute '%s'" % (self.__class__, tag))
@@ -1319,7 +1319,7 @@ class Tag(PageElement):
             new_context = []
             new_context_ids = set([])
 
-            if tokens[index-1] in self._selector_combinators:
+            if tokens[index - 1] in self._selector_combinators:
                 # This token was consumed by the previous combinator. Skip it.
                 if self._select_debug:
                     print('  Token was consumed by the previous combinator.')
@@ -1433,7 +1433,7 @@ class Tag(PageElement):
                 # In the case of "> foo", the candidate generator is
                 # one that yields a tag's direct children (">"), and
                 # the selector is "foo".
-                next_token = tokens[index+1]
+                next_token = tokens[index + 1]
                 def recursive_select(tag):
                     if self._select_debug:
                         print('    Calling select("%s") recursively on %s %s' % (next_token, tag.name, tag.attrs))

@@ -536,7 +536,7 @@ def mirror_from_string(data):
     # Split into pairs
     if len(mirrors) % 2 != 0:
         bb.warn('Invalid mirror data %s, should have paired members.' % data)
-    return list(zip(*[iter(mirrors)]*2))
+    return list(zip(*[iter(mirrors)] * 2))
 
 def verify_checksum(ud, d, precomputed={}):
     """
@@ -930,7 +930,7 @@ def build_mirroruris(origud, mirrors, ld):
                     continue
 
                 if not trusted_network(ld, newuri):
-                    logger.debug("Mirror %s not in the list of trusted networks, skipping" %  (newuri))
+                    logger.debug("Mirror %s not in the list of trusted networks, skipping" % (newuri))
                     continue
 
                 # Create a local copy of the mirrors minus the current line

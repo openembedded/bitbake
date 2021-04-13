@@ -32,12 +32,12 @@ class HereDocument:
 def make_io_redirect(p):
     """Make an IORedirect instance from the input 'io_redirect' production."""
     name, io_number, io_target = p
-    assert name=='io_redirect'
+    assert name == 'io_redirect'
     
-    if io_target[0]=='io_file':
+    if io_target[0] == 'io_file':
         io_type, io_op, io_file = io_target
         return IORedirect(io_op, io_file, io_number)
-    elif io_target[0]=='io_here':
+    elif io_target[0] == 'io_here':
         io_type, io_op, io_name, io_content = io_target
         return HereDocument(io_op, io_name, io_content, io_number)
     else:
@@ -116,7 +116,7 @@ def get_production(productions, ptype):
     found.
     """
     for production in productions:
-        if production is not None and production[0]==ptype:
+        if production is not None and production[0] == ptype:
             return production
     raise KeyError(ptype)
     
@@ -128,7 +128,7 @@ def p_multiple_commands(p):
     """multiple_commands : newline_sequence
                          | complete_command
                          | multiple_commands complete_command"""
-    if len(p)==2:
+    if len(p) == 2:
         if p[1] is not None:
             p[0] = [p[1]]
         else:
@@ -139,7 +139,7 @@ def p_multiple_commands(p):
 def p_complete_command(p):
     """complete_command : list separator
                         | list"""
-    if len(p)==3 and p[2] and p[2][1] == '&':
+    if len(p) == 3 and p[2] and p[2][1] == '&':
         p[0] = ('async', p[1])
     else:
         p[0] = p[1]
@@ -147,7 +147,7 @@ def p_complete_command(p):
 def p_list(p):
     """list : list separator_op and_or
             |                   and_or"""
-    if len(p)==2:
+    if len(p) == 2:
         p[0] = [p[1]]
     else:
         #if p[2]!=';':
@@ -158,7 +158,7 @@ def p_and_or(p):
     """and_or : pipeline
               | and_or AND_IF linebreak pipeline
               | and_or OR_IF  linebreak pipeline"""
-    if len(p)==2:
+    if len(p) == 2:
         p[0] = p[1]
     else:
         p[0] = ('and_or', AndOr(p[2], p[1], p[4]))
@@ -170,7 +170,7 @@ def p_maybe_bang_word(p):
 def p_pipeline(p):
     """pipeline : pipe_sequence
                 | bang_word pipe_sequence"""
-    if len(p)==3:
+    if len(p) == 3:
         p[0] = ('pipeline', Pipeline(p[2][1:], True))
     else:
         p[0] = ('pipeline', Pipeline(p[1][1:]))
@@ -178,7 +178,7 @@ def p_pipeline(p):
 def p_pipe_sequence(p):
     """pipe_sequence : command
                      | pipe_sequence PIPE linebreak command"""
-    if len(p)==2:
+    if len(p) == 2:
         p[0] = ['pipe_sequence', p[1]]
     else:
         p[0] = p[1] + [p[4]]
@@ -227,7 +227,7 @@ def p_compound_list(p):
     productions = p[1:]           
     try:
         sep = get_production(productions, 'separator')
-        if sep[1]!=';':
+        if sep[1] != ';':
             raise NotImplementedError()
     except KeyError:
         pass
@@ -237,7 +237,7 @@ def p_compound_list(p):
 def p_term(p):
     """term : term separator and_or
             |                and_or"""
-    if len(p)==2:
+    if len(p) == 2:
         p[0] = ['term', p[1]]
     else:
         if p[2] is not None and p[2][1] == '&':
@@ -280,7 +280,7 @@ def p_in(p):
 def p_wordlist(p):
     """wordlist : wordlist token
                 |          token"""
-    if len(p)==2:
+    if len(p) == 2:
         p[0] = ['wordlist', ('TOKEN', p[1])]
     else:
         p[0] = p[1] + [('TOKEN', p[2])]
@@ -304,7 +304,7 @@ def p_case_list_ns(p):
 def p_case_list(p):
     """case_list : case_list case_item
                  |           case_item"""
-    if len(p)==2:
+    if len(p) == 2:
         p[0] = ['case_list', p[1]]
     else:
         p[0] = p[1] + [p[2]]
@@ -336,7 +336,7 @@ def p_case_item(p):
 def p_pattern(p):
     """pattern :              token
                | pattern PIPE token"""
-    if len(p)==2:
+    if len(p) == 2:
         p[0] = ['pattern', ('TOKEN', p[1])]
     else:
         p[0] = p[1] + [('TOKEN', p[2])]
@@ -355,7 +355,7 @@ def p_if_clause(p):
     """if_clause : if_word compound_list then_word compound_list else_part Fi
                  | if_word compound_list then_word compound_list           Fi"""
     else_part = []
-    if len(p)==7:
+    if len(p) == 7:
         else_part = p[5]
     p[0] = ('if_clause', IfCond(p[2][1:], p[4][1:], else_part))
                  
@@ -363,11 +363,11 @@ def p_else_part(p):
     """else_part : Elif compound_list then_word compound_list else_part
                  | Elif compound_list then_word compound_list
                  | Else compound_list"""
-    if len(p)==3:
+    if len(p) == 3:
         p[0] = p[2][1:]
     else:
         else_part = []
-        if len(p)==6:
+        if len(p) == 6:
             else_part = p[5]
         p[0] = ('elif', IfCond(p[2][1:], p[4][1:], else_part))
                  
@@ -391,7 +391,7 @@ def p_function_definition(p):
 def p_function_body(p):
     """function_body : compound_command
                      | compound_command redirect_list"""
-    if len(p)!=2:
+    if len(p) != 2:
         raise NotImplementedError('functions redirections lists are not implemented')    
     p[0] = p[1]    
 
@@ -429,9 +429,9 @@ def p_simple_command(p):
         if name in ('cmd_prefix', 'cmd_suffix'):
             for sube in e[1:]:
                 subname = sube[0]
-                if subname=='io_redirect':
+                if subname == 'io_redirect':
                     redirs.append(make_io_redirect(sube))
-                elif subname=='ASSIGNMENT_WORD':
+                elif subname == 'ASSIGNMENT_WORD':
                     assigns.append(sube)
                 else:
                     words.append(sube)
@@ -500,7 +500,7 @@ def p_cmd_suffix(p):
         token = p[1]
         
     if isinstance(token, tuple):
-        if token[0]=='io_redirect':
+        if token[0] == 'io_redirect':
             p[0] = suffix + [token]
         else:
             #Convert maybe_*  to TOKEN if necessary
@@ -521,7 +521,7 @@ def p_io_redirect(p):
                    | IO_NUMBER io_file
                    |           io_here
                    | IO_NUMBER io_here"""
-    if len(p)==3:
+    if len(p) == 3:
         p[0] = ('io_redirect', p[1], p[2])
     else:
         p[0] = ('io_redirect', None, p[1])
@@ -577,7 +577,7 @@ def p_separator_op(p):
 def p_separator(p):
     """separator : separator_op linebreak
                  | newline_list"""
-    if len(p)==2:
+    if len(p) == 2:
         #Ignore newlines
         p[0] = None
     else:
@@ -687,7 +687,7 @@ def format_commands(v):
     if isinstance(v, list):
         return [format_commands(c) for c in v]
     if isinstance(v, tuple):
-        if len(v)==2 and isinstance(v[0], str) and not isinstance(v[1], str):
+        if len(v) == 2 and isinstance(v[0], str) and not isinstance(v[1], str):
             if v[0] == 'async':
                 return ['AsyncList', map(format_commands, v[1])]
             else:
@@ -702,7 +702,7 @@ def format_commands(v):
         return name
     elif isinstance(v, ForLoop):
         name = ['ForLoop']
-        name += [repr(v.name)+' in ', map(str, v.items)]
+        name += [repr(v.name) + ' in ', map(str, v.items)]
         name += ['commands', map(format_commands, v.cmds)]
         return name
     elif isinstance(v, AndOr):
@@ -747,7 +747,7 @@ def print_commands(cmds, output=sys.stdout):
             for c in cmd:
                 print_tree(c, spaces + 3, output)              
         else:
-            print >>output, ' '*spaces + str(cmd)
+            print >>output, ' ' * spaces + str(cmd)
     
     formatted = format_commands(cmds)
     print_tree(formatted, 0, output)

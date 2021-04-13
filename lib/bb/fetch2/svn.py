@@ -13,11 +13,11 @@ BitBake 'Fetch' implementation for svn.
 import os
 import bb
 import re
-from   bb.fetch2 import FetchMethod
-from   bb.fetch2 import FetchError
-from   bb.fetch2 import MissingParameterError
-from   bb.fetch2 import runfetchcmd
-from   bb.fetch2 import logger
+from bb.fetch2 import FetchMethod
+from bb.fetch2 import FetchError
+from bb.fetch2 import MissingParameterError
+from bb.fetch2 import runfetchcmd
+from bb.fetch2 import logger
 
 class Svn(FetchMethod):
     """Class to fetch a module or modules from svn repositories"""

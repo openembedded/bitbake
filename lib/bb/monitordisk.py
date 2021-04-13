@@ -49,7 +49,7 @@ def getMountedDev(path):
         # Reach the "/"
         if path == mountPoint:
             break
-        parentDev= os.stat(path).st_dev
+        parentDev = os.stat(path).st_dev
 
     try:
         with open("/proc/mounts", "r") as ifp:
@@ -242,12 +242,12 @@ class diskMonitor:
                                 (path, dev, freeInode / 1024.0))
                         self.preFreeI[k] = freeInode
 
-                    if action  == "STOPTASKS" and not self.checked[k]:
+                    if action == "STOPTASKS" and not self.checked[k]:
                         logger.error("No new tasks can be executed since the disk space monitor action is \"STOPTASKS\"!")
                         self.checked[k] = True
                         rq.finish_runqueue(False)
                         bb.event.fire(bb.event.DiskFull(dev, 'inode', freeInode, path), self.configuration)
-                    elif action  == "ABORT" and not self.checked[k]:
+                    elif action == "ABORT" and not self.checked[k]:
                         logger.error("Immediately abort since the disk space monitor action is \"ABORT\"!")
                         self.checked[k] = True
                         rq.finish_runqueue(True)

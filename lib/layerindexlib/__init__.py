@@ -894,14 +894,14 @@ class LayerIndexItemObj():
         if type(data) != type(dict()):
             raise TypeError('data (%s) is not a dict' % type(data))
 
-        super().__setattr__('_lock',  lock)
+        super().__setattr__('_lock', lock)
         super().__setattr__('index', index)
-        super().__setattr__('_data',  data)
+        super().__setattr__('_data', data)
 
     def __eq__(self, other):
         if self.__class__ != other.__class__:
             return False
-        res=(self._data == other._data)
+        res = (self._data == other._data)
         return res
 
     def __bool__(self):

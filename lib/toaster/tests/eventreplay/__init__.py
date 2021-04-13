@@ -34,7 +34,7 @@ class EventReplay(TestCase):
             - set self.eventplay_dir to the value of EVENTPLAY_DIR env variable
         """
         bitbake_dir = Path(__file__.split('lib/toaster')[0])
-        self.script = bitbake_dir /  'bin' / 'toaster-eventreplay'
+        self.script = bitbake_dir / 'bin' / 'toaster-eventreplay'
         self.assertTrue(self.script.exists(), "%s doesn't exist")
         self.eventplay_dir = os.getenv("EVENTREPLAY_DIR")
         self.assertTrue(self.eventplay_dir,

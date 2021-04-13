@@ -9,11 +9,11 @@ Based on the svn "Fetch" implementation.
 
 import logging
 import os
-import  bb
-from    bb.fetch2 import FetchMethod
-from    bb.fetch2 import FetchError
-from    bb.fetch2 import MissingParameterError
-from    bb.fetch2 import runfetchcmd
+import bb
+from bb.fetch2 import FetchMethod
+from bb.fetch2 import FetchError
+from bb.fetch2 import MissingParameterError
+from bb.fetch2 import runfetchcmd
 
 logger = logging.getLogger(__name__)
 
@@ -88,7 +88,7 @@ class Osc(FetchMethod):
 
         if os.access(os.path.join(d.getVar('OSCDIR'), ud.path, ud.module), os.R_OK):
             oscupdatecmd = self._buildosccommand(ud, d, "update")
-            logger.info("Update "+ ud.url)
+            logger.info("Update " + ud.url)
             # update sources there
             logger.debug("Running %s", oscupdatecmd)
             bb.fetch2.check_network_access(d, oscupdatecmd, ud.url)

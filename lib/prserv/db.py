@@ -68,9 +68,9 @@ class PRTable(object):
             self.dirty = False
 
     def _getValueHist(self, version, pkgarch, checksum):
-        data=self._execute("SELECT value FROM %s WHERE version=? AND pkgarch=? AND checksum=?;" % self.table,
+        data = self._execute("SELECT value FROM %s WHERE version=? AND pkgarch=? AND checksum=?;" % self.table,
                            (version, pkgarch, checksum))
-        row=data.fetchone()
+        row = data.fetchone()
         if row is not None:
             return row[0]
         else:
@@ -84,21 +84,21 @@ class PRTable(object):
 
             self.dirty = True
 
-            data=self._execute("SELECT value FROM %s WHERE version=? AND pkgarch=? AND checksum=?;" % self.table,
+            data = self._execute("SELECT value FROM %s WHERE version=? AND pkgarch=? AND checksum=?;" % self.table,
                                (version, pkgarch, checksum))
-            row=data.fetchone()
+            row = data.fetchone()
             if row is not None:
                 return row[0]
             else:
                 raise prserv.NotFoundError
 
     def _getValueNohist(self, version, pkgarch, checksum):
-        data=self._execute("SELECT value FROM %s \
+        data = self._execute("SELECT value FROM %s \
                             WHERE version=? AND pkgarch=? AND checksum=? AND \
                             value >= (select max(value) from %s where version=? AND pkgarch=?);" 
                             % (self.table, self.table),
                             (version, pkgarch, checksum, version, pkgarch))
-        row=data.fetchone()
+        row = data.fetchone()
         if row is not None:
             return row[0]
         else:
@@ -113,9 +113,9 @@ class PRTable(object):
 
             self.dirty = True
 
-            data=self._execute("SELECT value FROM %s WHERE version=? AND pkgarch=? AND checksum=?;" % self.table,
+            data = self._execute("SELECT value FROM %s WHERE version=? AND pkgarch=? AND checksum=?;" % self.table,
                                (version, pkgarch, checksum))
-            row=data.fetchone()
+            row = data.fetchone()
             if row is not None:
                 return row[0]
             else:
@@ -133,11 +133,11 @@ class PRTable(object):
                            (version, pkgarch, checksum))
         row = data.fetchone()
         if row is not None:
-            val=row[0]
+            val = row[0]
         else:
             #no value found, try to insert
             try:
-                self._execute("INSERT INTO %s VALUES (?, ?, ?, ?);"  % (self.table),
+                self._execute("INSERT INTO %s VALUES (?, ?, ?, ?);" % (self.table),
                            (version, pkgarch, checksum, value))
             except sqlite3.IntegrityError as exc:
                 logger.error(str(exc))
@@ -154,7 +154,7 @@ class PRTable(object):
     def _importNohist(self, version, pkgarch, checksum, value):
         try:
             #try to insert
-            self._execute("INSERT INTO %s VALUES (?, ?, ?, ?);"  % (self.table),
+            self._execute("INSERT INTO %s VALUES (?, ?, ?, ?);" % (self.table),
                            (version, pkgarch, checksum,value))
         except sqlite3.IntegrityError as exc:
             #already have the record, try to update
@@ -169,7 +169,7 @@ class PRTable(object):
 
         data = self._execute("SELECT value FROM %s WHERE version=? AND pkgarch=? AND checksum=? AND value>=?;" % self.table,
                             (version,pkgarch,checksum,value))
-        row=data.fetchone()
+        row = data.fetchone()
         if row is not None:
             return row[0]
         else:
@@ -246,19 +246,19 @@ class PRTable(object):
 class PRData(object):
     """Object representing the PR database"""
     def __init__(self, filename, nohist=True):
-        self.filename=os.path.abspath(filename)
-        self.nohist=nohist
+        self.filename = os.path.abspath(filename)
+        self.nohist = nohist
         #build directory hierarchy
         try:
             os.makedirs(os.path.dirname(self.filename))
         except OSError as e:
             if e.errno != errno.EEXIST:
                 raise e
-        self.connection=sqlite3.connect(self.filename, isolation_level="EXCLUSIVE", check_same_thread=False)
-        self.connection.row_factory=sqlite3.Row
+        self.connection = sqlite3.connect(self.filename, isolation_level="EXCLUSIVE", check_same_thread=False)
+        self.connection.row_factory = sqlite3.Row
         self.connection.execute("pragma synchronous = off;")
         self.connection.execute("PRAGMA journal_mode = MEMORY;")
-        self._tables={}
+        self._tables = {}
 
     def disconnect(self):
         self.connection.close()

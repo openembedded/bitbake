@@ -509,7 +509,7 @@ class SignatureGeneratorUniHashMixIn(object):
 
         # TODO: This cache can grow unbounded. It probably only needs to keep
         # for each task
-        unihash =  self._get_unihash(tid)
+        unihash = self._get_unihash(tid)
         if unihash is not None:
             self.unihash[tid] = unihash
             return unihash
@@ -693,10 +693,10 @@ def dump_this_task(outfile, d):
 def init_colors(enable_color):
     """Initialise colour dict for passing to compare_sigfiles()"""
     # First set up the colours
-    colors = {'color_title':   '\033[1m',
+    colors = {'color_title': '\033[1m',
               'color_default': '\033[0m',
-              'color_add':     '\033[0;32m',
-              'color_remove':  '\033[0;31m',
+              'color_add': '\033[0;32m',
+              'color_remove': '\033[0;31m',
              }
     # Leave all keys present but clear the values
     if not enable_color:

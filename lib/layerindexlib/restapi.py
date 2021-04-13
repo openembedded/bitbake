@@ -148,8 +148,8 @@ class RestApiPlugin(layerindexlib.plugin.IndexPlugin):
 
             up = urlparse(apiurl)
 
-            username=up.username
-            password=up.password
+            username = up.username
+            password = up.password
 
             # Strip username/password and params
             if up.port:

@@ -13,10 +13,10 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(__file__)),'lib'
 import prserv
 import prserv.serv
 
-__version__="1.0.0"
+__version__ = "1.0.0"
 
-PRHOST_DEFAULT='0.0.0.0'
-PRPORT_DEFAULT=8585
+PRHOST_DEFAULT = '0.0.0.0'
+PRPORT_DEFAULT = 8585
 
 def main():
     parser = optparse.OptionParser(
@@ -42,11 +42,11 @@ def main():
     prserv.init_logger(os.path.abspath(options.logfile),options.loglevel)
 
     if options.start:
-        ret=prserv.serv.start_daemon(options.dbfile, options.host, options.port,os.path.abspath(options.logfile))
+        ret = prserv.serv.start_daemon(options.dbfile, options.host, options.port,os.path.abspath(options.logfile))
     elif options.stop:
-        ret=prserv.serv.stop_daemon(options.host, options.port)
+        ret = prserv.serv.stop_daemon(options.host, options.port)
     else:
-        ret=parser.print_help()
+        ret = parser.print_help()
     return ret
 
 if __name__ == "__main__":

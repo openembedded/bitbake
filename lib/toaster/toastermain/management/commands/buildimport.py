@@ -52,12 +52,12 @@ def _log(msg):
     if 1 == verbose:
         print(msg)
     elif 2 == verbose:
-        f1=open('/tmp/toaster.log', 'a')
+        f1 = open('/tmp/toaster.log', 'a')
         f1.write("|" + msg + "|\n")
         f1.close()
 
 
-__config_regexp__  = re.compile(r"""
+__config_regexp__ = re.compile(r"""
     ^
     (?P<exp>export\s+)?
     (?P<var>[a-zA-Z0-9\-_+.${}/~]+?)
@@ -83,9 +83,9 @@ __config_regexp__  = re.compile(r"""
     """, re.X)
 
 class Command(BaseCommand):
-    args    = "<name> <path> <release>"
-    help    = "Import a command line build directory"
-    vars    = {}
+    args = "<name> <path> <release>"
+    help = "Import a command line build directory"
+    vars = {}
     toaster_vars = {}
 
     def add_arguments(self, parser):
@@ -284,7 +284,7 @@ class Command(BaseCommand):
             # isolate the sub-path
             path_index = line.rfind('/')
             if path_index > 0:
-                sub_path = line[path_index+1:]
+                sub_path = line[path_index + 1:]
                 line = line[0:path_index]
             else:
                 sub_path = ''
@@ -295,7 +295,7 @@ class Command(BaseCommand):
                 # extract version from name syntax
                 version_index = line.find('_')
                 if version_index > 0:
-                    version = line[version_index+1:]
+                    version = line[version_index + 1:]
                     line = line[0:version_index]
                 else:
                     version = ''
@@ -346,7 +346,7 @@ class Command(BaseCommand):
                 lv = Layer_Version.objects.get(pk=int(lv_id[0]))
                 pl,created = ProjectLayer.objects.get_or_create(project=project,
                                                    layercommit=lv)
-                pl.optional=False
+                pl.optional = False
                 pl.save()
                 _log("  %s => %s;%s" % (key,lv_id[0],lv_id[1]))
             elif key_short in lv_dict:
@@ -354,7 +354,7 @@ class Command(BaseCommand):
                 lv = Layer_Version.objects.get(pk=int(lv_id[0]))
                 pl,created = ProjectLayer.objects.get_or_create(project=project,
                                                    layercommit=lv)
-                pl.optional=False
+                pl.optional = False
                 pl.save()
                 _log("  %s ?> %s" % (key,lv_dict[key_short]))
             else:
@@ -384,7 +384,7 @@ class Command(BaseCommand):
                         layer_version.save()
                         pl,created = ProjectLayer.objects.get_or_create(project=project,
                                                            layercommit=layer_version)
-                        pl.optional=False
+                        pl.optional = False
                         pl.save()
                         found = True
                         # add layer contents to this layer version
@@ -421,7 +421,7 @@ class Command(BaseCommand):
                     layer_version.save()
                     pl,created = ProjectLayer.objects.get_or_create(project=project,
                                                        layercommit=layer_version)
-                    pl.optional=False
+                    pl.optional = False
                     pl.save()
                     # register the layer's content
                     _log("  Local Layer Add content")
@@ -439,11 +439,11 @@ class Command(BaseCommand):
             old_toaster_local = "%s/conf/toaster.conf" % project_path
             if os.path.isfile(old_toaster_local):
                 self.scan_conf(old_toaster_local)
-                shutil.move(old_toaster_local, old_toaster_local+"_old")
+                shutil.move(old_toaster_local, old_toaster_local + "_old")
             old_toaster_layer = "%s/conf/toaster-bblayers.conf" % project_path
             if os.path.isfile(old_toaster_layer):
                 self.scan_conf(old_toaster_layer)
-                shutil.move(old_toaster_layer, old_toaster_layer+"_old")
+                shutil.move(old_toaster_layer, old_toaster_layer + "_old")
 
     # Scan the found conf variables (if any)
     def apply_conf_variables(self,project,layers_list,lv_dict,release=None):

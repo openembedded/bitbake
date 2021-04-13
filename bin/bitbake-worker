@@ -327,10 +327,10 @@ class runQueueWorkerPipe():
         end = len(self.queue)
         index = self.queue.find(b"</event>")
         while index != -1:
-            msg = self.queue[:index+8]
+            msg = self.queue[:index + 8]
             assert msg.startswith(b"<event>") and msg.count(b"<event>") == 1
             worker_fire_prepickled(msg)
-            self.queue = self.queue[index+8:]
+            self.queue = self.queue[index + 8:]
             index = self.queue.find(b"</event>")
         return (end > start)
 

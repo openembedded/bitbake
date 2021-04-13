@@ -32,17 +32,17 @@ class BuildEnvironment(models.Model):
         (LOCK_RUNNING, "running"),
     )
 
-    address     = models.CharField(max_length=254)
-    betype      = models.IntegerField(choices=TYPE)
-    bbaddress   = models.CharField(max_length=254, blank=True)
-    bbport      = models.IntegerField(default=-1)
-    bbtoken     = models.CharField(max_length=126, blank=True)
-    bbstate     = models.IntegerField(choices=SERVER_STATE, default=SERVER_STOPPED)
-    sourcedir   = models.CharField(max_length=512, blank=True)
-    builddir    = models.CharField(max_length=512, blank=True)
-    lock        = models.IntegerField(choices=LOCK_STATE, default=LOCK_FREE)
-    created     = models.DateTimeField(auto_now_add=True)
-    updated     = models.DateTimeField(auto_now=True)
+    address = models.CharField(max_length=254)
+    betype = models.IntegerField(choices=TYPE)
+    bbaddress = models.CharField(max_length=254, blank=True)
+    bbport = models.IntegerField(default=-1)
+    bbtoken = models.CharField(max_length=126, blank=True)
+    bbstate = models.IntegerField(choices=SERVER_STATE, default=SERVER_STOPPED)
+    sourcedir = models.CharField(max_length=512, blank=True)
+    builddir = models.CharField(max_length=512, blank=True)
+    lock = models.IntegerField(choices=LOCK_STATE, default=LOCK_FREE)
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
 
     def get_artifact(self, path):
         if self.betype == BuildEnvironment.TYPE_LOCAL:
@@ -85,12 +85,12 @@ class BuildRequest(models.Model):
 
     search_allowed_fields = ("brtarget__target", "build__project__name")
 
-    project     = models.ForeignKey(Project, on_delete=models.CASCADE)
-    build       = models.OneToOneField(Build, on_delete=models.CASCADE, null=True)     # TODO: toasterui should set this when Build is created
+    project = models.ForeignKey(Project, on_delete=models.CASCADE)
+    build = models.OneToOneField(Build, on_delete=models.CASCADE, null=True)     # TODO: toasterui should set this when Build is created
     environment = models.ForeignKey(BuildEnvironment, on_delete=models.CASCADE, null=True)
-    state       = models.IntegerField(choices=REQUEST_STATE, default=REQ_CREATED)
-    created     = models.DateTimeField(auto_now_add=True)
-    updated     = models.DateTimeField(auto_now=True)
+    state = models.IntegerField(choices=REQUEST_STATE, default=REQ_CREATED)
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
 
     def __init__(self, *args, **kwargs):
         super(BuildRequest, self).__init__(*args, **kwargs)
@@ -140,26 +140,26 @@ class BRLayer(models.Model):
     layer_version = models.ForeignKey(Layer_Version, on_delete=models.CASCADE, null=True)
 
 class BRBitbake(models.Model):
-    req         = models.OneToOneField(BuildRequest, on_delete=models.CASCADE)    # only one bitbake for a request
-    giturl      = models.CharField(max_length=254)
-    commit      = models.CharField(max_length=254)
-    dirpath     = models.CharField(max_length=254)
+    req = models.OneToOneField(BuildRequest, on_delete=models.CASCADE)    # only one bitbake for a request
+    giturl = models.CharField(max_length=254)
+    commit = models.CharField(max_length=254)
+    dirpath = models.CharField(max_length=254)
 
 class BRVariable(models.Model):
-    req         = models.ForeignKey(BuildRequest, on_delete=models.CASCADE)
-    name        = models.CharField(max_length=100)
-    value       = models.TextField(blank=True)
+    req = models.ForeignKey(BuildRequest, on_delete=models.CASCADE)
+    name = models.CharField(max_length=100)
+    value = models.TextField(blank=True)
 
 class BRTarget(models.Model):
-    req         = models.ForeignKey(BuildRequest, on_delete=models.CASCADE)
-    target      = models.CharField(max_length=100)
-    task        = models.CharField(max_length=100, null=True)
+    req = models.ForeignKey(BuildRequest, on_delete=models.CASCADE)
+    target = models.CharField(max_length=100)
+    task = models.CharField(max_length=100, null=True)
 
 class BRError(models.Model):
-    req         = models.ForeignKey(BuildRequest, on_delete=models.CASCADE)
-    errtype     = models.CharField(max_length=100)
-    errmsg      = models.TextField()
-    traceback   = models.TextField()
+    req = models.ForeignKey(BuildRequest, on_delete=models.CASCADE)
+    errtype = models.CharField(max_length=100)
+    errmsg = models.TextField()
+    traceback = models.TextField()
 
     def __str__(self):
         return "%s (%s)" % (self.errmsg, self.req)

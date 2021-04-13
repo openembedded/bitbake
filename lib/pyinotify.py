@@ -1030,7 +1030,7 @@ class Stats(ProcessEvent):
                          created and must not exist prior to this call.
         @type filename: string
         """
-        flags = os.O_WRONLY|os.O_CREAT|os.O_NOFOLLOW|os.O_EXCL
+        flags = os.O_WRONLY | os.O_CREAT | os.O_NOFOLLOW | os.O_EXCL
         fd = os.open(filename, flags, 0o0600)
         os.write(fd, bytes(self.__str__(), locale.getpreferredencoding()))
         os.close(fd)
@@ -1215,7 +1215,7 @@ class Notifier:
             s_size = 16
             # Retrieve wd, mask, cookie and fname_len
             wd, mask, cookie, fname_len = struct.unpack('iIII',
-                                                        r[rsum:rsum+s_size])
+                                                        r[rsum:rsum + s_size])
             # Retrieve name
             bname, = struct.unpack('%ds' % fname_len,
                                    r[rsum + s_size:rsum + s_size + fname_len])
@@ -1299,9 +1299,9 @@ class Notifier:
 
             fd_inp = os.open(stdin, os.O_RDONLY)
             os.dup2(fd_inp, 0)
-            fd_out = os.open(stdout, os.O_WRONLY|os.O_CREAT, 0o0600)
+            fd_out = os.open(stdout, os.O_WRONLY | os.O_CREAT, 0o0600)
             os.dup2(fd_out, 1)
-            fd_err = os.open(stderr, os.O_WRONLY|os.O_CREAT, 0o0600)
+            fd_err = os.open(stderr, os.O_WRONLY | os.O_CREAT, 0o0600)
             os.dup2(fd_err, 2)
 
         # Detach task
@@ -1309,9 +1309,9 @@ class Notifier:
 
         # Write pid
         if pid_file:
-            flags = os.O_WRONLY|os.O_CREAT|os.O_NOFOLLOW|os.O_EXCL
+            flags = os.O_WRONLY | os.O_CREAT | os.O_NOFOLLOW | os.O_EXCL
             fd_pid = os.open(pid_file, flags, 0o0600)
-            os.write(fd_pid,  bytes(str(os.getpid()) + '\n',
+            os.write(fd_pid, bytes(str(os.getpid()) + '\n',
                                     locale.getpreferredencoding()))
             os.close(fd_pid)
             # Register unlink function
@@ -2271,7 +2271,7 @@ def command_line():
                       dest="stats",
                       help="Display dummy statistics")
     parser.add_option("-V", "--version", action="store_true",
-                      dest="version",  help="Pyinotify version")
+                      dest="version", help="Pyinotify version")
     parser.add_option("-f", "--raw-format", action="store_true",
                       dest="raw_format",
                       help="Disable enhanced output format.")

@@ -9,8 +9,8 @@ from django.db import OperationalError
 
 
 class Command(BaseCommand):
-    args    = '<buildID1 buildID2 .....>'
-    help    = "Deletes selected build(s)"
+    args = '<buildID1 buildID2 .....>'
+    help = "Deletes selected build(s)"
 
     def add_arguments(self, parser):
         parser.add_argument('buildids', metavar='N', type=int, nargs='+',
@@ -21,7 +21,7 @@ class Command(BaseCommand):
             try:
                 b = Build.objects.get(pk=bid)
             except ObjectDoesNotExist:
-                print('build %s does not exist, skipping...' %(bid))
+                print('build %s does not exist, skipping...' % (bid))
                 continue
             # theoretically, just b.delete() would suffice
             # however SQLite runs into problems when you try to

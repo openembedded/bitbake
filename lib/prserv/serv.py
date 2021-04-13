@@ -28,7 +28,7 @@ if sys.hexversion < 0x020600F0:
 class Handler(SimpleXMLRPCRequestHandler):
     def _dispatch(self,method,params):
         try:
-            value=self.server.funcs[method](*params)
+            value = self.server.funcs[method](*params)
         except:
             import traceback
             traceback.print_exc()
@@ -46,18 +46,18 @@ class PRServer(SimpleXMLRPCServer):
             SimpleXMLRPCServer.__init__(self, interface,
                                         logRequests=False, allow_none=True)
         except socket.error:
-            ip=socket.gethostbyname(interface[0])
-            port=interface[1]
-            msg="PR Server unable to bind to %s:%s\n" % (ip, port)
+            ip = socket.gethostbyname(interface[0])
+            port = interface[1]
+            msg = "PR Server unable to bind to %s:%s\n" % (ip, port)
             sys.stderr.write(msg)
             raise PRServiceConfigError
 
-        self.dbfile=dbfile
-        self.daemon=daemon
-        self.logfile=logfile
-        self.working_thread=None
+        self.dbfile = dbfile
+        self.daemon = daemon
+        self.logfile = logfile
+        self.working_thread = None
         self.host, self.port = self.socket.getsockname()
-        self.pidfile=PIDPREFIX % (self.host, self.port)
+        self.pidfile = PIDPREFIX % (self.host, self.port)
 
         self.register_function(self.getPR, "getPR")
         self.register_function(self.quit, "quit")
@@ -165,7 +165,7 @@ class PRServer(SimpleXMLRPCServer):
             return None
 
     def quit(self):
-        self.quitflag=True
+        self.quitflag = True
         os.write(self.quitpipeout, b"q")
         os.close(self.quitpipeout)
         return
@@ -511,5 +511,5 @@ def auto_shutdown():
         singleton = None
 
 def ping(host, port):
-    conn=PRServerConnection(host, port)
+    conn = PRServerConnection(host, port)
     return conn.ping()

@@ -311,7 +311,7 @@ class RunQueueSchedulerCompletion(RunQueueSchedulerSpeed):
                         # remains the same (but gets shifted back).
                         all_tasks.insert(index, new_task)
                         index += 1
-        bb.debug(3, 'merged task list: %s'  % all_tasks)
+        bb.debug(3, 'merged task list: %s' % all_tasks)
 
         # Now reverse the order so that tasks that finish the work on one
         # recipe are considered more imporant (= come first). The ordering
@@ -853,7 +853,7 @@ class RunQueueData:
 
             depends = self.runtaskentries[tid].depends
             for depend in depends:
-                mark_active(depend, depth+1)
+                mark_active(depend, depth + 1)
 
         def invalidate_task(tid, error_nostamp):
             (mc, fn, taskname, taskfn) = split_tid_mcfn(tid)
@@ -3037,7 +3037,7 @@ class runQueuePipe():
                 if isinstance(event, taskUniHashUpdate):
                     self.rqexec.updated_taskhash_queue.append((event.taskid, event.unihash))
                 found = True
-                self.queue = self.queue[index+8:]
+                self.queue = self.queue[index + 8:]
                 index = self.queue.find(b"</event>")
             index = self.queue.find(b"</exitcode>")
             while index != -1 and self.queue.startswith(b"<exitcode>"):
@@ -3051,7 +3051,7 @@ class runQueuePipe():
                     fakerootlog = self.fakerootlogs[taskfn]
                 self.rqexec.runqueue_process_waitpid(task, status, fakerootlog=fakerootlog)
                 found = True
-                self.queue = self.queue[index+11:]
+                self.queue = self.queue[index + 11:]
                 index = self.queue.find(b"</exitcode>")
         return (end > start)
 

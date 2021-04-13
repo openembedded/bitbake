@@ -19,8 +19,8 @@ import bb
 from bb import data
 import bb.parse
 
-logger      = logging.getLogger("BitBake")
-parselog    = logging.getLogger("BitBake.Parsing")
+logger = logging.getLogger("BitBake")
+parselog = logging.getLogger("BitBake.Parsing")
 
 class ConfigParameters(object):
     def __init__(self, argv=None):
@@ -417,7 +417,7 @@ class CookerDataBuilder(object):
             data = parse_config_file(p, data)
 
         # Handle any INHERITs and inherit the base class
-        bbclasses  = ["base"] + (data.getVar('INHERIT') or "").split()
+        bbclasses = ["base"] + (data.getVar('INHERIT') or "").split()
         for bbclass in bbclasses:
             data = _inherit(bbclass, data)
 
@@ -429,7 +429,7 @@ class CookerDataBuilder(object):
                 parselog.critical("Undefined event handler function '%s'" % var)
                 raise bb.BBHandledException()
             handlerln = int(data.getVarFlag(var, "lineno", False))
-            bb.event.register(var, data.getVar(var, False),  (data.getVarFlag(var, "eventmask") or "").split(), handlerfn, handlerln, data)
+            bb.event.register(var, data.getVar(var, False), (data.getVarFlag(var, "eventmask") or "").split(), handlerfn, handlerln, data)
 
         data.setVar('BBINCLUDED',bb.parse.get_file_depends(data))
 

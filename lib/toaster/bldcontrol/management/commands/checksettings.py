@@ -56,7 +56,7 @@ class Command(BaseCommand):
                     return True
 
                 def _update_builddir():
-                    be.builddir = os.environ.get('TOASTER_DIR')+"/build"
+                    be.builddir = os.environ.get('TOASTER_DIR') + "/build"
                     return True
 
                 if len(be.builddir) == 0:

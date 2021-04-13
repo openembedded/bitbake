@@ -68,9 +68,9 @@ import subprocess
 import tempfile
 import bb
 import bb.progress
-from   bb.fetch2 import FetchMethod
-from   bb.fetch2 import runfetchcmd
-from   bb.fetch2 import logger
+from bb.fetch2 import FetchMethod
+from bb.fetch2 import runfetchcmd
+from bb.fetch2 import logger
 
 
 class GitProgressHandler(bb.progress.LineFilterProgressHandler):
@@ -237,7 +237,7 @@ class Git(FetchMethod):
 
         for name in ud.names:
             # Ensure anything that doesn't look like a sha256 checksum/revision is translated into one
-            if not ud.revisions[name] or len(ud.revisions[name]) != 40  or (False in [c in "abcdef0123456789" for c in ud.revisions[name]]):
+            if not ud.revisions[name] or len(ud.revisions[name]) != 40 or (False in [c in "abcdef0123456789" for c in ud.revisions[name]]):
                 if ud.revisions[name]:
                     ud.unresolvedrev[name] = ud.revisions[name]
                 ud.revisions[name] = self.latest_revision(ud, d, name)
@@ -553,7 +553,7 @@ class Git(FetchMethod):
                             workdir=destdir)
                 runfetchcmd("%s checkout-index -q -f -a" % ud.basecmd, d, workdir=destdir)
             elif not ud.nobranch:
-                branchname =  ud.branches[ud.names[0]]
+                branchname = ud.branches[ud.names[0]]
                 runfetchcmd("%s checkout -B %s %s" % (ud.basecmd, branchname,
                             ud.revisions[ud.names[0]]), d, workdir=destdir)
                 runfetchcmd("%s branch %s --set-upstream-to origin/%s" % (ud.basecmd, branchname,
@@ -587,7 +587,7 @@ class Git(FetchMethod):
             cmd = "%s log --pretty=oneline -n 1 %s -- 2> /dev/null | wc -l" % (
                 ud.basecmd, ud.revisions[name])
         else:
-            cmd =  "%s branch --contains %s --list %s 2> /dev/null | wc -l" % (
+            cmd = "%s branch --contains %s --list %s 2> /dev/null | wc -l" % (
                 ud.basecmd, ud.revisions[name], ud.branches[name])
         try:
             output = runfetchcmd(cmd, d, quiet=True, workdir=wd)
@@ -701,7 +701,7 @@ class Git(FetchMethod):
                 if s == ref:
                     return sha1
         raise bb.fetch2.FetchError("Unable to resolve '%s' in upstream git repository in git ls-remote output for %s" %
-            (ud.unresolvedrev[name], ud.host+ud.path))
+            (ud.unresolvedrev[name], ud.host + ud.path))
 
     def latest_versionstring(self, ud, d):
         """

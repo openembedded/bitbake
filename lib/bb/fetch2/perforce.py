@@ -26,10 +26,10 @@ Supported SRC_URI options are:
 
 import os
 import bb
-from   bb.fetch2 import FetchMethod
-from   bb.fetch2 import FetchError
-from   bb.fetch2 import logger
-from   bb.fetch2 import runfetchcmd
+from bb.fetch2 import FetchMethod
+from bb.fetch2 import FetchError
+from bb.fetch2 import logger
+from bb.fetch2 import runfetchcmd
 
 class PerforceProgressHandler (bb.progress.BasicProgressHandler):
     """
@@ -168,7 +168,7 @@ class Perforce(FetchMethod):
                 filename = depot_filename[depot_filename.rfind(modulepath):]
             elif ud.pathisdir:
                 # Remove leading (visible) path to obtain the filepath
-                filename = depot_filename[len(ud.path)-1:]
+                filename = depot_filename[len(ud.path) - 1:]
             else:
                 # Remove everything, except the filename
                 filename = depot_filename[depot_filename.rfind('/'):]

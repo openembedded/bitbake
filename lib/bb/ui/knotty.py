@@ -374,7 +374,7 @@ _evt_list = ["bb.runqueue.runQueueExitWait", "bb.event.LogExecTTY", "logging.Log
               "bb.build.TaskFailed", "bb.build.TaskBase", "bb.event.ParseStarted",
               "bb.event.ParseProgress", "bb.event.ParseCompleted", "bb.event.CacheLoadStarted",
               "bb.event.CacheLoadProgress", "bb.event.CacheLoadCompleted", "bb.command.CommandFailed",
-              "bb.command.CommandExit", "bb.command.CommandCompleted",  "bb.cooker.CookerExit",
+              "bb.command.CommandExit", "bb.command.CommandCompleted", "bb.cooker.CookerExit",
               "bb.event.MultipleProviders", "bb.event.NoProvider", "bb.runqueue.sceneQueueTaskStarted",
               "bb.runqueue.runQueueTaskStarted", "bb.runqueue.runQueueTaskFailed", "bb.runqueue.sceneQueueTaskFailed",
               "bb.event.BuildBase", "bb.build.TaskStarted", "bb.build.TaskSucceeded", "bb.build.TaskFailedSilent",

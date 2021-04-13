@@ -214,7 +214,7 @@ CACHES = {
 
 
 from os.path import dirname as DN
-SITE_ROOT=DN(DN(os.path.abspath(__file__)))
+SITE_ROOT = DN(DN(os.path.abspath(__file__)))
 
 import subprocess
 TOASTER_BRANCH = subprocess.Popen('git branch | grep "^* " | tr -d "* "', cwd=SITE_ROOT, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()[0]
