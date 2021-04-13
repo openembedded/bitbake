@@ -12,6 +12,7 @@ import bb.persist_data
 import tempfile
 import threading
 
+
 class PersistDataTest(unittest.TestCase):
     def _create_data(self):
         return bb.persist_data.persist('TEST_PERSIST_DATA', self.d)

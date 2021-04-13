@@ -32,6 +32,7 @@ class TracebackEntry(namedtuple.abc):
     def __str__(self):
         return ''.join(self.format())
 
+
 def _get_frame_args(frame):
     """Get the formatted arguments and class (if available) for a frame"""
     arginfo = inspect.getargvalues(frame)
@@ -58,6 +59,7 @@ def _get_frame_args(frame):
     formatted = inspect.formatargvalues(*arginfo)
     return formatted, cls
 
+
 def extract_traceback(tb, context=1):
     frames = inspect.getinnerframes(tb, context)
     for frame, filename, lineno, function, code_context, index in frames:
@@ -66,6 +68,7 @@ def extract_traceback(tb, context=1):
             function = '%s.%s' % (cls, function)
         yield TracebackEntry(filename, lineno, function, formatted_args,
                              code_context, index)
+
 
 def format_extracted(extracted, formatter=None, limit=None):
     if limit:
@@ -86,6 +89,7 @@ def format_exception(etype, value, tb, context=1, limit=None, formatter=None):
     formatted.extend(format_extracted(tb, formatter, limit))
     formatted.extend(traceback.format_exception_only(etype, value))
     return formatted
+
 
 def to_string(exc):
     if isinstance(exc, SystemExit):

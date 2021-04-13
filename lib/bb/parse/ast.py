@@ -13,15 +13,18 @@ import bb
 from bb import methodpool
 from bb.parse import logger
 
+
 class StatementGroup(list):
     def eval(self, data):
         for statement in self:
             statement.eval(data)
 
+
 class AstNode(object):
     def __init__(self, filename, lineno):
         self.filename = filename
         self.lineno = lineno
+
 
 class IncludeNode(AstNode):
     def __init__(self, filename, lineno, what_file, force):
@@ -42,6 +45,7 @@ class IncludeNode(AstNode):
         else:
             bb.parse.ConfHandler.include(self.filename, s, self.lineno, data, False)
 
+
 class ExportNode(AstNode):
     def __init__(self, filename, lineno, var):
         AstNode.__init__(self, filename, lineno)
@@ -49,6 +53,7 @@ class ExportNode(AstNode):
 
     def eval(self, data):
         data.setVarFlag(self.var, "export", 1, op='exported')
+
 
 class UnsetNode(AstNode):
     def __init__(self, filename, lineno, var):
@@ -62,6 +67,7 @@ class UnsetNode(AstNode):
             'line': self.lineno,
         }
         data.delVar(self.var, **loginfo)
+
 
 class UnsetFlagNode(AstNode):
     def __init__(self, filename, lineno, var, flag):
@@ -77,6 +83,7 @@ class UnsetFlagNode(AstNode):
         }
         data.delVarFlag(self.var, self.flag, **loginfo)
 
+
 class DataNode(AstNode):
     """
     Various data related updates. For the sake of sanity
@@ -84,6 +91,7 @@ class DataNode(AstNode):
     this need to be re-evaluated... we might be able to do
     that faster with multiple classes.
     """
+
     def __init__(self, filename, lineno, groupd):
         AstNode.__init__(self, filename, lineno)
         self.groupd = groupd
@@ -144,6 +152,7 @@ class DataNode(AstNode):
         else:
             data.setVar(key, val, parsing=True, **loginfo)
 
+
 class MethodNode(AstNode):
     tr_tbl = str.maketrans('/.+-@%&', '_______')
 
@@ -179,6 +188,7 @@ class MethodNode(AstNode):
         data.setVarFlag(funcname, 'filename', self.filename)
         data.setVarFlag(funcname, 'lineno', str(self.lineno - len(self.body)))
 
+
 class PythonMethodNode(AstNode):
     def __init__(self, filename, lineno, function, modulename, body):
         AstNode.__init__(self, filename, lineno)
@@ -197,6 +207,7 @@ class PythonMethodNode(AstNode):
         data.setVar(self.function, text, parsing=True)
         data.setVarFlag(self.function, 'filename', self.filename)
         data.setVarFlag(self.function, 'lineno', str(self.lineno - len(self.body) - 1))
+
 
 class ExportFuncsNode(AstNode):
     def __init__(self, filename, lineno, fns, classname):
@@ -233,6 +244,7 @@ class ExportFuncsNode(AstNode):
                 data.setVar(func, "    " + calledfunc + "\n", parsing=True)
             data.setVarFlag(func, 'export_func', '1')
 
+
 class AddTaskNode(AstNode):
     def __init__(self, filename, lineno, func, before, after):
         AstNode.__init__(self, filename, lineno)
@@ -243,6 +255,7 @@ class AddTaskNode(AstNode):
     def eval(self, data):
         bb.build.addtask(self.func, self.before, self.after, data)
 
+
 class DelTaskNode(AstNode):
     def __init__(self, filename, lineno, tasks):
         AstNode.__init__(self, filename, lineno)
@@ -252,6 +265,7 @@ class DelTaskNode(AstNode):
         tasks = data.expand(self.tasks).split()
         for task in tasks:
             bb.build.deltask(task, data)
+
 
 class BBHandlerNode(AstNode):
     def __init__(self, filename, lineno, fns):
@@ -265,6 +279,7 @@ class BBHandlerNode(AstNode):
             data.setVarFlag(h, "handler", 1)
         data.setVar('__BBHANDLERS', bbhands)
 
+
 class InheritNode(AstNode):
     def __init__(self, filename, lineno, classes):
         AstNode.__init__(self, filename, lineno)
@@ -273,29 +288,38 @@ class InheritNode(AstNode):
     def eval(self, data):
         bb.parse.BBHandler.inherit(self.classes, self.filename, self.lineno, data)
 
+
 def handleInclude(statements, filename, lineno, m, force):
     statements.append(IncludeNode(filename, lineno, m.group(1), force))
+
 
 def handleExport(statements, filename, lineno, m):
     statements.append(ExportNode(filename, lineno, m.group(1)))
 
+
 def handleUnset(statements, filename, lineno, m):
     statements.append(UnsetNode(filename, lineno, m.group(1)))
+
 
 def handleUnsetFlag(statements, filename, lineno, m):
     statements.append(UnsetFlagNode(filename, lineno, m.group(1), m.group(2)))
 
+
 def handleData(statements, filename, lineno, groupd):
     statements.append(DataNode(filename, lineno, groupd))
+
 
 def handleMethod(statements, filename, lineno, func_name, body, python, fakeroot):
     statements.append(MethodNode(filename, lineno, func_name, body, python, fakeroot))
 
+
 def handlePythonMethod(statements, filename, lineno, funcname, modulename, body):
     statements.append(PythonMethodNode(filename, lineno, funcname, modulename, body))
 
+
 def handleExportFuncs(statements, filename, lineno, m, classname):
     statements.append(ExportFuncsNode(filename, lineno, m.group(1), classname))
+
 
 def handleAddTask(statements, filename, lineno, m):
     func = m.group("func")
@@ -306,6 +330,7 @@ def handleAddTask(statements, filename, lineno, m):
 
     statements.append(AddTaskNode(filename, lineno, func, before, after))
 
+
 def handleDelTask(statements, filename, lineno, m):
     func = m.group(1)
     if func is None:
@@ -313,18 +338,22 @@ def handleDelTask(statements, filename, lineno, m):
 
     statements.append(DelTaskNode(filename, lineno, func))
 
+
 def handleBBHandlers(statements, filename, lineno, m):
     statements.append(BBHandlerNode(filename, lineno, m.group(1)))
+
 
 def handleInherit(statements, filename, lineno, m):
     classes = m.group(1)
     statements.append(InheritNode(filename, lineno, classes))
+
 
 def runAnonFuncs(d):
     code = []
     for funcname in d.getVar("__BBANONFUNCS", False) or []:
         code.append("%s(d)" % funcname)
     bb.utils.better_exec("\n".join(code), {"d": d})
+
 
 def finalize(fn, d, variant=None):
     saved_handlers = bb.event.get_handlers().copy()
@@ -357,6 +386,7 @@ def finalize(fn, d, variant=None):
     finally:
         bb.event.set_handlers(saved_handlers)
 
+
 def _create_variants(datastores, names, function, onlyfinalise):
     def create_variant(name, orig_d, arg=None):
         if onlyfinalise and name not in onlyfinalise:
@@ -372,6 +402,7 @@ def _create_variants(datastores, names, function, onlyfinalise):
                 create_variant(name, datastores[""])
             else:
                 create_variant("%s-%s" % (variant, name), datastores[variant], name)
+
 
 def multi_finalize(fn, d):
     appends = (d.getVar("__BBAPPEND") or "").split()
@@ -408,6 +439,7 @@ def multi_finalize(fn, d):
                 extendedmap[ext] = ext
 
         pn = d.getVar("PN")
+
         def extendfunc(name, d):
             if name != extendedmap[name]:
                 d.setVar("BBEXTENDCURR", extendedmap[name])

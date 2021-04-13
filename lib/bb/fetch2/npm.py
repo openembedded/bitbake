@@ -40,6 +40,7 @@ from bb.fetch2 import check_network_access
 from bb.fetch2 import runfetchcmd
 from bb.utils import is_semver
 
+
 def npm_package(package):
     """Convert the npm package name to remove unsupported character"""
     # Scoped package names (with the @) use the same naming convention
@@ -48,13 +49,16 @@ def npm_package(package):
         return re.sub("/", "-", package[1:])
     return package
 
+
 def npm_filename(package, version):
     """Get the filename of a npm package"""
     return npm_package(package) + "-" + version + ".tgz"
 
+
 def npm_localfile(package, version):
     """Get the local filename of a npm package"""
     return os.path.join("npm2", npm_filename(package, version))
+
 
 def npm_integrity(integrity):
     """
@@ -64,6 +68,7 @@ def npm_integrity(integrity):
     algo, value = integrity.split("-", maxsplit=1)
     return "%ssum" % algo, base64.b64decode(value).hex()
 
+
 def npm_unpack(tarball, destdir, d):
     """Unpack a npm tarball"""
     bb.utils.mkdirhier(destdir)
@@ -72,11 +77,13 @@ def npm_unpack(tarball, destdir, d):
     cmd += " --strip-components=1"
     runfetchcmd(cmd, d, workdir=destdir)
 
+
 class NpmEnvironment(object):
     """
     Using a npm config file seems more reliable than using cli arguments.
     This class allows to create a controlled environment for npm commands.
     """
+
     def __init__(self, d, configs=None):
         self.d = d
         self.configs = configs
@@ -110,6 +117,7 @@ class NpmEnvironment(object):
                     cmd += " --%s=%s" % (key, shlex.quote(value))
 
             return _run(cmd)
+
 
 class Npm(FetchMethod):
     """Class to fetch a package from a npm registry"""

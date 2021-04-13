@@ -11,8 +11,10 @@ Provides support for using a datastore from the bitbake client
 
 import bb.data
 
+
 class RemoteDatastores:
     """Used on the server side to manage references to server-side datastores"""
+
     def __init__(self, cooker):
         self.cooker = cooker
         self.datastores = {}

@@ -29,6 +29,7 @@ from bs4.element import (
     Tag,
     )
 
+
 class HTML5TreeBuilder(HTMLTreeBuilder):
     """Use html5lib to build a tree."""
 
@@ -113,12 +114,15 @@ class TreeBuilderForHtml5lib(treebuildersbase.TreeBuilder):
     def getFragment(self):
         return treebuildersbase.TreeBuilder.getFragment(self).element
 
+
 class AttrList(object):
     def __init__(self, element):
         self.element = element
         self.attrs = dict(self.element.attrs)
+
     def __iter__(self):
         return list(self.attrs.items()).__iter__()
+
     def __setitem__(self, name, value):
         # If this attribute is a multi-valued attribute for this element,
         # turn its value into a list.
@@ -131,14 +135,19 @@ class AttrList(object):
             if not isinstance(value, list):
                 value = whitespace_re.split(value)
         self.element[name] = value
+
     def items(self):
         return list(self.attrs.items())
+
     def keys(self):
         return list(self.attrs.keys())
+
     def __len__(self):
         return len(self.attrs)
+
     def __getitem__(self, name):
         return self.attrs[name]
+
     def __contains__(self, name):
         return name in list(self.attrs.keys())
 
@@ -327,6 +336,7 @@ class Element(treebuildersbase.Node):
             return self.namespace, self.name
 
     nameTuple = property(getNameTuple)
+
 
 class TextNode(Element):
     def __init__(self, element, soup):

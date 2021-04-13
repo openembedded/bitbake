@@ -28,6 +28,7 @@ from bb.cache import CoreRecipeInfo
 
 import pickle
 
+
 class DumpCache(object):
     def __init__(self):
         parser = argparse.ArgumentParser(
@@ -71,6 +72,7 @@ class DumpCache(object):
                         print("%s: %s" % (key, val.__dict__))
                 elif not self.args.recipe:
                     print("%s %s" % (key, val))
+
 
 if __name__ == "__main__":
     try:

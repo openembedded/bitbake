@@ -17,5 +17,6 @@ the context of Django unit tests.
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from tests.browser.selenium_helpers_base import SeleniumTestCaseBase
 
+
 class SeleniumTestCase(SeleniumTestCaseBase, StaticLiveServerTestCase):
     pass

@@ -10,11 +10,12 @@ import re
 import bb
 logger = logging.getLogger("BitBake.Monitor")
 
+
 def printErr(info):
     logger.error("%s\n       Disk space monitor will NOT be enabled" % info)
 
-def convertGMK(unit):
 
+def convertGMK(unit):
     """ Convert the space unit G, M, K, the unit is case-insensitive """
 
     unitG = re.match(r'([1-9][0-9]*)[gG]\s?$', unit)
@@ -32,8 +33,8 @@ def convertGMK(unit):
     else:
         return None
 
-def getMountedDev(path):
 
+def getMountedDev(path):
     """ Get the device mounted at the path, uses /proc/mounts """
 
     # Get the mount point of the filesystem containing path
@@ -61,8 +62,8 @@ def getMountedDev(path):
         pass
     return None
 
-def getDiskData(BBDirs):
 
+def getDiskData(BBDirs):
     """Prepare disk data for disk space monitor"""
 
     # Save the device IDs, need the ID to be unique (the dictionary's key is
@@ -122,8 +123,8 @@ def getDiskData(BBDirs):
 
     return devDict
 
-def getInterval(configuration):
 
+def getInterval(configuration):
     """ Get the disk space interval """
 
     # The default value is 50M and 5K.
@@ -159,6 +160,7 @@ def getInterval(configuration):
             printErr("Invalid interval value in BB_DISKMON_WARNINTERVAL: %s" % interval)
             return None, None
 
+
 class diskMonitor:
 
     """Prepare the disk space monitor data"""
@@ -190,7 +192,6 @@ class diskMonitor:
                         self.enableMonitor = False
 
     def check(self, rq):
-
         """ Take action for the monitor """
 
         if self.enableMonitor:

@@ -6,6 +6,7 @@ from django import template
 
 register = template.Library()
 
+
 def objects_to_dictionaries(iterable, fields):
     """
     Convert an iterable into a list of dictionaries; fields should be set
@@ -34,5 +35,6 @@ def objects_to_dictionaries(iterable, fields):
             objects.append(out)
 
     return objects
+
 
 register.filter('objects_to_dictionaries', objects_to_dictionaries)

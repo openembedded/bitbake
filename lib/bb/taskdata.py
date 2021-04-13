@@ -16,6 +16,7 @@ import bb
 
 logger = logging.getLogger("BitBake.TaskData")
 
+
 def re_match_strings(target, strings):
     """
     Whether or not the string 'target' matches
@@ -29,16 +30,19 @@ def re_match_strings(target, strings):
             return True
     return False
 
+
 class TaskEntry:
     def __init__(self):
         self.tdepends = []
         self.idepends = []
         self.irdepends = []
 
+
 class TaskData:
     """
     BitBake Task Data implementation
     """
+
     def __init__(self, abort=True, skiplist=None, allowincomplete=False):
         self.build_targets = {}
         self.run_targets = {}
@@ -117,7 +121,6 @@ class TaskData:
                 parentids.append(parentid)
             self.taskentries[tid].tdepends.extend(parentids)
 
-
             # Touch all intertask dependencies
             handle_deps(task, 'depends', self.taskentries[tid].idepends, self.seen_build_target)
             handle_deps(task, 'rdepends', self.taskentries[tid].irdepends, self.seen_run_target)
@@ -178,7 +181,6 @@ class TaskData:
             paramlist = ','.join(params.keys())
             func = 'def %s(%s):\n%s\n\n%s(%s)' % (funcname, paramlist, func, funcname, paramlist)
             bb.utils.better_exec(func, params)
-
 
     def have_build_target(self, target):
         """
@@ -381,7 +383,6 @@ class TaskData:
             logger.debug2("adding %s to satisfy %s", fn, item)
             self.add_build_target(fn, item)
             self.add_tasks(fn, dataCache)
-
 
             #item = dataCache.pkg_fn[fn]
 

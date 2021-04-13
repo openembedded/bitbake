@@ -35,8 +35,10 @@ from bb.cache import MultiProcessCache
 
 logger = logging.getLogger('BitBake.CodeParser')
 
+
 def bbhash(s):
     return hashlib.sha256(s.encode("utf-8")).hexdigest()
+
 
 def check_indent(codestr):
     """If the code is indented, add a top level piece of code to 'remove' the indentation"""
@@ -77,7 +79,9 @@ class SetCache(object):
         self.setcache[h] = s
         return s
 
+
 codecache = SetCache()
+
 
 class pythonCacheLine(object):
     def __init__(self, refs, execs, contains):
@@ -93,11 +97,13 @@ class pythonCacheLine(object):
     def __setstate__(self, state):
         (refs, execs, contains) = state
         self.__init__(refs, execs, contains)
+
     def __hash__(self):
         l = (hash(self.refs), hash(self.execs))
         for c in sorted(self.contains.keys()):
             l = l + (c, hash(self.contains[c]))
         return hash(l)
+
     def __repr__(self):
         return " ".join([str(self.refs), str(self.execs), str(self.contains)]) 
 
@@ -112,10 +118,13 @@ class shellCacheLine(object):
     def __setstate__(self, state):
         (execs) = state
         self.__init__(execs)
+
     def __hash__(self):
         return hash(self.execs)
+
     def __repr__(self):
         return str(self.execs)
+
 
 class CodeParserCache(MultiProcessCache):
     cache_file_name = "bb_codeparser.dat"
@@ -168,18 +177,25 @@ class CodeParserCache(MultiProcessCache):
         data = [{}, {}]
         return data
 
+
 codeparsercache = CodeParserCache()
+
 
 def parser_cache_init(d):
     codeparsercache.init_cache(d)
 
+
 def parser_cache_save():
     codeparsercache.save_extras()
+
 
 def parser_cache_savemerge():
     codeparsercache.save_merge()
 
+
 Logger = logging.getLoggerClass()
+
+
 class BufferedLogger(Logger):
     def __init__(self, name, level=0, target=None):
         Logger.__init__(self, name)
@@ -195,6 +211,7 @@ class BufferedLogger(Logger):
             if self.target.isEnabledFor(record.levelno):
                 self.target.handle(record)
         self.buffer = []
+
 
 class PythonParser():
     getvars = (".getVar", ".appendVar", ".prependVar", "oe.utils.conditional")
@@ -316,6 +333,7 @@ class PythonParser():
         self.execs.update(self.var_execs)
 
         codeparsercache.pythoncacheextras[h] = codeparsercache.newPythonCacheLine(self.references, self.execs, self.contains)
+
 
 class ShellParser():
     def __init__(self, name, log):

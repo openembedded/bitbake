@@ -27,6 +27,7 @@ class BBHandledException(Exception):
     """
     pass
 
+
 import os
 import logging
 
@@ -34,6 +35,7 @@ import logging
 class NullHandler(logging.Handler):
     def emit(self, record):
         pass
+
 
 class BBLoggerMixin(object):
     def __init__(self, *args, **kwargs):
@@ -71,14 +73,19 @@ class BBLoggerMixin(object):
     def verbnote(self, msg, *args, **kwargs):
         return self.log(logging.INFO + 2, msg, *args, **kwargs)
 
+
 Logger = logging.getLoggerClass()
+
+
 class BBLogger(Logger, BBLoggerMixin):
     def __init__(self, name, *args, **kwargs):
         self.setup_bblogger(name)
         super().__init__(name, *args, **kwargs)
 
+
 logging.raiseExceptions = False
 logging.setLoggerClass(BBLogger)
+
 
 class BBLoggerAdapter(logging.LoggerAdapter, BBLoggerMixin):
     def __init__(self, logger, *args, **kwargs):
@@ -105,6 +112,7 @@ class BBLoggerAdapter(logging.LoggerAdapter, BBLoggerMixin):
             level = logger.getLevelName(logger.getEffectiveLevel())
             return '<%s %s (%s)>' % (self.__class__.__name__, logger.name, level)
 
+
 logging.LoggerAdapter = BBLoggerAdapter
 
 logger = logging.getLogger("BitBake")
@@ -112,6 +120,7 @@ logger.addHandler(NullHandler())
 logger.setLevel(logging.DEBUG - 2)
 
 mainlogger = logging.getLogger("BitBake.Main")
+
 
 class PrefixLoggerAdapter(logging.LoggerAdapter):
     def __init__(self, prefix, logger):
@@ -121,6 +130,7 @@ class PrefixLoggerAdapter(logging.LoggerAdapter):
     def process(self, msg, kwargs):
         return "%s%s" % (self.__msg_prefix, msg), kwargs
 
+
 # This has to be imported after the setLoggerClass, as the import of bb.msg
 # can result in construction of the various loggers.
 import bb.msg
@@ -129,8 +139,11 @@ from bb import fetch2 as fetch
 sys.modules['bb.fetch'] = sys.modules['bb.fetch2']
 
 # Messaging convenience functions
+
+
 def plain(*args):
     mainlogger.plain(''.join(args))
+
 
 def debug(lvl, *args):
     if isinstance(lvl, str):
@@ -138,6 +151,7 @@ def debug(lvl, *args):
         args = (lvl,) + args
         lvl = 1
     mainlogger.bbdebug(lvl, ''.join(args))
+
 
 def note(*args):
     mainlogger.info(''.join(args))
@@ -148,21 +162,28 @@ def note(*args):
 # Something is happening the user should be aware of but they probably did
 # something to make it happen
 #
+
+
 def verbnote(*args):
     mainlogger.verbnote(''.join(args))
 
 #
 # Warnings - things the user likely needs to pay attention to and fix
 #
+
+
 def warn(*args):
     mainlogger.warning(''.join(args))
+
 
 def error(*args, **kwargs):
     mainlogger.error(''.join(args), extra=kwargs)
 
+
 def fatal(*args, **kwargs):
     mainlogger.critical(''.join(args), extra=kwargs)
     raise BBHandledException()
+
 
 def deprecated(func, name=None, advice=""):
     """This is a decorator which can be used to mark functions
@@ -187,6 +208,8 @@ def deprecated(func, name=None, advice=""):
     return newFunc
 
 # For compatibility
+
+
 def deprecate_import(current, modulename, fromlist, renames=None):
     """Import objects from one module into another, wrapping them with a DeprecationWarning"""
     import sys

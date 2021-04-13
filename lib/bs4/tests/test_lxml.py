@@ -22,6 +22,7 @@ from bs4.testing import (
     skipIf,
 )
 
+
 @skipIf(
     not LXML_PRESENT,
     "lxml seems not to be present, not testing its tree builder.")
@@ -58,6 +59,7 @@ class LXMLTreeBuilderSmokeTest(SoupTest, HTMLTreeBuilderSmokeTest):
             soup = BeautifulStoneSoup("<b />")
         self.assertEqual("<b/>", str(soup.b))
         self.assertTrue("BeautifulStoneSoup class is deprecated" in str(w[0].message))
+
 
 @skipIf(
     not LXML_PRESENT,

@@ -28,7 +28,6 @@ class Az(Wget):
         """
         return ud.type in ['az']
 
-
     def checkstatus(self, fetch, ud, d, try_again=True):
 
         # checkstatus discards parameters either way, we need to do this before adding the SAS
@@ -53,7 +52,6 @@ class Az(Wget):
         localpath = os.path.join(d.getVar("DL_DIR"), ud.localfile)
         bb.utils.mkdirhier(os.path.dirname(localpath))
         fetchcmd += " -O %s" % shlex.quote(localpath)
-
 
         if ud.user and ud.pswd:
             fetchcmd += " --user=%s --password=%s --auth-no-challenge" % (ud.user, ud.pswd)

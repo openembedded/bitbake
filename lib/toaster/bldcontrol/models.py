@@ -10,6 +10,8 @@ from orm.models import Project, Build, Layer_Version
 import logging
 logger = logging.getLogger("toaster")
 # a BuildEnvironment is the equivalent of the "build/" directory on the localhost
+
+
 class BuildEnvironment(models.Model):
     SERVER_STOPPED = 0
     SERVER_STARTED = 1
@@ -62,6 +64,7 @@ class BuildEnvironment(models.Model):
 # a BuildRequest is a request that the scheduler will build using a BuildEnvironment
 # the build request queue is the table itself, ordered by state
 
+
 class BuildRequest(models.Model):
     REQ_CREATED = 0
     REQ_QUEUED = 1
@@ -112,7 +115,6 @@ class BuildRequest(models.Model):
 
         super(BuildRequest, self).save(*args, **kwargs)
 
-
     def get_duration(self):
         return (self.updated - self.created).total_seconds()
 
@@ -139,21 +141,25 @@ class BRLayer(models.Model):
     dirpath = models.CharField(max_length=254, null=True)
     layer_version = models.ForeignKey(Layer_Version, on_delete=models.CASCADE, null=True)
 
+
 class BRBitbake(models.Model):
     req = models.OneToOneField(BuildRequest, on_delete=models.CASCADE)    # only one bitbake for a request
     giturl = models.CharField(max_length=254)
     commit = models.CharField(max_length=254)
     dirpath = models.CharField(max_length=254)
 
+
 class BRVariable(models.Model):
     req = models.ForeignKey(BuildRequest, on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
     value = models.TextField(blank=True)
 
+
 class BRTarget(models.Model):
     req = models.ForeignKey(BuildRequest, on_delete=models.CASCADE)
     target = models.CharField(max_length=100)
     task = models.CharField(max_length=100, null=True)
+
 
 class BRError(models.Model):
     req = models.ForeignKey(BuildRequest, on_delete=models.CASCADE)

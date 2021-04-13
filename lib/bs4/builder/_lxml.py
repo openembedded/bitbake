@@ -25,6 +25,7 @@ from bs4.dammit import EncodingDetector
 
 LXML = 'lxml'
 
+
 class LXMLTreeBuilderForXML(TreeBuilder):
     DEFAULT_PARSER_CLASS = etree.XMLParser
 
@@ -241,7 +242,6 @@ class LXMLTreeBuilder(HTMLTreeBuilder, LXMLTreeBuilderForXML):
             self.parser.close()
         except (UnicodeDecodeError, LookupError, etree.ParserError) as e:
             raise ParserRejectedMarkup(str(e))
-
 
     def test_fragment_to_document(self, fragment):
         """See `TreeBuilder`."""

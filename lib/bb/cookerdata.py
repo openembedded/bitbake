@@ -22,6 +22,7 @@ import bb.parse
 logger = logging.getLogger("BitBake")
 parselog = logging.getLogger("BitBake.Parsing")
 
+
 class ConfigParameters(object):
     def __init__(self, argv=None):
         self.options, targets = self.parseCommandLine(argv or sys.argv)
@@ -112,6 +113,7 @@ class ConfigParameters(object):
         self.options.initialaction = action
         return action
 
+
 class CookerConfiguration(object):
     """
     Manages build options and configurations for one run
@@ -182,14 +184,17 @@ def catch_parse_error(func):
             raise bb.BBHandledException()
     return wrapped
 
+
 @catch_parse_error
 def parse_config_file(fn, data, include=True):
     return bb.parse.handle(fn, data, include)
+
 
 @catch_parse_error
 def _inherit(bbclass, data):
     bb.parse.BBHandler.inherit(bbclass, "configuration INHERITs", 0, data)
     return data
+
 
 def findConfigFile(configfile, data):
     search = []
@@ -213,6 +218,7 @@ def findConfigFile(configfile, data):
 # up to /. If that fails, we search for a conf/bitbake.conf in BBPATH.
 #
 
+
 def findTopdir():
     d = bb.data.init()
     bbpath = None
@@ -228,6 +234,7 @@ def findTopdir():
         if bitbakeconf:
             return os.path.dirname(os.path.dirname(bitbakeconf))
     return None
+
 
 class CookerDataBuilder(object):
 

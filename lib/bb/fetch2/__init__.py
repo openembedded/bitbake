@@ -40,8 +40,10 @@ logger = logging.getLogger("BitBake.Fetcher")
 CHECKSUM_LIST = ["md5", "sha256", "sha1", "sha384", "sha512"]
 SHOWN_CHECKSUM_LIST = ["sha256"]
 
+
 class BBFetchException(Exception):
     """Class all fetch exceptions inherit from"""
+
     def __init__(self, message):
         self.msg = message
         Exception.__init__(self, message)
@@ -49,8 +51,10 @@ class BBFetchException(Exception):
     def __str__(self):
         return self.msg
 
+
 class UntrustedUrl(BBFetchException):
     """Exception raised when encountering a host not listed in BB_ALLOWED_NETWORKS"""
+
     def __init__(self, url, message=''):
         if message:
             msg = message
@@ -60,8 +64,10 @@ class UntrustedUrl(BBFetchException):
         BBFetchException.__init__(self, msg)
         self.args = (url,)
 
+
 class MalformedUrl(BBFetchException):
     """Exception raised when encountering an invalid url"""
+
     def __init__(self, url, message=''):
         if message:
             msg = message
@@ -71,8 +77,10 @@ class MalformedUrl(BBFetchException):
         BBFetchException.__init__(self, msg)
         self.args = (url,)
 
+
 class FetchError(BBFetchException):
     """General fetcher exception when something happens incorrectly"""
+
     def __init__(self, message, url=None):
         if url:
             msg = "Fetcher failure for URL: '%s'. %s" % (url, message)
@@ -82,33 +90,42 @@ class FetchError(BBFetchException):
         BBFetchException.__init__(self, msg)
         self.args = (message, url)
 
+
 class ChecksumError(FetchError):
     """Exception when mismatched checksum encountered"""
+
     def __init__(self, message, url=None, checksum=None):
         self.checksum = checksum
         FetchError.__init__(self, message, url)
 
+
 class NoChecksumError(FetchError):
     """Exception when no checksum is specified, but BB_STRICT_CHECKSUM is set"""
 
+
 class UnpackError(BBFetchException):
     """General fetcher exception when something happens incorrectly when unpacking"""
+
     def __init__(self, message, url):
         msg = "Unpack failure for URL: '%s'. %s" % (url, message)
         self.url = url
         BBFetchException.__init__(self, msg)
         self.args = (message, url)
 
+
 class NoMethodError(BBFetchException):
     """Exception raised when there is no method to obtain a supplied url or set of urls"""
+
     def __init__(self, url):
         msg = "Could not find a fetcher which supports the URL: '%s'" % url
         self.url = url
         BBFetchException.__init__(self, msg)
         self.args = (url,)
 
+
 class MissingParameterError(BBFetchException):
     """Exception raised when a fetch method is missing a critical parameter in the url"""
+
     def __init__(self, missing, url):
         msg = "URL: '%s' is missing the required parameter '%s'" % (url, missing)
         self.url = url
@@ -116,16 +133,20 @@ class MissingParameterError(BBFetchException):
         BBFetchException.__init__(self, msg)
         self.args = (missing, url)
 
+
 class ParameterError(BBFetchException):
     """Exception raised when a url cannot be proccessed due to invalid parameters."""
+
     def __init__(self, message, url):
         msg = "URL: '%s' has invalid parameters. %s" % (url, message)
         self.url = url
         BBFetchException.__init__(self, msg)
         self.args = (message, url)
 
+
 class NetworkAccess(BBFetchException):
     """Exception raised when network access is disabled but it is required."""
+
     def __init__(self, url, cmd):
         msg = "Network access disabled through BB_NO_NETWORK (or set indirectly due to use of BB_FETCH_PREMIRRORONLY) but access requested with command %s (for url %s)" % (cmd, url)
         self.url = url
@@ -133,9 +154,11 @@ class NetworkAccess(BBFetchException):
         BBFetchException.__init__(self, msg)
         self.args = (url, cmd)
 
+
 class NonLocalMethod(Exception):
     def __init__(self):
         Exception.__init__(self)
+
 
 class MissingChecksumEvent(bb.event.Event):
     def __init__(self, url, **checksums):
@@ -351,6 +374,7 @@ class URI(object):
     def password(self, password):
         self.userinfo = "%s:%s" % (self.username, password)
 
+
 def decodeurl(url):
     """Decodes an URL into the tokens (scheme, network location, path,
     user, password, parameters).
@@ -397,6 +421,7 @@ def decodeurl(url):
 
     return type, host, urllib.parse.unquote(path), user, pswd, p
 
+
 def encodeurl(decoded):
     """Encodes a URL from tokens (scheme, network location, path,
     user, password, parameters).
@@ -424,6 +449,7 @@ def encodeurl(decoded):
             url += ";%s=%s" % (parm, p[parm])
 
     return url
+
 
 def uri_replace(ud, uri_find, uri_replace, replacements, d, mirrortarball=None):
     if not ud.url or not uri_find or not uri_replace:
@@ -481,9 +507,11 @@ def uri_replace(ud, uri_find, uri_replace, replacements, d, mirrortarball=None):
     logger.debug2("For url %s returning %s" % (ud.url, result))
     return result
 
+
 methods = []
 urldata_cache = {}
 saved_headrevs = {}
+
 
 def fetcher_init(d):
     """
@@ -516,11 +544,14 @@ def fetcher_init(d):
         if hasattr(m, "init"):
             m.init(d)
 
+
 def fetcher_parse_save():
     _checksum_cache.save_extras()
 
+
 def fetcher_parse_done():
     _checksum_cache.save_merge()
+
 
 def fetcher_compare_revisions(d):
     """
@@ -531,12 +562,14 @@ def fetcher_compare_revisions(d):
     headrevs = dict(bb.persist_data.persist('BB_URI_HEADREVS', d))
     return headrevs != bb.fetch2.saved_headrevs
 
+
 def mirror_from_string(data):
     mirrors = (data or "").replace('\\n', ' ').split()
     # Split into pairs
     if len(mirrors) % 2 != 0:
         bb.warn('Invalid mirror data %s, should have paired members.' % data)
     return list(zip(*[iter(mirrors)] * 2))
+
 
 def verify_checksum(ud, d, precomputed={}):
     """
@@ -631,6 +664,7 @@ def verify_checksum(ud, d, precomputed={}):
         raise ChecksumError("\n".join(messages), ud.url, bad_checksum)
 
     return checksum_dict
+
 
 def verify_donestamp(ud, d, origud=None):
     """
@@ -729,17 +763,20 @@ def update_stamp(ud, d):
             bb.utils.remove(ud.donestamp)
             raise
 
+
 def subprocess_setup():
     # Python installs a SIGPIPE handler by default. This is usually not what
     # non-Python subprocesses expect.
     # SIGPIPE errors are known issues with gzip/bash
     signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 
+
 def get_autorev(d):
     #  only not cache src rev in autorev case
     if d.getVar('BB_SRCREV_POLICY') != "cache":
         d.setVar('BB_DONT_CACHE', '1')
     return "AUTOINC"
+
 
 def get_srcrev(d, method_name='sortable_revision'):
     """
@@ -805,9 +842,11 @@ def get_srcrev(d, method_name='sortable_revision'):
 
     return format
 
+
 def localpath(url, d):
     fetcher = bb.fetch2.Fetch([url], d)
     return fetcher.localpath(url)
+
 
 def runfetchcmd(cmd, d, quiet=False, cleanup=None, log=None, workdir=None):
     """
@@ -894,6 +933,7 @@ def runfetchcmd(cmd, d, quiet=False, cleanup=None, log=None, workdir=None):
 
     return output
 
+
 def check_network_access(d, info, url):
     """
     log remote network access, and error if BB_NO_NETWORK is set or the given
@@ -905,6 +945,7 @@ def check_network_access(d, info, url):
         raise UntrustedUrl(url, info)
     else:
         logger.debug("Fetcher accessed the network with the command %s" % info)
+
 
 def build_mirroruris(origud, mirrors, ld):
     uris = []
@@ -960,6 +1001,7 @@ def build_mirroruris(origud, mirrors, ld):
     adduri(origud, uris, uds, mirrors, origud.mirrortarballs or [None])
 
     return uris, uds
+
 
 def rename_bad_checksum(ud, suffix):
     """
@@ -1094,6 +1136,7 @@ def try_mirrors(fetch, d, origud, mirrors, check=False):
             return ret
     return None
 
+
 def trusted_network(d, url):
     """
     Use a trusted url during download if networking is enabled and
@@ -1131,6 +1174,7 @@ def trusted_network(d, url):
             return True
 
     return False
+
 
 def srcrev_internal_helper(ud, d, name):
     """
@@ -1177,6 +1221,7 @@ def srcrev_internal_helper(ud, d, name):
 
     return srcrev
 
+
 def get_checksum_file_list(d):
     """ Get a list of files checksum in SRC_URI
 
@@ -1204,6 +1249,7 @@ def get_checksum_file_list(d):
 
     return " ".join(filelist)
 
+
 def get_file_checksums(filelist, pn, localdirsexclude):
     """Get a list of the checksums for a list of local files
 
@@ -1218,6 +1264,7 @@ class FetchData(object):
     """
     A class which represents the fetcher state for a given URI.
     """
+
     def __init__(self, url, d, localonly=False):
         # localpath is the location of a downloaded result. If not set, the file is local.
         self.donestamp = None
@@ -1333,6 +1380,7 @@ class FetchData(object):
             return d.getVar("SRCDATE_%s" % pn) or d.getVar("SRCDATE") or d.getVar("DATE")
 
         return d.getVar("SRCDATE") or d.getVar("DATE")
+
 
 class FetchMethod(object):
     """Base class for 'fetch'ing data"""
@@ -1615,6 +1663,7 @@ class FetchMethod(object):
         """
         return []
 
+
 class Fetch(object):
     def __init__(self, urls, d, cache=True, localonly=False, connection_cache=None):
         if localonly and cache:
@@ -1858,10 +1907,12 @@ class Fetch(object):
 
         return urldata
 
+
 class FetchConnectionCache(object):
     """
         A class which represents an container for socket connections.
     """
+
     def __init__(self):
         self.cache = {}
 
@@ -1893,6 +1944,7 @@ class FetchConnectionCache(object):
         for cn in list(self.cache.keys()):
             self.cache[cn].close()
             del self.cache[cn]
+
 
 from . import cvs
 from . import git

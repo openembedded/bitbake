@@ -18,6 +18,7 @@ import bb.parse
 import bb.data
 import bb.siggen
 
+
 class ParseTest(unittest.TestCase):
 
     testfile = """
@@ -96,7 +97,6 @@ exportD = "d"
         self.assertEqual(d.getVar("exportD"), "d")
         self.assertIsNone(d.getVarFlag("exportD", "export"))
 
-
     overridetest = """
 RRECOMMENDS_${PN} = "a"
 RRECOMMENDS_${PN}_libc = "b"
@@ -142,7 +142,6 @@ PN = "bc"
         d.setVar("OVERRIDES", "bc-dev")
         self.assertEqual(d.getVar("DESCRIPTION"), "C D")
 
-
     classextend = """
 VAR_var_override1 = "B"
 EXTRA = ":override1"
@@ -183,6 +182,7 @@ EMPTYVAR = ""
 deltask do_fetch ${MYVAR} ${EMPTYVAR}
 deltask ${EMPTYVAR}
 """
+
     def test_parse_addtask_deltask(self):
         import sys
         f = self.parsehelper(self.addtask_deltask)

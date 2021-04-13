@@ -15,6 +15,7 @@
 
 from bb.cache import RecipeInfoCommon
 
+
 class HobRecipeInfo(RecipeInfoCommon):
     __slots__ = ()
 

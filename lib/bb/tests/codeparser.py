@@ -18,6 +18,7 @@ logger = logging.getLogger('BitBake.TestCodeParser')
 import bb.parse
 import bb.data
 
+
 class ReferenceTest(unittest.TestCase):
     def setUp(self):
         self.d = bb.data.init()
@@ -38,6 +39,7 @@ class ReferenceTest(unittest.TestCase):
 
     def assertContains(self, contains):
         self.assertEqual(self.contains, contains)
+
 
 class VariableReferenceTest(ReferenceTest):
 
@@ -60,6 +62,7 @@ class VariableReferenceTest(ReferenceTest):
         self.setEmptyVars(["BAR"])
         self.parseExpression("${@d.getVar('BAR') + 'foo'}")
         self.assertReferences(set(["BAR"]))
+
 
 class ShellReferenceTest(ReferenceTest):
 
@@ -322,7 +325,6 @@ d.getVar(a(), False)
 
         self.assertEqual(deps, set(["somevar", "bar", "something", "inexpand", "test", "test2", "a"]))
 
-
     shelldata = """
 foo () {
 bar
@@ -368,7 +370,6 @@ esac
         deps, values = bb.data.build_dependencies("FOO", set(self.d.keys()), set(), set(), self.d)
 
         self.assertEqual(deps, set(["somevar", "inverted"] + execs))
-
 
     def test_vardeps(self):
         self.d.setVar("oe_libinstall", "echo test")

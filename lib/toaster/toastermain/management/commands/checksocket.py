@@ -17,6 +17,7 @@ from django.utils.encoding import force_text
 
 DEFAULT_ADDRPORT = "0.0.0.0:8000"
 
+
 class Command(BaseCommand):
     """Custom management command."""
 

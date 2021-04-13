@@ -47,6 +47,7 @@ def clean_context():
         "time": time,
     }
 
+
 def get_context():
     return _context
     
@@ -54,11 +55,14 @@ def get_context():
 def set_context(ctx):
     _context = ctx
 
+
 # Context used in better_exec, eval
 _context = clean_context()
 
+
 class VersionStringException(Exception):
     """Exception raised when an invalid version specification is found"""
+
 
 def explode_version(s):
     r = []
@@ -82,6 +86,7 @@ def explode_version(s):
         s = s[1:]
     return r
 
+
 def split_version(s):
     """Split a version string into its constituent parts (PE, PV, PR)"""
     s = s.strip(" <>=")
@@ -95,6 +100,7 @@ def split_version(s):
         s = s.rsplit("-", 1)[0]
     v = s
     return (e, v, r)
+
 
 def vercmp_part(a, b):
     va = explode_version(a)
@@ -123,6 +129,7 @@ def vercmp_part(a, b):
         elif ca > cb:
             return 1
 
+
 def vercmp(ta, tb):
     (ea, va, ra) = ta
     (eb, vb, rb) = tb
@@ -134,11 +141,13 @@ def vercmp(ta, tb):
         r = vercmp_part(ra, rb)
     return r
 
+
 def vercmp_string(a, b):
     """ Split version strings and compare them """
     ta = split_version(a)
     tb = split_version(b)
     return vercmp(ta, tb)
+
 
 def vercmp_string_op(a, b, op):
     """
@@ -161,6 +170,7 @@ def vercmp_string_op(a, b, op):
         return res != 0
     else:
         raise VersionStringException('Unsupported comparison operator "%s"' % op)
+
 
 def explode_deps(s):
     """
@@ -185,6 +195,7 @@ def explode_deps(s):
             # Ignore version
             #r[-1] += ' ' + ' '.join(j)
     return r
+
 
 def explode_dep_versions2(s, *, sort=True):
     """
@@ -253,6 +264,7 @@ def explode_dep_versions2(s, *, sort=True):
         r = collections.OrderedDict(sorted(r.items(), key=lambda x: x[0]))
     return r
 
+
 def explode_dep_versions(s):
     """
     Take an RDEPENDS style string of format:
@@ -269,6 +281,7 @@ def explode_dep_versions(s):
             bb.warn("explode_dep_versions(): Item %s appeared in dependency string '%s' multiple times with different values.  explode_dep_versions cannot cope with this." % (d, s))
         r[d] = r[d][0]
     return r
+
 
 def join_deps(deps, commasep=True):
     """
@@ -289,6 +302,7 @@ def join_deps(deps, commasep=True):
     else:
         return " ".join(result)
 
+
 def _print_trace(body, line):
     """
     Print the Environment of a Text Body
@@ -303,6 +317,7 @@ def _print_trace(body, line):
         else:
             error.append('     %.4d:%s' % (i, body[i - 1].rstrip()))
     return error
+
 
 def better_compile(text, file, realfile, mode="exec", lineno=0):
     """
@@ -339,6 +354,7 @@ def better_compile(text, file, realfile, mode="exec", lineno=0):
 
         e = bb.BBHandledException(e)
         raise e
+
 
 def _print_exception(t, value, tb, realfile, text, context):
     error = []
@@ -393,6 +409,7 @@ def _print_exception(t, value, tb, realfile, text, context):
     finally:
         logger.error("\n".join(error))
 
+
 def better_exec(code, context, text=None, realfile="<code>", pythonexception=False):
     """
     Similiar to better_compile, better_exec will
@@ -421,8 +438,10 @@ def better_exec(code, context, text=None, realfile="<code>", pythonexception=Fal
         e = bb.BBHandledException(e)
         raise e
 
+
 def simple_exec(code, context):
     exec(code, get_context(), context)
+
 
 def better_eval(source, locals, extraglobals=None):
     ctx = get_context()
@@ -431,6 +450,7 @@ def better_eval(source, locals, extraglobals=None):
         for g in extraglobals:
             ctx[g] = extraglobals[g]
     return eval(source, ctx, locals)
+
 
 @contextmanager
 def fileslocked(files):
@@ -445,6 +465,7 @@ def fileslocked(files):
     finally:
         for lock in locks:
             bb.utils.unlockfile(lock)
+
 
 def lockfile(name, shared=False, retry=True, block=False):
     """
@@ -505,6 +526,7 @@ def lockfile(name, shared=False, retry=True, block=False):
         if not retry:
             return None
 
+
 def unlockfile(lf):
     """
     Unlock a file locked using lockfile()
@@ -518,6 +540,7 @@ def unlockfile(lf):
         pass
     fcntl.flock(lf.fileno(), fcntl.LOCK_UN)
     lf.close()
+
 
 def _hasher(method, filename):
     import mmap
@@ -540,6 +563,7 @@ def md5_file(filename):
     import hashlib
     return _hasher(hashlib.md5(), filename)
 
+
 def sha256_file(filename):
     """
     Return the hex string representation of the 256-bit SHA checksum of
@@ -548,12 +572,14 @@ def sha256_file(filename):
     import hashlib
     return _hasher(hashlib.sha256(), filename)
 
+
 def sha1_file(filename):
     """
     Return the hex string representation of the SHA1 checksum of the filename
     """
     import hashlib
     return _hasher(hashlib.sha1(), filename)
+
 
 def sha384_file(filename):
     """
@@ -562,12 +588,14 @@ def sha384_file(filename):
     import hashlib
     return _hasher(hashlib.sha384(), filename)
 
+
 def sha512_file(filename):
     """
     Return the hex string representation of the SHA512 checksum of the filename
     """
     import hashlib
     return _hasher(hashlib.sha512(), filename)
+
 
 def preserved_envvars_exported():
     """Variables which are taken from the environment and placed in and exported
@@ -584,6 +612,7 @@ def preserved_envvars_exported():
         'BBSERVER',
     ]
 
+
 def preserved_envvars():
     """Variables which are taken from the environment and placed in the metadata"""
     v = [
@@ -593,6 +622,7 @@ def preserved_envvars():
         'BB_ENV_EXTRAWHITE',
     ]
     return v + preserved_envvars_exported()
+
 
 def filter_environment(good_vars):
     """
@@ -619,6 +649,7 @@ def filter_environment(good_vars):
 
     return removed_vars
 
+
 def approved_variables():
     """
     Determine and return the list of whitelisted variables which are approved
@@ -638,6 +669,7 @@ def approved_variables():
             approved.extend(['BB_ENV_EXTRAWHITE'])
     return approved
 
+
 def clean_environment():
     """
     Clean up any spurious environment variables. This will remove any
@@ -649,6 +681,7 @@ def clean_environment():
 
     return {}
 
+
 def empty_environment():
     """
     Remove all variables from the environment.
@@ -656,6 +689,7 @@ def empty_environment():
     for s in list(os.environ.keys()):
         os.unsetenv(s)
         del os.environ[s]
+
 
 def build_environment(d):
     """
@@ -666,6 +700,7 @@ def build_environment(d):
         export = d.getVarFlag(var, "export", False)
         if export:
             os.environ[var] = d.getVar(var) or ""
+
 
 def _check_unsafe_delete_path(path):
     """
@@ -682,6 +717,7 @@ def _check_unsafe_delete_path(path):
     if re.match('(/|//|/home|/home/[^/]*%s)$' % extra, os.path.abspath(path)):
         return True
     return False
+
 
 def remove(path, recurse=False, ionice=False):
     """Equivalent to rm -f or rm -rf"""
@@ -704,6 +740,7 @@ def remove(path, recurse=False, ionice=False):
             if exc.errno != errno.ENOENT:
                 raise
 
+
 def prunedir(topdir, ionice=False):
     """ Delete everything reachable from the directory named in 'topdir'. """
     # CAUTION:  This is dangerous!
@@ -715,6 +752,8 @@ def prunedir(topdir, ionice=False):
 # Could also use return re.compile("(%s)" % "|".join(map(re.escape, suffixes))).sub(lambda mo: "", var)
 # but thats possibly insane and suffixes is probably going to be small
 #
+
+
 def prune_suffix(var, suffixes, d):
     """ 
     See if var ends with any of the suffixes listed and
@@ -724,6 +763,7 @@ def prune_suffix(var, suffixes, d):
         if suffix and var.endswith(suffix):
             return var[:-len(suffix)]
     return var
+
 
 def mkdirhier(directory):
     """Create a directory like 'mkdir -p', but does not complain if
@@ -735,6 +775,7 @@ def mkdirhier(directory):
     except OSError as e:
         if e.errno != errno.EEXIST or not os.path.isdir(directory):
             raise e
+
 
 def movefile(src, dest, newmtime=None, sstat=None):
     """Moves a file from src to dest, preserving all permissions and
@@ -829,6 +870,7 @@ def movefile(src, dest, newmtime=None, sstat=None):
         newmtime = sstat[stat.ST_MTIME]
     return newmtime
 
+
 def copyfile(src, dest, newmtime=None, sstat=None):
     """
     Copies a file from src to dest, preserving all permissions and
@@ -909,6 +951,7 @@ def copyfile(src, dest, newmtime=None, sstat=None):
         newmtime = sstat[stat.ST_MTIME]
     return newmtime
 
+
 def break_hardlinks(src, sstat=None):
     """
     Ensures src is the only hardlink to this file.  Other hardlinks,
@@ -925,6 +968,7 @@ def break_hardlinks(src, sstat=None):
     if sstat[stat.ST_NLINK] == 1:
         return True
     return copyfile(src, src, sstat=sstat)
+
 
 def which(path, item, direction=0, history=False, executable=False):
     """
@@ -959,6 +1003,7 @@ def which(path, item, direction=0, history=False, executable=False):
         return "", hist
     return ""
 
+
 @contextmanager
 def umask(new_mask):
     """
@@ -969,6 +1014,7 @@ def umask(new_mask):
         yield
     finally:
         os.umask(current_mask)
+
 
 def to_boolean(string, default=None):
     """ 
@@ -985,6 +1031,7 @@ def to_boolean(string, default=None):
         return False
     else:
         raise ValueError("Invalid value for to_boolean: %s" % string)
+
 
 def contains(variable, checkvalues, truevalue, falsevalue, d):
     """Check if a variable contains all the values specified.
@@ -1017,6 +1064,7 @@ def contains(variable, checkvalues, truevalue, falsevalue, d):
         return truevalue
     return falsevalue
 
+
 def contains_any(variable, checkvalues, truevalue, falsevalue, d):
     """Check if a variable contains any values specified.
 
@@ -1046,6 +1094,7 @@ def contains_any(variable, checkvalues, truevalue, falsevalue, d):
     if checkvalues & val:
         return truevalue
     return falsevalue
+
 
 def filter(variable, checkvalues, d):
     """Return all words in the variable that are present in the checkvalues.
@@ -1111,8 +1160,10 @@ def get_referenced_vars(start_expr, d):
 def cpu_count():
     return multiprocessing.cpu_count()
 
+
 def nonblockingfd(fd):
     fcntl.fcntl(fd, fcntl.F_SETFL, fcntl.fcntl(fd, fcntl.F_GETFL) | os.O_NONBLOCK)
+
 
 def process_profilelog(fn, pout=None):
     # Either call with a list of filenames and set pout or a filename and optionally pout.
@@ -1136,6 +1187,8 @@ def process_profilelog(fn, pout=None):
 #
 # Was present to work around multiprocessing pool bugs in python < 2.7.3
 #
+
+
 def multiprocessingpool(*args, **kwargs):
 
     import multiprocessing.pool
@@ -1143,6 +1196,7 @@ def multiprocessingpool(*args, **kwargs):
     #multiprocessing.util.log_to_stderr(10)
     # Deal with a multiprocessing bug where signals to the processes would be delayed until the work
     # completes. Putting in a timeout means the signals (like SIGINT/SIGTERM) get processed.
+
     def wrapper(func):
         def wrap(self, timeout=None):
             return func(self, timeout=timeout if timeout is not None else 1e100)
@@ -1150,6 +1204,7 @@ def multiprocessingpool(*args, **kwargs):
     multiprocessing.pool.IMapIterator.next = wrapper(multiprocessing.pool.IMapIterator.next)
 
     return multiprocessing.Pool(*args, **kwargs)
+
 
 def exec_flat_python_func(func, *args, **kwargs):
     """Execute a flat python function (defined with def funcname(args):...)"""
@@ -1173,6 +1228,7 @@ def exec_flat_python_func(func, *args, **kwargs):
     comp = bb.utils.better_compile(code, '<string>', '<string>')
     bb.utils.better_exec(comp, context, code, '<string>')
     return context['retval']
+
 
 def edit_metadata(meta_lines, variables, varfunc, match_overrides=False):
     """Edit lines from a recipe or config file and modify one or more
@@ -1403,6 +1459,7 @@ def edit_bblayers_conf(bblayers_conf, add, remove, edit_cb=None):
         return pth
 
     approved = bb.utils.approved_variables()
+
     def canonicalise_path(pth):
         pth = remove_trailing_sep(pth)
         if 'HOME' in approved and '~' in pth:
@@ -1504,6 +1561,7 @@ def edit_bblayers_conf(bblayers_conf, add, remove, edit_cb=None):
 
     return (notadded, notremoved)
 
+
 def get_collection_res(d):
     collections = (d.getVar('BBFILE_COLLECTIONS') or '').split()
     collection_res = {}
@@ -1547,8 +1605,10 @@ def get_file_layer(filename, d, collection_res={}):
 # Constant taken from http://linux.die.net/include/linux/prctl.h
 PR_SET_PDEATHSIG = 1
 
+
 class PrCtlError(Exception):
     pass
+
 
 def signal_on_parent_exit(signame):
     """
@@ -1560,6 +1620,7 @@ def signal_on_parent_exit(signame):
     if result != 0:
         raise PrCtlError('prctl failed with error code %s' % result)
 
+
 #
 # Manually call the ioprio syscall. We could depend on other libs like psutil
 # however this gets us enough of what we need to bitbake for now without the
@@ -1568,6 +1629,7 @@ def signal_on_parent_exit(signame):
 _unamearch = os.uname()[4]
 IOPRIO_WHO_PROCESS = 1
 IOPRIO_CLASS_SHIFT = 13
+
 
 def ioprio_set(who, cls, value):
     NR_ioprio_set = None
@@ -1586,6 +1648,7 @@ def ioprio_set(who, cls, value):
     else:
         bb.warn("Unable to set IO Prio for arch %s" % _unamearch)
 
+
 def set_process_name(name):
     from ctypes import cdll, byref, create_string_buffer
     # This is nice to have for debugging, not essential
@@ -1595,6 +1658,7 @@ def set_process_name(name):
         libc.prctl(15, byref(buf), 0, 0, 0)
     except:
         pass
+
 
 def export_proxies(d):
     """ export common proxies variables from datastore to environment """
@@ -1642,13 +1706,17 @@ def load_plugins(logger, plugins, pluginpath):
 
 class LogCatcher(logging.Handler):
     """Logging handler for collecting logged messages so you can check them later"""
+
     def __init__(self):
         self.messages = []
         logging.Handler.__init__(self, logging.WARNING)
+
     def emit(self, record):
         self.messages.append(bb.build.logformatter.format(record))
+
     def contains(self, message):
         return (message in self.messages)
+
 
 def is_semver(version):
     """

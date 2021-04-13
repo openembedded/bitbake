@@ -26,6 +26,7 @@ install_dir = os.environ.get('TOASTER_DIR')
 
 from pprint import pformat
 
+
 class LocalhostBEController(BuildEnvironmentController):
     """ Implementation of the BuildEnvironmentController for the localhost;
         this controller manages the default build directory,
@@ -119,9 +120,7 @@ class LocalhostBEController(BuildEnvironmentController):
             gitrepos[(layer.giturl, layer.commit)].append((layer.name, layer.dirpath, layer_index))
             layer_index += 1
 
-
         logger.debug("localhostbecontroller, our git repos are %s" % pformat(gitrepos))
-
 
         # 2. Note for future use if the current source directory is a
         # checked-out git repos that could match a layer's vcs_url and therefore
@@ -310,10 +309,8 @@ class LocalhostBEController(BuildEnvironmentController):
 
         return layerpath
 
-
     def readServerLogFile(self):
         return open(os.path.join(self.be.builddir, "toaster_server.log"), "r").read()
-
 
     def triggerBuild(self, bitbake, layers, variables, targets, brbe):
         layers = self.setLayers(bitbake, layers, targets)

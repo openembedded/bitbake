@@ -19,6 +19,7 @@ import hashserv.client
 logger = logging.getLogger('BitBake.SigGen')
 hashequiv_logger = logging.getLogger('BitBake.SigGen.HashEquiv')
 
+
 def init(d):
     siggens = [obj for obj in globals().values()
                       if type(obj) is type and issubclass(obj, SignatureGenerator)]
@@ -33,6 +34,7 @@ def init(d):
                      "Available generators: %s", desired,
                      ', '.join(obj.name for obj in siggens))
         return SignatureGenerator(d)
+
 
 class SignatureGenerator(object):
     """
@@ -142,6 +144,7 @@ class SignatureGenerator(object):
             return dataCaches
 
         return DataCacheProxy()
+
 
 class SignatureGeneratorBasic(SignatureGenerator):
     """
@@ -422,6 +425,7 @@ class SignatureGeneratorBasic(SignatureGenerator):
                     bb.error("The mismatched hashes were %s and %s" % (dataCaches[mc].basetaskhash[tid], self.basehash[tid]))
                 self.dump_sigtask(fn, task, dataCaches[mc].stamp[fn], True)
 
+
 class SignatureGeneratorBasicHash(SignatureGeneratorBasic):
     name = "basichash"
 
@@ -450,6 +454,7 @@ class SignatureGeneratorBasicHash(SignatureGeneratorBasic):
     def invalidate_task(self, task, d, fn):
         bb.note("Tainting hash to force rebuild of task %s, %s" % (fn, task))
         bb.build.write_taint(task, d, fn)
+
 
 class SignatureGeneratorUniHashMixIn(object):
     def __init__(self, data):
@@ -669,8 +674,11 @@ class SignatureGeneratorUniHashMixIn(object):
 #
 # Dummy class used for bitbake-selftest
 #
+
+
 class SignatureGeneratorTestEquivHash(SignatureGeneratorUniHashMixIn, SignatureGeneratorBasicHash):
     name = "TestEquivHash"
+
     def init_rundepcheck(self, data):
         super().init_rundepcheck(data)
         self.server = data.getVar('BB_HASHSERVE')
@@ -679,9 +687,12 @@ class SignatureGeneratorTestEquivHash(SignatureGeneratorUniHashMixIn, SignatureG
 #
 # Dummy class used for bitbake-selftest
 #
+
+
 class SignatureGeneratorTestMulticonfigDepends(SignatureGeneratorBasicHash):
     name = "TestMulticonfigDepends"
     supports_multiconfig_datacaches = True
+
 
 def dump_this_task(outfile, d):
     import bb.parse
@@ -689,6 +700,7 @@ def dump_this_task(outfile, d):
     task = "do_" + d.getVar("BB_CURRENTTASK")
     referencestamp = bb.build.stamp_internal(task, d, None, True)
     bb.parse.siggen.dump_sigtask(fn, task, outfile, "customfile:" + referencestamp)
+
 
 def init_colors(enable_color):
     """Initialise colour dict for passing to compare_sigfiles()"""
@@ -703,6 +715,7 @@ def init_colors(enable_color):
         for k in colors.keys():
             colors[k] = ''
     return colors
+
 
 def worddiff_str(oldstr, newstr, colors=None):
     if not colors:
@@ -724,6 +737,7 @@ def worddiff_str(oldstr, newstr, colors=None):
         whitespace_note = ' (whitespace changed)'
     return '"%s"%s' % (' '.join(ret), whitespace_note)
 
+
 def list_inline_diff(oldlist, newlist, colors=None):
     if not colors:
         colors = init_colors(False)
@@ -740,6 +754,7 @@ def list_inline_diff(oldlist, newlist, colors=None):
             item = '{color_remove}-{value}{color_default}'.format(value=value, **colors)
             ret.append(item)
     return '[%s]' % (', '.join(ret))
+
 
 def clean_basepath(basepath):
     basepath, dir, recipe_task = basepath.rsplit("/", 2)
@@ -762,11 +777,13 @@ def clean_basepath(basepath):
 
     return cleaned + mc_suffix
 
+
 def clean_basepaths(a):
     b = {}
     for x in a:
         b[clean_basepath(x)] = a[x]
     return b
+
 
 def clean_basepaths_list(a):
     b = []
@@ -774,10 +791,12 @@ def clean_basepaths_list(a):
         b.append(clean_basepath(x))
     return b
 
+
 def compare_sigfiles(a, b, recursecb=None, color=False, collapsed=False):
     output = []
 
     colors = init_colors(color)
+
     def color_format(formatstr, **values):
         """
         Return colour formatted string.
@@ -875,7 +894,6 @@ def compare_sigfiles(a, b, recursecb=None, color=False, collapsed=False):
         for dep in removed:
             output.append(color_format("{color_title}Dependency on Variable %s was removed") % (dep))
 
-
     changed, added, removed = dict_diff(a_data['varvals'], b_data['varvals'])
     if changed:
         for dep in changed:
@@ -942,7 +960,6 @@ def compare_sigfiles(a, b, recursecb=None, color=False, collapsed=False):
                 output.append(color_format("{color_title}runtaskdeps changed:"))
             output.append("\n".join(changed))
 
-
     if 'runtaskhashes' in a_data and 'runtaskhashes' in b_data:
         a = a_data['runtaskhashes']
         b = b_data['runtaskhashes']
@@ -1008,6 +1025,7 @@ def calc_basehash(sigdata):
             basedata = basedata + str(val)
 
     return hashlib.sha256(basedata.encode("utf-8")).hexdigest()
+
 
 def calc_taskhash(sigdata):
     data = sigdata['basehash']

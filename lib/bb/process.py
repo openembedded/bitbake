@@ -11,10 +11,12 @@ import bb
 
 logger = logging.getLogger('BitBake.Process')
 
+
 def subprocess_setup():
     # Python installs a SIGPIPE handler by default. This is usually not what
     # non-Python subprocesses expect.
     signal.signal(signal.SIGPIPE, signal.SIG_DFL)
+
 
 class CmdError(RuntimeError):
     def __init__(self, command, msg=None):
@@ -32,9 +34,11 @@ class CmdError(RuntimeError):
             msg += ': %s' % self.msg
         return msg
 
+
 class NotFoundError(CmdError):
     def __str__(self):
         return CmdError.__str__(self) + ": command not found"
+
 
 class ExecutionError(CmdError):
     def __init__(self, command, exitcode, stdout=None, stderr=None):
@@ -55,6 +59,7 @@ class ExecutionError(CmdError):
         return (CmdError.__str__(self) +
                 " with exit code %s" % self.exitcode + message + (self.extra_message or ""))
 
+
 class Popen(subprocess.Popen):
     defaults = {
         "close_fds": True,
@@ -69,6 +74,7 @@ class Popen(subprocess.Popen):
         options = dict(self.defaults)
         options.update(kwargs)
         subprocess.Popen.__init__(self, *args, **options)
+
 
 def _logged_communicate(pipe, log, input, extrafiles):
     if pipe.stdin:
@@ -152,6 +158,7 @@ def _logged_communicate(pipe, log, input, extrafiles):
     if pipe.stderr is not None:
         pipe.stderr.close()
     return ''.join(outdata), ''.join(errdata)
+
 
 def run(cmd, input=None, log=None, extrafiles=None, **options):
     """Convenience function to run a command and return its output, raising an

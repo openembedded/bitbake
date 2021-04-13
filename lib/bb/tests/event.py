@@ -23,6 +23,7 @@ from bb.msg import BBLogFormatter
 
 class EventQueueStubBase(object):
     """ Base class for EventQueueStub classes """
+
     def __init__(self):
         self.event_calls = []
         return
@@ -38,6 +39,7 @@ class EventQueueStubBase(object):
 
 class EventQueueStub(EventQueueStubBase):
     """ Class used as specification for UI event handler queue stub objects """
+
     def __init__(self):
         super(EventQueueStub, self).__init__()
 
@@ -48,6 +50,7 @@ class EventQueueStub(EventQueueStubBase):
 class PickleEventQueueStub(EventQueueStubBase):
     """ Class used as specification for UI event handler queue stub objects
         with sendpickle method """
+
     def __init__(self):
         super(PickleEventQueueStub, self).__init__()
 
@@ -58,13 +61,13 @@ class PickleEventQueueStub(EventQueueStubBase):
 
 class UIClientStub(object):
     """ Class used as specification for UI event handler stub objects """
+
     def __init__(self):
         self.event = None
 
 
 class EventHandlingTest(unittest.TestCase):
     """ Event handling test class """
-
 
     def setUp(self):
         self._test_process = Mock()
@@ -460,7 +463,6 @@ class EventHandlingTest(unittest.TestCase):
         # called before processing the event from the second worker.
         self.assertEqual(self._threadlock_test_calls,
                          ["w1_ui1", "w1_ui2", "w2_ui1", "w2_ui2"])
-
 
     def test_disable_threadlock(self):
         """ Test disable_threadlock method """

@@ -144,6 +144,7 @@ class DepExplorer(Gtk.Window):
         package = model.get_value(model.get_iter(path), data_col)
 
         pkg_path = []
+
         def finder(model, path, iter, needle):
             package = model.get_value(iter, COL_PKG_NAME)
             if package == needle:
@@ -165,7 +166,6 @@ class DepExplorer(Gtk.Window):
         self.dep_treeview.set_current_package(current_package)
         self.revdep_treeview.set_current_package(current_package)
 
-
     def parse(self, depgraph):
         for task in depgraph["tdepends"]:
             self.pkg_model.insert(0, (task,))
@@ -175,6 +175,7 @@ class DepExplorer(Gtk.Window):
 
 class gtkthread(threading.Thread):
     quit = threading.Event()
+
     def __init__(self, shutdown):
         threading.Thread.__init__(self)
         self.setDaemon(True)

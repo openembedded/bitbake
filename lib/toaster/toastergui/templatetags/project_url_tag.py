@@ -7,6 +7,7 @@ from django.urls import reverse
 
 register = template.Library()
 
+
 def project_url(parser, token):
     """
     Create a URL for a project's main page;
@@ -21,6 +22,7 @@ def project_url(parser, token):
         )
     return ProjectUrlNode(project)
 
+
 class ProjectUrlNode(template.Node):
     def __init__(self, project):
         self.project = template.Variable(project)
@@ -34,5 +36,6 @@ class ProjectUrlNode(template.Node):
                 return reverse('project', args=(project.id,))
         except template.VariableDoesNotExist:
             return ''
+
 
 register.tag('project_url', project_url)

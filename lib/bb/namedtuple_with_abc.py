@@ -69,6 +69,7 @@ class _NamedTupleABC(metaclass=_NamedTupleABCMeta):
 _namedtuple.abc = _NamedTupleABC
 #_NamedTupleABC.register(type(version_info))  # (and similar, in the future...)
 
+
 @wraps(_namedtuple)
 def namedtuple(*args, **kwargs):
     '''Named tuple factory with namedtuple.abc subclass registration.'''
@@ -76,9 +77,8 @@ def namedtuple(*args, **kwargs):
     _NamedTupleABC.register(cls)
     return cls
 
+
 collections.namedtuple = namedtuple
-
-
 
 
 if __name__ == '__main__':
@@ -89,6 +89,7 @@ if __name__ == '__main__':
 
     class MyRecord(namedtuple.abc):
         _fields = 'x y z'  # such form will be transformed into ('x', 'y', 'z')
+
         def _my_custom_method(self):
             return list(self._asdict().items())
     # (the '_fields' attribute belongs to the named tuple public API anyway)
@@ -163,10 +164,13 @@ if __name__ == '__main__':
     class MyMixIn(object):
         def method(self):
             return "MyMixIn.method() called"
+
         def _my_custom_method(self):
             return "MyMixIn._my_custom_method() called"
+
         def count(self, item):
             return "MyMixIn.count({0}) called".format(item)
+
         def _asdict(self):  # (cannot override a namedtuple method, see below)
             return "MyMixIn._asdict() called"
 
@@ -206,6 +210,7 @@ if __name__ == '__main__':
 
     class MyRecord6(MyRecord33):
         _fields = 'j k l x y z'
+
         def _asdict(self):
             return "MyRecord6._asdict() called"
     rec6 = MyRecord6(1, 2, 3, 1, 2, 3)

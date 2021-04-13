@@ -18,6 +18,7 @@ import time
 # Add tests on task ordering (X happens before Y after Z)
 #
 
+
 class RunQueueTests(unittest.TestCase):
 
     alltasks = ['package', 'fetch', 'unpack', 'patch', 'prepare_recipe_sysroot', 'configure',
@@ -111,8 +112,8 @@ class RunQueueTests(unittest.TestCase):
             expected = ['a1:fetch', 'a1:unpack', 'a1:patch', 'a1:populate_sysroot_setscene']
             self.assertEqual(set(tasks), set(expected))
 
-
     # Test targets with intermediate setscene tasks alongside a target with no intermediate setscene tasks
+
     def test_mixed_direct_tasks_setscene_tasks(self):
         with tempfile.TemporaryDirectory(prefix="runqueuetest") as tempdir:
             cmd = ["bitbake", "c1:do_patch", "a1"]

@@ -42,20 +42,24 @@ buildlog = logging.getLogger("BitBake.Build")
 parselog = logging.getLogger("BitBake.Parsing")
 providerlog = logging.getLogger("BitBake.Provider")
 
+
 class NoSpecificMatch(bb.BBHandledException):
     """
     Exception raised when no or multiple file matches are found
     """
+
 
 class NothingToBuild(Exception):
     """
     Exception raised when there is nothing to build
     """
 
+
 class CollectionError(bb.BBHandledException):
     """
     Exception raised when layer configuration is incorrect
     """
+
 
 class state:
     initial, parsing, running, shutdown, forceshutdown, stopped, error = list(range(7))
@@ -152,6 +156,8 @@ class EventWriter:
 #============================================================================#
 # BBCooker
 #============================================================================#
+
+
 class BBCooker:
     """
     Manages one bitbake build run
@@ -800,7 +806,6 @@ class BBCooker:
                 for ei in extra_info:
                     depend_tree["pn"][pn][ei] = vars(self.recipecaches[mc])[ei][taskfn]
 
-
             dotname = "%s.%s" % (pn, bb.runqueue.taskname_from_tid(tid))
             if not dotname in depend_tree["tdepends"]:
                 depend_tree["tdepends"][dotname] = []
@@ -1155,7 +1160,6 @@ class BBCooker:
             raise bb.BBHandledException()
         else:
             shell.start(self)
-
 
     def handleCollections(self, collections):
         """Handle collections"""
@@ -1539,7 +1543,6 @@ class BBCooker:
 
         self.idleCallBackRegister(buildTargetsIdle, rq)
 
-
     def getAllKeysWithFlags(self, flaglist):
         dump = {}
         for k in self.data.keys():
@@ -1562,7 +1565,6 @@ class BBCooker:
             except Exception as e:
                 print(e)
         return dump
-
 
     def updateCacheSync(self):
         if self.state == state.running:
@@ -1975,11 +1977,13 @@ class CookerCollectFiles(object):
 
         return priorities
 
+
 class ParsingFailure(Exception):
     def __init__(self, realexception, recipe):
         self.realexception = realexception
         self.recipe = recipe
         Exception.__init__(self, realexception, recipe)
+
 
 class Parser(multiprocessing.Process):
     def __init__(self, jobs, results, quit, init, profile):
@@ -2045,6 +2049,7 @@ class Parser(multiprocessing.Process):
         try:
             origfilter = bb.event.LogHandler.filter
             # Record the filename we're parsing into any events generated
+
             def parse_filter(self, record):
                 record.taskpid = bb.event.worker_pid
                 record.fn = filename
@@ -2068,6 +2073,7 @@ class Parser(multiprocessing.Process):
             return True, ParsingFailure(exc, filename)
         finally:
             bb.event.LogHandler.filter = origfilter
+
 
 class CookerParser(object):
     def __init__(self, cooker, mcfilelist, masked):
@@ -2116,6 +2122,7 @@ class CookerParser(object):
         self.processes = []
         if self.toparse:
             bb.event.fire(bb.event.ParseStarted(self.toparse), self.cfgdata)
+
             def init():
                 signal.signal(signal.SIGTERM, signal.SIG_DFL)
                 signal.signal(signal.SIGHUP, signal.SIG_DFL)

@@ -17,16 +17,21 @@ import re
 from ply import lex
 from bb.pysh.sherrors import *
 
+
 class NeedMore(Exception):
     pass
+
 
 def is_blank(c):
     return c in (' ', '\t')
     
+
 _RE_DIGITS = re.compile(r'^\d+$')
+
 
 def are_digits(s):
     return _RE_DIGITS.search(s) is not None
+
 
 _OPERATORS = dict([
     ('&&', 'AND_IF'),
@@ -48,6 +53,8 @@ _OPERATORS = dict([
 ])
 
 #Make a function to silence pychecker "Local variable shadows global"
+
+
 def make_partial_ops():
     partials = {}
     for k in _OPERATORS:
@@ -55,19 +62,23 @@ def make_partial_ops():
             partials[k[:i]] = None
     return partials  
 
+
 _PARTIAL_OPERATORS = make_partial_ops()    
         
+
 def is_partial_op(s):
     """Return True if s matches a non-empty subpart of an operator starting
     at its first character.
     """
     return s in _PARTIAL_OPERATORS
     
+
 def is_op(s):
     """If s matches an operator, returns the operator identifier. Return None
     otherwise.
     """
     return _OPERATORS.get(s)
+
 
 _RESERVEDS = dict([
     ('if', 'If'),
@@ -89,19 +100,24 @@ _RESERVEDS = dict([
     ('|', 'PIPE'),
 ])
     
+
 def get_reserved(s):
     return _RESERVEDS.get(s)
     
+
 _RE_NAME = re.compile(r'^[0-9a-zA-Z_]+$')
+
 
 def is_name(s):
     return _RE_NAME.search(s) is not None
+
 
 def find_chars(seq, chars):
     for i, v in enumerate(seq):
         if v in chars:
             return i, v
     return -1, None
+
 
 class WordLexer:
     """WordLexer parse quoted or expansion expressions and return an expression
@@ -335,6 +351,7 @@ class WordLexer:
             else:
                 recurse = True
 
+
 def normalize_wordtree(wtree):
     """Fold back every literal sequence (delimited with empty strings) into
     parent sequence.
@@ -421,6 +438,7 @@ class HereDocLexer:
     """HereDocLexer delimits whatever comes from the here-document starting newline
     not included to the closing delimiter line included.
     """
+
     def __init__(self, op, delim):
         assert op in ('<<', '<<-')
         if not delim:
@@ -478,6 +496,7 @@ class HereDocLexer:
             if i == -1:
                 break
     
+
 class Token:
     #TODO: check this is still in use
     OPERATOR = 'OPERATOR'
@@ -502,6 +521,7 @@ class HereDoc:
         self.name = name
         self.pendings = []
                
+
 TK_COMMA = 'COMMA'
 TK_AMPERSAND = 'AMP'
 TK_OP = 'OP'
@@ -511,6 +531,7 @@ TK_NEWLINE = 'NEWLINE'
 TK_IONUMBER = 'IO_NUMBER'
 TK_ASSIGNMENT = 'ASSIGNMENT_WORD'
 TK_HERENAME = 'HERENAME'
+
 
 class Lexer:
     """Main lexer.
@@ -832,8 +853,10 @@ tokens += _OPERATORS.values()
 #Add reserved words
 tokens += _RESERVEDS.values()
             
+
 class PLYLexer(Lexer):
     """Bridge Lexer and PLY lexer interface."""
+
     def __init__(self):
         Lexer.__init__(self)
         self._tokens = []

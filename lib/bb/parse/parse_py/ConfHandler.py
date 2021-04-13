@@ -47,6 +47,7 @@ __export_regexp__ = re.compile(r"export\s+([a-zA-Z0-9\-_+.${}/~]+)$")
 __unset_regexp__ = re.compile(r"unset\s+([a-zA-Z0-9\-_+.${}/~]+)$")
 __unset_flag_regexp__ = re.compile(r"unset\s+([a-zA-Z0-9\-_+.${}/~]+)\[([a-zA-Z0-9\-_+.]+)\]$")
 
+
 def init(data):
     topdir = data.getVar('TOPDIR', False)
     if not topdir:
@@ -55,6 +56,7 @@ def init(data):
 
 def supports(fn, d):
     return fn[-5:] == ".conf"
+
 
 def include(parentfn, fns, lineno, data, error_out):
     """
@@ -68,6 +70,7 @@ def include(parentfn, fns, lineno, data, error_out):
     # "include" or "require" accept zero to n space-separated file names to include.
     for fn in fns.split():
         include_single_file(parentfn, fn, lineno, data, error_out)
+
 
 def include_single_file(parentfn, fn, lineno, data, error_out):
     """
@@ -102,6 +105,7 @@ def include_single_file(parentfn, fn, lineno, data, error_out):
             else:
                 raise ParseError("Error parsing %s: %s" % (fn, exc.strerror), parentfn, lineno)
 
+
 # We have an issue where a UI might want to enforce particular settings such as
 # an empty DISTRO variable. If configuration files do something like assigning
 # a weak default, it turns out to be very difficult to filter out these changes,
@@ -109,6 +113,7 @@ def include_single_file(parentfn, fn, lineno, data, error_out):
 # of configuration files. We therefore let the UIs hook into configuration file
 # parsing. This turns out to be a hard problem to solve any other way.
 confFilters = []
+
 
 def handle(fn, data, include):
     init(data)
@@ -157,6 +162,7 @@ def handle(fn, data, include):
 
     return data
 
+
 def feeder(lineno, s, fn, statements):
     m = __config_regexp__.match(s)
     if m:
@@ -190,6 +196,7 @@ def feeder(lineno, s, fn, statements):
         return
 
     raise ParseError("unparsed line: '%s'" % s, fn, lineno)
+
 
 # Add us to the handlers list
 from bb.parse import handlers

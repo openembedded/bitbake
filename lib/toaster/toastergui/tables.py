@@ -19,6 +19,7 @@ from toastergui.tablefilter import TableFilterActionDay
 
 import os
 
+
 class ProjectFilters(object):
     @staticmethod
     def in_project(project_layers):
@@ -27,6 +28,7 @@ class ProjectFilters(object):
     @staticmethod
     def not_in_project(project_layers):
         return ~(ProjectFilters.in_project(project_layers))
+
 
 class LayersTable(ToasterTable):
     """Table of layers in Toaster"""
@@ -282,7 +284,6 @@ class LayerMachinesTable(MachinesTable):
         context['layerversion'] = Layer_Version.objects.get(pk=kwargs['layerid'])
         return context
 
-
     def setup_queryset(self, *args, **kwargs):
         MachinesTable.setup_queryset(self, *args, **kwargs)
 
@@ -368,7 +369,6 @@ class RecipesTable(ToasterTable):
 
         self.queryset = prj.get_all_compatible_recipes()
 
-
     def setup_columns(self, *args, **kwargs):
 
         self.add_column(title="Version",
@@ -441,7 +441,6 @@ class LayerRecipesTable(RecipesTable):
         context['layerversion'] = Layer_Version.objects.get(pk=kwargs['layerid'])
         return context
 
-
     def setup_queryset(self, *args, **kwargs):
         self.queryset = \
                 Recipe.objects.filter(layer_version__pk=int(kwargs['layerid']))
@@ -472,8 +471,10 @@ class LayerRecipesTable(RecipesTable):
                         static_data_name="add-del-layers",
                         static_data_template=build_recipe_template)
 
+
 class CustomImagesTable(ToasterTable):
     """ Table to display your custom images """
+
     def __init__(self, *args, **kwargs):
         super(CustomImagesTable, self).__init__(*args, **kwargs)
         self.title = "Custom images"
@@ -537,7 +538,6 @@ class CustomImagesTable(ToasterTable):
                         static_data_name='approx_packages',
                         static_data_template=approx_packages_template)
 
-
         build_btn_template = '''
         <button data-recipe-name="{{data.name}}"
         class="btn btn-default btn-block build-recipe-btn">
@@ -548,6 +548,7 @@ class CustomImagesTable(ToasterTable):
                         hideable=False,
                         static_data_name='build_custom_img',
                         static_data_template=build_btn_template)
+
 
 class ImageRecipesTable(RecipesTable):
     """ A subset of the recipes table which displayed just image recipes """
@@ -565,7 +566,6 @@ class ImageRecipesTable(RecipesTable):
         self.queryset = self.queryset.filter(
                 Q(is_image=True) & ~Q(pk__in=custom_image_recipes))
         self.queryset = self.queryset.order_by(self.default_orderby)
-
 
     def setup_columns(self, *args, **kwargs):
 
@@ -590,6 +590,7 @@ class ImageRecipesTable(RecipesTable):
 
 class NewCustomImagesTable(ImageRecipesTable):
     """ Table which displays Images recipes which can be customised """
+
     def __init__(self, *args, **kwargs):
         super(NewCustomImagesTable, self).__init__(*args, **kwargs)
         self.title = "Select the image recipe you want to customise"
@@ -629,6 +630,7 @@ class NewCustomImagesTable(ImageRecipesTable):
 
 class SoftwareRecipesTable(RecipesTable):
     """ Displays just the software recipes """
+
     def __init__(self, *args, **kwargs):
         super(SoftwareRecipesTable, self).__init__(*args, **kwargs)
         self.title = "Compatible software recipes"
@@ -639,7 +641,6 @@ class SoftwareRecipesTable(RecipesTable):
 
         self.queryset = self.queryset.filter(is_image=False)
         self.queryset = self.queryset.order_by(self.default_orderby)
-
 
     def setup_columns(self, *args, **kwargs):
         self.add_column(title="Software recipe",
@@ -654,6 +655,7 @@ class SoftwareRecipesTable(RecipesTable):
         super(SoftwareRecipesTable, self).setup_columns(*args, **kwargs)
 
         self.add_column(**RecipesTable.build_col)
+
 
 class PackagesTable(ToasterTable):
     """ Table to display the packages in a recipe from it's last successful
@@ -733,7 +735,6 @@ class PackagesTable(ToasterTable):
                         orderable=True,
                         hidden=True)
 
-
         self.add_column(title="Dependencies",
                         static_data_name="dependencies",
                         static_data_template='\
@@ -790,7 +791,6 @@ class SelectPackagesTable(PackagesTable):
 
         self.static_context_extra['recipe_id'] = kwargs['custrecipeid']
 
-
         self.static_context_extra['current_packages'] = \
                 current_packages.values_list('pk', flat=True)
 
@@ -805,7 +805,6 @@ class SelectPackagesTable(PackagesTable):
         context['approx_pkg_size'] = \
                         custom_recipe.get_all_packages().aggregate(Sum('size'))
         return context
-
 
     def setup_columns(self, *args, **kwargs):
         super(SelectPackagesTable, self).setup_columns(*args, **kwargs)
@@ -841,6 +840,7 @@ class SelectPackagesTable(PackagesTable):
         in_current_image_filter.add_action(in_image_action)
         in_current_image_filter.add_action(not_in_image_action)
         self.add_filter(in_current_image_filter)
+
 
 class ProjectsTable(ToasterTable):
     """Table of projects in Toaster"""
@@ -1054,6 +1054,7 @@ class ProjectsTable(ToasterTable):
                         orderable=False,
                         static_data_name='image_files',
                         static_data_template=image_files_template)
+
 
 class BuildsTable(ToasterTable):
     """Table of builds in Toaster"""
@@ -1455,6 +1456,7 @@ class AllBuildsTable(BuildsTable):
         context = super(AllBuildsTable, self).get_context_data(**kwargs)
         context['mru'] = Build.get_recent()
         return context
+
 
 class ProjectBuildsTable(BuildsTable):
     """

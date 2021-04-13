@@ -26,6 +26,7 @@ class BuildTablesMixin(ToasterTable):
 
 class BuiltPackagesTableBase(tables.PackagesTable):
     """ Table to display all the packages built in a build """
+
     def __init__(self, *args, **kwargs):
         super(BuiltPackagesTableBase, self).__init__(*args, **kwargs)
         self.title = "Packages built"
@@ -131,6 +132,7 @@ class BuiltPackagesTableBase(tables.PackagesTable):
 
 class BuiltPackagesTable(BuildTablesMixin, BuiltPackagesTableBase):
     """ Show all the packages built for the selected build """
+
     def __init__(self, *args, **kwargs):
         super(BuiltPackagesTable, self).__init__(*args, **kwargs)
         self.title = "Packages built"
@@ -161,6 +163,7 @@ class BuiltPackagesTable(BuildTablesMixin, BuiltPackagesTableBase):
 
 class InstalledPackagesTable(BuildTablesMixin, BuiltPackagesTableBase):
     """ Show all packages installed in an image """
+
     def __init__(self, *args, **kwargs):
         super(InstalledPackagesTable, self).__init__(*args, **kwargs)
         self.title = "Packages Included"

@@ -16,6 +16,7 @@ from tests.browser.selenium_helpers import SeleniumTestCase
 from orm.models import BitbakeVersion, Release, Project, Build
 from orm.models import ProjectVariable
 
+
 class TestAllProjectsPage(SeleniumTestCase):
     """ Browser tests for projects page /projects/ """
 

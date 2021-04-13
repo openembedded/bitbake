@@ -29,6 +29,7 @@ sys.path.insert(0, join(dirname(dirname(abspath(__file__))), 'lib'))
 import bb.cooker
 from bb.ui import toasterui
 
+
 class EventPlayer:
     """Emulate a connection to a bitbake server."""
 
@@ -94,6 +95,7 @@ class EventPlayer:
         """
         pass
 
+
 def main(argv):
     with open(argv[-1]) as eventfile:
         # load variables from the first line
@@ -103,6 +105,7 @@ def main(argv):
         player = EventPlayer(eventfile, variables)
 
         return toasterui.main(player, player, params)
+
 
 # run toaster ui on our mock bitbake class
 if __name__ == "__main__":

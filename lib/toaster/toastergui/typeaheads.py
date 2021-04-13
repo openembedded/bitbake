@@ -93,6 +93,7 @@ class MachinesTypeAhead(ToasterTypeAhead):
 class DistrosTypeAhead(ToasterTypeAhead):
     """ Typeahead for all the distros available in the current project's
     configuration """
+
     def __init__(self):
         super(DistrosTypeAhead, self).__init__()
 
@@ -123,6 +124,7 @@ class DistrosTypeAhead(ToasterTypeAhead):
 class RecipesTypeAhead(ToasterTypeAhead):
     """ Typeahead for all the recipes available in the current project's
     configuration """
+
     def apply_search(self, search_term, prj, request):
         recipes = prj.get_available_recipes()
         recipes = recipes.order_by("name")
@@ -153,6 +155,7 @@ class RecipesTypeAhead(ToasterTypeAhead):
 
 class ProjectsTypeAhead(ToasterTypeAhead):
     """ Typeahead for all the projects, except for command line builds """
+
     def apply_search(self, search_term, prj, request):
         projects = Project.objects.exclude(is_default=True).order_by("name")
 

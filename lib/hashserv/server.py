@@ -112,8 +112,10 @@ class Stats(object):
 class ClientError(Exception):
     pass
 
+
 class ServerError(Exception):
     pass
+
 
 def insert_task(cursor, data, ignore=False):
     keys = sorted(data.keys())
@@ -122,6 +124,7 @@ def insert_task(cursor, data, ignore=False):
         ', '.join(keys),
         ', '.join(':' + k for k in keys))
     cursor.execute(query, data)
+
 
 async def copy_from_upstream(client, db, method, taskhash):
     d = await client.get_taskhash(method, taskhash, True)
@@ -136,6 +139,7 @@ async def copy_from_upstream(client, db, method, taskhash):
 
     return d
 
+
 async def copy_outhash_from_upstream(client, db, method, outhash, taskhash):
     d = await client.get_outhash(method, outhash, taskhash)
     if d is not None:
@@ -148,6 +152,7 @@ async def copy_outhash_from_upstream(client, db, method, outhash, taskhash):
             db.commit()
 
     return d
+
 
 class ServerClient(object):
     FAST_QUERY = 'SELECT taskhash, method, unihash FROM tasks_v2 WHERE method=:method AND taskhash=:taskhash ORDER BY created ASC LIMIT 1'
@@ -199,7 +204,6 @@ class ServerClient(object):
             self.upstream_client = None
 
         try:
-
 
             self.addr = self.writer.get_extra_info('peername')
             logger.debug('Client %r connected' % (self.addr,))
@@ -465,7 +469,6 @@ class ServerClient(object):
             d = {k: row[k] for k in ('taskhash', 'method', 'unihash')}
 
         self.write_message(d)
-
 
     async def handle_get_stats(self, request):
         d = {

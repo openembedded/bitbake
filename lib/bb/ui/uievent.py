@@ -22,6 +22,7 @@ import bb
 
 logger = logging.getLogger(__name__)
 
+
 class BBUIEventQueue:
     def __init__(self, BBServer, clientinfo=("localhost, 0")):
 
@@ -124,6 +125,7 @@ class BBUIEventQueue:
         except:
             pass
         self.server.quit = True
+
 
 class UIXMLRPCServer (SimpleXMLRPCServer):
 

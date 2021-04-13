@@ -32,12 +32,14 @@ from bb.utils import export_proxies
 from bs4 import BeautifulSoup
 from bs4 import SoupStrainer
 
+
 class WgetProgressHandler(bb.progress.LineFilterProgressHandler):
     """
     Extract progress information from wget output.
     Note: relies on --progress=dot (with -v or without -q/-nv) being
     specified on the wget command line.
     """
+
     def __init__(self, d):
         super(WgetProgressHandler, self).__init__(d)
         # Send an initial progress event so the bar gets shown
@@ -61,6 +63,7 @@ class Wget(FetchMethod):
     user_agent = "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:84.0) Gecko/20100101 Firefox/84.0"
 
     """Class to fetch urls via 'wget'"""
+
     def supports(self, ud, d):
         """
         Check to see if a given url can be fetched with wget.
@@ -232,11 +235,14 @@ class Wget(FetchMethod):
 
                 # no data, just have to read
                 r.read()
+
                 class fp_dummy(object):
                     def read(self):
                         return ""
+
                     def readline(self):
                         return ""
+
                     def close(self):
                         pass
                     closed = False
@@ -256,6 +262,7 @@ class Wget(FetchMethod):
             """
             Fallback to GET if HEAD is not allowed (405 HTTP error)
             """
+
             def http_error_405(self, req, fp, code, msg, headers):
                 fp.read()
                 fp.close()
@@ -274,12 +281,12 @@ class Wget(FetchMethod):
             # Forbidden when they actually mean 405 Method Not Allowed.
             http_error_403 = http_error_405
 
-
         class FixedHTTPRedirectHandler(urllib.request.HTTPRedirectHandler):
             """
             urllib2.HTTPRedirectHandler resets the method to GET on redirect,
             when we want to follow redirects using the original method.
             """
+
             def redirect_request(self, req, fp, code, msg, headers, newurl):
                 newreq = urllib.request.HTTPRedirectHandler.redirect_request(self, req, fp, code, msg, headers, newurl)
                 newreq.get_method = req.get_method
@@ -306,6 +313,7 @@ class Wget(FetchMethod):
             # optional Accept header is set.
             r.add_header("Accept", "*/*")
             r.add_header("User-Agent", self.user_agent)
+
             def add_basic_auth(login_str, request):
                 '''Adds Basic auth to http request, pass in login:password as string'''
                 import base64

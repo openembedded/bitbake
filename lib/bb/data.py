@@ -42,9 +42,11 @@ import bb
 logger = data_smart.logger
 _dict_type = data_smart.DataSmart
 
+
 def init():
     """Return a new object representing the Bitbake data"""
     return _dict_type()
+
 
 def init_db(parent=None):
     """Return a new object representing the Bitbake data,
@@ -53,6 +55,7 @@ def init_db(parent=None):
         return parent.createCopy()
     else:
         return _dict_type()
+
 
 def createCopy(source):
     """Link the source set to the destination
@@ -64,9 +67,11 @@ def createCopy(source):
     """
     return source.createCopy()
 
+
 def initVar(var, d):
     """Non-destructive var init for data structure"""
     d.initVar(var)
+
 
 def keys(d):
     """Return a list of keys in d"""
@@ -76,9 +81,11 @@ def keys(d):
 __expand_var_regexp__ = re.compile(r"\${[^{}]+}")
 __expand_python_regexp__ = re.compile(r"\${@.+?}")
 
+
 def expand(s, d, varname=None):
     """Variable expansion using the data store"""
     return d.expand(s, varname)
+
 
 def expandKeys(alterdata, readdata=None):
     if readdata is None:
@@ -105,6 +112,7 @@ def expandKeys(alterdata, readdata=None):
                 bb.warn("Variable key %s (%s) replaces original key %s (%s)." % (key, val, ekey, newval))
         alterdata.renameVar(key, ekey)
 
+
 def inheritFromOS(d, savedenv, permitted):
     """Inherit variables from the initial environment."""
     exportlist = bb.utils.preserved_envvars_exported()
@@ -116,6 +124,7 @@ def inheritFromOS(d, savedenv, permitted):
                     d.setVarFlag(s, "export", True, op='auto env export')
             except TypeError:
                 pass
+
 
 def emit_var(var, o=sys.__stdout__, d=init(), all=False):
     """Emit a variable to be sourced by a shell."""
@@ -185,6 +194,7 @@ def emit_var(var, o=sys.__stdout__, d=init(), all=False):
     o.write('%s="%s"\n' % (varExpanded, alter))
     return False
 
+
 def emit_env(o=sys.__stdout__, d=init(), all=False):
     """Emits all items in the data store in a format such that it can be sourced by a shell."""
 
@@ -195,10 +205,12 @@ def emit_env(o=sys.__stdout__, d=init(), all=False):
         for key in sorted(keys):
             emit_var(key, o, d, all and not isfunc) and o.write('\n')
 
+
 def exported_keys(d):
     return (key for key in d.keys() if not key.startswith('__') and
                                       d.getVarFlag(key, 'export', False) and
                                       not d.getVarFlag(key, 'unexport', False))
+
 
 def exported_vars(d):
     k = list(exported_keys(d))
@@ -211,6 +223,7 @@ def exported_vars(d):
 
         if value is not None:
             yield key, str(value)
+
 
 def emit_func(func, o=sys.__stdout__, d=init()):
     """Emits all items in the data store in a format such that it can be sourced by a shell."""
@@ -235,9 +248,11 @@ def emit_func(func, o=sys.__stdout__, d=init()):
                newdeps |= set((d.getVarFlag(dep, "vardeps") or "").split())
         newdeps -= seen
 
+
 _functionfmt = """
 def {function}(d):
 {body}"""
+
 
 def emit_func_python(func, o=sys.__stdout__, d=init()):
     """Emits all items in the data store in a format such that it can be sourced by a shell."""
@@ -270,9 +285,11 @@ def emit_func_python(func, o=sys.__stdout__, d=init()):
                newdeps |= set((d.getVarFlag(dep, "vardeps") or "").split())
         newdeps -= seen
 
+
 def update_data(d):
     """Performs final steps upon the datastore, including application of overrides"""
     d.finalize(parent=True)
+
 
 def build_dependencies(key, keys, shelldeps, varflagsexcl, d):
     deps = set()
@@ -373,6 +390,7 @@ def build_dependencies(key, keys, shelldeps, varflagsexcl, d):
     #bb.note("Variable %s references %s and calls %s" % (key, str(deps), str(execs)))
     #d.setVarFlag(key, "vardeps", deps)
 
+
 def generate_dependencies(d, whitelist):
 
     keys = set(key for key in d if not key.startswith("__"))
@@ -398,6 +416,7 @@ def generate_dependencies(d, whitelist):
             newdeps -= seen
         #print "For %s: %s" % (task, str(deps[task]))
     return tasklist, deps, values
+
 
 def generate_dependency_hash(tasklist, gendeps, lookupcache, whitelist, fn):
     taskdeps = {}
@@ -435,6 +454,7 @@ def generate_dependency_hash(tasklist, gendeps, lookupcache, whitelist, fn):
         taskdeps[task] = alldeps
 
     return taskdeps, basehash
+
 
 def inherits_class(klass, d):
     val = d.getVar('__inherit_cache', False) or []

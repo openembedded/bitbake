@@ -34,6 +34,7 @@ if 'sqlite' in settings.DATABASES['default']['ENGINE']:
     from time import sleep
 
     _base_save = models.Model.save
+
     def save(self, *args, **kwargs):
         while True:
             try:
@@ -53,12 +54,14 @@ if 'sqlite' in settings.DATABASES['default']['ENGINE']:
 
     from django.db.models.query import QuerySet
     _base_insert = QuerySet._insert
+
     def _insert(self, *args, **kwargs):
         with transaction.atomic(using=self.db, savepoint=False):
             return _base_insert(self, *args, **kwargs)
     QuerySet._insert = _insert
 
     from django.utils import six
+
     def _create_object_from_params(self, lookup, params):
         """
         Tries to create an object using passed params.
@@ -79,6 +82,7 @@ if 'sqlite' in settings.DATABASES['default']['ENGINE']:
 
     # end of HACK
 
+
 class GitURLValidator(validators.URLValidator):
     import re
     regex = re.compile(
@@ -89,6 +93,7 @@ class GitURLValidator(validators.URLValidator):
         r'\[?[A-F0-9]*:[A-F0-9:]+\]?)'  # ...or ipv6
         r'(?::\d+)?'  # optional port
         r'(?:/?|[/?]\S+)$', re.IGNORECASE)
+
 
 def GitURLField(**kwargs):
     r = models.URLField(**kwargs)
@@ -302,7 +307,6 @@ class Project(models.Model):
         else:
             return layer_versions
 
-
     def get_default_image_recipe(self):
         try:
             return self.projectvariable_set.get(name="DEFAULT_IMAGE").value
@@ -453,6 +457,7 @@ class Project(models.Model):
             br.delete()
             raise
         return br
+
 
 class Build(models.Model):
     SUCCEEDED = 0
@@ -750,7 +755,6 @@ class Build(models.Model):
         return self.outcome == Build.IN_PROGRESS and \
             self.task_build.exclude(outcome=Task.OUTCOME_NA).count() == 0
 
-
     def get_state(self):
         """
         Get the state of the build; one of 'Succeeded', 'Failed', 'In Progress',
@@ -776,10 +780,12 @@ class Build(models.Model):
     def __str__(self):
         return "%d %s %s" % (self.id, self.project, ",".join([t.target for t in self.target_set.all()]))
 
+
 class ProjectTarget(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
     target = models.CharField(max_length=100)
     task = models.CharField(max_length=100, null=True)
+
 
 class Target(models.Model):
     search_allowed_fields = ['target', 'file_name']
@@ -943,6 +949,8 @@ class Target(models.Model):
         return self.target_image_file_set.all().count() > 0
 
 # kernel artifacts for a target: bzImage and modules*
+
+
 class TargetKernelFile(models.Model):
     target = models.ForeignKey(Target, on_delete=models.CASCADE)
     file_name = models.FilePathField()
@@ -953,6 +961,8 @@ class TargetKernelFile(models.Model):
         return os.path.basename(self.file_name)
 
 # SDK artifacts for a target: sh and manifest files
+
+
 class TargetSDKFile(models.Model):
     target = models.ForeignKey(Target, on_delete=models.CASCADE)
     file_name = models.FilePathField()
@@ -961,6 +971,7 @@ class TargetSDKFile(models.Model):
     @property
     def basename(self):
         return os.path.basename(self.file_name)
+
 
 class Target_Image_File(models.Model):
     # valid suffixes for image files produced by a build
@@ -989,6 +1000,7 @@ class Target_Image_File(models.Model):
         filename, suffix = os.path.splitext(self.file_name)
         suffix = suffix.lstrip('.')
         return suffix
+
 
 class Target_File(models.Model):
     ITYPE_REGULAR = 1
@@ -1150,6 +1162,7 @@ class Task_Dependency(models.Model):
     task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name='task_dependencies_task')
     depends_on = models.ForeignKey(Task, on_delete=models.CASCADE, related_name='task_dependencies_depends')
 
+
 class Package(models.Model):
     search_allowed_fields = ['name', 'version', 'revision', 'recipe__name', 'recipe__version', 'recipe__license', 'recipe__layer_version__layer__name', 'recipe__layer_version__branch', 'recipe__layer_version__commit', 'recipe__layer_version__local_path', 'installed_name']
     build = models.ForeignKey('Build', on_delete=models.CASCADE, null=True)
@@ -1178,6 +1191,7 @@ class Package(models.Model):
         if self.name.find('packagegroup') != -1:
             return True
         return False
+
 
 class CustomImagePackage(Package):
     # CustomImageRecipe fields to track pacakges appended,
@@ -1295,6 +1309,7 @@ class Package_Dependency(models.Model):
     target = models.ForeignKey(Target, on_delete=models.CASCADE, null=True)
     objects = Package_DependencyManager()
 
+
 class Target_Installed_Package(models.Model):
     target = models.ForeignKey(Target, on_delete=models.CASCADE)
     package = models.ForeignKey(Package, on_delete=models.CASCADE, related_name='buildtargetlist_package')
@@ -1354,9 +1369,11 @@ class Recipe_DependencyManager(models.Manager):
     def get_queryset(self):
         return super(Recipe_DependencyManager, self).get_queryset().exclude(recipe_id=F('depends_on__id'))
 
+
 class Provides(models.Model):
     name = models.CharField(max_length=100)
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
+
 
 class Recipe_Dependency(models.Model):
     TYPE_DEPENDS = 0
@@ -1390,9 +1407,6 @@ class Machine(models.Model):
         return "Machine " + self.name + "(" + self.description + ")"
 
 
-
-
-
 class BitbakeVersion(models.Model):
 
     name = models.CharField(max_length=32, unique=True)
@@ -1417,6 +1431,7 @@ class Release(models.Model):
 
     def __str__(self):
         return self.name
+
 
 class ReleaseDefaultLayer(models.Model):
     release = models.ForeignKey(Release, on_delete=models.CASCADE)
@@ -1614,6 +1629,7 @@ class LayerVersionDependency(models.Model):
     depends_on = models.ForeignKey(Layer_Version, on_delete=models.CASCADE,
                                    related_name="dependees")
 
+
 class ProjectLayer(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
     layercommit = models.ForeignKey(Layer_Version, on_delete=models.CASCADE, null=True)
@@ -1624,6 +1640,7 @@ class ProjectLayer(models.Model):
 
     class Meta:
         unique_together = (("project", "layercommit"),)
+
 
 class CustomImageRecipe(Recipe):
 
@@ -1680,7 +1697,6 @@ class CustomImageRecipe(Recipe):
             cust_img_p = \
                     CustomImagePackage.objects.get(name=built_package)
             self.includes_set.add(cust_img_p)
-
 
         self.last_updated = target.build.completed_on
         self.save()
@@ -1784,10 +1800,12 @@ class CustomImageRecipe(Recipe):
 
         return recipe_contents
 
+
 class ProjectVariable(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
     value = models.TextField(blank=True)
+
 
 class Variable(models.Model):
     search_allowed_fields = ['variable_name', 'variable_value',
@@ -1799,12 +1817,14 @@ class Variable(models.Model):
     human_readable_name = models.CharField(max_length=200)
     description = models.TextField(blank=True)
 
+
 class VariableHistory(models.Model):
     variable = models.ForeignKey(Variable, on_delete=models.CASCADE, related_name='vhistory')
     value = models.TextField(blank=True)
     file_name = models.FilePathField(max_length=255)
     line_number = models.IntegerField(null=True)
     operation = models.CharField(max_length=64)
+
 
 class HelpText(models.Model):
     VARIABLE = 0
@@ -1814,6 +1834,7 @@ class HelpText(models.Model):
     area = models.IntegerField(choices=HELPTEXT_AREA)
     key = models.CharField(max_length=100)
     text = models.TextField()
+
 
 class LogMessage(models.Model):
     EXCEPTION = -1      # used to signal self-toaster-exceptions
@@ -1840,12 +1861,14 @@ class LogMessage(models.Model):
     def __str__(self):
         return force_bytes('%s %s %s' % (self.get_level_display(), self.message, self.build))
 
+
 def invalidate_cache(**kwargs):
     from django.core.cache import cache
     try:
       cache.clear()
     except Exception as e:
       logger.warning("Problem with cache backend: Failed to clear cache: %s" % e)
+
 
 def signal_runbuilds():
     """Send SIGUSR1 to runbuilds process"""
@@ -1855,6 +1878,7 @@ def signal_runbuilds():
             os.kill(int(pidf.read()), SIGUSR1)
     except FileNotFoundError:
         logger.info("Stopping existing runbuilds: no current process found")
+
 
 class Distro(models.Model):
     search_allowed_fields = ["name", "description", "layer_version__layer__name"]
@@ -1870,6 +1894,7 @@ class Distro(models.Model):
 
     def __unicode__(self):
         return "Distro " + self.name + "(" + self.description + ")"
+
 
 django.db.models.signals.post_save.connect(invalidate_cache)
 django.db.models.signals.post_delete.connect(invalidate_cache)

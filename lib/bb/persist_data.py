@@ -28,6 +28,7 @@ if sqlversion[0] < 3 or (sqlversion[0] == 3 and sqlversion[1] < 3):
 
 logger = logging.getLogger("BitBake.PersistData")
 
+
 @functools.total_ordering
 class SQLTable(collections.MutableMapping):
     class _Decorators(object):
@@ -70,6 +71,7 @@ class SQLTable(collections.MutableMapping):
             Note that the cursor is passed as an extra argument to the function
             after `self` and before any of the normal arguments
             """
+
             def wrap_func(self, *args, **kwargs):
                 # Context manager will COMMIT the database on success,
                 # or ROLLBACK on an exception
@@ -80,6 +82,7 @@ class SQLTable(collections.MutableMapping):
             return wrap_func
 
     """Object representing a table/domain in the database"""
+
     def __init__(self, cachefile, table):
         self.cachefile = cachefile
         self.table = table
@@ -241,6 +244,7 @@ class SQLTable(collections.MutableMapping):
 
 class PersistData(object):
     """Deprecated representation of the bitbake persistent data store"""
+
     def __init__(self, d):
         warnings.warn("Use of PersistData is deprecated.  Please use "
                       "persist(domain, d) instead.",
@@ -286,6 +290,7 @@ class PersistData(object):
         Deletes a key/value pair
         """
         del self.data[domain][key]
+
 
 def persist(domain, d):
     """Convenience factory for SQLTable objects based upon metadata"""

@@ -73,9 +73,11 @@ class TreeBuilderRegistry(object):
                 return candidate
         return None
 
+
 # The BeautifulSoup class will take feature lists from developers and use them
 # to look up builders in this registry.
 builder_registry = TreeBuilderRegistry()
+
 
 class TreeBuilder(object):
     """Turn a document into a Beautiful Soup object tree."""
@@ -93,7 +95,6 @@ class TreeBuilder(object):
     # A value for these tag/attribute combinations is a space- or
     # comma-separated list of CDATA, rather than a single CDATA.
     cdata_list_attributes = {}
-
 
     def __init__(self):
         self.soup = None
@@ -174,6 +175,7 @@ class TreeBuilder(object):
                         values = value
                     attrs[attr] = values
         return attrs
+
 
 class SAXTreeBuilder(TreeBuilder):
     """A Beautiful Soup treebuilder that listens for SAX events."""
@@ -288,6 +290,7 @@ class HTMLTreeBuilder(TreeBuilder):
 
         return (meta_encoding is not None)
 
+
 def register_treebuilders_from(module):
     """Copy TreeBuilders from the given module into this module."""
     # I'm fairly sure this is not the best way to do this.
@@ -301,8 +304,10 @@ def register_treebuilders_from(module):
             # Register the builder while we're at it.
             this_module.builder_registry.register(obj)
 
+
 class ParserRejectedMarkup(Exception):
     pass
+
 
 # Builders are registered in reverse order of priority, so that custom
 # builder registrations will take precedence. In general, we want lxml

@@ -38,6 +38,7 @@ import layerindexlib
 
 class Spinner(threading.Thread):
     """ A simple progress spinner to indicate download/parsing is happening"""
+
     def __init__(self, *args, **kwargs):
         super(Spinner, self).__init__(*args, **kwargs)
         self.setDaemon(True)

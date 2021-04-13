@@ -31,17 +31,21 @@ import bb.server.xmlrpcclient
 
 logger = logging.getLogger("BitBake")
 
+
 class BBMainException(Exception):
     pass
 
+
 class BBMainFatal(bb.BBHandledException):
     pass
+
 
 def present_options(optionlist):
     if len(optionlist) > 1:
         return ' or '.join([', '.join(optionlist[:-1]), optionlist[-1]])
     else:
         return optionlist[0]
+
 
 class BitbakeHelpFormatter(optparse.IndentedHelpFormatter):
     def format_option(self, option):
@@ -55,6 +59,7 @@ class BitbakeHelpFormatter(optparse.IndentedHelpFormatter):
             option.help = option.help.replace('@CHOICES@', present_options(valid_uis))
 
         return optparse.IndentedHelpFormatter.format_option(self, option)
+
 
 def list_extension_modules(pkg, checkattr):
     """
@@ -88,6 +93,7 @@ def list_extension_modules(pkg, checkattr):
             modules.append(modulename)
     return modules
 
+
 def import_extension_module(pkg, modulename, checkattr):
     try:
         # Dynamically load the UI based on the ui name. Although we
@@ -100,9 +106,12 @@ def import_extension_module(pkg, modulename, checkattr):
         raise BBMainException('FATAL: Unable to import extension module "%s" from %s. '
                               'Valid extension modules: %s' % (modulename, pkg.__name__, modules))
 
+
 # Display bitbake/OE warnings via the BitBake.Warnings logger, ignoring others"""
 warnlog = logging.getLogger("BitBake.Warnings")
 _warnings_showwarning = warnings.showwarning
+
+
 def _showwarning(message, category, filename, lineno, file=None, line=None):
     if file is not None:
         if _warnings_showwarning is not None:
@@ -110,6 +119,7 @@ def _showwarning(message, category, filename, lineno, file=None, line=None):
     else:
         s = warnings.formatwarning(message, category, filename, lineno)
         warnlog.warning(s)
+
 
 warnings.showwarning = _showwarning
 warnings.filterwarnings("ignore")
@@ -391,6 +401,7 @@ def bitbake_main(configParams, configuration):
 
     return 1
 
+
 def setup_bitbake(configParams, extrafeatures=None):
     # Ensure logging messages get sent to the UI as events
     handler = bb.event.LogHandler()
@@ -490,6 +501,7 @@ def setup_bitbake(configParams, extrafeatures=None):
     logger.removeHandler(handler)
 
     return server_connection, ui_module
+
 
 def lockBitbake():
     topdir = bb.cookerdata.findTopdir()

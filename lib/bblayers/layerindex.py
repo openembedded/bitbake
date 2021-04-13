@@ -73,7 +73,6 @@ class LayerIndexPlugin(ActionPlugin):
 
             return urls
 
-
         # Set the default...
         if args.branch:
             branches = [args.branch]

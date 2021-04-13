@@ -18,8 +18,10 @@ logger = logging.getLogger('BitBake.layerindexlib.cooker')
 
 import bb.utils
 
+
 def plugin_init(plugins):
     return CookerPlugin()
+
 
 class CookerPlugin(layerindexlib.plugin.IndexPlugin):
     def __init__(self):
@@ -145,7 +147,6 @@ class CookerPlugin(layerindexlib.plugin.IndexPlugin):
                                                vcs_subdir=layersubdir, vcs_last_rev=layerrev, actual_branch=layerbranch)
 
         return index
-
 
     def load_index(self, url, load):
         """

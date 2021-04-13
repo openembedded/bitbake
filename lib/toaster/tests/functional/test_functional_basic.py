@@ -11,6 +11,7 @@ import re
 from tests.functional.functional_helpers import SeleniumFunctionalTestCase
 from orm.models import Project
 
+
 class FuntionalTestBasic(SeleniumFunctionalTestCase):
 
 #   testcase (1514)

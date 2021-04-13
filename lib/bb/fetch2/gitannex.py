@@ -12,6 +12,7 @@ import bb
 from bb.fetch2.git import Git
 from bb.fetch2 import runfetchcmd
 
+
 class GitANNEX(Git):
     def supports(self, ud, d):
         """

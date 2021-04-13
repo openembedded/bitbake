@@ -22,6 +22,7 @@ import signal
 
 class KillRunbuilds(threading.Thread):
     """ Kill the runbuilds process after an amount of time """
+
     def __init__(self, *args, **kwargs):
         super(KillRunbuilds, self).__init__(*args, **kwargs)
         self.setDaemon(True)

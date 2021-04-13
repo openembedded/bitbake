@@ -35,7 +35,6 @@
 """
 
 
-
 import logging
 import os
 import sys
@@ -62,12 +61,14 @@ HEIGHT = 3
 
 MAXSTATUSLENGTH = 32
 
+
 class NCursesUI:
     """
     NCurses UI Class
     """
     class Window:
         """Base Window Class"""
+
         def __init__(self, x, y, width, height, fg=curses.COLOR_BLACK, bg=curses.COLOR_WHITE):
             self.win = curses.newwin(height, width, y, x)
             self.dimensions = (x, y, width, height)
@@ -109,6 +110,7 @@ class NCursesUI:
 
     class DecoratedWindow(Window):
         """Base class for windows with a box and a title bar"""
+
         def __init__(self, title, x, y, width, height, fg=curses.COLOR_BLACK, bg=curses.COLOR_WHITE):
             NCursesUI.Window.__init__(self, x + 1, y + 3, width - 2, height - 4, fg, bg)
             self.decoration = NCursesUI.Window(x, y, width, height, fg, bg)
@@ -137,6 +139,7 @@ class NCursesUI:
     class ThreadActivityWindow(DecoratedWindow):
     #-------------------------------------------------------------------------#
         """Thread Activity Window"""
+
         def __init__(self, x, y, width, height):
             NCursesUI.DecoratedWindow.__init__(self, "Thread Activity", x, y, width, height)
 
@@ -153,6 +156,7 @@ class NCursesUI:
     class MainWindow(DecoratedWindow):
     #-------------------------------------------------------------------------#
         """Main Window"""
+
         def __init__(self, x, y, width, height):
             self.StatusPosition = width - MAXSTATUSLENGTH
             NCursesUI.DecoratedWindow.__init__(self, None, x, y, width, height)
@@ -168,11 +172,11 @@ class NCursesUI:
                 status = status + " "
             self.decoration.setText(self.StatusPosition, 1, status, curses.A_BOLD)
 
-
     #-------------------------------------------------------------------------#
     class ShellOutputWindow(DecoratedWindow):
     #-------------------------------------------------------------------------#
         """Interactive Command Line Output"""
+
         def __init__(self, x, y, width, height):
             NCursesUI.DecoratedWindow.__init__(self, "Command Line Window", x, y, width, height)
 
@@ -180,6 +184,7 @@ class NCursesUI:
     class ShellInputWindow(Window):
     #-------------------------------------------------------------------------#
         """Interactive Command Line Input"""
+
         def __init__(self, x, y, width, height):
             NCursesUI.Window.__init__(self, x, y, width, height)
 
@@ -354,6 +359,7 @@ class NCursesUI:
                         print("Unable to cleanly shutdown: %s" % error)
                 shutdown = shutdown + 1
                 pass
+
 
 def main(server, eventHandler, params):
     if not os.isatty(sys.stdout.fileno()):

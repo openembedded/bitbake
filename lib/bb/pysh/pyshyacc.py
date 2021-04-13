@@ -16,18 +16,21 @@ tokens = pyshlex.tokens
 from ply import yacc
 import bb.pysh.sherrors as sherrors
     
+
 class IORedirect:
     def __init__(self, op, filename, io_number=None):
         self.op = op
         self.filename = filename
         self.io_number = io_number
         
+
 class HereDocument:
     def __init__(self, op, name, content, io_number=None):
         self.op = op
         self.name = name
         self.content = content
         self.io_number = io_number
+
 
 def make_io_redirect(p):
     """Make an IORedirect instance from the input 'io_redirect' production."""
@@ -43,14 +46,17 @@ def make_io_redirect(p):
     else:
         assert False, "Invalid IO redirection token %s" % repr(io_type)
         
+
 class SimpleCommand:
     """
     assigns contains (name, value) pairs.
     """
+
     def __init__(self, words, redirs, assigns):
         self.words = list(words)
         self.redirs = list(redirs)
         self.assigns = list(assigns)
+
 
 class Pipeline:
     def __init__(self, commands, reverse_status=False):
@@ -58,57 +64,68 @@ class Pipeline:
         assert self.commands    #Grammar forbids this
         self.reverse_status = reverse_status
         
+
 class AndOr:
     def __init__(self, op, left, right):
         self.op = str(op)
         self.left = left
         self.right = right
         
+
 class ForLoop:
     def __init__(self, name, items, cmds):
         self.name = str(name)
         self.items = list(items)
         self.cmds = list(cmds)
         
+
 class WhileLoop:
     def __init__(self, condition, cmds):
         self.condition = list(condition)
         self.cmds = list(cmds)
         
+
 class UntilLoop:
     def __init__(self, condition, cmds):
         self.condition = list(condition)
         self.cmds = list(cmds)
+
 
 class FunDef:
     def __init__(self, name, body):
         self.name = str(name)
         self.body = body
         
+
 class BraceGroup:
     def __init__(self, cmds):
         self.cmds = list(cmds)
         
+
 class IfCond:
     def __init__(self, cond, if_cmds, else_cmds):
         self.cond = list(cond)
         self.if_cmds = if_cmds
         self.else_cmds = else_cmds
 
+
 class Case:
     def __init__(self, name, items):
         self.name = name
         self.items = items
         
+
 class SubShell:
     def __init__(self, cmds):
         self.cmds = cmds
+
 
 class RedirectList:
     def __init__(self, cmd, redirs):
         self.cmd = cmd
         self.redirs = list(redirs)
         
+
 def get_production(productions, ptype):
     """productions must be a list of production tuples like (name, obj) where
     name is the production string identifier.
@@ -124,6 +141,7 @@ def get_production(productions, ptype):
 # PLY grammar definition
 #-------------------------------------------------------------------------------
 
+
 def p_multiple_commands(p):
     """multiple_commands : newline_sequence
                          | complete_command
@@ -136,6 +154,7 @@ def p_multiple_commands(p):
     else:
         p[0] = p[1] + [p[2]]
 
+
 def p_complete_command(p):
     """complete_command : list separator
                         | list"""
@@ -144,6 +163,7 @@ def p_complete_command(p):
     else:
         p[0] = p[1]
                  
+
 def p_list(p):
     """list : list separator_op and_or
             |                   and_or"""
@@ -154,6 +174,7 @@ def p_list(p):
         #    raise NotImplementedError('AND-OR list asynchronous execution is not implemented')
         p[0] = p[1] + [p[3]]
        
+
 def p_and_or(p):
     """and_or : pipeline
               | and_or AND_IF linebreak pipeline
@@ -163,10 +184,12 @@ def p_and_or(p):
     else:
         p[0] = ('and_or', AndOr(p[2], p[1], p[4]))
         
+
 def p_maybe_bang_word(p):
     """maybe_bang_word : Bang"""
     p[0] = ('maybe_bang_word', p[1])
             
+
 def p_pipeline(p):
     """pipeline : pipe_sequence
                 | bang_word pipe_sequence"""
@@ -175,6 +198,7 @@ def p_pipeline(p):
     else:
         p[0] = ('pipeline', Pipeline(p[1][1:]))
 
+
 def p_pipe_sequence(p):
     """pipe_sequence : command
                      | pipe_sequence PIPE linebreak command"""
@@ -182,6 +206,7 @@ def p_pipe_sequence(p):
         p[0] = ['pipe_sequence', p[1]]
     else:
         p[0] = p[1] + [p[4]]
+
 
 def p_command(p):
     """command : simple_command
@@ -205,6 +230,7 @@ def p_command(p):
     else:
         raise NotImplementedError('%s command is not implemented' % repr(p[1][0]))
 
+
 def p_compound_command(p):
     """compound_command : brace_group
                         | subshell
@@ -215,9 +241,11 @@ def p_compound_command(p):
                         | until_clause"""
     p[0] = p[1]
 
+
 def p_subshell(p):
     """subshell : LPARENS compound_list RPARENS"""
     p[0] = ('subshell', SubShell(p[2][1:]))
+
 
 def p_compound_list(p):
     """compound_list : term
@@ -234,6 +262,7 @@ def p_compound_list(p):
     term = get_production(productions, 'term')
     p[0] = ['compound_list'] + term[1:]
 
+
 def p_term(p):
     """term : term separator and_or
             |                and_or"""
@@ -245,10 +274,12 @@ def p_term(p):
         else:
             p[0] = p[1] + [p[3]]
             
+
 def p_maybe_for_word(p):
     # Rearrange 'For' priority wrt TOKEN. See p_for_word
     """maybe_for_word : For"""
     p[0] = ('maybe_for_word', p[1])
+
 
 def p_for_clause(p):
     """for_clause : for_word name linebreak                            do_group
@@ -269,13 +300,16 @@ def p_for_clause(p):
     name = p[2]
     p[0] = ('for_clause', ForLoop(name, items, do_group[1:]))
 
+
 def p_name(p):
     """name : token""" #Was NAME instead of token
     p[0] = p[1]
 
+
 def p_in(p):
     """in : In"""
     p[0] = ('in', p[1])
+
 
 def p_wordlist(p):
     """wordlist : wordlist token
@@ -284,6 +318,7 @@ def p_wordlist(p):
         p[0] = ['wordlist', ('TOKEN', p[1])]
     else:
         p[0] = p[1] + [('TOKEN', p[2])]
+
 
 def p_case_clause(p):
     """case_clause : Case token linebreak in linebreak case_list    Esac
@@ -296,11 +331,13 @@ def p_case_clause(p):
     name = p[2]
     p[0] = ('case_clause', Case(name, [c[1] for c in items]))
        
+
 def p_case_list_ns(p):
     """case_list_ns : case_list case_item_ns
                     |           case_item_ns"""
     p_case_list(p)
       
+
 def p_case_list(p):
     """case_list : case_list case_item
                  |           case_item"""
@@ -309,6 +346,7 @@ def p_case_list(p):
     else:
         p[0] = p[1] + [p[2]]
         
+
 def p_case_item_ns(p):
     """case_item_ns :         pattern RPARENS               linebreak
                     |         pattern RPARENS compound_list linebreak
@@ -316,6 +354,7 @@ def p_case_item_ns(p):
                     | LPARENS pattern RPARENS compound_list linebreak"""
     p_case_item(p)
                  
+
 def p_case_item(p):
     """case_item :         pattern RPARENS linebreak     DSEMI linebreak
                  |         pattern RPARENS compound_list DSEMI linebreak
@@ -333,6 +372,7 @@ def p_case_item(p):
 
     p[0] = ('case_item', (name, cmds))
                  
+
 def p_pattern(p):
     """pattern :              token
                | pattern PIPE token"""
@@ -341,16 +381,19 @@ def p_pattern(p):
     else:
         p[0] = p[1] + [('TOKEN', p[2])]
 
+
 def p_maybe_if_word(p):
     # Rearrange 'If' priority wrt TOKEN. See p_if_word
     """maybe_if_word : If"""
     p[0] = ('maybe_if_word', p[1])
+
 
 def p_maybe_then_word(p):
     # Rearrange 'Then' priority wrt TOKEN. See p_then_word
     """maybe_then_word : Then"""
     p[0] = ('maybe_then_word', p[1])
                  
+
 def p_if_clause(p):
     """if_clause : if_word compound_list then_word compound_list else_part Fi
                  | if_word compound_list then_word compound_list           Fi"""
@@ -359,6 +402,7 @@ def p_if_clause(p):
         else_part = p[5]
     p[0] = ('if_clause', IfCond(p[2][1:], p[4][1:], else_part))
                  
+
 def p_else_part(p):
     """else_part : Elif compound_list then_word compound_list else_part
                  | Elif compound_list then_word compound_list
@@ -371,23 +415,28 @@ def p_else_part(p):
             else_part = p[5]
         p[0] = ('elif', IfCond(p[2][1:], p[4][1:], else_part))
                  
+
 def p_while_clause(p):
     """while_clause : While compound_list do_group"""
     p[0] = ('while_clause', WhileLoop(p[2][1:], p[3][1:]))
     
+
 def p_maybe_until_word(p):
     # Rearrange 'Until' priority wrt TOKEN. See p_until_word
     """maybe_until_word : Until"""
     p[0] = ('maybe_until_word', p[1])
            
+
 def p_until_clause(p):
     """until_clause : until_word compound_list do_group"""
     p[0] = ('until_clause', UntilLoop(p[2][1:], p[3][1:]))
                  
+
 def p_function_definition(p):
     """function_definition : fname LPARENS RPARENS linebreak function_body"""
     p[0] = ('function_definition', FunDef(p[1], p[5]))
                  
+
 def p_function_body(p):
     """function_body : compound_command
                      | compound_command redirect_list"""
@@ -395,27 +444,33 @@ def p_function_body(p):
         raise NotImplementedError('functions redirections lists are not implemented')    
     p[0] = p[1]    
 
+
 def p_fname(p):
     """fname : TOKEN""" #Was NAME instead of token
     p[0] = p[1]
 
+
 def p_brace_group(p):
     """brace_group : Lbrace compound_list Rbrace"""
     p[0] = ('brace_group', BraceGroup(p[2][1:]))
+
 
 def p_maybe_done_word(p):
     #See p_assignment_word for details.
     """maybe_done_word : Done"""
     p[0] = ('maybe_done_word', p[1])
 
+
 def p_maybe_do_word(p):
     """maybe_do_word : Do"""
     p[0] = ('maybe_do_word', p[1])
+
 
 def p_do_group(p):
     """do_group : do_word compound_list done_word"""
     #Do group contains a list of AndOr
     p[0] = ['do_group'] + p[2][1:]
+
 
 def p_simple_command(p):
     """simple_command : cmd_prefix cmd_word cmd_suffix
@@ -441,19 +496,23 @@ def p_simple_command(p):
     cmd = SimpleCommand(words, redirs, assigns)
     p[0] = ('simple_command', cmd)
 
+
 def p_cmd_name(p):
     """cmd_name : TOKEN"""
     p[0] = ('cmd_name', p[1])
     
+
 def p_cmd_word(p):
     """cmd_word : token"""
     p[0] = ('cmd_word', p[1])
+
 
 def p_maybe_assignment_word(p):
     #See p_assignment_word for details.
     """maybe_assignment_word : ASSIGNMENT_WORD"""
     p[0] = ('maybe_assignment_word', p[1])
     
+
 def p_cmd_prefix(p):
     """cmd_prefix :            io_redirect
                   | cmd_prefix io_redirect
@@ -471,6 +530,7 @@ def p_cmd_prefix(p):
         value = get_production(p[1:], 'io_redirect')
     p[0] = prefix + [value]
                                   
+
 def p_cmd_suffix(p):
     """cmd_suffix   :            io_redirect
                     | cmd_suffix io_redirect
@@ -508,6 +568,7 @@ def p_cmd_suffix(p):
     else:
         p[0] = suffix + [('TOKEN', token)]
                  
+
 def p_redirect_list(p):
     """redirect_list : io_redirect
                      | redirect_list io_redirect"""
@@ -516,6 +577,7 @@ def p_redirect_list(p):
     else:
         p[0] = p[1] + [make_io_redirect(p[2])]
     
+
 def p_io_redirect(p):
     """io_redirect :           io_file
                    | IO_NUMBER io_file
@@ -526,6 +588,7 @@ def p_io_redirect(p):
     else:
         p[0] = ('io_redirect', None, p[1])
     
+
 def p_io_file(p):
     #Return the tuple (operator, filename)
     """io_file : LESS      filename
@@ -538,41 +601,49 @@ def p_io_file(p):
     #Extract the filename from the file
     p[0] = ('io_file', p[1], p[2][1])
 
+
 def p_filename(p):
     #Return the filename
     """filename : TOKEN"""
     p[0] = ('filename', p[1])
         
+
 def p_io_here(p):
     """io_here : DLESS here_end
                | DLESSDASH here_end"""
     p[0] = ('io_here', p[1], p[2][1], p[2][2])
 
+
 def p_here_end(p):
     """here_end : HERENAME TOKEN"""
     p[0] = ('here_document', p[1], p[2])
     
+
 def p_newline_sequence(p):
     # Nothing in the grammar can handle leading NEWLINE productions, so add
     # this one with the lowest possible priority relatively to newline_list.
     """newline_sequence : newline_list"""
     p[0] = None
     
+
 def p_newline_list(p):
     """newline_list : NEWLINE
                     | newline_list NEWLINE"""
     p[0] = None
                     
+
 def p_linebreak(p):
     """linebreak : newline_list
                  | empty"""
     p[0] = None
+
 
 def p_separator_op(p):                 
     """separator_op : COMMA
                     | COMMA COMMA
                     | AMP"""
     p[0] = p[1]
+
 
 def p_separator(p):
     """separator : separator_op linebreak
@@ -584,6 +655,7 @@ def p_separator(p):
         #Keep the separator operator
         p[0] = ('separator', p[1])
                  
+
 def p_sequential_sep(p):
     """sequential_sep : COMMA linebreak
                       | newline_list"""
@@ -592,48 +664,61 @@ def p_sequential_sep(p):
 # Low priority TOKEN => for_word conversion.
 # Let maybe_for_word be used as a token when necessary in higher priority
 # rules. 
+
+
 def p_for_word(p):
     """for_word : maybe_for_word"""
     p[0] = p[1]
+
 
 def p_if_word(p):
     """if_word : maybe_if_word"""
     p[0] = p[1]
 
+
 def p_then_word(p):
     """then_word : maybe_then_word"""
     p[0] = p[1]
+
 
 def p_done_word(p):
     """done_word : maybe_done_word"""
     p[0] = p[1]
 
+
 def p_do_word(p):
     """do_word : maybe_do_word"""
     p[0] = p[1]
     
+
 def p_until_word(p):
     """until_word : maybe_until_word"""
     p[0] = p[1]
     
+
 def p_assignment_word(p):
     """assignment_word : maybe_assignment_word"""
     p[0] = ('assignment_word', p[1][1])
     
+
 def p_bang_word(p):
     """bang_word : maybe_bang_word"""
     p[0] = ('bang_word', p[1][1])
+
 
 def p_token(p):
     """token : TOKEN
              | Fi"""
     p[0] = p[1]
 
+
 def p_empty(p):
     'empty :'
     p[0] = None
     
 # Error rule for syntax errors
+
+
 def p_error(p):
     msg = []
     w = msg.append
@@ -648,6 +733,7 @@ def p_error(p):
     else:
         w('Unexpected EOF')
     raise sherrors.ShellSyntaxError(''.join(msg))
+
 
 # Build the parser
 try:
@@ -679,6 +765,7 @@ def parse(input, eof=False, debug=False):
 #-------------------------------------------------------------------------------
 # AST rendering helpers
 #-------------------------------------------------------------------------------    
+
 
 def format_commands(v):
     """Return a tree made of strings and lists. Make command trees easier to
@@ -740,6 +827,7 @@ def format_commands(v):
     else:
         return repr(v)
              
+
 def print_commands(cmds, output=sys.stdout):
     """Pretty print a command tree."""
     def print_tree(cmd, spaces, output):

@@ -104,6 +104,8 @@ except AttributeError:
     MAXINT = sys.maxsize
 
 # Python 2.x/3.0 compatibility.
+
+
 def load_ply_lex():
     if sys.version_info[0] < 3:
         import lex
@@ -117,9 +119,11 @@ def load_ply_lex():
 # information, they can create their own logging object and pass
 # it into PLY.
 
+
 class PlyLogger(object):
     def __init__(self, f):
         self.f = f
+
     def debug(self, msg, *args, **kwargs):
         self.f.write((msg % args) + "\n")
     info = debug
@@ -133,17 +137,24 @@ class PlyLogger(object):
     critical = debug
 
 # Null logger is used when no output is generated. Does nothing.
+
+
 class NullLogger(object):
     def __getattribute__(self, name):
         return self
+
     def __call__(self, *args, **kwargs):
         return self
         
 # Exception raised for yacc-related errors
+
+
 class YaccError(Exception):
     pass
 
 # Format the result message that the parser produces when running in debug mode.
+
+
 def format_result(r):
     repr_str = repr(r)
     if '\n' in repr_str:
@@ -181,6 +192,7 @@ def format_stack_entry(r):
 #        .lexpos     = Starting lex position
 #        .endlexpos  = Ending lex position (optional, set automatically)
 
+
 class YaccSymbol:
     def __str__(self): return self.type
     def __repr__(self): return str(self)
@@ -194,12 +206,14 @@ class YaccSymbol:
 # for a symbol.  The lexspan() method returns a tuple (lexpos,endlexpos)
 # representing the range of positional information for a symbol.
 
+
 class YaccProduction:
     def __init__(self, s, stack=None):
         self.slice = s
         self.stack = stack
         self.lexer = None
         self.parser = None
+
     def __getitem__(self, n):
         if isinstance(n, slice):
             return [self[i] for i in range(*(n.indices(len(self.slice))))]
@@ -274,7 +288,6 @@ class LRParser:
         else:
             return self.parseopt_notrack(input, lexer, debug, tracking, tokenfunc)
         
-
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # parsedebug().
     #
@@ -605,7 +618,6 @@ class LRParser:
     # Edit the debug version above, then copy any modifications to the method
     # below while removing #--! DEBUG sections.
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
 
     def parseopt(self, input=None, lexer=None, debug=0, tracking=0, tokenfunc=None):
         lookahead = None                 # Current lookahead symbol
@@ -1139,6 +1151,7 @@ class LRParser:
 # manipulate the rules that make up a grammar. 
 # -----------------------------------------------------------------------------
 
+
 import re
 
 # regex matching identifiers
@@ -1168,8 +1181,10 @@ _is_identifier = re.compile(r'^[a-zA-Z0-9_-]+$')
 #       usyms     - Set of unique symbols found in the production
 # -----------------------------------------------------------------------------
 
+
 class Production(object):
     reduced = 0
+
     def __init__(self, number, name, prod, precedence=('right', 0), func=None, file='', line=0):
         self.name = name
         self.prod = tuple(prod)
@@ -1242,6 +1257,8 @@ class Production(object):
 # reading table data from files.   It only contains information
 # actually used by the LR parsing engine, plus some additional
 # debugging information.
+
+
 class MiniProduction(object):
     def __init__(self, str, name, len, func, file, line):
         self.name = name
@@ -1251,8 +1268,10 @@ class MiniProduction(object):
         self.file = file
         self.line = line
         self.str = str
+
     def __str__(self):
         return self.str
+
     def __repr__(self):
         return "MiniProduction(%s)" % self.str
 
@@ -1313,6 +1332,8 @@ class LRItem(object):
 #
 # Return the rightmost terminal from a list of symbols.  Used in add_production()
 # -----------------------------------------------------------------------------
+
+
 def rightmost_terminal(symbols, terminals):
     i = len(symbols) - 1
     while i >= 0:
@@ -1329,8 +1350,10 @@ def rightmost_terminal(symbols, terminals):
 # This data is used for critical parts of the table generation process later.
 # -----------------------------------------------------------------------------
 
+
 class GrammarError(YaccError):
     pass
+
 
 class Grammar(object):
     def __init__(self, terminals):
@@ -1367,7 +1390,6 @@ class Grammar(object):
                                     # a warning about unused precedence rules.
 
         self.Start = None           # Starting symbol for the grammar
-
 
     def __len__(self):
         return len(self.Productions)
@@ -1593,7 +1615,6 @@ class Grammar(object):
 
         return infinite
 
-
     # -----------------------------------------------------------------------------
     # undefined_symbols()
     #
@@ -1601,6 +1622,7 @@ class Grammar(object):
     # grammar rules.  Returns a list of tuples (sym, prod) where sym in the symbol
     # and prod is the production where the symbol was used. 
     # -----------------------------------------------------------------------------
+
     def undefined_symbols(self):
         result = []
         for p in self.Productions:
@@ -1782,7 +1804,6 @@ class Grammar(object):
                 break
         return self.Follow
 
-
     # -----------------------------------------------------------------------------
     # build_lritems()
     #
@@ -1834,8 +1855,10 @@ class Grammar(object):
 # in the derived class LRGeneratedTable.
 # -----------------------------------------------------------------------------
 
+
 class VersionError(YaccError):
     pass
+
 
 class LRTable(object):
     def __init__(self):
@@ -1921,6 +1944,7 @@ class LRTable(object):
 #          FP   - Set-valued function
 # ------------------------------------------------------------------------------
 
+
 def digraph(X, R, FP):
     N = {}
     for x in X:
@@ -1931,6 +1955,7 @@ def digraph(X, R, FP):
         if N[x] == 0:
             traverse(x, N, stack, F, X, R, FP)
     return F
+
 
 def traverse(x, N, stack, F, X, R, FP):
     stack.append(x)
@@ -1955,6 +1980,7 @@ def traverse(x, N, stack, F, X, R, FP):
            F[stack[-1]] = F[x]
            element = stack.pop()
 
+
 class LALRError(YaccError):
     pass
 
@@ -1964,6 +1990,7 @@ class LALRError(YaccError):
 # This class implements the LR table generation algorithm.  There are no
 # public methods except for write()
 # -----------------------------------------------------------------------------
+
 
 class LRGeneratedTable(LRTable):
     def __init__(self, grammar, method='LALR', log=None):
@@ -2580,7 +2607,6 @@ class LRGeneratedTable(LRTable):
             goto[st] = st_goto
             st += 1
 
-
     # -----------------------------------------------------------------------------
     # write()
     #
@@ -2701,7 +2727,6 @@ del _lr_goto_items
             sys.stderr.write(str(e) + "\n")
             return
 
-
     # -----------------------------------------------------------------------------
     # pickle_table()
     #
@@ -2744,6 +2769,7 @@ del _lr_goto_items
 # associated with the yacc() call if none was provided.
 # -----------------------------------------------------------------------------
 
+
 def get_caller_module_dict(levels):
     try:
         raise RuntimeError
@@ -2764,6 +2790,8 @@ def get_caller_module_dict(levels):
 #
 # This takes a raw grammar rule string and parses it into production data
 # -----------------------------------------------------------------------------
+
+
 def parse_grammar(doc, file, line):
     grammar = []
     # Split the doc string into lines
@@ -2805,6 +2833,8 @@ def parse_grammar(doc, file, line):
 # start symbol, error function, tokens, precedence list, action functions,
 # etc.
 # -----------------------------------------------------------------------------
+
+
 class ParserReflect(object):
     def __init__(self, pdict, log=None):
         self.pdict = pdict
@@ -3018,8 +3048,8 @@ class ParserReflect(object):
         p_functions.sort()
         self.pfuncs = p_functions
 
-
     # Validate all of the p_functions
+
     def validate_pfunctions(self):
         grammar = []
         # Check for non-empty symbols
@@ -3084,6 +3114,7 @@ class ParserReflect(object):
 # Build a parser
 # -----------------------------------------------------------------------------
 
+
 def yacc(method='LALR', debug=yaccdebug, module=None, tabmodule=tab_module, start=None, 
          check_recursion=1, optimize=0, write_tables=1, debugfile=debug_file, outputdir='',
          debuglog=None, errorlog=None, picklefile=None):
@@ -3144,7 +3175,6 @@ def yacc(method='LALR', debug=yaccdebug, module=None, tabmodule=tab_module, star
             debuglog = NullLogger()
 
     debuglog.info("Created by PLY version %s (http://www.dabeaz.com/ply)", __version__)
-
 
     errors = 0
 

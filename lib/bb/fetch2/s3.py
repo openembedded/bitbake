@@ -24,6 +24,7 @@ from bb.fetch2 import FetchMethod
 from bb.fetch2 import FetchError
 from bb.fetch2 import runfetchcmd
 
+
 class S3(FetchMethod):
     """Class to fetch urls via 'aws s3'"""
 

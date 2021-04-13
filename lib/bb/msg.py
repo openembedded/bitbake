@@ -19,6 +19,7 @@ from itertools import groupby
 import bb
 import bb.event
 
+
 class BBLogFormatter(logging.Formatter):
     """Formatter which ensures that our 'plain' messages (logging.INFO + 1) are used as is"""
 
@@ -103,6 +104,7 @@ class BBLogFormatter(logging.Formatter):
     def __repr__(self):
         return "%s fmt='%s' color=%s" % (self.__class__.__name__, self._fmt, "True" if self.color_enabled else "False")
 
+
 class BBLogFilter(object):
     def __init__(self, handler, level, debug_domains):
         self.stdlevel = level
@@ -121,6 +123,7 @@ class BBLogFilter(object):
             return True
         return False
 
+
 class LogFilterGEQLevel(logging.Filter):
     def __init__(self, level):
         self.strlevel = str(level)
@@ -131,6 +134,7 @@ class LogFilterGEQLevel(logging.Filter):
 
     def filter(self, record):
         return (record.levelno >= self.level)
+
 
 class LogFilterLTLevel(logging.Filter):
     def __init__(self, level):
@@ -146,8 +150,10 @@ class LogFilterLTLevel(logging.Filter):
 # Message control functions
 #
 
+
 loggerDefaultLogLevel = BBLogFormatter.NOTE
 loggerDefaultDomains = {}
+
 
 def init_msgconfig(verbose, debug, debug_domains=None):
     """
@@ -166,8 +172,10 @@ def init_msgconfig(verbose, debug, debug_domains=None):
             dlevel = len(tuple(iterator))
             bb.msg.loggerDefaultDomains["BitBake.%s" % domainarg] = logging.DEBUG - dlevel + 1
 
+
 def constructLogOptions():
     return loggerDefaultLogLevel, loggerDefaultDomains
+
 
 def addDefaultlogFilter(handler, cls=BBLogFilter, forcelevel=None):
     level, debug_domains = constructLogOptions()
@@ -176,6 +184,7 @@ def addDefaultlogFilter(handler, cls=BBLogFilter, forcelevel=None):
         level = forcelevel
 
     cls(handler, level, debug_domains)
+
 
 def stringToLevel(level):
     try:
@@ -194,6 +203,7 @@ def stringToLevel(level):
 # Message handling functions
 #
 
+
 def fatal(msgdomain, msg):
     if msgdomain:
         logger = logging.getLogger("BitBake.%s" % msgdomain)
@@ -201,6 +211,7 @@ def fatal(msgdomain, msg):
         logger = logging.getLogger("BitBake")
     logger.critical(msg)
     sys.exit(1)
+
 
 def logger_create(name, output=sys.stderr, level=logging.INFO, preserve_handlers=False, color='auto'):
     """Standalone logger creation function"""
@@ -217,12 +228,14 @@ def logger_create(name, output=sys.stderr, level=logging.INFO, preserve_handlers
     logger.setLevel(level)
     return logger
 
+
 def has_console_handler(logger):
     for handler in logger.handlers:
         if isinstance(handler, logging.StreamHandler):
             if handler.stream in [sys.stderr, sys.stdout]:
                 return True
     return False
+
 
 def mergeLoggingConfig(logconfig, userconfig):
     logconfig = copy.deepcopy(logconfig)
@@ -270,6 +283,7 @@ def mergeLoggingConfig(logconfig, userconfig):
         logconfig["loggers"][name] = userconfig["loggers"][name]
 
     return logconfig
+
 
 def setLoggingConfig(defaultconfig, userconfigfile=None):
     logconfig = copy.deepcopy(defaultconfig)

@@ -31,6 +31,7 @@ class ToasterSettingAdmin(admin.ModelAdmin):
 class LayerVersionsAdmin(admin.ModelAdmin):
     pass
 
+
 admin.site.register(Layer_Version, LayerVersionsAdmin)
 admin.site.register(BitbakeVersion, BitbakeVersionAdmin)
 admin.site.register(Release, ReleaseAdmin)

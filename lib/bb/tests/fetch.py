@@ -16,10 +16,12 @@ from bb.fetch2 import FetchMethod
 import bb
 from bb.tests.support.httpserver import HTTPService
 
+
 def skipIfNoNetwork():
     if os.environ.get("BB_SKIP_NETTESTS") == "yes":
         return unittest.skip("Network tests being skipped")
     return lambda f: f
+
 
 class URITest(unittest.TestCase):
     test_uris = {
@@ -325,7 +327,6 @@ class URITest(unittest.TestCase):
             self.assertEqual(uri.path, '')
             self.assertEqual(uri.params, {})
 
-
             uri.scheme = test['scheme']
             self.assertEqual(uri.scheme, test['scheme'])
 
@@ -371,6 +372,7 @@ class URITest(unittest.TestCase):
             self.assertEqual(uri.params, {})
             self.assertEqual(str(uri), (str(uri).split(";"))[0])
 
+
 class FetcherTest(unittest.TestCase):
 
     def setUp(self):
@@ -391,6 +393,7 @@ class FetcherTest(unittest.TestCase):
             print("Not cleaning up %s. Please remove manually." % self.tempdir)
         else:
             bb.utils.prunedir(self.tempdir)
+
 
 class MirrorUriTest(FetcherTest):
 
@@ -708,6 +711,7 @@ class FetcherLocalTest(FetcherTest):
         unpack_rev = stdout[0].strip()
         self.assertEqual(orig_rev, unpack_rev)
 
+
 class FetcherNoNetworkTest(FetcherTest):
     def setUp(self):
         super().setUp()
@@ -810,6 +814,7 @@ class FetcherNoNetworkTest(FetcherTest):
         # both files should still exist
         self.assertFalse(os.path.exists(os.path.join(self.dldir, "test-file.tar.gz")))
         self.assertFalse(os.path.exists(os.path.join(self.dldir, "test-file.tar.gz.done")))
+
 
 class FetcherNetworkTest(FetcherTest):
     @skipIfNoNetwork()
@@ -1056,6 +1061,7 @@ class FetcherNetworkTest(FetcherTest):
         self.assertTrue(os.path.exists(os.path.join(repo_path, 'edgelet/hsm-sys/azure-iot-hsm-c/deps/utpm/deps/c-utility/testtools/umock-c/deps/ctest/README.md')), msg='Missing submodule checkout')
         self.assertTrue(os.path.exists(os.path.join(repo_path, 'edgelet/hsm-sys/azure-iot-hsm-c/deps/utpm/deps/c-utility/testtools/umock-c/deps/testrunner/readme.md')), msg='Missing submodule checkout')
 
+
 class SVNTest(FetcherTest):
     def skipIfNoSvn():
         import shutil
@@ -1136,6 +1142,7 @@ class SVNTest(FetcherTest):
         self.assertTrue(os.path.exists(os.path.join(self.unpackdir, 'trunk/bitbake/trunk')), msg="External dir should exist")
         self.assertTrue(os.path.exists(os.path.join(self.unpackdir, 'trunk/bitbake/trunk', 'README')), msg="External README should exit")
 
+
 class TrustedNetworksTest(FetcherTest):
     def test_trusted_network(self):
         # Ensure trusted_network returns False when the host IS in the list.
@@ -1179,6 +1186,7 @@ class TrustedNetworksTest(FetcherTest):
         self.d.setVar("BB_ALLOWED_NETWORKS", "server1.org server2.org server3.org")
         self.assertFalse(bb.fetch.trusted_network(self.d, url))
 
+
 class URLHandle(unittest.TestCase):
 
     datatable = {
@@ -1204,6 +1212,7 @@ class URLHandle(unittest.TestCase):
         for k, v in self.datatable.items():
             result = bb.fetch.encodeurl(v)
             self.assertEqual(result, k)
+
 
 class FetchLatestVersionTest(FetcherTest):
 
@@ -1467,6 +1476,7 @@ class GitMakeShallowTest(FetcherTest):
         orig_revs = len(self.git('rev-list --all').splitlines())
         self.make_shallow(['refs/tags/1.10.0'])
         self.assertRevCount(orig_revs - 1746, ['--all'])
+
 
 class GitShallowTest(FetcherTest):
     def setUp(self):
@@ -2040,6 +2050,7 @@ class GitShallowTest(FetcherTest):
         dir = os.listdir(self.unpackdir + "/git/")
         self.assertIn("fstests.doap", dir)
 
+
 class GitLfsTest(FetcherTest):
     def setUp(self):
         FetcherTest.setUp(self)
@@ -2132,6 +2143,7 @@ class GitLfsTest(FetcherTest):
         shutil.rmtree(self.gitdir, ignore_errors=True)
         fetcher.unpack(self.d.getVar('WORKDIR'))
 
+
 class GitURLWithSpacesTest(FetcherTest):
     test_git_urls = {
         "git://tfs-example.org:22/tfs/example%20path/example.git": {
@@ -2163,6 +2175,7 @@ class GitURLWithSpacesTest(FetcherTest):
             self.assertEqual(ud.lockfile, os.path.join(self.dldir, "git2", ref['gitsrcname'] + '.lock'))
             self.assertEqual(ud.clonedir, os.path.join(self.dldir, "git2", ref['gitsrcname']))
             self.assertEqual(ud.fullmirror, os.path.join(self.dldir, "git2_" + ref['gitsrcname'] + '.tar.gz'))
+
 
 class NPMTest(FetcherTest):
     def skipIfNoNpm():

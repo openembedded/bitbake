@@ -15,6 +15,7 @@ from orm.models import Layer_Version, Layer, Release, ToasterSetting
 
 class TestLoadDataFixtures(TestCase):
     """ Test loading our 3 provided fixtures """
+
     def test_run_loaddata_poky_command(self):
         management.call_command('loaddata', 'poky')
 

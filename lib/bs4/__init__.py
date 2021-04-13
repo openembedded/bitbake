@@ -47,6 +47,7 @@ from .element import (
 # running this code under Python 3 without converting it.
 'You are trying to run the Python 2 version of Beautiful Soup under Python 3. This will not work.' != 'You need to convert the code, either by installing it (`python setup.py install`) or by running 2to3 (`2to3 -w bs4`).'
 
+
 class BeautifulSoup(Tag):
     """
     This class defines the basic interface called by the tree builders.
@@ -439,9 +440,11 @@ class BeautifulSoup(Tag):
         return prefix + super(BeautifulSoup, self).decode(
             indent_level, eventual_encoding, formatter)
 
+
 # Alias to make it easier to type import: 'from bs4 import _soup'
 _s = BeautifulSoup
 _soup = BeautifulSoup
+
 
 class BeautifulStoneSoup(BeautifulSoup):
     """Deprecated interface to an XML parser."""
@@ -456,6 +459,7 @@ class BeautifulStoneSoup(BeautifulSoup):
 
 class StopParsing(Exception):
     pass
+
 
 class FeatureNotFound(ValueError):
     pass

@@ -14,6 +14,7 @@ from django.utils import timezone
 from tests.browser.selenium_helpers import SeleniumTestCase
 from orm.models import BitbakeVersion, Release, Project, Build
 
+
 class TestToasterTableUI(SeleniumTestCase):
     """
     Tests for the UI elements of ToasterTable (sorting etc.);

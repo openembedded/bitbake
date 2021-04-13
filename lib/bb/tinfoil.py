@@ -29,20 +29,29 @@ import bb.fetch2
 # We need this in order to shut down the connection to the bitbake server,
 # otherwise the process will never properly exit
 _server_connections = []
+
+
 def _terminate_connections():
     for connection in _server_connections:
         connection.terminate()
+
+
 atexit.register(_terminate_connections)
+
 
 class TinfoilUIException(Exception):
     """Exception raised when the UI returns non-zero from its main function"""
+
     def __init__(self, returncode):
         self.returncode = returncode
+
     def __repr__(self):
         return 'UI module main returned %d' % self.returncode
 
+
 class TinfoilCommandFailed(Exception):
     """Exception raised when run_command fails"""
+
 
 class TinfoilDataStoreConnectorVarHistory:
     def __init__(self, tinfoil, dsindex):
@@ -60,6 +69,7 @@ class TinfoilDataStoreConnectorVarHistory:
         setattr(self, name, newfunc)
         return newfunc
 
+
 class TinfoilDataStoreConnectorIncHistory:
     def __init__(self, tinfoil, dsindex):
         self.tinfoil = tinfoil
@@ -75,6 +85,7 @@ class TinfoilDataStoreConnectorIncHistory:
         newfunc = partial(self.remoteCommand, name)
         setattr(self, name, newfunc)
         return newfunc
+
 
 class TinfoilDataStoreConnector:
     """
@@ -108,6 +119,7 @@ class TinfoilDataStoreConnector:
         for k in keys:
             yield k
 
+
 class TinfoilCookerAdapter:
     """
     Provide an adapter for existing code that expects to access a cooker object via Tinfoil,
@@ -116,11 +128,14 @@ class TinfoilCookerAdapter:
 
     class TinfoilCookerCollectionAdapter:
         """ cooker.collection adapter """
+
         def __init__(self, tinfoil, mc=''):
             self.tinfoil = tinfoil
             self.mc = mc
+
         def get_file_appends(self, fn):
             return self.tinfoil.get_file_appends(fn, self.mc)
+
         def __getattr__(self, name):
             if name == 'overlayed':
                 return self.tinfoil.get_overlayed_recipes(self.mc)
@@ -131,6 +146,7 @@ class TinfoilCookerAdapter:
 
     class TinfoilRecipeCacheAdapter:
         """ cooker.recipecache adapter """
+
         def __init__(self, tinfoil, mc=''):
             self.tinfoil = tinfoil
             self.mc = mc
@@ -192,6 +208,7 @@ class TinfoilCookerAdapter:
             self.collections[mc] = self.TinfoilCookerCollectionAdapter(tinfoil, mc)
             self.recipecaches[mc] = self.TinfoilRecipeCacheAdapter(tinfoil, mc)
         self._cache = {}
+
     def __getattr__(self, name):
         # Grab these only when they are requested since they aren't always used
         if name in self._cache:
@@ -224,6 +241,7 @@ class TinfoilRecipeInfo:
     you need other variable values you will need to parse the recipe using
     Tinfoil.parse_recipe().
     """
+
     def __init__(self, recipecache, d, pn, fn, fns):
         self._recipecache = recipecache
         self._d = d
@@ -269,6 +287,7 @@ class TinfoilRecipeInfo:
             return self._cached_rprovides
         else:
             raise AttributeError("%s instance has no attribute '%s'" % (self.__class__.__name__, name))
+
     def inherits(self, only_recipe=False):
         """
         Get the inherited classes for a recipe. Returns the class names only.
@@ -287,6 +306,7 @@ class TinfoilRecipeInfo:
                 continue
             clsname = os.path.splitext(os.path.basename(clsfile))[0]
             yield clsname
+
     def __str__(self):
         return '%s' % self.pn
 
@@ -591,7 +611,6 @@ class Tinfoil:
             if not variants and fn.startswith('virtual:'):
                 continue
             yield fn
-
 
     def get_recipe_info(self, pn, mc=''):
         """

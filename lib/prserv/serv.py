@@ -25,6 +25,7 @@ if sys.hexversion < 0x020600F0:
     print("Sorry, python 2.6 or later is required.")
     sys.exit(1)
 
+
 class Handler(SimpleXMLRPCRequestHandler):
     def _dispatch(self, method, params):
         try:
@@ -34,6 +35,7 @@ class Handler(SimpleXMLRPCRequestHandler):
             traceback.print_exc()
             raise
         return value
+
 
 PIDPREFIX = "/tmp/PRServer_%s_%s.pid"
 singleton = None
@@ -302,6 +304,7 @@ class PRServer(SimpleXMLRPCServer):
         self.work_forever()
         self.delpid()
 
+
 class PRServSingleton(object):
     def __init__(self, dbfile, logfile, interface):
         self.dbfile = dbfile
@@ -317,6 +320,7 @@ class PRServSingleton(object):
 
     def getinfo(self):
         return (self.host, self.port)
+
 
 class PRServerConnection(object):
     def __init__(self, host, port):
@@ -351,6 +355,7 @@ class PRServerConnection(object):
     def getinfo(self):
         return self.host, self.port
 
+
 def start_daemon(dbfile, host, port, logfile):
     ip = socket.gethostbyname(host)
     pidfile = PIDPREFIX % (ip, port)
@@ -375,6 +380,7 @@ def start_daemon(dbfile, host, port, logfile):
         sys.stdout.write("Server is listening at port %s instead of %s\n"
                          % (rport, port))
     return 0
+
 
 def stop_daemon(host, port):
     import glob
@@ -430,6 +436,7 @@ def stop_daemon(host, port):
 
     return 0
 
+
 def is_running(pid):
     try:
         os.kill(pid, 0)
@@ -438,14 +445,17 @@ def is_running(pid):
             return False
     return True
 
+
 def is_local_special(host, port):
     if host.strip().upper() == 'localhost'.upper() and (not port):
         return True
     else:
         return False
 
+
 class PRServiceConfigError(Exception):
     pass
+
 
 def auto_start(d):
     global singleton
@@ -495,6 +505,7 @@ def auto_start(d):
         logger.critical("PRservice %s:%d not available" % (host, port))
         raise PRServiceConfigError
 
+
 def auto_shutdown():
     global singleton
     if singleton:
@@ -509,6 +520,7 @@ def auto_shutdown():
         except ChildProcessError:
             pass
         singleton = None
+
 
 def ping(host, port):
     conn = PRServerConnection(host, port)

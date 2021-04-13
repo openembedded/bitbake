@@ -32,12 +32,15 @@ from multiprocessing import queues
 
 logger = logging.getLogger('BitBake')
 
+
 class ProcessTimeout(SystemExit):
     pass
+
 
 def serverlog(msg):
     print(str(os.getpid()) + " " + datetime.datetime.now().strftime('%H:%M:%S.%f') + " " + msg)
     sys.stdout.flush()
+
 
 class ProcessServer():
     profile_filename = "profile.log"
@@ -421,6 +424,7 @@ class ServerCommunicator():
         self.connection.send(['terminateServer'])
         return
 
+
 class BitBakeProcessServerConnection(object):
     def __init__(self, ui_channel, recv, eq, sock):
         self.connection = ServerCommunicator(ui_channel, recv)
@@ -434,8 +438,10 @@ class BitBakeProcessServerConnection(object):
         self.connection.recv.close()
         return
 
+
 start_log_format = '--- Starting bitbake server pid %s at %s ---'
 start_log_datetime_format = '%Y-%m-%d %H:%M:%S.%f'
+
 
 class BitBakeServer(object):
 
@@ -511,6 +517,7 @@ class BitBakeServer(object):
         serverscript = os.path.realpath(os.path.dirname(__file__) + "/../../../bin/bitbake-server")
         os.execl(sys.executable, "bitbake-server", serverscript, "decafbad", str(self.bitbake_lock.fileno()), str(self.readypipein), self.logfile, self.bitbake_lock.name, self.sockname, str(self.server_timeout), str(self.xmlrpcinterface[0]), str(self.xmlrpcinterface[1]))
 
+
 def execServer(lockfd, readypipeinfd, lockname, sockname, server_timeout, xmlrpcinterface):
 
     import bb.cookerdata
@@ -552,6 +559,7 @@ def execServer(lockfd, readypipeinfd, lockname, sockname, server_timeout, xmlrpc
         # Flush any ,essages/errors to the logfile before exit
         sys.stdout.flush()
         sys.stderr.flush()
+
 
 def connectProcessServer(sockname, featureset):
     # Connect to socket
@@ -615,11 +623,13 @@ def connectProcessServer(sockname, featureset):
 
     return server_connection
 
+
 def sendfds(sock, fds):
         '''Send an array of fds over an AF_UNIX socket.'''
         fds = array.array('i', fds)
         msg = bytes([len(fds) % 256])
         sock.sendmsg([msg], [(socket.SOL_SOCKET, socket.SCM_RIGHTS, fds)])
+
 
 def recvfds(sock, size):
         '''Receive an array of fds over an AF_UNIX socket.'''
@@ -643,6 +653,7 @@ def recvfds(sock, size):
         except (ValueError, IndexError):
             pass
         raise RuntimeError('Invalid data received')
+
 
 class BBUIEventQueue:
     def __init__(self, readfd):
@@ -697,6 +708,7 @@ class BBUIEventQueue:
                 # Easiest way to exit is to close the file descriptor to cause an exit
                 break
         self.reader.close()
+
 
 class ConnectionReader(object):
 

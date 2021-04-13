@@ -12,6 +12,7 @@ from tests.browser.selenium_helpers import SeleniumTestCase
 
 from orm.models import BitbakeVersion, Release, Project, ProjectVariable
 
+
 class TestProjectConfigsPage(SeleniumTestCase):
     """ Test data at /project/X/builds is displayed correctly """
 
@@ -28,7 +29,6 @@ class TestProjectConfigsPage(SeleniumTestCase):
         self.project1 = Project.objects.create_project(name=self.PROJECT_NAME,
                                                        release=release)
         self.project1.save()
-
 
     def test_no_underscore_iamgefs_type(self):
         """
@@ -50,7 +50,6 @@ class TestProjectConfigsPage(SeleniumTestCase):
         self.assertTrue(("A valid image type cannot include underscores" in element.text),
                         "Did not find underscore error message")
 
-
     def test_checkbox_verification(self):
         """
         Should automatically check the checkbox if user enters value
@@ -71,7 +70,6 @@ class TestProjectConfigsPage(SeleniumTestCase):
         for checkbox in checkboxes:
             if checkbox.get_attribute("value") == "btrfs":
                self.assertEqual(checkbox.is_selected(), True)
-
 
     def test_textbox_with_checkbox_verification(self):
         """

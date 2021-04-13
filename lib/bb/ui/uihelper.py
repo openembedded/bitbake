@@ -8,6 +8,7 @@
 import bb.build
 import time
 
+
 class BBUIHelper:
     def __init__(self):
         self.needUpdate = False

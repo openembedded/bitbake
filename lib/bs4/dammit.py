@@ -19,6 +19,7 @@ try:
     # First try the fast C implementation.
     #  PyPI package: cchardet
     import cchardet
+
     def chardet_dammit(s):
         return cchardet.detect(s)['encoding']
 except ImportError:
@@ -27,6 +28,7 @@ except ImportError:
         #  Debian package: python-chardet
         #  PyPI package: chardet
         import chardet
+
         def chardet_dammit(s):
             return chardet.detect(s)['encoding']
         #import chardet.constants
@@ -40,6 +42,7 @@ xml_encoding_re = re.compile(
     r'^<\?.*encoding=[\'"](.*?)[\'"].*\?>'.encode(), re.I)
 html_meta_re = re.compile(
     r'<\s*meta[^>]+charset\s*=\s*["\']?([^>]*?)[ /;\'">]'.encode(), re.I)
+
 
 class EntitySubstitution(object):
 
@@ -206,6 +209,7 @@ class EncodingDetector:
 
     5. Windows-1252.
     """
+
     def __init__(self, markup, override_encodings=None, is_html=False,
                  exclude_encodings=None):
         self.override_encodings = override_encodings or []
@@ -312,6 +316,7 @@ class EncodingDetector:
         if declared_encoding:
             return declared_encoding.lower()
         return None
+
 
 class UnicodeDammit:
     """A class for detecting the encoding of a *ML document and
@@ -457,7 +462,6 @@ class UnicodeDammit:
         except (LookupError, ValueError):
             pass
         return codec
-
 
     # A partial mapping of ISO-Latin-1 to HTML entities/XML numeric entities.
     MS_CHARS = {b'\x80': ('euro', '20AC'),

@@ -31,26 +31,32 @@ hashequiv_logger = logging.getLogger("BitBake.RunQueue.HashEquiv")
 
 __find_sha256__ = re.compile(r'(?i)(?<![a-z0-9])[a-f0-9]{64}(?![a-z0-9])')
 
+
 def fn_from_tid(tid):
      return tid.rsplit(":", 1)[0]
 
+
 def taskname_from_tid(tid):
     return tid.rsplit(":", 1)[1]
+
 
 def mc_from_tid(tid):
     if tid.startswith('mc:') and tid.count(':') >= 2:
         return tid.split(':')[1]
     return ""
 
+
 def split_tid(tid):
     (mc, fn, taskname, _) = split_tid_mcfn(tid)
     return (mc, fn, taskname)
+
 
 def split_mc(n):
     if n.startswith("mc:") and n.count(':') >= 2:
         _, mc, n = n.split(":", 2)
         return (mc, n)
     return ('', n)
+
 
 def split_tid_mcfn(tid):
     if tid.startswith('mc:') and tid.count(':') >= 2:
@@ -68,6 +74,7 @@ def split_tid_mcfn(tid):
 
     return (mc, fn, taskname, mcfn)
 
+
 def build_tid(mc, fn, taskname):
     if mc:
         return "mc:" + mc + ":" + fn + ":" + taskname
@@ -75,16 +82,20 @@ def build_tid(mc, fn, taskname):
 
 # Index used to pair up potentially matching multiconfig tasks
 # We match on PN, taskname and hash being equal
+
+
 def pending_hash_index(tid, rqdata):
     (mc, fn, taskname, taskfn) = split_tid_mcfn(tid)
     pn = rqdata.dataCaches[mc].pkg_fn[taskfn]
     h = rqdata.runtaskentries[tid].unihash
     return pn + ":" + "taskname" + h
 
+
 class RunQueueStats:
     """
     Holds statistics on the tasks handled by the associated runQueue
     """
+
     def __init__(self, total):
         self.completed = 0
         self.skipped = 0
@@ -112,6 +123,7 @@ class RunQueueStats:
     def taskActive(self):
         self.active = self.active + 1
 
+
 # These values indicate the next step due to be run in the
 # runQueue state machine
 runQueuePrepare = 2
@@ -120,6 +132,7 @@ runQueueRunning = 6
 runQueueFailed = 7
 runQueueCleanUp = 8
 runQueueComplete = 9
+
 
 class RunQueueScheduler(object):
     """
@@ -229,6 +242,7 @@ class RunQueueScheduler(object):
                   '\n'.join(['%d. %s' % (index + 1, self.describe_task(taskid)) for
                              index, taskid in enumerate(self.prio_map)])))
 
+
 class RunQueueSchedulerSpeed(RunQueueScheduler):
     """
     A scheduler optimised for speed. The priority map is sorted by task weight,
@@ -255,6 +269,7 @@ class RunQueueSchedulerSpeed(RunQueueScheduler):
                 self.prio_map.append(w)
 
         self.prio_map.reverse()
+
 
 class RunQueueSchedulerCompletion(RunQueueSchedulerSpeed):
     """
@@ -353,6 +368,7 @@ class RunQueueSchedulerCompletion(RunQueueSchedulerSpeed):
                     task_index += 1
         self.dump_prio('completion priorities')
 
+
 class RunTaskEntry(object):
     def __init__(self):
         self.depends = set()
@@ -362,10 +378,12 @@ class RunTaskEntry(object):
         self.task = None
         self.weight = 1
 
+
 class RunQueueData:
     """
     BitBake Run Queue implementation
     """
+
     def __init__(self, rq, cooker, cfgData, dataCaches, taskData, targets):
         self.cooker = cooker
         self.dataCaches = dataCaches
@@ -747,7 +765,6 @@ class RunQueueData:
         #     c) combine the total list of dependencies in cumulativedeps
         #     d) optimise by pre-truncating 'task' off the items in cumulativedeps (keeps items in sets lower)
 
-
         revdeps = {}
         deps = {}
         cumulativedeps = {}
@@ -1010,7 +1027,6 @@ class RunQueueData:
                 if dep in self.runtaskentries[tid].depends:
                     bb.msg.fatal("RunQueue", "Task %s has circular dependency on %s" % (tid, dep))
 
-
         logger.verbose("Compute totals (have %s endpoint(s))", len(endpoints))
 
         self.init_progress_reporter.next_stage()
@@ -1206,10 +1222,12 @@ class RunQueueData:
                          self.runtaskentries[tid].depends,
                          self.runtaskentries[tid].revdeps)
 
+
 class RunQueueWorker():
     def __init__(self, process, pipe):
         self.process = process
         self.pipe = pipe
+
 
 class RunQueue:
     def __init__(self, cooker, cfgData, dataCaches, taskData, targets):
@@ -1681,7 +1699,6 @@ class RunQueue:
 
             return recout
 
-
         for tid in invalidtasks:
             (mc, fn, taskname, taskfn) = split_tid_mcfn(tid)
             pn = self.rqdata.dataCaches[mc].pkg_fn[taskfn]
@@ -1988,7 +2005,6 @@ class RunQueueExecute:
                 logger.error("Task %s was never marked as buildable by the setscene code" % x)
                 err = True
         return err
-
 
     def execute(self):
         """
@@ -2594,6 +2610,7 @@ class RunQueueExecute:
             return True
         return False
 
+
 class SQData(object):
     def __init__(self):
         # SceneQueue dependencies
@@ -2610,6 +2627,7 @@ class SQData(object):
         self.outrightfail = set()
         # A list of normal tasks a setscene task covers
         self.sq_covered_tasks = {}
+
 
 def build_scenequeue_data(sqdata, rqdata, rq, cooker, stampcache, sqrq):
 
@@ -2798,6 +2816,7 @@ def build_scenequeue_data(sqdata, rqdata, rq, cooker, stampcache, sqrq):
         event = bb.event.StaleSetSceneTasks(found[mc])
         bb.event.fire(event, cooker.databuilder.mcdata[mc])
 
+
 def check_setscene_stamps(tid, rqdata, rq, stampcache, noexecstamp=False):
 
     (mc, fn, taskname, taskfn) = split_tid_mcfn(tid)
@@ -2817,6 +2836,7 @@ def check_setscene_stamps(tid, rqdata, rq, stampcache, noexecstamp=False):
         return False, True
 
     return False, False
+
 
 def update_scenequeue_data(tids, sqdata, rqdata, rq, cooker, stampcache, sqrq, summary=True):
 
@@ -2871,6 +2891,7 @@ class TaskFailure(Exception):
     """
     Exception raised when a task in a runqueue fails
     """
+
     def __init__(self, x):
         self.args = x
 
@@ -2885,10 +2906,12 @@ class runQueueExitWait(bb.event.Event):
         self.message = "Waiting for %s active tasks to finish" % remain
         bb.event.Event.__init__(self)
 
+
 class runQueueEvent(bb.event.Event):
     """
     Base runQueue event class
     """
+
     def __init__(self, task, stats, rq):
         self.taskid = task
         self.taskstring = task
@@ -2898,10 +2921,12 @@ class runQueueEvent(bb.event.Event):
         self.stats = stats.copy()
         bb.event.Event.__init__(self)
 
+
 class sceneQueueEvent(runQueueEvent):
     """
     Base sceneQueue event class
     """
+
     def __init__(self, task, stats, rq, noexec=False):
         runQueueEvent.__init__(self, task, stats, rq)
         self.taskstring = task + "_setscene"
@@ -2909,26 +2934,32 @@ class sceneQueueEvent(runQueueEvent):
         self.taskfile = fn_from_tid(task)
         self.taskhash = rq.rqdata.get_task_hash(task)
 
+
 class runQueueTaskStarted(runQueueEvent):
     """
     Event notifying a task was started
     """
+
     def __init__(self, task, stats, rq, noexec=False):
         runQueueEvent.__init__(self, task, stats, rq)
         self.noexec = noexec
+
 
 class sceneQueueTaskStarted(sceneQueueEvent):
     """
     Event notifying a setscene task was started
     """
+
     def __init__(self, task, stats, rq, noexec=False):
         sceneQueueEvent.__init__(self, task, stats, rq)
         self.noexec = noexec
+
 
 class runQueueTaskFailed(runQueueEvent):
     """
     Event notifying a task failed
     """
+
     def __init__(self, task, stats, exitcode, rq, fakeroot_log=None):
         runQueueEvent.__init__(self, task, stats, rq)
         self.exitcode = exitcode
@@ -2940,10 +2971,12 @@ class runQueueTaskFailed(runQueueEvent):
         else:
             return "Task (%s) failed with exit code '%s'" % (self.taskstring, self.exitcode)
 
+
 class sceneQueueTaskFailed(sceneQueueEvent):
     """
     Event notifying a setscene task failed
     """
+
     def __init__(self, task, stats, exitcode, rq):
         sceneQueueEvent.__init__(self, task, stats, rq)
         self.exitcode = exitcode
@@ -2951,45 +2984,55 @@ class sceneQueueTaskFailed(sceneQueueEvent):
     def __str__(self):
         return "Setscene task (%s) failed with exit code '%s' - real task will be run instead" % (self.taskstring, self.exitcode)
 
+
 class sceneQueueComplete(sceneQueueEvent):
     """
     Event when all the sceneQueue tasks are complete
     """
+
     def __init__(self, stats, rq):
         self.stats = stats.copy()
         bb.event.Event.__init__(self)
+
 
 class runQueueTaskCompleted(runQueueEvent):
     """
     Event notifying a task completed
     """
 
+
 class sceneQueueTaskCompleted(sceneQueueEvent):
     """
     Event notifying a setscene task completed
     """
 
+
 class runQueueTaskSkipped(runQueueEvent):
     """
     Event notifying a task was skipped
     """
+
     def __init__(self, task, stats, rq, reason):
         runQueueEvent.__init__(self, task, stats, rq)
         self.reason = reason
+
 
 class taskUniHashUpdate(bb.event.Event):
     """
     Base runQueue event class
     """
+
     def __init__(self, task, unihash):
         self.taskid = task
         self.unihash = unihash
         bb.event.Event.__init__(self)
 
+
 class runQueuePipe():
     """
     Abstraction for a pipe between a worker thread and the server
     """
+
     def __init__(self, pipein, pipeout, d, rq, rqexec, fakerootlogs=None):
         self.input = pipein
         if pipeout:
@@ -3062,6 +3105,7 @@ class runQueuePipe():
             print("Warning, worker left partial message: %s" % self.queue)
         self.input.close()
 
+
 def get_setscene_enforce_whitelist(d, targets):
     if d.getVar('BB_SETSCENE_ENFORCE') != '1':
         return None
@@ -3074,6 +3118,7 @@ def get_setscene_enforce_whitelist(d, targets):
         else:
             outlist.append(item)
     return outlist
+
 
 def check_setscene_enforce_whitelist(pn, taskname, whitelist):
     import fnmatch
