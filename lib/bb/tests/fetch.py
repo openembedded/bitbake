@@ -674,7 +674,7 @@ class FetcherLocalTest(FetcherTest):
         with self.assertRaises(bb.fetch2.UnpackError):
             self.fetchUnpack(['file://a;subdir=/bin/sh'])
 
-    def test_local_gitfetch_usehead(self):
+    def dummyGitTest(self, suffix):
         # Create dummy local Git repo
         src_dir = tempfile.mkdtemp(dir=self.tempdir,
                                    prefix='gitfetch_localusehead_')
@@ -693,7 +693,7 @@ class FetcherLocalTest(FetcherTest):
 
         # Fetch and check revision
         self.d.setVar("SRCREV", "AUTOINC")
-        url = "git://" + src_dir + ";protocol=file;usehead=1"
+        url = "git://" + src_dir + ";protocol=file;" + suffix
         fetcher = bb.fetch.Fetch([url], self.d)
         fetcher.download()
         fetcher.unpack(self.unpackdir)
@@ -701,34 +701,12 @@ class FetcherLocalTest(FetcherTest):
                                 cwd=os.path.join(self.unpackdir, 'git'))
         unpack_rev = stdout[0].strip()
         self.assertEqual(orig_rev, unpack_rev)
+
+    def test_local_gitfetch_usehead(self):
+        self.dummyGitTest("usehead=1")
 
     def test_local_gitfetch_usehead_withname(self):
-        # Create dummy local Git repo
-        src_dir = tempfile.mkdtemp(dir=self.tempdir,
-                                   prefix='gitfetch_localusehead_')
-        src_dir = os.path.abspath(src_dir)
-        bb.process.run("git init", cwd=src_dir)
-        bb.process.run("git config user.email 'you@example.com'", cwd=src_dir)
-        bb.process.run("git config user.name 'Your Name'", cwd=src_dir)
-        bb.process.run("git commit --allow-empty -m'Dummy commit'",
-                       cwd=src_dir)
-        # Use other branch than master
-        bb.process.run("git checkout -b my-devel", cwd=src_dir)
-        bb.process.run("git commit --allow-empty -m'Dummy commit 2'",
-                       cwd=src_dir)
-        stdout = bb.process.run("git rev-parse HEAD", cwd=src_dir)
-        orig_rev = stdout[0].strip()
-
-        # Fetch and check revision
-        self.d.setVar("SRCREV", "AUTOINC")
-        url = "git://" + src_dir + ";protocol=file;usehead=1;name=newName"
-        fetcher = bb.fetch.Fetch([url], self.d)
-        fetcher.download()
-        fetcher.unpack(self.unpackdir)
-        stdout = bb.process.run("git rev-parse HEAD",
-                                cwd=os.path.join(self.unpackdir, 'git'))
-        unpack_rev = stdout[0].strip()
-        self.assertEqual(orig_rev, unpack_rev)
+        self.dummyGitTest("usehead=1;name=newName")
 
 class FetcherNoNetworkTest(FetcherTest):
     def setUp(self):
