@@ -163,9 +163,6 @@ govern the behavior of the unpack stage:
 -  *dos:* Applies to ``.zip`` and ``.jar`` files and specifies whether
    to use DOS line ending conversion on text files.
 
--  *basepath:* Instructs the unpack stage to strip the specified
-   directories from the source path when unpacking.
-
 -  *subdir:* Unpacks the specific URL to the specified subdirectory
    within the root directory.
 
