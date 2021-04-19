@@ -30,8 +30,6 @@ timeout = float(sys.argv[7])
 xmlrpcinterface = (sys.argv[8], int(sys.argv[9]))
 if xmlrpcinterface[0] == "None":
     xmlrpcinterface = (None, xmlrpcinterface[1])
-if timeout == "None":
-    timeout = None
 
 # Replace standard fds with our own
 with open('/dev/null', 'r') as si:
