@@ -206,6 +206,7 @@ class LayerIndexPlugin(ActionPlugin):
 """
         args.show_only = True
         args.ignore = []
+        args.shallow = True
         self.do_layerindex_fetch(args)
 
     def register_commands(self, sp):
