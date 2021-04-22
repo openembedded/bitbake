@@ -325,9 +325,9 @@ Following is the complete "Hello World" example.
     following::
 
       BBPATH .= ":${LAYERDIR}"
-      BBFILES += "${LAYERDIR}/\*.bb"
+      BBFILES += "${LAYERDIR}/*.bb"
       BBFILE_COLLECTIONS += "mylayer"
-     `BBFILE_PATTERN_mylayer := "^${LAYERDIR_RE}/"
+      BBFILE_PATTERN_mylayer := "^${LAYERDIR_RE}/"
 
     For information on these variables, click on :term:`BBFILES`,
     :term:`LAYERDIR`, :term:`BBFILE_COLLECTIONS` or :term:`BBFILE_PATTERN_mylayer <BBFILE_PATTERN>`
