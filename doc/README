@@ -47,7 +47,7 @@ To install all required packages run:
 
 To build the documentation locally, run:
 
- $ cd documentation
+ $ cd doc
  $ make html
 
 The resulting HTML index page will be _build/html/index.html, and you
