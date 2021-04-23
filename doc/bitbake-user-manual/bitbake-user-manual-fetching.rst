@@ -232,15 +232,13 @@ Some example URLs are as follows::
 
    Because URL parameters are delimited by semi-colons, this can
    introduce ambiguity when parsing URLs that also contain semi-colons,
-   for example:
-   ::
+   for example::
 
            SRC_URI = "http://abc123.org/git/?p=gcc/gcc.git;a=snapshot;h=a5dd47"
 
 
    Such URLs should should be modified by replacing semi-colons with '&'
-   characters:
-   ::
+   characters::
 
            SRC_URI = "http://abc123.org/git/?p=gcc/gcc.git&a=snapshot&h=a5dd47"
 
@@ -248,8 +246,7 @@ Some example URLs are as follows::
    In most cases this should work. Treating semi-colons and '&' in
    queries identically is recommended by the World Wide Web Consortium
    (W3C). Note that due to the nature of the URL, you may have to
-   specify the name of the downloaded file as well:
-   ::
+   specify the name of the downloaded file as well::
 
            SRC_URI = "http://abc123.org/git/?p=gcc/gcc.git&a=snapshot&h=a5dd47;downloadfilename=myfile.bz2"
 
