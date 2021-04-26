@@ -18,10 +18,6 @@ import select
 
 logger = logging.getLogger("BitBake.PRserv")
 
-if sys.hexversion < 0x020600F0:
-    print("Sorry, python 2.6 or later is required.")
-    sys.exit(1)
-
 class Handler(SimpleXMLRPCRequestHandler):
     def _dispatch(self,method,params):
         try:
