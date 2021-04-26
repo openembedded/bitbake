@@ -482,3 +482,6 @@ def auto_shutdown():
 def ping(host, port):
     conn=PRServerConnection(host, port)
     return conn.ping()
+
+def connect(host, port):
+    return PRServerConnection(host, port)
