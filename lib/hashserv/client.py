@@ -14,10 +14,6 @@ from . import chunkify, DEFAULT_MAX_CHUNK, create_async_client
 logger = logging.getLogger("hashserv.client")
 
 
-class HashConnectionError(Exception):
-    pass
-
-
 class AsyncClient(object):
     MODE_NORMAL = 0
     MODE_GET_STREAM = 1
@@ -66,14 +62,14 @@ class AsyncClient(object):
                 return await proc()
             except (
                 OSError,
-                HashConnectionError,
+                ConnectionError,
                 json.JSONDecodeError,
                 UnicodeDecodeError,
             ) as e:
                 logger.warning("Error talking to server: %s" % e)
                 if count >= 3:
-                    if not isinstance(e, HashConnectionError):
-                        raise HashConnectionError(str(e))
+                    if not isinstance(e, ConnectionError):
+                        raise ConnectionError(str(e))
                     raise e
                 await self.close()
                 count += 1
@@ -82,12 +78,12 @@ class AsyncClient(object):
         async def get_line():
             line = await self.reader.readline()
             if not line:
-                raise HashConnectionError("Connection closed")
+                raise ConnectionError("Connection closed")
 
             line = line.decode("utf-8")
 
             if not line.endswith("\n"):
-                raise HashConnectionError("Bad message %r" % message)
+                raise ConnectionError("Bad message %r" % message)
 
             return line
 
@@ -119,7 +115,7 @@ class AsyncClient(object):
             await self.writer.drain()
             l = await self.reader.readline()
             if not l:
-                raise HashConnectionError("Connection closed")
+                raise ConnectionError("Connection closed")
             return l.decode("utf-8").rstrip()
 
         return await self._send_wrapper(proc)
@@ -128,11 +124,11 @@ class AsyncClient(object):
         if new_mode == self.MODE_NORMAL and self.mode == self.MODE_GET_STREAM:
             r = await self.send_stream("END")
             if r != "ok":
-                raise HashConnectionError("Bad response from server %r" % r)
+                raise ConnectionError("Bad response from server %r" % r)
         elif new_mode == self.MODE_GET_STREAM and self.mode == self.MODE_NORMAL:
             r = await self.send_message({"get-stream": None})
             if r != "ok":
-                raise HashConnectionError("Bad response from server %r" % r)
+                raise ConnectionError("Bad response from server %r" % r)
         elif new_mode != self.mode:
             raise Exception(
                 "Undefined mode transition %r -> %r" % (self.mode, new_mode)
