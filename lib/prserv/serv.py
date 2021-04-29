@@ -15,6 +15,7 @@ import prserv
 import prserv.db
 import errno
 import select
+import multiprocessing
 
 logger = logging.getLogger("BitBake.PRserv")
 
@@ -149,6 +150,9 @@ class PRServer(SimpleXMLRPCServer):
         # if there is data there.
         self.timeout = 0.01
 
+        signal.signal(signal.SIGINT, self.sigint_handler)
+        signal.signal(signal.SIGTERM, self.sigterm_handler)
+
         bb.utils.set_process_name("PRServ")
 
         # DB connection must be created after all forks
@@ -228,8 +232,6 @@ class PRServer(SimpleXMLRPCServer):
         os._exit(0)
 
     def cleanup_handles(self):
-        signal.signal(signal.SIGINT, self.sigint_handler)
-        signal.signal(signal.SIGTERM, self.sigterm_handler)
         os.chdir("/")
 
         sys.stdout.flush()
@@ -283,8 +285,10 @@ class PRServSingleton(object):
         self.port = None
 
     def start(self):
-        self.prserv = PRServer(self.dbfile, self.logfile, self.interface, daemon=False)
-        self.prserv.start()
+        self.prserv = PRServer(self.dbfile, self.logfile, self.interface)
+        self.process = multiprocessing.Process(target=self.prserv.work_forever)
+        self.process.start()
+
         self.host, self.port = self.prserv.getinfo()
 
     def getinfo(self):
