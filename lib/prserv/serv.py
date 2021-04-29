@@ -34,7 +34,7 @@ singleton = None
 
 
 class PRServer(SimpleXMLRPCServer):
-    def __init__(self, dbfile, logfile, interface, daemon=True):
+    def __init__(self, dbfile, logfile, interface):
         ''' constructor '''
         try:
             SimpleXMLRPCServer.__init__(self, interface,
@@ -47,7 +47,6 @@ class PRServer(SimpleXMLRPCServer):
             raise PRServiceConfigError
 
         self.dbfile=dbfile
-        self.daemon=daemon
         self.logfile=logfile
         self.working_thread=None
         self.host, self.port = self.socket.getsockname()
@@ -176,106 +175,6 @@ class PRServer(SimpleXMLRPCServer):
         os.close(self.quitpipein)
         return
 
-    def start(self):
-        if self.daemon:
-            pid = self.daemonize()
-        else:
-            pid = self.fork()
-            self.pid = pid
-
-        # Ensure both the parent sees this and the child from the work_forever log entry above
-        logger.info("Started PRServer with DBfile: %s, IP: %s, PORT: %s, PID: %s" %
-                     (self.dbfile, self.host, self.port, str(pid)))
-
-    def delpid(self):
-        os.remove(self.pidfile)
-
-    def daemonize(self):
-        """
-        See Advanced Programming in the UNIX, Sec 13.3
-        """
-        try:
-            pid = os.fork()
-            if pid > 0:
-                os.waitpid(pid, 0)
-                #parent return instead of exit to give control 
-                return pid
-        except OSError as e:
-            raise Exception("%s [%d]" % (e.strerror, e.errno))
-
-        os.setsid()
-        """
-        fork again to make sure the daemon is not session leader, 
-        which prevents it from acquiring controlling terminal
-        """
-        try:
-            pid = os.fork()
-            if pid > 0: #parent
-                os._exit(0)
-        except OSError as e:
-            raise Exception("%s [%d]" % (e.strerror, e.errno))
-
-        self.cleanup_handles()
-        os._exit(0)
-
-    def fork(self):
-        try:
-            pid = os.fork()
-            if pid > 0:
-                self.socket.close() # avoid ResourceWarning in parent
-                return pid
-        except OSError as e:
-            raise Exception("%s [%d]" % (e.strerror, e.errno))
-
-        bb.utils.signal_on_parent_exit("SIGTERM")
-        self.cleanup_handles()
-        os._exit(0)
-
-    def cleanup_handles(self):
-        os.chdir("/")
-
-        sys.stdout.flush()
-        sys.stderr.flush()
-
-        # We could be called from a python thread with io.StringIO as
-        # stdout/stderr or it could be 'real' unix fd forking where we need
-        # to physically close the fds to prevent the program launching us from
-        # potentially hanging on a pipe. Handle both cases.
-        si = open('/dev/null', 'r')
-        try:
-            os.dup2(si.fileno(),sys.stdin.fileno())
-        except (AttributeError, io.UnsupportedOperation):
-            sys.stdin = si
-        so = open(self.logfile, 'a+')
-        try:
-            os.dup2(so.fileno(),sys.stdout.fileno())
-        except (AttributeError, io.UnsupportedOperation):
-            sys.stdout = so
-        try:
-            os.dup2(so.fileno(),sys.stderr.fileno())
-        except (AttributeError, io.UnsupportedOperation):
-            sys.stderr = so
-
-        # Clear out all log handlers prior to the fork() to avoid calling
-        # event handlers not part of the PRserver
-        for logger_iter in logging.Logger.manager.loggerDict.keys():
-            logging.getLogger(logger_iter).handlers = []
-
-        # Ensure logging makes it to the logfile
-        streamhandler = logging.StreamHandler()
-        streamhandler.setLevel(logging.DEBUG)
-        formatter = bb.msg.BBLogFormatter("%(levelname)s: %(message)s")
-        streamhandler.setFormatter(formatter)
-        logger.addHandler(streamhandler)
-
-        # write pidfile
-        pid = str(os.getpid())
-        with open(self.pidfile, 'w') as pf:
-            pf.write("%s\n" % pid)
-
-        self.work_forever()
-        self.delpid()
-
 class PRServSingleton(object):
     def __init__(self, dbfile, logfile, interface):
         self.dbfile = dbfile
@@ -324,6 +223,76 @@ class PRServerConnection(object):
     def getinfo(self):
         return self.host, self.port
 
+def run_as_daemon(func, pidfile, logfile):
+    """
+    See Advanced Programming in the UNIX, Sec 13.3
+    """
+    try:
+        pid = os.fork()
+        if pid > 0:
+            os.waitpid(pid, 0)
+            #parent return instead of exit to give control
+            return pid
+    except OSError as e:
+        raise Exception("%s [%d]" % (e.strerror, e.errno))
+
+    os.setsid()
+    """
+    fork again to make sure the daemon is not session leader,
+    which prevents it from acquiring controlling terminal
+    """
+    try:
+        pid = os.fork()
+        if pid > 0: #parent
+            os._exit(0)
+    except OSError as e:
+        raise Exception("%s [%d]" % (e.strerror, e.errno))
+
+    os.chdir("/")
+
+    sys.stdout.flush()
+    sys.stderr.flush()
+
+    # We could be called from a python thread with io.StringIO as
+    # stdout/stderr or it could be 'real' unix fd forking where we need
+    # to physically close the fds to prevent the program launching us from
+    # potentially hanging on a pipe. Handle both cases.
+    si = open('/dev/null', 'r')
+    try:
+        os.dup2(si.fileno(),sys.stdin.fileno())
+    except (AttributeError, io.UnsupportedOperation):
+        sys.stdin = si
+    so = open(logfile, 'a+')
+    try:
+        os.dup2(so.fileno(),sys.stdout.fileno())
+    except (AttributeError, io.UnsupportedOperation):
+        sys.stdout = so
+    try:
+        os.dup2(so.fileno(),sys.stderr.fileno())
+    except (AttributeError, io.UnsupportedOperation):
+        sys.stderr = so
+
+    # Clear out all log handlers prior to the fork() to avoid calling
+    # event handlers not part of the PRserver
+    for logger_iter in logging.Logger.manager.loggerDict.keys():
+        logging.getLogger(logger_iter).handlers = []
+
+    # Ensure logging makes it to the logfile
+    streamhandler = logging.StreamHandler()
+    streamhandler.setLevel(logging.DEBUG)
+    formatter = bb.msg.BBLogFormatter("%(levelname)s: %(message)s")
+    streamhandler.setFormatter(formatter)
+    logger.addHandler(streamhandler)
+
+    # write pidfile
+    pid = str(os.getpid())
+    with open(pidfile, 'w') as pf:
+        pf.write("%s\n" % pid)
+
+    func()
+    os.remove(pidfile)
+    os._exit(0)
+
 def start_daemon(dbfile, host, port, logfile):
     ip = socket.gethostbyname(host)
     pidfile = PIDPREFIX % (ip, port)
@@ -339,7 +308,7 @@ def start_daemon(dbfile, host, port, logfile):
         return 1
 
     server = PRServer(os.path.abspath(dbfile), os.path.abspath(logfile), (ip,port))
-    server.start()
+    run_as_daemon(server.work_forever, pidfile, os.path.abspath(logfile))
 
     # Sometimes, the port (i.e. localhost:0) indicated by the user does not match with
     # the one the server actually is listening, so at least warn the user about it
