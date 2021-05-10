@@ -2789,6 +2789,7 @@ def update_scenequeue_data(tids, sqdata, rqdata, rq, cooker, stampcache, sqrq, s
     sqdata.valid |= rq.validate_hashes(tocheck, cooker.data, len(sqdata.stamppresent), False, summary=summary)
 
     sqdata.hashes = {}
+    sqrq.sq_deferred = {}
     for mc in sorted(sqdata.multiconfigs):
         for tid in sorted(sqdata.sq_revdeps):
             if mc_from_tid(tid) != mc:
@@ -2801,6 +2802,9 @@ def update_scenequeue_data(tids, sqdata, rqdata, rq, cooker, stampcache, sqrq, s
                 continue
             if tid in sqrq.scenequeue_notcovered:
                 continue
+            if tid in sqrq.scenequeue_covered:
+                continue
+
             sqdata.outrightfail.add(tid)
 
             h = pending_hash_index(tid, rqdata)
