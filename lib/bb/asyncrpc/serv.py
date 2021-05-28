@@ -147,7 +147,7 @@ class AsyncServer(object):
         )
 
         for s in self.server.sockets:
-            self.logger.info('Listening on %r' % (s.getsockname(),))
+            self.logger.debug('Listening on %r' % (s.getsockname(),))
             # Newer python does this automatically. Do it manually here for
             # maximum compatibility
             s.setsockopt(socket.SOL_TCP, socket.TCP_NODELAY, 1)
@@ -173,7 +173,7 @@ class AsyncServer(object):
         finally:
             os.chdir(cwd)
 
-        self.logger.info('Listening on %r' % path)
+        self.logger.debug('Listening on %r' % path)
 
         self._cleanup_socket = cleanup
         self.address = "unix://%s" % os.path.abspath(path)
@@ -192,7 +192,7 @@ class AsyncServer(object):
             self.logger.error('Error from client: %s' % str(e), exc_info=True)
             traceback.print_exc()
             writer.close()
-        self.logger.info('Client disconnected')
+        self.logger.debug('Client disconnected')
 
     def run_loop_forever(self):
         try:
@@ -212,7 +212,7 @@ class AsyncServer(object):
             self.server.close()
 
             self.loop.run_until_complete(self.server.wait_closed())
-            self.logger.info('Server shutting down')
+            self.logger.debug('Server shutting down')
         finally:
             if self.close_loop:
                 if sys.version_info >= (3, 6):
