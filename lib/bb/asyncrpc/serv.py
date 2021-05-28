@@ -28,6 +28,7 @@ class AsyncServerConnection(object):
         self.max_chunk = DEFAULT_MAX_CHUNK
         self.handlers = {
             'chunk-stream': self.handle_chunk,
+            'ping': self.handle_ping,
         }
         self.logger = logger
 
@@ -122,6 +123,10 @@ class AsyncServerConnection(object):
             raise ClientError("Nested chunks are not allowed")
 
         await self.dispatch_message(msg)
+
+    async def handle_ping(self, request):
+        response = {'alive': True}
+        self.write_message(response)
 
 
 class AsyncServer(object):
