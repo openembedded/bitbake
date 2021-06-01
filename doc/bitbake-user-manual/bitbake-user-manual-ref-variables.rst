@@ -797,16 +797,6 @@ overview of their function and contents.
       Allows you to use a configuration file to add to the list of
       command-line target recipes you want to build.
 
-   :term:`BBVERSIONS`
-      Allows a single recipe to build multiple versions of a project from a
-      single recipe file. You also able to specify conditional metadata
-      using the :term:`OVERRIDES` mechanism for a
-      single version or for an optionally named range of versions.
-
-      For more information on ``BBVERSIONS``, see the
-      ":ref:`bitbake-user-manual/bitbake-user-manual-metadata:variants - class extension mechanism`"
-      section.
-
    :term:`BITBAKE_UI`
       Used to specify the UI module to use when running BitBake. Using this
       variable is equivalent to using the ``-u`` command-line option.
