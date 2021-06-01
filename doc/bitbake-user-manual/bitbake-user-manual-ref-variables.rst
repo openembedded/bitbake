@@ -426,17 +426,6 @@ overview of their function and contents.
       The function specified by this variable returns a "True" or "False"
       depending on whether the dependency needs to be met.
 
-   :term:`BB_SETSCENE_VERIFY_FUNCTION2`
-      Specifies a function to call that verifies the list of planned task
-      execution before the main task execution happens. The function is
-      called once BitBake has a list of setscene tasks that have run and
-      either succeeded or failed.
-
-      The function allows for a task list check to see if they make sense.
-      Even if BitBake was planning to skip a task, the returned value of
-      the function can force BitBake to run the task, which is necessary
-      under certain metadata defined circumstances.
-
    :term:`BB_SIGNATURE_EXCLUDE_FLAGS`
       Lists variable flags (varflags) that can be safely excluded from
       checksum and dependency data for keys in the datastore. When

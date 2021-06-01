@@ -1920,10 +1920,6 @@ The following list describes related variables:
    Specifies a function BitBake calls that determines whether BitBake
    requires a setscene dependency to be met.
 
--  :term:`BB_SETSCENE_VERIFY_FUNCTION2`:
-   Specifies a function to call that verifies the list of planned task
-   execution before the main task execution happens.
-
 -  :term:`BB_STAMP_POLICY`: Defines the mode
    for comparing timestamps of stamp files.
 
