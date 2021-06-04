@@ -313,6 +313,16 @@ overview of their function and contents.
       However, the more accurate the data returned, the more efficient the
       build will be.
 
+   :term:`BB_HASHSERVE`
+      Specifies the Hash Equivalence server to use.
+
+      If set to ``auto``, BitBake automatically starts its own server
+      over a UNIX domain socket.
+
+      If set to ``host:port``, BitBake will use a remote server on the
+      specified host. This allows multiple clients to share the same
+      hash equivalence data.
+
    :term:`BB_INVALIDCONF`
       Used in combination with the ``ConfigParsed`` event to trigger
       re-parsing the base metadata (i.e. all the recipes). The
