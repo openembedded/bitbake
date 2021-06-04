@@ -23,10 +23,6 @@ overview of their function and contents.
       systems extend the functionality of the variable as it is
       described here in this glossary.
 
-   -  Finally, there are variables mentioned in this glossary that do
-      not appear in the BitBake glossary. These other variables are
-      variables used in systems that use BitBake.
-
 .. glossary::
 
    :term:`ASSUME_PROVIDED`
