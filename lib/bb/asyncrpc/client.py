@@ -77,7 +77,7 @@ class AsyncClient(object):
             line = line.decode("utf-8")
 
             if not line.endswith("\n"):
-                raise ConnectionError("Bad message %r" % msg)
+                raise ConnectionError("Bad message %r" % (line))
 
             return line
 
