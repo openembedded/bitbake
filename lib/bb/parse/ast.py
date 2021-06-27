@@ -48,7 +48,7 @@ class ExportNode(AstNode):
         self.var = var
 
     def eval(self, data):
-        data.setVarFlag(self.var, "export", 1, op = 'exported')
+        data.setVarFlag(self.var, "export", 1, op='exported')
 
 class UnsetNode(AstNode):
     def __init__(self, filename, lineno, var):
@@ -103,7 +103,7 @@ class DataNode(AstNode):
             'line': self.lineno,
         }
         if "exp" in groupd and groupd["exp"] is not None:
-            data.setVarFlag(key, "export", 1, op = 'exported', **loginfo)
+            data.setVarFlag(key, "export", 1, op='exported', **loginfo)
 
         op = "set"
         if "ques" in groupd and groupd["ques"] is not None:
@@ -326,7 +326,7 @@ def runAnonFuncs(d):
         code.append("%s(d)" % funcname)
     bb.utils.better_exec("\n".join(code), {"d": d})
 
-def finalize(fn, d, variant = None):
+def finalize(fn, d, variant=None):
     saved_handlers = bb.event.get_handlers().copy()
     try:
         for var in d.getVar('__BBHANDLERS', False) or []:
@@ -358,7 +358,7 @@ def finalize(fn, d, variant = None):
         bb.event.set_handlers(saved_handlers)
 
 def _create_variants(datastores, names, function, onlyfinalise):
-    def create_variant(name, orig_d, arg = None):
+    def create_variant(name, orig_d, arg=None):
         if onlyfinalise and name not in onlyfinalise:
             return
         new_d = bb.data.createCopy(orig_d)

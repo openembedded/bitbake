@@ -187,11 +187,11 @@ def deprecated(func, name=None, advice=""):
     return newFunc
 
 # For compatibility
-def deprecate_import(current, modulename, fromlist, renames = None):
+def deprecate_import(current, modulename, fromlist, renames=None):
     """Import objects from one module into another, wrapping them with a DeprecationWarning"""
     import sys
 
-    module = __import__(modulename, fromlist = fromlist)
+    module = __import__(modulename, fromlist=fromlist)
     for position, objname in enumerate(fromlist):
         obj = getattr(module, objname)
         newobj = deprecated(obj, "{0}.{1}".format(current, objname),

@@ -37,7 +37,7 @@ class TestProjectConfigsPage(SeleniumTestCase):
 
         imagefs_type = "foo_bar"
 
-        ProjectVariable.objects.get_or_create(project = self.project1, name = "IMAGE_FSTYPES", value = "abcd ")
+        ProjectVariable.objects.get_or_create(project=self.project1, name="IMAGE_FSTYPES", value="abcd ")
         url = reverse('projectconf', args=(self.project1.id,))
         self.get(url)
 
@@ -58,7 +58,7 @@ class TestProjectConfigsPage(SeleniumTestCase):
         """
         imagefs_type = "btrfs"
 
-        ProjectVariable.objects.get_or_create(project = self.project1, name = "IMAGE_FSTYPES", value = "abcd ")
+        ProjectVariable.objects.get_or_create(project=self.project1, name="IMAGE_FSTYPES", value="abcd ")
         url = reverse('projectconf', args=(self.project1.id,))
         self.get(url)
 
@@ -79,7 +79,7 @@ class TestProjectConfigsPage(SeleniumTestCase):
         or unchecks checkboxes.
         """
 
-        ProjectVariable.objects.get_or_create(project = self.project1, name = "IMAGE_FSTYPES", value = "abcd ")
+        ProjectVariable.objects.get_or_create(project=self.project1, name="IMAGE_FSTYPES", value="abcd ")
         url = reverse('projectconf', args=(self.project1.id,))
         self.get(url)
 

@@ -21,7 +21,7 @@ register = template.Library()
 def time_difference(start_time, end_time):
     return end_time - start_time
 
-@register.filter(name = 'sectohms')
+@register.filter(name='sectohms')
 def sectohms(time):
     try:
         tdsec = int(time)
@@ -31,18 +31,18 @@ def sectohms(time):
     return "%02d:%02d:%02d" % (hours, int((tdsec - (hours * 3600))/ 60), int(tdsec) % 60)
 
 
-@register.filter(name = 'get_tasks')
+@register.filter(name='get_tasks')
 def get_tasks(queryset):
     return list(target + ':' + task if task else target
                     for target, task in queryset.values_list('target', 'task'))
 
 
-@register.filter(name = "json")
-def json(value, default = None):
+@register.filter(name="json")
+def json(value, default=None):
     # JSON spec says that "\/" is functionally identical to "/" to allow for HTML-tag embedding in JSON strings
     # unfortunately, I can't find any option in the json module to turn on forward-slash escaping, so we do
     # it manually here
-    return mark_safe(JsonLib.dumps(value, indent=2, default = default, ensure_ascii=False).replace('</', '<\\/'))
+    return mark_safe(JsonLib.dumps(value, indent=2, default=default, ensure_ascii=False).replace('</', '<\\/'))
 
 @register.simple_tag
 def query(qs, **kwargs):
@@ -84,13 +84,13 @@ def multiply(value, arg):
     return int(value) * int(arg)
 
 @register.simple_tag
-def datecompute(delta, start = timezone.now()):
+def datecompute(delta, start=timezone.now()):
     return start + timedelta(delta)
 
 
-@register.filter(name = 'sortcols')
+@register.filter(name='sortcols')
 def sortcols(tablecols):
-    return sorted(tablecols, key = lambda t: t['name'])
+    return sorted(tablecols, key=lambda t: t['name'])
 
 @register.filter
 def task_color(task_object, show_green=False):

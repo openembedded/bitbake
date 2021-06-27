@@ -126,7 +126,7 @@ class WordLexer:
         "'": set(),
     }
         
-    def __init__(self, heredoc = False):
+    def __init__(self, heredoc=False):
         # _buffer is the unprocessed input characters buffer
         self._buffer = []
         # _stack is empty or contains a quoted list being processed
@@ -379,7 +379,7 @@ def make_wordtree(token, here_document=False):
         remaining = remaining[pos:]
         
         try:
-            result, remaining = WordLexer(heredoc = here_document).add(remaining, True)
+            result, remaining = WordLexer(heredoc=here_document).add(remaining, True)
         except NeedMore:
             raise ShellSyntaxError('Invalid token "%s"')
         tree.append(result)
@@ -544,7 +544,7 @@ class Lexer:
     #Match end of backquote strings
     RE_BACKQUOTE_END = re.compile(r'(?<!\\)(`)')
 
-    def __init__(self, parent_state = None):
+    def __init__(self, parent_state=None):
         self._input = []
         self._pos = 0
         

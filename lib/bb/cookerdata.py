@@ -231,7 +231,7 @@ def findTopdir():
 
 class CookerDataBuilder(object):
 
-    def __init__(self, cookercfg, worker = False):
+    def __init__(self, cookercfg, worker=False):
 
         self.prefiles = cookercfg.prefile
         self.postfiles = cookercfg.postfile
@@ -323,7 +323,7 @@ class CookerDataBuilder(object):
     def _findLayerConf(self, data):
         return findConfigFile("bblayers.conf", data)
 
-    def parseConfigurationFiles(self, prefiles, postfiles, mc = "default"):
+    def parseConfigurationFiles(self, prefiles, postfiles, mc="default"):
         data = bb.data.createCopy(self.basedata)
         data.setVar("BB_CURRENT_MC", mc)
 

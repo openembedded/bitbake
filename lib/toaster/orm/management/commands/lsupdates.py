@@ -81,7 +81,7 @@ class Command(BaseCommand):
 
         self.apiurl = DEFAULT_LAYERINDEX_SERVER
         if ToasterSetting.objects.filter(name='CUSTOM_LAYERINDEX_SERVER').count() == 1:
-            self.apiurl = ToasterSetting.objects.get(name = 'CUSTOM_LAYERINDEX_SERVER').value
+            self.apiurl = ToasterSetting.objects.get(name='CUSTOM_LAYERINDEX_SERVER').value
 
         assert self.apiurl is not None
 

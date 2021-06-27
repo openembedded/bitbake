@@ -60,7 +60,7 @@ class Command:
         # FIXME Add lock for this
         self.currentAsyncCommand = None
 
-    def runCommand(self, commandline, ro_only = False):
+    def runCommand(self, commandline, ro_only=False):
         command = commandline.pop(0)
 
         # Ensure cooker is ready for commands

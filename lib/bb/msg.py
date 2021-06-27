@@ -169,7 +169,7 @@ def init_msgconfig(verbose, debug, debug_domains=None):
 def constructLogOptions():
     return loggerDefaultLogLevel, loggerDefaultDomains
 
-def addDefaultlogFilter(handler, cls = BBLogFilter, forcelevel=None):
+def addDefaultlogFilter(handler, cls=BBLogFilter, forcelevel=None):
     level, debug_domains = constructLogOptions()
 
     if forcelevel is not None:

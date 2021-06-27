@@ -37,7 +37,7 @@ __expand_python_regexp__ = re.compile(r"\${@.+?}")
 __whitespace_split__ = re.compile(r'(\s)')
 __override_regexp__ = re.compile(r'[a-z0-9]+')
 
-def infer_caller_details(loginfo, parent = False, varval = True):
+def infer_caller_details(loginfo, parent=False, varval=True):
     """Save the caller the trouble of specifying everything."""
     # Save effort.
     if 'ignore' in loginfo and loginfo['ignore']:
@@ -84,7 +84,7 @@ def infer_caller_details(loginfo, parent = False, varval = True):
             loginfo['func'] = func
 
 class VariableParse:
-    def __init__(self, varname, d, val = None):
+    def __init__(self, varname, d, val=None):
         self.varname = varname
         self.d = d
         self.value = val
@@ -168,7 +168,7 @@ class ExpansionError(Exception):
         return self.msg
 
 class IncludeHistory(object):
-    def __init__(self, parent = None, filename = '[TOP LEVEL]'):
+    def __init__(self, parent=None, filename='[TOP LEVEL]'):
         self.parent = parent
         self.filename = filename
         self.children = []
@@ -196,7 +196,7 @@ class IncludeHistory(object):
             bb.warn("Include log: Tried to finish '%s' at top level." % self.filename)
         return False
 
-    def emit(self, o, level = 0):
+    def emit(self, o, level=0):
         """Emit an include history file, and its children."""
         if level:
             spaces = "  " * (level - 1)
@@ -238,7 +238,7 @@ class VariableHistory(object):
             return
         if len(kwonly) > 0:
             raise TypeError
-        infer_caller_details(loginfo, parent = True)
+        infer_caller_details(loginfo, parent=True)
         if 'ignore' in loginfo and loginfo['ignore']:
             return
         if 'op' not in loginfo or not loginfo['op']:
@@ -423,13 +423,13 @@ class DataSmart(MutableMapping):
 
         return varparse
 
-    def expand(self, s, varname = None):
+    def expand(self, s, varname=None):
         return self.expandWithRefs(s, varname).value
 
-    def finalize(self, parent = False):
+    def finalize(self, parent=False):
         return
 
-    def internal_finalize(self, parent = False):
+    def internal_finalize(self, parent=False):
         """Performs final steps upon the datastore, including application of overrides"""
         self.overrides = None
 
@@ -862,7 +862,7 @@ class DataSmart(MutableMapping):
             self.varhistory.record(**loginfo)
             self.dict[var][i] = flags[i]
 
-    def getVarFlags(self, var, expand = False, internalflags=False):
+    def getVarFlags(self, var, expand=False, internalflags=False):
         local_var, _ = self._findVar(var)
         flags = {}
 
@@ -1009,7 +1009,7 @@ class DataSmart(MutableMapping):
             else:
                 data.update({key:value})
 
-            varflags = d.getVarFlags(key, internalflags = True, expand=["vardepvalue"])
+            varflags = d.getVarFlags(key, internalflags=True, expand=["vardepvalue"])
             if not varflags:
                 continue
             for f in varflags:

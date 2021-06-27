@@ -656,9 +656,9 @@ except ImportError:
     outputdir = os.path.dirname(__file__)
     if not os.access(outputdir, os.W_OK):
         outputdir = ''
-    yacc.yacc(tabmodule = 'pyshtables', outputdir = outputdir, debug = 0)
+    yacc.yacc(tabmodule='pyshtables', outputdir=outputdir, debug=0)
 else:
-    yacc.yacc(tabmodule = 'pysh.pyshtables', write_tables = 0, debug = 0)
+    yacc.yacc(tabmodule='pysh.pyshtables', write_tables=0, debug=0)
 
 
 def parse(input, eof=False, debug=False):

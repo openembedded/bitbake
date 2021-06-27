@@ -44,7 +44,7 @@ class Command(BaseCommand):
         client = Client()
         info = []
         try:
-            resp = client.get(full_url, follow = True)
+            resp = client.get(full_url, follow=True)
         except Exception as e_status_code:
             self.error('Url: %s, error: %s' % (full_url, e_status_code))
             resp = type('object', (), {'status_code':0, 'content': str(e_status_code)})

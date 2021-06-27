@@ -36,11 +36,11 @@ class DumpCache(object):
         parser.add_argument("-r", "--recipe",
             help="specify the recipe, default: all recipes", action="store")
         parser.add_argument("-m", "--members",
-            help = "specify the member, use comma as separator for multiple ones, default: all members", action="store", default="")
+            help="specify the member, use comma as separator for multiple ones, default: all members", action="store", default="")
         parser.add_argument("-s", "--skip",
-            help = "skip skipped recipes", action="store_true")
+            help="skip skipped recipes", action="store_true")
         parser.add_argument("cachefile",
-            help = "specify bb_cache.dat", nargs = 1, action="store", default="")
+            help="specify bb_cache.dat", nargs=1, action="store", default="")
 
         self.args = parser.parse_args()
 

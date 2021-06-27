@@ -41,7 +41,7 @@ class BBTransport(xmlrpc.client.Transport):
             h.putheader("Bitbake-token", self.connection_token)
         xmlrpc.client.Transport.send_content(self, h, body)
 
-def _create_server(host, port, timeout = 60):
+def _create_server(host, port, timeout=60):
     t = BBTransport(timeout)
     s = xmlrpc.client.ServerProxy("http://%s:%d/" % (host, port), transport=t, allow_none=True, use_builtin_types=True)
     return s, t
@@ -64,7 +64,7 @@ def check_connection(remote, timeout):
     return True
 
 class BitBakeXMLRPCServerConnection(object):
-    def __init__(self, host, port, clientinfo=("localhost", 0), observer_only = False, featureset = None):
+    def __init__(self, host, port, clientinfo=("localhost", 0), observer_only=False, featureset=None):
         self.connection, self.transport = _create_server(host, port)
         self.clientinfo = clientinfo
         self.observer_only = observer_only
@@ -82,7 +82,7 @@ class BitBakeXMLRPCServerConnection(object):
             # no need to log it here, the error shall be sent to the client
             raise BaseException(error)
 
-    def connect(self, token = None):
+    def connect(self, token=None):
         if token is None:
             if self.observer_only:
                 token = "observer"
@@ -111,7 +111,7 @@ class BitBakeXMLRPCServerConnection(object):
         except:
             pass
 
-def connectXMLRPC(remote, featureset, observer_only = False, token = None):
+def connectXMLRPC(remote, featureset, observer_only=False, token=None):
     # The format of "remote" must be "server:port"
     try:
         [host, port] = remote.split(":")

@@ -218,7 +218,7 @@ class Project(models.Model):
 
     def get_last_build_id(self):
         try:
-            return Build.objects.filter( project = self.id ).order_by('-completed_on')[0].id
+            return Build.objects.filter( project=self.id ).order_by('-completed_on')[0].id
         except (Build.DoesNotExist,IndexError):
             return( -1 )
 
@@ -227,7 +227,7 @@ class Project(models.Model):
         if (-1 == build_id):
             return( "" )
         try:
-            return Build.objects.filter( id = build_id )[ 0 ].outcome
+            return Build.objects.filter( id=build_id )[ 0 ].outcome
         except (Build.DoesNotExist,IndexError):
             return( "not_found" )
 
@@ -236,7 +236,7 @@ class Project(models.Model):
         if (-1 == build_id):
             return( "" )
         try:
-            return Target.objects.filter(build = build_id)[0].target
+            return Target.objects.filter(build=build_id)[0].target
         except (Target.DoesNotExist,IndexError):
             return( "not_found" )
 
@@ -245,7 +245,7 @@ class Project(models.Model):
         if (-1 == build_id):
             return( 0 )
         try:
-            return Build.objects.filter(id = build_id)[ 0 ].errors.count()
+            return Build.objects.filter(id=build_id)[ 0 ].errors.count()
         except (Build.DoesNotExist,IndexError):
             return( "not_found" )
 
@@ -254,7 +254,7 @@ class Project(models.Model):
         if (-1 == build_id):
             return( 0 )
         try:
-            return Build.objects.filter(id = build_id)[ 0 ].warnings.count()
+            return Build.objects.filter(id=build_id)[ 0 ].warnings.count()
         except (Build.DoesNotExist,IndexError):
             return( "not_found" )
 
@@ -263,7 +263,7 @@ class Project(models.Model):
         Get list of file name extensions for images produced by the most
         recent build
         """
-        last_build = Build.objects.get(pk = self.get_last_build_id())
+        last_build = Build.objects.get(pk=self.get_last_build_id())
         return last_build.get_image_file_extensions()
 
     def get_last_imgfiles(self):
@@ -271,7 +271,7 @@ class Project(models.Model):
         if (-1 == build_id):
             return( "" )
         try:
-            return Variable.objects.filter(build = build_id, variable_name = "IMAGE_FSTYPES")[ 0 ].variable_value
+            return Variable.objects.filter(build=build_id, variable_name="IMAGE_FSTYPES")[ 0 ].variable_value
         except (Variable.DoesNotExist,IndexError):
             return( "not_found" )
 
@@ -372,14 +372,14 @@ class Project(models.Model):
     PROJECT_SPECIFIC_CLONING_SUCCESS = '4'
     PROJECT_SPECIFIC_CLONING_FAIL = '5'
 
-    def get_variable(self,variable,default_value = ''):
+    def get_variable(self,variable,default_value=''):
         try:
             return self.projectvariable_set.get(name=variable).value
         except (ProjectVariable.DoesNotExist,IndexError):
             return default_value
 
     def set_variable(self,variable,value):
-        pv,create = ProjectVariable.objects.get_or_create(project = self, name = variable)
+        pv,create = ProjectVariable.objects.get_or_create(project=self, name=variable)
         pv.value = value
         pv.save()
 
@@ -541,7 +541,7 @@ class Build(models.Model):
         return len(variables) > 0
 
     def completeper(self):
-        tf = Task.objects.filter(build = self)
+        tf = Task.objects.filter(build=self)
         tfc = tf.count()
         if tfc > 0:
             completeper = tf.exclude(outcome=Task.OUTCOME_NA).count()*100 // tfc
@@ -587,7 +587,7 @@ class Build(models.Model):
         """
         extensions = []
 
-        targets = Target.objects.filter(build_id = self.id)
+        targets = Target.objects.filter(build_id=self.id)
         for target in targets:
             if not target.is_image:
                 continue
@@ -613,7 +613,7 @@ class Build(models.Model):
         return list(set(re.split(r' {1,}', image_fstypes)))
 
     def get_sorted_target_list(self):
-        tgts = Target.objects.filter(build_id = self.id).order_by( 'target' )
+        tgts = Target.objects.filter(build_id=self.id).order_by( 'target' )
         return( tgts )
 
     def get_recipes(self):
@@ -786,7 +786,7 @@ class Target(models.Model):
     build = models.ForeignKey(Build, on_delete=models.CASCADE)
     target = models.CharField(max_length=100)
     task = models.CharField(max_length=100, null=True)
-    is_image = models.BooleanField(default = False)
+    is_image = models.BooleanField(default=False)
     image_size = models.IntegerField(default=0)
     license_manifest_path = models.CharField(max_length=500, null=True)
     package_manifest_path = models.CharField(max_length=500, null=True)
@@ -1010,7 +1010,7 @@ class Target_File(models.Model):
     target = models.ForeignKey(Target, on_delete=models.CASCADE)
     path = models.FilePathField()
     size = models.IntegerField()
-    inodetype = models.IntegerField(choices = ITYPES)
+    inodetype = models.IntegerField(choices=ITYPES)
     permission = models.CharField(max_length=16)
     owner = models.CharField(max_length=128)
     group = models.CharField(max_length=128)
@@ -1080,7 +1080,7 @@ class Task(models.Model):
             self._helptext = None
 
     def get_related_setscene(self):
-        return Task.objects.filter(task_executed=True, build = self.build, recipe = self.recipe, task_name=self.task_name+"_setscene")
+        return Task.objects.filter(task_executed=True, build=self.build, recipe=self.recipe, task_name=self.task_name+"_setscene")
 
     def get_outcome_text(self):
         return Task.TASK_OUTCOME[int(self.outcome) + 1][1]
@@ -1195,7 +1195,7 @@ class Package_DependencyManager(models.Manager):
     TARGET_LATEST = "use-latest-target-for-target"
 
     def get_queryset(self):
-        return super(Package_DependencyManager, self).get_queryset().exclude(package_id = F('depends_on__id'))
+        return super(Package_DependencyManager, self).get_queryset().exclude(package_id=F('depends_on__id'))
 
     def for_target_or_none(self, target):
         """ filter the dependencies to be displayed by the supplied target
@@ -1352,7 +1352,7 @@ class Recipe_DependencyManager(models.Manager):
     use_for_related_fields = True
 
     def get_queryset(self):
-        return super(Recipe_DependencyManager, self).get_queryset().exclude(recipe_id = F('depends_on__id'))
+        return super(Recipe_DependencyManager, self).get_queryset().exclude(recipe_id=F('depends_on__id'))
 
 class Provides(models.Model):
     name = models.CharField(max_length=100)
@@ -1375,7 +1375,7 @@ class Recipe_Dependency(models.Model):
 
 class Machine(models.Model):
     search_allowed_fields = ["name", "description", "layer_version__layer__name"]
-    up_date = models.DateTimeField(null = True, default = None)
+    up_date = models.DateTimeField(null=True, default=None)
 
     layer_version = models.ForeignKey('Layer_Version', on_delete=models.CASCADE)
     name = models.CharField(max_length=255)
@@ -1395,7 +1395,7 @@ class Machine(models.Model):
 
 class BitbakeVersion(models.Model):
 
-    name = models.CharField(max_length=32, unique = True)
+    name = models.CharField(max_length=32, unique=True)
     giturl = GitURLField()
     branch = models.CharField(max_length=32)
     dirpath = models.CharField(max_length=255)
@@ -1406,10 +1406,10 @@ class BitbakeVersion(models.Model):
 
 class Release(models.Model):
     """ A release is a project template, used to pre-populate Project settings with a configuration set """
-    name = models.CharField(max_length=32, unique = True)
+    name = models.CharField(max_length=32, unique=True)
     description = models.CharField(max_length=255)
     bitbake_version = models.ForeignKey(BitbakeVersion, on_delete=models.CASCADE)
-    branch_name = models.CharField(max_length=50, default = "")
+    branch_name = models.CharField(max_length=50, default="")
     helptext = models.TextField(null=True)
 
     def __unicode__(self):
@@ -1617,7 +1617,7 @@ class LayerVersionDependency(models.Model):
 class ProjectLayer(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
     layercommit = models.ForeignKey(Layer_Version, on_delete=models.CASCADE, null=True)
-    optional = models.BooleanField(default = True)
+    optional = models.BooleanField(default=True)
 
     def __unicode__(self):
         return "%s, %s" % (self.project.name, self.layercommit)
@@ -1787,7 +1787,7 @@ class CustomImageRecipe(Recipe):
 class ProjectVariable(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
-    value = models.TextField(blank = True)
+    value = models.TextField(blank=True)
 
 class Variable(models.Model):
     search_allowed_fields = ['variable_name', 'variable_value',
@@ -1831,7 +1831,7 @@ class LogMessage(models.Model):
     )
 
     build = models.ForeignKey(Build, on_delete=models.CASCADE)
-    task  = models.ForeignKey(Task, on_delete=models.CASCADE, blank = True, null=True)
+    task  = models.ForeignKey(Task, on_delete=models.CASCADE, blank=True, null=True)
     level = models.IntegerField(choices=LOG_LEVEL, default=INFO)
     message = models.TextField(blank=True, null=True)
     pathname = models.FilePathField(max_length=255, blank=True)
@@ -1858,7 +1858,7 @@ def signal_runbuilds():
 
 class Distro(models.Model):
     search_allowed_fields = ["name", "description", "layer_version__layer__name"]
-    up_date = models.DateTimeField(null = True, default = None)
+    up_date = models.DateTimeField(null=True, default=None)
 
     layer_version = models.ForeignKey('Layer_Version', on_delete=models.CASCADE)
     name = models.CharField(max_length=255)

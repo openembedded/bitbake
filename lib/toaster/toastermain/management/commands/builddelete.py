@@ -19,7 +19,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         for bid in options['buildids']:
             try:
-                b = Build.objects.get(pk = bid)
+                b = Build.objects.get(pk=bid)
             except ObjectDoesNotExist:
                 print('build %s does not exist, skipping...' %(bid))
                 continue

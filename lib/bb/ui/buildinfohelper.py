@@ -243,9 +243,9 @@ class ORMWrapper(object):
         to be stored
         """
         task_to_update = Task.objects.get(
-            build = build,
-            task_name = task_name,
-            recipe__name = recipe_name
+            build=build,
+            task_name=task_name,
+            recipe__name=recipe_name
         )
 
         if 'started' in task_stats and 'ended' in task_stats:
@@ -261,7 +261,7 @@ class ORMWrapper(object):
 
         task_to_update.save()
 
-    def get_update_task_object(self, task_information, must_exist = False):
+    def get_update_task_object(self, task_information, must_exist=False):
         assert 'build' in task_information
         assert 'recipe' in task_information
         assert 'task_name' in task_information
@@ -288,8 +288,8 @@ class ORMWrapper(object):
             task_object.outcome = Task.OUTCOME_CACHED
             object_changed = True
 
-            outcome_task_setscene = Task.objects.get(task_executed=True, build = task_object.build,
-                                    recipe = task_object.recipe, task_name=task_object.task_name+"_setscene").outcome
+            outcome_task_setscene = Task.objects.get(task_executed=True, build=task_object.build,
+                                    recipe=task_object.recipe, task_name=task_object.task_name+"_setscene").outcome
             if outcome_task_setscene == Task.OUTCOME_SUCCESS:
                 task_object.sstate_result = Task.SSTATE_RESTORED
                 object_changed = True
@@ -302,7 +302,7 @@ class ORMWrapper(object):
         return task_object
 
 
-    def get_update_recipe_object(self, recipe_information, must_exist = False):
+    def get_update_recipe_object(self, recipe_information, must_exist=False):
         assert 'layer_version' in recipe_information
         assert 'file_path' in recipe_information
         assert 'pathflags' in recipe_information
@@ -321,7 +321,7 @@ class ORMWrapper(object):
                 recipe_object.save()
 
         recipe, created = self._cached_get_or_create(Recipe, layer_version=recipe_information['layer_version'],
-                                     file_path=recipe_information['file_path'], pathflags = recipe_information['pathflags'])
+                                     file_path=recipe_information['file_path'], pathflags=recipe_information['pathflags'])
 
         update_recipe_obj(recipe)
 
@@ -332,7 +332,7 @@ class ORMWrapper(object):
                 built_recipe, c = self._cached_get_or_create(Recipe,
                         layer_version=built_layer,
                         file_path=recipe_information['file_path'],
-                        pathflags = recipe_information['pathflags'])
+                        pathflags=recipe_information['pathflags'])
                 update_recipe_obj(built_recipe)
                 break
 
@@ -392,12 +392,12 @@ class ORMWrapper(object):
             project = build_obj.project
 
         layer_version_object, _ = Layer_Version.objects.get_or_create(
-                                  build = build_obj,
-                                  layer = layer_obj,
-                                  branch = layer_version_information['branch'],
-                                  commit = layer_version_information['commit'],
-                                  priority = layer_version_information['priority'],
-                                  local_path = layer_version_information['local_path'],
+                                  build=build_obj,
+                                  layer=layer_obj,
+                                  branch=layer_version_information['branch'],
+                                  commit=layer_version_information['commit'],
+                                  priority=layer_version_information['priority'],
+                                  local_path=layer_version_information['local_path'],
                                   project=project)
 
         self.layer_version_objects.append(layer_version_object)
@@ -466,13 +466,13 @@ class ORMWrapper(object):
         # always create the root directory as a special case;
         # note that this is never displayed, so the owner, group,
         # size, permission are irrelevant
-        tf_obj = Target_File.objects.create(target = target_obj,
-                                            path = '/',
-                                            size = 0,
-                                            owner = '',
-                                            group = '',
-                                            permission = '',
-                                            inodetype = Target_File.ITYPE_DIRECTORY)
+        tf_obj = Target_File.objects.create(target=target_obj,
+                                            path='/',
+                                            size=0,
+                                            owner='',
+                                            group='',
+                                            permission='',
+                                            inodetype=Target_File.ITYPE_DIRECTORY)
         tf_obj.save()
 
         # insert directories, ordered by name depth
@@ -489,16 +489,16 @@ class ORMWrapper(object):
             parent_path = "/".join(path.split("/")[:len(path.split("/")) - 1])
             if len(parent_path) == 0:
                 parent_path = "/"
-            parent_obj = self._cached_get(Target_File, target = target_obj, path = parent_path, inodetype = Target_File.ITYPE_DIRECTORY)
+            parent_obj = self._cached_get(Target_File, target=target_obj, path=parent_path, inodetype=Target_File.ITYPE_DIRECTORY)
             tf_obj = Target_File.objects.create(
-                        target = target_obj,
-                        path = path,
-                        size = size,
-                        inodetype = Target_File.ITYPE_DIRECTORY,
-                        permission = permission,
-                        owner = user,
-                        group = group,
-                        directory = parent_obj)
+                        target=target_obj,
+                        path=path,
+                        size=size,
+                        inodetype=Target_File.ITYPE_DIRECTORY,
+                        permission=permission,
+                        owner=user,
+                        group=group,
+                        directory=parent_obj)
 
 
         # we insert files
@@ -516,14 +516,14 @@ class ORMWrapper(object):
                 inodetype = Target_File.ITYPE_FIFO
 
             tf_obj = Target_File.objects.create(
-                        target = target_obj,
-                        path = path,
-                        size = size,
-                        inodetype = inodetype,
-                        permission = permission,
-                        owner = user,
-                        group = group)
-            parent_obj = self._cached_get(Target_File, target = target_obj, path = parent_path, inodetype = Target_File.ITYPE_DIRECTORY)
+                        target=target_obj,
+                        path=path,
+                        size=size,
+                        inodetype=inodetype,
+                        permission=permission,
+                        owner=user,
+                        group=group)
+            parent_obj = self._cached_get(Target_File, target=target_obj, path=parent_path, inodetype=Target_File.ITYPE_DIRECTORY)
             tf_obj.directory = parent_obj
             tf_obj.save()
 
@@ -548,23 +548,23 @@ class ORMWrapper(object):
                 filetarget_path = "/".join(fcpl)
 
             try:
-                filetarget_obj = Target_File.objects.get(target = target_obj, path = filetarget_path)
+                filetarget_obj = Target_File.objects.get(target=target_obj, path=filetarget_path)
             except Target_File.DoesNotExist:
                 # we might have an invalid link; no way to detect this. just set it to None
                 filetarget_obj = None
 
-            parent_obj = Target_File.objects.get(target = target_obj, path = parent_path, inodetype = Target_File.ITYPE_DIRECTORY)
+            parent_obj = Target_File.objects.get(target=target_obj, path=parent_path, inodetype=Target_File.ITYPE_DIRECTORY)
 
             tf_obj = Target_File.objects.create(
-                        target = target_obj,
-                        path = path,
-                        size = size,
-                        inodetype = Target_File.ITYPE_SYMLINK,
-                        permission = permission,
-                        owner = user,
-                        group = group,
-                        directory = parent_obj,
-                        sym_target = filetarget_obj)
+                        target=target_obj,
+                        path=path,
+                        size=size,
+                        inodetype=Target_File.ITYPE_SYMLINK,
+                        permission=permission,
+                        owner=user,
+                        group=group,
+                        directory=parent_obj,
+                        sym_target=filetarget_obj)
 
 
     def save_target_package_information(self, build_obj, target_obj, packagedict, pkgpnmap, recipes, built_package=False):
@@ -588,7 +588,7 @@ class ORMWrapper(object):
             built_recipe = recipes[pkgpnmap[p]['PN']]
 
             if built_package:
-                packagedict[p]['object'], created = Package.objects.get_or_create( build = build_obj, name = searchname )
+                packagedict[p]['object'], created = Package.objects.get_or_create( build=build_obj, name=searchname )
                 recipe = built_recipe
             else:
                 packagedict[p]['object'], created = \
@@ -602,8 +602,7 @@ class ORMWrapper(object):
                         Recipe,
                         name=built_recipe.name,
                         layer_version__build=None,
-                        layer_version__release=
-                        built_recipe.layer_version.release,
+                        layer_version__release=built_recipe.layer_version.release,
                         file_path=built_recipe.file_path,
                         version=built_recipe.version
                     )
@@ -630,9 +629,9 @@ class ORMWrapper(object):
                     packagefile_objects = []
                     for targetpath in pkgpnmap[p]['FILES_INFO']:
                         targetfilesize = pkgpnmap[p]['FILES_INFO'][targetpath]
-                        packagefile_objects.append(Package_File( package = packagedict[p]['object'],
-                            path = targetpath,
-                            size = targetfilesize))
+                        packagefile_objects.append(Package_File( package=packagedict[p]['object'],
+                            path=targetpath,
+                            size=targetfilesize))
                     if len(packagefile_objects):
                         Package_File.objects.bulk_create(packagefile_objects)
                 except KeyError as e:
@@ -643,7 +642,7 @@ class ORMWrapper(object):
             packagedict[p]['object'].save()
 
             if built_package:
-                Target_Installed_Package.objects.create(target = target_obj, package = packagedict[p]['object'])
+                Target_Installed_Package.objects.create(target=target_obj, package=packagedict[p]['object'])
 
         packagedeps_objs = []
         pattern_so = re.compile(r'.*\.so(\.\d*)?$')
@@ -665,10 +664,10 @@ class ORMWrapper(object):
                         logger.info("Toaster does not add kernel module dependencies to packages (%s,%s)", p, px)
                         continue
                     packagedeps_objs.append(Package_Dependency(
-                        package = packagedict[p]['object'],
-                        depends_on = packagedict[px]['object'],
-                        dep_type = tdeptype,
-                        target = target_obj))
+                        package=packagedict[p]['object'],
+                        depends_on=packagedict[px]['object'],
+                        dep_type=tdeptype,
+                        target=target_obj))
                 except KeyError as e:
                     logger.warning("Could not add dependency to the package %s "
                                    "because %s is an unknown package", p, px)
@@ -706,9 +705,9 @@ class ORMWrapper(object):
         assert 'message' in log_information
 
         log_object = LogMessage.objects.create(
-                        build = log_information['build'],
-                        level = log_information['level'],
-                        message = log_information['message'])
+                        build=log_information['build'],
+                        level=log_information['level'],
+                        message=log_information['message'])
 
         for v in vars(log_object):
             if v in log_information.keys():
@@ -732,8 +731,8 @@ class ORMWrapper(object):
             pname = package_info['OPKGN']
 
         if built_package:
-            bp_object, _ = Package.objects.get_or_create( build = build_obj,
-                                                         name = pname )
+            bp_object, _ = Package.objects.get_or_create( build=build_obj,
+                                                         name=pname )
             recipe = built_recipe
         else:
             bp_object, created = \
@@ -764,9 +763,9 @@ class ORMWrapper(object):
         # save any attached file information
         packagefile_objects = []
         for path in package_info['FILES_INFO']:
-            packagefile_objects.append(Package_File( package = bp_object,
-                                        path = path,
-                                        size = package_info['FILES_INFO'][path] ))
+            packagefile_objects.append(Package_File( package=bp_object,
+                                        path=path,
+                                        size=package_info['FILES_INFO'][path] ))
         if len(packagefile_objects):
             Package_File.objects.bulk_create(packagefile_objects)
 
@@ -786,28 +785,28 @@ class ORMWrapper(object):
         # save soft dependency information
         if 'RDEPENDS' in package_info and package_info['RDEPENDS']:
             for p in bb.utils.explode_deps(package_info['RDEPENDS']):
-                packagedeps_objs.append(Package_Dependency(  package = bp_object,
-                    depends_on = _po_byname(p), dep_type = Package_Dependency.TYPE_RDEPENDS))
+                packagedeps_objs.append(Package_Dependency(  package=bp_object,
+                    depends_on=_po_byname(p), dep_type=Package_Dependency.TYPE_RDEPENDS))
         if 'RPROVIDES' in package_info and package_info['RPROVIDES']:
             for p in bb.utils.explode_deps(package_info['RPROVIDES']):
-                packagedeps_objs.append(Package_Dependency(  package = bp_object,
-                    depends_on = _po_byname(p), dep_type = Package_Dependency.TYPE_RPROVIDES))
+                packagedeps_objs.append(Package_Dependency(  package=bp_object,
+                    depends_on=_po_byname(p), dep_type=Package_Dependency.TYPE_RPROVIDES))
         if 'RRECOMMENDS' in package_info and package_info['RRECOMMENDS']:
             for p in bb.utils.explode_deps(package_info['RRECOMMENDS']):
-                packagedeps_objs.append(Package_Dependency(  package = bp_object,
-                    depends_on = _po_byname(p), dep_type = Package_Dependency.TYPE_RRECOMMENDS))
+                packagedeps_objs.append(Package_Dependency(  package=bp_object,
+                    depends_on=_po_byname(p), dep_type=Package_Dependency.TYPE_RRECOMMENDS))
         if 'RSUGGESTS' in package_info and package_info['RSUGGESTS']:
             for p in bb.utils.explode_deps(package_info['RSUGGESTS']):
-                packagedeps_objs.append(Package_Dependency(  package = bp_object,
-                    depends_on = _po_byname(p), dep_type = Package_Dependency.TYPE_RSUGGESTS))
+                packagedeps_objs.append(Package_Dependency(  package=bp_object,
+                    depends_on=_po_byname(p), dep_type=Package_Dependency.TYPE_RSUGGESTS))
         if 'RREPLACES' in package_info and package_info['RREPLACES']:
             for p in bb.utils.explode_deps(package_info['RREPLACES']):
-                packagedeps_objs.append(Package_Dependency(  package = bp_object,
-                    depends_on = _po_byname(p), dep_type = Package_Dependency.TYPE_RREPLACES))
+                packagedeps_objs.append(Package_Dependency(  package=bp_object,
+                    depends_on=_po_byname(p), dep_type=Package_Dependency.TYPE_RREPLACES))
         if 'RCONFLICTS' in package_info and package_info['RCONFLICTS']:
             for p in bb.utils.explode_deps(package_info['RCONFLICTS']):
-                packagedeps_objs.append(Package_Dependency(  package = bp_object,
-                    depends_on = _po_byname(p), dep_type = Package_Dependency.TYPE_RCONFLICTS))
+                packagedeps_objs.append(Package_Dependency(  package=bp_object,
+                    depends_on=_po_byname(p), dep_type=Package_Dependency.TYPE_RCONFLICTS))
 
         if len(packagedeps_objs) > 0:
             Package_Dependency.objects.bulk_create(packagedeps_objs)
@@ -834,18 +833,18 @@ class ORMWrapper(object):
                 value = vardump[k]['v']
                 if value is None:
                     value = ''
-                variable_obj = Variable.objects.create( build = build_obj,
-                    variable_name = k,
-                    variable_value = value,
-                    description = desc)
+                variable_obj = Variable.objects.create( build=build_obj,
+                    variable_name=k,
+                    variable_value=value,
+                    description=desc)
 
                 varhist_objects = []
                 for vh in vardump[k]['history']:
                     if not 'documentation.conf' in vh['file']:
-                        varhist_objects.append(VariableHistory( variable = variable_obj,
-                                file_name = vh['file'],
-                                line_number = vh['line'],
-                                operation = vh['op']))
+                        varhist_objects.append(VariableHistory( variable=variable_obj,
+                                file_name=vh['file'],
+                                line_number=vh['line'],
+                                operation=vh['op']))
                 if len(varhist_objects):
                     VariableHistory.objects.bulk_create(varhist_objects)
 
@@ -886,7 +885,7 @@ class BuildInfoHelper(object):
     # pylint: disable=bad-continuation
     # we do not follow the python conventions for continuation indentation due to long lines here
 
-    def __init__(self, server, has_build_history = False, brbe = None):
+    def __init__(self, server, has_build_history=False, brbe=None):
         self.internal_state = {}
         self.internal_state['taskdata'] = {}
         self.internal_state['targets'] = []
@@ -1033,7 +1032,7 @@ class BuildInfoHelper(object):
 
         #mockup the new layer
         unknown_layer, _ = Layer.objects.get_or_create(name="Unidentified layer", layer_index_url="")
-        unknown_layer_version_obj, _ = Layer_Version.objects.get_or_create(layer = unknown_layer, build = self.internal_state['build'])
+        unknown_layer_version_obj, _ = Layer_Version.objects.get_or_create(layer=unknown_layer, build=self.internal_state['build'])
 
         # append it so we don't run into this error again and again
         self.orm_wrapper.layer_version_objects.append(unknown_layer_version_obj)
@@ -1147,10 +1146,10 @@ class BuildInfoHelper(object):
 
         if self.brbe is not None:
             _, be_id = self.brbe.split(":")
-            be = BuildEnvironment.objects.get(pk = be_id)
+            be = BuildEnvironment.objects.get(pk=be_id)
             path_prefixes.append(be.builddir)
 
-        for layer in sorted(self.orm_wrapper.layer_version_objects, key = lambda x:len(x.local_path), reverse=True):
+        for layer in sorted(self.orm_wrapper.layer_version_objects, key=lambda x:len(x.local_path), reverse=True):
             path_prefixes.append(layer.local_path)
 
         # we strip the prefixes
@@ -1534,7 +1533,7 @@ class BuildInfoHelper(object):
                     dep = _save_a_task(taskdep)
                 else:
                     dep = tasks[taskdep]
-                taskdeps_objects.append(Task_Dependency( task = target, depends_on = dep ))
+                taskdeps_objects.append(Task_Dependency( task=target, depends_on=dep ))
         Task_Dependency.objects.bulk_create(taskdeps_objects)
 
         if len(errormsg) > 0:
@@ -1565,7 +1564,7 @@ class BuildInfoHelper(object):
 
         br_id, be_id = self.brbe.split(":")
 
-        br = BuildRequest.objects.get(pk = br_id)
+        br = BuildRequest.objects.get(pk=br_id)
 
         # if we're 'done' because we got cancelled update the build outcome
         if br.state == BuildRequest.REQ_CANCELLING:
@@ -1582,7 +1581,7 @@ class BuildInfoHelper(object):
             br.state = BuildRequest.REQ_FAILED
         br.save()
 
-        be = BuildEnvironment.objects.get(pk = be_id)
+        be = BuildEnvironment.objects.get(pk=be_id)
         be.lock = BuildEnvironment.LOCK_FREE
         be.save()
         signal_runbuilds()
@@ -1595,7 +1594,7 @@ class BuildInfoHelper(object):
         mockevent.lineno = LogMessage.ERROR
         self.store_log_event(mockevent)
 
-    def store_log_exception(self, text, backtrace = ""):
+    def store_log_exception(self, text, backtrace=""):
         mockevent = MockEvent()
         mockevent.levelno = -1
         mockevent.msg = text

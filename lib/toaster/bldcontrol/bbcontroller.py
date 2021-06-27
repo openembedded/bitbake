@@ -43,7 +43,7 @@ class BitbakeController(object):
     def triggerEvent(self, event):
         return self._runCommand(["triggerEvent", event])
 
-    def build(self, targets, task = None):
+    def build(self, targets, task=None):
         if task is None:
             task = "build"
         return self._runCommand(["buildTargets", targets, task])

@@ -71,7 +71,7 @@ class RecipeInfoCommon(object):
             return out_dict
 
     @classmethod
-    def getvar(cls, var, metadata, expand = True):
+    def getvar(cls, var, metadata, expand=True):
         return metadata.getVar(var, expand) or ''
 
 
@@ -331,7 +331,7 @@ class NoCache(object):
         bb_data = self.load_bbfile(virtualfn, appends, virtonly=True)
         return bb_data[virtual]
 
-    def load_bbfile(self, bbfile, appends, virtonly = False, mc=None):
+    def load_bbfile(self, bbfile, appends, virtonly=False, mc=None):
         """
         Load and parse one .bb build file
         Return the data and whether parsing resulted in the file being skipped

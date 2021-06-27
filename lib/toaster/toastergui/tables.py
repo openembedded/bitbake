@@ -72,7 +72,7 @@ class LayersTable(ToasterTable):
         self.add_filter(in_current_project_filter)
 
     def setup_queryset(self, *args, **kwargs):
-        prj = Project.objects.get(pk = kwargs['pid'])
+        prj = Project.objects.get(pk=kwargs['pid'])
         compatible_layers = prj.get_all_compatible_layer_versions()
 
         self.static_context_extra['current_layers'] = \
@@ -222,7 +222,7 @@ class MachinesTable(ToasterTable):
         self.add_filter(in_current_project_filter)
 
     def setup_queryset(self, *args, **kwargs):
-        prj = Project.objects.get(pk = kwargs['pid'])
+        prj = Project.objects.get(pk=kwargs['pid'])
         self.queryset = prj.get_all_compatible_machines()
         self.queryset = self.queryset.order_by(self.default_orderby)
 
@@ -358,7 +358,7 @@ class RecipesTable(ToasterTable):
         self.add_filter(table_filter)
 
     def setup_queryset(self, *args, **kwargs):
-        prj = Project.objects.get(pk = kwargs['pid'])
+        prj = Project.objects.get(pk=kwargs['pid'])
 
         # Project layers used by the filters
         self.project_layers = prj.get_project_layer_versions(pk=True)
@@ -496,7 +496,7 @@ class CustomImagesTable(ToasterTable):
         return context
 
     def setup_queryset(self, *args, **kwargs):
-        prj = Project.objects.get(pk = kwargs['pid'])
+        prj = Project.objects.get(pk=kwargs['pid'])
         self.queryset = CustomImageRecipe.objects.filter(project=prj)
         self.queryset = self.queryset.order_by(self.default_orderby)
 
@@ -596,7 +596,7 @@ class NewCustomImagesTable(ImageRecipesTable):
 
     def setup_queryset(self, *args, **kwargs):
         super(ImageRecipesTable, self).setup_queryset(*args, **kwargs)
-        prj = Project.objects.get(pk = kwargs['pid'])
+        prj = Project.objects.get(pk=kwargs['pid'])
         self.static_context_extra['current_layers'] = \
                 prj.get_project_layer_versions(pk=True)
 
@@ -765,7 +765,7 @@ class SelectPackagesTable(PackagesTable):
     def setup_queryset(self, *args, **kwargs):
         self.cust_recipe =\
             CustomImageRecipe.objects.get(pk=kwargs['custrecipeid'])
-        prj = Project.objects.get(pk = kwargs['pid'])
+        prj = Project.objects.get(pk=kwargs['pid'])
 
         current_packages = self.cust_recipe.get_all_packages()
 
@@ -1564,7 +1564,7 @@ class DistrosTable(ToasterTable):
         self.add_filter(in_current_project_filter)
 
     def setup_queryset(self, *args, **kwargs):
-        prj = Project.objects.get(pk = kwargs['pid'])
+        prj = Project.objects.get(pk=kwargs['pid'])
         self.queryset = prj.get_all_compatible_distros()
         self.queryset = self.queryset.order_by(self.default_orderby)
 

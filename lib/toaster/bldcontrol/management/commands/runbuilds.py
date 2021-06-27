@@ -85,9 +85,9 @@ class Command(BaseCommand):
             bec.be.save()
             # Cancel the pending build and report the exception to the UI
             log_object = LogMessage.objects.create(
-                            build = br.build,
-                            level = LogMessage.EXCEPTION,
-                            message = errmsg)
+                            build=br.build,
+                            level=LogMessage.EXCEPTION,
+                            message=errmsg)
             log_object.save()
             br.build.outcome = Build.FAILED
             br.build.save()

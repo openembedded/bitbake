@@ -146,8 +146,7 @@ class Command(BaseCommand):
         # we are just starting up. we must not have any builds in progress, or build environments taken
         for b in BuildRequest.objects.filter(state=BuildRequest.REQ_INPROGRESS):
             BRError.objects.create(req=b, errtype="toaster",
-                                   errmsg=
-                                   "Toaster found this build IN PROGRESS while Toaster started up. This is an inconsistent state, and the build was marked as failed")
+                                   errmsg="Toaster found this build IN PROGRESS while Toaster started up. This is an inconsistent state, and the build was marked as failed")
 
         BuildRequest.objects.filter(state=BuildRequest.REQ_INPROGRESS).update(state=BuildRequest.REQ_FAILED)
 

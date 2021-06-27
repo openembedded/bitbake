@@ -379,20 +379,20 @@ def getName(e):
 
 class OperationStarted(Event):
     """An operation has begun"""
-    def __init__(self, msg = "Operation Started"):
+    def __init__(self, msg="Operation Started"):
         Event.__init__(self)
         self.msg = msg
 
 class OperationCompleted(Event):
     """An operation has completed"""
-    def __init__(self, total, msg = "Operation Completed"):
+    def __init__(self, total, msg="Operation Completed"):
         Event.__init__(self)
         self.total = total
         self.msg = msg
 
 class OperationProgress(Event):
     """An operation is in progress"""
-    def __init__(self, current, total, msg = "Operation in Progress"):
+    def __init__(self, current, total, msg="Operation in Progress"):
         Event.__init__(self)
         self.current = current
         self.total = total
@@ -436,7 +436,7 @@ class RecipeParsed(RecipeEvent):
 class BuildBase(Event):
     """Base class for bitbake build events"""
 
-    def __init__(self, n, p, failures = 0):
+    def __init__(self, n, p, failures=0):
         self._name = n
         self._pkgs = p
         Event.__init__(self)
@@ -471,7 +471,7 @@ class BuildInit(BuildBase):
 
 class BuildStarted(BuildBase, OperationStarted):
     """Event when builds start"""
-    def __init__(self, n, p, failures = 0):
+    def __init__(self, n, p, failures=0):
         OperationStarted.__init__(self, "Building Started")
         BuildBase.__init__(self, n, p, failures)
 
@@ -553,7 +553,7 @@ class NoProvider(Event):
 class MultipleProviders(Event):
     """Multiple Providers"""
 
-    def  __init__(self, item, candidates, runtime = False):
+    def  __init__(self, item, candidates, runtime=False):
         Event.__init__(self)
         self._item = item
         self._candidates = candidates
@@ -802,7 +802,7 @@ class SanityCheck(Event):
     """
     Event to run sanity checks, either raise errors or generate events as return status.
     """
-    def __init__(self, generateevents = True):
+    def __init__(self, generateevents=True):
         Event.__init__(self)
         self.generateevents = generateevents
 
@@ -824,7 +824,7 @@ class NetworkTest(Event):
     """
     Event to run network connectivity tests, either raise errors or generate events as return status.
     """
-    def __init__(self, generateevents = True):
+    def __init__(self, generateevents=True):
         Event.__init__(self)
         self.generateevents = generateevents
 

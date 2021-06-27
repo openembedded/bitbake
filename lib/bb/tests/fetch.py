@@ -1367,7 +1367,7 @@ class FetchCheckStatusTest(FetcherTest):
 
         connection_cache = FetchConnectionCache()
         fetch = bb.fetch2.Fetch(self.test_wget_uris, self.d,
-                    connection_cache = connection_cache)
+                    connection_cache=connection_cache)
 
         for u in self.test_wget_uris:
             with self.subTest(url=u):
