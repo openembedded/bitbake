@@ -556,5 +556,3 @@ class Serialize(unittest.TestCase):
         self.assertEqual(d, newd)
         self.assertEqual(newd.getVar('HELLO'), 'world')
         self.assertEqual(newd.getVarFlag('HELLO', 'other'), 'planet')
-
-

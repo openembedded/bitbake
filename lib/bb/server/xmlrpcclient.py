@@ -141,6 +141,3 @@ def connectXMLRPC(remote, featureset, observer_only=False, token=None):
     except Exception as e:
         bb.warn("Could not connect to server at %s:%s (%s)" % (host, port, str(e)))
         raise e
-
-
-

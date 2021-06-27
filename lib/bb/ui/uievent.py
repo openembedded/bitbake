@@ -155,4 +155,3 @@ class UIXMLRPCServer (SimpleXMLRPCServer):
         if request is None:
             return
         SimpleXMLRPCServer.process_request(self, request, client_address)
-

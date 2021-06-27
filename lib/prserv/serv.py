@@ -367,7 +367,7 @@ def auto_start(d):
         connection.ping()
         realhost, realport = connection.getinfo()
         return str(realhost) + ":" + str(realport)
-        
+
     except Exception:
         logger.critical("PRservice %s:%d not available" % (host, port))
         raise PRServiceConfigError

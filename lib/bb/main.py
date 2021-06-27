@@ -510,4 +510,3 @@ def lockBitbake():
         raise BBMainFatal
     lockfile = topdir + "/bitbake.lock"
     return topdir, bb.utils.lockfile(lockfile, False, False)
-

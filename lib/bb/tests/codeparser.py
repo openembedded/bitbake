@@ -14,7 +14,7 @@ import bb
 logger = logging.getLogger('BitBake.TestCodeParser')
 
 # bb.data references bb.parse but can't directly import due to circular dependencies.
-# Hack around it for now :( 
+# Hack around it for now :(
 import bb.parse
 import bb.data
 
@@ -419,5 +419,3 @@ esac
     #    self.d.setVar("FOO", "foo=oe_libinstall; eval $foo")
     #    self.d.setVarFlag("FOO", "vardeps", "oe_*")
     #    self.assertEquals(deps, set(["oe_libinstall"]))
-
-

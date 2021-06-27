@@ -359,4 +359,3 @@ def activate_synchronous_off(sender, connection, **kwargs):
 
 connection_created.connect(activate_synchronous_off)
 #
-

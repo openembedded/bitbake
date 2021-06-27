@@ -184,9 +184,9 @@ class LayerIndex():
         '''Load the layerindex.
 
            indexURI - An index to load.  (Use multiple calls to load multiple indexes)
-           
+
            reload - If reload is True, then any previously loaded indexes will be forgotten.
-           
+
            load - List of elements to load.  Default loads all items.
                   Note: plugs may ignore this.
 

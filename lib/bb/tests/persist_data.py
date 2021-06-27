@@ -127,4 +127,3 @@ class PersistDataTest(unittest.TestCase):
         for t in threads:
             t.join()
         self._validate_stress()
-

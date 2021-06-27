@@ -205,7 +205,7 @@ def feeder(lineno, s, fn, root, statements, eof=False):
 
     # Skip empty lines
     if s == '':
-        return   
+        return
 
     # Skip comments
     if s[0] == '#':

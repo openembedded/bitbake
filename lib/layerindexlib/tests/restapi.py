@@ -169,4 +169,3 @@ class LayerIndexWebRestApiTest(LayersTest):
 
         for collection, result in tests:
             _check(collection, result)
-

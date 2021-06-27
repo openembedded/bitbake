@@ -159,7 +159,7 @@ python () {
     #
     # Test based upon a real world data corruption issue. One
     # data store changing a variable poked through into a different data
-    # store. This test case replicates that issue where the value 'B' would 
+    # store. This test case replicates that issue where the value 'B' would
     # become unset/disappear.
     #
     def test_parse_classextend_contamination(self):
@@ -193,4 +193,3 @@ deltask ${EMPTYVAR}
         self.assertTrue("addtask contained multiple 'after' keywords" in stdout)
         self.assertTrue('addtask ignored: " do_patch"' in stdout)
         #self.assertTrue('dependent task do_foo for do_patch does not exist' in stdout)
-

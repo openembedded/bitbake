@@ -75,4 +75,3 @@ class GitANNEX(Git):
         if annex:
             runfetchcmd("%s annex get" % (ud.basecmd), d, workdir=ud.destdir)
             runfetchcmd("chmod u+w -R %s/.git/annex" % (ud.destdir), d, quiet=True, workdir=ud.destdir)
-

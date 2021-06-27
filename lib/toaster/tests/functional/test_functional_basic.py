@@ -226,6 +226,3 @@ class FuntionalTestBasic(SeleniumFunctionalTestCase):
             self.assertTrue(re.search("Select the image recipe you want to customise", self.driver.find_element_by_xpath("//div[@class='col-md-12']/h2").text), 'The new custom image tab is not loading correctly')
         except:
             self.fail(msg='New custom image tab not loading properly')
-
-
-

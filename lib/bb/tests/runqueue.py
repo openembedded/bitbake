@@ -364,5 +364,3 @@ class RunQueueTests(unittest.TestCase):
         # Wait for the hashserve socket to disappear else we'll see races with the tempdir cleanup
         while os.path.exists(tempdir + "/hashserve.sock"):
             time.sleep(0.5)
-
-

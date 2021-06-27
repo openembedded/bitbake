@@ -268,4 +268,3 @@ class Perforce(FetchMethod):
 
     def _build_revision(self, ud, d):
         return ud.revision
-

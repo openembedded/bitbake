@@ -35,7 +35,7 @@ class Hg(FetchMethod):
         """
         Don't require checksums for local archives created from
         repository checkouts.
-        """ 
+        """
         return False
 
     def urldata_init(self, ud, d):

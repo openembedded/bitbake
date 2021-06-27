@@ -225,4 +225,3 @@ def deprecate_import(current, modulename, fromlist, renames=None):
             newname = objname
 
         setattr(sys.modules[current], newname, newobj)
-

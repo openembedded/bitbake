@@ -57,4 +57,3 @@ class Command(BaseCommand):
                 except OperationalError as e:
                     # execute migrations
                     need_bldcontrol_migration = True
-

@@ -6,7 +6,7 @@
 # RecipeInfo or simply use those already defined RecipeInfo.
 # In the following patch, this newly defined new extra RecipeInfo
 # will be dynamically loaded and used for loading/saving the extra
-# cache fields  
+# cache fields
 
 # Copyright (C) 2011, Intel Corporation. All rights reserved.
 
@@ -21,8 +21,8 @@ class HobRecipeInfo(RecipeInfoCommon):
 
     classname = "HobRecipeInfo"
     # please override this member with the correct data cache file
-    # such as (bb_cache.dat, bb_extracache_hob.dat) 
-    cachefile = "bb_extracache_" + classname + ".dat"        
+    # such as (bb_cache.dat, bb_extracache_hob.dat)
+    cachefile = "bb_extracache_" + classname + ".dat"
 
     # override this member with the list of extra cache fields
     # that this class will provide

@@ -579,4 +579,3 @@ class Command(BaseCommand):
             print("|Default_image=%s|Project_id=%d" % (self.vars['DEFAULT_IMAGE'], project.id))
         else:
             print("|Project_id=%d" % (project.id))
-

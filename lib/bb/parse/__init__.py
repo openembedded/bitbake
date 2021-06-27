@@ -104,7 +104,7 @@ def check_dependency(d, f):
     s = (f, cached_mtime_noerror(f))
     deps = (d.getVar('__depends', False) or [])
     return s in deps
-   
+
 
 def supports(fn, data):
     """Returns true if we have a handler for this file, false otherwise"""

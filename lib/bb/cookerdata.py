@@ -441,4 +441,3 @@ class CookerDataBuilder(object):
         data.setVar('BBINCLUDED', bb.parse.get_file_depends(data))
 
         return data
-

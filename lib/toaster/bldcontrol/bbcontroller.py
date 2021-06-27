@@ -125,4 +125,3 @@ class ShellCmdException(Exception):
 
 class BuildSetupException(Exception):
     pass
-
