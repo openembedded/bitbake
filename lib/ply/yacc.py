@@ -140,12 +140,14 @@ class NullLogger(object):
         return self
         
 # Exception raised for yacc-related errors
-class YaccError(Exception):   pass
+class YaccError(Exception):
+    pass
 
 # Format the result message that the parser produces when running in debug mode.
 def format_result(r):
     repr_str = repr(r)
-    if '\n' in repr_str: repr_str = repr(repr_str)
+    if '\n' in repr_str:
+        repr_str = repr(repr_str)
     if len(repr_str) > resultlimit:
         repr_str = repr_str[:resultlimit]+" ..."
     result = "<%s @ 0x%x> (%s)" % (type(r).__name__,id(r),repr_str)
@@ -155,7 +157,8 @@ def format_result(r):
 # Format stack entries when the parser is running in debug mode
 def format_stack_entry(r):
     repr_str = repr(r)
-    if '\n' in repr_str: repr_str = repr(repr_str)
+    if '\n' in repr_str:
+        repr_str = repr(repr_str)
     if len(repr_str) < 16:
         return repr_str
     else:
@@ -200,8 +203,10 @@ class YaccProduction:
     def __getitem__(self,n):
         if isinstance(n,slice):
             return [self[i] for i in range(*(n.indices(len(self.slice))))]
-        if n >= 0: return self.slice[n].value
-        else: return self.stack[n].value
+        if n >= 0:
+            return self.slice[n].value
+        else:
+            return self.stack[n].value
 
     def __setitem__(self,n,v):
         self.slice[n].value = v
@@ -375,7 +380,8 @@ class LRParser:
                     lookahead = None
 
                     # Decrease error count on successful shift
-                    if errorcount: errorcount -=1
+                    if errorcount:
+                        errorcount -=1
                     continue
 
                 if t < 0:
@@ -533,8 +539,10 @@ class LRParser:
                             continue
                     else:
                         if errtoken:
-                            if hasattr(errtoken,"lineno"): lineno = lookahead.lineno
-                            else: lineno = 0
+                            if hasattr(errtoken,"lineno"):
+                                lineno = lookahead.lineno
+                            else:
+                                lineno = 0
                             if lineno:
                                 sys.stderr.write("yacc: Syntax error at line %d, token=%s\n" % (lineno, errtoken.type))
                             else:
@@ -672,7 +680,8 @@ class LRParser:
                     lookahead = None
 
                     # Decrease error count on successful shift
-                    if errorcount: errorcount -=1
+                    if errorcount:
+                        errorcount -=1
                     continue
 
                 if t < 0:
@@ -806,8 +815,10 @@ class LRParser:
                             continue
                     else:
                         if errtoken:
-                            if hasattr(errtoken,"lineno"): lineno = lookahead.lineno
-                            else: lineno = 0
+                            if hasattr(errtoken,"lineno"):
+                                lineno = lookahead.lineno
+                            else:
+                                lineno = 0
                             if lineno:
                                 sys.stderr.write("yacc: Syntax error at line %d, token=%s\n" % (lineno, errtoken.type))
                             else:
@@ -944,7 +955,8 @@ class LRParser:
                     lookahead = None
 
                     # Decrease error count on successful shift
-                    if errorcount: errorcount -=1
+                    if errorcount:
+                        errorcount -=1
                     continue
 
                 if t < 0:
@@ -1061,8 +1073,10 @@ class LRParser:
                             continue
                     else:
                         if errtoken:
-                            if hasattr(errtoken,"lineno"): lineno = lookahead.lineno
-                            else: lineno = 0
+                            if hasattr(errtoken,"lineno"):
+                                lineno = lookahead.lineno
+                            else:
+                                lineno = 0
                             if lineno:
                                 sys.stderr.write("yacc: Syntax error at line %d, token=%s\n" % (lineno, errtoken.type))
                             else:
@@ -1203,7 +1217,8 @@ class Production(object):
             
     # Return the nth lr_item from the production (or None if at the end)
     def lr_item(self,n):
-        if n > len(self.prod): return None
+        if n > len(self.prod):
+            return None
         p = LRItem(self,n)
 
         # Precompute the list of productions immediately following.  Hack. Remove later
@@ -1314,7 +1329,8 @@ def rightmost_terminal(symbols, terminals):
 # This data is used for critical parts of the table generation process later.
 # -----------------------------------------------------------------------------
 
-class GrammarError(YaccError): pass
+class GrammarError(YaccError):
+    pass
 
 class Grammar(object):
     def __init__(self,terminals):
@@ -1588,7 +1604,8 @@ class Grammar(object):
     def undefined_symbols(self):
         result = []
         for p in self.Productions:
-            if not p: continue
+            if not p:
+                continue
 
             for s in p.prod:
                 if not s in self.Prodnames and not s in self.Terminals and s != 'error':
@@ -1661,7 +1678,8 @@ class Grammar(object):
                 if f == '<empty>':
                     x_produces_empty = 1
                 else:
-                    if f not in result: result.append(f)
+                    if f not in result:
+                        result.append(f)
 
             if x_produces_empty:
                 # We have to consider the next x in beta,
@@ -1760,7 +1778,8 @@ class Grammar(object):
                                 if f not in self.Follow[B]:
                                     self.Follow[B].append(f)
                                     didadd = 1
-            if not didadd: break
+            if not didadd:
+                break
         return self.Follow
 
 
@@ -1800,7 +1819,8 @@ class Grammar(object):
                         lri.lr_before = None
 
                 lastlri.lr_next = lri
-                if not lri: break
+                if not lri:
+                    break
                 lr_items.append(lri)
                 lastlri = lri
                 i += 1
@@ -1814,7 +1834,8 @@ class Grammar(object):
 # in the derived class LRGeneratedTable.
 # -----------------------------------------------------------------------------
 
-class VersionError(YaccError): pass
+class VersionError(YaccError):
+    pass
 
 class LRTable(object):
     def __init__(self):
@@ -1907,7 +1928,8 @@ def digraph(X,R,FP):
     stack = []
     F = { }
     for x in X:
-        if N[x] == 0: traverse(x,N,stack,F,X,R,FP)
+        if N[x] == 0:
+            traverse(x,N,stack,F,X,R,FP)
     return F
 
 def traverse(x,N,stack,F,X,R,FP):
@@ -1922,7 +1944,8 @@ def traverse(x,N,stack,F,X,R,FP):
              traverse(y,N,stack,F,X,R,FP)
         N[x] = min(N[x],N[y])
         for a in F.get(y,[]):
-            if a not in F[x]: F[x].append(a)
+            if a not in F[x]:
+                F[x].append(a)
     if N[x] == d:
        N[stack[-1]] = MAXINT
        F[stack[-1]] = F[x]
@@ -1932,7 +1955,8 @@ def traverse(x,N,stack,F,X,R,FP):
            F[stack[-1]] = F[x]
            element = stack.pop()
 
-class LALRError(YaccError): pass
+class LALRError(YaccError):
+    pass
 
 # -----------------------------------------------------------------------------
 #                             == LRGeneratedTable ==
@@ -1989,7 +2013,8 @@ class LRGeneratedTable(LRTable):
             didadd = 0
             for j in J:
                 for x in j.lr_after:
-                    if getattr(x,"lr0_added",0) == self._add_count: continue
+                    if getattr(x,"lr0_added",0) == self._add_count:
+                        continue
                     # Add B --> .G to J
                     J.append(x.lr_next)
                     x.lr0_added = self._add_count
@@ -2007,7 +2032,8 @@ class LRGeneratedTable(LRTable):
     def lr0_goto(self,I,x):
         # First we look for a previously cached entry
         g = self.lr_goto_cache.get((id(I),x),None)
-        if g: return g
+        if g:
+            return g
 
         # Now we generate the goto set in a way that guarantees uniqueness
         # of the result
@@ -2060,8 +2086,10 @@ class LRGeneratedTable(LRTable):
 
             for x in asyms:
                 g = self.lr0_goto(I,x)
-                if not g:  continue
-                if id(g) in self.lr0_cidhash: continue
+                if not g:
+                    continue
+                if id(g) in self.lr0_cidhash:
+                    continue
                 self.lr0_cidhash[id(g)] = len(C)
                 C.append(g)
 
@@ -2104,10 +2132,12 @@ class LRGeneratedTable(LRTable):
                     nullable[p.name] = 1
                     continue
                for t in p.prod:
-                    if not t in nullable: break
+                    if not t in nullable:
+                        break
                else:
                     nullable[p.name] = 1
-           if len(nullable) == num_nullable: break
+           if len(nullable) == num_nullable:
+               break
            num_nullable = len(nullable)
         return nullable
 
@@ -2129,7 +2159,8 @@ class LRGeneratedTable(LRTable):
                  if p.lr_index < p.len - 1:
                       t = (state,p.prod[p.lr_index+1])
                       if t[1] in self.grammar.Nonterminals:
-                            if t not in trans: trans.append(t)
+                            if t not in trans:
+                                trans.append(t)
              state = state + 1
          return trans
 
@@ -2152,7 +2183,8 @@ class LRGeneratedTable(LRTable):
            if p.lr_index < p.len - 1:
                a = p.prod[p.lr_index+1]
                if a in self.grammar.Terminals:
-                   if a not in terms: terms.append(a)
+                   if a not in terms:
+                       terms.append(a)
 
         # This extra bit is to handle the start state
         if state == 0 and N == self.grammar.Productions[0].prod[0]:
@@ -2224,7 +2256,8 @@ class LRGeneratedTable(LRTable):
             lookb = []
             includes = []
             for p in C[state]:
-                if p.name != N: continue
+                if p.name != N:
+                    continue
 
                 # Okay, we have a name match.  We now follow the production all the way
                 # through the state machine until we get the . on the right hand side
@@ -2243,8 +2276,10 @@ class LRGeneratedTable(LRTable):
 
                            li = lr_index + 1
                            while li < p.len:
-                                if p.prod[li] in self.grammar.Terminals: break      # No forget it
-                                if not p.prod[li] in nullable: break
+                                if p.prod[li] in self.grammar.Terminals:
+                                    break      # No forget it
+                                if not p.prod[li] in nullable:
+                                    break
                                 li = li + 1
                            else:
                                 # Appears to be a relation between (j,t) and (state,N)
@@ -2255,17 +2290,21 @@ class LRGeneratedTable(LRTable):
 
                 # When we get here, j is the final state, now we have to locate the production
                 for r in C[j]:
-                     if r.name != p.name: continue
-                     if r.len != p.len:   continue
+                     if r.name != p.name:
+                         continue
+                     if r.len != p.len:
+                         continue
                      i = 0
                      # This look is comparing a production ". A B C" with "A B C ."
                      while i < r.lr_index:
-                          if r.prod[i] != p.prod[i+1]: break
+                          if r.prod[i] != p.prod[i+1]:
+                              break
                           i = i + 1
                      else:
                           lookb.append((j,r))
             for i in includes:
-                 if not i in includedict: includedict[i] = []
+                 if not i in includedict:
+                     includedict[i] = []
                  includedict[i].append((state,N))
             lookdict[(state,N)] = lookb
 
@@ -2331,7 +2370,8 @@ class LRGeneratedTable(LRTable):
                       p.lookaheads[state] = []
                  f = followset.get(trans,[])
                  for a in f:
-                      if a not in p.lookaheads[state]: p.lookaheads[state].append(a)
+                      if a not in p.lookaheads[state]:
+                          p.lookaheads[state].append(a)
 
     # -----------------------------------------------------------------------------
     # add_lalr_lookaheads()
@@ -2601,10 +2641,10 @@ del _lr_action_items
 """)
 
             else:
-                f.write("\n_lr_action = { ");
+                f.write("\n_lr_action = { ")
                 for k,v in self.lr_action.items():
                     f.write("(%r,%r):%r," % (k[0],k[1],v))
-                f.write("}\n");
+                f.write("}\n")
 
             if smaller:
                 # Factor out names to try and make smaller
@@ -2640,10 +2680,10 @@ for _k, _v in _lr_goto_items.items():
 del _lr_goto_items
 """)
             else:
-                f.write("\n_lr_goto = { ");
+                f.write("\n_lr_goto = { ")
                 for k,v in self.lr_goto.items():
                     f.write("(%r,%r):%r," % (k[0],k[1],v))
-                f.write("}\n");
+                f.write("}\n")
 
             # Write production table
             f.write("_lr_productions = [\n")
@@ -2733,7 +2773,8 @@ def parse_grammar(doc,file,line):
     for ps in pstrings:
         dline += 1
         p = ps.split()
-        if not p: continue
+        if not p:
+            continue
         try:
             if p[0] == '|':
                 # This is a continuation of a previous rule
@@ -2835,7 +2876,8 @@ class ParserReflect(object):
 
         for filename in self.files.keys():
             base,ext = os.path.splitext(filename)
-            if ext != '.py': return 1          # No idea. Assume it's okay.
+            if ext != '.py':
+                return 1          # No idea. Assume it's okay.
 
             try:
                 f = open(filename)
@@ -2963,8 +3005,10 @@ class ParserReflect(object):
     def get_pfunctions(self):
         p_functions = []
         for name, item in self.pdict.items():
-            if name[:2] != 'p_': continue
-            if name == 'p_error': continue
+            if name[:2] != 'p_':
+                continue
+            if name == 'p_error':
+                continue
             if isinstance(item,(types.FunctionType,types.MethodType)):
                 line = func_code(item).co_firstlineno
                 file = func_code(item).co_filename
@@ -3016,8 +3060,10 @@ class ParserReflect(object):
         # or functions that look like they might be grammar rules.
 
         for n,v in self.pdict.items():
-            if n[0:2] == 'p_' and isinstance(v, (types.FunctionType, types.MethodType)): continue
-            if n[0:2] == 't_': continue
+            if n[0:2] == 'p_' and isinstance(v, (types.FunctionType, types.MethodType)):
+                continue
+            if n[0:2] == 't_':
+                continue
             if n[0:2] == 'p_' and n != 'p_error':
                 self.log.warning("'%s' not defined as a function", n)
             if ((isinstance(v,types.FunctionType) and func_code(v).co_argcount == 1) or

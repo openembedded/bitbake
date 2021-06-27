@@ -97,7 +97,7 @@ are overlayed will also be listed, with a " (skipped)" suffix.
                             print('  %s' % self.get_layer_name(os.path.dirname(classdir)))
 
         if overlayed_class_found:
-            items_listed = True;
+            items_listed = True
 
         if not items_listed:
             logger.plain('No overlayed files found.')

@@ -33,7 +33,7 @@ def sectohms(time):
 
 @register.filter(name = 'get_tasks')
 def get_tasks(queryset):
-    return list(target + ':' + task if task else target \
+    return list(target + ':' + task if task else target
                     for target, task in queryset.values_list('target', 'task'))
 
 

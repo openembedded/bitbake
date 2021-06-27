@@ -996,7 +996,7 @@ class BBCooker:
 
         if msgs:
             msg = "\n".join(msgs)
-            warn_only = self.databuilder.mcdata[mc].getVar("BB_DANGLINGAPPENDS_WARNONLY", \
+            warn_only = self.databuilder.mcdata[mc].getVar("BB_DANGLINGAPPENDS_WARNONLY",
                 False) or "no"
             if warn_only.lower() in ("1", "yes", "true"):
                 bb.warn(msg)

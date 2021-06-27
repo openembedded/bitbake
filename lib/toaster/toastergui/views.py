@@ -380,8 +380,8 @@ def _modify_date_range_filter(filter_string):
     if 0 >  filter_string.find('_daterange'):
         return filter_string,''
     # normalize GUI dates to database format
-    filter_string = filter_string.replace('_daterange','').replace(':','!');
-    filter_list = filter_string.split('!');
+    filter_string = filter_string.replace('_daterange','').replace(':','!')
+    filter_list = filter_string.split('!')
     if 4 != len(filter_list):
         return filter_string
     today = timezone.localtime(timezone.now())
@@ -431,10 +431,10 @@ def builddashboard( request, build_id ):
     template = "builddashboard.html"
     if Build.objects.filter( pk=build_id ).count( ) == 0 :
         return redirect( builds )
-    build = Build.objects.get( pk = build_id );
-    layerVersionId = Layer_Version.objects.filter( build = build_id );
-    recipeCount = Recipe.objects.filter( layer_version__id__in = layerVersionId ).count( );
-    tgts = Target.objects.filter( build_id = build_id ).order_by( 'target' );
+    build = Build.objects.get( pk = build_id )
+    layerVersionId = Layer_Version.objects.filter( build = build_id )
+    recipeCount = Recipe.objects.filter( layer_version__id__in = layerVersionId ).count( )
+    tgts = Target.objects.filter( build_id = build_id ).order_by( 'target' )
 
     # set up custom target list with computed package and image data
     targets = []
@@ -469,7 +469,7 @@ def builddashboard( request, build_id ):
         for i in ti:
             ndx = i.file_name.rfind('/')
             if ndx < 0:
-                ndx = 0;
+                ndx = 0
             f = i.file_name[ndx + 1:]
             image_files.append({
                 'id': i.id,
@@ -540,14 +540,14 @@ def task( request, build_id, task_id ):
     tasks_list = Task.objects.filter( pk=task_id )
     if tasks_list.count( ) == 0:
         return redirect( builds )
-    task_object = tasks_list[ 0 ];
+    task_object = tasks_list[ 0 ]
     dependencies = sorted(
         _find_task_dep( task_object ),
         key=lambda t:'%s_%s %s'%(t.recipe.name, t.recipe.version, t.task_name))
     reverse_dependencies = sorted(
         _find_task_revdep( task_object ),
         key=lambda t:'%s_%s %s'%( t.recipe.name, t.recipe.version, t.task_name ))
-    coveredBy = '';
+    coveredBy = ''
     if ( task_object.outcome == Task.OUTCOME_COVERED ):
 #        _list = generateCoveredList( task )
         coveredBy = sorted(generateCoveredList2( _find_task_revdep( task_object ) ), key = lambda x: x.recipe.name)
@@ -824,7 +824,7 @@ def configuration(request, build_id):
 
     var_names = ('BB_VERSION', 'BUILD_SYS', 'NATIVELSBSTRING', 'TARGET_SYS',
                  'MACHINE', 'DISTRO', 'DISTRO_VERSION', 'TUNE_FEATURES', 'TARGET_FPU')
-    context = dict(Variable.objects.filter(build=build_id, variable_name__in=var_names)\
+    context = dict(Variable.objects.filter(build=build_id, variable_name__in=var_names)
                                            .values_list('variable_name', 'variable_value'))
     build = Build.objects.get(pk=build_id)
     context.update({'objectname': 'configuration',
@@ -1086,7 +1086,7 @@ def package_built_detail(request, build_id, package_id):
             ]
     }
     if paths.all().count() < 2:
-        context['disable_sort'] = True;
+        context['disable_sort'] = True
 
     response = toaster_render(request, template, context)
     _set_parameters_values(pagesize, orderby, request)

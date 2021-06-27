@@ -1626,7 +1626,7 @@ class Watch:
         s = ' '.join(['%s%s%s' % (output_format.field_name(attr),
                                   output_format.punctuation('='),
                                   output_format.field_value(getattr(self,
-                                                                    attr))) \
+                                                                    attr)))
                       for attr in self.__slots__ if not attr.startswith('_')])
 
         s = '%s%s %s %s' % (output_format.punctuation('<'),
@@ -1899,7 +1899,7 @@ class WatchManager:
                                                             auto_add,
                                                             exclude_filter)
                         if wd < 0:
-                            err = ('add_watch: cannot watch %s WD=%d, %s' % \
+                            err = ('add_watch: cannot watch %s WD=%d, %s' %
                                        (rpath, wd,
                                         self._inotify_wrapper.str_errno()))
                             if quiet:
@@ -1942,8 +1942,8 @@ class WatchManager:
             for iwd in self._wmd.items():
                 cur = iwd[1].path
                 pref = os.path.commonprefix([root, cur])
-                if root == os.sep or (len(pref) == lend and \
-                                      len(cur) > lend and \
+                if root == os.sep or (len(pref) == lend and
+                                      len(cur) > lend and
                                       cur[lend] == os.sep):
                     yield iwd[1].wd
 
@@ -1997,7 +1997,7 @@ class WatchManager:
                                                               mask)
                 if wd_ < 0:
                     ret_[awd] = False
-                    err = ('update_watch: cannot update %s WD=%d, %s' % \
+                    err = ('update_watch: cannot update %s WD=%d, %s' %
                                (apath, wd_, self._inotify_wrapper.str_errno()))
                     if quiet:
                         log.error(err)
@@ -2107,7 +2107,7 @@ class WatchManager:
             wd_ = self._inotify_wrapper.inotify_rm_watch(self._fd, awd)
             if wd_ < 0:
                 ret_[awd] = False
-                err = ('rm_watch: cannot remove WD=%d, %s' % \
+                err = ('rm_watch: cannot remove WD=%d, %s' %
                            (awd, self._inotify_wrapper.str_errno()))
                 if quiet:
                     log.error(err)

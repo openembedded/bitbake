@@ -594,7 +594,7 @@ def verify_checksum(ud, d, precomputed={}):
 
         # If strict checking enabled and neither sum defined, raise error
         if strict == "1":
-            messages.append("No checksum specified for '%s', please add at " \
+            messages.append("No checksum specified for '%s', please add at "
                             "least one to the recipe:" % ud.localpath)
             messages.extend(checksum_lines)
             logger.error("\n".join(messages))
@@ -606,7 +606,7 @@ def verify_checksum(ud, d, precomputed={}):
             return checksum_dict
 
         # Log missing sums so user can more easily add them
-        messages.append("Missing checksum for '%s', consider adding at " \
+        messages.append("Missing checksum for '%s', consider adding at "
                         "least one to the recipe:" % ud.localpath)
         messages.extend(checksum_lines)
         logger.warning("\n".join(messages))
@@ -619,17 +619,17 @@ def verify_checksum(ud, d, precomputed={}):
 
     for ci in checksum_infos:
         if ci["expected"] and ci["expected"] != ci["data"]:
-            messages.append("File: '%s' has %s checksum '%s' when '%s' was " \
+            messages.append("File: '%s' has %s checksum '%s' when '%s' was "
                             "expected" % (ud.localpath, ci["id"], ci["data"], ci["expected"]))
             bad_checksum = ci["data"]
 
     if bad_checksum:
-        messages.append("If this change is expected (e.g. you have upgraded " \
-                        "to a new version without updating the checksums) " \
+        messages.append("If this change is expected (e.g. you have upgraded "
+                        "to a new version without updating the checksums) "
                         "then you can use these lines within the recipe:")
         messages.extend(checksum_lines)
-        messages.append("Otherwise you should retry the download and/or " \
-                        "check with upstream to determine if the file has " \
+        messages.append("Otherwise you should retry the download and/or "
+                        "check with upstream to determine if the file has "
                         "become corrupted or otherwise unexpectedly modified.")
         raise ChecksumError("\n".join(messages), ud.url, bad_checksum)
 
@@ -781,7 +781,7 @@ def get_srcrev(d, method_name='sortable_revision'):
     #
     format = d.getVar('SRCREV_FORMAT')
     if not format:
-        raise FetchError("The SRCREV_FORMAT variable must be set when multiple SCMs are used.\n"\
+        raise FetchError("The SRCREV_FORMAT variable must be set when multiple SCMs are used.\n"
                          "The SCMs are:\n%s" % '\n'.join(scms))
 
     name_to_rev = {}

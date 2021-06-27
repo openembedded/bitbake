@@ -47,16 +47,16 @@ class BuildEnvironment(models.Model):
     def get_artifact(self, path):
         if self.betype == BuildEnvironment.TYPE_LOCAL:
             return open(path, "r")
-        raise NotImplementedError("FIXME: artifact download not implemented "\
-                                  "for build environment type %s" % \
+        raise NotImplementedError("FIXME: artifact download not implemented "
+                                  "for build environment type %s" %
                                   self.get_betype_display())
 
     def has_artifact(self, path):
         import os
         if self.betype == BuildEnvironment.TYPE_LOCAL:
             return os.path.exists(path)
-        raise NotImplementedError("FIXME: has artifact not implemented for "\
-                                  "build environment type %s" % \
+        raise NotImplementedError("FIXME: has artifact not implemented for "
+                                  "build environment type %s" %
                                   self.get_betype_display())
 
 # a BuildRequest is a request that the scheduler will build using a BuildEnvironment
@@ -117,8 +117,8 @@ class BuildRequest(models.Model):
         return (self.updated - self.created).total_seconds()
 
     def get_sorted_target_list(self):
-        tgts = self.brtarget_set.order_by( 'target' );
-        return( tgts );
+        tgts = self.brtarget_set.order_by( 'target' )
+        return( tgts )
 
     def get_machine(self):
         return self.brvariable_set.get(name="MACHINE").value

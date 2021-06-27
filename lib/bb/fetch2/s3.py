@@ -28,11 +28,11 @@ from bb.fetch2 import runfetchcmd
 def convertToBytes(value, unit):
     value = float(value)
     if (unit == "KiB"):
-        value = value*1024.0;
+        value = value*1024.0
     elif (unit == "MiB"):
-        value = value*1024.0*1024.0;
+        value = value*1024.0*1024.0
     elif (unit == "GiB"):
-        value = value*1024.0*1024.0*1024.0;
+        value = value*1024.0*1024.0*1024.0
     return value
 
 class S3ProgressHandler(bb.progress.LineFilterProgressHandler):

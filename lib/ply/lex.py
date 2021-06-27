@@ -321,7 +321,8 @@ class Lexer:
             # Look for a regular expression match
             for lexre,lexindexfunc in self.lexre:
                 m = lexre.match(lexdata,lexpos)
-                if not m: continue
+                if not m:
+                    continue
 
                 # Create a token for return
                 tok = LexToken()
@@ -390,7 +391,8 @@ class Lexer:
                         # Error method didn't change text position at all. This is an error.
                         raise LexError("Scanning error. Illegal character '%s'" % (lexdata[lexpos]), lexdata[lexpos:])
                     lexpos = self.lexpos
-                    if not newtok: continue
+                    if not newtok:
+                        continue
                     return newtok
 
                 self.lexpos = lexpos
@@ -484,7 +486,8 @@ def _names_to_funcs(namelist,fdict):
 # -----------------------------------------------------------------------------
 
 def _form_master_re(relist,reflags,ldict,toknames):
-    if not relist: return []
+    if not relist:
+        return []
     regex = "|".join(relist)
     try:
         lexre = re.compile(regex,re.VERBOSE | reflags)
@@ -508,7 +511,8 @@ def _form_master_re(relist,reflags,ldict,toknames):
         return [(lexre,lexindexfunc)],[regex],[lexindexnames]
     except Exception:
         m = int(len(relist)/2)
-        if m == 0: m = 1
+        if m == 0:
+            m = 1
         llist, lre, lnames = _form_master_re(relist[:m],reflags,ldict,toknames)
         rlist, rre, rnames = _form_master_re(relist[m:],reflags,ldict,toknames)
         return llist+rlist, lre+rre, lnames+rnames
@@ -526,7 +530,8 @@ def _statetoken(s,names):
     nonstate = 1
     parts = s.split("_")
     for i in range(1,len(parts)):
-         if not parts[i] in names and parts[i] != 'ANY': break
+         if not parts[i] in names and parts[i] != 'ANY':
+             break
     if i > 1:
        states = tuple(parts[1:i])
     else:
@@ -829,7 +834,8 @@ class LexerReflect(object):
     def validate_file(self,filename):
         import os.path
         base,ext = os.path.splitext(filename)
-        if ext != '.py': return         # No idea what the file is. Return OK
+        if ext != '.py':
+            return         # No idea what the file is. Return OK
 
         try:
             f = open(filename)
@@ -878,7 +884,8 @@ def lex(module=None,object=None,debug=0,optimize=0,lextab="lextab",reflags=0,now
             debuglog = PlyLogger(sys.stderr)
 
     # Get the module dictionary used for the lexer
-    if object: module = object
+    if object:
+        module = object
 
     if module:
         _items = [(k,getattr(module,k)) for k in dir(module)]
@@ -1034,7 +1041,8 @@ def runmain(lexer=None,data=None):
 
     while 1:
         tok = _token()
-        if not tok: break
+        if not tok:
+            break
         sys.stdout.write("(%s,%r,%d,%d)\n" % (tok.type, tok.value, tok.lineno,tok.lexpos))
 
 # -----------------------------------------------------------------------------

@@ -291,7 +291,7 @@ class TestBuildDashboardPage(SeleniumTestCase):
         self._get_build_dashboard(self.build3)
         selector = '[data-role="new-custom-image-trigger"]'
         self.assertFalse(self.element_exists(selector),
-            'new custom image button should not show for builds which ' \
+            'new custom image button should not show for builds which '
             'don\'t have any image recipes')
 
     def test_left_panel(self):

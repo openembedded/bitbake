@@ -36,8 +36,10 @@ else:
 
 
 def format_updatable(updatable, pbar):
-    if hasattr(updatable, 'update'): return updatable.update(pbar)
-    else: return updatable
+    if hasattr(updatable, 'update'):
+        return updatable.update(pbar)
+    else:
+        return updatable
 
 
 class Widget(AbstractWidget):
@@ -202,7 +204,8 @@ class AnimatedMarker(Widget):
         """Updates the widget to show the next marker or the first marker when
         finished"""
 
-        if pbar.finished: return self.markers[0]
+        if pbar.finished:
+            return self.markers[0]
 
         self.curmark = (self.curmark + 1) % len(self.markers)
         return self.markers[self.curmark]
@@ -257,7 +260,8 @@ class FormatLabel(Timer):
                    context[name] = value
                 else:
                    context[name] = transform(value)
-            except: pass
+            except:
+                pass
 
         return self.format_string % context
 
@@ -344,15 +348,18 @@ class BouncingBar(Bar):
 
         width -= len(left) + len(right)
 
-        if pbar.finished: return '%s%s%s' % (left, width * marker, right)
+        if pbar.finished:
+            return '%s%s%s' % (left, width * marker, right)
 
         position = int(pbar.currval % (width * 2 - 1))
-        if position > width: position = width * 2 - position
+        if position > width:
+            position = width * 2 - position
         lpad = self.fill * (position - 1)
         rpad = self.fill * (width - len(marker) - len(lpad))
 
         # Swap if we want to bounce the other way
-        if not self.fill_left: rpad, lpad = lpad, rpad
+        if not self.fill_left:
+            rpad, lpad = lpad, rpad
 
         return '%s%s%s%s%s' % (left, lpad, marker, rpad, right)
 
@@ -375,7 +382,8 @@ class BouncingSlider(Bar):
         if width < 0:
             return ''
 
-        if pbar.finished: return '%s%s%s' % (left, width * '=', right)
+        if pbar.finished:
+            return '%s%s%s' % (left, width * '=', right)
 
         self.curmark = self.curmark + 1
         position = int(self.curmark % (width * 2 - 1))

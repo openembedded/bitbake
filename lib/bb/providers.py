@@ -164,7 +164,7 @@ def findPreferredProvider(pn, cfgData, dataCache, pkg_pn = None, item = None):
                     preferred_ver = (pe, pv, pr)
                     break
             if preferred_file:
-                break;
+                break
         if preferred_r:
             pv_str = '%s-%s' % (preferred_v, preferred_r)
         else:

@@ -27,7 +27,7 @@ class SeleniumFunctionalTestCase(SeleniumTestCaseBase):
         # So that the buildinfo helper uses the test database'
         if os.environ.get('DJANGO_SETTINGS_MODULE', '') != \
             'toastermain.settings_test':
-            raise RuntimeError("Please initialise django with the tests settings:  " \
+            raise RuntimeError("Please initialise django with the tests settings:  "
                 "DJANGO_SETTINGS_MODULE='toastermain.settings_test'")
 
         load_build_environment()

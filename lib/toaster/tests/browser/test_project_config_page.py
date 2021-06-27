@@ -38,8 +38,8 @@ class TestProjectConfigsPage(SeleniumTestCase):
         imagefs_type = "foo_bar"
 
         ProjectVariable.objects.get_or_create(project = self.project1, name = "IMAGE_FSTYPES", value = "abcd ")
-        url = reverse('projectconf', args=(self.project1.id,));
-        self.get(url);
+        url = reverse('projectconf', args=(self.project1.id,))
+        self.get(url)
 
         self.click('#change-image_fstypes-icon')
 
@@ -59,8 +59,8 @@ class TestProjectConfigsPage(SeleniumTestCase):
         imagefs_type = "btrfs"
 
         ProjectVariable.objects.get_or_create(project = self.project1, name = "IMAGE_FSTYPES", value = "abcd ")
-        url = reverse('projectconf', args=(self.project1.id,));
-        self.get(url);
+        url = reverse('projectconf', args=(self.project1.id,))
+        self.get(url)
 
         self.click('#change-image_fstypes-icon')
 
@@ -80,8 +80,8 @@ class TestProjectConfigsPage(SeleniumTestCase):
         """
 
         ProjectVariable.objects.get_or_create(project = self.project1, name = "IMAGE_FSTYPES", value = "abcd ")
-        url = reverse('projectconf', args=(self.project1.id,));
-        self.get(url);
+        url = reverse('projectconf', args=(self.project1.id,))
+        self.get(url)
 
         self.click('#change-image_fstypes-icon')
 

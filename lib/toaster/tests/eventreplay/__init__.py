@@ -58,7 +58,7 @@ class CoreImageMinimalEventReplay(EventReplay):
         self._replay('core-image-minimal.events')
 
         # test installed packages
-        packages = sorted(Target_Installed_Package.objects.\
+        packages = sorted(Target_Installed_Package.objects.
                           values_list('package__name', flat=True))
         self.assertEqual(packages, ['base-files', 'base-passwd', 'busybox',
                                     'busybox-hwclock', 'busybox-syslog',

@@ -24,7 +24,7 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('addrport', nargs='?', default=DEFAULT_ADDRPORT,
-                            help='ipaddr:port to check, %s by default' % \
+                            help='ipaddr:port to check, %s by default' %
                                  DEFAULT_ADDRPORT)
 
     def handle(self, *args, **options):
@@ -43,7 +43,7 @@ class Command(BaseCommand):
             sock.bind(tuple(splitted))
         except (socket.error, OverflowError) as err:
             errors = {
-                errno.EACCES: 'You don\'t have permission to access port %s' \
+                errno.EACCES: 'You don\'t have permission to access port %s'
                               % splitted[1],
                 errno.EADDRINUSE: 'Port %s is already in use' % splitted[1],
                 errno.EADDRNOTAVAIL: 'IP address can\'t be assigned to',
