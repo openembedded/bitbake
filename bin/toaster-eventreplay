@@ -72,7 +72,7 @@ class EventPlayer:
                     if not key.startswith("__"):
                         dump[key] = {
                             'v': val['v'],
-                            'history' : val['history'],
+                            'history': val['history'],
                         }
                         for flag in flaglist:
                             dump[key][flag] = val[flag]

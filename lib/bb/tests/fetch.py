@@ -23,7 +23,7 @@ def skipIfNoNetwork():
 
 class URITest(unittest.TestCase):
     test_uris = {
-        "http://www.google.com/index.html" : {
+        "http://www.google.com/index.html": {
             'uri': 'http://www.google.com/index.html',
             'scheme': 'http',
             'hostname': 'www.google.com',
@@ -37,7 +37,7 @@ class URITest(unittest.TestCase):
             'query': {},
             'relative': False
         },
-        "http://www.google.com/index.html;param1=value1" : {
+        "http://www.google.com/index.html;param1=value1": {
             'uri': 'http://www.google.com/index.html;param1=value1',
             'scheme': 'http',
             'hostname': 'www.google.com',
@@ -53,7 +53,7 @@ class URITest(unittest.TestCase):
             'query': {},
             'relative': False
         },
-        "http://www.example.org/index.html?param1=value1" : {
+        "http://www.example.org/index.html?param1=value1": {
             'uri': 'http://www.example.org/index.html?param1=value1',
             'scheme': 'http',
             'hostname': 'www.example.org',
@@ -69,7 +69,7 @@ class URITest(unittest.TestCase):
             },
             'relative': False
         },
-        "http://www.example.org/index.html?qparam1=qvalue1;param2=value2" : {
+        "http://www.example.org/index.html?qparam1=qvalue1;param2=value2": {
             'uri': 'http://www.example.org/index.html?qparam1=qvalue1;param2=value2',
             'scheme': 'http',
             'hostname': 'www.example.org',
@@ -88,7 +88,7 @@ class URITest(unittest.TestCase):
             'relative': False
         },
         # Check that trailing semicolons are handled correctly
-        "http://www.example.org/index.html?qparam1=qvalue1;param2=value2;" : {
+        "http://www.example.org/index.html?qparam1=qvalue1;param2=value2;": {
             'uri': 'http://www.example.org/index.html?qparam1=qvalue1;param2=value2',
             'scheme': 'http',
             'hostname': 'www.example.org',
@@ -106,7 +106,7 @@ class URITest(unittest.TestCase):
             },
             'relative': False
         },
-        "http://www.example.com:8080/index.html" : {
+        "http://www.example.com:8080/index.html": {
             'uri': 'http://www.example.com:8080/index.html',
             'scheme': 'http',
             'hostname': 'www.example.com',
@@ -120,7 +120,7 @@ class URITest(unittest.TestCase):
             'query': {},
             'relative': False
         },
-        "cvs://anoncvs@cvs.handhelds.org/cvs;module=familiar/dist/ipkg" : {
+        "cvs://anoncvs@cvs.handhelds.org/cvs;module=familiar/dist/ipkg": {
             'uri': 'cvs://anoncvs@cvs.handhelds.org/cvs;module=familiar/dist/ipkg',
             'scheme': 'cvs',
             'hostname': 'cvs.handhelds.org',
@@ -268,7 +268,7 @@ class URITest(unittest.TestCase):
             'userinfo': '',
             'username': '',
             'password': '',
-            'params': {"someparam" : "1"},
+            'params': {"someparam": "1"},
             'query': {},
             'relative': False
         },
@@ -283,7 +283,7 @@ class URITest(unittest.TestCase):
             'userinfo': '',
             'username': '',
             'password': '',
-            'params': {"someparam" : "1"},
+            'params': {"someparam": "1"},
             'query': {},
             'relative': True
         }
@@ -396,40 +396,23 @@ class FetcherTest(unittest.TestCase):
 class MirrorUriTest(FetcherTest):
 
     replaceuris = {
-        ("git://git.invalid.infradead.org/mtd-utils.git;tag=1234567890123456789012345678901234567890", "git://.*/.*", "http://somewhere.org/somedir/") 
-            : "http://somewhere.org/somedir/git2_git.invalid.infradead.org.mtd-utils.git.tar.gz",
-        ("git://git.invalid.infradead.org/mtd-utils.git;tag=1234567890123456789012345678901234567890", "git://.*/([^/]+/)*([^/]*)", "git://somewhere.org/somedir/\\2;protocol=http") 
-            : "git://somewhere.org/somedir/mtd-utils.git;tag=1234567890123456789012345678901234567890;protocol=http", 
-        ("git://git.invalid.infradead.org/foo/mtd-utils.git;tag=1234567890123456789012345678901234567890", "git://.*/([^/]+/)*([^/]*)", "git://somewhere.org/somedir/\\2;protocol=http") 
-            : "git://somewhere.org/somedir/mtd-utils.git;tag=1234567890123456789012345678901234567890;protocol=http", 
-        ("git://git.invalid.infradead.org/foo/mtd-utils.git;tag=1234567890123456789012345678901234567890", "git://.*/([^/]+/)*([^/]*)", "git://somewhere.org/\\2;protocol=http") 
-            : "git://somewhere.org/mtd-utils.git;tag=1234567890123456789012345678901234567890;protocol=http", 
-        ("git://someserver.org/bitbake;tag=1234567890123456789012345678901234567890", "git://someserver.org/bitbake", "git://git.openembedded.org/bitbake")
-            : "git://git.openembedded.org/bitbake;tag=1234567890123456789012345678901234567890",
-        ("file://sstate-xyz.tgz", "file://.*", "file:///somewhere/1234/sstate-cache") 
-            : "file:///somewhere/1234/sstate-cache/sstate-xyz.tgz",
-        ("file://sstate-xyz.tgz", "file://.*", "file:///somewhere/1234/sstate-cache/") 
-            : "file:///somewhere/1234/sstate-cache/sstate-xyz.tgz",
-        ("http://somewhere.org/somedir1/somedir2/somefile_1.2.3.tar.gz", "http://.*/.*", "http://somewhere2.org/somedir3") 
-            : "http://somewhere2.org/somedir3/somefile_1.2.3.tar.gz",
-        ("http://somewhere.org/somedir1/somefile_1.2.3.tar.gz", "http://somewhere.org/somedir1/somefile_1.2.3.tar.gz", "http://somewhere2.org/somedir3/somefile_1.2.3.tar.gz") 
-            : "http://somewhere2.org/somedir3/somefile_1.2.3.tar.gz",
-        ("http://www.apache.org/dist/subversion/subversion-1.7.1.tar.bz2", "http://www.apache.org/dist", "http://archive.apache.org/dist")
-            : "http://archive.apache.org/dist/subversion/subversion-1.7.1.tar.bz2",
-        ("http://www.apache.org/dist/subversion/subversion-1.7.1.tar.bz2", "http://.*/.*", "file:///somepath/downloads/")
-            : "file:///somepath/downloads/subversion-1.7.1.tar.bz2",
-        ("git://git.invalid.infradead.org/mtd-utils.git;tag=1234567890123456789012345678901234567890", "git://.*/.*", "git://somewhere.org/somedir/BASENAME;protocol=http") 
-            : "git://somewhere.org/somedir/mtd-utils.git;tag=1234567890123456789012345678901234567890;protocol=http", 
-        ("git://git.invalid.infradead.org/foo/mtd-utils.git;tag=1234567890123456789012345678901234567890", "git://.*/.*", "git://somewhere.org/somedir/BASENAME;protocol=http") 
-            : "git://somewhere.org/somedir/mtd-utils.git;tag=1234567890123456789012345678901234567890;protocol=http", 
-        ("git://git.invalid.infradead.org/foo/mtd-utils.git;tag=1234567890123456789012345678901234567890", "git://.*/.*", "git://somewhere.org/somedir/MIRRORNAME;protocol=http") 
-            : "git://somewhere.org/somedir/git.invalid.infradead.org.foo.mtd-utils.git;tag=1234567890123456789012345678901234567890;protocol=http", 
-        ("http://somewhere.org/somedir1/somedir2/somefile_1.2.3.tar.gz", "http://.*/.*", "http://somewhere2.org")
-            : "http://somewhere2.org/somefile_1.2.3.tar.gz",
-        ("http://somewhere.org/somedir1/somedir2/somefile_1.2.3.tar.gz", "http://.*/.*", "http://somewhere2.org/")
-            : "http://somewhere2.org/somefile_1.2.3.tar.gz",
-        ("git://someserver.org/bitbake;tag=1234567890123456789012345678901234567890;branch=master", "git://someserver.org/bitbake;branch=master", "git://git.openembedded.org/bitbake;protocol=http")
-            : "git://git.openembedded.org/bitbake;tag=1234567890123456789012345678901234567890;branch=master;protocol=http",
+        ("git://git.invalid.infradead.org/mtd-utils.git;tag=1234567890123456789012345678901234567890", "git://.*/.*", "http://somewhere.org/somedir/"): "http://somewhere.org/somedir/git2_git.invalid.infradead.org.mtd-utils.git.tar.gz",
+        ("git://git.invalid.infradead.org/mtd-utils.git;tag=1234567890123456789012345678901234567890", "git://.*/([^/]+/)*([^/]*)", "git://somewhere.org/somedir/\\2;protocol=http"): "git://somewhere.org/somedir/mtd-utils.git;tag=1234567890123456789012345678901234567890;protocol=http", 
+        ("git://git.invalid.infradead.org/foo/mtd-utils.git;tag=1234567890123456789012345678901234567890", "git://.*/([^/]+/)*([^/]*)", "git://somewhere.org/somedir/\\2;protocol=http"): "git://somewhere.org/somedir/mtd-utils.git;tag=1234567890123456789012345678901234567890;protocol=http", 
+        ("git://git.invalid.infradead.org/foo/mtd-utils.git;tag=1234567890123456789012345678901234567890", "git://.*/([^/]+/)*([^/]*)", "git://somewhere.org/\\2;protocol=http"): "git://somewhere.org/mtd-utils.git;tag=1234567890123456789012345678901234567890;protocol=http", 
+        ("git://someserver.org/bitbake;tag=1234567890123456789012345678901234567890", "git://someserver.org/bitbake", "git://git.openembedded.org/bitbake"): "git://git.openembedded.org/bitbake;tag=1234567890123456789012345678901234567890",
+        ("file://sstate-xyz.tgz", "file://.*", "file:///somewhere/1234/sstate-cache"): "file:///somewhere/1234/sstate-cache/sstate-xyz.tgz",
+        ("file://sstate-xyz.tgz", "file://.*", "file:///somewhere/1234/sstate-cache/"): "file:///somewhere/1234/sstate-cache/sstate-xyz.tgz",
+        ("http://somewhere.org/somedir1/somedir2/somefile_1.2.3.tar.gz", "http://.*/.*", "http://somewhere2.org/somedir3"): "http://somewhere2.org/somedir3/somefile_1.2.3.tar.gz",
+        ("http://somewhere.org/somedir1/somefile_1.2.3.tar.gz", "http://somewhere.org/somedir1/somefile_1.2.3.tar.gz", "http://somewhere2.org/somedir3/somefile_1.2.3.tar.gz"): "http://somewhere2.org/somedir3/somefile_1.2.3.tar.gz",
+        ("http://www.apache.org/dist/subversion/subversion-1.7.1.tar.bz2", "http://www.apache.org/dist", "http://archive.apache.org/dist"): "http://archive.apache.org/dist/subversion/subversion-1.7.1.tar.bz2",
+        ("http://www.apache.org/dist/subversion/subversion-1.7.1.tar.bz2", "http://.*/.*", "file:///somepath/downloads/"): "file:///somepath/downloads/subversion-1.7.1.tar.bz2",
+        ("git://git.invalid.infradead.org/mtd-utils.git;tag=1234567890123456789012345678901234567890", "git://.*/.*", "git://somewhere.org/somedir/BASENAME;protocol=http"): "git://somewhere.org/somedir/mtd-utils.git;tag=1234567890123456789012345678901234567890;protocol=http", 
+        ("git://git.invalid.infradead.org/foo/mtd-utils.git;tag=1234567890123456789012345678901234567890", "git://.*/.*", "git://somewhere.org/somedir/BASENAME;protocol=http"): "git://somewhere.org/somedir/mtd-utils.git;tag=1234567890123456789012345678901234567890;protocol=http", 
+        ("git://git.invalid.infradead.org/foo/mtd-utils.git;tag=1234567890123456789012345678901234567890", "git://.*/.*", "git://somewhere.org/somedir/MIRRORNAME;protocol=http"): "git://somewhere.org/somedir/git.invalid.infradead.org.foo.mtd-utils.git;tag=1234567890123456789012345678901234567890;protocol=http", 
+        ("http://somewhere.org/somedir1/somedir2/somefile_1.2.3.tar.gz", "http://.*/.*", "http://somewhere2.org"): "http://somewhere2.org/somefile_1.2.3.tar.gz",
+        ("http://somewhere.org/somedir1/somedir2/somefile_1.2.3.tar.gz", "http://.*/.*", "http://somewhere2.org/"): "http://somewhere2.org/somefile_1.2.3.tar.gz",
+        ("git://someserver.org/bitbake;tag=1234567890123456789012345678901234567890;branch=master", "git://someserver.org/bitbake;branch=master", "git://git.openembedded.org/bitbake;protocol=http"): "git://git.openembedded.org/bitbake;tag=1234567890123456789012345678901234567890;branch=master;protocol=http",
 
         #Renaming files doesn't work
         #("http://somewhere.org/somedir1/somefile_1.2.3.tar.gz", "http://somewhere.org/somedir1/somefile_1.2.3.tar.gz", "http://somewhere2.org/somedir3/somefile_2.3.4.tar.gz") : "http://somewhere2.org/somedir3/somefile_2.3.4.tar.gz"
@@ -1194,10 +1177,10 @@ class TrustedNetworksTest(FetcherTest):
 class URLHandle(unittest.TestCase):
 
     datatable = {
-       "http://www.google.com/index.html" : ('http', 'www.google.com', '/index.html', '', '', {}),
-       "cvs://anoncvs@cvs.handhelds.org/cvs;module=familiar/dist/ipkg" : ('cvs', 'cvs.handhelds.org', '/cvs', 'anoncvs', '', {'module': 'familiar/dist/ipkg'}),
-       "cvs://anoncvs:anonymous@cvs.handhelds.org/cvs;tag=V0-99-81;module=familiar/dist/ipkg" : ('cvs', 'cvs.handhelds.org', '/cvs', 'anoncvs', 'anonymous', collections.OrderedDict([('tag', 'V0-99-81'), ('module', 'familiar/dist/ipkg')])),
-       "git://git.openembedded.org/bitbake;branch=@foo" : ('git', 'git.openembedded.org', '/bitbake', '', '', {'branch': '@foo'}),
+       "http://www.google.com/index.html": ('http', 'www.google.com', '/index.html', '', '', {}),
+       "cvs://anoncvs@cvs.handhelds.org/cvs;module=familiar/dist/ipkg": ('cvs', 'cvs.handhelds.org', '/cvs', 'anoncvs', '', {'module': 'familiar/dist/ipkg'}),
+       "cvs://anoncvs:anonymous@cvs.handhelds.org/cvs;tag=V0-99-81;module=familiar/dist/ipkg": ('cvs', 'cvs.handhelds.org', '/cvs', 'anoncvs', 'anonymous', collections.OrderedDict([('tag', 'V0-99-81'), ('module', 'familiar/dist/ipkg')])),
+       "git://git.openembedded.org/bitbake;branch=@foo": ('git', 'git.openembedded.org', '/bitbake', '', '', {'branch': '@foo'}),
        "file://somelocation;someparam=1": ('file', '', 'somelocation', '', '', {'someparam': '1'}),
     }
     # we require a pathname to encodeurl but users can still pass such urls to 
@@ -1221,37 +1204,26 @@ class FetchLatestVersionTest(FetcherTest):
 
     test_git_uris = {
         # version pattern "X.Y.Z"
-        ("mx-1.0", "git://github.com/clutter-project/mx.git;branch=mx-1.4", "9b1db6b8060bd00b121a692f942404a24ae2960f", "")
-            : "1.99.4",
+        ("mx-1.0", "git://github.com/clutter-project/mx.git;branch=mx-1.4", "9b1db6b8060bd00b121a692f942404a24ae2960f", ""): "1.99.4",
         # version pattern "vX.Y"
         # mirror of git.infradead.org since network issues interfered with testing
-        ("mtd-utils", "git://git.yoctoproject.org/mtd-utils.git", "ca39eb1d98e736109c64ff9c1aa2a6ecca222d8f", "")
-            : "1.5.0",
+        ("mtd-utils", "git://git.yoctoproject.org/mtd-utils.git", "ca39eb1d98e736109c64ff9c1aa2a6ecca222d8f", ""): "1.5.0",
         # version pattern "pkg_name-X.Y"
         # mirror of git://anongit.freedesktop.org/git/xorg/proto/presentproto since network issues interfered with testing
-        ("presentproto", "git://git.yoctoproject.org/bbfetchtests-presentproto", "24f3a56e541b0a9e6c6ee76081f441221a120ef9", "")
-            : "1.0",
+        ("presentproto", "git://git.yoctoproject.org/bbfetchtests-presentproto", "24f3a56e541b0a9e6c6ee76081f441221a120ef9", ""): "1.0",
         # version pattern "pkg_name-vX.Y.Z"
-        ("dtc", "git://git.qemu.org/dtc.git", "65cc4d2748a2c2e6f27f1cf39e07a5dbabd80ebf", "")
-            : "1.4.0",
+        ("dtc", "git://git.qemu.org/dtc.git", "65cc4d2748a2c2e6f27f1cf39e07a5dbabd80ebf", ""): "1.4.0",
         # combination version pattern
-        ("sysprof", "git://gitlab.gnome.org/GNOME/sysprof.git;protocol=https", "cd44ee6644c3641507fb53b8a2a69137f2971219", "")
-            : "1.2.0",
-        ("u-boot-mkimage", "git://git.denx.de/u-boot.git;branch=master;protocol=git", "62c175fbb8a0f9a926c88294ea9f7e88eb898f6c", "")
-            : "2014.01",
+        ("sysprof", "git://gitlab.gnome.org/GNOME/sysprof.git;protocol=https", "cd44ee6644c3641507fb53b8a2a69137f2971219", ""): "1.2.0",
+        ("u-boot-mkimage", "git://git.denx.de/u-boot.git;branch=master;protocol=git", "62c175fbb8a0f9a926c88294ea9f7e88eb898f6c", ""): "2014.01",
         # version pattern "yyyymmdd"
-        ("mobile-broadband-provider-info", "git://gitlab.gnome.org/GNOME/mobile-broadband-provider-info.git;protocol=https", "4ed19e11c2975105b71b956440acdb25d46a347d", "")
-            : "20120614",
+        ("mobile-broadband-provider-info", "git://gitlab.gnome.org/GNOME/mobile-broadband-provider-info.git;protocol=https", "4ed19e11c2975105b71b956440acdb25d46a347d", ""): "20120614",
         # packages with a valid UPSTREAM_CHECK_GITTAGREGEX
                 # mirror of git://anongit.freedesktop.org/xorg/driver/xf86-video-omap since network issues interfered with testing
-        ("xf86-video-omap", "git://git.yoctoproject.org/bbfetchtests-xf86-video-omap", "ae0394e687f1a77e966cf72f895da91840dffb8f", "(?P<pver>(\d+\.(\d\.?)*))")
-            : "0.4.3",
-        ("build-appliance-image", "git://git.yoctoproject.org/poky", "b37dd451a52622d5b570183a81583cc34c2ff555", "(?P<pver>(([0-9][\.|_]?)+[0-9]))")
-            : "11.0.0",
-        ("chkconfig-alternatives-native", "git://github.com/kergoth/chkconfig;branch=sysroot", "cd437ecbd8986c894442f8fce1e0061e20f04dee", "chkconfig\-(?P<pver>((\d+[\.\-_]*)+))")
-            : "1.3.59",
-        ("remake", "git://github.com/rocky/remake.git", "f05508e521987c8494c92d9c2871aec46307d51d", "(?P<pver>(\d+\.(\d+\.)*\d*(\+dbg\d+(\.\d+)*)*))")
-            : "3.82+dbg0.9",
+        ("xf86-video-omap", "git://git.yoctoproject.org/bbfetchtests-xf86-video-omap", "ae0394e687f1a77e966cf72f895da91840dffb8f", "(?P<pver>(\d+\.(\d\.?)*))"): "0.4.3",
+        ("build-appliance-image", "git://git.yoctoproject.org/poky", "b37dd451a52622d5b570183a81583cc34c2ff555", "(?P<pver>(([0-9][\.|_]?)+[0-9]))"): "11.0.0",
+        ("chkconfig-alternatives-native", "git://github.com/kergoth/chkconfig;branch=sysroot", "cd437ecbd8986c894442f8fce1e0061e20f04dee", "chkconfig\-(?P<pver>((\d+[\.\-_]*)+))"): "1.3.59",
+        ("remake", "git://github.com/rocky/remake.git", "f05508e521987c8494c92d9c2871aec46307d51d", "(?P<pver>(\d+\.(\d+\.)*\d*(\+dbg\d+(\.\d+)*)*))"): "3.82+dbg0.9",
     }
 
     test_wget_uris = {
@@ -1259,43 +1231,34 @@ class FetchLatestVersionTest(FetcherTest):
         # packages with versions inside directory name
         #
         # http://kernel.org/pub/linux/utils/util-linux/v2.23/util-linux-2.24.2.tar.bz2
-        ("util-linux", "/pub/linux/utils/util-linux/v2.23/util-linux-2.24.2.tar.bz2", "", "")
-            : "2.24.2",
+        ("util-linux", "/pub/linux/utils/util-linux/v2.23/util-linux-2.24.2.tar.bz2", "", ""): "2.24.2",
         # http://www.abisource.com/downloads/enchant/1.6.0/enchant-1.6.0.tar.gz
-        ("enchant", "/downloads/enchant/1.6.0/enchant-1.6.0.tar.gz", "", "")
-            : "1.6.0",
+        ("enchant", "/downloads/enchant/1.6.0/enchant-1.6.0.tar.gz", "", ""): "1.6.0",
         # http://www.cmake.org/files/v2.8/cmake-2.8.12.1.tar.gz
-        ("cmake", "/files/v2.8/cmake-2.8.12.1.tar.gz", "", "")
-            : "2.8.12.1",
+        ("cmake", "/files/v2.8/cmake-2.8.12.1.tar.gz", "", ""): "2.8.12.1",
         #
         # packages with versions only in current directory
         #
         # http://downloads.yoctoproject.org/releases/eglibc/eglibc-2.18-svnr23787.tar.bz2
-        ("eglic", "/releases/eglibc/eglibc-2.18-svnr23787.tar.bz2", "", "")
-            : "2.19",
+        ("eglic", "/releases/eglibc/eglibc-2.18-svnr23787.tar.bz2", "", ""): "2.19",
         # http://downloads.yoctoproject.org/releases/gnu-config/gnu-config-20120814.tar.bz2
-        ("gnu-config", "/releases/gnu-config/gnu-config-20120814.tar.bz2", "", "")
-            : "20120814",
+        ("gnu-config", "/releases/gnu-config/gnu-config-20120814.tar.bz2", "", ""): "20120814",
         #
         # packages with "99" in the name of possible version
         #
         # http://freedesktop.org/software/pulseaudio/releases/pulseaudio-4.0.tar.xz
-        ("pulseaudio", "/software/pulseaudio/releases/pulseaudio-4.0.tar.xz", "", "")
-            : "5.0",
+        ("pulseaudio", "/software/pulseaudio/releases/pulseaudio-4.0.tar.xz", "", ""): "5.0",
         # http://xorg.freedesktop.org/releases/individual/xserver/xorg-server-1.15.1.tar.bz2
-        ("xserver-xorg", "/releases/individual/xserver/xorg-server-1.15.1.tar.bz2", "", "")
-            : "1.15.1",
+        ("xserver-xorg", "/releases/individual/xserver/xorg-server-1.15.1.tar.bz2", "", ""): "1.15.1",
         #
         # packages with valid UPSTREAM_CHECK_URI and UPSTREAM_CHECK_REGEX
         #
         # http://www.cups.org/software/1.7.2/cups-1.7.2-source.tar.bz2
         # https://github.com/apple/cups/releases
-        ("cups", "/software/1.7.2/cups-1.7.2-source.tar.bz2", "/apple/cups/releases", "(?P<name>cups\-)(?P<pver>((\d+[\.\-_]*)+))\-source\.tar\.gz")
-            : "2.0.0",
+        ("cups", "/software/1.7.2/cups-1.7.2-source.tar.bz2", "/apple/cups/releases", "(?P<name>cups\-)(?P<pver>((\d+[\.\-_]*)+))\-source\.tar\.gz"): "2.0.0",
         # http://download.oracle.com/berkeley-db/db-5.3.21.tar.gz
         # http://ftp.debian.org/debian/pool/main/d/db5.3/
-        ("db", "/berkeley-db/db-5.3.21.tar.gz", "/debian/pool/main/d/db5.3/", "(?P<name>db5\.3_)(?P<pver>\d+(\.\d+)+).+\.orig\.tar\.xz")
-            : "5.3.10",
+        ("db", "/berkeley-db/db-5.3.21.tar.gz", "/debian/pool/main/d/db5.3/", "(?P<name>db5\.3_)(?P<pver>\d+(\.\d+)+).+\.orig\.tar\.xz"): "5.3.10",
     }
 
     @skipIfNoNetwork()
@@ -2177,12 +2140,12 @@ class GitLfsTest(FetcherTest):
 
 class GitURLWithSpacesTest(FetcherTest):
     test_git_urls = {
-        "git://tfs-example.org:22/tfs/example%20path/example.git" : {
+        "git://tfs-example.org:22/tfs/example%20path/example.git": {
             'url': 'git://tfs-example.org:22/tfs/example%20path/example.git',
             'gitsrcname': 'tfs-example.org.22.tfs.example_path.example.git',
             'path': '/tfs/example path/example.git'
         },
-        "git://tfs-example.org:22/tfs/example%20path/example%20repo.git" : {
+        "git://tfs-example.org:22/tfs/example%20path/example%20repo.git": {
             'url': 'git://tfs-example.org:22/tfs/example%20path/example%20repo.git',
             'gitsrcname': 'tfs-example.org.22.tfs.example_path.example_repo.git',
             'path': '/tfs/example path/example repo.git'

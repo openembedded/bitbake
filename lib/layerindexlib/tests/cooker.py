@@ -79,12 +79,12 @@ class LayerIndexCookerTest(LayersTest):
             else:
                 self.assertIsNone(result, msg="Found %s when it should be there" % collection)
 
-        tests = [ ('core', True),
+        tests = [('core', True),
                   ('openembedded-core', False),
                   ('networking-layer', True),
                   ('meta-python', True),
                   ('openembedded-layer', True),
-                  ('notpresent', False) ]
+                  ('notpresent', False)]
 
         for collection,result in tests:
             _check(collection, result)
@@ -98,12 +98,12 @@ class LayerIndexCookerTest(LayersTest):
             else:
                 self.assertIsNone(result, msg="Found %s when it should be there" % collection)
 
-        tests = [ ('openembedded-core', True),
+        tests = [('openembedded-core', True),
                   ('core', False),
                   ('networking-layer', True),
                   ('meta-python', True),
                   ('openembedded-layer', True),
-                  ('notpresent', False) ]
+                  ('notpresent', False)]
 
         for collection,result in tests:
             _check(collection, result)

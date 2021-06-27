@@ -72,7 +72,7 @@ for t in os.walk(os.path.dirname(currentdir)):
             if p.pattern.regex.pattern == '^' + modulename + '/':
                 conflict = True
         if not conflict:
-            urlpatterns.insert(0, url(r'^' + modulename + '/', include ( modulename + '.urls')))
+            urlpatterns.insert(0, url(r'^' + modulename + '/', include(modulename + '.urls')))
         else:
             logger.warning("Module \'%s\' has a regexp conflict, was not added to the urlpatterns" % modulename)
 

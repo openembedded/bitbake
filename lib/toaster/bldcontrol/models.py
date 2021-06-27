@@ -117,8 +117,8 @@ class BuildRequest(models.Model):
         return (self.updated - self.created).total_seconds()
 
     def get_sorted_target_list(self):
-        tgts = self.brtarget_set.order_by( 'target' )
-        return( tgts )
+        tgts = self.brtarget_set.order_by('target')
+        return(tgts)
 
     def get_machine(self):
         return self.brvariable_set.get(name="MACHINE").value

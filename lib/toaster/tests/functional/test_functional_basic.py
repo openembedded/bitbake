@@ -107,12 +107,12 @@ class FuntionalTestBasic(SeleniumFunctionalTestCase):
            layer_list = self.driver.find_element_by_id("layers-in-project-list")
            layers = layer_list.find_elements_by_tag_name("li")
            for layer in layers:
-               if re.match ("openembedded-core",layer.text):
-                    print ("openembedded-core layer is a default layer in the project configuration")
-               elif re.match ("meta-poky",layer.text):
-                  print ("meta-poky layer is a default layer in the project configuration")
-               elif re.match ("meta-yocto-bsp",layer.text):
-                  print ("meta-yocto-bsp is a default layer in the project configuratoin")
+               if re.match("openembedded-core",layer.text):
+                    print("openembedded-core layer is a default layer in the project configuration")
+               elif re.match("meta-poky",layer.text):
+                  print("meta-poky layer is a default layer in the project configuration")
+               elif re.match("meta-yocto-bsp",layer.text):
+                  print("meta-yocto-bsp is a default layer in the project configuratoin")
                else:
                   self.fail(msg='default layers are missing from the project configuration')
         except:
@@ -177,12 +177,12 @@ class FuntionalTestBasic(SeleniumFunctionalTestCase):
            layers = layer_list.find_elements_by_tag_name("li")
 
            for layer in layers:
-               if re.match ("openembedded-core",layer.text):
-                    print ("openembedded-core layer is a default layer in the project configuration")
-               elif re.match ("meta-poky",layer.text):
-                  print ("meta-poky layer is a default layer in the project configuration")
-               elif re.match ("meta-yocto-bsp",layer.text):
-                  print ("meta-yocto-bsp is a default layer in the project configuratoin")
+               if re.match("openembedded-core",layer.text):
+                    print("openembedded-core layer is a default layer in the project configuration")
+               elif re.match("meta-poky",layer.text):
+                  print("meta-poky layer is a default layer in the project configuration")
+               elif re.match("meta-yocto-bsp",layer.text):
+                  print("meta-yocto-bsp is a default layer in the project configuratoin")
                else:
                   self.fail(msg='default layers are missing from the project configuration')
 

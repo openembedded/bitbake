@@ -40,13 +40,13 @@ class CookerTest(unittest.TestCase):
         # Priorities: list of (collection, pattern, regex, priority)
         bbfile_config_priorities = []
         # Order is important for this test, shortest to longest is typical failure case
-        bbfile_config_priorities.append( append_collection(topdir, 'first', self.d) )
-        bbfile_config_priorities.append( append_collection(topdir, 'second', self.d) )
-        bbfile_config_priorities.append( append_collection(topdir, 'second/third', self.d) )
+        bbfile_config_priorities.append(append_collection(topdir, 'first', self.d))
+        bbfile_config_priorities.append(append_collection(topdir, 'second', self.d))
+        bbfile_config_priorities.append(append_collection(topdir, 'second/third', self.d))
 
-        pkgfns = [ topdir + '/first/recipes/sample1_1.0.bb',
+        pkgfns = [topdir + '/first/recipes/sample1_1.0.bb',
                    topdir + '/second/recipes/sample2_1.0.bb',
-                   topdir + '/second/third/recipes/sample3_1.0.bb' ]
+                   topdir + '/second/third/recipes/sample3_1.0.bb']
 
         class LogHandler(logging.Handler):
             def __init__(self):

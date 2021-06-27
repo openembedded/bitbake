@@ -110,9 +110,9 @@ class DistrosTypeAhead(ToasterTypeAhead):
 
             detail = "[ %s ]" % (distro.layer_version.layer.name)
             needed_fields = {
-                'id' : distro.pk,
-                'name' : distro.name,
-                'detail' : detail,
+                'id': distro.pk,
+                'name': distro.name,
+                'detail': detail,
             }
 
             results.append(needed_fields)

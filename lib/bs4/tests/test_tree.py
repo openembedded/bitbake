@@ -146,7 +146,7 @@ class TestFindAllBasicNamespaces(TreeTest):
     def test_find_by_namespaced_name(self):
         soup = self.soup('<mathml:msqrt>4</mathml:msqrt><a svg:fill="red">')
         self.assertEqual("4", soup.find("mathml:msqrt").string)
-        self.assertEqual("a", soup.find(attrs={ "svg:fill" : "red" }).name)
+        self.assertEqual("a", soup.find(attrs={"svg:fill": "red"}).name)
 
 
 class TestFindAllByName(TreeTest):
@@ -194,7 +194,7 @@ class TestFindAllByName(TreeTest):
 
     def test_find_all_by_tag_dict(self):
         self.assertSelects(
-            self.tree.find_all({'a' : True, 'b' : True}),
+            self.tree.find_all({'a': True, 'b': True}),
             ['First tag.', 'Second tag.', 'Nested tag.'])
 
     def test_find_all_by_tag_re(self):
@@ -252,10 +252,10 @@ class TestFindAllByAttribute(TreeTest):
         self.assertSelects(tree.find_all(name='name1'),
                            ["A tag called 'name1'."])
         # This does what you want.
-        self.assertSelects(tree.find_all(attrs={'name' : 'name1'}),
+        self.assertSelects(tree.find_all(attrs={'name': 'name1'}),
                            ["Name match."])
 
-        self.assertSelects(tree.find_all(attrs={'class' : 'class2'}),
+        self.assertSelects(tree.find_all(attrs={'class': 'class2'}),
                            ["Class match."])
 
     def test_find_all_by_class(self):
@@ -325,7 +325,7 @@ class TestFindAllByAttribute(TreeTest):
                          <a id="first">Match.</a>
                          <a id="second">Non-match.</a>""")
 
-        strainer = SoupStrainer(attrs={'id' : 'first'})
+        strainer = SoupStrainer(attrs={'id': 'first'})
         self.assertSelects(tree.find_all(strainer), ['Match.'])
 
     def test_find_all_with_missing_atribute(self):

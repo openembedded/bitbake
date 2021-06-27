@@ -133,7 +133,7 @@ class VariableParse:
                     self.contains[k] = parser.contains[k].copy()
                 else:
                     self.contains[k].update(parser.contains[k])
-            value = utils.better_eval(codeobj, DataContext(self.d), {'d' : self.d})
+            value = utils.better_eval(codeobj, DataContext(self.d), {'d': self.d})
             return str(value)
 
 
@@ -363,7 +363,7 @@ class VariableHistory(object):
         """If file f and line are not given, the entire history of var is deleted"""
         if var in self.variables:
             if f and line:
-                self.variables[var] = [ x for x in self.variables[var] if x['file']!=f and x['line']!=line]
+                self.variables[var] = [x for x in self.variables[var] if x['file']!=f and x['line']!=line]
             else:
                 self.variables[var] = []
 

@@ -150,7 +150,7 @@ class Lexer:
         # the lexstatere and lexstateerrorf tables.
 
         if object:
-            newtab = { }
+            newtab = {}
             for key, ritem in self.lexstatere.items():
                 newre = []
                 for cre, findex in ritem:
@@ -163,7 +163,7 @@ class Lexer:
                 newre.append((cre,newfindex))
                 newtab[key] = newre
             c.lexstatere = newtab
-            c.lexstateerrorf = { }
+            c.lexstateerrorf = {}
             for key, ef in self.lexstateerrorf.items():
                 c.lexstateerrorf[key] = getattr(object,ef.__name__)
             c.lexmodule = object
@@ -185,7 +185,7 @@ class Lexer:
         tf.write("_lexliterals  = %s\n" % repr(self.lexliterals))
         tf.write("_lexstateinfo = %s\n" % repr(self.lexstateinfo))
 
-        tabre = { }
+        tabre = {}
         # Collect all functions in the initial state
         initial = self.lexstatere["INITIAL"]
         initialfuncs = []
@@ -203,7 +203,7 @@ class Lexer:
         tf.write("_lexstatere   = %s\n" % repr(tabre))
         tf.write("_lexstateignore = %s\n" % repr(self.lexstateignore))
 
-        taberr = { }
+        taberr = {}
         for key, ef in self.lexstateerrorf.items():
              if ef:
                   taberr[key] = ef.__name__
@@ -222,7 +222,7 @@ class Lexer:
             if sys.version_info[0] < 3:
                 exec("import %s as lextab" % tabfile)
             else:
-                env = { }
+                env = {}
                 exec("import %s as lextab" % tabfile, env,env)
                 lextab = env['lextab']
 
@@ -234,8 +234,8 @@ class Lexer:
         self.lexliterals    = lextab._lexliterals
         self.lexstateinfo   = lextab._lexstateinfo
         self.lexstateignore = lextab._lexstateignore
-        self.lexstatere     = { }
-        self.lexstateretext = { }
+        self.lexstatere     = {}
+        self.lexstateretext = {}
         for key,lre in lextab._lexstatere.items():
              titem = []
              txtitem = []
@@ -244,7 +244,7 @@ class Lexer:
                   txtitem.append(lre[i][0])
              self.lexstatere[key] = titem
              self.lexstateretext[key] = txtitem
-        self.lexstateerrorf = { }
+        self.lexstateerrorf = {}
         for key,ef in lextab._lexstateerrorf.items():
              self.lexstateerrorf[key] = fdict[ef]
         self.begin('INITIAL')
@@ -493,7 +493,7 @@ def _form_master_re(relist,reflags,ldict,toknames):
         lexre = re.compile(regex,re.VERBOSE | reflags)
 
         # Build the index to function map for the matching engine
-        lexindexfunc = [ None ] * (max(lexre.groupindex.values())+1)
+        lexindexfunc = [None] * (max(lexre.groupindex.values())+1)
         lexindexnames = lexindexfunc[:]
 
         for f,i in lexre.groupindex.items():
@@ -556,7 +556,7 @@ class LexerReflect(object):
         self.error_func = None
         self.tokens     = []
         self.reflags    = reflags
-        self.stateinfo  = { 'INITIAL' : 'inclusive'}
+        self.stateinfo  = {'INITIAL': 'inclusive'}
         self.files      = {}
         self.error      = 0
 
@@ -659,15 +659,15 @@ class LexerReflect(object):
     # categories (functions, strings, error functions, and ignore characters)
 
     def get_rules(self):
-        tsymbols = [f for f in self.ldict if f[:2] == 't_' ]
+        tsymbols = [f for f in self.ldict if f[:2] == 't_']
 
         # Now build up a list of functions and a list of strings
 
-        self.toknames = { }        # Mapping of symbols to token names
-        self.funcsym =  { }        # Symbols defined as functions
-        self.strsym =   { }        # Symbols defined as strings
-        self.ignore   = { }        # Ignore strings by state
-        self.errorf   = { }        # Error functions by state
+        self.toknames = {}        # Mapping of symbols to token names
+        self.funcsym =  {}        # Symbols defined as functions
+        self.strsym =   {}        # Symbols defined as strings
+        self.ignore   = {}        # Ignore strings by state
+        self.errorf   = {}        # Error functions by state
 
         for s in self.stateinfo:
              self.funcsym[s] = []
@@ -847,7 +847,7 @@ class LexerReflect(object):
         fre = re.compile(r'\s*def\s+(t_[a-zA-Z_0-9]*)\(')
         sre = re.compile(r'\s*(t_[a-zA-Z_0-9]*)\s*=')
 
-        counthash = { }
+        counthash = {}
         linen = 1
         for l in lines:
             m = fre.match(l)
@@ -871,7 +871,7 @@ class LexerReflect(object):
 def lex(module=None,object=None,debug=0,optimize=0,lextab="lextab",reflags=0,nowarn=0,outputdir="", debuglog=None, errorlog=None):
     global lexer
     ldict = None
-    stateinfo  = { 'INITIAL' : 'inclusive'}
+    stateinfo  = {'INITIAL': 'inclusive'}
     lexobj = Lexer()
     lexobj.lexoptimize = optimize
     global token,input
@@ -918,7 +918,7 @@ def lex(module=None,object=None,debug=0,optimize=0,lextab="lextab",reflags=0,now
         debuglog.info("lex: states   = %r", linfo.stateinfo)
 
     # Build a dictionary of valid token names
-    lexobj.lextokens = { }
+    lexobj.lextokens = {}
     for n in linfo.tokens:
         lexobj.lextokens[n] = 1
 
@@ -931,7 +931,7 @@ def lex(module=None,object=None,debug=0,optimize=0,lextab="lextab",reflags=0,now
     # Get the stateinfo dictionary
     stateinfo = linfo.stateinfo
 
-    regexs = { }
+    regexs = {}
     # Build the master regular expressions
     for state in stateinfo:
         regex_list = []

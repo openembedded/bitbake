@@ -189,7 +189,7 @@ def p_command(p):
                | compound_command redirect_list
                | function_definition"""
         
-    if p[1][0] in ( 'simple_command', 
+    if p[1][0] in ('simple_command', 
                     'for_clause',
                     'while_clause',
                     'until_clause',

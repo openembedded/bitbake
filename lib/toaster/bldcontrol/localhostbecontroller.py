@@ -111,12 +111,12 @@ class LocalhostBEController(BuildEnvironmentController):
             # If we have local layers then we don't need clone them
             # For local layers giturl will be empty
             if not layer.giturl:
-                nongitlayerlist.append( "%03d:%s" % (layer_index,layer.local_source_dir) )
+                nongitlayerlist.append("%03d:%s" % (layer_index,layer.local_source_dir))
                 continue
 
             if not (layer.giturl, layer.commit) in gitrepos:
                 gitrepos[(layer.giturl, layer.commit)] = []
-            gitrepos[(layer.giturl, layer.commit)].append( (layer.name,layer.dirpath,layer_index) )
+            gitrepos[(layer.giturl, layer.commit)].append((layer.name,layer.dirpath,layer_index))
             layer_index += 1
 
 
@@ -338,7 +338,7 @@ class LocalhostBEController(BuildEnvironmentController):
         # init build environment
         try:
             custom_script = ToasterSetting.objects.get(name="CUSTOM_BUILD_INIT_SCRIPT").value
-            custom_script = custom_script.replace("%BUILDDIR%" ,builddir)
+            custom_script = custom_script.replace("%BUILDDIR%",builddir)
             self._shellcmd("bash -c 'source %s'" % (custom_script),env=git_env)
         except ToasterSetting.DoesNotExist:
             self._shellcmd("bash -c 'source %s %s'" % (oe_init, builddir),

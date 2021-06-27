@@ -96,7 +96,7 @@ class Command(BaseCommand):
                     " ".join(whitelist_branch_names))
 
         # We require a non-empty bb.data, but we can fake it with a dictionary
-        layerindex = layerindexlib.LayerIndex({"DUMMY" : "VALUE"})
+        layerindex = layerindexlib.LayerIndex({"DUMMY": "VALUE"})
 
         http_progress = Spinner()
         http_progress.start()

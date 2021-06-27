@@ -291,7 +291,7 @@ class LRParser:
 
     def parsedebug(self,input=None,lexer=None,debug=None,tracking=0,tokenfunc=None):
         lookahead = None                 # Current lookahead symbol
-        lookaheadstack = [ ]             # Stack of lookahead symbols
+        lookaheadstack = []             # Stack of lookahead symbols
         actions = self.action            # Local reference to action table (to avoid lookup on self.)
         goto    = self.goto              # Local reference to goto table (to avoid lookup on self.)
         prod    = self.productions       # Local reference to production list (to avoid lookup on self.)
@@ -323,9 +323,9 @@ class LRParser:
 
         # Set up the state and symbol stacks
 
-        statestack = [ ]                # Stack of parsing states
+        statestack = []                # Stack of parsing states
         self.statestack = statestack
-        symstack   = [ ]                # Stack of grammar symbols
+        symstack   = []                # Stack of grammar symbols
         self.symstack = symstack
 
         pslice.stack = symstack         # Put in the production
@@ -457,7 +457,7 @@ class LRParser:
                            sym.lexpos = lexer.lexpos
                         # --! TRACKING
 
-                        targ = [ sym ]
+                        targ = [sym]
 
                         # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                         # The code enclosed in this section is duplicated 
@@ -609,7 +609,7 @@ class LRParser:
 
     def parseopt(self,input=None,lexer=None,debug=0,tracking=0,tokenfunc=None):
         lookahead = None                 # Current lookahead symbol
-        lookaheadstack = [ ]             # Stack of lookahead symbols
+        lookaheadstack = []             # Stack of lookahead symbols
         actions = self.action            # Local reference to action table (to avoid lookup on self.)
         goto    = self.goto              # Local reference to goto table (to avoid lookup on self.)
         prod    = self.productions       # Local reference to production list (to avoid lookup on self.)
@@ -637,9 +637,9 @@ class LRParser:
 
         # Set up the state and symbol stacks
 
-        statestack = [ ]                # Stack of parsing states
+        statestack = []                # Stack of parsing states
         self.statestack = statestack
-        symstack   = [ ]                # Stack of grammar symbols
+        symstack   = []                # Stack of grammar symbols
         self.symstack = symstack
 
         pslice.stack = symstack         # Put in the production
@@ -746,7 +746,7 @@ class LRParser:
                            sym.lexpos = lexer.lexpos
                         # --! TRACKING
 
-                        targ = [ sym ]
+                        targ = [sym]
 
                         # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                         # The code enclosed in this section is duplicated 
@@ -884,7 +884,7 @@ class LRParser:
 
     def parseopt_notrack(self,input=None,lexer=None,debug=0,tracking=0,tokenfunc=None):
         lookahead = None                 # Current lookahead symbol
-        lookaheadstack = [ ]             # Stack of lookahead symbols
+        lookaheadstack = []             # Stack of lookahead symbols
         actions = self.action            # Local reference to action table (to avoid lookup on self.)
         goto    = self.goto              # Local reference to goto table (to avoid lookup on self.)
         prod    = self.productions       # Local reference to production list (to avoid lookup on self.)
@@ -912,9 +912,9 @@ class LRParser:
 
         # Set up the state and symbol stacks
 
-        statestack = [ ]                # Stack of parsing states
+        statestack = []                # Stack of parsing states
         self.statestack = statestack
-        symstack   = [ ]                # Stack of grammar symbols
+        symstack   = []                # Stack of grammar symbols
         self.symstack = symstack
 
         pslice.stack = symstack         # Put in the production
@@ -1004,7 +1004,7 @@ class LRParser:
     
                     else:
 
-                        targ = [ sym ]
+                        targ = [sym]
 
                         # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                         # The code enclosed in this section is duplicated 
@@ -1185,7 +1185,7 @@ class Production(object):
         self.len  = len(self.prod)   # Length of the production
 
         # Create a list of unique production symbols used in the production
-        self.usyms = [ ]             
+        self.usyms = []             
         for s in self.prod:
             if s not in self.usyms:
                 self.usyms.append(s)
@@ -1292,7 +1292,7 @@ class LRItem(object):
         self.prod       = list(p.prod)
         self.number     = p.number
         self.lr_index   = n
-        self.lookaheads = { }
+        self.lookaheads = {}
         self.prod.insert(n,".")
         self.prod       = tuple(self.prod)
         self.len        = len(self.prod)
@@ -1338,13 +1338,13 @@ class Grammar(object):
                                     # entry is always reserved for the purpose of
                                     # building an augmented grammar
 
-        self.Prodnames    = { }     # A dictionary mapping the names of nonterminals to a list of all
+        self.Prodnames    = {}     # A dictionary mapping the names of nonterminals to a list of all
                                     # productions of that nonterminal.
 
-        self.Prodmap      = { }     # A dictionary that is only used to detect duplicate
+        self.Prodmap      = {}     # A dictionary that is only used to detect duplicate
                                     # productions.
 
-        self.Terminals    = { }     # A dictionary mapping the names of terminal symbols to a
+        self.Terminals    = {}     # A dictionary mapping the names of terminal symbols to a
                                     # list of the rules where they are used.
 
         for term in terminals:
@@ -1352,17 +1352,17 @@ class Grammar(object):
 
         self.Terminals['error'] = []
 
-        self.Nonterminals = { }     # A dictionary mapping names of nonterminals to a list
+        self.Nonterminals = {}     # A dictionary mapping names of nonterminals to a list
                                     # of rule numbers where they are used.
 
-        self.First        = { }     # A dictionary of precomputed FIRST(x) symbols
+        self.First        = {}     # A dictionary of precomputed FIRST(x) symbols
 
-        self.Follow       = { }     # A dictionary of precomputed FOLLOW(x) symbols
+        self.Follow       = {}     # A dictionary of precomputed FOLLOW(x) symbols
 
-        self.Precedence   = { }     # Precedence rules for each terminal. Contains tuples of the
+        self.Precedence   = {}     # Precedence rules for each terminal. Contains tuples of the
                                     # form ('right',level) or ('nonassoc', level) or ('left',level)
 
-        self.UsedPrecedence = { }   # Precedence rules that were actually used by the grammer.
+        self.UsedPrecedence = {}   # Precedence rules that were actually used by the grammer.
                                     # This is only used to provide error checking and to generate
                                     # a warning about unused precedence rules.
 
@@ -1461,7 +1461,7 @@ class Grammar(object):
         # From this point on, everything is valid.  Create a new Production instance
         pnumber  = len(self.Productions)
         if not prodname in self.Nonterminals:
-            self.Nonterminals[prodname] = [ ]
+            self.Nonterminals[prodname] = []
 
         # Add the production number to Terminals and Nonterminals
         for t in syms:
@@ -1469,7 +1469,7 @@ class Grammar(object):
                 self.Terminals[t].append(pnumber)
             else:
                 if not t in self.Nonterminals:
-                    self.Nonterminals[t] = [ ]
+                    self.Nonterminals[t] = []
                 self.Nonterminals[t].append(pnumber)
 
         # Create a production and add it to the list of productions
@@ -1481,7 +1481,7 @@ class Grammar(object):
         try:
             self.Prodnames[prodname].append(p)
         except KeyError:
-            self.Prodnames[prodname] = [ p ]
+            self.Prodnames[prodname] = [p]
         return 0
 
     # -----------------------------------------------------------------------------
@@ -1519,11 +1519,11 @@ class Grammar(object):
                 for r in p.prod:
                     mark_reachable_from(r)
 
-        reachable   = { }
+        reachable   = {}
         for s in list(self.Terminals) + list(self.Nonterminals):
             reachable[s] = 0
 
-        mark_reachable_from( self.Productions[0].prod[0] )
+        mark_reachable_from(self.Productions[0].prod[0])
 
         return [s for s in list(self.Nonterminals)
                         if not reachable[s]]
@@ -1669,7 +1669,7 @@ class Grammar(object):
     def _first(self,beta):
 
         # We are computing First(x1,x2,x3,...,xn)
-        result = [ ]
+        result = []
         for x in beta:
             x_produces_empty = 0
 
@@ -1724,7 +1724,7 @@ class Grammar(object):
                 for p in self.Prodnames[n]:
                     for f in self._first(p.prod):
                         if f not in self.First[n]:
-                            self.First[n].append( f )
+                            self.First[n].append(f)
                             some_change = 1
             if not some_change:
                 break
@@ -1749,12 +1749,12 @@ class Grammar(object):
 
         # Add '$end' to the follow list of the start symbol
         for k in self.Nonterminals:
-            self.Follow[k] = [ ]
+            self.Follow[k] = []
 
         if not start:
             start = self.Productions[1].name
 
-        self.Follow[start] = [ '$end' ]
+        self.Follow[start] = ['$end']
 
         while 1:
             didadd = 0
@@ -1851,7 +1851,7 @@ class LRTable(object):
             if sys.version_info[0] < 3:
                 exec("import %s as parsetab" % module)
             else:
-                env = { }
+                env = {}
                 exec("import %s as parsetab" % module, env, env)
                 parsetab = env['parsetab']
 
@@ -1922,11 +1922,11 @@ class LRTable(object):
 # ------------------------------------------------------------------------------
 
 def digraph(X,R,FP):
-    N = { }
+    N = {}
     for x in X:
        N[x] = 0
     stack = []
-    F = { }
+    F = {}
     for x in X:
         if N[x] == 0:
             traverse(x,N,stack,F,X,R,FP)
@@ -2040,16 +2040,16 @@ class LRGeneratedTable(LRTable):
 
         s = self.lr_goto_cache.get(x,None)
         if not s:
-            s = { }
+            s = {}
             self.lr_goto_cache[x] = s
 
-        gs = [ ]
+        gs = []
         for p in I:
             n = p.lr_next
             if n and n.lr_before == x:
                 s1 = s.get(id(n),None)
                 if not s1:
-                    s1 = { }
+                    s1 = {}
                     s[id(n)] = s1
                 gs.append(n)
                 s = s1
@@ -2066,7 +2066,7 @@ class LRGeneratedTable(LRTable):
     # Compute the LR(0) sets of item function
     def lr0_items(self):
 
-        C = [ self.lr0_closure([self.grammar.Productions[0].lr_next]) ]
+        C = [self.lr0_closure([self.grammar.Productions[0].lr_next])]
         i = 0
         for I in C:
             self.lr0_cidhash[id(I)] = i
@@ -2079,7 +2079,7 @@ class LRGeneratedTable(LRTable):
             i += 1
 
             # Collect all of the symbols that could possibly be in the goto(I,X) sets
-            asyms = { }
+            asyms = {}
             for ii in I:
                 for s in ii.usyms:
                     asyms[s] = None
@@ -2174,7 +2174,7 @@ class LRGeneratedTable(LRTable):
     # -----------------------------------------------------------------------------
 
     def dr_relation(self,C,trans,nullable):
-        dr_set = { }
+        dr_set = {}
         state,N = trans
         terms = []
 
@@ -2411,7 +2411,7 @@ class LRGeneratedTable(LRTable):
         action = self.lr_action       # Action array
         log    = self.log             # Logger for output
 
-        actionp = { }                 # Action production array (temporary)
+        actionp = {}                 # Action production array (temporary)
         
         log.info("Parsing method: %s", self.lr_method)
 
@@ -2427,10 +2427,10 @@ class LRGeneratedTable(LRTable):
         st = 0
         for I in C:
             # Loop over each production in I
-            actlist = [ ]              # List of actions
-            st_action  = { }
-            st_actionp = { }
-            st_goto    = { }
+            actlist = []              # List of actions
+            st_action  = {}
+            st_actionp = {}
+            st_goto    = {}
             log.info("")
             log.info("state %d", st)
             log.info("")
@@ -2542,7 +2542,7 @@ class LRGeneratedTable(LRTable):
                                     st_actionp[a] = p
 
             # Print the actions associated with each terminal
-            _actprint = { }
+            _actprint = {}
             for a,p,m in actlist:
                 if a in st_action:
                     if p is st_actionp[a]:
@@ -2563,7 +2563,7 @@ class LRGeneratedTable(LRTable):
 
             # Construct the goto table for this state
 
-            nkeys = { }
+            nkeys = {}
             for ii in I:
                 for s in ii.usyms:
                     if s in self.grammar.Nonterminals:
@@ -2608,7 +2608,7 @@ _lr_signature = %r
 
             # Factor out names to try and make smaller
             if smaller:
-                items = { }
+                items = {}
 
                 for s,nd in self.lr_action.items():
                    for name,v in nd.items():
@@ -2648,7 +2648,7 @@ del _lr_action_items
 
             if smaller:
                 # Factor out names to try and make smaller
-                items = { }
+                items = {}
 
                 for s,nd in self.lr_goto.items():
                    for name,v in nd.items():
@@ -2886,7 +2886,7 @@ class ParserReflect(object):
             except IOError:
                 continue
 
-            counthash = { }
+            counthash = {}
             for linen,l in enumerate(lines):
                 linen += 1
                 m = fre.match(l)

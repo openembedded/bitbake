@@ -35,8 +35,8 @@ class BBUIEventQueue:
         server = UIXMLRPCServer(self.clientinfo)
         self.host, self.port = server.socket.getsockname()
 
-        server.register_function( self.system_quit, "event.quit" )
-        server.register_function( self.send_event, "event.sendpickle" )
+        server.register_function(self.system_quit, "event.quit")
+        server.register_function(self.send_event, "event.sendpickle")
         server.socket.settimeout(1)
 
         self.EventHandle = None
@@ -115,7 +115,7 @@ class BBUIEventQueue:
 
         self.server.server_close()
 
-    def system_quit( self ):
+    def system_quit(self):
         """
         Shut down the callback thread
         """
@@ -127,9 +127,9 @@ class BBUIEventQueue:
 
 class UIXMLRPCServer (SimpleXMLRPCServer):
 
-    def __init__( self, interface ):
+    def __init__(self, interface):
         self.quit = False
-        SimpleXMLRPCServer.__init__( self,
+        SimpleXMLRPCServer.__init__(self,
                                     interface,
                                     requestHandler=SimpleXMLRPCRequestHandler,
                                     logRequests=False, allow_none=True, use_builtin_types=True)

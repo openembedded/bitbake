@@ -170,7 +170,7 @@ class DepExplorer(Gtk.Window):
         for task in depgraph["tdepends"]:
             self.pkg_model.insert(0, (task,))
             for depend in depgraph["tdepends"][task]:
-                self.depends_model.insert (0, (TYPE_DEP, task, depend))
+                self.depends_model.insert(0, (TYPE_DEP, task, depend))
 
 
 class gtkthread(threading.Thread):

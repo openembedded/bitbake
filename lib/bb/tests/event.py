@@ -196,7 +196,7 @@ class EventHandlingTest(unittest.TestCase):
                                    "*")
         self.assertEqual(result, bb.event.Registered)
         bb.event.set_eventfilter(
-            lambda name, handler, event, d :
+            lambda name, handler, event, d:
             name == 'event_handler2' and
             bb.event.getName(event) == "OperationStarted")
         event1 = bb.event.OperationStarted()

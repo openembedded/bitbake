@@ -218,45 +218,45 @@ class Project(models.Model):
 
     def get_last_build_id(self):
         try:
-            return Build.objects.filter( project=self.id ).order_by('-completed_on')[0].id
+            return Build.objects.filter(project=self.id).order_by('-completed_on')[0].id
         except (Build.DoesNotExist,IndexError):
-            return( -1 )
+            return(-1)
 
     def get_last_outcome(self):
         build_id = self.get_last_build_id()
         if (-1 == build_id):
-            return( "" )
+            return("")
         try:
-            return Build.objects.filter( id=build_id )[ 0 ].outcome
+            return Build.objects.filter(id=build_id)[0].outcome
         except (Build.DoesNotExist,IndexError):
-            return( "not_found" )
+            return("not_found")
 
     def get_last_target(self):
         build_id = self.get_last_build_id()
         if (-1 == build_id):
-            return( "" )
+            return("")
         try:
             return Target.objects.filter(build=build_id)[0].target
         except (Target.DoesNotExist,IndexError):
-            return( "not_found" )
+            return("not_found")
 
     def get_last_errors(self):
         build_id = self.get_last_build_id()
         if (-1 == build_id):
-            return( 0 )
+            return(0)
         try:
-            return Build.objects.filter(id=build_id)[ 0 ].errors.count()
+            return Build.objects.filter(id=build_id)[0].errors.count()
         except (Build.DoesNotExist,IndexError):
-            return( "not_found" )
+            return("not_found")
 
     def get_last_warnings(self):
         build_id = self.get_last_build_id()
         if (-1 == build_id):
-            return( 0 )
+            return(0)
         try:
-            return Build.objects.filter(id=build_id)[ 0 ].warnings.count()
+            return Build.objects.filter(id=build_id)[0].warnings.count()
         except (Build.DoesNotExist,IndexError):
-            return( "not_found" )
+            return("not_found")
 
     def get_last_build_extensions(self):
         """
@@ -269,11 +269,11 @@ class Project(models.Model):
     def get_last_imgfiles(self):
         build_id = self.get_last_build_id()
         if (-1 == build_id):
-            return( "" )
+            return("")
         try:
-            return Variable.objects.filter(build=build_id, variable_name="IMAGE_FSTYPES")[ 0 ].variable_value
+            return Variable.objects.filter(build=build_id, variable_name="IMAGE_FSTYPES")[0].variable_value
         except (Variable.DoesNotExist,IndexError):
-            return( "not_found" )
+            return("not_found")
 
     def get_all_compatible_layer_versions(self):
         """ Returns Queryset of all Layer_Versions which are compatible with
@@ -613,8 +613,8 @@ class Build(models.Model):
         return list(set(re.split(r' {1,}', image_fstypes)))
 
     def get_sorted_target_list(self):
-        tgts = Target.objects.filter(build_id=self.id).order_by( 'target' )
-        return( tgts )
+        tgts = Target.objects.filter(build_id=self.id).order_by('target')
+        return(tgts)
 
     def get_recipes(self):
         """
@@ -998,13 +998,13 @@ class Target_File(models.Model):
     ITYPE_FIFO = 5
     ITYPE_CHARACTER = 6
     ITYPE_BLOCK = 7
-    ITYPES = ( (ITYPE_REGULAR ,'regular'),
-        ( ITYPE_DIRECTORY ,'directory'),
-        ( ITYPE_SYMLINK ,'symlink'),
-        ( ITYPE_SOCKET ,'socket'),
-        ( ITYPE_FIFO ,'fifo'),
-        ( ITYPE_CHARACTER ,'character'),
-        ( ITYPE_BLOCK ,'block'),
+    ITYPES = ((ITYPE_REGULAR,'regular'),
+        (ITYPE_DIRECTORY,'directory'),
+        (ITYPE_SYMLINK,'symlink'),
+        (ITYPE_SOCKET,'socket'),
+        (ITYPE_FIFO,'fifo'),
+        (ITYPE_CHARACTER,'character'),
+        (ITYPE_BLOCK,'block'),
         )
 
     target = models.ForeignKey(Target, on_delete=models.CASCADE)
@@ -1070,7 +1070,7 @@ class Task(models.Model):
         (OUTCOME_NA, ''),
     )
 
-    search_allowed_fields = [ "recipe__name", "recipe__version", "task_name", "logfile" ]
+    search_allowed_fields = ["recipe__name", "recipe__version", "task_name", "logfile"]
 
     def __init__(self, *args, **kwargs):
         super(Task, self).__init__(*args, **kwargs)
@@ -1142,7 +1142,7 @@ class Task(models.Model):
         return "%d(%d) %s:%s" % (self.pk, self.build.pk, self.recipe.name, self.task_name)
 
     class Meta:
-        ordering = ('order', 'recipe' ,)
+        ordering = ('order', 'recipe',)
         unique_together = ('build', 'recipe', 'task_name', )
 
 
@@ -1279,14 +1279,14 @@ class Package_Dependency(models.Model):
         package name.
     """
     DEPENDS_DICT = {
-        TYPE_RDEPENDS :     ("depends", "%s is required to run %s"),
-        TYPE_TRDEPENDS :    ("depends", "%s is required to run %s"),
-        TYPE_TRECOMMENDS :  ("recommends", "%s extends the usability of %s"),
-        TYPE_RRECOMMENDS :  ("recommends", "%s extends the usability of %s"),
-        TYPE_RSUGGESTS :    ("suggests", "%s is suggested for installation with %s"),
-        TYPE_RPROVIDES :    ("provides", "%s is provided by %s"),
-        TYPE_RREPLACES :    ("replaces", "%s is replaced by %s"),
-        TYPE_RCONFLICTS :   ("conflicts", "%s conflicts with %s, which will not be installed if this package is not first removed"),
+        TYPE_RDEPENDS:     ("depends", "%s is required to run %s"),
+        TYPE_TRDEPENDS:    ("depends", "%s is required to run %s"),
+        TYPE_TRECOMMENDS:  ("recommends", "%s extends the usability of %s"),
+        TYPE_RRECOMMENDS:  ("recommends", "%s extends the usability of %s"),
+        TYPE_RSUGGESTS:    ("suggests", "%s is suggested for installation with %s"),
+        TYPE_RPROVIDES:    ("provides", "%s is provided by %s"),
+        TYPE_RREPLACES:    ("replaces", "%s is replaced by %s"),
+        TYPE_RCONFLICTS:   ("conflicts", "%s conflicts with %s, which will not be installed if this package is not first removed"),
     }
 
     package = models.ForeignKey(Package, on_delete=models.CASCADE, related_name='package_dependencies_source')

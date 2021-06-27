@@ -37,7 +37,7 @@ _checksum_cache = bb.checksum.FileChecksumCache()
 
 logger = logging.getLogger("BitBake.Fetcher")
 
-CHECKSUM_LIST = [ "md5", "sha256", "sha1", "sha384", "sha512" ]
+CHECKSUM_LIST = ["md5", "sha256", "sha1", "sha384", "sha512"]
 SHOWN_CHECKSUM_LIST = ["sha256"]
 
 class BBFetchException(Exception):
@@ -580,8 +580,8 @@ def verify_checksum(ud, d, precomputed={}):
     for checksum_id in CHECKSUM_LIST:
         checksum_infos.append(compute_checksum_info(checksum_id))
 
-    checksum_dict = {ci["id"] : ci["data"] for ci in checksum_infos}
-    checksum_event = {"%ssum" % ci["id"] : ci["data"] for ci in checksum_infos}
+    checksum_dict = {ci["id"]: ci["data"] for ci in checksum_infos}
+    checksum_event = {"%ssum" % ci["id"]: ci["data"] for ci in checksum_infos}
 
     for ci in checksum_infos:
         if ci["id"] in SHOWN_CHECKSUM_LIST:

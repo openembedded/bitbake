@@ -29,7 +29,7 @@ bblogger = logging.getLogger("BitBake")
 logger = logging.getLogger("BitBake.RunQueue")
 hashequiv_logger = logging.getLogger("BitBake.RunQueue.HashEquiv")
 
-__find_sha256__ = re.compile( r'(?i)(?<![a-z0-9])[a-f0-9]{64}(?![a-z0-9])' )
+__find_sha256__ = re.compile(r'(?i)(?<![a-z0-9])[a-f0-9]{64}(?![a-z0-9])')
 
 def fn_from_tid(tid):
      return tid.rsplit(":", 1)[0]
@@ -960,7 +960,7 @@ class RunQueueData:
             for task in self.cooker.configuration.runonly:
                 if not task.startswith("do_"):
                     task = "do_{0}".format(task)
-                runonly_tids = { k: v for k, v in self.runtaskentries.items() if taskname_from_tid(k) == task }
+                runonly_tids = {k: v for k, v in self.runtaskentries.items() if taskname_from_tid(k) == task}
 
                 for tid in list(runonly_tids):
                     mark_active(tid,1)
@@ -1259,21 +1259,21 @@ class RunQueue:
         workerpipe = runQueuePipe(worker.stdout, None, self.cfgData, self, rqexec, fakerootlogs=fakerootlogs)
 
         workerdata = {
-            "taskdeps" : self.rqdata.dataCaches[mc].task_deps,
-            "fakerootenv" : self.rqdata.dataCaches[mc].fakerootenv,
-            "fakerootdirs" : self.rqdata.dataCaches[mc].fakerootdirs,
-            "fakerootnoenv" : self.rqdata.dataCaches[mc].fakerootnoenv,
-            "sigdata" : bb.parse.siggen.get_taskdata(),
-            "logdefaultlevel" : bb.msg.loggerDefaultLogLevel,
-            "build_verbose_shell" : self.cooker.configuration.build_verbose_shell,
-            "build_verbose_stdout" : self.cooker.configuration.build_verbose_stdout,
-            "logdefaultdomain" : bb.msg.loggerDefaultDomains,
-            "prhost" : self.cooker.prhost,
-            "buildname" : self.cfgData.getVar("BUILDNAME"),
-            "date" : self.cfgData.getVar("DATE"),
-            "time" : self.cfgData.getVar("TIME"),
-            "hashservaddr" : self.cooker.hashservaddr,
-            "umask" : self.cfgData.getVar("BB_DEFAULT_UMASK"),
+            "taskdeps": self.rqdata.dataCaches[mc].task_deps,
+            "fakerootenv": self.rqdata.dataCaches[mc].fakerootenv,
+            "fakerootdirs": self.rqdata.dataCaches[mc].fakerootdirs,
+            "fakerootnoenv": self.rqdata.dataCaches[mc].fakerootnoenv,
+            "sigdata": bb.parse.siggen.get_taskdata(),
+            "logdefaultlevel": bb.msg.loggerDefaultLogLevel,
+            "build_verbose_shell": self.cooker.configuration.build_verbose_shell,
+            "build_verbose_stdout": self.cooker.configuration.build_verbose_stdout,
+            "logdefaultdomain": bb.msg.loggerDefaultDomains,
+            "prhost": self.cooker.prhost,
+            "buildname": self.cfgData.getVar("BUILDNAME"),
+            "date": self.cfgData.getVar("DATE"),
+            "time": self.cfgData.getVar("TIME"),
+            "hashservaddr": self.cooker.hashservaddr,
+            "umask": self.cfgData.getVar("BB_DEFAULT_UMASK"),
         }
 
         worker.stdin.write(b"<cookerconfig>" + pickle.dumps(self.cooker.configuration) + b"</cookerconfig>")
@@ -1425,7 +1425,7 @@ class RunQueue:
         return valid
 
     def validate_hash(self, sq_data, d, siginfo, currentcount, summary):
-        locs = {"sq_data" : sq_data, "d" : d, "siginfo" : siginfo, "currentcount" : currentcount, "summary" : summary}
+        locs = {"sq_data": sq_data, "d": d, "siginfo": siginfo, "currentcount": currentcount, "summary": summary}
 
         # Metadata has **kwargs so args can be added, sq_data can also gain new fields
         call = self.hashvalidate + "(sq_data, d, siginfo=siginfo, currentcount=currentcount, summary=summary)"
@@ -1693,7 +1693,7 @@ class RunQueue:
                     match = m
             if match is None:
                 bb.fatal("Can't find a task we're supposed to have written out? (hash: %s)?" % h)
-            matches = {k : v for k, v in iter(matches.items()) if h not in k}
+            matches = {k: v for k, v in iter(matches.items()) if h not in k}
             if matches:
                 latestmatch = sorted(matches.keys(), key=lambda f: matches[f])[-1]
                 prevh = __find_sha256__.search(latestmatch).group(0)
@@ -1848,7 +1848,7 @@ class RunQueueExecute:
             pn = self.rqdata.dataCaches[mc].pkg_fn[taskfn]
             taskdata[dep] = [pn, taskname, fn]
         call = self.rq.depvalidate + "(task, taskdata, notneeded, d)"
-        locs = { "task" : task, "taskdata" : taskdata, "notneeded" : self.scenequeue_notneeded, "d" : self.cooker.data }
+        locs = {"task": task, "taskdata": taskdata, "notneeded": self.scenequeue_notneeded, "d": self.cooker.data}
         valid = bb.utils.better_eval(call, locs)
         return valid
 

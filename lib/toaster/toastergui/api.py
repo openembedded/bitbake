@@ -36,7 +36,7 @@ def _log(msg):
         print(msg)
     elif 2 == verbose:
         f1=open('/tmp/toaster.log', 'a')
-        f1.write("|" + msg + "|\n" )
+        f1.write("|" + msg + "|\n")
         f1.close()
 
 logger = logging.getLogger("toaster")

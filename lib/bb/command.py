@@ -110,7 +110,7 @@ class Command:
             if self.currentAsyncCommand is not None:
                 (command, options) = self.currentAsyncCommand
                 commandmethod = getattr(CommandsAsync, command)
-                needcache = getattr( commandmethod, "needcache" )
+                needcache = getattr(commandmethod, "needcache")
                 if needcache and self.cooker.state != bb.cooker.state.running:
                     self.cooker.updateCache()
                     return True

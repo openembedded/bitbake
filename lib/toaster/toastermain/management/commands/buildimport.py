@@ -53,11 +53,11 @@ def _log(msg):
         print(msg)
     elif 2 == verbose:
         f1=open('/tmp/toaster.log', 'a')
-        f1.write("|" + msg + "|\n" )
+        f1.write("|" + msg + "|\n")
         f1.close()
 
 
-__config_regexp__  = re.compile( r"""
+__config_regexp__  = re.compile(r"""
     ^
     (?P<exp>export\s+)?
     (?P<var>[a-zA-Z0-9\-_+.${}/~]+?)
@@ -156,7 +156,7 @@ class Command(BaseCommand):
             while s[-1] == '\\':
                 s2 = f.readline().strip()
                 lineno = lineno + 1
-                if (not s2 or s2 and s2[0] != "#") and s[0] == "#" :
+                if (not s2 or s2 and s2[0] != "#") and s[0] == "#":
                     echo("There is a confusing multiline, partially commented expression on line %s of file %s (%s).\nPlease clarify whether this is all a comment or should be parsed." % (lineno, fn, s))
                 s = s[:-1] + s2
             # skip comments
@@ -307,7 +307,7 @@ class Command(BaseCommand):
                 _log("LOCAL_CLONE(%s/%s), version=%s" % (line,sub_path,version))
 
             # capture the layer information into layers_list
-            layers_list.append( (line,sub_path,version,layer_path,is_toaster_clone) )
+            layers_list.append((line,sub_path,version,layer_path,is_toaster_clone))
         return layers_list,lv_dict
 
     #
