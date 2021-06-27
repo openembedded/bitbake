@@ -15,6 +15,7 @@ logger = logging.getLogger('BitBake.TestSiggen')
 
 import bb.siggen
 
+
 class SiggenTest(unittest.TestCase):
 
     def test_clean_basepath_simple_target_basepath(self):
@@ -64,7 +65,6 @@ class SiggenTest(unittest.TestCase):
         actual_cleaned = bb.siggen.clean_basepath(basepath)
 
         self.assertEqual(actual_cleaned, expected_cleaned)
-
 
     # def test_clean_basepath_performance(self):
     #     input_basepaths = [

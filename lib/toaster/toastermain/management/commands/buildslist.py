@@ -6,7 +6,6 @@ from django.core.management.base import BaseCommand
 from orm.models import Build
 
 
-
 class Command(BaseCommand):
     args = ""
     help = "Lists current builds"

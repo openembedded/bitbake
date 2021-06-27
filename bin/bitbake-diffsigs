@@ -26,6 +26,7 @@ logger = bb.msg.logger_create(myname)
 
 is_dump = myname == 'bitbake-dumpsig'
 
+
 def find_siginfo(tinfoil, pn, taskname, sigs=None):
     result = None
     tinfoil.set_event_mask(['bb.event.FindSigInfoResult',
@@ -50,6 +51,7 @@ def find_siginfo(tinfoil, pn, taskname, sigs=None):
         logger.error('No result returned from findSigInfo command')
         sys.exit(2)
     return result
+
 
 def find_siginfo_task(bbhandler, pn, taskname, sig1=None, sig2=None):
     """ Find the most recent signature files for the specified PN/task """

@@ -13,6 +13,7 @@ from tests.browser.selenium_helpers import SeleniumTestCase
 from orm.models import Project, Build, Recipe, Task, Layer, Layer_Version
 from orm.models import Target
 
+
 class TestBuilddashboardPageTasks(SeleniumTestCase):
     """ Test build dashboard tasks sub-page """
 

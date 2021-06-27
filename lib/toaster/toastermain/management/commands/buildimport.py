@@ -48,6 +48,8 @@ TOASTER_EPILOG = '#=== TOASTER_CONFIG_EPILOG ==='
 
 # quick development/debugging support
 verbose = 2
+
+
 def _log(msg):
     if 1 == verbose:
         print(msg)
@@ -81,6 +83,7 @@ __config_regexp__ = re.compile(r"""
     (?P=apo)
     $
     """, re.X)
+
 
 class Command(BaseCommand):
     args = "<name> <path> <release>"

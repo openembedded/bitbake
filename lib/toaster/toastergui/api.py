@@ -31,6 +31,8 @@ from toastergui.templatetags.projecttags import filtered_filesizeformat
 
 # development/debugging support
 verbose = 2
+
+
 def _log(msg):
     if 1 == verbose:
         print(msg)
@@ -38,6 +40,7 @@ def _log(msg):
         f1 = open('/tmp/toaster.log', 'a')
         f1.write("|" + msg + "|\n")
         f1.close()
+
 
 logger = logging.getLogger("toaster")
 
@@ -180,6 +183,7 @@ class XhrProjectUpdate(View):
         response.status_code = 500
         return response
 
+
 class XhrSetDefaultImageUrl(View):
 
     def get(self, request, *args, **kwargs):
@@ -260,6 +264,7 @@ def scan_layer_content(layer, layer_version):
 
         except Exception as e:
             logger.warning("ERROR:scan_layer_content: %s" % e)
+
 
 class XhrLayer(View):
     """ Delete, Get, Add and Update Layer information
@@ -989,6 +994,7 @@ class XhrProject(View):
 
     Entry point: /xhr_project/<project_id>
     """
+
     def post(self, request, *args, **kwargs):
         """
           Edit project control
@@ -1187,6 +1193,7 @@ class XhrBuild(View):
 
     Entry point: /xhr_build/<build_id>
     """
+
     def delete(self, request, *args, **kwargs):
         """
           Delete build data

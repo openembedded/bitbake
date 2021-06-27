@@ -14,9 +14,11 @@ import bb.parse
 import logging
 import os
 
+
 class LogRecord():
     def __enter__(self):
         logs = []
+
         class LogHandler(logging.Handler):
             def emit(self, record):
                 logs.append(record)
@@ -25,10 +27,12 @@ class LogRecord():
         self.handler = handler
         logger.addHandler(handler)
         return logs
+
     def __exit__(self, type, value, traceback):
         logger = logging.getLogger("BitBake")
         logger.removeHandler(self.handler)
         return
+
 
 def logContains(item, logs):
     for l in logs:
@@ -36,6 +40,7 @@ def logContains(item, logs):
         if item in m:
             return True
     return False
+
 
 class DataExpansions(unittest.TestCase):
     def setUp(self):
@@ -144,6 +149,7 @@ class DataExpansions(unittest.TestCase):
         keys = list(newd.keys())
         self.assertCountEqual(keys, ['value_of_foo', 'foo'])
 
+
 class TestNestedExpansions(unittest.TestCase):
     def setUp(self):
         self.d = bb.data.init()
@@ -185,6 +191,7 @@ class TestNestedExpansions(unittest.TestCase):
         val = self.d.expand("${${@'value_of' + '_f'+'o'+'o'+'b'+'a'+'r'}}")
         self.assertEqual(str(val), "187")
 
+
 class TestMemoize(unittest.TestCase):
     def test_memoized(self):
         d = bb.data.init()
@@ -212,6 +219,7 @@ class TestMemoize(unittest.TestCase):
         self.assertEqual(d.getVar("foo", False),
                          d.getVar("bar", False))
 
+
 class TestConcat(unittest.TestCase):
     def setUp(self):
         self.d = bb.data.init()
@@ -235,6 +243,7 @@ class TestConcat(unittest.TestCase):
         self.d.appendVar("TEST", ":val2")
         self.d.appendVar("TEST", ":${BAR}")
         self.assertEqual(self.d.getVar("TEST"), "foo:val:val2:bar")
+
 
 class TestConcatOverride(unittest.TestCase):
     def setUp(self):
@@ -318,6 +327,7 @@ class TestConcatOverride(unittest.TestCase):
         self.d.setVar("TEST", " A B")
         self.d.setVar("TEST_remove", "B")
         self.assertEqual(self.d.getVar("TEST"), " A ")
+
 
 class TestOverrides(unittest.TestCase):
     def setUp(self):
@@ -405,6 +415,7 @@ class TestOverrides(unittest.TestCase):
         bb.data.expandKeys(self.d)
         self.assertEqual(self.d.getVar("VERSION"), "2")
 
+
 class TestKeyExpansion(unittest.TestCase):
     def setUp(self):
         self.d = bb.data.init()
@@ -418,6 +429,7 @@ class TestKeyExpansion(unittest.TestCase):
             bb.data.expandKeys(self.d)
             self.assertTrue(logContains("Variable key VAL_${FOO} (A) replaces original key VAL_foo (B)", logs))
         self.assertEqual(self.d.getVar("VAL_foo"), "A")
+
 
 class TestFlags(unittest.TestCase):
     def setUp(self):
@@ -521,6 +533,7 @@ class TaskHash(unittest.TestCase):
         d.setVar("VAR2", "B")
         nexthash = gettask_bashhash("mytask", d)
         self.assertEqual(orighash, nexthash)
+
 
 class Serialize(unittest.TestCase):
 

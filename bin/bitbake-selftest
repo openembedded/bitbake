@@ -43,6 +43,7 @@ for t in tests:
 # Set-up logging
 class StdoutStreamHandler(logging.StreamHandler):
     """Special handler so that unittest is able to capture stdout"""
+
     def __init__(self):
         # Override __init__() because we don't want to set self.stream here
         logging.Handler.__init__(self)
@@ -64,6 +65,7 @@ Environment variables:
                         connection
   BB_TMPDIR_NOCLEAN     set to 'yes' to preserve test tmp directories
 """
+
 
 class main(unittest.main):
     def _print_help(self, *args, **kwargs):

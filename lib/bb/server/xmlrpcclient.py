@@ -14,6 +14,7 @@ import xmlrpc.client
 import bb
 from bb.ui import uievent
 
+
 class BBTransport(xmlrpc.client.Transport):
     def __init__(self, timeout):
         self.timeout = timeout
@@ -41,10 +42,12 @@ class BBTransport(xmlrpc.client.Transport):
             h.putheader("Bitbake-token", self.connection_token)
         xmlrpc.client.Transport.send_content(self, h, body)
 
+
 def _create_server(host, port, timeout=60):
     t = BBTransport(timeout)
     s = xmlrpc.client.ServerProxy("http://%s:%d/" % (host, port), transport=t, allow_none=True, use_builtin_types=True)
     return s, t
+
 
 def check_connection(remote, timeout):
     try:
@@ -62,6 +65,7 @@ def check_connection(remote, timeout):
     except ConnectionError:
         return False
     return True
+
 
 class BitBakeXMLRPCServerConnection(object):
     def __init__(self, host, port, clientinfo=("localhost", 0), observer_only=False, featureset=None):
@@ -110,6 +114,7 @@ class BitBakeXMLRPCServerConnection(object):
             self.connection.removeClient()
         except:
             pass
+
 
 def connectXMLRPC(remote, featureset, observer_only=False, token=None):
     # The format of "remote" must be "server:port"

@@ -70,14 +70,17 @@ if 0:
 
 worker_queue = queue.Queue()
 
+
 def worker_fire(event, d):
     data = b"<event>" + pickle.dumps(event) + b"</event>"
     worker_fire_prepickled(data)
+
 
 def worker_fire_prepickled(event):
     global worker_queue
 
     worker_queue.put(event)
+
 
 #
 # We can end up with write contention with the cooker, it can be trying to send commands
@@ -85,6 +88,7 @@ def worker_fire_prepickled(event):
 # back data to cooker.
 #
 worker_thread_exit = False
+
 
 def worker_flush(worker_queue):
     worker_queue_int = b""
@@ -108,8 +112,10 @@ def worker_flush(worker_queue):
         if worker_thread_exit and worker_queue.empty() and not worker_queue_int:
             return
 
+
 worker_thread = Thread(target=worker_flush, args=(worker_queue,))
 worker_thread.start()
+
 
 def worker_child_fire(event, d):
     global worker_pipe
@@ -126,19 +132,24 @@ def worker_child_fire(event, d):
         sigterm_handler(None, None)
         raise
 
+
 bb.event.worker_fire = worker_fire
 
 lf = None
 #lf = open("/tmp/workercommandlog", "w+")
+
+
 def workerlog_write(msg):
     if lf:
         lf.write(msg)
         lf.flush()
 
+
 def sigterm_handler(signum, frame):
     signal.signal(signal.SIGTERM, signal.SIG_DFL)
     os.killpg(0, signal.SIGTERM)
     sys.exit()
+
 
 def fork_off_task(cfg, data, databuilder, workerdata, fn, task, taskname, taskhash, unihash, appends, taskdepdata, extraconfigdata, quieterrors=False, dry_run_exec=False):
     # We need to setup the environment BEFORE the fork, since
@@ -305,10 +316,12 @@ def fork_off_task(cfg, data, databuilder, workerdata, fn, task, taskname, taskha
 
     return pid, pipein, pipeout
 
+
 class runQueueWorkerPipe():
     """
     Abstraction for a pipe between a worker thread and the worker server
     """
+
     def __init__(self, pipein, pipeout):
         self.input = pipein
         if pipeout:
@@ -341,7 +354,9 @@ class runQueueWorkerPipe():
             print("Warning, worker child left partial message: %s" % self.queue)
         self.input.close()
 
+
 normalexit = False
+
 
 class BitbakeWorker(object):
     def __init__(self, din):
@@ -400,7 +415,6 @@ class BitbakeWorker(object):
             if len(self.build_pids):
                 while self.process_waitpid():
                     continue
-
 
     def handle_item(self, item, func):
         if self.queue.startswith(b"<" + item + b">"):
@@ -495,6 +509,7 @@ class BitbakeWorker(object):
                     pass
         for pipe in self.build_pipes:
             self.build_pipes[pipe].read()
+
 
 try:
     worker = BitbakeWorker(os.fdopen(sys.stdin.fileno(), 'rb'))

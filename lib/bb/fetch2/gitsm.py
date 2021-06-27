@@ -27,6 +27,7 @@ from bb.fetch2 import runfetchcmd
 from bb.fetch2 import logger
 from bb.fetch2 import Fetch
 
+
 class GitSM(Git):
     def supports(self, ud, d):
         """
@@ -151,6 +152,7 @@ class GitSM(Git):
             pass
 
         need_update_list = []
+
         def need_update_submodule(ud, url, module, modpath, workdir, d):
             url += ";bareclone=1;nobranch=1"
 
@@ -261,6 +263,7 @@ class GitSM(Git):
         import tempfile
 
         urldata = []
+
         def add_submodule(ud, url, module, modpath, workdir, d):
             url += ";bareclone=1;nobranch=1"
             newfetch = Fetch([url], d, cache=False)

@@ -30,6 +30,7 @@ from bb.fetch2.npm import npm_localfile
 from bb.fetch2.npm import npm_unpack
 from bb.utils import is_semver
 
+
 def foreach_dependencies(shrinkwrap, callback=None, dev=False):
     """
         Run a callback for each dependencies of a shrinkwrap file.
@@ -52,6 +53,7 @@ def foreach_dependencies(shrinkwrap, callback=None, dev=False):
                 callback(name, deps[name], subtree)
 
     _walk_deps(shrinkwrap.get("dependencies", {}), [])
+
 
 class NpmShrinkWrap(FetchMethod):
     """Class to fetch all package from a shrinkwrap file"""

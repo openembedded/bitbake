@@ -30,6 +30,7 @@ featureSet = [bb.cooker.CookerFeatures.SEND_SANITYEVENTS]
 logger = logging.getLogger("BitBake")
 interactive = sys.stdout.isatty()
 
+
 class BBProgress(progressbar.ProgressBar):
     def __init__(self, msg, maxval, widgets=None, extrapos=-1, resize_handler=None):
         self.msg = msg
@@ -73,6 +74,7 @@ class BBProgress(progressbar.ProgressBar):
         # We always want the bar to print when update() is called
         return True
 
+
 class NonInteractiveProgress(object):
     fobj = sys.stdout
 
@@ -96,11 +98,13 @@ class NonInteractiveProgress(object):
         self.fobj.flush()
         self.finished = True
 
+
 def new_progress(msg, maxval):
     if interactive:
         return BBProgress(msg, maxval)
     else:
         return NonInteractiveProgress(msg, maxval)
+
 
 def pluralise(singular, plural, qty):
     if(qty == 1):
@@ -118,6 +122,7 @@ class InteractConsoleLogFilter(logging.Filter):
             return False
         self.tf.clearFooter()
         return True
+
 
 class TerminalFilter(object):
     rows = 25
@@ -321,6 +326,7 @@ class TerminalFilter(object):
             fd = sys.stdin.fileno()
             self.termios.tcsetattr(fd, self.termios.TCSADRAIN, self.stdinbackup)
 
+
 def print_event_log(event, includelogs, loglines, termfilter):
     # FIXME refactor this out further
     logfile = event.logfile
@@ -347,6 +353,7 @@ def print_event_log(event, includelogs, loglines, termfilter):
                 for line in lines:
                     print(line)
 
+
 def _log_settings_from_server(server, observe_only):
     # Get values of variables which control our output
     includelogs, error = server.runCommand(["getVariable", "BBINCLUDELOGS"])
@@ -371,6 +378,7 @@ def _log_settings_from_server(server, observe_only):
         raise BaseException(error)
     return includelogs, loglines, consolelogfile, logconfigfile
 
+
 _evt_list = ["bb.runqueue.runQueueExitWait", "bb.event.LogExecTTY", "logging.LogRecord",
               "bb.build.TaskFailed", "bb.build.TaskBase", "bb.event.ParseStarted",
               "bb.event.ParseProgress", "bb.event.ParseCompleted", "bb.event.CacheLoadStarted",
@@ -381,6 +389,7 @@ _evt_list = ["bb.runqueue.runQueueExitWait", "bb.event.LogExecTTY", "logging.Log
               "bb.event.BuildBase", "bb.build.TaskStarted", "bb.build.TaskSucceeded", "bb.build.TaskFailedSilent",
               "bb.build.TaskProgress", "bb.event.ProcessStarted", "bb.event.ProcessProgress", "bb.event.ProcessFinished"]
 
+
 def drain_events_errorhandling(eventHandler):
     # We don't have logging setup, we do need to show any events we see before exiting
     event = True
@@ -389,6 +398,7 @@ def drain_events_errorhandling(eventHandler):
         event = eventHandler.waitEvent(0)
         if isinstance(event, logging.LogRecord):
             logger.handle(event)
+
 
 def main(server, eventHandler, params, tf=TerminalFilter):
 
@@ -594,7 +604,6 @@ def main(server, eventHandler, params, tf=TerminalFilter):
         elif not ret:
             logger.error("Command '%s' failed: returned %s" % (cmdline, ret))
             return 1
-
 
     parseprogress = None
     cacheprogress = None

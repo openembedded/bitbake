@@ -12,6 +12,8 @@ import re
 import logging
 
 # Cooker tests
+
+
 class CookerTest(unittest.TestCase):
     def setUp(self):
         # At least one variable needs to be set

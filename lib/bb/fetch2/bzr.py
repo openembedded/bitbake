@@ -20,6 +20,7 @@ from bb.fetch2 import FetchError
 from bb.fetch2 import runfetchcmd
 from bb.fetch2 import logger
 
+
 class Bzr(FetchMethod):
     def supports(self, ud, d):
         return ud.type in ['bzr']

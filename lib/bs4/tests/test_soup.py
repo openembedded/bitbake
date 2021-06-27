@@ -34,6 +34,7 @@ except ImportError as e:
 PYTHON_2_PRE_2_7 = (sys.version_info < (2, 7))
 PYTHON_3_PRE_3_2 = (sys.version_info[0] == 3 and sys.version_info < (3, 2))
 
+
 class TestConstructor(SoupTest):
 
     def test_short_unicode_input(self):
@@ -96,6 +97,7 @@ class TestWarnings(SoupTest):
         self.assertRaises(
             TypeError, self.soup, "<a>", no_such_argument=True)
 
+
 class TestWarnings(SoupTest):
 
     def test_disk_file_warning(self):
@@ -124,6 +126,7 @@ class TestWarnings(SoupTest):
             soup = self.soup("http://www.crummy.com/ is great")
         self.assertEqual(0, len(w))
 
+
 class TestSelectiveParsing(SoupTest):
 
     def test_parse_with_soupstrainer(self):
@@ -135,6 +138,7 @@ class TestSelectiveParsing(SoupTest):
 
 class TestEntitySubstitution(unittest.TestCase):
     """Standalone tests of the EntitySubstitution class."""
+
     def setUp(self):
         self.sub = EntitySubstitution
 
@@ -262,6 +266,7 @@ class TestEncodingConversion(SoupTest):
         markup = '<div><a \N{SNOWMAN}="snowman"></a></div>'
         self.assertEqual(self.soup(markup).div.encode("utf8"), markup.encode("utf8"))
 
+
 class TestUnicodeDammit(unittest.TestCase):
     """Standalone tests of UnicodeDammit."""
 
@@ -299,7 +304,6 @@ class TestUnicodeDammit(unittest.TestCase):
         dammit = UnicodeDammit(utf8)
         self.assertEqual(dammit.original_encoding.lower(), 'utf-8')
         self.assertEqual(dammit.unicode_markup, 'Sacr\xe9 bleu! \N{SNOWMAN}')
-
 
     def test_convert_hebrew(self):
         hebrew = b"\xed\xe5\xec\xf9"
@@ -436,6 +440,7 @@ class TestUnicodeDammit(unittest.TestCase):
             output = UnicodeDammit.detwingle(input)
             self.assertEqual(output, input)
 
+
 class TestNamedspacedAttribute(SoupTest):
 
     def test_name_may_be_none(self):
@@ -470,7 +475,6 @@ class TestAttributeValueWithCharsetSubstitution(unittest.TestCase):
         self.assertEqual("euc-jp", value)
         self.assertEqual("euc-jp", value.original_value)
         self.assertEqual("utf8", value.encode("utf8"))
-
 
     def test_content_meta_attribute_value(self):
         value = ContentMetaAttributeValue("text/html; charset=euc-jp")

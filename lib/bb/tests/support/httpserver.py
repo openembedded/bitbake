@@ -10,16 +10,19 @@ import signal
 import logging
 from socketserver import ThreadingMixIn
 
+
 class HTTPServer(ThreadingMixIn, http.server.HTTPServer):
 
     def server_start(self, root_dir, logger):
         os.chdir(root_dir)
         self.serve_forever()
 
+
 class HTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
     def log_message(self, format_str, *args):
         pass
+
 
 class HTTPService(object):
 
@@ -52,7 +55,6 @@ class HTTPService(object):
 
         if self.logger:
             self.logger.info("Started HTTPService on %s:%s" % (self.host, self.port))
-
 
     def stop(self):
         if hasattr(self, "server"):

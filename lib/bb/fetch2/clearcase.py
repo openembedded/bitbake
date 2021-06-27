@@ -58,8 +58,10 @@ from bb.fetch2 import ParameterError
 from bb.fetch2 import runfetchcmd
 from bb.fetch2 import logger
 
+
 class ClearCase(FetchMethod):
     """Class to fetch urls via 'clearcase'"""
+
     def init(self, d):
         pass
 

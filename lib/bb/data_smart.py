@@ -37,6 +37,7 @@ __expand_python_regexp__ = re.compile(r"\${@.+?}")
 __whitespace_split__ = re.compile(r'(\s)')
 __override_regexp__ = re.compile(r'[a-z0-9]+')
 
+
 def infer_caller_details(loginfo, parent=False, varval=True):
     """Save the caller the trouble of specifying everything."""
     # Save effort.
@@ -49,6 +50,7 @@ def infer_caller_details(loginfo, parent=False, varval=True):
     # Infer caller's likely values for variable (var) and value (value), 
     # to reduce clutter in the rest of the code.
     above = None
+
     def set_above():
         try:
             raise Exception
@@ -82,6 +84,7 @@ def infer_caller_details(loginfo, parent=False, varval=True):
         loginfo['line'] = line
         if func not in loginfo:
             loginfo['func'] = func
+
 
 class VariableParse:
     def __init__(self, varname, d, val=None):
@@ -150,6 +153,7 @@ class DataContext(dict):
         else:
             return value
 
+
 class ExpansionError(Exception):
     def __init__(self, varname, expression, exception):
         self.expression = expression
@@ -164,8 +168,10 @@ class ExpansionError(Exception):
             self.msg = "Failure expanding expression %s which triggered exception %s: %s" % (expression, type(exception).__name__, exception)
         Exception.__init__(self, self.msg)
         self.args = (varname, expression, exception)
+
     def __str__(self):
         return self.msg
+
 
 class IncludeHistory(object):
     def __init__(self, parent=None, filename='[TOP LEVEL]'):
@@ -209,6 +215,7 @@ class IncludeHistory(object):
         for child in self.children:
             o.write("\n")
             child.emit(o, level)
+
 
 class VariableHistory(object):
     def __init__(self, dataroot):
@@ -367,6 +374,7 @@ class VariableHistory(object):
             else:
                 self.variables[var] = []
 
+
 class DataSmart(MutableMapping):
     def __init__(self):
         self.dict = {}
@@ -481,7 +489,6 @@ class DataSmart(MutableMapping):
             self.dict[var] = copy.copy(local_var)
         else:
             self.initVar(var)
-
 
     def setVar(self, var, value, **loginfo):
         #print("var=" + str(var) + "  val=" + str(value))
@@ -743,7 +750,6 @@ class DataSmart(MutableMapping):
             elif flag == "_content" and "_defaultval" in local_var and not noweakdefault:
                 value = copy.copy(local_var["_defaultval"])
 
-
         if flag == "_content" and local_var is not None and "_append" in local_var and not parsing:
             if not value:
                 value = ""
@@ -877,7 +883,6 @@ class DataSmart(MutableMapping):
             return None
         return flags
 
-
     def delVarFlags(self, var, **loginfo):
         self.expand_cache = {}
         if not var in self.dict:
@@ -942,6 +947,7 @@ class DataSmart(MutableMapping):
     def __iter__(self):
         deleted = set()
         overrides = set()
+
         def keylist(d):        
             klist = set()
             for key in d:

@@ -13,6 +13,7 @@ from tests.browser.selenium_helpers import SeleniumTestCase
 
 from orm.models import Build, Project
 
+
 class TestProjectPage(SeleniumTestCase):
     """ Test project data at /project/X/ is displayed correctly """
 

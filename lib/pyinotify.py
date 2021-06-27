@@ -12,6 +12,7 @@ pyinotify
 @contact: seb@dbzteam.org
 """
 
+
 class PyinotifyError(Exception):
     """Indicates exceptions raised by a Pyinotify class."""
     pass
@@ -21,6 +22,7 @@ class UnsupportedPythonVersionError(PyinotifyError):
     """
     Raised on unsupported Python versions.
     """
+
     def __init__(self, version):
         """
         @param version: Current Python version
@@ -89,6 +91,7 @@ class InotifyBindingNotFoundError(PyinotifyError):
     """
     Raised when no inotify support couldn't be found.
     """
+
     def __init__(self):
         err = "Couldn't find any inotify binding"
         PyinotifyError.__init__(self, err)
@@ -247,6 +250,7 @@ def logger_init():
     log.setLevel(20)
     return log
 
+
 log = logger_init()
 
 
@@ -260,6 +264,7 @@ class ProcINotify:
       - Read max_queued_events attribute: myvar = max_queued_events.value
       - Update max_queued_events attribute: max_queued_events.value = 42
     """
+
     def __init__(self, attr):
         self._base = "/proc/sys/fs/inotify"
         self._attr = attr
@@ -449,6 +454,7 @@ class _Event:
     is the base class and should be subclassed.
 
     """
+
     def __init__(self, dict_):
         """
         Attach attributes (contained in dict_) to self.
@@ -491,6 +497,7 @@ class _RawEvent(_Event):
     Raw event, it contains only the informations provided by the system.
     It doesn't infer anything.
     """
+
     def __init__(self, wd, mask, cookie, name):
         """
         @param wd: Watch Descriptor.
@@ -548,6 +555,7 @@ class Event(_Event):
       - dir (bool): True if the event was raised against a directory.
 
     """
+
     def __init__(self, raw):
         """
         Concretely, this is the raw event plus inferred infos.
@@ -572,6 +580,7 @@ class ProcessEventError(PyinotifyError):
     """
     ProcessEventError Exception. Raised on ProcessEvent error.
     """
+
     def __init__(self, err):
         """
         @param err: Exception error description.
@@ -584,6 +593,7 @@ class _ProcessEvent:
     """
     Abstract processing event class.
     """
+
     def __call__(self, event):
         """
         To behave like a functor the object must be callable.
@@ -633,6 +643,7 @@ class _SysProcessEvent(_ProcessEvent):
          event, he is not processed as the others events, instead, its
          value is captured and appropriately aggregated to dst event.
     """
+
     def __init__(self, wm, notifier):
         """
 
@@ -929,6 +940,7 @@ class PrintAllEvents(ProcessEvent):
     Dummy class used to print events strings representations. For instance this
     class is used from command line to print all received events to stdout.
     """
+
     def my_init(self, out=None):
         """
         @param out: Where events will be written.
@@ -957,6 +969,7 @@ class ChainIfTrue(ProcessEvent):
     Makes conditional chaining depending on the result of the nested
     processing instance.
     """
+
     def my_init(self, func):
         """
         Method automatically called from base class constructor.
@@ -971,6 +984,7 @@ class Stats(ProcessEvent):
     """
     Compute and display trivial statistics about processed events.
     """
+
     def my_init(self):
         """
         Method automatically called from base class constructor.
@@ -1044,6 +1058,7 @@ class Stats(ProcessEvent):
         unity = scale / m
         fmt = '%%-26s%%-%ds%%s' % (len(output_format.field_value('@' * scale))
                                    + 1)
+
         def func(x):
             return fmt % (output_format.field_name(x[0]),
                           output_format.field_value('@' * int(x[1] * unity)),
@@ -1057,6 +1072,7 @@ class NotifierError(PyinotifyError):
     Notifier Exception. Raised on Notifier error.
 
     """
+
     def __init__(self, err):
         """
         @param err: Exception string's description.
@@ -1070,6 +1086,7 @@ class Notifier:
     Read notifications, process events.
 
     """
+
     def __init__(self, watch_manager, default_proc_fun=None, read_freq=0,
                  threshold=0, timeout=None):
         """
@@ -1395,6 +1412,7 @@ class ThreadedNotifier(threading.Thread, Notifier):
     through Notifier class. Moreover Notifier should be considered first because
     it is not threaded and could be easily daemonized.
     """
+
     def __init__(self, watch_manager, default_proc_fun=None, read_freq=0,
                  threshold=0, timeout=None):
         """
@@ -1481,6 +1499,7 @@ class AsyncNotifier(asyncore.file_dispatcher, Notifier):
     use pyinotify along with the asyncore framework.
 
     """
+
     def __init__(self, watch_manager, default_proc_fun=None, read_freq=0,
                  threshold=0, timeout=None, channel_map=None):
         """
@@ -1509,6 +1528,7 @@ class TornadoAsyncNotifier(Notifier):
     Tornado ioloop adapter.
 
     """
+
     def __init__(self, watch_manager, ioloop, callback=None,
                  default_proc_fun=None, read_freq=0, threshold=0, timeout=None,
                  channel_map=None):
@@ -1552,6 +1572,7 @@ class AsyncioNotifier(Notifier):
     asyncio/trollius event loop adapter.
 
     """
+
     def __init__(self, watch_manager, loop, callback=None,
                  default_proc_fun=None, read_freq=0, threshold=0, timeout=None):
         """
@@ -1640,6 +1661,7 @@ class ExcludeFilter:
     """
     ExcludeFilter is an exclusion filter.
     """
+
     def __init__(self, arg_lst):
         """
         Examples:
@@ -1701,6 +1723,7 @@ class WatchManagerError(Exception):
     WatchManager Exception. Raised on error encountered on watches
     operations.
     """
+
     def __init__(self, msg, wmd):
         """
         @param msg: Exception string's description.
@@ -1721,6 +1744,7 @@ class WatchManager:
     there are ThreadedNotifier instances.
 
     """
+
     def __init__(self, exclude_filter=lambda path: False):
         """
         Initialization: init inotify, init watch manager dictionary.
@@ -2121,7 +2145,6 @@ class WatchManager:
             log.debug('Watch WD=%d (%s) removed', awd, self.get_path(awd))
         return ret_
 
-
     def watch_transient_file(self, filename, mask, proc_class):
         """
         Watch a transient file, which will be created and deleted frequently
@@ -2177,6 +2200,7 @@ class RawOutputFormat:
     """
     Format string representations.
     """
+
     def __init__(self, format=None):
         self.format = format or {}
 
@@ -2202,12 +2226,15 @@ class RawOutputFormat:
         """Class name color."""
         return self.format.get('red', '') + self.simple(s, 'bold')
 
+
 output_format = RawOutputFormat()
+
 
 class ColoredOutputFormat(RawOutputFormat):
     """
     Format colored string representations.
     """
+
     def __init__(self):
         f = {'normal': '\033[0m',
              'black': '\033[30m',

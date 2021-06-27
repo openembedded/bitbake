@@ -13,6 +13,7 @@ from tests.browser.selenium_helpers import SeleniumTestCase
 from orm.models import Project, Build, Layer, Layer_Version, Recipe, Target
 from orm.models import Task, Task_Dependency
 
+
 class TestTaskPage(SeleniumTestCase):
     """ Test page which shows an individual task """
     RECIPE_NAME = 'bar'

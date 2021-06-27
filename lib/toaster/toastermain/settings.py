@@ -147,11 +147,13 @@ STATICFILES_FINDERS = (
 # Make this unique, and don't share it with anybody.
 SECRET_KEY = 'NOT_SUITABLE_FOR_HOSTED_DEPLOYMENT'
 
+
 class InvalidString(str):
     def __mod__(self, other):
         from django.template.base import TemplateSyntaxError
         raise TemplateSyntaxError(
             "Undefined variable or unknown value for: \"%s\"" % other)
+
 
 TEMPLATES = [
     {
@@ -347,10 +349,14 @@ if DEBUG and SQL_DEBUG:
 
 # If we're using sqlite, we need to tweak the performance a bit
 from django.db.backends.signals import connection_created
+
+
 def activate_synchronous_off(sender, connection, **kwargs):
     if connection.vendor == 'sqlite':
         cursor = connection.cursor()
         cursor.execute('PRAGMA synchronous = 0;')
+
+
 connection_created.connect(activate_synchronous_off)
 #
 

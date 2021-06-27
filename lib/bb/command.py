@@ -25,32 +25,40 @@ import bb.event
 import bb.cooker
 import bb.remotedata
 
+
 class DataStoreConnectionHandle(object):
     def __init__(self, dsindex=0):
         self.dsindex = dsindex
 
+
 class CommandCompleted(bb.event.Event):
     pass
+
 
 class CommandExit(bb.event.Event):
     def __init__(self, exitcode):
         bb.event.Event.__init__(self)
         self.exitcode = int(exitcode)
 
+
 class CommandFailed(CommandExit):
     def __init__(self, message):
         self.error = message
         CommandExit.__init__(self, 1)
+
     def __str__(self):
         return "Command execution failed: %s" % self.error
 
+
 class CommandError(Exception):
     pass
+
 
 class Command:
     """
     A queue of asynchronous commands for bitbake
     """
+
     def __init__(self, cooker):
         self.cooker = cooker
         self.cmds_sync = CommandsSync()
@@ -150,6 +158,7 @@ class Command:
     def reset(self):
         if self.remotedatastores:
            self.remotedatastores = bb.remotedata.RemoteDatastores(self.cooker)
+
 
 class CommandsSync:
     """
@@ -406,6 +415,7 @@ class CommandsSync:
     def getSkippedRecipes(self, command, params):
         # Return list sorted by reverse priority order
         import bb.cache
+
         def sortkey(x):
             vfn, _ = x
             realfn, _, mc = bb.cache.virtualfn2realfn(vfn)
@@ -564,6 +574,7 @@ class CommandsSync:
         idx = command.remotedatastores.store(envdata)
         return DataStoreConnectionHandle(idx)
     parseRecipeFile.readonly = True
+
 
 class CommandsAsync:
     """

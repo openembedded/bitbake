@@ -55,6 +55,7 @@ ALL_SYMBOLS.update(BINOP_SYMBOLS)
 ALL_SYMBOLS.update(CMPOP_SYMBOLS)
 ALL_SYMBOLS.update(UNARYOP_SYMBOLS)
 
+
 def to_source(node, indent_with=' ' * 4, add_line_information=False):
     """This function can convert a node tree back into python sourcecode.
     This is useful for debugging purposes, especially if you're dealing with
@@ -121,6 +122,7 @@ class SourceGenerator(NodeVisitor):
 
     def signature(self, node):
         want_comma = []
+
         def write_comma():
             if want_comma:
                 self.write(', ')
@@ -193,6 +195,7 @@ class SourceGenerator(NodeVisitor):
 
     def visit_ClassDef(self, node):
         have_args = []
+
         def paren_or_comma():
             if have_args:
                 self.write(', ')
@@ -364,6 +367,7 @@ class SourceGenerator(NodeVisitor):
 
     def visit_Call(self, node):
         want_comma = []
+
         def write_comma():
             if want_comma:
                 self.write(', ')

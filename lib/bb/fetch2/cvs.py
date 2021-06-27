@@ -18,10 +18,12 @@ import bb
 from bb.fetch2 import FetchMethod, FetchError, MissingParameterError, logger
 from bb.fetch2 import runfetchcmd
 
+
 class Cvs(FetchMethod):
     """
     Class to fetch a module or modules from cvs repositories
     """
+
     def supports(self, ud, d):
         """
         Check to see if a given url can be fetched with cvs.

@@ -40,6 +40,7 @@ logger = logging.getLogger("toaster")
 project_enable = ('1' == os.environ.get('TOASTER_BUILDSERVER'))
 is_project_specific = ('1' == os.environ.get('TOASTER_PROJECTSPECIFIC'))
 
+
 class MimeTypeFinder(object):
     # setting this to False enables additional non-standard mimetypes
     # to be included in the guess
@@ -56,6 +57,8 @@ class MimeTypeFinder(object):
         return guessed_type
 
 # single point to add global values into the context before rendering
+
+
 def toaster_render(request, page, context):
     context['project_enable'] = project_enable
     context['project_specific'] = is_project_specific
@@ -84,6 +87,7 @@ def landing(request):
     context = {'lvs_nos': Layer_Version.objects.all().count()}
 
     return toaster_render(request, 'landing.html', context)
+
 
 def objtojson(obj):
     from django.db.models.query import QuerySet
@@ -141,7 +145,6 @@ def _build_page_range(paginator, index=1):
     except EmptyPage:
         page = paginator.page(paginator.num_pages)
 
-
     page.page_range = [page.number]
     crt_range = 0
     for i in range(1, 5):
@@ -165,6 +168,7 @@ def _verify_parameters(g, mandatory_parameters):
         return miss
     return None
 
+
 def _redirect_parameters(view, g, mandatory_parameters, *args, **kwargs):
     try:
         from urllib import unquote, urlencode
@@ -180,6 +184,7 @@ def _redirect_parameters(view, g, mandatory_parameters, *args, **kwargs):
 
     return redirect(url + "?%s" % urlencode(params), permanent=False, **kwargs)
 
+
 class RedirectException(Exception):
     def __init__(self, view, g, mandatory_parameters, *args, **kwargs):
         super(RedirectException, self).__init__()
@@ -192,10 +197,12 @@ class RedirectException(Exception):
     def get_redirect_response(self):
         return _redirect_parameters(self.view, self.g, self.mandatory_parameters, self.oargs, **self.okwargs)
 
+
 FIELD_SEPARATOR = ":"
 AND_VALUE_SEPARATOR = "!"
 OR_VALUE_SEPARATOR = "|"
 DESCENDING = "-"
+
 
 def __get_q_for_val(name, value):
     if "OR" in value or "AND" in value:
@@ -222,6 +229,7 @@ def __get_q_for_val(name, value):
         kwargs = {name: value}
         return Q(**kwargs)
 
+
 def _get_filtering_query(filter_string):
 
     search_terms = filter_string.split(FIELD_SEPARATOR)
@@ -241,11 +249,13 @@ def _get_filtering_query(filter_string):
 
     return and_query
 
+
 def _get_toggle_order(request, orderkey, toggle_reverse=False):
     if toggle_reverse:
         return "%s:+" % orderkey if request.GET.get('orderby', "") == "%s:-" % orderkey else "%s:-" % orderkey
     else:
         return "%s:-" % orderkey if request.GET.get('orderby', "") == "%s:+" % orderkey else "%s:+" % orderkey
+
 
 def _get_toggle_order_icon(request, orderkey):
     if request.GET.get('orderby', "") == "%s:+" % orderkey:
@@ -256,6 +266,8 @@ def _get_toggle_order_icon(request, orderkey):
         return None
 
 # we check that the input comes in a valid form that we can recognize
+
+
 def _validate_input(field_input, model):
 
     invalid = None
@@ -285,6 +297,8 @@ def _validate_input(field_input, model):
 
 # uses search_allowed_fields in orm/models.py to create a search query
 # for these fields with the supplied input text
+
+
 def _get_search_results(search_term, queryset, model):
     search_object = None
     for st in search_term.split(" "):
@@ -342,6 +356,8 @@ def _get_queryset(model, queryset, filter_string, search_term, ordering_string, 
 # returns the value of entries per page and the name of the applied sorting field.
 # if the value is given explicitly as a GET parameter it will be the first selected,
 # otherwise the cookie value will be used.
+
+
 def _get_parameters_values(request, default_count, default_order):
     current_url = resolve(request.path_info).url_name
     pagesize = request.GET.get('count', request.session.get('%s_count' % current_url, default_count))
@@ -358,6 +374,8 @@ def _set_parameters_values(pagesize, orderby, request):
     request.session['%s_orderby' % current_url] = orderby
 
 # date range: normalize GUI's dd/mm/yyyy to date object
+
+
 def _normalize_input_date(date_str, default):
     date_str = re.sub('/', '-', date_str)
     # accept dd/mm/yyyy to d/m/yy
@@ -375,6 +393,8 @@ def _normalize_input_date(date_str, default):
 # convert and normalize any received date range filter, for example:
 # "completed_on__gte!completed_on__lt:01/03/2015!02/03/2015_daterange" to
 # "completed_on__gte!completed_on__lt:2015-03-01!2015-03-02"
+
+
 def _modify_date_range_filter(filter_string):
     # was the date range radio button selected?
     if 0 > filter_string.find('_daterange'):
@@ -397,6 +417,7 @@ def _modify_date_range_filter(filter_string):
     filter_string = filter_list[0] + '!' + filter_list[1] + ':' + date_from_str + '!' + date_to_str
     daterange_selected = re.sub('__.*', '', date_id)
     return filter_string, daterange_selected
+
 
 def _add_daterange_context(queryset_all, request, daterange_list):
     # calculate the exact begining of local today and yesterday
@@ -519,7 +540,6 @@ def builddashboard(request, build_id):
     return toaster_render(request, template, context)
 
 
-
 def generateCoveredList2(revlist=None):
     if not revlist:
         revlist = []
@@ -534,6 +554,7 @@ def generateCoveredList2(revlist=None):
         revlist = list(set(revlist + newlist))
         covered_list = [x for x in revlist if x.outcome == Task.OUTCOME_COVERED]
     return revlist
+
 
 def task(request, build_id, task_id):
     template = "task.html"
@@ -590,6 +611,7 @@ def task(request, build_id, task_id):
 
     return toaster_render(request, template, context)
 
+
 def recipe(request, build_id, recipe_id, active_tab="1"):
     template = "recipe.html"
     if Recipe.objects.filter(pk=recipe_id).count() == 0:
@@ -616,6 +638,7 @@ def recipe(request, build_id, recipe_id, active_tab="1"):
             'tab_states': tab_states,
     }
     return toaster_render(request, template, context)
+
 
 def recipe_packages(request, build_id, recipe_id):
     template = "recipe_packages.html"
@@ -664,21 +687,30 @@ def recipe_packages(request, build_id, recipe_id):
     _set_parameters_values(pagesize, orderby, request)
     return response
 
+
 from django.http import HttpResponse
+
+
 def xhr_dirinfo(request, build_id, target_id):
     top = request.GET.get('start', '/')
     return HttpResponse(_get_dir_entries(build_id, target_id, top), content_type="application/json")
 
+
 from django.utils.functional import Promise
 from django.utils.encoding import force_text
+
+
 class LazyEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, Promise):
             return force_text(obj)
         return super(LazyEncoder, self).default(obj)
 
+
 from toastergui.templatetags.projecttags import filtered_filesizeformat
 import os
+
+
 def _get_dir_entries(build_id, target_id, start):
     node_str = {
         Target_File.ITYPE_REGULAR: '-',
@@ -750,6 +782,7 @@ def _get_dir_entries(build_id, target_id, start):
     rsorted = sorted(rsorted, key=lambda entry: entry['isdir'], reverse=True)
     return json.dumps(rsorted, cls=LazyEncoder).replace('</', '<\\/')
 
+
 def dirinfo(request, build_id, target_id, file_path=None):
     template = "dirinfo.html"
     objects = _get_dir_entries(build_id, target_id, '/')
@@ -783,10 +816,12 @@ def dirinfo(request, build_id, target_id, file_path=None):
               }
     return toaster_render(request, template, context)
 
+
 def _find_task_dep(task_object):
     tdeps = Task_Dependency.objects.filter(task=task_object).filter(depends_on__order__gt=0)
     tdeps = tdeps.exclude(depends_on__outcome=Task.OUTCOME_NA).select_related("depends_on")
     return [x.depends_on for x in tdeps]
+
 
 def _find_task_revdep(task_object):
     tdeps = Task_Dependency.objects.filter(depends_on=task_object).filter(task__order__gt=0)
@@ -798,6 +833,7 @@ def _find_task_revdep(task_object):
 
     return [tdep.task for tdep in tdeps]
 
+
 def _find_task_revdep_list(tasklist):
     tdeps = Task_Dependency.objects.filter(depends_on__in=tasklist).filter(task__order__gt=0)
     tdeps = tdeps.exclude(task__outcome=Task.OUTCOME_NA).select_related("task", "task__recipe", "task__build")
@@ -807,6 +843,7 @@ def _find_task_revdep_list(tasklist):
     tdeps = tdeps.exclude(task=F('depends_on'))
 
     return [tdep.task for tdep in tdeps]
+
 
 def _find_task_provider(task_object):
     task_revdeps = _find_task_revdep(task_object)
@@ -818,6 +855,7 @@ def _find_task_provider(task_object):
         if trc is not None:
             return trc
     return None
+
 
 def configuration(request, build_id):
     template = 'configuration.html'
@@ -926,6 +964,7 @@ def configvars(request, build_id):
     _set_parameters_values(pagesize, orderby, request)
     return response
 
+
 def bfile(request, build_id, package_id):
     template = 'bfile.html'
     files = Package_File.objects.filter(package=package_id)
@@ -959,6 +998,8 @@ the RRECOMMENDS or TRECOMMENDS value.
 The lists are built in the sort order specified for the package runtime
 dependency views.
 """
+
+
 def _get_package_dependencies(package_id, target_id=INVALID_KEY):
     runtime_deps = []
     other_deps = []
@@ -1014,12 +1055,16 @@ def _get_package_dependencies(package_id, target_id=INVALID_KEY):
     return retvalues
 
 # Return the count of packages dependent on package for this target_id image
+
+
 def _get_package_reverse_dep_count(package, target_id):
     return package.package_dependencies_target.filter(target_id__exact=target_id, dep_type__exact=Package_Dependency.TYPE_TRDEPENDS).count()
 
 # Return the count of the packages that this package_id is dependent on.
 # Use one of the two RDEPENDS types, either TRDEPENDS if the package was
 # installed, or else RDEPENDS if only built.
+
+
 def _get_package_dependency_count(package, target_id, is_installed):
     if is_installed:
         return package.package_dependencies_source.filter(target_id__exact=target_id,
@@ -1027,12 +1072,14 @@ def _get_package_dependency_count(package, target_id, is_installed):
     else:
         return package.package_dependencies_source.filter(dep_type__exact=Package_Dependency.TYPE_RDEPENDS).count()
 
+
 def _get_package_alias(package):
     alias = package.installed_name
     if alias is not None and alias != '' and alias != package.name:
         return alias
     else:
         return ''
+
 
 def _get_fullpackagespec(package):
     r = package.name
@@ -1047,6 +1094,7 @@ def _get_fullpackagespec(package):
         if revision_good:
             r += package.revision
     return r
+
 
 def package_built_detail(request, build_id, package_id):
     template = "package_built_detail.html"
@@ -1091,6 +1139,7 @@ def package_built_detail(request, build_id, package_id):
     response = toaster_render(request, template, context)
     _set_parameters_values(pagesize, orderby, request)
     return response
+
 
 def package_built_dependencies(request, build_id, package_id):
     template = "package_built_dependencies.html"
@@ -1157,6 +1206,7 @@ def package_included_detail(request, build_id, target_id, package_id):
     _set_parameters_values(pagesize, orderby, request)
     return response
 
+
 def package_included_dependencies(request, build_id, target_id, package_id):
     template = "package_included_dependencies.html"
     if Build.objects.filter(pk=build_id).count() == 0:
@@ -1178,6 +1228,7 @@ def package_included_dependencies(request, build_id, target_id, package_id):
             'dependency_count': _get_package_dependency_count(package, target_id, True)
     }
     return toaster_render(request, template, context)
+
 
 def package_included_reverse_dependencies(request, build_id, target_id, package_id):
     template = "package_included_reverse_dependencies.html"
@@ -1232,6 +1283,7 @@ def package_included_reverse_dependencies(request, build_id, target_id, package_
     _set_parameters_values(pagesize, orderby, request)
     return response
 
+
 def image_information_dir(request, build_id, target_id, packagefile_id):
     # stubbed for now
     return redirect(builds)
@@ -1241,6 +1293,8 @@ def image_information_dir(request, build_id, target_id, packagefile_id):
 # projects and non_cli_projects (i.e. projects created by the user)
 # variables referred to in templates, which used to determine the
 # visibility of UI elements like the "New build" button
+
+
 def managedcontextprocessor(request):
     projects = Project.objects.all()
     ret = {
@@ -1254,6 +1308,7 @@ def managedcontextprocessor(request):
 
 # REST-based API calls to return build/building status to external Toaster
 # managers and aggregators via JSON
+
 
 def _json_build_status(build_id, extend):
     build_stat = None
@@ -1311,6 +1366,7 @@ def _json_build_status(build_id, extend):
         build_state = str(e)
     return build_stat
 
+
 def json_builds(request):
     build_table = []
     builds = []
@@ -1322,6 +1378,7 @@ def json_builds(request):
         build_table = str(e)
     return JsonResponse({'builds': build_table, 'count': len(builds)})
 
+
 def json_building(request):
     build_table = []
     builds = []
@@ -1332,6 +1389,7 @@ def json_building(request):
     except Exception as e:
         build_table = str(e)
     return JsonResponse({'building': build_table, 'count': len(builds)})
+
 
 def json_build(request, build_id):
     return JsonResponse({'build': _json_build_status(build_id, True)})
@@ -1725,7 +1783,6 @@ if True:
         except Exception as e:
             return HttpResponse(json.dumps({"error": str(e) + "\n" + traceback.format_exc()}), content_type="application/json")
 
-
     def customrecipe_download(request, pid, recipe_id):
         recipe = get_object_or_404(CustomImageRecipe, pk=recipe_id)
 
@@ -1773,7 +1830,6 @@ if True:
         }
 
         return toaster_render(request, 'layerdetails.html', context)
-
 
     def get_project_configvars_context():
         # Vars managed outside of this view

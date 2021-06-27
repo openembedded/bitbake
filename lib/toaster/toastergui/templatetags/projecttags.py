@@ -17,9 +17,11 @@ from django.utils.safestring import mark_safe
 
 register = template.Library()
 
+
 @register.simple_tag
 def time_difference(start_time, end_time):
     return end_time - start_time
+
 
 @register.filter(name='sectohms')
 def sectohms(time):
@@ -43,6 +45,7 @@ def json(value, default=None):
     # unfortunately, I can't find any option in the json module to turn on forward-slash escaping, so we do
     # it manually here
     return mark_safe(JsonLib.dumps(value, indent=2, default=default, ensure_ascii=False).replace('</', '<\\/'))
+
 
 @register.simple_tag
 def query(qs, **kwargs):
@@ -73,15 +76,18 @@ def whitespace_space_filter(value, arg):
     except (ValueError, TypeError):
         raise
 
+
 @register.filter
 def divide(value, arg):
     if int(arg) == 0:
         return -1
     return int(value) // int(arg)
 
+
 @register.filter
 def multiply(value, arg):
     return int(value) * int(arg)
+
 
 @register.simple_tag
 def datecompute(delta, start=timezone.now()):
@@ -91,6 +97,7 @@ def datecompute(delta, start=timezone.now()):
 @register.filter(name='sortcols')
 def sortcols(tablecols):
     return sorted(tablecols, key=lambda t: t['name'])
+
 
 @register.filter
 def task_color(task_object, show_green=False):
@@ -107,6 +114,7 @@ def task_color(task_object, show_green=False):
     else:
         return ''
 
+
 @register.filter
 def filtered_icon(options, filter):
     """Returns btn-primary if the filter matches one of the filter options
@@ -117,6 +125,7 @@ def filtered_icon(options, filter):
         if ('daterange' == option[1]) and filter.startswith(option[4]):
             return "btn-primary"
     return ""
+
 
 @register.filter
 def filtered_tooltip(options, filter):
@@ -129,11 +138,13 @@ def filtered_tooltip(options, filter):
             return "Showing only %s" % option[0]
     return ""
 
+
 @register.filter
 def format_none_and_zero(value):
     """Return empty string if the value is None, zero or Not Applicable
     """
     return "" if (not value) or (value == 0) or (value == "0") or (value == 'Not Applicable') else value
+
 
 @register.filter
 def filtered_filesizeformat(value):
@@ -147,10 +158,12 @@ def filtered_filesizeformat(value):
 
     return filesizeformat(value).replace("bytes", "B")
 
+
 @register.filter
 def filtered_packagespec(value):
     """Strip off empty version and revision"""
     return re.sub(r'(--$)', '', value)
+
 
 @register.filter
 def check_filter_status(options, filter):
@@ -163,12 +176,14 @@ def check_filter_status(options, filter):
             return ""
     return "checked"
 
+
 @register.filter
 def variable_parent_name(value):
     """ filter extended variable names to the parent name
     """
     value = re.sub('_\$.*', '', value)
     return re.sub('_[a-z].*', '', value)
+
 
 @register.filter
 def filter_setin_files(file_list, matchstr):
@@ -189,6 +204,7 @@ def filter_setin_files(file_list, matchstr):
 
     return result
 
+
 @register.filter
 def string_slice(strvar, slicevar):
     """ slice a string with |string_slice:'[first]:[last]'
@@ -201,11 +217,13 @@ def string_slice(strvar, slicevar):
     else:
         return strvar[int(first):int(last)]
 
+
 @register.filter
 def string_remove_regex(value, ex):
     """ remove sub-string of string that matches regex
     """
     return re.sub(ex, '', value)
+
 
 @register.filter
 def filtered_installedsize(size, installed_size):
@@ -214,6 +232,7 @@ def filtered_installedsize(size, installed_size):
     """
     return size if (installed_size == 0) or (installed_size == "") or (installed_size is None) else installed_size
 
+
 @register.filter
 def filtered_packageversion(version, revision):
     """ Emit "version-revision" if version and revision are not null
@@ -221,6 +240,7 @@ def filtered_packageversion(version, revision):
         else ""
     """
     return "" if (not version or version == "") else version if (not revision or revision == "") else version + "-" + revision
+
 
 @register.filter
 def filter_sizeovertotal(package_object, total_size):
@@ -233,12 +253,14 @@ def filter_sizeovertotal(package_object, total_size):
 
     return '{:.1%}'.format(float(size) / float(total_size))
 
+
 from django.utils.safestring import mark_safe
 @register.filter
 def format_vpackage_rowclass(size):
     if size == -1:
         return mark_safe('class="text-muted"')
     return ''
+
 
 @register.filter
 def format_vpackage_namehelp(name):
@@ -248,6 +270,7 @@ def format_vpackage_namehelp(name):
     r += '</span>'
     return mark_safe(r)
 
+
 @register.filter
 def get_dict_value(dictionary, key):
     """ return the value of a dictionary key
@@ -256,6 +279,7 @@ def get_dict_value(dictionary, key):
         return dictionary[key]
     except (KeyError, IndexError):
         return ''
+
 
 @register.filter
 def is_shaid(text):
@@ -268,6 +292,7 @@ def is_shaid(text):
         return False
     except ValueError:
         return False
+
 
 @register.filter
 def cut_path_prefix(fullpath, prefixes):

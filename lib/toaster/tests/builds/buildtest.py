@@ -29,6 +29,7 @@ logger = logging.getLogger("toaster")
 # want to wrap everything in a database transaction as an external process
 # (bitbake needs access to the database)
 
+
 def load_build_environment():
     call_command('loaddata', 'settings.xml', app_label="orm")
     call_command('loaddata', 'poky.xml', app_label="orm")
@@ -84,6 +85,7 @@ def load_build_environment():
                         % bitbake_path)
 
     os.environ['BBBASEDIR'] = bitbake_path
+
 
 class BuildTest(unittest.TestCase):
 

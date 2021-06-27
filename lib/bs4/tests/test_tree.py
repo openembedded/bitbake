@@ -30,6 +30,7 @@ from bs4.testing import SoupTest
 XML_BUILDER_PRESENT = (builder_registry.lookup("xml") is not None)
 LXML_PRESENT = (builder_registry.lookup("lxml") is not None)
 
+
 class TreeTest(SoupTest):
 
     def assertSelects(self, tags, should_match):
@@ -71,7 +72,6 @@ class TestFind(TreeTest):
         str(soup)
         self.assertEqual("here it is", soup.find(id='Räksmörgås').text)
 
-
     def test_find_everything(self):
         """Test an optimization that finds all tags."""
         soup = self.soup("<a>foo</a><b>bar</b>")
@@ -81,6 +81,7 @@ class TestFind(TreeTest):
         """Test an optimization that finds all tags with a given name."""
         soup = self.soup("<a>foo</a><b>bar</b><a>baz</a>")
         self.assertEqual(2, len(soup.find_all('a')))
+
 
 class TestFindAll(TreeTest):
     """Basic tests of the find_all() method."""
@@ -173,7 +174,6 @@ class TestFindAllByName(TreeTest):
         self.assertSelects(
             self.tree.find_all('a', text=re.compile("tag")),
             ['First tag.', 'Nested tag.'])
-
 
     def test_find_all_on_non_root_element(self):
         # You can call find_all on any node, not just the root.
@@ -397,10 +397,9 @@ class TestFindAllByAttribute(TreeTest):
         self.assertEqual([], soup.find_all(id=1, text="bar"))
 
 
-
-
 class TestIndex(TreeTest):
     """Test Tag.index"""
+
     def test_index(self):
         tree = self.soup("""<div>
                             <a>Identical</a>
@@ -430,7 +429,6 @@ class TestParentOperations(TreeTest):
                                    </ul>
                                   </ul>''')
         self.start = self.tree.b
-
 
     def test_parent(self):
         self.assertEqual(self.start.parent['id'], 'bottom')
@@ -515,6 +513,7 @@ class TestNextOperations(ProximityTest):
         tag, contents = successors
         self.assertEqual(tag['id'], '3')
         self.assertEqual(contents, "Three")
+
 
 class TestPreviousOperations(ProximityTest):
 
@@ -681,6 +680,7 @@ class TestPreviousSibling(SiblingTest):
 
 class TestTagCreation(SoupTest):
     """Test the ability to create new tags."""
+
     def test_new_tag(self):
         soup = self.soup("")
         new_tag = soup.new_tag("foo", bar="baz")
@@ -720,6 +720,7 @@ class TestTagCreation(SoupTest):
         s = soup.new_string("foo", Comment)
         self.assertEqual("foo", s)
         self.assertTrue(isinstance(s, Comment))
+
 
 class TestTreeModification(SoupTest):
 
@@ -1093,7 +1094,6 @@ class TestTreeModification(SoupTest):
         [soup.script.extract() for i in soup.find_all("script")]
         self.assertEqual("<body>\n\n<a></a>\n</body>", str(soup.body))
 
-
     def test_extract_works_when_element_is_surrounded_by_identical_strings(self):
         soup = self.soup(
  '<html>\n'
@@ -1101,7 +1101,6 @@ class TestTreeModification(SoupTest):
  '</html>')
         soup.find('body').extract()
         self.assertEqual(None, soup.find('body'))
-
 
     def test_clear(self):
         """Tag.clear()"""
@@ -1135,6 +1134,7 @@ class TestTreeModification(SoupTest):
         cdata = CData("foo")
         soup.a.string = cdata
         self.assertTrue(isinstance(soup.a.string, CData))
+
 
 class TestElementObjects(SoupTest):
     """Test various features of element objects."""
@@ -1179,7 +1179,6 @@ class TestElementObjects(SoupTest):
         soup = self.soup("<foo attr='bar'>")
         self.assertTrue(soup.foo.has_attr('attr'))
         self.assertFalse(soup.foo.has_attr('attr2'))
-
 
     def test_attributes_come_out_in_alphabetical_order(self):
         markup = '<b a="1" z="5" m="3" f="2" y="4"></b>'
@@ -1246,10 +1245,12 @@ class TestElementObjects(SoupTest):
         soup = self.soup("foo<!--IGNORE-->bar")
         self.assertEqual(['foo', 'bar'], list(soup.strings))
 
+
 class TestCDAtaListAttributes(SoupTest):
 
     """Testing cdata-list attributes like 'class'.
     """
+
     def test_single_value_becomes_list(self):
         soup = self.soup("<a class='foo'>")
         self.assertEqual(["foo"], soup.a['class'])
@@ -1281,9 +1282,11 @@ class TestCDAtaListAttributes(SoupTest):
     def test_string_has_immutable_name_property(self):
         string = self.soup("s").string
         self.assertEqual(None, string.name)
+
         def t():
             string.name = 'foo'
         self.assertRaises(AttributeError, t)
+
 
 class TestPersistence(SoupTest):
     "Testing features like pickle and deepcopy."
@@ -1374,6 +1377,7 @@ class TestPersistence(SoupTest):
         self.assertEqual(None, div_copy.previous_element)
         self.assertEqual(None, div_copy.find(string='Bar').next_element)
         self.assertNotEqual(None, div.find(string='Bar').next_element)
+
 
 class TestSubstitutions(SoupTest):
 
@@ -1521,6 +1525,7 @@ class TestSubstitutions(SoupTest):
         soup = self.soup(markup, parse_only=strainer)
         self.assertEqual(soup.contents[0].name, 'pre')
 
+
 class TestEncoding(SoupTest):
     """Test the ability to encode objects into strings."""
 
@@ -1573,6 +1578,7 @@ class TestEncoding(SoupTest):
         else:
             self.assertEqual(b'<b>\\u2603</b>', repr(soup))
 
+
 class TestNavigableStringSubclasses(SoupTest):
 
     def test_cdata(self):
@@ -1592,6 +1598,7 @@ class TestNavigableStringSubclasses(SoupTest):
         """
 
         self.count = 0
+
         def increment(*args):
             self.count += 1
             return "BITTER FAILURE"
@@ -1614,6 +1621,7 @@ class TestNavigableStringSubclasses(SoupTest):
     def test_declaration(self):
         d = Declaration("foo")
         self.assertEqual("<?foo?>", d.output_ready())
+
 
 class TestSoupSelector(TreeTest):
 
@@ -1703,7 +1711,6 @@ class TestSoupSelector(TreeTest):
     def test_select_one_returns_none_if_no_match(self):
         match = self.soup.select_one('nonexistenttag')
         self.assertEqual(None, match)
-
 
     def test_tag_in_tag_one(self):
         els = self.soup.select('div div')
@@ -1901,7 +1908,6 @@ class TestSoupSelector(TreeTest):
 
         self.assertRaises(
             NotImplementedError, self.soup.select, "a:nth-of-type(a)")
-
 
     def test_nth_of_type(self):
         # Try to select first paragraph

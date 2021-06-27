@@ -22,6 +22,7 @@ import bb.utils
 from bb.fetch2 import FetchMethod, FetchError, ParameterError
 from bb.fetch2 import logger
 
+
 class Local(FetchMethod):
     def supports(self, urldata, d):
         """

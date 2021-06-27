@@ -15,6 +15,7 @@ from tests.browser.selenium_helpers import SeleniumTestCase
 from orm.models import Project, Release, BitbakeVersion, Build, LogMessage
 from orm.models import Layer, Layer_Version, Recipe, CustomImageRecipe, Variable
 
+
 class TestBuildDashboardPage(SeleniumTestCase):
     """ Tests for the build dashboard /build/X """
 

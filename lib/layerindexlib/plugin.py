@@ -11,8 +11,10 @@ import logging
 
 logger = logging.getLogger('BitBake.layerindexlib.plugin')
 
+
 class LayerIndexPluginException(Exception):
     """LayerIndex Generic Exception"""
+
     def __init__(self, message):
          self.msg = message
          Exception.__init__(self, message)
@@ -20,13 +22,16 @@ class LayerIndexPluginException(Exception):
     def __str__(self):
          return self.msg
 
+
 class LayerIndexPluginUrlError(LayerIndexPluginException):
     """Exception raised when a plugin does not support a given URL type"""
+
     def __init__(self, plugin, url):
         msg = "%s does not support %s:" % (plugin, url)
         self.plugin = plugin
         self.url = url
         LayerIndexPluginException.__init__(self, msg)
+
 
 class IndexPlugin():
     def __init__(self):

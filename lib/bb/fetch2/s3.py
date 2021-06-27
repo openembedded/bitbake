@@ -25,6 +25,7 @@ from bb.fetch2 import FetchMethod
 from bb.fetch2 import FetchError
 from bb.fetch2 import runfetchcmd
 
+
 def convertToBytes(value, unit):
     value = float(value)
     if (unit == "KiB"):
@@ -35,11 +36,13 @@ def convertToBytes(value, unit):
         value = value * 1024.0 * 1024.0 * 1024.0
     return value
 
+
 class S3ProgressHandler(bb.progress.LineFilterProgressHandler):
     """
     Extract progress information from s3 cp output, e.g.:
     Completed 5.1 KiB/8.8 GiB (12.0 MiB/s) with 1 file(s) remaining
     """
+
     def __init__(self, d):
         super(S3ProgressHandler, self).__init__(d)
         # Send an initial progress event so the bar gets shown

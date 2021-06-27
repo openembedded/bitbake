@@ -19,8 +19,10 @@ from bb.fetch2 import MissingParameterError
 from bb.fetch2 import runfetchcmd
 from bb.fetch2 import logger
 
+
 class Svn(FetchMethod):
     """Class to fetch a module or modules from svn repositories"""
+
     def supports(self, ud, d):
         """
         Check to see if a given url can be fetched with svn.
@@ -171,7 +173,6 @@ class Svn(FetchMethod):
         bb.utils.remove(ud.localpath)
         bb.utils.remove(ud.moddir, True)
         
-
     def supports_srcrev(self):
         return True
 

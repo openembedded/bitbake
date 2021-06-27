@@ -15,6 +15,7 @@ def skipIfNoNetwork():
         return unittest.skip("Network tests being skipped")
     return lambda f: f
 
+
 class LayerIndexWebRestApiTest(LayersTest):
 
     @skipIfNoNetwork()

@@ -54,6 +54,7 @@ __pattern__ = re.compile(r'''
  $
 ''', re.VERBOSE)
 
+
 class SSH(FetchMethod):
     '''Class to fetch a module or modules via Secure Shell'''
 

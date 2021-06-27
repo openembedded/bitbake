@@ -24,6 +24,7 @@ from django.test import TestCase
 
 from orm.models import Target_Installed_Package, Package, Build
 
+
 class EventReplay(TestCase):
     """Base class for eventreplay test cases"""
 
@@ -49,6 +50,7 @@ class EventReplay(TestCase):
 
         self.assertEqual(status, 0)
 
+
 class CoreImageMinimalEventReplay(EventReplay):
     """Replay core-image-minimal events"""
 
@@ -73,6 +75,7 @@ class CoreImageMinimalEventReplay(EventReplay):
                                     'update-alternatives-opkg',
                                     'update-rc.d', 'util-linux-libblkid',
                                     'util-linux-libuuid', 'v86d', 'zlib'])
+
 
 class ZlibEventReplay(EventReplay):
     """Replay zlib events"""

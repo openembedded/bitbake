@@ -16,6 +16,7 @@ import traceback
 
 import bb
 
+
 def createDaemon(function, logfile):
     """
     Detach a process from the controlling terminal and run it in the

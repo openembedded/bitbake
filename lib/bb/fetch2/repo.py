@@ -17,8 +17,10 @@ from bb.fetch2 import FetchMethod
 from bb.fetch2 import runfetchcmd
 from bb.fetch2 import logger
 
+
 class Repo(FetchMethod):
     """Class to fetch a module or modules from repo (git) repositories"""
+
     def supports(self, ud, d):
         """
         Check to see if a given url can be fetched with repo.

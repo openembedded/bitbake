@@ -26,8 +26,10 @@ import bb.siggen
 
 logger = logging.getLogger("BitBake.Parsing")
 
+
 class ParseError(Exception):
     """Exception raised when parsing fails"""
+
     def __init__(self, msg, filename, lineno=0):
         self.msg = msg
         self.filename = filename
@@ -40,17 +42,23 @@ class ParseError(Exception):
         else:
             return "ParseError in %s: %s" % (self.filename, self.msg)
 
+
 class SkipRecipe(Exception):
     """Exception raised to skip this recipe"""
+
 
 class SkipPackage(SkipRecipe):
     """Exception raised to skip this recipe (use SkipRecipe in new code)"""
 
+
 __mtime_cache = {}
+
+
 def cached_mtime(f):
     if f not in __mtime_cache:
         __mtime_cache[f] = os.stat(f)[stat.ST_MTIME]
     return __mtime_cache[f]
+
 
 def cached_mtime_noerror(f):
     if f not in __mtime_cache:
@@ -59,6 +67,7 @@ def cached_mtime_noerror(f):
         except OSError:
             return 0
     return __mtime_cache[f]
+
 
 def update_mtime(f):
     try:
@@ -69,14 +78,17 @@ def update_mtime(f):
         return 0
     return __mtime_cache[f]
 
+
 def update_cache(f):
     if f in __mtime_cache:
         logger.debug("Updating mtime cache for %s" % f)
         update_mtime(f)
 
+
 def clear_cache():
     global __mtime_cache
     __mtime_cache = {}
+
 
 def mark_dependency(d, f):
     if f.startswith('./'):
@@ -87,17 +99,20 @@ def mark_dependency(d, f):
         deps.append(s)
         d.setVar('__depends', deps)
 
+
 def check_dependency(d, f):
     s = (f, cached_mtime_noerror(f))
     deps = (d.getVar('__depends', False) or [])
     return s in deps
    
+
 def supports(fn, data):
     """Returns true if we have a handler for this file, false otherwise"""
     for h in handlers:
         if h['supports'](fn, data):
             return 1
     return 0
+
 
 def handle(fn, data, include=0):
     """Call the handler that is appropriate for this file"""
@@ -107,13 +122,16 @@ def handle(fn, data, include=0):
                 return h['handle'](fn, data, include)
     raise ParseError("not a BitBake file", fn)
 
+
 def init(fn, data):
     for h in handlers:
         if h['supports'](fn):
             return h['init'](data)
 
+
 def init_parser(d):
     bb.parse.siggen = bb.siggen.init(d)
+
 
 def resolve_file(fn, d):
     if not os.path.isabs(fn):
@@ -132,8 +150,11 @@ def resolve_file(fn, d):
 
     return fn
 
+
 # Used by OpenEmbedded metadata
 __pkgsplit_cache__ = {}
+
+
 def vars_from_file(mypkg, d):
     if not mypkg or not mypkg.endswith((".bb", ".bbappend")):
         return (None, None, None)
@@ -153,6 +174,7 @@ def vars_from_file(mypkg, d):
     parts.extend(tmplist)
     return parts
 
+
 def get_file_depends(d):
     '''Return the dependent files'''
     dep_files = []
@@ -161,5 +183,6 @@ def get_file_depends(d):
     for (fn, _) in depends:
         dep_files.append(os.path.abspath(fn))
     return " ".join(dep_files)
+
 
 from bb.parse.parse_py import __version__, ConfHandler, BBHandler

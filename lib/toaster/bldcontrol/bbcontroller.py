@@ -15,6 +15,7 @@ from bldcontrol.models import BuildEnvironment, BRLayer, BRBitbake
 path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 sys.path.insert(0, path)
 
+
 class BitbakeController(object):
     """ This is the basic class that controlls a bitbake server.
         It is outside the scope of this class on how the server is started and aquired
@@ -50,7 +51,6 @@ class BitbakeController(object):
 
     def forceShutDown(self):
         return self._runCommand(["stateForceShutdown"])
-
 
 
 def getBuildEnvironmentController(**kwargs):
@@ -91,6 +91,7 @@ class BuildEnvironmentController(object):
         Bash is expected to be available.
 
     """
+
     def __init__(self, be):
         """ Takes a BuildEnvironment object as parameter that points to the settings of the BE.
         """
@@ -116,6 +117,7 @@ class BuildEnvironmentController(object):
 
     def triggerBuild(self, bitbake, layers, variables, targets):
         raise NotImplementedError("Must override BE release")
+
 
 class ShellCmdException(Exception):
     pass

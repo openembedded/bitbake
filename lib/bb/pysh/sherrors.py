@@ -8,8 +8,10 @@
 """Define shell exceptions and error codes.
 """
 
+
 class ShellError(Exception):
     pass
+
 
 class ShellSyntaxError(ShellError):
     pass

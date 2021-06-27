@@ -25,6 +25,7 @@ from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from selenium.common.exceptions import NoSuchElementException, \
         StaleElementReferenceException, TimeoutException
 
+
 def create_selenium_driver(cls, browser='chrome'):
     # set default browser string based on env (if available)
     env_browser = os.environ.get('TOASTER_TESTS_BROWSER')
@@ -57,6 +58,7 @@ def create_selenium_driver(cls, browser='chrome'):
     else:
         msg = 'Selenium driver for browser %s is not available' % browser
         raise RuntimeError(msg)
+
 
 class Wait(WebDriverWait):
     """
@@ -114,6 +116,7 @@ class Wait(WebDriverWait):
                 break
 
         raise TimeoutException(message)
+
 
 class SeleniumTestCaseBase(unittest.TestCase):
     """

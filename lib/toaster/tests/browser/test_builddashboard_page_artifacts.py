@@ -16,6 +16,7 @@ from orm.models import Project, Release, BitbakeVersion, Build, Target, Package
 from orm.models import Target_Image_File, TargetSDKFile, TargetKernelFile
 from orm.models import Target_Installed_Package, Variable
 
+
 class TestBuildDashboardPageArtifacts(SeleniumTestCase):
     """ Tests for artifacts on the build dashboard /build/X """
 

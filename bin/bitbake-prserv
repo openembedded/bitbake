@@ -18,6 +18,7 @@ __version__ = "1.0.0"
 PRHOST_DEFAULT = '0.0.0.0'
 PRPORT_DEFAULT = 8585
 
+
 def main():
     parser = optparse.OptionParser(
         version="Bitbake PR Service Core version %s, %%prog version %s" % (prserv.__version__, __version__),
@@ -48,6 +49,7 @@ def main():
     else:
         ret = parser.print_help()
     return ret
+
 
 if __name__ == "__main__":
     try:

@@ -64,24 +64,30 @@ _is_identifier = re.compile(r'^[a-zA-Z0-9_]+$')
 # Exception thrown when invalid token encountered and no default error
 # handler is defined.
 
+
 class LexError(Exception):
     def __init__(self, message, s):
          self.args = (message,)
          self.text = s
 
 # Token class.  This class is used to represent the tokens produced.
+
+
 class LexToken(object):
     def __str__(self):
         return "LexToken(%s,%r,%d,%d)" % (self.type, self.value, self.lineno, self.lexpos)
+
     def __repr__(self):
         return str(self)
 
 # This object is a stand-in for a logging object created by the 
 # logging module.  
 
+
 class PlyLogger(object):
     def __init__(self, f):
         self.f = f
+
     def critical(self, msg, *args, **kwargs):
         self.f.write((msg % args) + "\n")
 
@@ -95,9 +101,12 @@ class PlyLogger(object):
     debug = critical
 
 # Null logger is used when no output is generated. Does nothing.
+
+
 class NullLogger(object):
     def __getattribute__(self, name):
         return self
+
     def __call__(self, *args, **kwargs):
         return self
 
@@ -114,6 +123,7 @@ class NullLogger(object):
 #    lineno           -  Current line number
 #    lexpos           -  Current position in the input string
 # -----------------------------------------------------------------------------
+
 
 class Lexer:
     def __init__(self):
@@ -430,6 +440,7 @@ class Lexer:
 # associated with the yacc() call if none was provided.
 # -----------------------------------------------------------------------------
 
+
 def get_caller_module_dict(levels):
     try:
         raise RuntimeError
@@ -452,6 +463,7 @@ def get_caller_module_dict(levels):
 # suitable for output to a table file
 # -----------------------------------------------------------------------------
 
+
 def _funcs_to_names(funclist, namelist):
     result = []
     for f, name in zip(funclist, namelist):
@@ -467,6 +479,7 @@ def _funcs_to_names(funclist, namelist):
 # Given a list of regular expression function names, this converts it back to
 # functions.
 # -----------------------------------------------------------------------------
+
 
 def _names_to_funcs(namelist, fdict):
      result = []
@@ -484,6 +497,7 @@ def _names_to_funcs(namelist, fdict):
 # form the master regular expression.  Given limitations in the Python re
 # module, it may be necessary to break the master regex into separate expressions.
 # -----------------------------------------------------------------------------
+
 
 def _form_master_re(relist, reflags, ldict, toknames):
     if not relist:
@@ -525,6 +539,7 @@ def _form_master_re(relist, reflags, ldict, toknames):
 # is a tuple of state names and tokenname is the name of the token.  For example,
 # calling this with s = "t_foo_bar_SPAM" might return (('foo','bar'),'SPAM')
 # -----------------------------------------------------------------------------
+
 
 def _statetoken(s, names):
     nonstate = 1
@@ -729,8 +744,6 @@ class LexerReflect(object):
         for state in self.stateinfo:
             # Validate all rules defined by functions
 
-            
-
             for fname, f in self.funcsym[state]:
                 line = func_code(f).co_firstlineno
                 file = func_code(f).co_filename
@@ -822,7 +835,6 @@ class LexerReflect(object):
         for f in self.files:
             self.validate_file(f)
 
-
     # -----------------------------------------------------------------------------
     # validate_file()
     #
@@ -868,6 +880,8 @@ class LexerReflect(object):
 #
 # Build all of the regular expression rules from definitions in the supplied module
 # -----------------------------------------------------------------------------
+
+
 def lex(module=None, object=None, debug=0, optimize=0, lextab="lextab", reflags=0, nowarn=0, outputdir="", debuglog=None, errorlog=None):
     global lexer
     ldict = None
@@ -1018,6 +1032,7 @@ def lex(module=None, object=None, debug=0, optimize=0, lextab="lextab", reflags=
 # This runs the lexer as a main program
 # -----------------------------------------------------------------------------
 
+
 def runmain(lexer=None, data=None):
     if not data:
         try:
@@ -1052,6 +1067,7 @@ def runmain(lexer=None, data=None):
 # when its docstring might need to be set in an alternative way
 # -----------------------------------------------------------------------------
 
+
 def TOKEN(r):
     def set_doc(f):
         if hasattr(r, "__call__"):
@@ -1060,6 +1076,7 @@ def TOKEN(r):
             f.__doc__ = r
         return f
     return set_doc
+
 
 # Alternative spelling of the TOKEN decorator
 Token = TOKEN

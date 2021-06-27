@@ -19,6 +19,7 @@ and should be in the same directory as this sample.
 from django.urls import reverse
 from tests.browser.selenium_helpers import SeleniumTestCase
 
+
 class TestSample(SeleniumTestCase):
     """ Test landing page shows the Toaster brand """
 

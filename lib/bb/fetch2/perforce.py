@@ -31,6 +31,7 @@ from bb.fetch2 import FetchError
 from bb.fetch2 import logger
 from bb.fetch2 import runfetchcmd
 
+
 class PerforceProgressHandler (bb.progress.BasicProgressHandler):
     """
     Implements basic progress information for perforce, based on the number of
@@ -40,6 +41,7 @@ class PerforceProgressHandler (bb.progress.BasicProgressHandler):
     to "count" the number of files already completed and give an indication of
     the progress.
     """
+
     def __init__(self, d, num_files):
         self._num_files = num_files
         self._count = 0
@@ -61,8 +63,10 @@ class PerforceProgressHandler (bb.progress.BasicProgressHandler):
 
         super(PerforceProgressHandler, self).write(string)
 
+
 class Perforce(FetchMethod):
     """ Class to fetch from perforce repositories """
+
     def supports(self, ud, d):
         """ Check to see if a given url can be fetched with perforce. """
         return ud.type in ['p4']

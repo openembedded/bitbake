@@ -19,6 +19,7 @@ from tests.builds.buildtest import load_build_environment
 
 logger = logging.getLogger("toaster")
 
+
 class SeleniumFunctionalTestCase(SeleniumTestCaseBase):
     wait_toaster_time = 5
 
@@ -60,12 +61,10 @@ class SeleniumFunctionalTestCase(SeleniumTestCaseBase):
             runbuilds_pid = int(f.read())
             os.kill(runbuilds_pid, signal.SIGTERM)
 
-
     def get_URL(self):
          rc = self.get_page_source()
          project_url = re.search("(projectPageUrl\s:\s\")(.*)(\",)", rc)
          return project_url.group(2)
-
 
     def find_element_by_link_text_in_table(self, table_id, link_text):
         """

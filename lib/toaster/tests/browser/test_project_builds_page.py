@@ -15,6 +15,7 @@ from tests.browser.selenium_helpers import SeleniumTestCase
 
 from orm.models import BitbakeVersion, Release, Project, Build, Target
 
+
 class TestProjectBuildsPage(SeleniumTestCase):
     """ Test data at /project/X/builds is displayed correctly """
 

@@ -34,6 +34,7 @@ featureSet = [bb.cooker.CookerFeatures.HOB_EXTRA_CACHES, bb.cooker.CookerFeature
 logger = logging.getLogger("ToasterLogger")
 interactive = sys.stdout.isatty()
 
+
 def _log_settings_from_server(server):
     # Get values of variables which control our output
     includelogs, error = server.runCommand(["getVariable", "BBINCLUDELOGS"])
@@ -56,6 +57,8 @@ def _log_settings_from_server(server):
 # other log file names
 #
 # returns (log file, path to log file) for a build
+
+
 def _open_build_log(log_dir):
     format_str = "%(levelname)s: %(message)s"
 
@@ -76,11 +79,14 @@ def _open_build_log(log_dir):
     return (build_log, build_log_file_path)
 
 # stop logging to the build log if it exists
+
+
 def _close_build_log(build_log):
     if build_log:
         build_log.flush()
         build_log.close()
         logger.removeHandler(build_log)
+
 
 _evt_list = [
     "bb.build.TaskBase",
@@ -120,6 +126,7 @@ _evt_list = [
     "bb.runqueue.sceneQueueTaskFailed",
     "bb.runqueue.sceneQueueTaskStarted",
     "logging.LogRecord"]
+
 
 def main(server, eventHandler, params):
     # set to a logging.FileHandler instance when a build starts;
@@ -346,7 +353,6 @@ def main(server, eventHandler, params):
             if isinstance(event, (bb.runqueue.sceneQueueTaskCompleted, bb.runqueue.sceneQueueTaskFailed)):
                 buildinfohelper.update_and_store_task(event)
                 continue
-
 
             if isinstance(event, (bb.event.TreeDataPreparationStarted, bb.event.TreeDataPreparationCompleted)):
                 continue

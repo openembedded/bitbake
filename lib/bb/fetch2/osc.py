@@ -17,6 +17,7 @@ from bb.fetch2 import runfetchcmd
 
 logger = logging.getLogger(__name__)
 
+
 class Osc(FetchMethod):
     """Class to fetch a module or modules from Opensuse build server
        repositories."""

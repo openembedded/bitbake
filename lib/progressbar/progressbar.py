@@ -137,7 +137,6 @@ class ProgressBar(object):
         self.update_interval = 1
         self.next_update = 0
 
-
     def __call__(self, iterable):
         """Use a ProgressBar to iterate through an iterable."""
 
@@ -150,10 +149,8 @@ class ProgressBar(object):
         self.__iterable = iter(iterable)
         return self
 
-
     def __iter__(self):
         return self
-
 
     def __next__(self):
         try:
@@ -169,24 +166,20 @@ class ProgressBar(object):
             self.finish()
             raise
 
-
     # Create an alias so that Python 2.x won't complain about not being
     # an iterator.
     next = __next__
-
 
     def _env_size(self):
         """Tries to find the term_width from the environment."""
 
         return int(os.environ.get('COLUMNS', self._DEFAULT_TERMSIZE)) - 1
 
-
     def _handle_resize(self, signum=None, frame=None):
         """Tries to catch resize signals sent from the terminal."""
 
         h, w = array('h', ioctl(self.fd, termios.TIOCGWINSZ, '\0' * 8))[:2]
         self.term_width = w
-
 
     def percentage(self):
         """Returns the progress as a percentage."""
@@ -195,7 +188,6 @@ class ProgressBar(object):
         return (self.currval * 100.0 / self.maxval) if self.maxval else 100.00
 
     percent = property(percentage)
-
 
     def _format_widgets(self):
         result = []
@@ -223,7 +215,6 @@ class ProgressBar(object):
 
         return result
 
-
     def _format_line(self):
         """Joins the widgets and justifies the line."""
 
@@ -234,7 +225,6 @@ class ProgressBar(object):
         else:
             return widgets.rjust(self.term_width)
 
-
     def _need_update(self):
         """Returns whether the ProgressBar should redraw the line."""
         if self.currval >= self.next_update or self.finished:
@@ -243,13 +233,11 @@ class ProgressBar(object):
         delta = time.time() - self.last_update_time
         return self._time_sensitive and delta > self.poll
 
-
     def _update_widgets(self):
         """Checks all widgets for the time sensitive bit."""
 
         self._time_sensitive = any(getattr(w, 'TIME_SENSITIVE', False)
                                     for w in self.widgets)
-
 
     def update(self, value=None):
         """Updates the ProgressBar to a new value."""
@@ -261,7 +249,6 @@ class ProgressBar(object):
                 raise ValueError('Value out of range')
 
             self.currval = value
-
 
         if not self._need_update():
             return
@@ -276,7 +263,6 @@ class ProgressBar(object):
         self.fd.flush()
         self.last_update_time = now
         return output
-
 
     def start(self, update=True):
         """Starts measuring time, and prints the bar at 0%.
@@ -301,7 +287,6 @@ class ProgressBar(object):
                 raise ValueError('Value out of range')
             self.update_interval = self.maxval / self.num_intervals
 
-
         self.start_time = time.time()
         if update:
             self.last_update_time = self.start_time
@@ -310,7 +295,6 @@ class ProgressBar(object):
             self.last_update_time = 0
 
         return self
-
 
     def finish(self):
         """Puts the ProgressBar bar in the finished state."""

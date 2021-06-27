@@ -96,7 +96,6 @@ class Timer(Widget):
 
         return str(datetime.timedelta(seconds=int(seconds)))
 
-
     def update(self, pbar):
         """Updates the widget to show the elapsed time."""
 
@@ -210,6 +209,7 @@ class AnimatedMarker(Widget):
         self.curmark = (self.curmark + 1) % len(self.markers)
         return self.markers[self.curmark]
 
+
 # Alias for backwards compatibility
 RotatingMarker = AnimatedMarker
 
@@ -247,6 +247,7 @@ class FormatLabel(Timer):
     }
 
     __slots__ = ('format_string',)
+
     def __init__(self, format):
         self.format_string = format
 
@@ -298,7 +299,6 @@ class Bar(WidgetHFill):
         self.right = right
         self.fill = fill
         self.fill_left = fill_left
-
 
     def update(self, pbar, width):
         """Updates the progress bar and its subcomponents."""
@@ -370,10 +370,12 @@ class BouncingSlider(Bar):
     without reference to the actual value. Based on a combination of
     BouncingBar from a newer version of this module and RotatingMarker.
     """
+
     def __init__(self, marker='<=>'):
         self.curmark = -1
         self.forward = True
         Bar.__init__(self, marker=marker)
+
     def update(self, pbar, width):
         left, marker, right = (format_updatable(i, pbar) for i in
                                (self.left, self.marker, self.right))

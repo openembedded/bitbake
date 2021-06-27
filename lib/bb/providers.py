@@ -17,14 +17,18 @@ import bb
 
 logger = logging.getLogger("BitBake.Provider")
 
+
 class NoProvider(bb.BBHandledException):
     """Exception raised when no provider of a build dependency can be found"""
+
 
 class NoRProvider(bb.BBHandledException):
     """Exception raised when no provider of a runtime dependency can be found"""
 
+
 class MultipleRProvider(bb.BBHandledException):
     """Exception raised when multiple providers of a runtime dependency can be found"""
+
 
 def findProviders(cfgData, dataCache, pkg_pn=None):
     """
@@ -50,6 +54,7 @@ def findProviders(cfgData, dataCache, pkg_pn=None):
 
     return (latest_versions, preferred_versions, required)
 
+
 def allProviders(dataCache):
     """
     Find all providers for each pn
@@ -59,6 +64,7 @@ def allProviders(dataCache):
         ver = dataCache.pkg_pepvpr[fn]
         all_providers[pn].append((ver, fn))
     return all_providers
+
 
 def sortPriorities(pn, dataCache, pkg_pn=None):
     """
@@ -87,6 +93,7 @@ def sortPriorities(pn, dataCache, pkg_pn=None):
 
     return tmp_pn
 
+
 def versionVariableMatch(cfgData, keyword, pn):
     """
     Return the value of the <keyword>_VERSION variable if set.
@@ -102,6 +109,7 @@ def versionVariableMatch(cfgData, keyword, pn):
 
     return ver
 
+
 def preferredVersionMatch(pe, pv, pr, preferred_e, preferred_v, preferred_r):
     """
     Check if the version pe,pv,pr is the preferred one.
@@ -114,6 +122,7 @@ def preferredVersionMatch(pe, pv, pr, preferred_e, preferred_v, preferred_r):
             if preferred_v is not None and preferred_v.endswith('%') and pv.startswith(preferred_v[:len(preferred_v) - 1]):
                 return True
     return False
+
 
 def findPreferredProvider(pn, cfgData, dataCache, pkg_pn=None, item=None):
     """
@@ -196,6 +205,7 @@ def findPreferredProvider(pn, cfgData, dataCache, pkg_pn=None, item=None):
 
     return (preferred_ver, preferred_file, required)
 
+
 def findLatestProvider(pn, cfgData, dataCache, file_set):
     """
     Return the highest version of the providers in file_set.
@@ -215,6 +225,7 @@ def findLatestProvider(pn, cfgData, dataCache, file_set):
 
     return (latest, latest_f)
 
+
 def findBestProvider(pn, cfgData, dataCache, pkg_pn=None, item=None):
     """
     If there is a PREFERRED_VERSION, find the highest-priority bbfile
@@ -233,6 +244,7 @@ def findBestProvider(pn, cfgData, dataCache, pkg_pn=None, item=None):
         preferred_ver = latest
 
     return (latest, latest_f, preferred_ver, preferred_file, required)
+
 
 def _filterProviders(providers, item, cfgData, dataCache):
     """
@@ -292,6 +304,7 @@ def _filterProviders(providers, item, cfgData, dataCache):
 
     return eligible
 
+
 def filterProviders(providers, item, cfgData, dataCache):
     """
     Take a list of providers and filter/reorder according to the
@@ -319,6 +332,7 @@ def filterProviders(providers, item, cfgData, dataCache):
     logger.debug("sorted providers for %s are: %s", item, eligible)
 
     return eligible, foundUnique
+
 
 def filterProvidersRunTime(providers, item, cfgData, dataCache):
     """
@@ -378,7 +392,9 @@ def filterProvidersRunTime(providers, item, cfgData, dataCache):
 
     return eligible, numberPreferred
 
+
 regexp_cache = {}
+
 
 def getRuntimeProviders(dataCache, rdepend):
     """
@@ -412,6 +428,7 @@ def getRuntimeProviders(dataCache, rdepend):
             logger.debug("Assuming %s is a dynamic package, but it may not exist" % rdepend)
 
     return rproviders
+
 
 def buildWorldTargetList(dataCache, task=None):
     """

@@ -83,6 +83,7 @@ class BuiltInRegistryTest(unittest.TestCase):
         self.assertRaises(ValueError, BeautifulSoup,
                           "", features="no-such-feature")
 
+
 class RegistryTest(unittest.TestCase):
     """Test the TreeBuilderRegistry class in general."""
 

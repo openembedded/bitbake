@@ -12,6 +12,7 @@ import os
 import tempfile
 import re
 
+
 class VerCmpString(unittest.TestCase):
 
     def test_vercmpstring(self):
@@ -103,6 +104,7 @@ class Path(unittest.TestCase):
             result = bb.utils._check_unsafe_delete_path(arg1)
             self.assertEqual(result, correctresult, '_check_unsafe_delete_path("%s") != %s' % (arg1, correctresult))
 
+
 class Checksum(unittest.TestCase):
     filler = b"Shiver me timbers square-rigged spike Gold Road galleon bilge water boatswain wherry jack pirate. Mizzenmast rum lad Privateer jack salmagundi hang the jib piracy Pieces of Eight Corsair. Parrel marooned black spot yawl provost quarterdeck cable no prey, no pay spirits lateen sail."
 
@@ -129,6 +131,7 @@ class Checksum(unittest.TestCase):
             f.flush()
             checksum = bb.utils.sha256_file(f.name)
             self.assertEqual(checksum, "fcfbae8bf6b721dbb9d2dc6a9334a58f2031a9a9b302999243f99da4d7f12d0f")
+
 
 class EditMetadataFile(unittest.TestCase):
     _origfile = """
@@ -163,6 +166,7 @@ do_functionname() {
     command2 ${VAL3} ${VAL4}
 }
 """
+
     def _testeditfile(self, varvalues, compareto, dummyvars=None):
         if dummyvars is None:
             dummyvars = []
@@ -171,6 +175,7 @@ do_functionname() {
             tf.close()
             try:
                 varcalls = []
+
                 def handle_file(varname, origvalue, op, newlines):
                     self.assertIn(varname, varvalues, 'Callback called for variable %s not in the list!' % varname)
                     self.assertNotIn(varname, dummyvars, 'Callback called for variable %s in dummy list!' % varname)
@@ -187,7 +192,6 @@ do_functionname() {
                 self.assertEqual(sorted(varvalues.keys()), sorted(varcalls + dummyvars))
             finally:
                 os.remove(tf.name)
-
 
     def test_edit_metadata_file_nochange(self):
         # Test file doesn't get modified with nothing to do
@@ -236,7 +240,6 @@ do_functionname() {
 """
         self._testeditfile({'HELLO': ('newvalue', None, 4, True)}, newfile1)
 
-
     def test_edit_metadata_file_2(self):
 
         newfile2 = """
@@ -272,7 +275,6 @@ do_functionname() {
         self._testeditfile({'MULTILINE': (['d1', 'd2', 'd3'], None, 4, False),
                         'MULTILINE3': ('nowsingle', None, 4, True),
                         'NOTPRESENT': (['a', 'b'], None, 4, False)}, newfile2, dummyvars=['NOTPRESENT'])
-
 
     def test_edit_metadata_file_3(self):
 
@@ -312,7 +314,6 @@ do_functionname() {
                         'THIS': (None, None, 0, False),
                         'OTHER': ('yetanothervalue', None, 0, True)}, newfile3)
 
-
     def test_edit_metadata_file_4(self):
 
         newfile4 = """
@@ -341,7 +342,6 @@ MULTILINE2 := " \\
                         'MULTILINE3': (None, None, 0, False),
                         'THIS': ('that', None, 0, False),
                         'do_functionname()': (None, None, 0, False)}, newfile4)
-
 
     def test_edit_metadata(self):
         newfile5 = """
@@ -379,7 +379,6 @@ do_functionname() {
     command2 ${VAL3} ${VAL4}
 }
 """
-
 
         def handle_var(varname, origvalue, op, newlines):
             if varname == 'THIS':
@@ -421,6 +420,7 @@ MULTILINE = "  stuff \\
         testvalue = re.sub('\s+', ' ', value_in_callback.strip())
         self.assertEqual(expected_value, testvalue)
 
+
 class EditBbLayersConf(unittest.TestCase):
 
     def _test_bblayers_edit(self, before, after, add, remove, notadded, notremoved):
@@ -436,7 +436,6 @@ class EditBbLayersConf(unittest.TestCase):
                 self.assertEqual(notremoved, actual_notremoved)
             finally:
                 os.remove(tf.name)
-
 
     def test_bblayers_remove(self):
         before = r"""
@@ -467,7 +466,6 @@ BBLAYERS = " \
                                  '/home/user/path/layer2',
                                  [],
                                  [])
-
 
     def test_bblayers_add(self):
         before = r"""
@@ -501,7 +499,6 @@ BBLAYERS = " \
                                  [],
                                  [])
 
-
     def test_bblayers_add_remove(self):
         before = r"""
 # A comment
@@ -531,7 +528,6 @@ BBLAYERS = " \
                                  ['/other/path/to/layer5', '/home/user/path/layer2/'], '/home/user/path/subpath/layer3/',
                                  ['/home/user/path/layer2'],
                                  [])
-
 
     def test_bblayers_add_remove_home(self):
         before = r"""
@@ -563,7 +559,6 @@ BBLAYERS = " \
                                  [os.environ['HOME'] + '/path/layer4'],
                                  ['~/path/notinlist'])
 
-
     def test_bblayers_add_remove_plusequals(self):
         before = r"""
 # A comment
@@ -590,7 +585,6 @@ BBLAYERS += " \
                                  '/home/user/path/layer1',
                                  [],
                                  [])
-
 
     def test_bblayers_add_remove_plusequals2(self):
         before = r"""

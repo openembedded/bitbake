@@ -24,6 +24,7 @@ import bb.msg
 
 logger = bb.msg.logger_create('bitbake-layers', sys.stdout)
 
+
 def main():
     parser = argparse.ArgumentParser(
         description="BitBake layers utility",

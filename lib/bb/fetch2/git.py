@@ -75,6 +75,7 @@ from bb.fetch2 import logger
 
 class GitProgressHandler(bb.progress.LineFilterProgressHandler):
     """Extract progress information from git output"""
+
     def __init__(self, d):
         self._buffer = ''
         self._count = 0
@@ -118,6 +119,7 @@ class Git(FetchMethod):
     make_shallow_path = os.path.join(bitbake_dir, 'bin', 'git-make-shallow')
 
     """Class to fetch a module or modules from git repositories"""
+
     def init(self, d):
         pass
 

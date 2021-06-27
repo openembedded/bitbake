@@ -13,6 +13,7 @@ from tests.browser.selenium_helpers import SeleniumTestCase
 
 from orm.models import Project, Build
 
+
 class TestLandingPage(SeleniumTestCase):
     """ Tests for redirects on the landing page """
 

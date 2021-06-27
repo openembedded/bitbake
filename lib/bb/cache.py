@@ -28,6 +28,7 @@ logger = logging.getLogger("BitBake.Cache")
 
 __cache_version__ = "154"
 
+
 def getCacheFile(path, filename, mc, data_hash):
     mcspec = ''
     if mc:
@@ -37,6 +38,8 @@ def getCacheFile(path, filename, mc, data_hash):
 # RecipeInfoCommon defines common data retrieving methods
 # from meta data for caches. CoreRecipeInfo as well as other
 # Extra RecipeInfo needs to inherit this class
+
+
 class RecipeInfoCommon(object):
 
     @classmethod
@@ -236,6 +239,7 @@ class CoreRecipeInfo(RecipeInfoCommon):
         cachedata.fakerootlogs[fn] = self.fakerootlogs
         cachedata.extradepsfunc[fn] = self.extradepsfunc
 
+
 def virtualfn2realfn(virtualfn):
     """
     Convert a virtual file name to a real one + the associated subclass keyword
@@ -255,6 +259,7 @@ def virtualfn2realfn(virtualfn):
 
     return (fn, cls, mc)
 
+
 def realfn2virtual(realfn, cls, mc):
     """
     Convert a real filename + the associated subclass keyword to a virtual filename
@@ -264,6 +269,7 @@ def realfn2virtual(realfn, cls, mc):
     if mc:
         realfn = "mc:" + mc + ":" + realfn
     return realfn
+
 
 def variant2virtual(realfn, variant):
     """
@@ -277,6 +283,7 @@ def variant2virtual(realfn, variant):
             return "mc:" + elems[1] + ":virtual:" + ":".join(elems[2:]) + ":" + realfn
         return "mc:" + elems[1] + ":" + realfn
     return "virtual:" + variant + ":" + realfn
+
 
 def parse_recipe(bb_data, bbfile, appends, mc=''):
     """
@@ -312,7 +319,6 @@ def parse_recipe(bb_data, bbfile, appends, mc=''):
         if chdir_back:
             os.chdir(oldpath)
         raise
-
 
 
 class NoCache(object):
@@ -361,10 +367,12 @@ class NoCache(object):
 
         return datastores
 
+
 class Cache(NoCache):
     """
     BitBake Cache implementation
     """
+
     def __init__(self, databuilder, mc, data_hash, caches_array):
         super().__init__(databuilder)
         data = databuilder.data
@@ -761,6 +769,7 @@ class Cache(NoCache):
             info_array.append(cache_class(realfn, data))
         self.add_info(file_name, info_array, cacheData, parsed)
 
+
 class MulticonfigCache(Mapping):
     def __init__(self, databuilder, data_hash, caches_array):
         def progress(p):
@@ -780,7 +789,6 @@ class MulticonfigCache(Mapping):
                 previous_percent = current_percent
                 bb.event.fire(bb.event.CacheLoadProgress(current_progress, cachesize),
                                 databuilder.data)
-
 
         cachesize = 0
         current_progress = 0
@@ -816,6 +824,7 @@ class MulticonfigCache(Mapping):
     def __iter__(self):
         for k in self.__caches:
             yield k
+
 
 def init(cooker):
     """
@@ -861,6 +870,7 @@ class CacheData(object):
     def add_from_recipeinfo(self, fn, info_array):
         for info in info_array:
             info.add_cacheData(self, fn)
+
 
 class MultiProcessCache(object):
     """

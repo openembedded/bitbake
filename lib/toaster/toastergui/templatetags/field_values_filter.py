@@ -6,6 +6,7 @@ from django import template
 
 register = template.Library()
 
+
 def field_values(iterable, field):
     """
     Convert an iterable of models into a list of strings, one for each model,
@@ -18,5 +19,6 @@ def field_values(iterable, field):
             objects.append(getattr(item, field))
 
     return objects
+
 
 register.filter('field_values', field_values)

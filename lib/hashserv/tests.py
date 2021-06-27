@@ -16,6 +16,7 @@ import threading
 import unittest
 import socket
 
+
 def _run_server(server, idx):
     # logging.basicConfig(level=logging.DEBUG, filename='bbhashserv.log', filemode='w',
     #                     format='%(levelname)s %(filename)s:%(lineno)d %(message)s')
@@ -290,10 +291,10 @@ class TestHashEquivalenceUnixServer(HashEquivalenceTestSetup, HashEquivalenceCom
 
 class TestHashEquivalenceUnixServerLongPath(HashEquivalenceTestSetup, unittest.TestCase):
     DEEP_DIRECTORY = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb/ccccccccccccccccccccccccccccccccccccccccccc"
+
     def get_server_addr(self, server_idx):
         os.makedirs(os.path.join(self.temp_dir.name, self.DEEP_DIRECTORY), exist_ok=True)
         return "unix://" + os.path.join(self.temp_dir.name, self.DEEP_DIRECTORY, 'sock%d' % server_idx)
-
 
     def test_long_sock_path(self):
         # Simple test that hashes can be created

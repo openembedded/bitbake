@@ -11,6 +11,7 @@ PY3K = (sys.version_info[0] > 2)
 
 whitespace_re = re.compile(r"\s+")
 
+
 def _alias(attr):
     """Alias one attribute name to another for backward compatibility"""
     @property
@@ -38,8 +39,10 @@ class NamespacedAttribute(str):
         obj.namespace = namespace
         return obj
 
+
 class AttributeValueWithCharsetSubstitution(str):
     """A stand-in object for a character encoding specified in HTML."""
+
 
 class CharsetMetaAttributeValue(AttributeValueWithCharsetSubstitution):
     """A generic stand-in for the value of a meta tag's 'charset' attribute.
@@ -83,6 +86,7 @@ class ContentMetaAttributeValue(AttributeValueWithCharsetSubstitution):
             return match.group(1) + encoding
         return self.CHARSET_RE.sub(rewrite, self.original_value)
 
+
 class HTMLAwareEntitySubstitution(EntitySubstitution):
 
     """Entity substitution rules that are aware of some HTML quirks.
@@ -117,6 +121,7 @@ class HTMLAwareEntitySubstitution(EntitySubstitution):
     def substitute_xml(cls, ns):
         return cls._substitute_if_appropriate(
             ns, EntitySubstitution.substitute_xml)
+
 
 class PageElement(object):
     """Contains the navigational information for some part of the page
@@ -723,6 +728,7 @@ class NavigableString(str, PageElement):
     def name(self, name):
         raise AttributeError("A NavigableString cannot be given a name.")
 
+
 class PreformattedString(NavigableString):
     """A NavigableString not subject to the normal formatting rules.
 
@@ -736,15 +742,18 @@ class PreformattedString(NavigableString):
         self.format_string(self, formatter)
         return self.PREFIX + self + self.SUFFIX
 
+
 class CData(PreformattedString):
 
     PREFIX = '<![CDATA['
     SUFFIX = ']]>'
 
+
 class ProcessingInstruction(PreformattedString):
 
     PREFIX = '<?'
     SUFFIX = '>'
+
 
 class Comment(PreformattedString):
 
@@ -1279,6 +1288,7 @@ class Tag(PageElement):
 
     _selector_combinators = ['>', '+', '~']
     _select_debug = False
+
     def select_one(self, selector):
         """Perform a CSS selection operation on the current element."""
         value = self.select(selector, limit=1)
@@ -1345,6 +1355,7 @@ class Tag(PageElement):
             elif '#' in token:
                 # ID selector
                 tag_name, tag_id = token.split('#', 1)
+
                 def id_matches(tag):
                     return tag.get('id', None) == tag_id
                 checker = id_matches
@@ -1353,6 +1364,7 @@ class Tag(PageElement):
                 # Class selector
                 tag_name, klass = token.split('.', 1)
                 classes = set(klass.split('.'))
+
                 def classes_match(candidate):
                     return classes.issubset(candidate.get('class', []))
                 checker = classes_match
@@ -1379,6 +1391,7 @@ class Tag(PageElement):
                     if pseudo_value < 1:
                         raise ValueError(
                             'nth-of-type pseudo-class value must be at least 1.')
+
                     class Counter(object):
                         def __init__(self, destination):
                             self.count = 0
@@ -1434,6 +1447,7 @@ class Tag(PageElement):
                 # one that yields a tag's direct children (">"), and
                 # the selector is "foo".
                 next_token = tokens[index + 1]
+
                 def recursive_select(tag):
                     if self._select_debug:
                         print('    Calling select("%s") recursively on %s %s' % (next_token, tag.name, tag.attrs))
@@ -1502,7 +1516,6 @@ class Tag(PageElement):
                     elif self._select_debug:
                         print("     FAILURE %s %s" % (candidate.name, repr(candidate.attrs)))
 
-
             current_context = new_context
 
         if self._select_debug:
@@ -1527,6 +1540,8 @@ class Tag(PageElement):
         return self.has_attr(key)
 
 # Next, a couple classes to represent queries and their results.
+
+
 class SoupStrainer(object):
     """Encapsulates a number of ways of matching a markup element (tag or
     text)."""
@@ -1719,6 +1734,7 @@ class SoupStrainer(object):
 class ResultSet(list):
     """A ResultSet is just a list that keeps track of the SoupStrainer
     that created it."""
+
     def __init__(self, source, result=()):
         super(ResultSet, self).__init__(result)
         self.source = source

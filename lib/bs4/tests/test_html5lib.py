@@ -14,6 +14,7 @@ from bs4.testing import (
     skipIf,
 )
 
+
 @skipIf(
     not HTML5LIB_PRESENT,
     "html5lib seems not to be present, not testing its tree builder.")
@@ -76,7 +77,6 @@ class HTML5LibBuilderSmokeTest(SoupTest, HTML5TreeBuilderSmokeTest):
         soup = self.soup(markup)
         self.assertEqual("<body><p><em>foo</em></p><em>\n</em><p><em>bar<a></a></em></p></body>", soup.body.decode())
         self.assertEqual(2, len(soup.find_all('p')))
-
 
     def test_reparented_markup_ends_with_whitespace(self):
         markup = '<p><em>foo</p>\n<p>bar<a></a></em></p>\n'

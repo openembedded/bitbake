@@ -40,6 +40,7 @@ TABLE_DEFINITION = (
 
 TABLE_COLUMNS = tuple(name for name, _ in TABLE_DEFINITION)
 
+
 def setup_database(database, sync=True):
     db = sqlite3.connect(database)
     db.row_factory = sqlite3.Row
@@ -119,6 +120,7 @@ def create_client(addr):
         c.connect_tcp(*a)
 
     return c
+
 
 async def create_async_client(addr):
     from . import client

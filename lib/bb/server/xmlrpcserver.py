@@ -20,6 +20,8 @@ import bb
 # equal, it is assumed that a client is trying to connect to the server
 # while another client is connected to the server. In this case, a 503 error
 # ("service unavailable") is returned to the client.
+
+
 class BitBakeXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
     def __init__(self, request, client_address, server):
         self.server = server
@@ -47,6 +49,7 @@ class BitBakeXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         self.end_headers()
         self.wfile.write(bytes(response, 'utf-8'))
 
+
 class BitBakeXMLRPCServer(SimpleXMLRPCServer):
     # remove this when you're done with debugging
     # allow_reuse_address = True
@@ -68,7 +71,6 @@ class BitBakeXMLRPCServer(SimpleXMLRPCServer):
         self.cooker = cooker
         self.parent = parent
 
-
     def register_functions(self, context, prefix):
         """
         Convenience method for registering all functions in the scope
@@ -85,6 +87,7 @@ class BitBakeXMLRPCServer(SimpleXMLRPCServer):
 
     def handle_requests(self):
         self._handle_request_noblock()
+
 
 class BitBakeXMLRPCServerCommands():
 

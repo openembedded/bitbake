@@ -29,6 +29,7 @@ if sqlversion[0] < 3 or (sqlversion[0] == 3 and sqlversion[1] < 3):
 # Value can decrement if returning to a previous build.
 #
 
+
 class PRTable(object):
     def __init__(self, conn, table, nohist):
         self.conn = conn
@@ -243,8 +244,10 @@ class PRTable(object):
             fd.write('\n')
         return writeCount
 
+
 class PRData(object):
     """Object representing the PR database"""
+
     def __init__(self, filename, nohist=True):
         self.filename = os.path.abspath(filename)
         self.nohist = nohist

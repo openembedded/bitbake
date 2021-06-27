@@ -36,6 +36,7 @@ class Command(BaseCommand):
         # we make sure we have builddir and sourcedir for all defined build envionments
         for be in BuildEnvironment.objects.all():
             be.needs_import = False
+
             def _verify_be():
                 is_changed = False
 
@@ -157,8 +158,6 @@ class Command(BaseCommand):
         Build.objects.filter(outcome=Build.IN_PROGRESS).update(outcome=Build.FAILED, completed_on=timezone.now())
 
         return 0
-
-
 
     def handle(self, **options):
         retval = 0

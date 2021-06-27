@@ -34,6 +34,7 @@ verboseStdoutLogging = False
 
 __mtime_cache = {}
 
+
 def cached_mtime_noerror(f):
     if f not in __mtime_cache:
         try:
@@ -42,9 +43,11 @@ def cached_mtime_noerror(f):
             return 0
     return __mtime_cache[f]
 
+
 def reset_cache():
     global __mtime_cache
     __mtime_cache = {}
+
 
 # When we execute a Python function, we'd like certain things
 # in all namespaces, hence we add them to __builtins__.
@@ -57,6 +60,7 @@ else:
 
 builtins['bb'] = bb
 builtins['os'] = os
+
 
 class TaskBase(event.Event):
     """Base class for task events"""
@@ -86,14 +90,18 @@ class TaskBase(event.Event):
 
     task = property(getTask, setTask, None, "task property")
 
+
 class TaskStarted(TaskBase):
     """Task execution started"""
+
     def __init__(self, t, fn, logfile, taskflags, d):
         super(TaskStarted, self).__init__(t, fn, logfile, d)
         self.taskflags = taskflags
 
+
 class TaskSucceeded(TaskBase):
     """Task execution completed"""
+
 
 class TaskFailed(TaskBase):
     """Task execution failed"""
@@ -102,17 +110,21 @@ class TaskFailed(TaskBase):
         self.errprinted = errprinted
         super(TaskFailed, self).__init__(task, fn, logfile, metadata)
 
+
 class TaskFailedSilent(TaskBase):
     """Task execution failed (silently)"""
+
     def getDisplayName(self):
         # Don't need to tell the user it was silent
         return "Failed"
+
 
 class TaskInvalid(TaskBase):
 
     def __init__(self, task, fn, metadata):
         super(TaskInvalid, self).__init__(task, fn, None, metadata)
         self._message = "No such task '%s'" % task
+
 
 class TaskProgress(event.Event):
     """
@@ -128,6 +140,7 @@ class TaskProgress(event.Event):
     The rate is optional, this is simply an extra string to display to the
     user if specified.
     """
+
     def __init__(self, progress, rate=None):
         self.progress = progress
         self.rate = rate
@@ -162,6 +175,7 @@ class StdoutNoopContextManager:
     """
     This class acts like sys.stdout, but adds noop __enter__ and __exit__ methods.
     """
+
     def __enter__(self):
         return sys.stdout
 
@@ -267,10 +281,13 @@ def exec_func(func, d, dirs=None):
         except:
             pass
 
+
 _functionfmt = """
 {function}(d)
 """
 logformatter = bb.msg.BBLogFormatter("%(levelname)s: %(message)s")
+
+
 def exec_func_python(func, d, runfile, cwd=None):
     """Execute a python BB 'function'"""
 
@@ -305,6 +322,7 @@ def exec_func_python(func, d, runfile, cwd=None):
                 os.chdir(olddir)
             except OSError as e:
                 bb.warn("%s: Cannot restore cwd %s: %s" % (func, olddir, e))
+
 
 def shell_trap_code():
     return '''#!/bin/sh\n
@@ -364,6 +382,7 @@ case $BASH_VERSION in
 esac
 '''
 
+
 def create_progress_handler(func, progress, logfile, d):
     if progress == 'percent':
         # Use default regex
@@ -399,6 +418,7 @@ def create_progress_handler(func, progress, logfile, d):
         bb.warn('%s: invalid task progress varflag value "%s", ignoring' % (func, progress))
 
     return logfile
+
 
 def exec_func_shell(func, d, runfile, cwd=None):
     """Execute a shell function from the metadata
@@ -452,6 +472,7 @@ exit $ret
             raise
 
     fifobuffer = bytearray()
+
     def readfifo(data):
         nonlocal fifobuffer
         fifobuffer.extend(data)
@@ -562,6 +583,7 @@ exit $ret
 
     bb.debug(2, "Shell function %s finished" % func)
 
+
 def _task_data(fn, task, d):
     localdata = bb.data.createCopy(d)
     localdata.setVar('BB_FILENAME', fn)
@@ -571,6 +593,7 @@ def _task_data(fn, task, d):
     localdata.finalize()
     bb.data.expandKeys(localdata)
     return localdata
+
 
 def _exec_task(fn, task, d, quieterr):
     """Execute a BB 'task'
@@ -638,6 +661,7 @@ def _exec_task(fn, task, d, quieterr):
         def __init__(self):
             self.triggered = False
             logging.Handler.__init__(self, logging.ERROR)
+
         def emit(self, record):
             if getattr(record, 'forcelog', False):
                 self.triggered = False
@@ -730,6 +754,7 @@ def _exec_task(fn, task, d, quieterr):
 
     return 0
 
+
 def exec_task(fn, task, d, profile=False):
     try:
         quieterr = False
@@ -759,6 +784,7 @@ def exec_task(fn, task, d, profile=False):
             failedevent = TaskFailed(task, None, d, True)
             event.fire(failedevent, d)
         return 1
+
 
 def stamp_internal(taskname, d, file_name, baseonly=False, noextra=False):
     """
@@ -797,6 +823,7 @@ def stamp_internal(taskname, d, file_name, baseonly=False, noextra=False):
 
     return stamp
 
+
 def stamp_cleanmask_internal(taskname, d, file_name):
     """
     Internal stamp helper function to generate stamp cleaning mask
@@ -823,6 +850,7 @@ def stamp_cleanmask_internal(taskname, d, file_name):
     cleanmask = bb.parse.siggen.stampcleanmask(stamp, file_name, taskname, extrainfo)
 
     return [cleanmask, cleanmask.replace(taskflagname, taskflagname + "_setscene")]
+
 
 def make_stamp(task, d, file_name=None):
     """
@@ -854,6 +882,7 @@ def make_stamp(task, d, file_name=None):
         file_name = d.getVar('BB_FILENAME')
         bb.parse.siggen.dump_sigtask(file_name, task, stampbase, True)
 
+
 def find_stale_stamps(task, d, file_name=None):
     current = stamp_internal(task, d, file_name)
     current2 = stamp_internal(task + "_setscene", d, file_name)
@@ -871,6 +900,7 @@ def find_stale_stamps(task, d, file_name=None):
             found.append(name)
     return found
 
+
 def del_stamp(task, d, file_name=None):
     """
     Removes a stamp for a given task
@@ -878,6 +908,7 @@ def del_stamp(task, d, file_name=None):
     """
     stamp = stamp_internal(task, d, file_name)
     bb.utils.remove(stamp)
+
 
 def write_taint(task, d, file_name=None):
     """
@@ -897,12 +928,14 @@ def write_taint(task, d, file_name=None):
     with open(taintfn, 'w') as taintf:
         taintf.write(str(uuid.uuid4()))
 
+
 def stampfile(taskname, d, file_name=None, noextra=False):
     """
     Return the stamp for a given task
     (d can be a data dict or dataCache)
     """
     return stamp_internal(taskname, d, file_name, noextra=noextra)
+
 
 def add_tasks(tasklist, d):
     task_deps = d.getVar('_task_deps', False)
@@ -922,6 +955,7 @@ def add_tasks(tasklist, d):
             task_deps['tasks'].append(task)
 
         flags = d.getVarFlags(task)
+
         def getTask(name):
             if not name in task_deps:
                 task_deps[name] = {}
@@ -956,6 +990,7 @@ def add_tasks(tasklist, d):
     # don't assume holding a reference
     d.setVar('_task_deps', task_deps)
 
+
 def addtask(task, before, after, d):
     if task[:3] != "do_":
         task = "do_" + task
@@ -980,6 +1015,7 @@ def addtask(task, before, after, d):
             if task not in existing:
                 d.setVarFlag(entry, "deps", [task] + existing)
 
+
 def deltask(task, d):
     if task[:3] != "do_":
         task = "do_" + task
@@ -996,6 +1032,7 @@ def deltask(task, d):
         if task in deps:
             deps.remove(task)
             d.setVarFlag(bbtask, 'deps', deps)
+
 
 def preceedtask(task, with_recrdeptasks, d):
     """
@@ -1019,6 +1056,7 @@ def preceedtask(task, with_recrdeptasks, d):
             preceed.update(recrdeptask.split())
     return preceed
 
+
 def tasksbetween(task_start, task_end, d):
     """
     Return the list of tasks between two tasks in the current recipe,
@@ -1027,6 +1065,7 @@ def tasksbetween(task_start, task_end, d):
     """
     outtasks = []
     tasks = list(filter(lambda k: d.getVarFlag(k, "task"), d.keys()))
+
     def follow_chain(task, endtask, chain=None):
         if not chain:
             chain = []

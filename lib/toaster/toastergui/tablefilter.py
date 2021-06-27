@@ -10,6 +10,7 @@ from django.db.models import Q, Max, Min
 from django.utils import dateparse, timezone
 from datetime import timedelta
 
+
 class TableFilter(object):
     """
     Stores a filter for a named field, and can retrieve the action
@@ -63,6 +64,7 @@ class TableFilter(object):
             'filter_actions': filter_actions
         }
 
+
 class TableFilterQueryHelper(object):
     def dateStringsToQ(self, field_name, date_from_str, date_to_str):
         """
@@ -96,6 +98,7 @@ class TableFilterQueryHelper(object):
         args[field_name + '__lte'] = date_to
 
         return Q(**args)
+
 
 class TableFilterAction(object):
     """
@@ -134,6 +137,7 @@ class TableFilterAction(object):
             'count': self.filter(queryset).count()
         }
 
+
 class TableFilterActionToggle(TableFilterAction):
     """
     A single filter action which will populate one radio button of
@@ -144,6 +148,7 @@ class TableFilterActionToggle(TableFilterAction):
     def __init__(self, *args):
         super(TableFilterActionToggle, self).__init__(*args)
         self.type = 'toggle'
+
 
 class TableFilterActionDay(TableFilterAction):
     """
@@ -190,6 +195,7 @@ class TableFilterActionDay(TableFilterAction):
         )
 
         return queryset.filter(self.criteria)
+
 
 class TableFilterActionDateRange(TableFilterAction):
     """
@@ -254,6 +260,7 @@ class TableFilterActionDateRange(TableFilterAction):
         data['count'] = None
 
         return data
+
 
 class TableFilterMap(object):
     """

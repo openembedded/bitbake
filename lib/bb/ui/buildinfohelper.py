@@ -52,8 +52,10 @@ from django.db import transaction, connection
 # the logger name is standard throughout BitBake
 logger = logging.getLogger("ToasterLogger")
 
+
 class NotExisting(Exception):
     pass
+
 
 class ORMWrapper(object):
     """ This class creates the dictionaries needed to store information in the database
@@ -77,7 +79,6 @@ class ORMWrapper(object):
                 key += "-%s" % str(kwargs[k])
         return key
 
-
     def _cached_get_or_create(self, clazz, **kwargs):
         """ This is a memory-cached get_or_create. We assume that the objects will not be created in the
             database through any other means.
@@ -96,7 +97,6 @@ class ORMWrapper(object):
                 clazz.objects.get_or_create(**kwargs)
 
         return (vars(self)[dictname][key], created)
-
 
     def _cached_get(self, clazz, **kwargs):
         """ This is a memory-cached get. We assume that the objects will not change  in the database between gets.
@@ -301,14 +301,12 @@ class ORMWrapper(object):
             task_object.save()
         return task_object
 
-
     def get_update_recipe_object(self, recipe_information, must_exist=False):
         assert 'layer_version' in recipe_information
         assert 'file_path' in recipe_information
         assert 'pathflags' in recipe_information
 
         assert not recipe_information['file_path'].startswith("/")      # we should have layer-relative paths at all times
-
 
         def update_recipe_obj(recipe_object):
             object_changed = False
@@ -335,7 +333,6 @@ class ORMWrapper(object):
                         pathflags=recipe_information['pathflags'])
                 update_recipe_obj(built_recipe)
                 break
-
 
         # If we're in analysis mode or if this is a custom recipe
         # then we are wholly responsible for the data
@@ -500,7 +497,6 @@ class ORMWrapper(object):
                         group=group,
                         directory=parent_obj)
 
-
         # we insert files
         for d in files:
             (user, group, size) = d[1:4]
@@ -565,7 +561,6 @@ class ORMWrapper(object):
                         group=group,
                         directory=parent_obj,
                         sym_target=filetarget_obj)
-
 
     def save_target_package_information(self, build_obj, target_obj, packagedict, pkgpnmap, recipes, built_package=False):
         assert isinstance(build_obj, Build)
@@ -715,7 +710,6 @@ class ORMWrapper(object):
 
         return log_object.save()
 
-
     def save_build_package_information(self, build_obj, package_info, recipes,
                                        built_package):
         # assert isinstance(build_obj, Build)
@@ -853,6 +847,7 @@ class MockEvent(object):
     """ This object is used to create event, for which normal event-processing methods can
         be used, out of data that is not coming via an actual event
     """
+
     def __init__(self):
         self.msg = None
         self.levelno = None
@@ -906,7 +901,6 @@ class BuildInfoHelper(object):
         self.project = None
 
         logger.debug("buildinfohelper: Build info helper inited %s" % vars(self))
-
 
     ###################
     ## methods to convert event/external info into objects that the ORM layer uses
@@ -1044,8 +1038,6 @@ class BuildInfoHelper(object):
         filepath_flags = ":".join(sorted(taskfile.split(":")[:-1]))
         layer_version_obj = self._get_layer_version_for_path(localfilepath)
 
-
-
         recipe_info = {}
         recipe_info['layer_version'] = layer_version_obj
         recipe_info['file_path'] = localfilepath
@@ -1078,7 +1070,6 @@ class BuildInfoHelper(object):
                                                      package=package))
 
         return build_stats_path
-
 
     ################################
     ## external available methods to store information
@@ -1251,7 +1242,6 @@ class BuildInfoHelper(object):
                         'outcome': task_information['outcome'],
                     }
 
-
     def store_tasks_stats(self, event):
         self._ensure_build()
         task_data = BuildInfoHelper._get_data_from_event(event)
@@ -1321,7 +1311,6 @@ class BuildInfoHelper(object):
 
         self.orm_wrapper.get_update_task_object(task_information, True) # must exist
 
-
     def store_missed_state_tasks(self, event):
         for (fn, taskname, taskhash, sstatefile) in BuildInfoHelper._get_data_from_event(event)['missed']:
 
@@ -1355,7 +1344,6 @@ class BuildInfoHelper(object):
 
             self.orm_wrapper.get_update_task_object(task_information)
 
-
     def store_target_package_data(self, event):
         self._ensure_build()
 
@@ -1383,8 +1371,6 @@ class BuildInfoHelper(object):
                     except KeyError as e:
                         logger.warning("KeyError in save_target_file_information"
                                        "%s ", e)
-
-
 
     def cancel_cli_build(self):
         """
@@ -1538,7 +1524,6 @@ class BuildInfoHelper(object):
 
         if len(errormsg) > 0:
             logger.warning("buildinfohelper: dependency info not identify recipes: \n%s", errormsg)
-
 
     def store_build_package_information(self, event):
         self._ensure_build()

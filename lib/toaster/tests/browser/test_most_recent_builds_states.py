@@ -14,6 +14,7 @@ from tests.browser.selenium_helpers_base import Wait
 from orm.models import Project, Build, Task, Recipe, Layer, Layer_Version
 from bldcontrol.models import BuildRequest
 
+
 class TestMostRecentBuildsStates(SeleniumTestCase):
     """ Test states update correctly in most recent builds area """
 

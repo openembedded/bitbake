@@ -43,9 +43,11 @@ __classname__ = ""
 
 cached_statements = {}
 
+
 def supports(fn, d):
     """Return True if fn has a supported extension"""
     return os.path.splitext(fn)[-1] in [".bb", ".bbclass", ".inc"]
+
 
 def inherit(files, fn, lineno, d):
     __inherit_cache = d.getVar('__inherit_cache', False) or []
@@ -69,6 +71,7 @@ def inherit(files, fn, lineno, d):
             d.setVar('__inherit_cache', __inherit_cache)
             include(fn, file, lineno, d, "inherit")
             __inherit_cache = d.getVar('__inherit_cache', False) or []
+
 
 def get_statements(filename, absolute_filename, base_name):
     global cached_statements
@@ -95,6 +98,7 @@ def get_statements(filename, absolute_filename, base_name):
         if filename.endswith(".bbclass") or filename.endswith(".inc"):
             cached_statements[absolute_filename] = statements
         return statements
+
 
 def handle(fn, d, include):
     global __func_start_regexp__, __inherit_regexp__, __export_func_regexp__, __addtask_regexp__, __addhandler_regexp__, __infunc__, __body__, __residue__, __classname__
@@ -147,6 +151,7 @@ def handle(fn, d, include):
         d.setVar("FILE", oldfile)
 
     return d
+
 
 def feeder(lineno, s, fn, root, statements, eof=False):
     global __func_start_regexp__, __inherit_regexp__, __export_func_regexp__, __addtask_regexp__, __addhandler_regexp__, __def_regexp__, __python_func_regexp__, __inpython__, __infunc__, __body__, bb, __residue__, __classname__
@@ -261,6 +266,7 @@ def feeder(lineno, s, fn, root, statements, eof=False):
         return
 
     return ConfHandler.feeder(lineno, s, fn, statements)
+
 
 # Add us to the handlers list
 from .. import handlers

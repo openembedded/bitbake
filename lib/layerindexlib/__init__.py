@@ -16,8 +16,10 @@ logger = logging.getLogger('BitBake.layerindexlib')
 
 # Exceptions
 
+
 class LayerIndexException(Exception):
     '''LayerIndex Generic Exception'''
+
     def __init__(self, message):
          self.msg = message
          Exception.__init__(self, message)
@@ -25,8 +27,10 @@ class LayerIndexException(Exception):
     def __str__(self):
          return self.msg
 
+
 class LayerIndexUrlError(LayerIndexException):
     '''Exception raised when unable to access a URL for some reason'''
+
     def __init__(self, url, message=""):
         if message:
             msg = "Unable to access layerindex url %s: %s" % (url, message)
@@ -35,8 +39,10 @@ class LayerIndexUrlError(LayerIndexException):
         self.url = url
         LayerIndexException.__init__(self, msg)
 
+
 class LayerIndexFetchError(LayerIndexException):
     '''General layerindex fetcher exception when something fails'''
+
     def __init__(self, url, message=""):
         if message:
             msg = "Unable to fetch layerindex url %s: %s" % (url, message)
@@ -174,7 +180,6 @@ class LayerIndex():
 
         return res
 
-
     def load_layerindex(self, indexURI, load=['layerDependencies', 'recipes', 'machines', 'distros'], reload=False):
         '''Load the layerindex.
 
@@ -270,7 +275,6 @@ will write out the individual elements split by layer and related components.
             logger.debug("No plugins support %s" % indexURI)
             raise LayerIndexException("No plugins support %s" % indexURI)
 
-
     def is_empty(self):
         '''Return True or False if the index has any usable data.
 
@@ -283,7 +287,6 @@ layerBranches set.  If not, they are effectively blank.'''
                 found = True
                 break
         return not found
-
 
     def find_vcs_url(self, vcs_url, branch=None):
         '''Return the first layerBranch with the given vcs_url
@@ -376,7 +379,6 @@ layerBranches set.  If not, they are effectively blank.'''
             else:
                 invalid.append(name)
 
-
         def _resolve_dependencies(layerbranches, ignores, dependencies, invalid, processed=None):
             for layerbranch in layerbranches:
                 if ignores and layerbranch.layer.name in ignores:
@@ -448,7 +450,6 @@ layerBranches set.  If not, they are effectively blank.'''
                 dependencies[layerbranch.layer.name] = [layerbranch]
 
         return (dependencies, invalid)
-
 
     def list_obj(self, object):
         '''Print via the plain logger object information
@@ -744,7 +745,6 @@ class LayerIndexObj():
 
         return cache
 
-
     def find_vcs_url(self, vcs_url, branches=None):
         ''''Return the first layerBranch with the given vcs_url
 
@@ -761,7 +761,6 @@ class LayerIndexObj():
             return layerbranch
 
         return None
-
 
     def find_collection(self, collection, version=None, branches=None):
         '''Return the first layerBranch with the given collection name
@@ -782,7 +781,6 @@ class LayerIndexObj():
                 return layerbranch
 
         return None
-
 
     def find_layerbranch(self, name, branches=None):
         '''Return the first layerbranch whose layer name matches
@@ -970,6 +968,8 @@ class LayerIndexItemObj():
         return self._lock
 
 # Branch object
+
+
 class Branch(LayerIndexItemObj):
     def define_data(self, id, name, bitbake_branch,
                  short_description=None, sort_priority=1,
@@ -1165,6 +1165,7 @@ class LayerBranch(LayerIndexItemObj):
 # the layer object to get various attributes.  So add an intermediate set
 # of attributes that can easily get us the layerbranch as well as layer.
 
+
 class LayerIndexItemObj_LayerBranch(LayerIndexItemObj):
     @property
     def layerbranch_id(self):
@@ -1338,6 +1339,7 @@ class Machine(LayerIndexItemObj_LayerBranch):
             self.layerbranch_id = layerbranch
         self.updated = updated or datetime.datetime.today().isoformat()
 
+
 class Distro(LayerIndexItemObj_LayerBranch):
     def define_data(self, id,
                     name, description, layerbranch,
@@ -1353,6 +1355,8 @@ class Distro(LayerIndexItemObj_LayerBranch):
 
 # When performing certain actions, we may need to sort the data.
 # This will allow us to keep it consistent from run to run.
+
+
 def sort_entry(item):
     newitem = item
     try:

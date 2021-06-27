@@ -56,6 +56,7 @@ class SoupTest(unittest.TestCase):
                 self.assertEqual(earlier, e.previous_element)
             earlier = e
 
+
 class HTMLTreeBuilderSmokeTest(SoupTest):
 
     """A basic test of a treebuilder's competence.
@@ -541,6 +542,7 @@ Hello, world!
         data.a['foo'] = 'bar'
         self.assertEqual('<a foo="bar">text</a>', data.a.decode())
 
+
 class XMLTreeBuilderSmokeTest(SoupTest):
 
     def test_pickle_and_unpickle_identity(self):
@@ -611,7 +613,6 @@ class XMLTreeBuilderSmokeTest(SoupTest):
         soup = self.soup(markup)
         self.assertEqual(soup.encode("utf-8"), markup)
 
-
     def test_tags_are_empty_element_if_and_only_if_they_are_empty(self):
         self.assertSoupEquals("<p>", "<p/>")
         self.assertSoupEquals("<p>foo</p>")
@@ -638,6 +639,7 @@ class XMLTreeBuilderSmokeTest(SoupTest):
         soup = self.soup(markup)
         self.assertEqual(str(soup.foo), markup)
 
+
 class HTML5TreeBuilderSmokeTest(HTMLTreeBuilderSmokeTest):
     """Smoke test for a tree builder that supports HTML5."""
 
@@ -658,7 +660,6 @@ class HTML5TreeBuilderSmokeTest(HTMLTreeBuilderSmokeTest):
         self.assertEqual(namespace, soup.svg.namespace)
         self.assertEqual(namespace, soup.circle.namespace)
 
-
     def test_mathml_tags_have_namespace(self):
         markup = '<math><msqrt>5</msqrt></math>'
         soup = self.soup(markup)
@@ -672,6 +673,7 @@ class HTML5TreeBuilderSmokeTest(HTMLTreeBuilderSmokeTest):
         self.assertTrue(isinstance(soup.contents[0], Comment))
         self.assertEqual(soup.contents[0], '?xml version="1.0" encoding="utf-8"?')
         self.assertEqual("html", soup.contents[0].next_element.name)
+
 
 def skipIf(condition, reason):
    def nothing(test, *args, **kwargs):

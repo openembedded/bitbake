@@ -18,6 +18,7 @@ import traceback
 import sys
 import cProfile
 
+
 def diagnose(data):
     """Diagnostic suite for isolating common problems."""
     print("Diagnostic running on Beautiful Soup %s" % __version__)
@@ -42,7 +43,6 @@ def diagnose(data):
         except ImportError as e:
             print(
                 "lxml is not installed or couldn't be imported.")
-
 
     if 'html5lib' in basic_parsers:
         try:
@@ -78,6 +78,7 @@ def diagnose(data):
 
         print("-" * 80)
 
+
 def lxml_trace(data, html=True, **kwargs):
     """Print out the lxml events that occur during parsing.
 
@@ -87,6 +88,7 @@ def lxml_trace(data, html=True, **kwargs):
     from lxml import etree
     for event, element in etree.iterparse(StringIO(data), html=html, **kwargs):
         print(("%s, %4s, %s" % (event, element.tag, element.text)))
+
 
 class AnnouncingParser(HTMLParser):
     """Announces HTMLParser parse events, without doing anything else."""
@@ -121,6 +123,7 @@ class AnnouncingParser(HTMLParser):
     def handle_pi(self, data):
         self._p("%s PI" % data)
 
+
 def htmlparser_trace(data):
     """Print out the HTMLParser events that occur during parsing.
 
@@ -130,8 +133,10 @@ def htmlparser_trace(data):
     parser = AnnouncingParser()
     parser.feed(data)
 
+
 _vowels = "aeiou"
 _consonants = "bcdfghjklmnpqrstvwxyz"
+
 
 def rword(length=5):
     "Generate a random word-like string."
@@ -144,10 +149,12 @@ def rword(length=5):
         s += random.choice(t)
     return s
 
+
 def rsentence(length=4):
     "Generate a random sentence-like string."
     return " ".join(rword(random.randint(4, 9)) for i in range(length))
         
+
 def rdoc(num_elements=1000):
     """Randomly generate an invalid HTML document."""
     tag_names = ['p', 'div', 'span', 'i', 'b', 'script', 'table']
@@ -165,6 +172,7 @@ def rdoc(num_elements=1000):
             tag_name = random.choice(tag_names)
             elements.append("</%s>" % tag_name)
     return "<html>" + "\n".join(elements) + "</html>"
+
 
 def benchmark_parsers(num_elements=100000):
     """Very basic head-to-head performance benchmark."""
@@ -198,6 +206,7 @@ def benchmark_parsers(num_elements=100000):
     b = time.time()
     print("Raw html5lib parsed the markup in %.2fs." % (b - a))
 
+
 def profile(num_elements=100000, parser="lxml"):
 
     filehandle = tempfile.NamedTemporaryFile()
@@ -211,6 +220,7 @@ def profile(num_elements=100000, parser="lxml"):
     # stats.strip_dirs()
     stats.sort_stats("cumulative")
     stats.print_stats('_html5lib|bs4', 50)
+
 
 if __name__ == '__main__':
     diagnose(sys.stdin.read())

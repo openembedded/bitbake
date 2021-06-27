@@ -17,6 +17,8 @@ logger = logging.getLogger("BitBake.Cache")
 
 # mtime cache (non-persistent)
 # based upon the assumption that files do not change during bitbake run
+
+
 class FileMtimeCache(object):
     cache = {}
 
@@ -41,6 +43,8 @@ class FileMtimeCache(object):
         self.cache.clear()
 
 # Checksum + mtime cache (persistent)
+
+
 class FileChecksumCache(MultiProcessCache):
     cache_file_name = "local_file_checksum_cache.dat"
     CACHE_VERSION = 1

@@ -40,6 +40,7 @@ class ProgressHandler:
     used to build objects to intercept console output and determine the
     progress of some operation.
     """
+
     def __init__(self, d, outfile=None):
         self._progress = 0
         self._data = d
@@ -85,6 +86,7 @@ class LineFilterProgressHandler(ProgressHandler):
     getting progress, assuming that that can be done on a per-line
     basis.
     """
+
     def __init__(self, d, outfile=None):
         self._linebuffer = ''
         super().__init__(d, outfile)
@@ -150,6 +152,7 @@ class MultiStageProgressReporter:
     be passed around or stored at the object level and calls
     to next_stage() and update() made whereever needed.
     """
+
     def __init__(self, d, stage_weights, debug=False):
         """
         Initialise the progress reporter.
@@ -265,6 +268,7 @@ class MultiStageProcessProgressReporter(MultiStageProgressReporter):
     Version of MultiStageProgressReporter intended for use with
     standalone processes (such as preparing the runqueue)
     """
+
     def __init__(self, d, processname, stage_weights, debug=False):
         self._processname = processname
         self._started = False
@@ -291,6 +295,7 @@ class DummyMultiStageProcessProgressReporter(MultiStageProgressReporter):
     MultiStageProcessProgressReporter that takes the calls and does nothing
     with them (to avoid a bunch of "if progress_reporter:" checks)
     """
+
     def __init__(self):
         super().__init__(None, [])
 

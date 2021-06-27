@@ -17,8 +17,10 @@ import layerindexlib.plugin
 
 logger = logging.getLogger('BitBake.layerindexlib.restapi')
 
+
 def plugin_init(plugins):
     return RestApiPlugin()
+
 
 class RestApiPlugin(layerindexlib.plugin.IndexPlugin):
     def __init__(self):
@@ -45,7 +47,6 @@ class RestApiPlugin(layerindexlib.plugin.IndexPlugin):
             return self.load_index_web(up, url, load)
 
         raise layerindexlib.plugin.LayerIndexPluginUrlError(self.type, url)
-
 
     def load_index_file(self, up, url, load):
         """
@@ -79,7 +80,6 @@ class RestApiPlugin(layerindexlib.plugin.IndexPlugin):
             index.config['BRANCH'] = branches
         else:
             branches = ['*']
-
 
         def load_cache(path, index, branches=[]):
             logger.debug('Loading json file %s' % path)
@@ -115,7 +115,6 @@ class RestApiPlugin(layerindexlib.plugin.IndexPlugin):
                 if lName in pindex:
                     index.add_raw_element(lName, lType, pindex[lName])
 
-
         if not os.path.isdir(up.path):
             load_cache(up.path, index, branches)
             return index
@@ -129,7 +128,6 @@ class RestApiPlugin(layerindexlib.plugin.IndexPlugin):
                 load_cache(fpath, index, branches)
 
         return index
-
 
     def load_index_web(self, up, url, load):
         """
@@ -220,7 +218,6 @@ class RestApiPlugin(layerindexlib.plugin.IndexPlugin):
         # Load all of the layerItems (these can not be easily filtered)
         logger.debug("Loading %s from %s" % ('layerItems', index.apilinks['layerItems']))
 
-
         # The link won't include username/password, so pull it from the original url
         pindex['layerItems'] = _get_json_response(index.apilinks['layerItems'],
                                                   username=up.username, password=up.password)
@@ -228,7 +225,6 @@ class RestApiPlugin(layerindexlib.plugin.IndexPlugin):
             logger.debug("No layers were found at url %s." % (url))
             return index
         index.add_raw_element("layerItems", layerindexlib.LayerItem, pindex['layerItems'])
-
 
 	# From this point on load the contents for each branch.  Otherwise we
 	# could run into a timeout.
@@ -244,7 +240,6 @@ class RestApiPlugin(layerindexlib.plugin.IndexPlugin):
                 logger.debug("No valid layer branches (%s) found at url %s." % (branches or "*", url))
                 return index
             index.add_raw_element("layerBranches", layerindexlib.LayerBranch, pindex['layerBranches'])
-
 
             # Load the rest, they all have a similar format
             # Note: the layer index has a few more items, we can add them if necessary
@@ -291,7 +286,6 @@ class RestApiPlugin(layerindexlib.plugin.IndexPlugin):
             logger.error('No layerBranches to write.')
             return
 
-
         def filter_item(layerbranchid, objects):
             filtered = []
             for obj in getattr(index, objects, None):
@@ -307,7 +301,6 @@ class RestApiPlugin(layerindexlib.plugin.IndexPlugin):
                         logger.debug('No obj._data: %s %s' % (objects, type(obj)))
                         filtered.append(obj)
             return filtered
-
 
         # Write out to a single file.
         # Filter out unnecessary items, then sort as we write for determinism
@@ -344,7 +337,6 @@ class RestApiPlugin(layerindexlib.plugin.IndexPlugin):
             with open(up.path, 'wt') as f:
                 json.dump(layerindexlib.sort_entry(pindex), f, indent=4)
             return
-
 
         # Write out to a directory one file per layerBranch
         # Prepare all layer related items, to create a minimal file.
