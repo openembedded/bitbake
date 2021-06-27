@@ -398,7 +398,7 @@ class ToasterTable(TemplateView):
             raise
 
         data = json.dumps(data, indent=2, cls=DjangoJSONEncoder)
-        cache.set(cache_name, data, 60*30)
+        cache.set(cache_name, data, 60 * 30)
 
         return data
 

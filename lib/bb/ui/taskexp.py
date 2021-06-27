@@ -226,7 +226,7 @@ def main(server, eventHandler, params):
     Gdk.threads_enter()
     dep = DepExplorer()
     bardialog = Gtk.Dialog(parent=dep,
-            flags=Gtk.DialogFlags.MODAL|Gtk.DialogFlags.DESTROY_WITH_PARENT)
+            flags=Gtk.DialogFlags.MODAL | Gtk.DialogFlags.DESTROY_WITH_PARENT)
     bardialog.set_default_size(400, 50)
     box = bardialog.get_content_area()
     pbar = Gtk.ProgressBar()

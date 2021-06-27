@@ -110,14 +110,14 @@ class NCursesUI:
     class DecoratedWindow(Window):
         """Base class for windows with a box and a title bar"""
         def __init__(self, title, x, y, width, height, fg=curses.COLOR_BLACK, bg=curses.COLOR_WHITE):
-            NCursesUI.Window.__init__(self, x+1, y+3, width-2, height-4, fg, bg)
+            NCursesUI.Window.__init__(self, x + 1, y + 3, width - 2, height - 4, fg, bg)
             self.decoration = NCursesUI.Window(x, y, width, height, fg, bg)
             self.decoration.setBoxed()
-            self.decoration.win.hline(2, 1, curses.ACS_HLINE, width-2)
+            self.decoration.win.hline(2, 1, curses.ACS_HLINE, width - 2)
             self.setTitle(title)
 
         def setTitle(self, title):
-            self.decoration.setText(1, 1, title.center(self.dimensions[WIDTH]-2), curses.A_BOLD)
+            self.decoration.setText(1, 1, title.center(self.dimensions[WIDTH] - 2), curses.A_BOLD)
 
     #-------------------------------------------------------------------------#
 #    class TitleWindow( Window ):
@@ -144,7 +144,7 @@ class NCursesUI:
             line = "%02d: %s" % (thread, text)
             width = self.dimensions[WIDTH]
             if (len(line) > width):
-                line = line[:width-3] + "..."
+                line = line[:width - 3] + "..."
             else:
                 line = line.ljust(width)
             self.setText(0, thread, line)
@@ -268,7 +268,7 @@ class NCursesUI:
                 if isinstance(event, bb.event.CacheLoadProgress):
                     x = event.current
                     y = self.parse_total
-                    mw.setStatus("Loading Cache:   %s [%2d %%]" % (next(parsespin), x*100/y))
+                    mw.setStatus("Loading Cache:   %s [%2d %%]" % (next(parsespin), x * 100 / y))
                 if isinstance(event, bb.event.CacheLoadCompleted):
                     mw.setStatus("Idle")
                     mw.appendText("Loaded %d entries from dependency cache.\n"
@@ -279,7 +279,7 @@ class NCursesUI:
                 if isinstance(event, bb.event.ParseProgress):
                     x = event.current
                     y = self.parse_total
-                    mw.setStatus("Parsing Recipes: %s [%2d %%]" % (next(parsespin), x*100/y))
+                    mw.setStatus("Parsing Recipes: %s [%2d %%]" % (next(parsespin), x * 100 / y))
                 if isinstance(event, bb.event.ParseCompleted):
                     mw.setStatus("Idle")
                     mw.appendText("Parsing finished. %d cached, %d parsed, %d skipped, %d masked.\n"

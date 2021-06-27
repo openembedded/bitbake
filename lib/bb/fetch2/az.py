@@ -15,9 +15,9 @@ BitBake 'Fetch' Azure Storage implementation
 import shlex
 import os
 import bb
-from   bb.fetch2 import FetchError
-from   bb.fetch2 import logger
-from   bb.fetch2.wget import Wget
+from bb.fetch2 import FetchError
+from bb.fetch2 import logger
+from bb.fetch2.wget import Wget
 
 
 class Az(Wget):
@@ -79,7 +79,7 @@ class Az(Wget):
             # FetchError from the fetcher, if the artifact exists retyring should succeed
             if 'Unable to establish SSL connection' in str(e):
                 logger.debug2('Unable to establish SSL connection: Retries remaining: %s, Retrying...' % retries)
-                self.download(ud, d, retries -1)
+                self.download(ud, d, retries - 1)
 
         # Sanity check since wget can pretend it succeed when it didn't
         # Also, this used to happen if sourceforge sent us to the mirror page

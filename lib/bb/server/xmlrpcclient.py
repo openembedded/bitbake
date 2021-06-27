@@ -56,7 +56,7 @@ def check_connection(remote, timeout):
 
     server, _transport = _create_server(host, port, timeout)
     try:
-        ret, err =  server.runCommand(['getVariable', 'TOPDIR'])
+        ret, err = server.runCommand(['getVariable', 'TOPDIR'])
         if err or not ret:
             return False
     except ConnectionError:

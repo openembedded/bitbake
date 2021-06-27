@@ -48,7 +48,7 @@ def check_indent(codestr):
     if i == 0:
         return codestr
 
-    if codestr[i-1] == "\t" or codestr[i-1] == " ":
+    if codestr[i - 1] == "\t" or codestr[i - 1] == " ":
         if codestr[0] == "\n":
             # Since we're adding a line, we need to remove one line of any empty padding
             # to ensure line numbers are correct
@@ -200,7 +200,7 @@ class PythonParser():
     getvars = (".getVar", ".appendVar", ".prependVar", "oe.utils.conditional")
     getvarflags = (".getVarFlag", ".appendVarFlag", ".prependVarFlag")
     containsfuncs = ("bb.utils.contains", "base_contains")
-    containsanyfuncs = ("bb.utils.contains_any",  "bb.utils.filter")
+    containsanyfuncs = ("bb.utils.contains_any", "bb.utils.filter")
     execfuncs = ("bb.build.exec_func", "bb.build.exec_task")
 
     def warn(self, func, arg):
@@ -371,7 +371,7 @@ class ShellParser():
             # Element 1 of each item in the case is the list of commands to be
             # executed when that pattern matches.
             words = chain(*[item[0] for item in value.items])
-            cmds  = chain(*[item[1] for item in value.items])
+            cmds = chain(*[item[1] for item in value.items])
             return cmds, words
 
         def if_clause(value):

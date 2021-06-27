@@ -295,13 +295,13 @@ def _print_trace(body, line):
     """
     error = []
     # print the environment of the method
-    min_line = max(1, line-4)
+    min_line = max(1, line - 4)
     max_line = min(line + 4, len(body))
     for i in range(min_line, max_line + 1):
         if line == i:
-            error.append(' *** %.4d:%s' % (i, body[i-1].rstrip()))
+            error.append(' *** %.4d:%s' % (i, body[i - 1].rstrip()))
         else:
-            error.append('     %.4d:%s' % (i, body[i-1].rstrip()))
+            error.append('     %.4d:%s' % (i, body[i - 1].rstrip()))
     return error
 
 def better_compile(text, file, realfile, mode="exec", lineno=0):
@@ -365,21 +365,21 @@ def _print_exception(t, value, tb, realfile, text, context):
         # "text". If so, try and improve the context of the error by diving down the trace
         level = 0
         nexttb = tb.tb_next
-        while nexttb is not None and (level+1) < len(tbextract):
-            error.append("File: '%s', lineno: %s, function: %s" % (tbextract[level+1][0], tbextract[level+1][1], tbextract[level+1][2]))
-            if tbextract[level][0] == tbextract[level+1][0] and tbextract[level+1][2] == tbextract[level][0]:
+        while nexttb is not None and (level + 1) < len(tbextract):
+            error.append("File: '%s', lineno: %s, function: %s" % (tbextract[level + 1][0], tbextract[level + 1][1], tbextract[level + 1][2]))
+            if tbextract[level][0] == tbextract[level + 1][0] and tbextract[level + 1][2] == tbextract[level][0]:
                 # The code was possibly in the string we compiled ourselves
-                error.extend(_print_trace(textarray, tbextract[level+1][1]))
-            elif tbextract[level+1][0].startswith("/"):
+                error.extend(_print_trace(textarray, tbextract[level + 1][1]))
+            elif tbextract[level + 1][0].startswith("/"):
                 # The code looks like it might be in a file, try and load it
                 try:
-                    with open(tbextract[level+1][0], "r") as f:
+                    with open(tbextract[level + 1][0], "r") as f:
                         text = f.readlines()
-                        error.extend(_print_trace(text, tbextract[level+1][1]))
+                        error.extend(_print_trace(text, tbextract[level + 1][1]))
                 except:
-                    error.append(tbformat[level+1])
+                    error.append(tbformat[level + 1])
             else:
-                error.append(tbformat[level+1])
+                error.append(tbformat[level + 1])
             nexttb = tb.tb_next
             level = level + 1
 
@@ -512,7 +512,7 @@ def unlockfile(lf):
     try:
         # If we had a shared lock, we need to promote to exclusive before
         # removing the lockfile. Attempt this, ignore failures.
-        fcntl.flock(lf.fileno(), fcntl.LOCK_EX|fcntl.LOCK_NB)
+        fcntl.flock(lf.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
         os.unlink(lf.name)
     except (IOError, OSError):
         pass

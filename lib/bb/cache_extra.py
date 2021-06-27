@@ -21,7 +21,7 @@ class HobRecipeInfo(RecipeInfoCommon):
     classname = "HobRecipeInfo"
     # please override this member with the correct data cache file
     # such as (bb_cache.dat, bb_extracache_hob.dat) 
-    cachefile = "bb_extracache_" + classname +".dat"        
+    cachefile = "bb_extracache_" + classname + ".dat"        
 
     # override this member with the list of extra cache fields
     # that this class will provide

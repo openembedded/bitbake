@@ -51,12 +51,12 @@ User credentials:
 import os
 import shutil
 import bb
-from   bb.fetch2 import FetchMethod
-from   bb.fetch2 import FetchError
-from   bb.fetch2 import MissingParameterError
-from   bb.fetch2 import ParameterError
-from   bb.fetch2 import runfetchcmd
-from   bb.fetch2 import logger
+from bb.fetch2 import FetchMethod
+from bb.fetch2 import FetchError
+from bb.fetch2 import MissingParameterError
+from bb.fetch2 import ParameterError
+from bb.fetch2 import runfetchcmd
+from bb.fetch2 import logger
 
 class ClearCase(FetchMethod):
     """Class to fetch urls via 'clearcase'"""
@@ -86,7 +86,7 @@ class ClearCase(FetchMethod):
         if 'vob' in ud.parm:
             ud.vob = ud.parm['vob']
         else:
-            msg = ud.url+": vob must be defined so the fetcher knows what to get."
+            msg = ud.url + ": vob must be defined so the fetcher knows what to get."
             raise MissingParameterError('vob', msg)
 
         if 'module' in ud.parm:
@@ -102,18 +102,18 @@ class ClearCase(FetchMethod):
         ud.label = d.getVar("SRCREV", False)
         ud.customspec = d.getVar("CCASE_CUSTOM_CONFIG_SPEC")
 
-        ud.server     = "%s://%s%s" % (ud.proto, ud.host, ud.path)
+        ud.server = "%s://%s%s" % (ud.proto, ud.host, ud.path)
 
         ud.identifier = "clearcase-%s%s-%s" % (ud.vob.replace("/", ""),
                                                 ud.module.replace("/", "."),
                                                 ud.label.replace("/", "."))
 
-        ud.viewname         = "%s-view%s" % (ud.identifier, d.getVar("DATETIME", d, True))
-        ud.csname           = "%s-config-spec" % (ud.identifier)
-        ud.ccasedir         = os.path.join(d.getVar("DL_DIR"), ud.type)
-        ud.viewdir          = os.path.join(ud.ccasedir, ud.viewname)
-        ud.configspecfile   = os.path.join(ud.ccasedir, ud.csname)
-        ud.localfile        = "%s.tar.gz" % (ud.identifier)
+        ud.viewname = "%s-view%s" % (ud.identifier, d.getVar("DATETIME", d, True))
+        ud.csname = "%s-config-spec" % (ud.identifier)
+        ud.ccasedir = os.path.join(d.getVar("DL_DIR"), ud.type)
+        ud.viewdir = os.path.join(ud.ccasedir, ud.viewname)
+        ud.configspecfile = os.path.join(ud.ccasedir, ud.csname)
+        ud.localfile = "%s.tar.gz" % (ud.identifier)
 
         self.debug("host            = %s" % ud.host)
         self.debug("path            = %s" % ud.path)
@@ -174,7 +174,7 @@ class ClearCase(FetchMethod):
         custom_config_spec = d.getVar("CCASE_CUSTOM_CONFIG_SPEC", d)
         if custom_config_spec is not None:
             for line in custom_config_spec.split("\\n"):
-                config_spec += line+"\n"
+                config_spec += line + "\n"
             bb.warn("A custom config spec has been set, SRCREV is only relevant for the tarball name.")
         else:
             config_spec += "element * CHECKEDOUT\n"

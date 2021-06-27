@@ -62,7 +62,7 @@ class Command(BaseCommand):
 
     def mini_progress(self, what, i, total):
         i = i + 1
-        pec = (float(i)/float(total))*100
+        pec = (float(i) / float(total)) * 100
 
         sys.stdout.write("\rUpdating %s %d%%" %
                          (what,

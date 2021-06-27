@@ -183,20 +183,20 @@ def benchmark_parsers(num_elements=100000):
             print("%s could not parse the markup." % parser)
             traceback.print_exc()
         if success:
-            print("BS4+%s parsed the markup in %.2fs." % (parser, b-a))
+            print("BS4+%s parsed the markup in %.2fs." % (parser, b - a))
 
     from lxml import etree
     a = time.time()
     etree.HTML(data)
     b = time.time()
-    print("Raw lxml parsed the markup in %.2fs." % (b-a))
+    print("Raw lxml parsed the markup in %.2fs." % (b - a))
 
     import html5lib
     parser = html5lib.HTMLParser()
     a = time.time()
     parser.parse(data)
     b = time.time()
-    print("Raw html5lib parsed the markup in %.2fs." % (b-a))
+    print("Raw html5lib parsed the markup in %.2fs." % (b - a))
 
 def profile(num_elements=100000, parser="lxml"):
 

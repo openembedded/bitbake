@@ -19,8 +19,8 @@ import urllib.parse
 import urllib.error
 import bb
 import bb.utils
-from   bb.fetch2 import FetchMethod, FetchError, ParameterError
-from   bb.fetch2 import logger
+from bb.fetch2 import FetchMethod, FetchError, ParameterError
+from bb.fetch2 import logger
 
 class Local(FetchMethod):
     def supports(self, urldata, d):

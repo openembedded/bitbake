@@ -87,7 +87,7 @@ class CoreRecipeInfo(RecipeInfoCommon):
         self.appends = self.listvar('__BBAPPEND', metadata)
         self.nocache = self.getvar('BB_DONT_CACHE', metadata)
 
-        self.provides  = self.depvar('PROVIDES', metadata)
+        self.provides = self.depvar('PROVIDES', metadata)
         self.rprovides = self.depvar('RPROVIDES', metadata)
         self.pn = self.getvar('PN', metadata) or bb.parse.vars_from_file(filename,metadata)[0]
         self.packages = self.listvar('PACKAGES', metadata)
@@ -118,17 +118,17 @@ class CoreRecipeInfo(RecipeInfoCommon):
         self.stampclean = self.getvar('STAMPCLEAN', metadata)
         self.stamp_extrainfo = self.flaglist('stamp-extra-info', self.tasks, metadata)
         self.file_checksums = self.flaglist('file-checksums', self.tasks, metadata, True)
-        self.depends          = self.depvar('DEPENDS', metadata)
-        self.rdepends         = self.depvar('RDEPENDS', metadata)
-        self.rrecommends      = self.depvar('RRECOMMENDS', metadata)
-        self.rdepends_pkg     = self.pkgvar('RDEPENDS', self.packages, metadata)
-        self.rrecommends_pkg  = self.pkgvar('RRECOMMENDS', self.packages, metadata)
-        self.inherits         = self.getvar('__inherit_cache', metadata, expand=False)
-        self.fakerootenv      = self.getvar('FAKEROOTENV', metadata)
-        self.fakerootdirs     = self.getvar('FAKEROOTDIRS', metadata)
-        self.fakerootlogs     = self.getvar('FAKEROOTLOGS', metadata)
-        self.fakerootnoenv    = self.getvar('FAKEROOTNOENV', metadata)
-        self.extradepsfunc    = self.getvar('calculate_extra_depends', metadata)
+        self.depends = self.depvar('DEPENDS', metadata)
+        self.rdepends = self.depvar('RDEPENDS', metadata)
+        self.rrecommends = self.depvar('RRECOMMENDS', metadata)
+        self.rdepends_pkg = self.pkgvar('RDEPENDS', self.packages, metadata)
+        self.rrecommends_pkg = self.pkgvar('RRECOMMENDS', self.packages, metadata)
+        self.inherits = self.getvar('__inherit_cache', metadata, expand=False)
+        self.fakerootenv = self.getvar('FAKEROOTENV', metadata)
+        self.fakerootdirs = self.getvar('FAKEROOTDIRS', metadata)
+        self.fakerootlogs = self.getvar('FAKEROOTLOGS', metadata)
+        self.fakerootnoenv = self.getvar('FAKEROOTNOENV', metadata)
+        self.extradepsfunc = self.getvar('calculate_extra_depends', metadata)
 
     @classmethod
     def init_cacheData(cls, cachedata):

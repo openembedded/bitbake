@@ -62,8 +62,8 @@ class SeleniumFunctionalTestCase(SeleniumTestCaseBase):
 
 
     def get_URL(self):
-         rc=self.get_page_source()
-         project_url=re.search("(projectPageUrl\s:\s\")(.*)(\",)",rc)
+         rc = self.get_page_source()
+         project_url = re.search("(projectPageUrl\s:\s\")(.*)(\",)",rc)
          return project_url.group(2)
 
 

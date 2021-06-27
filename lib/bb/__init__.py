@@ -119,7 +119,7 @@ class PrefixLoggerAdapter(logging.LoggerAdapter):
         self.__msg_prefix = prefix
 
     def process(self, msg, kwargs):
-        return "%s%s" %(self.__msg_prefix, msg), kwargs
+        return "%s%s" % (self.__msg_prefix, msg), kwargs
 
 # This has to be imported after the setLoggerClass, as the import of bb.msg
 # can result in construction of the various loggers.

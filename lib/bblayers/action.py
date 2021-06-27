@@ -219,7 +219,7 @@ build results (as the layer priority order has effectively changed).
             bbfiles_layer = []
             for item in bbfiles:
                 if first_regex.match(item):
-                    newpath = os.path.join(outputdir, item[len(layerdir)+1:])
+                    newpath = os.path.join(outputdir, item[len(layerdir) + 1:])
                     bbfiles_layer.append(newpath)
 
             if bbfiles_layer:

@@ -45,7 +45,7 @@ class HeartbeatEvent(Event):
         Event.__init__(self)
         self.time = time
 
-Registered        = 10
+Registered = 10
 AlreadyRegistered = 14
 
 def get_class_handlers():
@@ -255,7 +255,7 @@ def register(name, handler, mask=None, filename=None, lineno=None, data=None):
                         filename = "%s(e)" % name
                     code = compile(tmp, filename, "exec", ast.PyCF_ONLY_AST)
                     if lineno is not None:
-                        ast.increment_lineno(code, lineno-1)
+                        ast.increment_lineno(code, lineno - 1)
                     code = compile(code, filename, "exec")
                     bb.methodpool.compile_cache_add(tmp, code)
             except SyntaxError:
@@ -553,7 +553,7 @@ class NoProvider(Event):
 class MultipleProviders(Event):
     """Multiple Providers"""
 
-    def  __init__(self, item, candidates, runtime=False):
+    def __init__(self, item, candidates, runtime=False):
         Event.__init__(self)
         self._item = item
         self._candidates = candidates

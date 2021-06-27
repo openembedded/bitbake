@@ -48,11 +48,11 @@ def create_selenium_driver(cls,browser='chrome'):
     elif browser == 'remote':
         # if we were to add yet another env variable like TOASTER_REMOTE_BROWSER
         # we could let people pick firefox or chrome, left for later
-        remote_hub= os.environ.get('TOASTER_REMOTE_HUB')
+        remote_hub = os.environ.get('TOASTER_REMOTE_HUB')
         driver = webdriver.Remote(remote_hub,
                                   webdriver.DesiredCapabilities.FIREFOX.copy())
 
-        driver.get("http://%s:%s"%(cls.server_thread.host,cls.server_thread.port))
+        driver.get("http://%s:%s" % (cls.server_thread.host,cls.server_thread.port))
         return driver
     else:
         msg = 'Selenium driver for browser %s is not available' % browser

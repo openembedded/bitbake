@@ -168,7 +168,7 @@ class MultiStageProgressReporter:
         """
         self._data = d
         total = sum(stage_weights)
-        self._stage_weights = [float(x)/total for x in stage_weights]
+        self._stage_weights = [float(x) / total for x in stage_weights]
         self._stage = -1
         self._base_progress = 0
         # Send an initial progress event so the bar gets shown

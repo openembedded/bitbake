@@ -25,8 +25,8 @@ import logging
 import hashlib
 import bb
 import bb.codeparser
-from bb   import utils
-from bb.COW  import COWDictBase
+from bb import utils
+from bb.COW import COWDictBase
 
 logger = logging.getLogger("BitBake.Data")
 
@@ -328,7 +328,7 @@ class VariableHistory(object):
         var_history = self.variable(var)
         lines = []
         for event in var_history:
-            if f== event['file']:
+            if f == event['file']:
                 line = event['line']
                 lines.append(line)
         return lines
@@ -363,7 +363,7 @@ class VariableHistory(object):
         """If file f and line are not given, the entire history of var is deleted"""
         if var in self.variables:
             if f and line:
-                self.variables[var] = [x for x in self.variables[var] if x['file']!=f and x['line']!=line]
+                self.variables[var] = [x for x in self.variables[var] if x['file'] != f and x['line'] != line]
             else:
                 self.variables[var] = []
 
@@ -486,14 +486,14 @@ class DataSmart(MutableMapping):
     def setVar(self, var, value, **loginfo):
         #print("var=" + str(var) + "  val=" + str(value))
         self.expand_cache = {}
-        parsing=False
+        parsing = False
         if 'parsing' in loginfo:
-            parsing=True
+            parsing = True
 
         if 'op' not in loginfo:
             loginfo['op'] = "set"
 
-        match  = __setvar_regexp__.match(var)
+        match = __setvar_regexp__.match(var)
         if match and match.group("keyword") in __setvar_keyword__:
             base = match.group('base')
             keyword = match.group("keyword")
@@ -570,7 +570,7 @@ class DataSmart(MutableMapping):
 
     def _setvar_update_overrides(self, var, **loginfo):
         # aka pay the cookie monster
-        override = var[var.rfind('_')+1:]
+        override = var[var.rfind('_') + 1:]
         shortvar = var[:var.rfind('_')]
         while override and __override_regexp__.match(override):
             if shortvar not in self.overridedata:
@@ -581,7 +581,7 @@ class DataSmart(MutableMapping):
                 self.overridedata[shortvar].append([var, override])
             override = None
             if "_" in shortvar:
-                override = var[shortvar.rfind('_')+1:]
+                override = var[shortvar.rfind('_') + 1:]
                 shortvar = var[:shortvar.rfind('_')]
                 if len(shortvar) == 0:
                     override = None
@@ -650,7 +650,7 @@ class DataSmart(MutableMapping):
         if var in self.overridedata:
             del self.overridedata[var]
         if '_' in var:
-            override = var[var.rfind('_')+1:]
+            override = var[var.rfind('_') + 1:]
             shortvar = var[:var.rfind('_')]
             while override and override.islower():
                 try:
@@ -662,7 +662,7 @@ class DataSmart(MutableMapping):
                     pass
                 override = None
                 if "_" in shortvar:
-                    override = var[shortvar.rfind('_')+1:]
+                    override = var[shortvar.rfind('_') + 1:]
                     shortvar = var[:shortvar.rfind('_')]
                     if len(shortvar) == 0:
                          override = None
@@ -891,8 +891,8 @@ class DataSmart(MutableMapping):
 
             # try to save the content
             if "_content" in self.dict[var]:
-                content  = self.dict[var]["_content"]
-                self.dict[var]            = {}
+                content = self.dict[var]["_content"]
+                self.dict[var] = {}
                 self.dict[var]["_content"] = content
             else:
                 del self.dict[var]

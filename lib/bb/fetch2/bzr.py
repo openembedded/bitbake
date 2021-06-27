@@ -48,7 +48,7 @@ class Bzr(FetchMethod):
 
         basecmd = d.getVar("FETCHCMD_bzr") or "/usr/bin/env bzr"
 
-        proto =  ud.parm.get('protocol', 'http')
+        proto = ud.parm.get('protocol', 'http')
 
         bzrroot = ud.host + ud.path
 

@@ -33,7 +33,7 @@ class CommandCompleted(bb.event.Event):
     pass
 
 class CommandExit(bb.event.Event):
-    def  __init__(self, exitcode):
+    def __init__(self, exitcode):
         bb.event.Event.__init__(self)
         self.exitcode = int(exitcode)
 

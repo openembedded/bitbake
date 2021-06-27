@@ -440,7 +440,7 @@ class ViewTests(TestCase):
 
                     descending = get_data(table_cls(),
                                           {"orderby":
-                                           '-'+column['field_name']})
+                                           '-' + column['field_name']})
 
                     row_one = get_text_from_td(
                         descending['rows'][0][column['field_name']])

@@ -111,7 +111,7 @@ def preferredVersionMatch(pe, pv, pr, preferred_e, preferred_v, preferred_r):
         if pe == preferred_e or preferred_e is None:
             if preferred_v == pv:
                 return True
-            if preferred_v is not None and preferred_v.endswith('%') and pv.startswith(preferred_v[:len(preferred_v)-1]):
+            if preferred_v is not None and preferred_v.endswith('%') and pv.startswith(preferred_v[:len(preferred_v) - 1]):
                 return True
     return False
 

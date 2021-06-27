@@ -31,7 +31,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # -----------------------------------------------------------------------------
 
-__version__    = "3.3"
+__version__ = "3.3"
 __tabversion__ = "3.2"       # Version of table file used
 
 import re
@@ -86,7 +86,7 @@ class PlyLogger(object):
         self.f.write((msg % args) + "\n")
 
     def warning(self,msg,*args,**kwargs):
-        self.f.write("WARNING: "+ (msg % args) + "\n")
+        self.f.write("WARNING: " + (msg % args) + "\n")
 
     def error(self,msg,*args,**kwargs):
         self.f.write("ERROR: " + (msg % args) + "\n")
@@ -176,7 +176,7 @@ class Lexer:
         if isinstance(tabfile,types.ModuleType):
             return
         basetabfilename = tabfile.split(".")[-1]
-        filename = os.path.join(outputdir,basetabfilename)+".py"
+        filename = os.path.join(outputdir,basetabfilename) + ".py"
         tf = open(filename,"w")
         tf.write("# %s.py. This file automatically created by PLY (version %s). Don't edit!\n" % (tabfile,__version__))
         tf.write("_tabversion   = %s\n" % repr(__version__))
@@ -229,12 +229,12 @@ class Lexer:
         if getattr(lextab,"_tabversion","0.0") != __version__:
             raise ImportError("Inconsistent PLY version")
 
-        self.lextokens      = lextab._lextokens
-        self.lexreflags     = lextab._lexreflags
-        self.lexliterals    = lextab._lexliterals
-        self.lexstateinfo   = lextab._lexstateinfo
+        self.lextokens = lextab._lextokens
+        self.lexreflags = lextab._lexreflags
+        self.lexliterals = lextab._lexliterals
+        self.lexstateinfo = lextab._lexstateinfo
         self.lexstateignore = lextab._lexstateignore
-        self.lexstatere     = {}
+        self.lexstatere = {}
         self.lexstateretext = {}
         for key,lre in lextab._lexstatere.items():
              titem = []
@@ -307,10 +307,10 @@ class Lexer:
     # ------------------------------------------------------------
     def token(self):
         # Make local copies of frequently referenced attributes
-        lexpos    = self.lexpos
-        lexlen    = self.lexlen
+        lexpos = self.lexpos
+        lexlen = self.lexlen
         lexignore = self.lexignore
-        lexdata   = self.lexdata
+        lexdata = self.lexdata
 
         while lexpos < lexlen:
             # This code provides some short-circuit code for whitespace, tabs, and other ignored characters
@@ -354,7 +354,7 @@ class Lexer:
 
                 # Every function must return a token, if nothing, we just move to next token
                 if not newtok:
-                    lexpos    = self.lexpos         # This is here in case user has updated lexpos.
+                    lexpos = self.lexpos         # This is here in case user has updated lexpos.
                     lexignore = self.lexignore      # This is here in case there was a state change
                     break
 
@@ -493,7 +493,7 @@ def _form_master_re(relist,reflags,ldict,toknames):
         lexre = re.compile(regex,re.VERBOSE | reflags)
 
         # Build the index to function map for the matching engine
-        lexindexfunc = [None] * (max(lexre.groupindex.values())+1)
+        lexindexfunc = [None] * (max(lexre.groupindex.values()) + 1)
         lexindexnames = lexindexfunc[:]
 
         for f,i in lexre.groupindex.items():
@@ -510,12 +510,12 @@ def _form_master_re(relist,reflags,ldict,toknames):
         
         return [(lexre,lexindexfunc)],[regex],[lexindexnames]
     except Exception:
-        m = int(len(relist)/2)
+        m = int(len(relist) / 2)
         if m == 0:
             m = 1
         llist, lre, lnames = _form_master_re(relist[:m],reflags,ldict,toknames)
         rlist, rre, rnames = _form_master_re(relist[m:],reflags,ldict,toknames)
-        return llist+rlist, lre+rre, lnames+rnames
+        return llist + rlist, lre + rre, lnames + rnames
 
 # -----------------------------------------------------------------------------
 # def _statetoken(s,names)
@@ -552,13 +552,13 @@ def _statetoken(s,names):
 # -----------------------------------------------------------------------------
 class LexerReflect(object):
     def __init__(self,ldict,log=None,reflags=0):
-        self.ldict      = ldict
+        self.ldict = ldict
         self.error_func = None
-        self.tokens     = []
-        self.reflags    = reflags
-        self.stateinfo  = {'INITIAL': 'inclusive'}
-        self.files      = {}
-        self.error      = 0
+        self.tokens = []
+        self.reflags = reflags
+        self.stateinfo = {'INITIAL': 'inclusive'}
+        self.files = {}
+        self.error = 0
 
         if log is None:
             self.log = PlyLogger(sys.stderr)
@@ -664,10 +664,10 @@ class LexerReflect(object):
         # Now build up a list of functions and a list of strings
 
         self.toknames = {}        # Mapping of symbols to token names
-        self.funcsym =  {}        # Symbols defined as functions
-        self.strsym =   {}        # Symbols defined as strings
-        self.ignore   = {}        # Ignore strings by state
-        self.errorf   = {}        # Error functions by state
+        self.funcsym = {}        # Symbols defined as functions
+        self.strsym = {}        # Symbols defined as strings
+        self.ignore = {}        # Ignore strings by state
+        self.errorf = {}        # Error functions by state
 
         for s in self.stateinfo:
              self.funcsym[s] = []
@@ -871,7 +871,7 @@ class LexerReflect(object):
 def lex(module=None,object=None,debug=0,optimize=0,lextab="lextab",reflags=0,nowarn=0,outputdir="", debuglog=None, errorlog=None):
     global lexer
     ldict = None
-    stateinfo  = {'INITIAL': 'inclusive'}
+    stateinfo = {'INITIAL': 'inclusive'}
     lexobj = Lexer()
     lexobj.lexoptimize = optimize
     global token,input

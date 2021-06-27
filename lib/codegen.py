@@ -11,42 +11,42 @@
 from ast import *
 
 BOOLOP_SYMBOLS = {
-    And:        'and',
-    Or:         'or'
+    And: 'and',
+    Or: 'or'
 }
 
 BINOP_SYMBOLS = {
-    Add:        '+',
-    Sub:        '-',
-    Mult:       '*',
-    Div:        '/',
-    FloorDiv:   '//',
-    Mod:        '%',
-    LShift:     '<<',
-    RShift:     '>>',
-    BitOr:      '|',
-    BitAnd:     '&',
-    BitXor:     '^'
+    Add: '+',
+    Sub: '-',
+    Mult: '*',
+    Div: '/',
+    FloorDiv: '//',
+    Mod: '%',
+    LShift: '<<',
+    RShift: '>>',
+    BitOr: '|',
+    BitAnd: '&',
+    BitXor: '^'
 }
 
 CMPOP_SYMBOLS = {
-    Eq:         '==',
-    Gt:         '>',
-    GtE:        '>=',
-    In:         'in',
-    Is:         'is',
-    IsNot:      'is not',
-    Lt:         '<',
-    LtE:        '<=',
-    NotEq:      '!=',
-    NotIn:      'not in'
+    Eq: '==',
+    Gt: '>',
+    GtE: '>=',
+    In: 'in',
+    Is: 'is',
+    IsNot: 'is not',
+    Lt: '<',
+    LtE: '<=',
+    NotEq: '!=',
+    NotIn: 'not in'
 }
 
 UNARYOP_SYMBOLS = {
-    Invert:     '~',
-    Not:        'not',
-    UAdd:       '+',
-    USub:       '-'
+    Invert: '~',
+    Not: 'not',
+    UAdd: '+',
+    USub: '-'
 }
 
 ALL_SYMBOLS = {}

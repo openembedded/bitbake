@@ -53,7 +53,7 @@ if 'sqlite' in settings.DATABASES['default']['ENGINE']:
 
     from django.db.models.query import QuerySet
     _base_insert = QuerySet._insert
-    def _insert(self,  *args, **kwargs):
+    def _insert(self, *args, **kwargs):
         with transaction.atomic(using=self.db, savepoint=False):
             return _base_insert(self, *args, **kwargs)
     QuerySet._insert = _insert
@@ -197,7 +197,7 @@ class Project(models.Model):
 
     # set to True for the project which is the default container
     # for builds initiated by the command line etc.
-    is_default= models.BooleanField(default=False)
+    is_default = models.BooleanField(default=False)
 
     def __unicode__(self):
         return "%s (Release %s, BBV %s)" % (self.name, self.release, self.bitbake_version)
@@ -544,7 +544,7 @@ class Build(models.Model):
         tf = Task.objects.filter(build=self)
         tfc = tf.count()
         if tfc > 0:
-            completeper = tf.exclude(outcome=Task.OUTCOME_NA).count()*100 // tfc
+            completeper = tf.exclude(outcome=Task.OUTCOME_NA).count() * 100 // tfc
         else:
             completeper = 0
         return completeper
@@ -553,7 +553,7 @@ class Build(models.Model):
         eta = timezone.now()
         completeper = self.completeper()
         if self.completeper() > 0:
-            eta += ((eta - self.started_on)*(100-completeper))/completeper
+            eta += ((eta - self.started_on) * (100 - completeper)) / completeper
         return eta
 
     def has_images(self):
@@ -1080,7 +1080,7 @@ class Task(models.Model):
             self._helptext = None
 
     def get_related_setscene(self):
-        return Task.objects.filter(task_executed=True, build=self.build, recipe=self.recipe, task_name=self.task_name+"_setscene")
+        return Task.objects.filter(task_executed=True, build=self.build, recipe=self.recipe, task_name=self.task_name + "_setscene")
 
     def get_outcome_text(self):
         return Task.TASK_OUTCOME[int(self.outcome) + 1][1]
@@ -1089,7 +1089,7 @@ class Task(models.Model):
         return Task.TASK_OUTCOME_HELP[int(self.outcome)][1]
 
     def get_sstate_text(self):
-        if self.sstate_result==Task.SSTATE_NA:
+        if self.sstate_result == Task.SSTATE_NA:
             return ''
         else:
             return Task.SSTATE_RESULT[int(self.sstate_result)][1]
@@ -1136,7 +1136,7 @@ class Task(models.Model):
     logfile = models.FilePathField(max_length=255, blank=True)
 
     outcome_text = property(get_outcome_text)
-    sstate_text  = property(get_sstate_text)
+    sstate_text = property(get_sstate_text)
 
     def __unicode__(self):
         return "%d(%d) %s:%s" % (self.pk, self.build.pk, self.recipe.name, self.task_name)
@@ -1279,14 +1279,14 @@ class Package_Dependency(models.Model):
         package name.
     """
     DEPENDS_DICT = {
-        TYPE_RDEPENDS:     ("depends", "%s is required to run %s"),
-        TYPE_TRDEPENDS:    ("depends", "%s is required to run %s"),
-        TYPE_TRECOMMENDS:  ("recommends", "%s extends the usability of %s"),
-        TYPE_RRECOMMENDS:  ("recommends", "%s extends the usability of %s"),
-        TYPE_RSUGGESTS:    ("suggests", "%s is suggested for installation with %s"),
-        TYPE_RPROVIDES:    ("provides", "%s is provided by %s"),
-        TYPE_RREPLACES:    ("replaces", "%s is replaced by %s"),
-        TYPE_RCONFLICTS:   ("conflicts", "%s conflicts with %s, which will not be installed if this package is not first removed"),
+        TYPE_RDEPENDS: ("depends", "%s is required to run %s"),
+        TYPE_TRDEPENDS: ("depends", "%s is required to run %s"),
+        TYPE_TRECOMMENDS: ("recommends", "%s extends the usability of %s"),
+        TYPE_RRECOMMENDS: ("recommends", "%s extends the usability of %s"),
+        TYPE_RSUGGESTS: ("suggests", "%s is suggested for installation with %s"),
+        TYPE_RPROVIDES: ("provides", "%s is provided by %s"),
+        TYPE_RREPLACES: ("replaces", "%s is replaced by %s"),
+        TYPE_RCONFLICTS: ("conflicts", "%s conflicts with %s, which will not be installed if this package is not first removed"),
     }
 
     package = models.ForeignKey(Package, on_delete=models.CASCADE, related_name='package_dependencies_source')
@@ -1382,7 +1382,7 @@ class Machine(models.Model):
     description = models.CharField(max_length=255)
 
     def get_vcs_machine_file_link_url(self):
-        path = 'conf/machine/'+self.name+'.conf'
+        path = 'conf/machine/' + self.name + '.conf'
 
         return self.layer_version.get_vcs_file_link_url(path)
 
@@ -1579,7 +1579,7 @@ class Layer_Version(models.Model):
             for ldep in lver.dependencies.all():
                 yield ldep.depends_on
                 # get next level of deps recursively calling gen_layerdeps
-                for subdep in gen_layerdeps(ldep.depends_on, project, depth-1):
+                for subdep in gen_layerdeps(ldep.depends_on, project, depth - 1):
                     yield subdep
 
         project = Project.objects.get(pk=project_id)
@@ -1723,14 +1723,14 @@ class CustomImageRecipe(Recipe):
             packages_conf = "IMAGE_INSTALL_append = \" "
 
             for pkg in self.appends_set.all():
-                packages_conf += pkg.name+' '
+                packages_conf += pkg.name + ' '
         else:
             packages_conf = "IMAGE_FEATURES =\"\"\nIMAGE_INSTALL = \""
             # We add all the known packages to be built by this recipe apart
             # from locale packages which are are controlled with IMAGE_LINGUAS.
             for pkg in self.get_all_packages().exclude(
                     name__icontains="locale"):
-                packages_conf += pkg.name+' '
+                packages_conf += pkg.name + ' '
 
         packages_conf += "\""
 
@@ -1801,7 +1801,7 @@ class Variable(models.Model):
 
 class VariableHistory(models.Model):
     variable = models.ForeignKey(Variable, on_delete=models.CASCADE, related_name='vhistory')
-    value   = models.TextField(blank=True)
+    value = models.TextField(blank=True)
     file_name = models.FilePathField(max_length=255)
     line_number = models.IntegerField(null=True)
     operation = models.CharField(max_length=64)
@@ -1831,7 +1831,7 @@ class LogMessage(models.Model):
     )
 
     build = models.ForeignKey(Build, on_delete=models.CASCADE)
-    task  = models.ForeignKey(Task, on_delete=models.CASCADE, blank=True, null=True)
+    task = models.ForeignKey(Task, on_delete=models.CASCADE, blank=True, null=True)
     level = models.IntegerField(choices=LOG_LEVEL, default=INFO)
     message = models.TextField(blank=True, null=True)
     pathname = models.FilePathField(max_length=255, blank=True)

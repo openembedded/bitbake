@@ -231,7 +231,7 @@ def emit_func(func, o=sys.__stdout__, d=init()):
         for dep in deps:
             if d.getVarFlag(dep, "func", False) and not d.getVarFlag(dep, "python", False):
                emit_var(dep, o, d, False) and o.write('\n')
-               newdeps |=  bb.codeparser.ShellParser(dep, logger).parse_shell(d.getVar(dep))
+               newdeps |= bb.codeparser.ShellParser(dep, logger).parse_shell(d.getVar(dep))
                newdeps |= set((d.getVarFlag(dep, "vardeps") or "").split())
         newdeps -= seen
 
@@ -394,7 +394,7 @@ def generate_dependencies(d, whitelist):
             for dep in nextdeps:
                 if dep not in deps:
                     deps[dep], values[dep] = build_dependencies(dep, keys, shelldeps, varflagsexcl, d)
-                newdeps |=  deps[dep]
+                newdeps |= deps[dep]
             newdeps -= seen
         #print "For %s: %s" % (task, str(deps[task]))
     return tasklist, deps, values

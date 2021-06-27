@@ -1268,7 +1268,7 @@ class FetchLatestVersionTest(FetcherTest):
             self.d.setVar("SRCREV", k[2])
             self.d.setVar("UPSTREAM_CHECK_GITTAGREGEX", k[3])
             ud = bb.fetch2.FetchData(k[1], self.d)
-            pupver= ud.method.latest_versionstring(ud, self.d)
+            pupver = ud.method.latest_versionstring(ud, self.d)
             verstring = pupver[0]
             self.assertTrue(verstring, msg="Could not find upstream version for %s" % k[0])
             r = bb.utils.vercmp_string(v, verstring)

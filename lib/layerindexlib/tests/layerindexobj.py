@@ -36,13 +36,13 @@ class LayerIndexObjectsTest(LayersTest):
                                         'test_branch', 'bb_test_branch')
         self.index.branches[branchId].lockData()
 
-        layerItemId +=1
+        layerItemId += 1
         self.index.layerItems[layerItemId] = LayerItem(self.index)
         self.index.layerItems[layerItemId].define_data(layerItemId,
                                         'test_layerItem', vcs_url='git://git_test_url/test_layerItem')
         self.index.layerItems[layerItemId].lockData()
 
-        layerBranchId +=1
+        layerBranchId += 1
         self.index.layerBranches[layerBranchId] = LayerBranch(self.index)
         self.index.layerBranches[layerBranchId].define_data(layerBranchId,
                                         'test_collection', '99', layerItemId,
@@ -66,12 +66,12 @@ class LayerIndexObjectsTest(LayersTest):
                                         'test_distro', 'test_distro',
                                         layerBranchId)
 
-        layerItemId +=1
+        layerItemId += 1
         self.index.layerItems[layerItemId] = LayerItem(self.index)
         self.index.layerItems[layerItemId].define_data(layerItemId, 'test_layerItem 2',
                                         vcs_url='git://git_test_url/test_layerItem')
 
-        layerBranchId +=1
+        layerBranchId += 1
         self.index.layerBranches[layerBranchId] = LayerBranch(self.index)
         self.index.layerBranches[layerBranchId].define_data(layerBranchId,
                                         'test_collection_2', '72', layerItemId,

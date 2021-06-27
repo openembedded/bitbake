@@ -28,7 +28,7 @@ def sectohms(time):
     except ValueError:
         tdsec = 0
     hours = int(tdsec / 3600)
-    return "%02d:%02d:%02d" % (hours, int((tdsec - (hours * 3600))/ 60), int(tdsec) % 60)
+    return "%02d:%02d:%02d" % (hours, int((tdsec - (hours * 3600)) / 60), int(tdsec) % 60)
 
 
 @register.filter(name='get_tasks')
@@ -124,9 +124,9 @@ def filtered_tooltip(options, filter):
     """
     for option in options:
         if filter == option[1]:
-            return "Showing only %s"%option[0]
+            return "Showing only %s" % option[0]
         if ('daterange' == option[1]) and filter.startswith(option[4]):
-            return "Showing only %s"%option[0]
+            return "Showing only %s" % option[0]
     return ""
 
 @register.filter
@@ -167,7 +167,7 @@ def check_filter_status(options, filter):
 def variable_parent_name(value):
     """ filter extended variable names to the parent name
     """
-    value=re.sub('_\$.*', '', value)
+    value = re.sub('_\$.*', '', value)
     return re.sub('_[a-z].*', '', value)
 
 @register.filter
@@ -193,10 +193,10 @@ def filter_setin_files(file_list, matchstr):
 def string_slice(strvar,slicevar):
     """ slice a string with |string_slice:'[first]:[last]'
     """
-    first,last= slicevar.partition(':')[::2]
-    if first=='':
+    first,last = slicevar.partition(':')[::2]
+    if first == '':
         return strvar[:int(last)]
-    elif last=='':
+    elif last == '':
         return strvar[int(first):]
     else:
         return strvar[int(first):int(last)]
@@ -231,7 +231,7 @@ def filter_sizeovertotal(package_object, total_size):
     if size is None or size == '':
         size = package_object.size
 
-    return '{:.1%}'.format(float(size)/float(total_size))
+    return '{:.1%}'.format(float(size) / float(total_size))
 
 from django.utils.safestring import mark_safe
 @register.filter
@@ -242,7 +242,7 @@ def format_vpackage_rowclass(size):
 
 @register.filter
 def format_vpackage_namehelp(name):
-    r =  name + '&nbsp;'
+    r = name + '&nbsp;'
     r += '<span class="glyphicon glyphicon-question-sign get-help hover-help"'
     r += ' title = "' + name + ' has not been built">'
     r += '</span>'

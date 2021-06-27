@@ -45,7 +45,7 @@ from .element import (
 
 # The very first thing we do is give a useful error if someone is
 # running this code under Python 3 without converting it.
-'You are trying to run the Python 2 version of Beautiful Soup under Python 3. This will not work.'!='You need to convert the code, either by installing it (`python setup.py install`) or by running 2to3 (`2to3 -w bs4`).'
+'You are trying to run the Python 2 version of Beautiful Soup under Python 3. This will not work.' != 'You need to convert the code, either by installing it (`python setup.py install`) or by running 2to3 (`2to3 -w bs4`).'
 
 class BeautifulSoup(Tag):
     """
@@ -340,12 +340,12 @@ class BeautifulSoup(Tag):
                 previous_element = parent
                 previous_sibling = None
             else:
-                previous_element = previous_sibling = parent.contents[index-1]
-            if index == len(parent.contents)-1:
+                previous_element = previous_sibling = parent.contents[index - 1]
+            if index == len(parent.contents) - 1:
                 next_element = parent.next_sibling
                 next_sibling = None
             else:
-                next_element = next_sibling = parent.contents[index+1]
+                next_element = next_sibling = parent.contents[index + 1]
 
             o.previous_element = previous_element
             if previous_element:

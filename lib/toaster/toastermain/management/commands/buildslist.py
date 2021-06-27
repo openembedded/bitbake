@@ -8,8 +8,8 @@ from orm.models import Build
 
 
 class Command(BaseCommand):
-    args    = ""
-    help    = "Lists current builds"
+    args = ""
+    help = "Lists current builds"
 
     def handle(self,**options):
         for b in Build.objects.all():

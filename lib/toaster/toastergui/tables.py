@@ -139,7 +139,7 @@ class LayersTable(ToasterTable):
                         static_data_name="git_subdir",
                         static_data_template=git_dir_template)
 
-        revision_template =  '''
+        revision_template = '''
         {% if data.layer.local_source_dir %}
         <span class="text-muted">Not applicable</span>
         <span class="glyphicon glyphicon-question-sign get-help" data-original-title="" title="The source code of {{data.layer.name}} is not in a Git repository, so there is no revision associated with it"> </span>
