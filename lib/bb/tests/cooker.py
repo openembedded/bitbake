@@ -6,7 +6,8 @@
 
 import unittest
 import os
-import bb, bb.cooker
+import bb
+import bb.cooker
 import re
 import logging
 

@@ -30,7 +30,8 @@ IETF secsh internet draft:
 # SPDX-License-Identifier: GPL-2.0-only
 #
 
-import re, os
+import re
+import os
 from bb.fetch2 import check_network_access, FetchMethod, ParameterError, runfetchcmd
 
 

@@ -12,10 +12,13 @@ BitBake build tools.
 #
 # Based on functions from the base bb module, Copyright 2003 Holger Schurig
 
-import os, re
+import os
+import re
 import signal
 import logging
-import urllib.request, urllib.parse, urllib.error
+import urllib.request
+import urllib.parse
+import urllib.error
 if 'git' not in urllib.parse.uses_netloc:
     urllib.parse.uses_netloc.append('git')
 import operator
@@ -23,7 +26,8 @@ import collections
 import subprocess
 import pickle
 import errno
-import bb.persist_data, bb.utils
+import bb.persist_data
+import bb.utils
 import bb.checksum
 import bb.process
 import bb.event

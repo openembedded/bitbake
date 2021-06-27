@@ -9,7 +9,12 @@
 # SPDX-License-Identifier: GPL-2.0-only
 #
 
-import sys, os, glob, os.path, re, time
+import sys
+import os
+import glob
+import os.path
+import re
+import time
 import itertools
 import logging
 import multiprocessing
@@ -18,7 +23,9 @@ import threading
 from io import StringIO, UnsupportedOperation
 from contextlib import closing
 from collections import defaultdict, namedtuple
-import bb, bb.exceptions, bb.command
+import bb
+import bb.exceptions
+import bb.command
 from bb import utils, data, parse, event, cache, providers, taskdata, runqueue, build
 import queue
 import signal

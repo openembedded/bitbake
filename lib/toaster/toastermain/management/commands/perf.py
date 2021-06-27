@@ -4,7 +4,9 @@
 
 from django.core.management.base import BaseCommand
 from django.test.client import Client
-import os, sys, re
+import os
+import sys
+import re
 import requests
 from django.conf import settings
 

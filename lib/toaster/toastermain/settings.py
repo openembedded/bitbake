@@ -258,7 +258,8 @@ if os.environ.get('TOASTER_DEVEL', None) is not None:
 DEBUG_PANEL_ENABLED = False
 if os.environ.get('TOASTER_DEVEL', None) is not None:
     try:
-        import debug_toolbar, debug_panel
+        import debug_toolbar
+        import debug_panel
         MIDDLEWARE = ['debug_panel.middleware.DebugPanelMiddleware',] + MIDDLEWARE
         #MIDDLEWARE = MIDDLEWARE + ['debug_toolbar.middleware.DebugToolbarMiddleware',]
         INSTALLED_APPS = INSTALLED_APPS + ('debug_toolbar','debug_panel',)

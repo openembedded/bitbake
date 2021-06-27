@@ -37,7 +37,10 @@
 
 
 import logging
-import os, sys, itertools, time
+import os
+import sys
+import itertools
+import time
 
 try:
     import curses

@@ -84,7 +84,10 @@ resultlimit = 40               # Size limit of results when running in debug mod
 
 pickle_protocol = 0            # Protocol to use when writing pickle files
 
-import re, types, sys, os.path
+import re
+import types
+import sys
+import os.path
 
 # Compatibility function for python 2.6/3.0
 if sys.version_info[0] < 3:

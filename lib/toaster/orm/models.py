@@ -1504,7 +1504,8 @@ class Layer_Version(models.Model):
     # code lifted, with adaptations, from the layerindex-web application
     # https://git.yoctoproject.org/cgit/cgit.cgi/layerindex-web/
     def _handle_url_path(self, base_url, path):
-        import re, posixpath
+        import re
+        import posixpath
         if base_url:
             if self.dirpath:
                 if path:
