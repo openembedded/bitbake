@@ -38,7 +38,7 @@ def diagnose(data):
         basic_parsers.append(["lxml", "xml"])
         try:
             from lxml import etree
-            print("Found lxml version %s" % ".".join(map(str,etree.LXML_VERSION)))
+            print("Found lxml version %s" % ".".join(map(str, etree.LXML_VERSION)))
         except ImportError as e:
             print(
                 "lxml is not installed or couldn't be imported.")
@@ -146,20 +146,20 @@ def rword(length=5):
 
 def rsentence(length=4):
     "Generate a random sentence-like string."
-    return " ".join(rword(random.randint(4,9)) for i in range(length))
+    return " ".join(rword(random.randint(4, 9)) for i in range(length))
         
 def rdoc(num_elements=1000):
     """Randomly generate an invalid HTML document."""
     tag_names = ['p', 'div', 'span', 'i', 'b', 'script', 'table']
     elements = []
     for i in range(num_elements):
-        choice = random.randint(0,3)
+        choice = random.randint(0, 3)
         if choice == 0:
             # New tag.
             tag_name = random.choice(tag_names)
             elements.append("<%s>" % tag_name)
         elif choice == 1:
-            elements.append(rsentence(random.randint(1,4)))
+            elements.append(rsentence(random.randint(1, 4)))
         elif choice == 2:
             # Close a tag.
             tag_name = random.choice(tag_names)

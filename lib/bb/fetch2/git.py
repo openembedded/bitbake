@@ -145,21 +145,21 @@ class Git(FetchMethod):
         if not ud.proto in ('git', 'file', 'ssh', 'http', 'https', 'rsync'):
             raise bb.fetch2.ParameterError("Invalid protocol type", ud.url)
 
-        ud.nocheckout = ud.parm.get("nocheckout","0") == "1"
+        ud.nocheckout = ud.parm.get("nocheckout", "0") == "1"
 
-        ud.rebaseable = ud.parm.get("rebaseable","0") == "1"
+        ud.rebaseable = ud.parm.get("rebaseable", "0") == "1"
 
-        ud.nobranch = ud.parm.get("nobranch","0") == "1"
+        ud.nobranch = ud.parm.get("nobranch", "0") == "1"
 
         # usehead implies nobranch
-        ud.usehead = ud.parm.get("usehead","0") == "1"
+        ud.usehead = ud.parm.get("usehead", "0") == "1"
         if ud.usehead:
             if ud.proto != "file":
                  raise bb.fetch2.ParameterError("The usehead option is only for use with local ('protocol=file') git repositories", ud.url)
             ud.nobranch = 1
 
         # bareclone implies nocheckout
-        ud.bareclone = ud.parm.get("bareclone","0") == "1"
+        ud.bareclone = ud.parm.get("bareclone", "0") == "1"
         if ud.bareclone:
             ud.nocheckout = 1
   
@@ -246,7 +246,7 @@ class Git(FetchMethod):
                     ud.unresolvedrev[name] = ud.revisions[name]
                 ud.revisions[name] = self.latest_revision(ud, d, name)
 
-        gitsrcname = '%s%s' % (ud.host.replace(':', '.'), ud.path.replace('/', '.').replace('*', '.').replace(' ','_'))
+        gitsrcname = '%s%s' % (ud.host.replace(':', '.'), ud.path.replace('/', '.').replace('*', '.').replace(' ', '_'))
         if gitsrcname.startswith('.'):
             gitsrcname = gitsrcname[1:]
 
@@ -627,7 +627,7 @@ class Git(FetchMethod):
             output = runfetchcmd(cmd, d, quiet=True, workdir=wd)
             if int(output) > 0:
                 return True
-        except (bb.fetch2.FetchError,ValueError):
+        except (bb.fetch2.FetchError, ValueError):
             pass
         return False
 

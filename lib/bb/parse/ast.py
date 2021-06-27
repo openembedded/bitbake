@@ -61,7 +61,7 @@ class UnsetNode(AstNode):
             'file': self.filename,
             'line': self.lineno,
         }
-        data.delVar(self.var,**loginfo)
+        data.delVar(self.var, **loginfo)
 
 class UnsetFlagNode(AstNode):
     def __init__(self, filename, lineno, var, flag):

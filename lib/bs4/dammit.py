@@ -491,7 +491,7 @@ class UnicodeDammit:
                 b'\x9c': ('oelig', '153'),
                 b'\x9d': '?',
                 b'\x9e': ('#x17E', '17E'),
-                b'\x9f': ('Yuml', ''),}
+                b'\x9f': ('Yuml', ''), }
 
     # A parochial partial mapping of ISO-Latin-1 to ASCII. Contains
     # horrors like stripping diacritical marks to turn á into a, but also

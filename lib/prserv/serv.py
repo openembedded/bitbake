@@ -20,7 +20,7 @@ import multiprocessing
 logger = logging.getLogger("BitBake.PRserv")
 
 class Handler(SimpleXMLRPCRequestHandler):
-    def _dispatch(self,method,params):
+    def _dispatch(self, method, params):
         try:
             value = self.server.funcs[method](*params)
         except:
@@ -112,7 +112,7 @@ class PRServer(SimpleXMLRPCServer):
         try:
             return self.table.getValue(version, pkgarch, checksum)
         except prserv.NotFoundError:
-            logger.error("can not find value for (%s, %s)",version, checksum)
+            logger.error("can not find value for (%s, %s)", version, checksum)
             return None
         except sqlite3.Error as exc:
             logger.error(str(exc))
@@ -150,7 +150,7 @@ class PRServerConnection(object):
     def ping(self):
         return self.connection.ping()
 
-    def export(self,version=None, pkgarch=None, checksum=None, colinfo=True):
+    def export(self, version=None, pkgarch=None, checksum=None, colinfo=True):
         return self.connection.export(version, pkgarch, checksum, colinfo)
 
     def importone(self, version, pkgarch, checksum, value):
@@ -195,16 +195,16 @@ def run_as_daemon(func, pidfile, logfile):
     # potentially hanging on a pipe. Handle both cases.
     si = open('/dev/null', 'r')
     try:
-        os.dup2(si.fileno(),sys.stdin.fileno())
+        os.dup2(si.fileno(), sys.stdin.fileno())
     except (AttributeError, io.UnsupportedOperation):
         sys.stdin = si
     so = open(logfile, 'a+')
     try:
-        os.dup2(so.fileno(),sys.stdout.fileno())
+        os.dup2(so.fileno(), sys.stdout.fileno())
     except (AttributeError, io.UnsupportedOperation):
         sys.stdout = so
     try:
-        os.dup2(so.fileno(),sys.stderr.fileno())
+        os.dup2(so.fileno(), sys.stderr.fileno())
     except (AttributeError, io.UnsupportedOperation):
         sys.stderr = so
 
@@ -243,15 +243,15 @@ def start_daemon(dbfile, host, port, logfile):
                             % pidfile)
         return 1
 
-    server = PRServer(os.path.abspath(dbfile), os.path.abspath(logfile), (ip,port))
+    server = PRServer(os.path.abspath(dbfile), os.path.abspath(logfile), (ip, port))
     run_as_daemon(server.serve_forever, pidfile, os.path.abspath(logfile))
 
     # Sometimes, the port (i.e. localhost:0) indicated by the user does not match with
     # the one the server actually is listening, so at least warn the user about it
-    _,rport = server.getinfo()
+    _, rport = server.getinfo()
     if port != rport:
         sys.stdout.write("Server is listening at port %s instead of %s\n"
-                         % (rport,port))
+                         % (rport, port))
     return 0
 
 def stop_daemon(host, port):
@@ -269,7 +269,7 @@ def stop_daemon(host, port):
         # so at least advise the user which ports the corresponding server is listening
         ports = []
         portstr = ""
-        for pf in glob.glob(PIDPREFIX % (ip,'*')):
+        for pf in glob.glob(PIDPREFIX % (ip, '*')):
             bn = os.path.basename(pf)
             root, _ = os.path.splitext(bn)
             ports.append(root.split('_')[-1])
@@ -277,7 +277,7 @@ def stop_daemon(host, port):
             portstr = "Wrong port? Other ports listening at %s: %s" % (host, ' '.join(ports))
 
         sys.stderr.write("pidfile %s does not exist. Daemon not running? %s\n"
-                         % (pidfile,portstr))
+                         % (pidfile, portstr))
         return 1
 
     try:
@@ -343,7 +343,7 @@ def auto_start(d):
                auto_shutdown()
         if not singleton:
             bb.utils.mkdirhier(cachedir)
-            singleton = PRServSingleton(os.path.abspath(dbfile), os.path.abspath(logfile), ("localhost",0))
+            singleton = PRServSingleton(os.path.abspath(dbfile), os.path.abspath(logfile), ("localhost", 0))
             singleton.start()
     if singleton:
         host, port = singleton.getinfo()
@@ -352,7 +352,7 @@ def auto_start(d):
         port = int(host_params[1])
 
     try:
-        connection = PRServerConnection(host,port)
+        connection = PRServerConnection(host, port)
         connection.ping()
         realhost, realport = connection.getinfo()
         return str(realhost) + ":" + str(realport)

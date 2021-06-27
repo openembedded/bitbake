@@ -190,10 +190,10 @@ def filter_setin_files(file_list, matchstr):
     return result
 
 @register.filter
-def string_slice(strvar,slicevar):
+def string_slice(strvar, slicevar):
     """ slice a string with |string_slice:'[first]:[last]'
     """
-    first,last = slicevar.partition(':')[::2]
+    first, last = slicevar.partition(':')[::2]
     if first == '':
         return strvar[:int(last)]
     elif last == '':
@@ -202,7 +202,7 @@ def string_slice(strvar,slicevar):
         return strvar[int(first):int(last)]
 
 @register.filter
-def string_remove_regex(value,ex):
+def string_remove_regex(value, ex):
     """ remove sub-string of string that matches regex
     """
     return re.sub(ex, '', value)

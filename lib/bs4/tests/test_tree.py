@@ -1252,7 +1252,7 @@ class TestCDAtaListAttributes(SoupTest):
     """
     def test_single_value_becomes_list(self):
         soup = self.soup("<a class='foo'>")
-        self.assertEqual(["foo"],soup.a['class'])
+        self.assertEqual(["foo"], soup.a['class'])
 
     def test_multiple_values_becomes_list(self):
         soup = self.soup("<a class='foo bar'>")
@@ -1260,7 +1260,7 @@ class TestCDAtaListAttributes(SoupTest):
 
     def test_multiple_values_separated_by_weird_whitespace(self):
         soup = self.soup("<a class='foo\tbar\nbaz'>")
-        self.assertEqual(["foo", "bar", "baz"],soup.a['class'])
+        self.assertEqual(["foo", "bar", "baz"], soup.a['class'])
 
     def test_attributes_joined_into_string_on_output(self):
         soup = self.soup("<a class='foo\tbar'>")

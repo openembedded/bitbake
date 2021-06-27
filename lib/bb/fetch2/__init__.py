@@ -532,7 +532,7 @@ def fetcher_compare_revisions(d):
     return headrevs != bb.fetch2.saved_headrevs
 
 def mirror_from_string(data):
-    mirrors = (data or "").replace('\\n',' ').split()
+    mirrors = (data or "").replace('\\n', ' ').split()
     # Split into pairs
     if len(mirrors) % 2 != 0:
         bb.warn('Invalid mirror data %s, should have paired members.' % data)
@@ -918,7 +918,7 @@ def build_mirroruris(origud, mirrors, ld):
     replacements["HOST"] = origud.host
     replacements["PATH"] = origud.path
     replacements["BASENAME"] = origud.path.split("/")[-1]
-    replacements["MIRRORNAME"] = origud.host.replace(':','.') + origud.path.replace('/', '.').replace('*', '.')
+    replacements["MIRRORNAME"] = origud.host.replace(':', '.') + origud.path.replace('/', '.').replace('*', '.')
 
     def adduri(ud, uris, uds, mirrors, tarballs):
         for line in mirrors:
@@ -994,7 +994,7 @@ def try_mirror_url(fetch, origud, ud, ld, check=False):
 
         if not verify_donestamp(ud, ld, origud) or ud.method.need_update(ud, ld):
             ud.method.download(ud, ld)
-            if hasattr(ud.method,"build_mirror_data"):
+            if hasattr(ud.method, "build_mirror_data"):
                 ud.method.build_mirror_data(ud, ld)
 
         if not ud.localpath or not os.path.exists(ud.localpath):
@@ -1262,7 +1262,7 @@ class FetchData(object):
 
         self.ignore_checksums = False
 
-        self.names = self.parm.get("name",'default').split(',')
+        self.names = self.parm.get("name", 'default').split(',')
 
         self.method = None
         for m in methods:

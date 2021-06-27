@@ -500,7 +500,7 @@ exit $ret
         try:
             bb.debug(2, "Executing shell function %s" % func)
             with open(os.devnull, 'r+') as stdin, logfile:
-                bb.process.run(cmd, shell=False, stdin=stdin, log=logfile, extrafiles=[(fifo,readfifo)])
+                bb.process.run(cmd, shell=False, stdin=stdin, log=logfile, extrafiles=[(fifo, readfifo)])
         except bb.process.ExecutionError as exe:
             # Find the backtrace that the shell trap generated
             backtrace_marker_regex = re.compile(r"WARNING: Backtrace \(BB generated script\)")

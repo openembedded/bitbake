@@ -129,7 +129,7 @@ class ProjectManager(models.Manager):
         for defaultconf in ToasterSetting.objects.filter(
                 name__startswith="DEFCONF_"):
             name = defaultconf.name[8:]
-            pv,create = ProjectVariable.objects.get_or_create(project=prj,name=name)
+            pv, create = ProjectVariable.objects.get_or_create(project=prj, name=name)
             pv.value = defaultconf.value
             pv.save()
 
@@ -205,7 +205,7 @@ class Project(models.Model):
     def get_current_machine_name(self):
         try:
             return self.projectvariable_set.get(name="MACHINE").value
-        except (ProjectVariable.DoesNotExist,IndexError):
+        except (ProjectVariable.DoesNotExist, IndexError):
             return None
 
     def get_number_of_builds(self):
@@ -219,7 +219,7 @@ class Project(models.Model):
     def get_last_build_id(self):
         try:
             return Build.objects.filter(project=self.id).order_by('-completed_on')[0].id
-        except (Build.DoesNotExist,IndexError):
+        except (Build.DoesNotExist, IndexError):
             return(-1)
 
     def get_last_outcome(self):
@@ -228,7 +228,7 @@ class Project(models.Model):
             return("")
         try:
             return Build.objects.filter(id=build_id)[0].outcome
-        except (Build.DoesNotExist,IndexError):
+        except (Build.DoesNotExist, IndexError):
             return("not_found")
 
     def get_last_target(self):
@@ -237,7 +237,7 @@ class Project(models.Model):
             return("")
         try:
             return Target.objects.filter(build=build_id)[0].target
-        except (Target.DoesNotExist,IndexError):
+        except (Target.DoesNotExist, IndexError):
             return("not_found")
 
     def get_last_errors(self):
@@ -246,7 +246,7 @@ class Project(models.Model):
             return(0)
         try:
             return Build.objects.filter(id=build_id)[0].errors.count()
-        except (Build.DoesNotExist,IndexError):
+        except (Build.DoesNotExist, IndexError):
             return("not_found")
 
     def get_last_warnings(self):
@@ -255,7 +255,7 @@ class Project(models.Model):
             return(0)
         try:
             return Build.objects.filter(id=build_id)[0].warnings.count()
-        except (Build.DoesNotExist,IndexError):
+        except (Build.DoesNotExist, IndexError):
             return("not_found")
 
     def get_last_build_extensions(self):
@@ -272,7 +272,7 @@ class Project(models.Model):
             return("")
         try:
             return Variable.objects.filter(build=build_id, variable_name="IMAGE_FSTYPES")[0].variable_value
-        except (Variable.DoesNotExist,IndexError):
+        except (Variable.DoesNotExist, IndexError):
             return("not_found")
 
     def get_all_compatible_layer_versions(self):
@@ -306,7 +306,7 @@ class Project(models.Model):
     def get_default_image_recipe(self):
         try:
             return self.projectvariable_set.get(name="DEFAULT_IMAGE").value
-        except (ProjectVariable.DoesNotExist,IndexError):
+        except (ProjectVariable.DoesNotExist, IndexError):
             return None
 
     def get_is_new(self):
@@ -372,14 +372,14 @@ class Project(models.Model):
     PROJECT_SPECIFIC_CLONING_SUCCESS = '4'
     PROJECT_SPECIFIC_CLONING_FAIL = '5'
 
-    def get_variable(self,variable,default_value=''):
+    def get_variable(self, variable, default_value=''):
         try:
             return self.projectvariable_set.get(name=variable).value
-        except (ProjectVariable.DoesNotExist,IndexError):
+        except (ProjectVariable.DoesNotExist, IndexError):
             return default_value
 
-    def set_variable(self,variable,value):
-        pv,create = ProjectVariable.objects.get_or_create(project=self, name=variable)
+    def set_variable(self, variable, value):
+        pv, create = ProjectVariable.objects.get_or_create(project=self, name=variable)
         pv.value = value
         pv.save()
 
@@ -998,13 +998,13 @@ class Target_File(models.Model):
     ITYPE_FIFO = 5
     ITYPE_CHARACTER = 6
     ITYPE_BLOCK = 7
-    ITYPES = ((ITYPE_REGULAR,'regular'),
-        (ITYPE_DIRECTORY,'directory'),
-        (ITYPE_SYMLINK,'symlink'),
-        (ITYPE_SOCKET,'socket'),
-        (ITYPE_FIFO,'fifo'),
-        (ITYPE_CHARACTER,'character'),
-        (ITYPE_BLOCK,'block'),
+    ITYPES = ((ITYPE_REGULAR, 'regular'),
+        (ITYPE_DIRECTORY, 'directory'),
+        (ITYPE_SYMLINK, 'symlink'),
+        (ITYPE_SOCKET, 'socket'),
+        (ITYPE_FIFO, 'fifo'),
+        (ITYPE_CHARACTER, 'character'),
+        (ITYPE_BLOCK, 'block'),
         )
 
     target = models.ForeignKey(Target, on_delete=models.CASCADE)

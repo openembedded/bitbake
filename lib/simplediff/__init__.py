@@ -55,7 +55,7 @@ def diff(old, new):
     # Create a map from old values to their indices
     old_index_map = dict()
     for i, val in enumerate(old):
-        old_index_map.setdefault(val,list()).append(i)
+        old_index_map.setdefault(val, list()).append(i)
 
     # Find the largest substring common to old and new.
     # We use a dynamic programming approach here.
@@ -86,7 +86,7 @@ def diff(old, new):
 
     for inew, val in enumerate(new):
         _overlap = dict()
-        for iold in old_index_map.get(val,list()):
+        for iold in old_index_map.get(val, list()):
             # now we are considering all values of iold such that
             # `old[iold] == new[inew]`.
             _overlap[iold] = (iold and overlap.get(iold - 1, 0)) + 1

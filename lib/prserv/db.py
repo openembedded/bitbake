@@ -77,8 +77,8 @@ class PRTable(object):
             #no value found, try to insert
             try:
                 self._execute("INSERT INTO %s VALUES (?, ?, ?, (select ifnull(max(value)+1,0) from %s where version=? AND pkgarch=?));"
-                           % (self.table,self.table),
-                           (version,pkgarch, checksum,version, pkgarch))
+                           % (self.table, self.table),
+                           (version, pkgarch, checksum, version, pkgarch))
             except sqlite3.IntegrityError as exc:
                 logger.error(str(exc))
 
@@ -105,7 +105,7 @@ class PRTable(object):
             #no value found, try to insert
             try:
                 self._execute("INSERT OR REPLACE INTO %s VALUES (?, ?, ?, (select ifnull(max(value)+1,0) from %s where version=? AND pkgarch=?));"
-                               % (self.table,self.table),
+                               % (self.table, self.table),
                                (version, pkgarch, checksum, version, pkgarch))
             except sqlite3.IntegrityError as exc:
                 logger.error(str(exc))
@@ -155,20 +155,20 @@ class PRTable(object):
         try:
             #try to insert
             self._execute("INSERT INTO %s VALUES (?, ?, ?, ?);" % (self.table),
-                           (version, pkgarch, checksum,value))
+                           (version, pkgarch, checksum, value))
         except sqlite3.IntegrityError as exc:
             #already have the record, try to update
             try:
                 self._execute("UPDATE %s SET value=? WHERE version=? AND pkgarch=? AND checksum=? AND value<?"  
                               % (self.table),
-                               (value,version,pkgarch,checksum,value))
+                               (value, version, pkgarch, checksum, value))
             except sqlite3.IntegrityError as exc:
                 logger.error(str(exc))
 
         self.dirty = True
 
         data = self._execute("SELECT value FROM %s WHERE version=? AND pkgarch=? AND checksum=? AND value>=?;" % self.table,
-                            (version,pkgarch,checksum,value))
+                            (version, pkgarch, checksum, value))
         row = data.fetchone()
         if row is not None:
             return row[0]
@@ -263,7 +263,7 @@ class PRData(object):
     def disconnect(self):
         self.connection.close()
 
-    def __getitem__(self,tblname):
+    def __getitem__(self, tblname):
         if not isinstance(tblname, str):
             raise TypeError("tblname argument must be a string, not '%s'" %
                             type(tblname))

@@ -854,7 +854,7 @@ class Tinfoil:
         elif isinstance(obj, dict):
             # New style class
             newobj = origtype()
-            for k,v in obj.items():
+            for k, v in obj.items():
                 setattr(newobj, k, v)
         else:
             # Assume we can coerce the type

@@ -106,7 +106,7 @@ def _logged_communicate(pipe, log, input, extrafiles):
         stderrbuf = b""
 
         try:
-            r,w,e = select.select(rlist, [], [], 1)
+            r, w, e = select.select(rlist, [], [], 1)
         except OSError as e:
             if e.errno != errno.EINTR:
                 raise

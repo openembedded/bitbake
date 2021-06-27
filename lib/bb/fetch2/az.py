@@ -32,7 +32,7 @@ class Az(Wget):
     def checkstatus(self, fetch, ud, d, try_again=True):
 
         # checkstatus discards parameters either way, we need to do this before adding the SAS
-        ud.url = ud.url.replace('az://','https://').split(';')[0]
+        ud.url = ud.url.replace('az://', 'https://').split(';')[0]
 
         az_sas = d.getVar('AZ_SAS')
         if az_sas and az_sas not in ud.url:

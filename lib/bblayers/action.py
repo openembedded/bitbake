@@ -165,7 +165,7 @@ build results (as the layer priority order has effectively changed).
                         ext = os.path.splitext(f1)[1]
                         if ext != '.bbappend':
                             fdest = f1full[len(layer):]
-                            fdest = os.path.normpath(os.sep.join([outputdir,fdest]))
+                            fdest = os.path.normpath(os.sep.join([outputdir, fdest]))
                             bb.utils.mkdirhier(os.path.dirname(fdest))
                             if os.path.exists(fdest):
                                 if f1 == 'layer.conf' and root.endswith('/conf'):
@@ -199,7 +199,7 @@ build results (as the layer priority order has effectively changed).
                         self.apply_append(appendname, first_append)
                     else:
                         fdest = appendname[len(layer):]
-                        fdest = os.path.normpath(os.sep.join([outputdir,fdest]))
+                        fdest = os.path.normpath(os.sep.join([outputdir, fdest]))
                         bb.utils.mkdirhier(os.path.dirname(fdest))
                         bb.utils.copyfile(appendname, fdest)
                         first_append = fdest
