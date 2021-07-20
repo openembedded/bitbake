@@ -146,7 +146,7 @@ class DataNode(AstNode):
             data.setVar(key, val, parsing=True, **loginfo)
 
 class MethodNode(AstNode):
-    tr_tbl = str.maketrans('/.+-@%&', '_______')
+    tr_tbl = str.maketrans('/.+-@%&~', '________')
 
     def __init__(self, filename, lineno, func_name, body, python, fakeroot):
         AstNode.__init__(self, filename, lineno)
