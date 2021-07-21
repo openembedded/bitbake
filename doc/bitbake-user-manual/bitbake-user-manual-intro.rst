@@ -417,8 +417,8 @@ Following is the usage and syntax for BitBake::
      -l DEBUG_DOMAINS, --log-domains=DEBUG_DOMAINS
                            Show debug logging for the specified logging domains
      -P, --profile         Profile the command and save reports.
-     -u UI, --ui=UI        The user interface to use (knotty, ncurses or taskexp
-                           - default knotty).
+     -u UI, --ui=UI        The user interface to use (knotty, ncurses, taskexp or
+                           teamcity - default knotty).
      --token=XMLRPCTOKEN   Specify the connection token to be used when
                            connecting to a remote server.
      --revisions-changed   Set the exit code depending on whether upstream
@@ -433,6 +433,9 @@ Following is the usage and syntax for BitBake::
                            Environment variable BB_SERVER_TIMEOUT.
      --no-setscene         Do not run any setscene tasks. sstate will be ignored
                            and everything needed, built.
+     --skip-setscene       Skip setscene tasks if they would be executed. Tasks
+                           previously restored from sstate will be kept, unlike
+                           --no-setscene
      --setscene-only       Only run setscene tasks, don't run any real tasks.
      --remote-server=REMOTE_SERVER
                            Connect to the specified server.
