@@ -91,9 +91,10 @@ level changes:
       Variables that are exported to the environment are preceded by the
       string "export" in the command's output.
 
--  For recipe changes, use the following::
+-  To find changes to a given variable in a specific recipe, use the
+   following::
 
-      $ bitbake recipe -e \| grep VARIABLE="
+      $ bitbake recipename -e | grep VARIABLENAME=\"
 
    This command checks to see if the variable actually makes
    it into a specific recipe.
