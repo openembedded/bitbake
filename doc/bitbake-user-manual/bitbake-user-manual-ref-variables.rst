@@ -231,23 +231,23 @@ overview of their function and contents.
       based on the interval occur each time a respective interval is
       reached beyond the initial warning (i.e. 1 Gbytes and 100 Kbytes).
 
-   :term:`BB_ENV_WHITELIST`
-      Specifies the internal whitelist of variables to allow through from
-      the external environment into BitBake's datastore. If the value of
-      this variable is not specified (which is the default), the following
-      list is used: :term:`BBPATH`, :term:`BB_PRESERVE_ENV`,
-      :term:`BB_ENV_WHITELIST`, and :term:`BB_ENV_EXTRAWHITE`.
+   :term:`BB_ENV_EXTRAWHITE`
+      Specifies an additional set of variables to allow through (whitelist)
+      from the external environment into BitBake's datastore. This list of
+      variables are on top of the internal list set in
+      :term:`BB_ENV_WHITELIST`.
 
       .. note::
 
          You must set this variable in the external environment in order
          for it to work.
 
-   :term:`BB_ENV_EXTRAWHITE`
-      Specifies an additional set of variables to allow through (whitelist)
-      from the external environment into BitBake's datastore. This list of
-      variables are on top of the internal list set in
-      :term:`BB_ENV_WHITELIST`.
+   :term:`BB_ENV_WHITELIST`
+      Specifies the internal whitelist of variables to allow through from
+      the external environment into BitBake's datastore. If the value of
+      this variable is not specified (which is the default), the following
+      list is used: :term:`BBPATH`, :term:`BB_PRESERVE_ENV`,
+      :term:`BB_ENV_WHITELIST`, and :term:`BB_ENV_EXTRAWHITE`.
 
       .. note::
 
@@ -276,18 +276,6 @@ overview of their function and contents.
 
          BB_GENERATE_MIRROR_TARBALLS = "1"
 
-   :term:`BB_HASHCONFIG_WHITELIST`
-      Lists variables that are excluded from base configuration checksum,
-      which is used to determine if the cache can be reused.
-
-      One of the ways BitBake determines whether to re-parse the main
-      metadata is through checksums of the variables in the datastore of
-      the base configuration data. There are variables that you typically
-      want to exclude when checking whether or not to re-parse and thus
-      rebuild the cache. As an example, you would usually exclude ``TIME``
-      and ``DATE`` because these variables are always changing. If you did
-      not exclude them, BitBake would never reuse the cache.
-
    :term:`BB_HASHBASE_WHITELIST`
       Lists variables that are excluded from checksum and dependency data.
       Variables that are excluded can therefore change without affecting
@@ -308,6 +296,18 @@ overview of their function and contents.
       completely accurate. A given setscene task can still later fail.
       However, the more accurate the data returned, the more efficient the
       build will be.
+
+   :term:`BB_HASHCONFIG_WHITELIST`
+      Lists variables that are excluded from base configuration checksum,
+      which is used to determine if the cache can be reused.
+
+      One of the ways BitBake determines whether to re-parse the main
+      metadata is through checksums of the variables in the datastore of
+      the base configuration data. There are variables that you typically
+      want to exclude when checking whether or not to re-parse and thus
+      rebuild the cache. As an example, you would usually exclude ``TIME``
+      and ``DATE`` because these variables are always changing. If you did
+      not exclude them, BitBake would never reuse the cache.
 
    :term:`BB_HASHSERVE`
       Specifies the Hash Equivalence server to use.
@@ -357,14 +357,14 @@ overview of their function and contents.
       running builds when not connected to the Internet, and when operating
       in certain kinds of firewall environments.
 
+   :term:`BB_NUMBER_PARSE_THREADS`
+      Sets the number of threads BitBake uses when parsing. By default, the
+      number of threads is equal to the number of cores on the system.
+
    :term:`BB_NUMBER_THREADS`
       The maximum number of tasks BitBake should run in parallel at any one
       time. If your host development system supports multiple cores, a good
       rule of thumb is to set this variable to twice the number of cores.
-
-   :term:`BB_NUMBER_PARSE_THREADS`
-      Sets the number of threads BitBake uses when parsing. By default, the
-      number of threads is equal to the number of cores on the system.
 
    :term:`BB_ORIGENV`
       Contains a copy of the original external environment in which BitBake
