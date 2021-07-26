@@ -24,6 +24,7 @@ overview of their function and contents.
       described here in this glossary.
 
 .. glossary::
+   :sorted:
 
    :term:`ASSUME_PROVIDED`
       Lists recipe names (:term:`PN` values) BitBake does not
