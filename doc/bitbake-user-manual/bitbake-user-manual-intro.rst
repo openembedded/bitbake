@@ -537,7 +537,7 @@ current working directory:
 To stop depending on common depends, use the "-I" depend option and
 BitBake omits them from the graph. Leaving this information out can
 produce more readable graphs. This way, you can remove from the graph
-``DEPENDS`` from inherited classes such as ``base.bbclass``.
+:term:`DEPENDS` from inherited classes such as ``base.bbclass``.
 
 Here are two examples that create dependency graphs. The second example
 omits depends common in OpenEmbedded from the graph::
@@ -564,7 +564,7 @@ for two separate targets:
 .. image:: figures/bb_multiconfig_files.png
    :align: center
 
-The reason for this required file hierarchy is because the ``BBPATH``
+The reason for this required file hierarchy is because the :term:`BBPATH`
 variable is not constructed until the layers are parsed. Consequently,
 using the configuration file as a pre-configuration file is not possible
 unless it is located in the current working directory.

@@ -225,7 +225,7 @@ immediately, rather than when the variable is actually used::
    C := "${C}append"
 
 In this example, ``A`` contains "test 123", even though the final value
-of ``T`` is "456". The variable ``B`` will end up containing "456
+of :term:`T` is "456". The variable :term:`B` will end up containing "456
 cvalappend". This is because references to undefined variables are
 preserved as is during (immediate)expansion. This is in contrast to GNU
 Make, where undefined variables expand to nothing. The variable ``C``
@@ -248,7 +248,7 @@ examples::
    C = "cval"
    C =+ "test"
 
-The variable ``B`` contains "bval additionaldata" and ``C`` contains "test
+The variable :term:`B` contains "bval additionaldata" and ``C`` contains "test
 cval".
 
 .. _appending-and-prepending-without-spaces:
@@ -267,7 +267,7 @@ examples::
    C = "cval"
    C =. "test"
 
-The variable ``B`` contains "bvaladditionaldata" and ``C`` contains
+The variable :term:`B` contains "bvaladditionaldata" and ``C`` contains
 "testcval".
 
 Appending and Prepending (Override Style Syntax)
@@ -287,7 +287,7 @@ rather than being immediately applied. Here are some examples::
    D = "dval"
    D_append = "additional data"
 
-The variable ``B``
+The variable :term:`B`
 becomes "bval additional data" and ``C`` becomes "additional data cval".
 The variable ``D`` becomes "dvaladditional data".
 
@@ -496,14 +496,14 @@ Conditional Syntax (Overrides)
 
 BitBake uses :term:`OVERRIDES` to control what
 variables are overridden after BitBake parses recipes and configuration
-files. This section describes how you can use ``OVERRIDES`` as
+files. This section describes how you can use :term:`OVERRIDES` as
 conditional metadata, talks about key expansion in relationship to
-``OVERRIDES``, and provides some examples to help with understanding.
+:term:`OVERRIDES`, and provides some examples to help with understanding.
 
 Conditional Metadata
 --------------------
 
-You can use ``OVERRIDES`` to conditionally select a specific version of
+You can use :term:`OVERRIDES` to conditionally select a specific version of
 a variable and to conditionally append or prepend the value of a
 variable.
 
@@ -513,10 +513,10 @@ variable.
    underscores are not permitted in override names as they are used to
    separate overrides from each other and from the variable name.
 
--  *Selecting a Variable:* The ``OVERRIDES`` variable is a
+-  *Selecting a Variable:* The :term:`OVERRIDES` variable is a
    colon-character-separated list that contains items for which you want
    to satisfy conditions. Thus, if you have a variable that is
-   conditional on "arm", and "arm" is in ``OVERRIDES``, then the
+   conditional on "arm", and "arm" is in :term:`OVERRIDES`, then the
    "arm"-specific version of the variable is used rather than the
    non-conditional version. Here is an example::
 
@@ -525,7 +525,7 @@ variable.
       TEST_os = "osspecific"
       TEST_nooverride = "othercondvalue"
 
-   In this example, the ``OVERRIDES``
+   In this example, the :term:`OVERRIDES`
    variable lists three overrides: "architecture", "os", and "machine".
    The variable ``TEST`` by itself has a default value of "default". You
    select the os-specific version of the ``TEST`` variable by appending
@@ -547,13 +547,13 @@ variable.
 
 -  *Appending and Prepending:* BitBake also supports append and prepend
    operations to variable values based on whether a specific item is
-   listed in ``OVERRIDES``. Here is an example::
+   listed in :term:`OVERRIDES`. Here is an example::
 
       DEPENDS = "glibc ncurses"
       OVERRIDES = "machine:local"
       DEPENDS_append_machine = "libmad"
 
-   In this example, ``DEPENDS`` becomes "glibc ncurses libmad".
+   In this example, :term:`DEPENDS` becomes "glibc ncurses libmad".
 
    Again, using an OpenEmbedded metadata-based kernel recipe file as an
    example, the following lines will conditionally append to the
@@ -627,7 +627,7 @@ not been applied yet, ``A_foo`` is set to "X" due to the append and
 ``A`` simply equals "Z".
 
 Applying overrides, however, changes things. Since "foo" is listed in
-``OVERRIDES``, the conditional variable ``A`` is replaced with the "foo"
+:term:`OVERRIDES`, the conditional variable ``A`` is replaced with the "foo"
 version, which is equal to "X". So effectively, ``A_foo`` replaces
 ``A``.
 
@@ -686,7 +686,7 @@ share the task.
 
 This section presents the mechanisms BitBake provides to allow you to
 share functionality between recipes. Specifically, the mechanisms
-include ``include``, ``inherit``, ``INHERIT``, and ``require``
+include ``include``, ``inherit``, :term:`INHERIT`, and ``require``
 directives.
 
 Locating Include and Class Files
@@ -702,7 +702,7 @@ current directory for ``include`` and ``require`` directives.
 
 In order for include and class files to be found by BitBake, they need
 to be located in a "classes" subdirectory that can be found in
-``BBPATH``.
+:term:`BBPATH`.
 
 ``inherit`` Directive
 ---------------------
@@ -725,7 +725,7 @@ functionality for using Autotools that could be shared across recipes::
    inherit autotools
 
 In this case, BitBake would search for the directory
-``classes/autotools.bbclass`` in ``BBPATH``.
+``classes/autotools.bbclass`` in :term:`BBPATH`.
 
 .. note::
 
@@ -780,7 +780,7 @@ BitBake understands the ``include`` directive. This directive causes
 BitBake to parse whatever file you specify, and to insert that file at
 that location. The directive is much like its equivalent in Make except
 that if the path specified on the include line is a relative path,
-BitBake locates the first file it can find within ``BBPATH``.
+BitBake locates the first file it can find within :term:`BBPATH`.
 
 The include directive is a more generic method of including
 functionality as compared to the :ref:`inherit <bitbake-user-manual/bitbake-user-manual-metadata:\`\`inherit\`\` directive>`
@@ -822,7 +822,7 @@ does not suit a ``.bbclass`` file.
 
 Similar to how BitBake handles :ref:`include <bitbake-user-manual/bitbake-user-manual-metadata:\`\`include\`\` directive>`, if
 the path specified on the require line is a relative path, BitBake
-locates the first file it can find within ``BBPATH``.
+locates the first file it can find within :term:`BBPATH`.
 
 As an example, suppose you have two versions of a recipe (e.g.
 ``foo_1.2.2.bb`` and ``foo_2.0.0.bb``) where each version contains some
@@ -851,7 +851,7 @@ As an example, suppose you needed to inherit a class file called
 This configuration directive causes the named class to be inherited at
 the point of the directive during parsing. As with the ``inherit``
 directive, the ``.bbclass`` file must be located in a "classes"
-subdirectory in one of the directories specified in ``BBPATH``.
+subdirectory in one of the directories specified in :term:`BBPATH`.
 
 .. note::
 
@@ -1015,7 +1015,7 @@ is an example::
    SOMECONDITION = "1"
    DEPENDS = "${@get_depends(d)}"
 
-This would result in ``DEPENDS`` containing ``dependencywithcond``.
+This would result in :term:`DEPENDS` containing ``dependencywithcond``.
 
 Here are some things to know about Python functions:
 
@@ -1382,7 +1382,7 @@ Sometimes, it is useful to be able to obtain information from the
 original execution environment. BitBake saves a copy of the original
 environment into a special variable named :term:`BB_ORIGENV`.
 
-The ``BB_ORIGENV`` variable returns a datastore object that can be
+The :term:`BB_ORIGENV` variable returns a datastore object that can be
 queried using the standard datastore operators such as
 ``getVar(, False)``. The datastore object is useful, for example, to
 find the original ``DISPLAY`` variable. Here is an example::
@@ -1467,7 +1467,7 @@ functionality of the task:
          can result in unpredictable behavior.
 
       -  Setting the varflag to a value greater than the value used in
-         the ``BB_NUMBER_THREADS`` variable causes ``number_threads`` to
+         the :term:`BB_NUMBER_THREADS` variable causes ``number_threads`` to
          have no effect.
 
 -  ``[postfuncs]``: List of functions to call after the completion of
@@ -1537,7 +1537,7 @@ intent is to make it easy to do things like email notification on build
 failures.
 
 Following is an example event handler that prints the name of the event
-and the content of the ``FILE`` variable::
+and the content of the :term:`FILE` variable::
 
    addhandler myclass_eventhandler
    python myclass_eventhandler() {
@@ -1576,7 +1576,7 @@ might have an interest in viewing:
 
 -  ``bb.event.ConfigParsed()``: Fired when the base configuration; which
    consists of ``bitbake.conf``, ``base.bbclass`` and any global
-   ``INHERIT`` statements; has been parsed. You can see multiple such
+   :term:`INHERIT` statements; has been parsed. You can see multiple such
    events when each of the workers parse the base configuration or if
    the server changes configuration and reparses. Any given datastore
    only has one such event executed against it, however. If
@@ -1733,13 +1733,13 @@ Build Dependencies
 
 BitBake uses the :term:`DEPENDS` variable to manage
 build time dependencies. The ``[deptask]`` varflag for tasks signifies
-the task of each item listed in ``DEPENDS`` that must complete before
+the task of each item listed in :term:`DEPENDS` that must complete before
 that task can be executed. Here is an example::
 
    do_configure[deptask] = "do_populate_sysroot"
 
 In this example, the ``do_populate_sysroot`` task
-of each item in ``DEPENDS`` must complete before ``do_configure`` can
+of each item in :term:`DEPENDS` must complete before ``do_configure`` can
 execute.
 
 Runtime Dependencies
@@ -1748,8 +1748,8 @@ Runtime Dependencies
 BitBake uses the :term:`PACKAGES`, :term:`RDEPENDS`, and :term:`RRECOMMENDS`
 variables to manage runtime dependencies.
 
-The ``PACKAGES`` variable lists runtime packages. Each of those packages
-can have ``RDEPENDS`` and ``RRECOMMENDS`` runtime dependencies. The
+The :term:`PACKAGES` variable lists runtime packages. Each of those packages
+can have :term:`RDEPENDS` and :term:`RRECOMMENDS` runtime dependencies. The
 ``[rdeptask]`` flag for tasks is used to signify the task of each item
 runtime dependency which must have completed before that task can be
 executed. ::
@@ -1757,9 +1757,9 @@ executed. ::
    do_package_qa[rdeptask] = "do_packagedata"
 
 In the previous
-example, the ``do_packagedata`` task of each item in ``RDEPENDS`` must
+example, the ``do_packagedata`` task of each item in :term:`RDEPENDS` must
 have completed before ``do_package_qa`` can execute.
-Although ``RDEPENDS`` contains entries from the
+Although :term:`RDEPENDS` contains entries from the
 runtime dependency namespace, BitBake knows how to map them back
 to the build-time dependency namespace, in which the tasks are defined.
 
@@ -1802,7 +1802,7 @@ Inter-Task Dependencies
 BitBake uses the ``[depends]`` flag in a more generic form to manage
 inter-task dependencies. This more generic form allows for
 inter-dependency checks for specific tasks rather than checks for the
-data in ``DEPENDS``. Here is an example::
+data in :term:`DEPENDS`. Here is an example::
 
    do_patch[depends] = "quilt-native:do_populate_sysroot"
 
