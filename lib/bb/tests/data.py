@@ -281,7 +281,7 @@ class TestConcatOverride(unittest.TestCase):
     # (including that whitespace is preserved)
     def test_remove_inactive_override(self):
         self.d.setVar("TEST", "${VAL} ${BAR}    123")
-        self.d.setVar("TEST:remove_inactiveoverride", "val")
+        self.d.setVar("TEST:remove:inactiveoverride", "val")
         self.assertEqual(self.d.getVar("TEST"), "val bar    123")
 
     def test_doubleref_remove(self):
@@ -329,35 +329,35 @@ class TestOverrides(unittest.TestCase):
         self.assertEqual(self.d.getVar("TEST"), "testvalue")
 
     def test_one_override(self):
-        self.d.setVar("TEST_bar", "testvalue2")
+        self.d.setVar("TEST:bar", "testvalue2")
         self.assertEqual(self.d.getVar("TEST"), "testvalue2")
 
     def test_one_override_unset(self):
-        self.d.setVar("TEST2_bar", "testvalue2")
+        self.d.setVar("TEST2:bar", "testvalue2")
 
         self.assertEqual(self.d.getVar("TEST2"), "testvalue2")
-        self.assertCountEqual(list(self.d.keys()), ['TEST', 'TEST2', 'OVERRIDES', 'TEST2_bar'])
+        self.assertCountEqual(list(self.d.keys()), ['TEST', 'TEST2', 'OVERRIDES', 'TEST2:bar'])
 
     def test_multiple_override(self):
-        self.d.setVar("TEST_bar", "testvalue2")
-        self.d.setVar("TEST_local", "testvalue3")
-        self.d.setVar("TEST_foo", "testvalue4")
+        self.d.setVar("TEST:bar", "testvalue2")
+        self.d.setVar("TEST:local", "testvalue3")
+        self.d.setVar("TEST:foo", "testvalue4")
         self.assertEqual(self.d.getVar("TEST"), "testvalue3")
-        self.assertCountEqual(list(self.d.keys()), ['TEST', 'TEST_foo', 'OVERRIDES', 'TEST_bar', 'TEST_local'])
+        self.assertCountEqual(list(self.d.keys()), ['TEST', 'TEST:foo', 'OVERRIDES', 'TEST:bar', 'TEST:local'])
 
     def test_multiple_combined_overrides(self):
-        self.d.setVar("TEST_local_foo_bar", "testvalue3")
+        self.d.setVar("TEST:local:foo:bar", "testvalue3")
         self.assertEqual(self.d.getVar("TEST"), "testvalue3")
 
     def test_multiple_overrides_unset(self):
-        self.d.setVar("TEST2_local_foo_bar", "testvalue3")
+        self.d.setVar("TEST2:local:foo:bar", "testvalue3")
         self.assertEqual(self.d.getVar("TEST2"), "testvalue3")
 
     def test_keyexpansion_override(self):
         self.d.setVar("LOCAL", "local")
-        self.d.setVar("TEST_bar", "testvalue2")
-        self.d.setVar("TEST_${LOCAL}", "testvalue3")
-        self.d.setVar("TEST_foo", "testvalue4")
+        self.d.setVar("TEST:bar", "testvalue2")
+        self.d.setVar("TEST:${LOCAL}", "testvalue3")
+        self.d.setVar("TEST:foo", "testvalue4")
         bb.data.expandKeys(self.d)
         self.assertEqual(self.d.getVar("TEST"), "testvalue3")
 
@@ -368,31 +368,31 @@ class TestOverrides(unittest.TestCase):
         self.assertEqual(self.d.getVar("ALTERNATIVE:lib32-ncurses-tools"), "a")
 
     def test_underscore_override(self):
-        self.d.setVar("TEST_bar", "testvalue2")
-        self.d.setVar("TEST_some_val", "testvalue3")
-        self.d.setVar("TEST_foo", "testvalue4")
+        self.d.setVar("TEST:bar", "testvalue2")
+        self.d.setVar("TEST:some_val", "testvalue3")
+        self.d.setVar("TEST:foo", "testvalue4")
         self.d.setVar("OVERRIDES", "foo:bar:some_val")
         self.assertEqual(self.d.getVar("TEST"), "testvalue3")
 
     def test_remove_with_override(self):
-        self.d.setVar("TEST_bar", "testvalue2")
-        self.d.setVar("TEST_some_val", "testvalue3 testvalue5")
-        self.d.setVar("TEST_some_val:remove", "testvalue3")
-        self.d.setVar("TEST_foo", "testvalue4")
+        self.d.setVar("TEST:bar", "testvalue2")
+        self.d.setVar("TEST:some_val", "testvalue3 testvalue5")
+        self.d.setVar("TEST:some_val:remove", "testvalue3")
+        self.d.setVar("TEST:foo", "testvalue4")
         self.d.setVar("OVERRIDES", "foo:bar:some_val")
         self.assertEqual(self.d.getVar("TEST"), " testvalue5")
 
     def test_append_and_override_1(self):
         self.d.setVar("TEST:append", "testvalue2")
-        self.d.setVar("TEST_bar", "testvalue3")
+        self.d.setVar("TEST:bar", "testvalue3")
         self.assertEqual(self.d.getVar("TEST"), "testvalue3testvalue2")
 
     def test_append_and_override_2(self):
-        self.d.setVar("TEST:append_bar", "testvalue2")
+        self.d.setVar("TEST:append:bar", "testvalue2")
         self.assertEqual(self.d.getVar("TEST"), "testvaluetestvalue2")
 
     def test_append_and_override_3(self):
-        self.d.setVar("TEST_bar:append", "testvalue2")
+        self.d.setVar("TEST:bar:append", "testvalue2")
         self.assertEqual(self.d.getVar("TEST"), "testvalue2")
 
     # Test an override with _<numeric> in it based on a real world OE issue

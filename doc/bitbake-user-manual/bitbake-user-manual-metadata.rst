@@ -551,7 +551,7 @@ variable.
 
       DEPENDS = "glibc ncurses"
       OVERRIDES = "machine:local"
-      DEPENDS:append_machine = "libmad"
+      DEPENDS:append:machine = "libmad"
 
    In this example, :term:`DEPENDS` becomes "glibc ncurses libmad".
 
@@ -618,27 +618,27 @@ example::
 
    OVERRIDES = "foo"
    A = "Z"
-   A_foo:append = "X"
+   A:foo:append = "X"
 
 For this case,
 ``A`` is unconditionally set to "Z" and "X" is unconditionally and
-immediately appended to the variable ``A_foo``. Because overrides have
-not been applied yet, ``A_foo`` is set to "X" due to the append and
+immediately appended to the variable ``A:foo``. Because overrides have
+not been applied yet, ``A:foo`` is set to "X" due to the append and
 ``A`` simply equals "Z".
 
 Applying overrides, however, changes things. Since "foo" is listed in
 :term:`OVERRIDES`, the conditional variable ``A`` is replaced with the "foo"
-version, which is equal to "X". So effectively, ``A_foo`` replaces
+version, which is equal to "X". So effectively, ``A:foo`` replaces
 ``A``.
 
 This next example changes the order of the override and the append::
 
    OVERRIDES = "foo"
    A = "Z"
-   A:append_foo = "X"
+   A:append:foo = "X"
 
 For this case, before
-overrides are handled, ``A`` is set to "Z" and ``A_append_foo`` is set
+overrides are handled, ``A`` is set to "Z" and ``A:append:foo`` is set
 to "X". Once the override for "foo" is applied, however, ``A`` gets
 appended with "X". Consequently, ``A`` becomes "ZX". Notice that spaces
 are not appended.
@@ -648,15 +648,15 @@ back as in the first example::
 
    OVERRIDES = "foo"
    A = "Y"
-   A_foo:append = "Z"
-   A_foo:append = "X"
+   A:foo:append = "Z"
+   A:foo:append = "X"
 
 For this case, before any overrides are resolved,
 ``A`` is set to "Y" using an immediate assignment. After this immediate
-assignment, ``A_foo`` is set to "Z", and then further appended with "X"
+assignment, ``A:foo`` is set to "Z", and then further appended with "X"
 leaving the variable set to "ZX". Finally, applying the override for
 "foo" results in the conditional variable ``A`` becoming "ZX" (i.e.
-``A`` is replaced with ``A_foo``).
+``A`` is replaced with ``A:foo``).
 
 This final example mixes in some varying operators::
 
@@ -752,7 +752,7 @@ parsed. One way to achieve a conditional inherit in this case is to use
 overrides::
 
    VARIABLE = ""
-   VARIABLE_someoverride = "myclass"
+   VARIABLE:someoverride = "myclass"
 
 Another method is by using anonymous Python. Here is an example::
 

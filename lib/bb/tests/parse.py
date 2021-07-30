@@ -144,7 +144,7 @@ PN = "bc"
 
 
     classextend = """
-VAR_var_override1 = "B"
+VAR_var:override1 = "B"
 EXTRA = ":override1"
 OVERRIDES = "nothing${EXTRA}"
 
