@@ -245,35 +245,35 @@ class TestConcatOverride(unittest.TestCase):
 
     def test_prepend(self):
         self.d.setVar("TEST", "${VAL}")
-        self.d.setVar("TEST_prepend", "${FOO}:")
+        self.d.setVar("TEST:prepend", "${FOO}:")
         self.assertEqual(self.d.getVar("TEST"), "foo:val")
 
     def test_append(self):
         self.d.setVar("TEST", "${VAL}")
-        self.d.setVar("TEST_append", ":${BAR}")
+        self.d.setVar("TEST:append", ":${BAR}")
         self.assertEqual(self.d.getVar("TEST"), "val:bar")
 
     def test_multiple_append(self):
         self.d.setVar("TEST", "${VAL}")
-        self.d.setVar("TEST_prepend", "${FOO}:")
-        self.d.setVar("TEST_append", ":val2")
-        self.d.setVar("TEST_append", ":${BAR}")
+        self.d.setVar("TEST:prepend", "${FOO}:")
+        self.d.setVar("TEST:append", ":val2")
+        self.d.setVar("TEST:append", ":${BAR}")
         self.assertEqual(self.d.getVar("TEST"), "foo:val:val2:bar")
 
     def test_append_unset(self):
-        self.d.setVar("TEST_prepend", "${FOO}:")
-        self.d.setVar("TEST_append", ":val2")
-        self.d.setVar("TEST_append", ":${BAR}")
+        self.d.setVar("TEST:prepend", "${FOO}:")
+        self.d.setVar("TEST:append", ":val2")
+        self.d.setVar("TEST:append", ":${BAR}")
         self.assertEqual(self.d.getVar("TEST"), "foo::val2:bar")
 
     def test_remove(self):
         self.d.setVar("TEST", "${VAL} ${BAR}")
-        self.d.setVar("TEST_remove", "val")
+        self.d.setVar("TEST:remove", "val")
         self.assertEqual(self.d.getVar("TEST"), " bar")
 
     def test_remove_cleared(self):
         self.d.setVar("TEST", "${VAL} ${BAR}")
-        self.d.setVar("TEST_remove", "val")
+        self.d.setVar("TEST:remove", "val")
         self.d.setVar("TEST", "${VAL} ${BAR}")
         self.assertEqual(self.d.getVar("TEST"), "val bar")
 
@@ -281,42 +281,42 @@ class TestConcatOverride(unittest.TestCase):
     # (including that whitespace is preserved)
     def test_remove_inactive_override(self):
         self.d.setVar("TEST", "${VAL} ${BAR}    123")
-        self.d.setVar("TEST_remove_inactiveoverride", "val")
+        self.d.setVar("TEST:remove_inactiveoverride", "val")
         self.assertEqual(self.d.getVar("TEST"), "val bar    123")
 
     def test_doubleref_remove(self):
         self.d.setVar("TEST", "${VAL} ${BAR}")
-        self.d.setVar("TEST_remove", "val")
+        self.d.setVar("TEST:remove", "val")
         self.d.setVar("TEST_TEST", "${TEST} ${TEST}")
         self.assertEqual(self.d.getVar("TEST_TEST"), " bar  bar")
 
     def test_empty_remove(self):
         self.d.setVar("TEST", "")
-        self.d.setVar("TEST_remove", "val")
+        self.d.setVar("TEST:remove", "val")
         self.assertEqual(self.d.getVar("TEST"), "")
 
     def test_remove_expansion(self):
         self.d.setVar("BAR", "Z")
         self.d.setVar("TEST", "${BAR}/X Y")
-        self.d.setVar("TEST_remove", "${BAR}/X")
+        self.d.setVar("TEST:remove", "${BAR}/X")
         self.assertEqual(self.d.getVar("TEST"), " Y")
 
     def test_remove_expansion_items(self):
         self.d.setVar("TEST", "A B C D")
         self.d.setVar("BAR", "B D")
-        self.d.setVar("TEST_remove", "${BAR}")
+        self.d.setVar("TEST:remove", "${BAR}")
         self.assertEqual(self.d.getVar("TEST"), "A  C ")
 
     def test_remove_preserve_whitespace(self):
         # When the removal isn't active, the original value should be preserved
         self.d.setVar("TEST", " A B")
-        self.d.setVar("TEST_remove", "C")
+        self.d.setVar("TEST:remove", "C")
         self.assertEqual(self.d.getVar("TEST"), " A B")
 
     def test_remove_preserve_whitespace2(self):
         # When the removal is active preserve the whitespace
         self.d.setVar("TEST", " A B")
-        self.d.setVar("TEST_remove", "B")
+        self.d.setVar("TEST:remove", "B")
         self.assertEqual(self.d.getVar("TEST"), " A ")
 
 class TestOverrides(unittest.TestCase):
@@ -362,10 +362,10 @@ class TestOverrides(unittest.TestCase):
         self.assertEqual(self.d.getVar("TEST"), "testvalue3")
 
     def test_rename_override(self):
-        self.d.setVar("ALTERNATIVE_ncurses-tools_class-target", "a")
+        self.d.setVar("ALTERNATIVE:ncurses-tools:class-target", "a")
         self.d.setVar("OVERRIDES", "class-target")
-        self.d.renameVar("ALTERNATIVE_ncurses-tools", "ALTERNATIVE_lib32-ncurses-tools")
-        self.assertEqual(self.d.getVar("ALTERNATIVE_lib32-ncurses-tools"), "a")
+        self.d.renameVar("ALTERNATIVE:ncurses-tools", "ALTERNATIVE:lib32-ncurses-tools")
+        self.assertEqual(self.d.getVar("ALTERNATIVE:lib32-ncurses-tools"), "a")
 
     def test_underscore_override(self):
         self.d.setVar("TEST_bar", "testvalue2")
@@ -377,22 +377,22 @@ class TestOverrides(unittest.TestCase):
     def test_remove_with_override(self):
         self.d.setVar("TEST_bar", "testvalue2")
         self.d.setVar("TEST_some_val", "testvalue3 testvalue5")
-        self.d.setVar("TEST_some_val_remove", "testvalue3")
+        self.d.setVar("TEST_some_val:remove", "testvalue3")
         self.d.setVar("TEST_foo", "testvalue4")
         self.d.setVar("OVERRIDES", "foo:bar:some_val")
         self.assertEqual(self.d.getVar("TEST"), " testvalue5")
 
     def test_append_and_override_1(self):
-        self.d.setVar("TEST_append", "testvalue2")
+        self.d.setVar("TEST:append", "testvalue2")
         self.d.setVar("TEST_bar", "testvalue3")
         self.assertEqual(self.d.getVar("TEST"), "testvalue3testvalue2")
 
     def test_append_and_override_2(self):
-        self.d.setVar("TEST_append_bar", "testvalue2")
+        self.d.setVar("TEST:append_bar", "testvalue2")
         self.assertEqual(self.d.getVar("TEST"), "testvaluetestvalue2")
 
     def test_append_and_override_3(self):
-        self.d.setVar("TEST_bar_append", "testvalue2")
+        self.d.setVar("TEST_bar:append", "testvalue2")
         self.assertEqual(self.d.getVar("TEST"), "testvalue2")
 
     # Test an override with _<numeric> in it based on a real world OE issue
@@ -400,7 +400,7 @@ class TestOverrides(unittest.TestCase):
         self.d.setVar("TARGET_ARCH", "x86_64")
         self.d.setVar("PN", "test-${TARGET_ARCH}")
         self.d.setVar("VERSION", "1")
-        self.d.setVar("VERSION_pn-test-${TARGET_ARCH}", "2")
+        self.d.setVar("VERSION:pn-test-${TARGET_ARCH}", "2")
         self.d.setVar("OVERRIDES", "pn-${PN}")
         bb.data.expandKeys(self.d)
         self.assertEqual(self.d.getVar("VERSION"), "2")
@@ -498,7 +498,7 @@ class TaskHash(unittest.TestCase):
         d.setVar("VAR", "val")
         # Adding an inactive removal shouldn't change the hash
         d.setVar("BAR", "notbar")
-        d.setVar("MYCOMMAND_remove", "${BAR}")
+        d.setVar("MYCOMMAND:remove", "${BAR}")
         nexthash = gettask_bashhash("mytask", d)
         self.assertEqual(orighash, nexthash)
 

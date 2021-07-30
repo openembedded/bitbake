@@ -1118,7 +1118,7 @@ overview of their function and contents.
       attempt before any others by adding something like the following to
       your configuration::
 
-         PREMIRRORS_prepend = "\
+         PREMIRRORS:prepend = "\
          git://.*/.* http://www.yoctoproject.org/sources/ \n \
          ftp://.*/.* http://www.yoctoproject.org/sources/ \n \
          http://.*/.* http://www.yoctoproject.org/sources/ \n \
@@ -1184,7 +1184,7 @@ overview of their function and contents.
       that depends on the ``perl`` package. In this case, you would use the
       following :term:`RDEPENDS` statement::
 
-         RDEPENDS_${PN}-dev += "perl"
+         RDEPENDS:${PN}-dev += "perl"
 
       In the example, the development package depends on the ``perl`` package.
       Thus, the :term:`RDEPENDS` variable has the ``${PN}-dev`` package name as part
@@ -1195,7 +1195,7 @@ overview of their function and contents.
       differences from you. Here is the general syntax to specify versions
       with the :term:`RDEPENDS` variable::
 
-         RDEPENDS_${PN} = "package (operator version)"
+         RDEPENDS:${PN} = "package (operator version)"
 
       For ``operator``, you can specify the following::
 
@@ -1208,7 +1208,7 @@ overview of their function and contents.
       For example, the following sets up a dependency on version 1.2 or
       greater of the package ``foo``::
 
-         RDEPENDS_${PN} = "foo (>= 1.2)"
+         RDEPENDS:${PN} = "foo (>= 1.2)"
 
       For information on build-time dependencies, see the :term:`DEPENDS`
       variable.
@@ -1237,7 +1237,7 @@ overview of their function and contents.
       variable in conjunction with a package name override. Here is an
       example::
 
-         RPROVIDES_${PN} = "widget-abi-2"
+         RPROVIDES:${PN} = "widget-abi-2"
 
    :term:`RRECOMMENDS`
       A list of packages that extends the usability of a package being
@@ -1251,7 +1251,7 @@ overview of their function and contents.
       differences from you. Here is the general syntax to specify versions
       with the :term:`RRECOMMENDS` variable::
 
-         RRECOMMENDS_${PN} = "package (operator version)"
+         RRECOMMENDS:${PN} = "package (operator version)"
 
       For ``operator``, you can specify the following::
 
@@ -1264,7 +1264,7 @@ overview of their function and contents.
       For example, the following sets up a recommend on version
       1.2 or greater of the package ``foo``::
 
-         RRECOMMENDS_${PN} = "foo (>= 1.2)"
+         RRECOMMENDS:${PN} = "foo (>= 1.2)"
 
    :term:`SECTION`
       The section in which packages should be categorized.

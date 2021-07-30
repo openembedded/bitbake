@@ -1150,7 +1150,7 @@ def srcrev_internal_helper(ud, d, name):
     if name != '':
         attempts.append("SRCREV_%s" % name)
     if pn:
-        attempts.append("SRCREV_pn-%s" % pn)
+        attempts.append("SRCREV:pn-%s" % pn)
     attempts.append("SRCREV")
 
     for a in attempts:
