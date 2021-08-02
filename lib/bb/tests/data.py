@@ -405,6 +405,11 @@ class TestOverrides(unittest.TestCase):
         bb.data.expandKeys(self.d)
         self.assertEqual(self.d.getVar("VERSION"), "2")
 
+    def test_append_and_unused_override(self):
+        # Had a bug where an unused override append could return "" instead of None
+        self.d.setVar("BAR:append:unusedoverride", "testvalue2")
+        self.assertEqual(self.d.getVar("BAR"), None)
+
 class TestKeyExpansion(unittest.TestCase):
     def setUp(self):
         self.d = bb.data.init()

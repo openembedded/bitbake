@@ -750,8 +750,6 @@ class DataSmart(MutableMapping):
 
 
         if flag == "_content" and local_var is not None and ":append" in local_var and not parsing:
-            if not value:
-                value = ""
             self.need_overrides()
             for (r, o) in local_var[":append"]:
                 match = True
@@ -760,11 +758,11 @@ class DataSmart(MutableMapping):
                         if not o2 in self.overrides:
                             match = False                            
                 if match:
+                    if value is None:
+                        value = ""
                     value = value + r
 
         if flag == "_content" and local_var is not None and ":prepend" in local_var and not parsing:
-            if not value:
-                value = ""
             self.need_overrides()
             for (r, o) in local_var[":prepend"]:
 
@@ -774,6 +772,8 @@ class DataSmart(MutableMapping):
                         if not o2 in self.overrides:
                             match = False                            
                 if match:
+                    if value is None:
+                        value = ""
                     value = r + value
 
         parser = None
