@@ -325,14 +325,14 @@ Surrounding spaces and spacing are preserved. Here is an example::
 The variable ``FOO`` becomes
 "  789 123456    " and ``FOO2`` becomes "    abcdef     ".
 
-Like "_append" and "_prepend", "_remove" is applied at variable
+Like ":append" and ":prepend", ":remove" is applied at variable
 expansion time.
 
 Override Style Operation Advantages
 -----------------------------------
 
-An advantage of the override style operations "_append", "_prepend", and
-"_remove" as compared to the "+=" and "=+" operators is that the
+An advantage of the override style operations ":append", ":prepend", and
+":remove" as compared to the "+=" and "=+" operators is that the
 override style operators provide guaranteed operations. For example,
 consider a class ``foo.bbclass`` that needs to add the value "val" to
 the variable ``FOO``, and a recipe that uses ``foo.bbclass`` as follows::
@@ -347,14 +347,14 @@ not what is desired::
    FOO += "val"
 
 If, on the other hand, ``foo.bbclass``
-uses the "_append" operator, then the final value of ``FOO`` will be
+uses the ":append" operator, then the final value of ``FOO`` will be
 "initial val", as intended::
 
    FOO:append = " val"
 
 .. note::
 
-   It is never necessary to use "+=" together with "_append". The following
+   It is never necessary to use "+=" together with ":append". The following
    sequence of assignments appends "barbaz" to FOO::
 
        FOO:append = "bar"
@@ -379,8 +379,8 @@ You can find more out about variable flags in general in the
 
 You can define, append, and prepend values to variable flags. All the
 standard syntax operations previously mentioned work for variable flags
-except for override style syntax (i.e. "_prepend", "_append", and
-"_remove").
+except for override style syntax (i.e. ":prepend", ":append", and
+":remove").
 
 Here are some examples showing how to set variable flags::
 
@@ -581,7 +581,7 @@ variable.
    ``do_compile`` task.
 
    You can also use this syntax with other combinations (e.g.
-   "``_prepend``") as shown in the following example::
+   "``:prepend``") as shown in the following example::
 
       EXTRA_OEMAKE:prepend:task-compile = "${PARALLEL_MAKE} "
 
@@ -613,7 +613,7 @@ users.
 
 There is often confusion concerning the order in which overrides and
 various "append" operators take effect. Recall that an append or prepend
-operation using "_append" and "_prepend" does not result in an immediate
+operation using ":append" and ":prepend" does not result in an immediate
 assignment as would "+=", ".=", "=+", or "=.". Consider the following
 example::
 
@@ -671,7 +671,7 @@ For this case, the type of append
 operators are affecting the order of assignments as BitBake passes
 through the code multiple times. Initially, ``A`` is set to "1 45"
 because of the three statements that use immediate operators. After
-these assignments are made, BitBake applies the "_append" operations.
+these assignments are made, BitBake applies the ":append" operations.
 Those operations result in ``A`` becoming "1 4523".
 
 Sharing Functionality
@@ -908,7 +908,7 @@ rules. The scripts are executed by ``/bin/sh``, which may not be a bash
 shell but might be something such as ``dash``. You should not use
 Bash-specific script (bashisms).
 
-Overrides and override-style operators like ``_append`` and ``_prepend``
+Overrides and override-style operators like ``:append`` and ``:prepend``
 can also be applied to shell functions. Most commonly, this application
 would be used in a ``.bbappend`` file to modify functions in the main
 recipe. It can also be used to modify functions inherited from classes.
@@ -1135,7 +1135,7 @@ equivalent to the following snippet::
 values set for the variables within the anonymous functions become
 available to tasks, which always run after parsing.
 
-Overrides and override-style operators such as "``_append``" are applied
+Overrides and override-style operators such as "``:append``" are applied
 before anonymous functions run. In the following example, ``FOO`` ends
 up with the value "foo from anonymous"::
 
@@ -1165,7 +1165,7 @@ To understand the benefits of this feature, consider the basic scenario
 where a class defines a task function and your recipe inherits the
 class. In this basic scenario, your recipe inherits the task function as
 defined in the class. If desired, your recipe can add to the start and
-end of the function by using the "_prepend" or "_append" operations
+end of the function by using the ":prepend" or ":append" operations
 respectively, or it can redefine the function completely. However, if it
 redefines the function, there is no means for it to call the class
 version of the function. ``EXPORT_FUNCTIONS`` provides a mechanism that
