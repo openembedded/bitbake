@@ -1146,7 +1146,7 @@ def srcrev_internal_helper(ud, d, name):
     pn = d.getVar("PN")
     attempts = []
     if name != '' and pn:
-        attempts.append("SRCREV_%s_pn-%s" % (name, pn))
+        attempts.append("SRCREV_%s:pn-%s" % (name, pn))
     if name != '':
         attempts.append("SRCREV_%s" % name)
     if pn:

@@ -99,7 +99,7 @@ exportD = "d"
 
     overridetest = """
 RRECOMMENDS:${PN} = "a"
-RRECOMMENDS:${PN}_libc = "b"
+RRECOMMENDS:${PN}:libc = "b"
 OVERRIDES = "libc:${PN}"
 PN = "gtk+"
 """

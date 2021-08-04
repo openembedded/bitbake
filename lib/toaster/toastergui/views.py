@@ -1840,7 +1840,7 @@ if True:
             pass
         try:
             context['image_install:append'] =  ProjectVariable.objects.get(project = prj, name = "IMAGE_INSTALL:append").value
-            context['image_install:append_defined'] = "1"
+            context['image_install_append_defined'] = "1"
         except ProjectVariable.DoesNotExist:
             pass
         try:
