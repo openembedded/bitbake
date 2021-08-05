@@ -197,6 +197,7 @@ def main(server, eventHandler, params):
     gtkgui.start()
 
     try:
+        params.updateToServer(server, os.environ.copy())
         params.updateFromServer(server)
         cmdline = params.parseActions()
         if not cmdline:
