@@ -1941,7 +1941,7 @@ Wildcard Support in Variables
 =============================
 
 Support for wildcard use in variables varies depending on the context in
-which it is used. For example, some variables and file names allow
+which it is used. For example, some variables and filenames allow
 limited use of wildcards through the "``%``" and "``*``" characters.
 Other variables or names support Python's
 `glob <https://docs.python.org/3/library/glob.html>`_ syntax,
