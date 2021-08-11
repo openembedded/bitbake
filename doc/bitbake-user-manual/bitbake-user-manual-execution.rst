@@ -578,9 +578,6 @@ the build. This information includes:
 -  ``BB_BASEHASH_``\ *filename:taskname*: The base hashes for each
    dependent task.
 
--  ``BBHASHDEPS_``\ *filename:taskname*: The task dependencies for
-   each task.
-
 -  :term:`BB_TASKHASH`: The hash of the currently running task.
 
 It is worth noting that BitBake's "-S" option lets you debug BitBake's
