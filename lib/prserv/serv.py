@@ -18,14 +18,16 @@ PIDPREFIX = "/tmp/PRServer_%s_%s.pid"
 singleton = None
 
 class PRServerClient(bb.asyncrpc.AsyncServerConnection):
-    def __init__(self, reader, writer, table):
+    def __init__(self, reader, writer, table, read_only):
         super().__init__(reader, writer, 'PRSERVICE', logger)
         self.handlers.update({
             'get-pr': self.handle_get_pr,
             'import-one': self.handle_import_one,
             'export': self.handle_export,
+            'is-readonly': self.handle_is_readonly,
         })
         self.table = table
+        self.read_only = read_only
 
     def validate_proto_version(self):
         return (self.proto_version == (1, 0))
@@ -56,16 +58,17 @@ class PRServerClient(bb.asyncrpc.AsyncServerConnection):
         self.write_message(response)
 
     async def handle_import_one(self, request):
-        version = request['version']
-        pkgarch = request['pkgarch']
-        checksum = request['checksum']
-        value = request['value']
+        response = None
+        if not self.read_only:
+            version = request['version']
+            pkgarch = request['pkgarch']
+            checksum = request['checksum']
+            value = request['value']
 
-        value = self.table.importone(version, pkgarch, checksum, value)
-        if value is not None:
-            response = {'value': value}
-        else:
-            response = None
+            value = self.table.importone(version, pkgarch, checksum, value)
+            if value is not None:
+                response = {'value': value}
+
         self.write_message(response)
 
     async def handle_export(self, request):
@@ -83,20 +86,25 @@ class PRServerClient(bb.asyncrpc.AsyncServerConnection):
         response = {'metainfo': metainfo, 'datainfo': datainfo}
         self.write_message(response)
 
+    async def handle_is_readonly(self, request):
+        response = {'readonly': self.read_only}
+        self.write_message(response)
+
 class PRServer(bb.asyncrpc.AsyncServer):
-    def __init__(self, dbfile):
+    def __init__(self, dbfile, read_only=False):
         super().__init__(logger)
         self.dbfile = dbfile
         self.table = None
+        self.read_only = read_only
 
     def accept_client(self, reader, writer):
-        return PRServerClient(reader, writer, self.table)
+        return PRServerClient(reader, writer, self.table, self.read_only)
 
     def _serve_forever(self):
-        self.db = prserv.db.PRData(self.dbfile)
+        self.db = prserv.db.PRData(self.dbfile, read_only=self.read_only)
         self.table = self.db["PRMAIN"]
 
-        logger.debug("Started PRServer with DBfile: %s, Address: %s, PID: %s" %
+        logger.info("Started PRServer with DBfile: %s, Address: %s, PID: %s" %
                      (self.dbfile, self.address, str(os.getpid())))
 
         super()._serve_forever()
@@ -194,7 +202,7 @@ def run_as_daemon(func, pidfile, logfile):
     os.remove(pidfile)
     os._exit(0)
 
-def start_daemon(dbfile, host, port, logfile):
+def start_daemon(dbfile, host, port, logfile, read_only=False):
     ip = socket.gethostbyname(host)
     pidfile = PIDPREFIX % (ip, port)
     try:
@@ -210,7 +218,7 @@ def start_daemon(dbfile, host, port, logfile):
 
     dbfile = os.path.abspath(dbfile)
     def daemon_main():
-        server = PRServer(dbfile)
+        server = PRServer(dbfile, read_only=read_only)
         server.start_tcp_server(host, port)
         server.serve_forever()
 

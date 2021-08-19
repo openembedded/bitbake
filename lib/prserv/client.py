@@ -32,10 +32,17 @@ class PRAsyncClient(bb.asyncrpc.AsyncClient):
         if response:
             return (response['metainfo'], response['datainfo'])
 
+    async def is_readonly(self):
+        response = await self.send_message(
+            {'is-readonly': {}}
+        )
+        if response:
+            return response['readonly']
+
 class PRClient(bb.asyncrpc.Client):
     def __init__(self):
         super().__init__()
-        self._add_methods('getPR', 'importone', 'export')
+        self._add_methods('getPR', 'importone', 'export', 'is_readonly')
 
     def _get_async_client(self):
         return PRAsyncClient()
