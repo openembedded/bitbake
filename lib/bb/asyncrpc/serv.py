@@ -136,10 +136,7 @@ class AsyncServer(object):
         self.logger = logger
         self.start = None
         self.address = None
-
-    @property
-    def loop(self):
-        return asyncio.get_event_loop()
+        self.loop = None
 
     def start_tcp_server(self, host, port):
         def start_tcp():
@@ -228,6 +225,12 @@ class AsyncServer(object):
         """
         Serve requests in the current process
         """
+        # Create loop and override any loop that may have existed in
+        # a parent process.  It is possible that the usecases of
+        # serve_forever might be constrained enough to allow using
+        # get_event_loop here, but better safe than sorry for now.
+        self.loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(self.loop)
         self.start()
         self._serve_forever()
 
@@ -236,6 +239,19 @@ class AsyncServer(object):
         Serve requests in a child process
         """
         def run(queue):
+            # Create loop and override any loop that may have existed
+            # in a parent process.  Without doing this and instead
+            # using get_event_loop, at the very minimum the hashserv
+            # unit tests will hang when running the second test.
+            # This happens since get_event_loop in the spawned server
+            # process for the second testcase ends up with the loop
+            # from the hashserv client created in the unit test process
+            # when running the first testcase.  The problem is somewhat
+            # more general, though, as any potential use of asyncio in
+            # Cooker could create a loop that needs to replaced in this
+            # new process.
+            self.loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(self.loop)
             try:
                 self.start()
             finally:
