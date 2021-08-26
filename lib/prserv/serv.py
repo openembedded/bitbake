@@ -129,6 +129,8 @@ class PRServSingleton(object):
         self.prserv.start_tcp_server(self.host, self.port)
         self.process = self.prserv.serve_as_process()
 
+        if not self.prserv.address:
+            raise PRServiceConfigError
         if not self.port:
             self.port = int(self.prserv.address.rsplit(':', 1)[1])
 
@@ -276,7 +278,7 @@ def is_running(pid):
     return True
 
 def is_local_special(host, port):
-    if host.strip().lower() == 'localhost' and not port:
+    if (host == 'localhost' or host == '127.0.0.1') and not port:
         return True
     else:
         return False
@@ -300,7 +302,9 @@ def auto_start(d):
                 'Usage: PRSERV_HOST = "<hostname>:<port>"']))
         raise PRServiceConfigError
 
-    if is_local_special(host_params[0], int(host_params[1])):
+    host = host_params[0].strip().lower()
+    port = int(host_params[1])
+    if is_local_special(host, port):
         import bb.utils
         cachedir = (d.getVar("PERSISTENT_DIR") or d.getVar("CACHE"))
         if not cachedir:
@@ -314,14 +318,11 @@ def auto_start(d):
                auto_shutdown()
         if not singleton:
             bb.utils.mkdirhier(cachedir)
-            singleton = PRServSingleton(os.path.abspath(dbfile), os.path.abspath(logfile), "localhost", 0)
+            singleton = PRServSingleton(os.path.abspath(dbfile), os.path.abspath(logfile), host, port)
             singleton.start()
     if singleton:
         host = singleton.host
         port = singleton.port
-    else:
-        host = host_params[0]
-        port = int(host_params[1])
 
     try:
         ping(host, port)
