@@ -126,7 +126,7 @@ class PRServSingleton(object):
 
     def start(self):
         self.prserv = PRServer(self.dbfile)
-        self.prserv.start_tcp_server(self.host, self.port)
+        self.prserv.start_tcp_server(socket.gethostbyname(self.host), self.port)
         self.process = self.prserv.serve_as_process()
 
         if not self.prserv.address:
@@ -221,7 +221,7 @@ def start_daemon(dbfile, host, port, logfile, read_only=False):
     dbfile = os.path.abspath(dbfile)
     def daemon_main():
         server = PRServer(dbfile, read_only=read_only)
-        server.start_tcp_server(host, port)
+        server.start_tcp_server(ip, port)
         server.serve_forever()
 
     run_as_daemon(daemon_main, pidfile, os.path.abspath(logfile))
