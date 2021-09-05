@@ -2278,10 +2278,32 @@ class NPMTest(FetcherTest):
         fetcher.download()
         self.assertTrue(os.path.exists(ud.localpath))
         # Setup the mirror
+        pkgname = os.path.basename(ud.proxy.urls[0].split(';')[0])
         mirrordir = os.path.join(self.tempdir, 'mirror')
         bb.utils.mkdirhier(mirrordir)
-        os.replace(ud.localpath, os.path.join(mirrordir, os.path.basename(ud.localpath)))
+        os.replace(ud.localpath, os.path.join(mirrordir, pkgname))
         self.d.setVar('PREMIRRORS', 'https?$://.*/.* file://%s/\n' % mirrordir)
+        self.d.setVar('BB_FETCH_PREMIRRORONLY', '1')
+        # Fetch again
+        self.assertFalse(os.path.exists(ud.localpath))
+        fetcher.download()
+        self.assertTrue(os.path.exists(ud.localpath))
+
+    @skipIfNoNpm()
+    @skipIfNoNetwork()
+    def test_npm_premirrors_with_specified_filename(self):
+        url = 'npm://registry.npmjs.org;package=@savoirfairelinux/node-server-example;version=1.0.0'
+        # Fetch once to get a tarball
+        fetcher = bb.fetch.Fetch([url], self.d)
+        ud = fetcher.ud[fetcher.urls[0]]
+        fetcher.download()
+        self.assertTrue(os.path.exists(ud.localpath))
+        # Setup the mirror
+        mirrordir = os.path.join(self.tempdir, 'mirror')
+        bb.utils.mkdirhier(mirrordir)
+        mirrorfilename = os.path.join(mirrordir, os.path.basename(ud.localpath))
+        os.replace(ud.localpath, mirrorfilename)
+        self.d.setVar('PREMIRRORS', 'https?$://.*/.* file://%s\n' % mirrorfilename)
         self.d.setVar('BB_FETCH_PREMIRRORONLY', '1')
         # Fetch again
         self.assertFalse(os.path.exists(ud.localpath))
@@ -2350,7 +2372,7 @@ class NPMTest(FetcherTest):
     @skipIfNoNpm()
     @skipIfNoNetwork()
     def test_npm_registry_alternate(self):
-        url = 'npm://registry.freajs.org;package=@savoirfairelinux/node-server-example;version=1.0.0'
+        url = 'npm://skimdb.npmjs.com;package=@savoirfairelinux/node-server-example;version=1.0.0'
         fetcher = bb.fetch.Fetch([url], self.d)
         fetcher.download()
         fetcher.unpack(self.unpackdir)
