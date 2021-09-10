@@ -342,6 +342,9 @@ class CookerDataBuilder(object):
             layers = (data.getVar('BBLAYERS') or "").split()
             broken_layers = []
 
+            if not layers:
+                bb.fatal("The bblayers.conf file doesn't contain any BBLAYERS definition")
+
             data = bb.data.createCopy(data)
             approved = bb.utils.approved_variables()
 
