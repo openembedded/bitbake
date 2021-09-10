@@ -592,6 +592,10 @@ def _exec_task(fn, task, d, quieterr):
                 event.fire(TaskFailedSilent(task, fn, logfn, localdata), localdata)
             else:
                 errprinted = errchk.triggered
+                # If the output is already on stdout, we've printed the information in the
+                # logs once already so don't duplicate
+                if verboseStdoutLogging:
+                    errprinted = True
                 logger.error(str(exc))
                 event.fire(TaskFailed(task, fn, logfn, localdata, errprinted), localdata)
             return 1
