@@ -151,6 +151,7 @@ class ExpansionError(Exception):
         self.expression = expression
         self.variablename = varname
         self.exception = exception
+        self.varlist = [varname or expression]
         if varname:
             if expression:
                 self.msg = "Failure expanding variable %s, expression was %s which triggered exception %s: %s" % (varname, expression, type(exception).__name__, exception)
@@ -160,8 +161,13 @@ class ExpansionError(Exception):
             self.msg = "Failure expanding expression %s which triggered exception %s: %s" % (expression, type(exception).__name__, exception)
         Exception.__init__(self, self.msg)
         self.args = (varname, expression, exception)
+
+    def addVar(self, varname):
+        self.varlist.append(varname)
+
     def __str__(self):
-        return self.msg
+        chain = "\nThe variable dependency chain for the failure is: " + " -> ".join(self.varlist)
+        return self.msg + chain
 
 class IncludeHistory(object):
     def __init__(self, parent = None, filename = '[TOP LEVEL]'):
@@ -407,7 +413,8 @@ class DataSmart(MutableMapping):
                         raise
                 if s == olds:
                     break
-            except ExpansionError:
+            except ExpansionError as e:
+                e.addVar(varname)
                 raise
             except bb.parse.SkipRecipe:
                 raise
