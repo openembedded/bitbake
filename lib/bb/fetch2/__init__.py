@@ -754,6 +754,11 @@ def get_srcrev(d, method_name='sortable_revision'):
     that fetcher provides a method with the given name and the same signature as sortable_revision.
     """
 
+    recursion = d.getVar("__BBINSRCREV")
+    if recursion:
+        raise FetchError("There are recursive references in fetcher variables, likely through SRC_URI")
+    d.setVar("__BBINSRCREV", True)
+
     scms = []
     fetcher = Fetch(d.getVar('SRC_URI').split(), d)
     urldata = fetcher.ud
@@ -768,6 +773,7 @@ def get_srcrev(d, method_name='sortable_revision'):
         autoinc, rev = getattr(urldata[scms[0]].method, method_name)(urldata[scms[0]], d, urldata[scms[0]].names[0])
         if len(rev) > 10:
             rev = rev[:10]
+        d.delVar("__BBINSRCREV")
         if autoinc:
             return "AUTOINC+" + rev
         return rev
@@ -802,6 +808,7 @@ def get_srcrev(d, method_name='sortable_revision'):
     if seenautoinc:
         format = "AUTOINC+" + format
 
+    d.delVar("__BBINSRCREV")
     return format
 
 def localpath(url, d):
