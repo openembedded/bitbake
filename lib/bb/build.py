@@ -587,7 +587,7 @@ def _exec_task(fn, task, d, quieterr):
         except bb.BBHandledException:
             event.fire(TaskFailed(task, fn, logfn, localdata, True), localdata)
             return 1
-        except Exception as exc:
+        except (Exception, SystemExit) as exc:
             if quieterr:
                 event.fire(TaskFailedSilent(task, fn, logfn, localdata), localdata)
             else:
