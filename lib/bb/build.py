@@ -905,6 +905,8 @@ def tasksbetween(task_start, task_end, d):
     def follow_chain(task, endtask, chain=None):
         if not chain:
             chain = []
+        if task in chain:
+            bb.fatal("Circular task dependencies as %s depends on itself via the chain %s" % (task, " -> ".join(chain)))
         chain.append(task)
         for othertask in tasks:
             if othertask == task:
