@@ -208,8 +208,8 @@ metadata. For example, in ``bitbake.conf`` the recipe name and version
 are used to set the variables :term:`PN` and
 :term:`PV`::
 
-   PN = "${@bb.parse.BBHandler.vars_from_file(d.getVar('FILE', False),d)[0] or 'defaultpkgname'}"
-   PV = "${@bb.parse.BBHandler.vars_from_file(d.getVar('FILE', False),d)[1] or '1.0'}"
+   PN = "${@bb.parse.vars_from_file(d.getVar('FILE', False),d)[0] or 'defaultpkgname'}"
+   PV = "${@bb.parse.vars_from_file(d.getVar('FILE', False),d)[1] or '1.0'}"
 
 In this example, a recipe called "something_1.2.3.bb" would set
 :term:`PN` to "something" and :term:`PV` to "1.2.3".
