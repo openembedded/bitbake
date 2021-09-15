@@ -513,9 +513,11 @@ except BaseException as e:
         import traceback
         sys.stderr.write(traceback.format_exc())
         sys.stderr.write(str(e))
-
-worker_thread_exit = True
-worker_thread.join()
+finally:
+    worker_thread_exit = True
+    worker_thread.join()
 
 workerlog_write("exiting")
+if not normalexit:
+    sys.exit(1)
 sys.exit(0)
