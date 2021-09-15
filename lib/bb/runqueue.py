@@ -2180,7 +2180,8 @@ class RunQueueExecute:
         if self.sq_deferred:
             tid = self.sq_deferred.pop(list(self.sq_deferred.keys())[0])
             logger.warning("Runqeueue deadlocked on deferred tasks, forcing task %s" % tid)
-            self.sq_task_failoutright(tid)
+            if tid not in self.runq_complete:
+                self.sq_task_failoutright(tid)
             return True
 
         if len(self.failed_tids) != 0:
