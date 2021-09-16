@@ -85,15 +85,19 @@ class RunQueueStats:
     """
     Holds statistics on the tasks handled by the associated runQueue
     """
-    def __init__(self, total):
+    def __init__(self, total, setscene_total):
         self.completed = 0
         self.skipped = 0
         self.failed = 0
         self.active = 0
+        self.setscene_active = 0
+        self.setscene_covered = 0
+        self.setscene_notcovered = 0
+        self.setscene_total = setscene_total
         self.total = total
 
     def copy(self):
-        obj = self.__class__(self.total)
+        obj = self.__class__(self.total, self.setscene_total)
         obj.__dict__.update(self.__dict__)
         return obj
 
@@ -111,6 +115,13 @@ class RunQueueStats:
 
     def taskActive(self):
         self.active = self.active + 1
+
+    def updateCovered(self, covered, notcovered):
+        self.setscene_covered = covered
+        self.setscene_notcovered = notcovered
+
+    def updateActiveSetscene(self, active):
+        self.setscene_active = active
 
 # These values indicate the next step due to be run in the
 # runQueue state machine
@@ -1735,7 +1746,7 @@ class RunQueueExecute:
         self.holdoff_need_update = True
         self.sqdone = False
 
-        self.stats = RunQueueStats(len(self.rqdata.runtaskentries))
+        self.stats = RunQueueStats(len(self.rqdata.runtaskentries), len(self.rqdata.runq_setscene_tids))
 
         for mc in rq.worker:
             rq.worker[mc].pipe.setrunqueueexec(self)
@@ -1786,6 +1797,7 @@ class RunQueueExecute:
             else:
                 self.sq_task_complete(task)
             self.sq_live.remove(task)
+            self.stats.updateActiveSetscene(len(self.sq_live))
         else:
             if status != 0:
                 self.task_fail(task, status, fakerootlog=fakerootlog)
@@ -2087,6 +2099,7 @@ class RunQueueExecute:
             self.build_stamps2.append(self.build_stamps[task])
             self.sq_running.add(task)
             self.sq_live.add(task)
+            self.stats.updateActiveSetscene(len(self.sq_live))
             if self.can_start_task():
                 return True
 
@@ -2462,6 +2475,7 @@ class RunQueueExecute:
                 self.sq_task_failoutright(tid)
 
         if changed:
+            self.stats.updateCovered(len(self.scenequeue_covered), len(self.scenequeue_notcovered))
             self.holdoff_need_update = True
 
     def scenequeue_updatecounters(self, task, fail=False):
@@ -2495,6 +2509,7 @@ class RunQueueExecute:
                         new.add(dep)
             next = new
 
+        self.stats.updateCovered(len(self.scenequeue_covered), len(self.scenequeue_notcovered))
         self.holdoff_need_update = True
 
     def sq_task_completeoutright(self, task):
