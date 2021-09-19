@@ -422,14 +422,14 @@ class Git(FetchMethod):
 
         # Create as a temp file and move atomically into position to avoid races
         @contextmanager
-        def create_atomic(filename, d):
+        def create_atomic(filename):
             fd, tfile = tempfile.mkstemp(dir=os.path.dirname(filename))
             try:
                 yield tfile
                 umask = os.umask(0o666)
                 os.umask(umask)
                 os.chmod(tfile, (0o666 & ~umask))
-                runfetchcmd("mv %s %s" % (tfile, filename), d)
+                os.rename(tfile, filename)
             finally:
                 os.close(fd)
 
@@ -443,7 +443,7 @@ class Git(FetchMethod):
                     self.clone_shallow_local(ud, shallowclone, d)
 
                     logger.info("Creating tarball of git repository")
-                    with create_atomic(ud.fullshallow, d) as tfile:
+                    with create_atomic(ud.fullshallow) as tfile:
                         runfetchcmd("tar -czf %s ." % tfile, d, workdir=shallowclone)
                     runfetchcmd("touch %s.done" % ud.fullshallow, d)
                 finally:
@@ -453,7 +453,7 @@ class Git(FetchMethod):
                 os.unlink(ud.fullmirror)
 
             logger.info("Creating tarball of git repository")
-            with create_atomic(ud.fullmirror, d) as tfile:
+            with create_atomic(ud.fullmirror) as tfile:
                 runfetchcmd("tar -czf %s ." % tfile, d, workdir=ud.clonedir)
             runfetchcmd("touch %s.done" % ud.fullmirror, d)
 
