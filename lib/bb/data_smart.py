@@ -151,7 +151,7 @@ class ExpansionError(Exception):
         self.expression = expression
         self.variablename = varname
         self.exception = exception
-        self.varlist = [varname or expression]
+        self.varlist = [varname or expression or ""]
         if varname:
             if expression:
                 self.msg = "Failure expanding variable %s, expression was %s which triggered exception %s: %s" % (varname, expression, type(exception).__name__, exception)
@@ -163,7 +163,8 @@ class ExpansionError(Exception):
         self.args = (varname, expression, exception)
 
     def addVar(self, varname):
-        self.varlist.append(varname)
+        if varname:
+            self.varlist.append(varname)
 
     def __str__(self):
         chain = "\nThe variable dependency chain for the failure is: " + " -> ".join(self.varlist)
