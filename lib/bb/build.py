@@ -707,7 +707,7 @@ def _exec_task(fn, task, d, quieterr):
                 # logs once already so don't duplicate
                 if verboseStdoutLogging:
                     errprinted = True
-                logger.error(str(exc))
+                logger.error(repr(exc))
                 event.fire(TaskFailed(task, fn, logfn, localdata, errprinted), localdata)
             return 1
     finally:
