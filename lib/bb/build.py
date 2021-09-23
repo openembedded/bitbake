@@ -686,51 +686,51 @@ def _exec_task(fn, task, d, quieterr):
     try:
         try:
             event.fire(TaskStarted(task, fn, logfn, flags, localdata), localdata)
-        except (bb.BBHandledException, SystemExit):
-            return 1
 
-        try:
             for func in (prefuncs or '').split():
                 exec_func(func, localdata)
             exec_func(task, localdata)
             for func in (postfuncs or '').split():
                 exec_func(func, localdata)
-        except bb.BBHandledException:
-            event.fire(TaskFailed(task, fn, logfn, localdata, True), localdata)
-            return 1
-        except (Exception, SystemExit) as exc:
-            if quieterr:
-                event.fire(TaskFailedSilent(task, fn, logfn, localdata), localdata)
-            else:
-                errprinted = errchk.triggered
-                # If the output is already on stdout, we've printed the information in the
-                # logs once already so don't duplicate
-                if verboseStdoutLogging:
-                    errprinted = True
-                logger.error(repr(exc))
-                event.fire(TaskFailed(task, fn, logfn, localdata, errprinted), localdata)
-            return 1
-    finally:
-        sys.stdout.flush()
-        sys.stderr.flush()
+        finally:
+            # Need to flush and close the logs before sending events where the
+            # UI may try to look at the logs.
+            sys.stdout.flush()
+            sys.stderr.flush()
 
-        bblogger.removeHandler(handler)
+            bblogger.removeHandler(handler)
 
-        # Restore the backup fds
-        os.dup2(osi[0], osi[1])
-        os.dup2(oso[0], oso[1])
-        os.dup2(ose[0], ose[1])
+            # Restore the backup fds
+            os.dup2(osi[0], osi[1])
+            os.dup2(oso[0], oso[1])
+            os.dup2(ose[0], ose[1])
 
-        # Close the backup fds
-        os.close(osi[0])
-        os.close(oso[0])
-        os.close(ose[0])
+            # Close the backup fds
+            os.close(osi[0])
+            os.close(oso[0])
+            os.close(ose[0])
 
-        logfile.close()
-        if os.path.exists(logfn) and os.path.getsize(logfn) == 0:
-            logger.debug2("Zero size logfn %s, removing", logfn)
-            bb.utils.remove(logfn)
-            bb.utils.remove(loglink)
+            logfile.close()
+            if os.path.exists(logfn) and os.path.getsize(logfn) == 0:
+                logger.debug2("Zero size logfn %s, removing", logfn)
+                bb.utils.remove(logfn)
+                bb.utils.remove(loglink)
+    except bb.BBHandledException:
+        event.fire(TaskFailed(task, fn, logfn, localdata, True), localdata)
+        return 1
+    except (Exception, SystemExit) as exc:
+        if quieterr:
+            event.fire(TaskFailedSilent(task, fn, logfn, localdata), localdata)
+        else:
+            errprinted = errchk.triggered
+            # If the output is already on stdout, we've printed the information in the
+            # logs once already so don't duplicate
+            if verboseStdoutLogging:
+                errprinted = True
+            logger.error(repr(exc))
+            event.fire(TaskFailed(task, fn, logfn, localdata, errprinted), localdata)
+        return 1
+
     event.fire(TaskSucceeded(task, fn, logfn, localdata), localdata)
 
     if not localdata.getVarFlag(task, 'nostamp', False) and not localdata.getVarFlag(task, 'selfstamp', False):
