@@ -27,6 +27,7 @@ import bb.persist_data, bb.utils
 import bb.checksum
 import bb.process
 import bb.event
+import time
 
 __version__ = "2"
 _checksum_cache = bb.checksum.FileChecksumCache()
@@ -880,21 +881,29 @@ def runfetchcmd(cmd, d, quiet=False, cleanup=None, log=None, workdir=None):
     success = False
     error_message = ""
 
-    try:
-        (output, errors) = bb.process.run(cmd, log=log, shell=True, stderr=subprocess.PIPE, cwd=workdir)
-        success = True
-    except bb.process.NotFoundError as e:
-        error_message = "Fetch command %s" % (e.command)
-    except bb.process.ExecutionError as e:
-        if e.stdout:
-            output = "output:\n%s\n%s" % (e.stdout, e.stderr)
-        elif e.stderr:
-            output = "output:\n%s" % e.stderr
-        else:
-            output = "no output"
-        error_message = "Fetch command %s failed with exit code %s, %s" % (e.command, e.exitcode, output)
-    except bb.process.CmdError as e:
-        error_message = "Fetch command %s could not be run:\n%s" % (e.command, e.msg)
+    retries = 5
+    while retries:
+        try:
+            (output, errors) = bb.process.run(cmd, log=log, shell=True, stderr=subprocess.PIPE, cwd=workdir)
+            success = True
+        except bb.process.NotFoundError as e:
+            error_message = "Fetch command %s" % (e.command)
+        except bb.process.ExecutionError as e:
+            if e.stdout:
+                output = "output:\n%s\n%s" % (e.stdout, e.stderr)
+            elif e.stderr:
+                output = "output:\n%s" % e.stderr
+            else:
+                output = "no output"
+            error_message = "Fetch command %s failed with exit code %s, %s" % (e.command, e.exitcode, output)
+        except bb.process.CmdError as e:
+            error_message = "Fetch command %s could not be run:\n%s" % (e.command, e.msg)
+        if not success:
+            retries -= 1
+            bb.warn("code fetch retrying!")
+            time.sleep(5)
+            continue
+        break
     if not success:
         for f in cleanup:
             try:
