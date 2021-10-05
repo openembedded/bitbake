@@ -376,7 +376,7 @@ class FetcherTest(unittest.TestCase):
     def setUp(self):
         self.origdir = os.getcwd()
         self.d = bb.data.init()
-        self.tempdir = tempfile.mkdtemp()
+        self.tempdir = tempfile.mkdtemp(prefix="bitbake-fetch-")
         self.dldir = os.path.join(self.tempdir, "download")
         os.mkdir(self.dldir)
         self.d.setVar("DL_DIR", self.dldir)
