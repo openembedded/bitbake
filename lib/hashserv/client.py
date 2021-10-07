@@ -111,6 +111,7 @@ class Client(bb.asyncrpc.Client):
             "report_unihash",
             "report_unihash_equiv",
             "get_taskhash",
+            "get_outhash",
             "get_stats",
             "reset_stats",
             "backfill_wait",
