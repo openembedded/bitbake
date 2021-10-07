@@ -107,7 +107,6 @@ class Client(bb.asyncrpc.Client):
         super().__init__()
         self._add_methods(
             "connect_tcp",
-            "close",
             "get_unihash",
             "report_unihash",
             "report_unihash_equiv",
