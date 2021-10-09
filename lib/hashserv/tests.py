@@ -392,15 +392,14 @@ class HashEquivalenceCommonTests(object):
         result = self.client.report_unihash(taskhash2, self.METHOD, outhash3, unihash2)
         self.assertEqual(result['unihash'], unihash2)
 
-        # Report Task 2. This is equivalent to Task 1, so will pick up the
-        # unihash from that task
+        # Report Task 2. This is equivalent to Task 1 but there is already a mapping for
+        # taskhash2 so it will report unihash2
         result = self.client.report_unihash(taskhash2, self.METHOD, outhash1, unihash2)
-        self.assertEqual(result['unihash'], unihash1)
+        self.assertEqual(result['unihash'], unihash2)
 
-        # The originally reported unihash for Task 3 should have been updated
-        # with the second report to use the new unihash from Task 1 (because is
-        # shares a taskhash with Task 2)
-        self.assertClientGetHash(self.client, taskhash2, unihash1)
+        # The originally reported unihash for Task 3 should be unchanged even if it
+        # shares a taskhash with Task 2
+        self.assertClientGetHash(self.client, taskhash2, unihash2)
 
 class TestHashEquivalenceUnixServer(HashEquivalenceTestSetup, HashEquivalenceCommonTests, unittest.TestCase):
     def get_server_addr(self, server_idx):

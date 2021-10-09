@@ -413,7 +413,7 @@ class ServerClient(bb.asyncrpc.AsyncServerConnection):
                     # A matching output hash was found. Set our taskhash to the
                     # same unihash since they are equivalent
                     unihash = row['unihash']
-                    resolve = Resolve.REPLACE
+                    resolve = Resolve.IGNORE
                 else:
                     # No matching output hash was found. This is probably the
                     # first outhash to be added.
