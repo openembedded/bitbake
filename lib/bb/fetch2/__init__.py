@@ -1721,7 +1721,9 @@ class Fetch(object):
                     self.d.setVar("BB_NO_NETWORK", "1")
 
                 firsterr = None
-                verified_stamp = m.verify_donestamp(ud, self.d)
+                verified_stamp = False
+                if done:
+                    verified_stamp = m.verify_donestamp(ud, self.d)
                 if not done and (not verified_stamp or m.need_update(ud, self.d)):
                     try:
                         if not trusted_network(self.d, ud.url):
