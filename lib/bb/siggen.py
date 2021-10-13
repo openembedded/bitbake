@@ -11,6 +11,8 @@ import pickle
 import bb.data
 import difflib
 import simplediff
+import json
+import bb.compress.zstd
 from bb.checksum import FileChecksumCache
 from bb import runqueue
 import hashserv
@@ -18,6 +20,12 @@ import hashserv.client
 
 logger = logging.getLogger('BitBake.SigGen')
 hashequiv_logger = logging.getLogger('BitBake.SigGen.HashEquiv')
+
+class SetEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, set):
+            return list(sorted(obj))
+        return json.JSONEncoder.default(self, obj)
 
 def init(d):
     siggens = [obj for obj in globals().values()
@@ -398,9 +406,9 @@ class SignatureGeneratorBasic(SignatureGenerator):
 
         fd, tmpfile = tempfile.mkstemp(dir=os.path.dirname(sigfile), prefix="sigtask.")
         try:
-            with os.fdopen(fd, "wb") as stream:
-                p = pickle.dump(data, stream, -1)
-                stream.flush()
+            with bb.compress.zstd.open(fd, "wt", encoding="utf-8", num_threads=1) as f:
+                json.dump(data, f, sort_keys=True, separators=(",", ":"), cls=SetEncoder)
+                f.flush()
             os.chmod(tmpfile, 0o664)
             bb.utils.rename(tmpfile, sigfile)
         except (OSError, IOError) as err:
@@ -794,12 +802,10 @@ def compare_sigfiles(a, b, recursecb=None, color=False, collapsed=False):
         formatparams.update(values)
         return formatstr.format(**formatparams)
 
-    with open(a, 'rb') as f:
-        p1 = pickle.Unpickler(f)
-        a_data = p1.load()
-    with open(b, 'rb') as f:
-        p2 = pickle.Unpickler(f)
-        b_data = p2.load()
+    with bb.compress.zstd.open(a, "rt", encoding="utf-8", num_threads=1) as f:
+        a_data = json.load(f)
+    with bb.compress.zstd.open(b, "rt", encoding="utf-8", num_threads=1) as f:
+        b_data = json.load(f)
 
     def dict_diff(a, b, whitelist=set()):
         sa = set(a.keys())
@@ -1031,9 +1037,8 @@ def calc_taskhash(sigdata):
 def dump_sigfile(a):
     output = []
 
-    with open(a, 'rb') as f:
-        p1 = pickle.Unpickler(f)
-        a_data = p1.load()
+    with bb.compress.zstd.open(a, "rt", encoding="utf-8", num_threads=1) as f:
+        a_data = json.load(f)
 
     output.append("basewhitelist: %s" % (a_data['basewhitelist']))
 
