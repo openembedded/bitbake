@@ -1780,7 +1780,11 @@ class Fetch(object):
 
     def checkstatus(self, urls=None):
         """
-        Check all urls exist upstream
+        Check all URLs exist upstream.
+
+        Returns None if the URLs exist, raises FetchError if the check wasn't
+        successful but there wasn't an error (such as file not found), and
+        raises other exceptions in error cases.
         """
 
         if not urls:
