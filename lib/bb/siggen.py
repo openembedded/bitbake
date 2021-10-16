@@ -24,8 +24,13 @@ hashequiv_logger = logging.getLogger('BitBake.SigGen.HashEquiv')
 class SetEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, set):
-            return list(sorted(obj))
+            return dict(_set_object=list(sorted(obj)))
         return json.JSONEncoder.default(self, obj)
+
+def SetDecoder(dct):
+    if '_set_object' in dct:
+        return set(dct['_set_object'])
+    return dct
 
 def init(d):
     siggens = [obj for obj in globals().values()
@@ -803,9 +808,9 @@ def compare_sigfiles(a, b, recursecb=None, color=False, collapsed=False):
         return formatstr.format(**formatparams)
 
     with bb.compress.zstd.open(a, "rt", encoding="utf-8", num_threads=1) as f:
-        a_data = json.load(f)
+        a_data = json.load(f, object_hook=SetDecoder)
     with bb.compress.zstd.open(b, "rt", encoding="utf-8", num_threads=1) as f:
-        b_data = json.load(f)
+        b_data = json.load(f, object_hook=SetDecoder)
 
     def dict_diff(a, b, whitelist=set()):
         sa = set(a.keys())
@@ -821,11 +826,11 @@ def compare_sigfiles(a, b, recursecb=None, color=False, collapsed=False):
 
     def file_checksums_diff(a, b):
         from collections import Counter
-        # Handle old siginfo format
-        if isinstance(a, dict):
-            a = [(os.path.basename(f), cs) for f, cs in a.items()]
-        if isinstance(b, dict):
-            b = [(os.path.basename(f), cs) for f, cs in b.items()]
+
+        # Convert lists back to tuples
+        a = [(f[0], f[1]) for f in a]
+        b = [(f[0], f[1]) for f in b]
+
         # Compare lists, ensuring we can handle duplicate filenames if they exist
         removedcount = Counter(a)
         removedcount.subtract(b)
@@ -908,9 +913,9 @@ def compare_sigfiles(a, b, recursecb=None, color=False, collapsed=False):
                 output.append(color_format("{color_title}Variable {var} value changed from '{color_default}{oldval}{color_title}' to '{color_default}{newval}{color_title}'{color_default}", var=dep, oldval=oldval, newval=newval))
 
     if not 'file_checksum_values' in a_data:
-         a_data['file_checksum_values'] = {}
+         a_data['file_checksum_values'] = []
     if not 'file_checksum_values' in b_data:
-         b_data['file_checksum_values'] = {}
+         b_data['file_checksum_values'] = []
 
     changed, added, removed = file_checksums_diff(a_data['file_checksum_values'], b_data['file_checksum_values'])
     if changed:
@@ -1038,7 +1043,7 @@ def dump_sigfile(a):
     output = []
 
     with bb.compress.zstd.open(a, "rt", encoding="utf-8", num_threads=1) as f:
-        a_data = json.load(f)
+        a_data = json.load(f, object_hook=SetDecoder)
 
     output.append("basewhitelist: %s" % (a_data['basewhitelist']))
 
