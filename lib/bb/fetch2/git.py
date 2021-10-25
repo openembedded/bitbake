@@ -516,13 +516,24 @@ class Git(FetchMethod):
     def unpack(self, ud, destdir, d):
         """ unpack the downloaded src to destdir"""
 
-        subdir = ud.parm.get("subpath", "")
-        if subdir != "":
-            readpathspec = ":%s" % subdir
-            def_destsuffix = "%s/" % os.path.basename(subdir.rstrip('/'))
-        else:
-            readpathspec = ""
-            def_destsuffix = "git/"
+        subdir = ud.parm.get("subdir")
+        subpath = ud.parm.get("subpath")
+        readpathspec = ""
+        def_destsuffix = "git/"
+
+        if subpath:
+            readpathspec = ":%s" % subpath
+            def_destsuffix = "%s/" % os.path.basename(subpath.rstrip('/'))
+
+        if subdir:
+            # If 'subdir' param exists, create a dir and use it as destination for unpack cmd
+            if os.path.isabs(subdir):
+                if not os.path.realpath(subdir).startswith(os.path.realpath(destdir)):
+                    raise bb.fetch2.UnpackError("subdir argument isn't a subdirectory of unpack root %s" % destdir, ud.url)
+                destdir = subdir
+            else:
+                destdir = os.path.join(destdir, subdir)
+            def_destsuffix = ""
 
         destsuffix = ud.parm.get("destsuffix", def_destsuffix)
         destdir = ud.destdir = os.path.join(destdir, destsuffix)
@@ -569,7 +580,7 @@ class Git(FetchMethod):
                 bb.note("Repository %s has LFS content but it is not being fetched" % (repourl))
 
         if not ud.nocheckout:
-            if subdir != "":
+            if subpath:
                 runfetchcmd("%s read-tree %s%s" % (ud.basecmd, ud.revisions[ud.names[0]], readpathspec), d,
                             workdir=destdir)
                 runfetchcmd("%s checkout-index -q -f -a" % ud.basecmd, d, workdir=destdir)

@@ -2157,7 +2157,7 @@ class GitLfsTest(FetcherTest):
     def test_lfs_enabled(self):
         import shutil
 
-        uri = 'git://%s;protocol=file;subdir=${S};lfs=1' % self.srcdir
+        uri = 'git://%s;protocol=file;lfs=1' % self.srcdir
         self.d.setVar('SRC_URI', uri)
 
         # Careful: suppress initial attempt at downloading until
@@ -2182,7 +2182,7 @@ class GitLfsTest(FetcherTest):
     def test_lfs_disabled(self):
         import shutil
 
-        uri = 'git://%s;protocol=file;subdir=${S};lfs=0' % self.srcdir
+        uri = 'git://%s;protocol=file;lfs=0' % self.srcdir
         self.d.setVar('SRC_URI', uri)
 
         # In contrast to test_lfs_enabled(), allow the implicit download
