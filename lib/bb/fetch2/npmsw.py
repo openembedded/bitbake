@@ -29,6 +29,8 @@ from bb.fetch2.npm import npm_integrity
 from bb.fetch2.npm import npm_localfile
 from bb.fetch2.npm import npm_unpack
 from bb.utils import is_semver
+from bb.utils import lockfile
+from bb.utils import unlockfile
 
 def foreach_dependencies(shrinkwrap, callback=None, dev=False):
     """
@@ -187,7 +189,9 @@ class NpmShrinkWrap(FetchMethod):
             proxy_ud = ud.proxy.ud[proxy_url]
             proxy_d = ud.proxy.d
             proxy_ud.setup_localpath(proxy_d)
+            lf = lockfile(proxy_ud.lockfile)
             returns.append(handle(proxy_ud.method, proxy_ud, proxy_d))
+            unlockfile(lf)
         return returns
 
     def verify_donestamp(self, ud, d):
