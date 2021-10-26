@@ -417,7 +417,11 @@ class BitbakeWorker(object):
         if self.queue.startswith(b"<" + item + b">"):
             index = self.queue.find(b"</" + item + b">")
             while index != -1:
-                func(self.queue[(len(item) + 2):index])
+                try:
+                    func(self.queue[(len(item) + 2):index])
+                except pickle.UnpicklingError:
+                    workerlog_write("Unable to unpickle data: %s\n" % ":".join("{:02x}".format(c) for c in self.queue))
+                    raise
                 self.queue = self.queue[(index + len(item) + 3):]
                 index = self.queue.find(b"</" + item + b">")
 
