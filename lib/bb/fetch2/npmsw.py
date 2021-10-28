@@ -131,6 +131,8 @@ class NpmShrinkWrap(FetchMethod):
 
             # Handle git sources
             elif version.startswith("git"):
+                if version.startswith("github:"):
+                    version = "git+https://github.com/" + version[len("github:"):]
                 regex = re.compile(r"""
                     ^
                     git\+
