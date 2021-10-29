@@ -165,7 +165,10 @@ class Git(FetchMethod):
             ud.nocheckout = 1
   
         ud.unresolvedrev = {}
-        branches = ud.parm.get("branch", "master").split(',')
+        branches = ud.parm.get("branch", "").split(',')
+        if branches == [""] and not ud.nobranch:
+            bb.warn("URL: %s does not set any branch parameter. The future default branch used by tools and repositories is uncertain and we will therefore soon require this is set in all git urls." % ud.url)
+            branches = ["master"]
         if len(branches) != len(ud.names):
             raise bb.fetch2.ParameterError("The number of name and branch parameters is not balanced", ud.url)
 
