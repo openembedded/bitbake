@@ -1656,7 +1656,7 @@ class BBCooker:
         # Return a copy, don't modify the original
         pkgs_to_build = pkgs_to_build[:]
 
-        if len(pkgs_to_build) == 0:
+        if not pkgs_to_build:
             raise NothingToBuild
 
         ignore = (self.data.getVar("ASSUME_PROVIDED") or "").split()
@@ -1795,10 +1795,10 @@ class CookerCollectFiles(object):
         files.sort( key=lambda fileitem: self.calc_bbfile_priority(fileitem)[0] )
         config.setVar("BBFILES_PRIORITIZED", " ".join(files))
 
-        if not len(files):
+        if not files:
             files = self.get_bbfiles()
 
-        if not len(files):
+        if not files:
             collectlog.error("no recipe files to build, check your BBPATH and BBFILES?")
             bb.event.fire(CookerExit(), eventdata)
 
