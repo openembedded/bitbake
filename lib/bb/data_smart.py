@@ -810,7 +810,7 @@ class DataSmart(MutableMapping):
                     expanded_removes[r] = self.expand(r).split()
 
                 parser.removes = set()
-                val = ""
+                val = []
                 for v in __whitespace_split__.split(parser.value):
                     skip = False
                     for r in removes:
@@ -819,8 +819,8 @@ class DataSmart(MutableMapping):
                             skip = True
                     if skip:
                         continue
-                    val = val + v
-                parser.value = val
+                    val.append(v)
+                parser.value = "".join(val)
                 if expand:
                     value = parser.value
 

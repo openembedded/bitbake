@@ -571,7 +571,7 @@ class ORMWrapper(object):
         assert isinstance(build_obj, Build)
         assert isinstance(target_obj, Target)
 
-        errormsg = ""
+        errormsg = []
         for p in packagedict:
             # Search name swtiches round the installed name vs package name
             # by default installed name == package name
@@ -636,7 +636,7 @@ class ORMWrapper(object):
                     if packagefile_objects:
                         Package_File.objects.bulk_create(packagefile_objects)
                 except KeyError as e:
-                    errormsg += "  stpi: Key error, package %s key %s \n" % ( p, e )
+                    errormsg.append("  stpi: Key error, package %s key %s \n" % (p, e))
 
             # save disk installed size
             packagedict[p]['object'].installed_size = packagedict[p]['size']
@@ -678,8 +678,8 @@ class ORMWrapper(object):
         else:
             logger.info("No package dependencies created")
 
-        if len(errormsg) > 0:
-            logger.warning("buildinfohelper: target_package_info could not identify recipes: \n%s", errormsg)
+        if errormsg:
+            logger.warning("buildinfohelper: target_package_info could not identify recipes: \n%s", "".join(errormsg))
 
     def save_target_image_file_information(self, target_obj, file_name, file_size):
         Target_Image_File.objects.create(target=target_obj,
@@ -1404,7 +1404,7 @@ class BuildInfoHelper(object):
         assert 'pn' in event._depgraph
         assert 'tdepends' in event._depgraph
 
-        errormsg = ""
+        errormsg = []
 
         # save layer version priorities
         if 'layer-priorities' in event._depgraph.keys():
@@ -1496,7 +1496,7 @@ class BuildInfoHelper(object):
                 elif dep in self.internal_state['recipes']:
                     dependency = self.internal_state['recipes'][dep]
                 else:
-                    errormsg += "  stpd: KeyError saving recipe dependency for %s, %s \n" % (recipe, dep)
+                    errormsg.append("  stpd: KeyError saving recipe dependency for %s, %s \n" % (recipe, dep))
                     continue
                 recipe_dep = Recipe_Dependency(recipe=target,
                                                depends_on=dependency,
@@ -1537,8 +1537,8 @@ class BuildInfoHelper(object):
                 taskdeps_objects.append(Task_Dependency( task = target, depends_on = dep ))
         Task_Dependency.objects.bulk_create(taskdeps_objects)
 
-        if len(errormsg) > 0:
-            logger.warning("buildinfohelper: dependency info not identify recipes: \n%s", errormsg)
+        if errormsg:
+            logger.warning("buildinfohelper: dependency info not identify recipes: \n%s", "".join(errormsg))
 
 
     def store_build_package_information(self, event):

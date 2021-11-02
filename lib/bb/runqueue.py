@@ -1061,12 +1061,12 @@ class RunQueueData:
                         seen_pn.append(pn)
                     else:
                         bb.fatal("Multiple versions of %s are due to be built (%s). Only one version of a given PN should be built in any given build. You likely need to set PREFERRED_VERSION_%s to select the correct version or don't depend on multiple versions." % (pn, " ".join(prov_list[prov]), pn))
-                msg = "Multiple .bb files are due to be built which each provide %s:\n  %s" % (prov, "\n  ".join(prov_list[prov]))
+                msgs = ["Multiple .bb files are due to be built which each provide %s:\n  %s" % (prov, "\n  ".join(prov_list[prov]))]
                 #
                 # Construct a list of things which uniquely depend on each provider
                 # since this may help the user figure out which dependency is triggering this warning
                 #
-                msg += "\nA list of tasks depending on these providers is shown and may help explain where the dependency comes from."
+                msgs.append("\nA list of tasks depending on these providers is shown and may help explain where the dependency comes from.")
                 deplist = {}
                 commondeps = None
                 for provfn in prov_list[prov]:
@@ -1086,12 +1086,12 @@ class RunQueueData:
                         commondeps &= deps
                     deplist[provfn] = deps
                 for provfn in deplist:
-                    msg += "\n%s has unique dependees:\n  %s" % (provfn, "\n  ".join(deplist[provfn] - commondeps))
+                    msgs.append("\n%s has unique dependees:\n  %s" % (provfn, "\n  ".join(deplist[provfn] - commondeps)))
                 #
                 # Construct a list of provides and runtime providers for each recipe
                 # (rprovides has to cover RPROVIDES, PACKAGES, PACKAGES_DYNAMIC)
                 #
-                msg += "\nIt could be that one recipe provides something the other doesn't and should. The following provider and runtime provider differences may be helpful."
+                msgs.append("\nIt could be that one recipe provides something the other doesn't and should. The following provider and runtime provider differences may be helpful.")
                 provide_results = {}
                 rprovide_results = {}
                 commonprovs = None
@@ -1118,16 +1118,16 @@ class RunQueueData:
                     else:
                         commonrprovs &= rprovides
                     rprovide_results[provfn] = rprovides
-                #msg += "\nCommon provides:\n  %s" % ("\n  ".join(commonprovs))
-                #msg += "\nCommon rprovides:\n  %s" % ("\n  ".join(commonrprovs))
+                #msgs.append("\nCommon provides:\n  %s" % ("\n  ".join(commonprovs)))
+                #msgs.append("\nCommon rprovides:\n  %s" % ("\n  ".join(commonrprovs)))
                 for provfn in prov_list[prov]:
-                    msg += "\n%s has unique provides:\n  %s" % (provfn, "\n  ".join(provide_results[provfn] - commonprovs))
-                    msg += "\n%s has unique rprovides:\n  %s" % (provfn, "\n  ".join(rprovide_results[provfn] - commonrprovs))
+                    msgs.append("\n%s has unique provides:\n  %s" % (provfn, "\n  ".join(provide_results[provfn] - commonprovs)))
+                    msgs.append("\n%s has unique rprovides:\n  %s" % (provfn, "\n  ".join(rprovide_results[provfn] - commonrprovs)))
 
                 if self.warn_multi_bb:
-                    logger.verbnote(msg)
+                    logger.verbnote("".join(msgs))
                 else:
-                    logger.error(msg)
+                    logger.error("".join(msgs))
 
         self.init_progress_reporter.next_stage()
 
@@ -1935,7 +1935,7 @@ class RunQueueExecute:
         self.stats.taskFailed()
         self.failed_tids.append(task)
 
-        fakeroot_log = ""
+        fakeroot_log = []
         if fakerootlog and os.path.exists(fakerootlog):
             with open(fakerootlog) as fakeroot_log_file:
                 fakeroot_failed = False
@@ -1945,12 +1945,12 @@ class RunQueueExecute:
                             fakeroot_failed = True
                     if 'doing new pid setup and server start' in line:
                         break
-                    fakeroot_log = line + fakeroot_log
+                    fakeroot_log.append(line)
 
             if not fakeroot_failed:
-                fakeroot_log = None
+                fakeroot_log = []
 
-        bb.event.fire(runQueueTaskFailed(task, self.stats, exitcode, self.rq, fakeroot_log=fakeroot_log), self.cfgData)
+        bb.event.fire(runQueueTaskFailed(task, self.stats, exitcode, self.rq, fakeroot_log=("".join(fakeroot_log) or None)), self.cfgData)
 
         if self.rqdata.taskData[''].abort:
             self.rq.state = runQueueCleanUp
@@ -2608,12 +2608,13 @@ class RunQueueExecute:
         pn = self.rqdata.dataCaches[mc].pkg_fn[taskfn]
         if not check_setscene_enforce_whitelist(pn, taskname, self.rqdata.setscenewhitelist):
             if tid in self.rqdata.runq_setscene_tids:
-                msg = 'Task %s.%s attempted to execute unexpectedly and should have been setscened' % (pn, taskname)
+                msg = ['Task %s.%s attempted to execute unexpectedly and should have been setscened' % (pn, taskname)]
             else:
-                msg = 'Task %s.%s attempted to execute unexpectedly' % (pn, taskname)
+                msg = ['Task %s.%s attempted to execute unexpectedly' % (pn, taskname)]
             for t in self.scenequeue_notcovered:
-                msg = msg + "\nTask %s, unihash %s, taskhash %s" % (t, self.rqdata.runtaskentries[t].unihash, self.rqdata.runtaskentries[t].hash)
-            logger.error(msg + '\nThis is usually due to missing setscene tasks. Those missing in this build were: %s' % pprint.pformat(self.scenequeue_notcovered))
+                msg.append("\nTask %s, unihash %s, taskhash %s" % (t, self.rqdata.runtaskentries[t].unihash, self.rqdata.runtaskentries[t].hash))
+            msg.append('\nThis is usually due to missing setscene tasks. Those missing in this build were: %s' % pprint.pformat(self.scenequeue_notcovered))
+            logger.error("".join(msg))
             return True
         return False
 
