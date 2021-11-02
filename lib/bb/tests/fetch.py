@@ -888,6 +888,14 @@ class FetcherNetworkTest(FetcherTest):
         self.assertEqual(os.path.getsize(self.dldir + "/bitbake-1.0.tar.gz"), 57749)
 
     @skipIfNoNetwork()
+    def test_fetch_premirror_use_downloadfilename_to_fetch(self):
+        # Ensure downloadfilename is used when fetching from premirror.
+        self.d.setVar("PREMIRRORS", "http://.*/.* https://downloads.yoctoproject.org/releases/bitbake")
+        fetcher = bb.fetch.Fetch(["http://invalid.yoctoproject.org/releases/bitbake/bitbake-1.1.tar.gz;downloadfilename=bitbake-1.0.tar.gz"], self.d)
+        fetcher.download()
+        self.assertEqual(os.path.getsize(self.dldir + "/bitbake-1.0.tar.gz"), 57749)
+
+    @skipIfNoNetwork()
     def gitfetcher(self, url1, url2):
         def checkrevision(self, fetcher):
             fetcher.unpack(self.unpackdir)
