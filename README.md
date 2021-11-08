@@ -13,12 +13,11 @@ Bitbake plain documentation can be found under the doc directory or its integrat
 html version at the Yocto Project website:
     https://docs.yoctoproject.org
 
-Contributing
-------------
+## Contributing
 
 Please refer to
 https://www.openembedded.org/wiki/How_to_submit_a_patch_to_OpenEmbedded
-for guidelines on how to submit patches, just note that the latter documentation is intended
+for guidelines on how to submit patches. Note that the latter documentation is intended
 for OpenEmbedded (and its core) not bitbake patches (bitbake-devel@lists.openembedded.org)
 but in general main guidelines apply. Once the commit(s) have been created, the way to send
 the patch is through git-send-email. For example, to send the last commit (HEAD) on current
@@ -31,18 +30,18 @@ the Yocto Project documentation mailing list:
 
     git send-email -M -1 --to bitbake-devel@lists.openembedded.org --cc docs@lists.yoctoproject.org
 
-Mailing list:
+### Mailing list
 
     https://lists.openembedded.org/g/bitbake-devel
 
-Source code:
+### Source code
 
     https://git.openembedded.org/bitbake/
 
-Testing:
+## Testing
 
-Bitbake has a testsuite located in lib/bb/tests/ whichs aim to try and prevent regressions.
-You can run this with "bitbake-selftest". In particular the fetcher is well covered since
+Bitbake has a testsuite located in `lib/bb/tests` which aims to try and prevent regressions.
+You can run this with `bitbake-selftest`. In particular the fetcher is well covered since
 it has so many corner cases. The datastore has many tests too. Testing with the testsuite is
 recommended before submitting patches, particularly to the fetcher and datastore. We also
 appreciate new test cases and may require them for more obscure issues.
