@@ -933,6 +933,7 @@ class RunQueueData:
             for tid in list(self.runtaskentries.keys()):
                 if tid not in runq_build:
                    reduced_tasklist.remove(tid)
+            runq_build = {}
 
             for task in self.cooker.configuration.runall:
                 if not task.startswith("do_"):
