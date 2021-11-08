@@ -2040,6 +2040,7 @@ class Parser(multiprocessing.Process):
                 result = pending.pop()
             else:
                 try:
+                    time.sleep(0.25)
                     job = self.jobs.pop()
                 except IndexError:
                     self.results.close()
@@ -2218,7 +2219,7 @@ class CookerParser(object):
             yield not cached, mc, infos
 
     def parse_generator(self):
-        while True:
+        while self.processes:
             if self.parsed >= self.toparse:
                 break
 
@@ -2232,6 +2233,14 @@ class CookerParser(object):
                     raise value
                 else:
                     yield result
+            for process in self.processes.copy():
+                if not process.is_alive():
+                    process.join()
+                    self.processes.remove(process)
+
+        if not (self.parsed >= self.toparse):
+            raise bb.parse.ParseError("Not all recipes parsed, parser thread killed/died? Exiting.", None)
+
 
     def parse_next(self):
         result = []
