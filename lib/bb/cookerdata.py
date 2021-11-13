@@ -210,7 +210,7 @@ def findConfigFile(configfile, data):
 
 #
 # We search for a conf/bblayers.conf under an entry in BBPATH or in cwd working
-# up to /. If that fails, we search for a conf/bitbake.conf in BBPATH.
+# up to /. If that fails, bitbake would fall back to cwd.
 #
 
 def findTopdir():
@@ -223,11 +223,8 @@ def findTopdir():
     layerconf = findConfigFile("bblayers.conf", d)
     if layerconf:
         return os.path.dirname(os.path.dirname(layerconf))
-    if bbpath:
-        bitbakeconf = bb.utils.which(bbpath, "conf/bitbake.conf")
-        if bitbakeconf:
-            return os.path.dirname(os.path.dirname(bitbakeconf))
-    return None
+
+    return os.path.abspath(os.getcwd())
 
 class CookerDataBuilder(object):
 
@@ -416,6 +413,9 @@ class CookerDataBuilder(object):
                         " the expected location.\nMaybe you accidentally"
                         " invoked bitbake from the wrong directory?")
             raise SystemExit(msg)
+
+        if not data.getVar("TOPDIR"):
+            data.setVar("TOPDIR", os.path.abspath(os.getcwd()))
 
         data = parse_config_file(os.path.join("conf", "bitbake.conf"), data)
 
