@@ -29,9 +29,10 @@ class RunQueueTests(unittest.TestCase):
     def run_bitbakecmd(self, cmd, builddir, sstatevalid="", slowtasks="", extraenv=None, cleanup=False):
         env = os.environ.copy()
         env["BBPATH"] = os.path.realpath(os.path.join(os.path.dirname(__file__), "runqueue-tests"))
-        env["BB_ENV_EXTRAWHITE"] = "SSTATEVALID SLOWTASKS"
+        env["BB_ENV_EXTRAWHITE"] = "SSTATEVALID SLOWTASKS TOPDIR"
         env["SSTATEVALID"] = sstatevalid
         env["SLOWTASKS"] = slowtasks
+        env["TOPDIR"] = builddir
         if extraenv:
             for k in extraenv:
                 env[k] = extraenv[k]
