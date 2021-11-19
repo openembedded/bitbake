@@ -894,7 +894,7 @@ Regardless of the type of function, you can only define them in class
 Shell Functions
 ---------------
 
-Functions written in shell script and executed either directly as
+Functions written in shell script are executed either directly as
 functions, tasks, or both. They can also be called by other shell
 functions. Here is an example shell function definition::
 
