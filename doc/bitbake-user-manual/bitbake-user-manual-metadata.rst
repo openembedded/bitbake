@@ -944,7 +944,7 @@ Running ``do_foo`` prints the following::
    Overrides and override-style operators can be applied to any shell
    function, not just :ref:`tasks <bitbake-user-manual/bitbake-user-manual-metadata:tasks>`.
 
-You can use the ``bitbake -e`` recipename command to view the final
+You can use the ``bitbake -e recipename`` command to view the final
 assembled function after all overrides have been applied.
 
 BitBake-Style Python Functions
@@ -996,7 +996,7 @@ Running ``do_foo`` prints the following::
    recipename do_foo: second
    recipename do_foo: third
 
-You can use the ``bitbake -e`` recipename command to view
+You can use the ``bitbake -e recipename`` command to view
 the final assembled function after all overrides have been applied.
 
 Python Functions
