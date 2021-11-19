@@ -104,15 +104,15 @@ Line Joining
 
 Outside of :ref:`functions <bitbake-user-manual/bitbake-user-manual-metadata:functions>`,
 BitBake joins any line ending in
-a backslash character ("\") with the following line before parsing
-statements. The most common use for the "\" character is to split
+a backslash character ("\\") with the following line before parsing
+statements. The most common use for the "\\" character is to split
 variable assignments over multiple lines, as in the following example::
 
    FOO = "bar \
           baz \
           qaz"
 
-Both the "\" character and the newline
+Both the "\\" character and the newline
 character that follow it are removed when joining lines. Thus, no
 newline characters end up in the value of ``FOO``.
 
@@ -125,7 +125,7 @@ Consider this additional example where the two assignments both assign
 
 .. note::
 
-   BitBake does not interpret escape sequences like "\n" in variable
+   BitBake does not interpret escape sequences like "\\n" in variable
    values. For these to have an effect, the value must be passed to some
    utility that interprets escape sequences, such as
    ``printf`` or ``echo -n``.
@@ -159,7 +159,7 @@ behavior::
    C = "qux"
    *At this point, ${A} equals "qux bar baz"*
    B = "norf"
-   *At this point, ${A} equals "norf baz"\*
+   *At this point, ${A} equals "norf baz"*
 
 Contrast this behavior with the
 :ref:`bitbake-user-manual/bitbake-user-manual-metadata:immediate variable
