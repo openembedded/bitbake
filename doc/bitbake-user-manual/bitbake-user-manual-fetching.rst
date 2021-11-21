@@ -84,18 +84,18 @@ fetcher does know how to use HTTP as a transport.
 Here are some examples that show commonly used mirror definitions::
 
    PREMIRRORS ?= "\
-      bzr://.*/.\*  http://somemirror.org/sources/ \\n \
-      cvs://.*/.\*  http://somemirror.org/sources/ \\n \
-      git://.*/.\*  http://somemirror.org/sources/ \\n \
-      hg://.*/.\*   http://somemirror.org/sources/ \\n \
-      osc://.*/.\*  http://somemirror.org/sources/ \\n \
-      p4://.*/.\*   http://somemirror.org/sources/ \\n \
-     svn://.*/.\*   http://somemirror.org/sources/ \\n"
+      bzr://.*/.\*  http://somemirror.org/sources/ \
+      cvs://.*/.\*  http://somemirror.org/sources/ \
+      git://.*/.\*  http://somemirror.org/sources/ \
+      hg://.*/.\*   http://somemirror.org/sources/ \
+      osc://.*/.\*  http://somemirror.org/sources/ \
+      p4://.*/.\*   http://somemirror.org/sources/ \
+     svn://.*/.\*   http://somemirror.org/sources/"
 
    MIRRORS =+ "\
-      ftp://.*/.\*   http://somemirror.org/sources/ \\n \
-      http://.*/.\*  http://somemirror.org/sources/ \\n \
-      https://.*/.\* http://somemirror.org/sources/ \\n"
+      ftp://.*/.\*   http://somemirror.org/sources/ \
+      http://.*/.\*  http://somemirror.org/sources/ \
+      https://.*/.\* http://somemirror.org/sources/"
 
 It is useful to note that BitBake
 supports cross-URLs. It is possible to mirror a Git repository on an
