@@ -815,7 +815,9 @@ class BBCooker:
             for dep in rq.rqdata.runtaskentries[tid].depends:
                 (depmc, depfn, _, deptaskfn) = bb.runqueue.split_tid_mcfn(dep)
                 deppn = self.recipecaches[depmc].pkg_fn[deptaskfn]
-                depend_tree["tdepends"][dotname].append("%s.%s" % (deppn, bb.runqueue.taskname_from_tid(dep)))
+                if depmc:
+                    depmc = "mc:" + depmc + ":"
+                depend_tree["tdepends"][dotname].append("%s%s.%s" % (depmc, deppn, bb.runqueue.taskname_from_tid(dep)))
             if taskfn not in seen_fns:
                 seen_fns.append(taskfn)
                 packages = []
