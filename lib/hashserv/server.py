@@ -521,7 +521,7 @@ class Server(object):
 
     def start_tcp_server(self, host, port):
         self.server = self.loop.run_until_complete(
-            asyncio.start_server(self.handle_client, host, port, loop=self.loop)
+            asyncio.start_server(self.handle_client, host, port)
         )
 
         for s in self.server.sockets:
@@ -546,7 +546,7 @@ class Server(object):
             # Work around path length limits in AF_UNIX
             os.chdir(os.path.dirname(path))
             self.server = self.loop.run_until_complete(
-                asyncio.start_unix_server(self.handle_client, os.path.basename(path), loop=self.loop)
+                asyncio.start_unix_server(self.handle_client, os.path.basename(path))
             )
         finally:
             os.chdir(cwd)
