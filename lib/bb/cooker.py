@@ -2036,7 +2036,6 @@ class Parser(multiprocessing.Process):
                 result = pending.pop()
             else:
                 try:
-                    time.sleep(0.25)
                     job = self.jobs.pop()
                 except IndexError:
                     self.results.close()
