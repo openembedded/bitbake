@@ -2214,24 +2214,28 @@ class CookerParser(object):
             yield not cached, mc, infos
 
     def parse_generator(self):
-        while self.processes:
+        empty = False
+        while self.processes or not empty:
+            for process in self.processes.copy():
+                if not process.is_alive():
+                    process.join()
+                    self.processes.remove(process)
+
             if self.parsed >= self.toparse:
                 break
 
             try:
                 result = self.result_queue.get(timeout=0.25)
             except queue.Empty:
+                empty = True
                 pass
             else:
+                empty = False
                 value = result[1]
                 if isinstance(value, BaseException):
                     raise value
                 else:
                     yield result
-            for process in self.processes.copy():
-                if not process.is_alive():
-                    process.join()
-                    self.processes.remove(process)
 
         if not (self.parsed >= self.toparse):
             raise bb.parse.ParseError("Not all recipes parsed, parser thread killed/died? Exiting.", None)
