@@ -1378,6 +1378,9 @@ overview of their function and contents.
       -  ``git://`` : Fetches files from a Git revision control
          repository.
 
+      -  ``gitsm://`` : Fetches submodules from a Git revision control
+         repository.
+
       -  ``hg://`` : Fetches files from a Mercurial (``hg``) revision
          control repository.
 
