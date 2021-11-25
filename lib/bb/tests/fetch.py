@@ -626,6 +626,9 @@ class FetcherLocalTest(FetcherTest):
         os.makedirs(os.path.join(self.localsrcdir, 'dir', 'subdir'))
         touch(os.path.join(self.localsrcdir, 'dir', 'subdir', 'e'))
         touch(os.path.join(self.localsrcdir, r'backslash\x2dsystemd-unit.device'))
+        bb.process.run('tar cf archive.tar -C dir .', cwd=self.localsrcdir)
+        bb.process.run('tar czf archive.tar.gz -C dir .', cwd=self.localsrcdir)
+        bb.process.run('tar cjf archive.tar.bz2 -C dir .', cwd=self.localsrcdir)
         self.d.setVar("FILESPATH", self.localsrcdir)
 
     def fetchUnpack(self, uris):
@@ -679,6 +682,18 @@ class FetcherLocalTest(FetcherTest):
         # Unpacking to an absolute path outside of the root should fail
         with self.assertRaises(bb.fetch2.UnpackError):
             self.fetchUnpack(['file://a;subdir=/bin/sh'])
+
+    def test_local_striplevel(self):
+        tree = self.fetchUnpack(['file://archive.tar;subdir=bar;striplevel=1'])
+        self.assertEqual(tree, ['bar/c', 'bar/d', 'bar/subdir/e'])
+
+    def test_local_striplevel_gzip(self):
+        tree = self.fetchUnpack(['file://archive.tar.gz;subdir=bar;striplevel=1'])
+        self.assertEqual(tree, ['bar/c', 'bar/d', 'bar/subdir/e'])
+
+    def test_local_striplevel_bzip2(self):
+        tree = self.fetchUnpack(['file://archive.tar.bz2;subdir=bar;striplevel=1'])
+        self.assertEqual(tree, ['bar/c', 'bar/d', 'bar/subdir/e'])
 
     def dummyGitTest(self, suffix):
         # Create dummy local Git repo
