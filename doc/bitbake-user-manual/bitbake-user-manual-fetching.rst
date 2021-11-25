@@ -167,6 +167,9 @@ govern the behavior of the unpack stage:
 -  *dos:* Applies to ``.zip`` and ``.jar`` files and specifies whether
    to use DOS line ending conversion on text files.
 
+-  *striplevel:* Strip specified number of leading components (levels)
+   from file names on extraction
+
 -  *subdir:* Unpacks the specific URL to the specified subdirectory
    within the root directory.
 
