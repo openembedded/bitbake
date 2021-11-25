@@ -1458,30 +1458,31 @@ class FetchMethod(object):
         cmd = None
 
         if unpack:
+            tar_cmd = 'tar --extract --no-same-owner'
             if file.endswith('.tar'):
-                cmd = 'tar x --no-same-owner -f %s' % file
+                cmd = '%s -f %s' % (tar_cmd, file)
             elif file.endswith('.tgz') or file.endswith('.tar.gz') or file.endswith('.tar.Z'):
-                cmd = 'tar xz --no-same-owner -f %s' % file
+                cmd = '%s -z -f %s' % (tar_cmd, file)
             elif file.endswith('.tbz') or file.endswith('.tbz2') or file.endswith('.tar.bz2'):
-                cmd = 'bzip2 -dc %s | tar x --no-same-owner -f -' % file
+                cmd = 'bzip2 -dc %s | %s -f -' % (file, tar_cmd)
             elif file.endswith('.gz') or file.endswith('.Z') or file.endswith('.z'):
                 cmd = 'gzip -dc %s > %s' % (file, efile)
             elif file.endswith('.bz2'):
                 cmd = 'bzip2 -dc %s > %s' % (file, efile)
             elif file.endswith('.txz') or file.endswith('.tar.xz'):
-                cmd = 'xz -dc %s | tar x --no-same-owner -f -' % file
+                cmd = 'xz -dc %s | %s -f -' % (file, tar_cmd)
             elif file.endswith('.xz'):
                 cmd = 'xz -dc %s > %s' % (file, efile)
             elif file.endswith('.tar.lz'):
-                cmd = 'lzip -dc %s | tar x --no-same-owner -f -' % file
+                cmd = 'lzip -dc %s | %s -f -' % (file, tar_cmd)
             elif file.endswith('.lz'):
                 cmd = 'lzip -dc %s > %s' % (file, efile)
             elif file.endswith('.tar.7z'):
-                cmd = '7z x -so %s | tar x --no-same-owner -f -' % file
+                cmd = '7z x -so %s | %s -f -' % (file, tar_cmd)
             elif file.endswith('.7z'):
                 cmd = '7za x -y %s 1>/dev/null' % file
             elif file.endswith('.tzst') or file.endswith('.tar.zst'):
-                cmd = 'zstd --decompress --stdout %s | tar x --no-same-owner -f -' % file
+                cmd = 'zstd --decompress --stdout %s | %s -f -' % (file, tar_cmd)
             elif file.endswith('.zst'):
                 cmd = 'zstd --decompress --stdout %s > %s' % (file, efile)
             elif file.endswith('.zip') or file.endswith('.jar'):
@@ -1514,7 +1515,7 @@ class FetchMethod(object):
                         raise UnpackError("Unable to unpack deb/ipk package - does not contain data.tar.* file", urldata.url)
                 else:
                     raise UnpackError("Unable to unpack deb/ipk package - could not list contents", urldata.url)
-                cmd = 'ar x %s %s && tar --no-same-owner -xpf %s && rm %s' % (file, datafile, datafile, datafile)
+                cmd = 'ar x %s %s && %s -p -f %s && rm %s' % (file, datafile, tar_cmd, datafile, datafile)
 
         # If 'subdir' param exists, create a dir and use it as destination for unpack cmd
         if 'subdir' in urldata.parm:
