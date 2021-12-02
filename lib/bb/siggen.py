@@ -1054,28 +1054,28 @@ def dump_sigfile(a):
     with bb.compress.zstd.open(a, "rt", encoding="utf-8", num_threads=1) as f:
         a_data = json.load(f, object_hook=SetDecoder)
 
-    output.append("basewhitelist: %s" % (a_data['basewhitelist']))
+    output.append("basewhitelist: %s" % (sorted(a_data['basewhitelist'])))
 
-    output.append("taskwhitelist: %s" % (a_data['taskwhitelist']))
+    output.append("taskwhitelist: %s" % (sorted(a_data['taskwhitelist'] or [])))
 
     output.append("Task dependencies: %s" % (sorted(a_data['taskdeps'])))
 
     output.append("basehash: %s" % (a_data['basehash']))
 
-    for dep in a_data['gendeps']:
-        output.append("List of dependencies for variable %s is %s" % (dep, a_data['gendeps'][dep]))
+    for dep in sorted(a_data['gendeps']):
+        output.append("List of dependencies for variable %s is %s" % (dep, sorted(a_data['gendeps'][dep])))
 
-    for dep in a_data['varvals']:
+    for dep in sorted(a_data['varvals']):
         output.append("Variable %s value is %s" % (dep, a_data['varvals'][dep]))
 
     if 'runtaskdeps' in a_data:
-        output.append("Tasks this task depends on: %s" % (a_data['runtaskdeps']))
+        output.append("Tasks this task depends on: %s" % (sorted(a_data['runtaskdeps'])))
 
     if 'file_checksum_values' in a_data:
-        output.append("This task depends on the checksums of files: %s" % (a_data['file_checksum_values']))
+        output.append("This task depends on the checksums of files: %s" % (sorted(a_data['file_checksum_values'])))
 
     if 'runtaskhashes' in a_data:
-        for dep in a_data['runtaskhashes']:
+        for dep in sorted(a_data['runtaskhashes']):
             output.append("Hash for dependent task %s is %s" % (dep, a_data['runtaskhashes'][dep]))
 
     if 'taint' in a_data:
