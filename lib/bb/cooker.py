@@ -411,6 +411,8 @@ class BBCooker:
             self.data.disableTracking()
 
     def parseConfiguration(self):
+        self.updateCacheSync()
+
         # Change nice level if we're asked to
         nice = self.data.getVar("BB_NICE_LEVEL")
         if nice:
