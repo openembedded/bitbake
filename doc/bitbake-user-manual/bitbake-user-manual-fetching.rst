@@ -229,6 +229,11 @@ downloaded file is useful for avoiding collisions in
 :term:`DL_DIR` when dealing with multiple files that
 have the same name.
 
+If a username and password are specified in the ``SRC_URI``, a Basic
+Authorization header will be added to each request, including across redirects.
+To instead limit the Authorization header to the first request, add
+"redirectauth=0" to the list of parameters.
+
 Some example URLs are as follows::
 
    SRC_URI = "http://oe.handhelds.org/not_there.aac"

@@ -112,7 +112,17 @@ class Wget(FetchMethod):
             fetchcmd += " -O %s" % shlex.quote(localpath)
 
         if ud.user and ud.pswd:
-            fetchcmd += " --user=%s --password=%s --auth-no-challenge" % (ud.user, ud.pswd)
+            fetchcmd += " --auth-no-challenge"
+            if ud.parm.get("redirectauth", "1") == "1":
+                # An undocumented feature of wget is that if the
+                # username/password are specified on the URI, wget will only
+                # send the Authorization header to the first host and not to
+                # any hosts that it is redirected to.  With the increasing
+                # usage of temporary AWS URLs, this difference now matters as
+                # AWS will reject any request that has authentication both in
+                # the query parameters (from the redirect) and in the
+                # Authorization header.
+                fetchcmd += " --user=%s --password=%s" % (ud.user, ud.pswd)
 
         uri = ud.url.split(";")[0]
         if os.path.exists(ud.localpath):
