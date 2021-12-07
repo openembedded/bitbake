@@ -1346,6 +1346,12 @@ class FetchLatestVersionTest(FetcherTest):
         # http://ftp.debian.org/debian/pool/main/d/db5.3/
         ("db", "/berkeley-db/db-5.3.21.tar.gz", "/debian/pool/main/d/db5.3/", r"(?P<name>db5\.3_)(?P<pver>\d+(\.\d+)+).+\.orig\.tar\.xz")
             : "5.3.10",
+        #
+        # packages where the tarball compression changed in the new version
+        #
+        # http://ftp.debian.org/debian/pool/main/m/minicom/minicom_2.7.1.orig.tar.gz
+        ("minicom", "/debian/pool/main/m/minicom/minicom_2.7.1.orig.tar.gz", "", "")
+            : "2.8",
     }
 
     @skipIfNoNetwork()
