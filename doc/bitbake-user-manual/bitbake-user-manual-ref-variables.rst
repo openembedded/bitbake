@@ -374,11 +374,31 @@ overview of their function and contents.
       Specifies the Hash Equivalence server to use.
 
       If set to ``auto``, BitBake automatically starts its own server
-      over a UNIX domain socket.
+      over a UNIX domain socket. An option is to connect this server
+      to an upstream one, by setting :term:`BB_HASHSERVE_UPSTREAM`.
 
-      If set to ``host:port``, BitBake will use a remote server on the
+      If set to ``unix://path``, BitBake will connect to an existing
+      hash server available over a UNIX domain socket.
+
+      If set to ``host:port``, BitBake will connect to a remote server on the
       specified host. This allows multiple clients to share the same
       hash equivalence data.
+
+      The remote server can be started manually through
+      the ``bin/bitbake-hashserv`` script provided by BitBake,
+      which supports UNIX domain sockets too.
+
+   :term:`BB_HASHSERVE_UPSTREAM`
+      Specifies an upstream Hash Equivalence server.
+
+      This optional setting is only useful when a local Hash Equivalence
+      server is started (setting :term:`BB_HASHSERVE` to ``auto``),
+      and you wish the local server to query an upstream server for
+      Hash Equivalence data.
+
+      Example usage::
+
+         BB_HASHSERVE_UPSTREAM = "typhoon.yocto.io:8687"
 
    :term:`BB_INVALIDCONF`
       Used in combination with the ``ConfigParsed`` event to trigger
