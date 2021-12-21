@@ -27,6 +27,7 @@ import errno
 import signal
 import collections
 import copy
+import ctypes
 from subprocess import getstatusoutput
 from contextlib import contextmanager
 from ctypes import cdll
@@ -1594,6 +1595,36 @@ def set_process_name(name):
         libc.prctl(15, byref(buf), 0, 0, 0)
     except:
         pass
+
+def disable_network(uid=None, gid=None):
+    """
+    Disable networking in the current process if the kernel supports it, else
+    just return after logging to debug. To do this we need to create a new user
+    namespace, then map back to the original uid/gid.
+    """
+    libc = ctypes.CDLL('libc.so.6')
+
+    # From sched.h
+    # New user namespace
+    CLONE_NEWUSER = 0x10000000
+    # New network namespace
+    CLONE_NEWNET = 0x40000000
+
+    if uid is None:
+        uid = os.getuid()
+    if gid is None:
+        gid = os.getgid()
+
+    ret = libc.unshare(CLONE_NEWNET | CLONE_NEWUSER)
+    if ret != 0:
+        logger.debug("System doesn't suport disabling network without admin privs")
+        return
+    with open("/proc/self/uid_map", "w") as f:
+        f.write("%s %s 1" % (uid, uid))
+    with open("/proc/self/setgroups", "w") as f:
+        f.write("deny")
+    with open("/proc/self/gid_map", "w") as f:
+        f.write("%s %s 1" % (gid, gid))
 
 def export_proxies(d):
     """ export common proxies variables from datastore to environment """
