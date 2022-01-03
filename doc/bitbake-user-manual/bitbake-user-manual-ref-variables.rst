@@ -386,7 +386,10 @@ overview of their function and contents.
 
       The remote server can be started manually through
       the ``bin/bitbake-hashserv`` script provided by BitBake,
-      which supports UNIX domain sockets too.
+      which supports UNIX domain sockets too. This script also allows
+      to start the server in read-only mode, to avoid accepting
+      equivalences that correspond to Share State caches that are
+      only available on specific clients.
 
    :term:`BB_HASHSERVE_UPSTREAM`
       Specifies an upstream Hash Equivalence server.
