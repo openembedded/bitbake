@@ -1019,6 +1019,11 @@ class BBCooker:
         if matches:
             bb.event.fire(bb.event.FilesMatchingFound(filepattern, matches), self.data)
 
+    def testCookerCommandEvent(self, filepattern):
+        # Dummy command used by OEQA selftest to test tinfoil without IO
+        matches = ["A", "B"]
+        bb.event.fire(bb.event.FilesMatchingFound(filepattern, matches), self.data)
+
     def findProviders(self, mc=''):
         return bb.providers.findProviders(self.databuilder.mcdata[mc], self.recipecaches[mc], self.recipecaches[mc].pkg_pn)
 
