@@ -385,7 +385,6 @@ class RunQueueData:
         self.rq = rq
         self.warn_multi_bb = False
 
-        self.stampwhitelist = cfgData.getVar("BB_STAMP_WHITELIST") or ""
         self.multi_provider_whitelist = (cfgData.getVar("MULTI_PROVIDER_WHITELIST") or "").split()
         self.setscenewhitelist = get_setscene_enforce_whitelist(cfgData, targets)
         self.setscenewhitelist_checked = False
@@ -1128,17 +1127,6 @@ class RunQueueData:
                     logger.error("".join(msgs))
 
         self.init_progress_reporter.next_stage()
-
-        # Create a whitelist usable by the stamp checks
-        self.stampfnwhitelist = {}
-        for mc in self.taskData:
-            self.stampfnwhitelist[mc] = []
-            for entry in self.stampwhitelist.split():
-                if entry not in self.taskData[mc].build_targets:
-                    continue
-                fn = self.taskData.build_targets[entry][0]
-                self.stampfnwhitelist[mc].append(fn)
-
         self.init_progress_reporter.next_stage()
 
         # Iterate over the task list looking for tasks with a 'setscene' function
@@ -1227,7 +1215,6 @@ class RunQueue:
         self.cfgData = cfgData
         self.rqdata = RunQueueData(self, cooker, cfgData, dataCaches, taskData, targets)
 
-        self.stamppolicy = cfgData.getVar("BB_STAMP_POLICY") or "perfile"
         self.hashvalidate = cfgData.getVar("BB_HASHCHECK_FUNCTION") or None
         self.depvalidate = cfgData.getVar("BB_SETSCENE_DEPVALID") or None
 
@@ -1356,14 +1343,6 @@ class RunQueue:
         if taskname is None:
             taskname = tn
 
-        if self.stamppolicy == "perfile":
-            fulldeptree = False
-        else:
-            fulldeptree = True
-            stampwhitelist = []
-            if self.stamppolicy == "whitelist":
-                stampwhitelist = self.rqdata.stampfnwhitelist[mc]
-
         stampfile = bb.build.stampfile(taskname, self.rqdata.dataCaches[mc], taskfn)
 
         # If the stamp is missing, it's not current
@@ -1395,7 +1374,7 @@ class RunQueue:
                     continue
                 if t3 and t3 > t2:
                     continue
-                if fn == fn2 or (fulldeptree and fn2 not in stampwhitelist):
+                if fn == fn2:
                     if not t2:
                         logger.debug2('Stampfile %s does not exist', stampfile2)
                         iscurrent = False
