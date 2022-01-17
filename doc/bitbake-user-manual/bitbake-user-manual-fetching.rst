@@ -396,6 +396,19 @@ This fetcher supports the following parameters:
    protocol is "file". You can also use "http", "https", "ssh" and
    "rsync".
 
+   .. note::
+
+     When ``protocol`` is "ssh", the URL expected in :term:`SRC_URI` differs
+     from the one that is typically passed to ``git clone`` command and provided
+     by the Git server to fetch from. For example, the URL returned by GitLab
+     server for ``mesa`` when cloning over SSH is
+     ``git@gitlab.freedesktop.org:mesa/mesa.git``, however the expected URL in
+     :term:`SRC_URI` is the following::
+
+       SRC_URI = "git://git@gitlab.freedesktop.org/mesa/mesa.git;protocol=ssh;..."
+
+     Note the ``:`` character changed for a ``/`` before the path to the project.
+
 -  *"nocheckout":* Tells the fetcher to not checkout source code when
    unpacking when set to "1". Set this option for the URL where there is
    a custom routine to checkout code. The default is "0".
@@ -446,6 +459,7 @@ Here are some example URLs::
 
    SRC_URI = "git://git.oe.handhelds.org/git/vip.git;tag=version-1"
    SRC_URI = "git://git.oe.handhelds.org/git/vip.git;protocol=http"
+   SRC_URI = "git://git@gitlab.freedesktop.org/mesa/mesa.git;protocol=ssh;..."
 
 .. note::
 
