@@ -549,29 +549,6 @@ overview of their function and contents.
       -  *clear* - Queries the source controls system every time. With this
          policy, there is no cache. The "clear" policy is the default.
 
-   :term:`BB_STAMP_POLICY`
-      Defines the mode used for how timestamps of stamp files are compared.
-      You can set the variable to one of the following modes:
-
-      -  *perfile* - Timestamp comparisons are only made between timestamps
-         of a specific recipe. This is the default mode.
-
-      -  *full* - Timestamp comparisons are made for all dependencies.
-
-      -  *whitelist* - Identical to "full" mode except timestamp
-         comparisons are made for recipes listed in the
-         :term:`BB_STAMP_WHITELIST` variable.
-
-      .. note::
-
-         Stamp policies are largely obsolete with the introduction of
-         setscene tasks.
-
-   :term:`BB_STAMP_WHITELIST`
-      Lists files whose stamp file timestamps are compared when the stamp
-      policy mode is set to "whitelist". For information on stamp policies,
-      see the :term:`BB_STAMP_POLICY` variable.
-
    :term:`BB_STRICT_CHECKSUM`
       Sets a more strict checksum mechanism for non-local URLs. Setting
       this variable to a value causes BitBake to report an error if it

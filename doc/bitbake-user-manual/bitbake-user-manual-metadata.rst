@@ -1921,12 +1921,6 @@ The following list describes related variables:
    Specifies a function BitBake calls that determines whether BitBake
    requires a setscene dependency to be met.
 
--  :term:`BB_STAMP_POLICY`: Defines the mode
-   for comparing timestamps of stamp files.
-
--  :term:`BB_STAMP_WHITELIST`: Lists stamp
-   files that are looked at when the stamp policy is "whitelist".
-
 -  :term:`BB_TASKHASH`: Within an executing task,
    this variable holds the hash of the task as returned by the currently
    enabled signature generator.
