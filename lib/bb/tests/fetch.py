@@ -2260,6 +2260,41 @@ class GitURLWithSpacesTest(FetcherTest):
             self.assertEqual(ud.clonedir, os.path.join(self.dldir, "git2", ref['gitsrcname']))
             self.assertEqual(ud.fullmirror, os.path.join(self.dldir, "git2_" + ref['gitsrcname'] + '.tar.gz'))
 
+class CrateTest(FetcherTest):
+    def test_crate_url(self):
+
+        uri = "crate://crates.io/glob/0.2.11"
+        self.d.setVar('SRC_URI', uri)
+
+        uris = self.d.getVar('SRC_URI').split()
+        d = self.d
+
+        fetcher = bb.fetch2.Fetch(uris, self.d)
+        fetcher.download()
+        fetcher.unpack(self.tempdir)
+        self.assertEqual(sorted(os.listdir(self.tempdir)), ['cargo_home', 'download' , 'unpacked'])
+        self.assertEqual(sorted(os.listdir(self.tempdir + "/download")), ['glob-0.2.11.crate', 'glob-0.2.11.crate.done'])
+        self.assertTrue(os.path.exists(self.tempdir + "/cargo_home/bitbake/glob-0.2.11/.cargo-checksum.json"))
+        self.assertTrue(os.path.exists(self.tempdir + "/cargo_home/bitbake/glob-0.2.11/src/lib.rs"))
+
+    def test_crate_url_multi(self):
+
+        uri = "crate://crates.io/glob/0.2.11 crate://crates.io/time/0.1.35"
+        self.d.setVar('SRC_URI', uri)
+
+        uris = self.d.getVar('SRC_URI').split()
+        d = self.d
+
+        fetcher = bb.fetch2.Fetch(uris, self.d)
+        fetcher.download()
+        fetcher.unpack(self.tempdir)
+        self.assertEqual(sorted(os.listdir(self.tempdir)), ['cargo_home', 'download' , 'unpacked'])
+        self.assertEqual(sorted(os.listdir(self.tempdir + "/download")), ['glob-0.2.11.crate', 'glob-0.2.11.crate.done', 'time-0.1.35.crate', 'time-0.1.35.crate.done'])
+        self.assertTrue(os.path.exists(self.tempdir + "/cargo_home/bitbake/glob-0.2.11/.cargo-checksum.json"))
+        self.assertTrue(os.path.exists(self.tempdir + "/cargo_home/bitbake/glob-0.2.11/src/lib.rs"))
+        self.assertTrue(os.path.exists(self.tempdir + "/cargo_home/bitbake/time-0.1.35/.cargo-checksum.json"))
+        self.assertTrue(os.path.exists(self.tempdir + "/cargo_home/bitbake/time-0.1.35/src/lib.rs"))
+
 class NPMTest(FetcherTest):
     def skipIfNoNpm():
         import shutil

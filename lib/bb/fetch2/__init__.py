@@ -1942,6 +1942,7 @@ from . import clearcase
 from . import npm
 from . import npmsw
 from . import az
+from . import crate
 
 methods.append(local.Local())
 methods.append(wget.Wget())
@@ -1962,3 +1963,4 @@ methods.append(clearcase.ClearCase())
 methods.append(npm.Npm())
 methods.append(npmsw.NpmShrinkWrap())
 methods.append(az.Az())
+methods.append(crate.Crate())
