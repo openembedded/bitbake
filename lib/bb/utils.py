@@ -1735,3 +1735,19 @@ def environment(**envvars):
                 os.environ[var] = backup[var]
             else:
                 del os.environ[var]
+
+def is_local_uid(uid=''):
+    """
+    Check whether uid is a local one or not.
+    Can't use pwd module since it gets all UIDs, not local ones only.
+    """
+    if not uid:
+        uid = os.getuid()
+    with open('/etc/passwd', 'r') as f:
+        for line in f:
+            line_split = line.split(':')
+            if len(line_split) < 3:
+                continue
+            if str(uid) == line_split[2]:
+                return True
+    return False
