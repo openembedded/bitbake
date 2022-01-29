@@ -1179,10 +1179,10 @@ overview of their function and contents.
       your configuration::
 
          PREMIRRORS:prepend = "\
-         git://.*/.* http://downloads.yoctoproject.org/mirror/sources/ \n \
-         ftp://.*/.* http://downloads.yoctoproject.org/mirror/sources/ \n \
-         http://.*/.* http://downloads.yoctoproject.org/mirror/sources/ \n \
-         https://.*/.* http://downloads.yoctoproject.org/mirror/sources/ \n"
+         git://.*/.* http://downloads.yoctoproject.org/mirror/sources/ \
+         ftp://.*/.* http://downloads.yoctoproject.org/mirror/sources/ \
+         http://.*/.* http://downloads.yoctoproject.org/mirror/sources/ \
+         https://.*/.* http://downloads.yoctoproject.org/mirror/sources/"
 
       These changes cause the build system to intercept Git, FTP, HTTP, and
       HTTPS requests and direct them to the ``http://`` sources mirror. You can
