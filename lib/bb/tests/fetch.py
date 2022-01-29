@@ -393,6 +393,15 @@ class FetcherTest(unittest.TestCase):
             bb.process.run('chmod u+rw -R %s' % self.tempdir)
             bb.utils.prunedir(self.tempdir)
 
+    def git(self, cmd, cwd=None):
+        if isinstance(cmd, str):
+            cmd = 'git ' + cmd
+        else:
+            cmd = ['git'] + cmd
+        if cwd is None:
+            cwd = self.gitdir
+        return bb.process.run(cmd, cwd=cwd)[0]
+
 class MirrorUriTest(FetcherTest):
 
     replaceuris = {
@@ -699,28 +708,24 @@ class FetcherLocalTest(FetcherTest):
         # Create dummy local Git repo
         src_dir = tempfile.mkdtemp(dir=self.tempdir,
                                    prefix='gitfetch_localusehead_')
-        src_dir = os.path.abspath(src_dir)
-        bb.process.run("git init", cwd=src_dir)
-        bb.process.run("git config user.email 'you@example.com'", cwd=src_dir)
-        bb.process.run("git config user.name 'Your Name'", cwd=src_dir)
-        bb.process.run("git commit --allow-empty -m'Dummy commit'",
-                       cwd=src_dir)
+        self.gitdir = os.path.abspath(src_dir)
+        self.git('init')
+        self.git('config user.email "you@example.com"')
+        self.git('config user.name "Your Name"')
+        self.git(['commit', '--allow-empty', '-m', 'Dummy commit'])
         # Use other branch than master
-        bb.process.run("git checkout -b my-devel", cwd=src_dir)
-        bb.process.run("git commit --allow-empty -m'Dummy commit 2'",
-                       cwd=src_dir)
-        stdout = bb.process.run("git rev-parse HEAD", cwd=src_dir)
-        orig_rev = stdout[0].strip()
+        self.git(['checkout', '-b', 'my-devel'])
+        self.git(['commit', '--allow-empty', '-m', 'Dummy commit 2'])
+        orig_rev = self.git(['rev-parse', 'HEAD']).strip()
 
         # Fetch and check revision
         self.d.setVar("SRCREV", "AUTOINC")
-        url = "git://" + src_dir + ";protocol=file;" + suffix
+        url = "git://" + self.gitdir + ";protocol=file;" + suffix
         fetcher = bb.fetch.Fetch([url], self.d)
         fetcher.download()
         fetcher.unpack(self.unpackdir)
-        stdout = bb.process.run("git rev-parse HEAD",
-                                cwd=os.path.join(self.unpackdir, 'git'))
-        unpack_rev = stdout[0].strip()
+        unpack_rev = self.git(['rev-parse', 'HEAD'],
+                              cwd=os.path.join(self.unpackdir, 'git')).strip()
         self.assertEqual(orig_rev, unpack_rev)
 
     def test_local_gitfetch_usehead(self):
@@ -920,7 +925,8 @@ class FetcherNetworkTest(FetcherTest):
     def gitfetcher(self, url1, url2):
         def checkrevision(self, fetcher):
             fetcher.unpack(self.unpackdir)
-            revision = bb.process.run("git rev-parse HEAD", shell=True, cwd=self.unpackdir + "/git")[0].strip()
+            revision = self.git(['rev-parse', 'HEAD'],
+                                cwd=os.path.join(self.unpackdir, 'git')).strip()
             self.assertEqual(revision, "270a05b0b4ba0959fe0624d2a4885d7b70426da5")
 
         self.d.setVar("BB_GENERATE_MIRROR_TARBALLS", "1")
@@ -996,7 +1002,7 @@ class FetcherNetworkTest(FetcherTest):
         recipeurl = "git://someserver.org/bitbake"
         self.sourcedir = self.unpackdir.replace("unpacked", "sourcemirror.git")
         os.chdir(self.tempdir)
-        bb.process.run("git clone %s %s 2> /dev/null" % (realurl, self.sourcedir), shell=True)
+        self.git(['clone', realurl, self.sourcedir], cwd=self.tempdir)
         self.d.setVar("PREMIRRORS", "%s git://%s;protocol=file" % (recipeurl, self.sourcedir))
         self.gitfetcher(recipeurl, recipeurl)
 
@@ -1437,9 +1443,9 @@ class GitMakeShallowTest(FetcherTest):
         FetcherTest.setUp(self)
         self.gitdir = os.path.join(self.tempdir, 'gitshallow')
         bb.utils.mkdirhier(self.gitdir)
-        bb.process.run('git init', cwd=self.gitdir)
-        bb.process.run('git config user.email "you@example.com"', cwd=self.gitdir)
-        bb.process.run('git config user.name "Your Name"', cwd=self.gitdir)
+        self.git('init')
+        self.git('config user.email "you@example.com"')
+        self.git('config user.name "Your Name"')
 
     def assertRefs(self, expected_refs):
         actual_refs = self.git(['for-each-ref', '--format=%(refname)']).splitlines()
@@ -1452,13 +1458,6 @@ class GitMakeShallowTest(FetcherTest):
         revs = self.git(['rev-list'] + args)
         actual_count = len(revs.splitlines())
         self.assertEqual(expected_count, actual_count, msg='Object count `%d` is not the expected `%d`' % (actual_count, expected_count))
-
-    def git(self, cmd):
-        if isinstance(cmd, str):
-            cmd = 'git ' + cmd
-        else:
-            cmd = ['git'] + cmd
-        return bb.process.run(cmd, cwd=self.gitdir)[0]
 
     def make_shallow(self, args=None):
         if args is None:
@@ -1594,15 +1593,6 @@ class GitShallowTest(FetcherTest):
         revs = self.git(['rev-list'] + args, cwd=cwd)
         actual_count = len(revs.splitlines())
         self.assertEqual(expected_count, actual_count, msg='Object count `%d` is not the expected `%d`' % (actual_count, expected_count))
-
-    def git(self, cmd, cwd=None):
-        if isinstance(cmd, str):
-            cmd = 'git ' + cmd
-        else:
-            cmd = ['git'] + cmd
-        if cwd is None:
-            cwd = self.gitdir
-        return bb.process.run(cmd, cwd=cwd)[0]
 
     def add_empty_file(self, path, cwd=None, msg=None):
         if msg is None:
@@ -2140,7 +2130,7 @@ class GitLfsTest(FetcherTest):
 
         self.gitdir = os.path.join(self.tempdir, 'git')
         self.srcdir = os.path.join(self.tempdir, 'gitsource')
-        
+
         self.d.setVar('WORKDIR', self.tempdir)
         self.d.setVar('S', self.gitdir)
         self.d.delVar('PREMIRRORS')
@@ -2157,15 +2147,6 @@ class GitLfsTest(FetcherTest):
             attrs.write('*.mp3 filter=lfs -text')
         self.git(['add', '.gitattributes'], cwd=self.srcdir)
         self.git(['commit', '-m', "attributes", '.gitattributes'], cwd=self.srcdir)
-
-    def git(self, cmd, cwd=None):
-        if isinstance(cmd, str):
-            cmd = 'git ' + cmd
-        else:
-            cmd = ['git'] + cmd
-        if cwd is None:
-            cwd = self.gitdir
-        return bb.process.run(cmd, cwd=cwd)[0]
 
     def fetch(self, uri=None, download=True):
         uris = self.d.getVar('SRC_URI').split()
