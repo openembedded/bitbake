@@ -473,10 +473,13 @@ def uri_replace(ud, uri_find, uri_replace, replacements, d, mirrortarball=None):
                     basename = os.path.basename(ud.localpath)
                 if basename:
                     uri_basename = os.path.basename(uri_decoded[loc])
-                    if uri_basename and basename != uri_basename and result_decoded[loc].endswith(uri_basename):
-                        result_decoded[loc] = result_decoded[loc].replace(uri_basename, basename)
-                    elif not result_decoded[loc].endswith(basename):
-                        result_decoded[loc] = os.path.join(result_decoded[loc], basename)
+                    # Prefix with a slash as a sentinel in case
+                    # result_decoded[loc] does not contain one.
+                    path = "/" + result_decoded[loc]
+                    if uri_basename and basename != uri_basename and path.endswith("/" + uri_basename):
+                        result_decoded[loc] = path[1:-len(uri_basename)] + basename
+                    elif not path.endswith("/" + basename):
+                        result_decoded[loc] = os.path.join(path[1:], basename)
         else:
             return None
     result = encodeurl(result_decoded)
