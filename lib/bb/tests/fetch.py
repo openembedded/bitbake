@@ -402,6 +402,13 @@ class FetcherTest(unittest.TestCase):
             cwd = self.gitdir
         return bb.process.run(cmd, cwd=cwd)[0]
 
+    def git_init(self, cwd=None):
+        self.git('init', cwd=cwd)
+        if not self.git(['config', 'user.email'], cwd=cwd):
+            self.git(['config', 'user.email', 'you@example.com'], cwd=cwd)
+        if not self.git(['config', 'user.name'], cwd=cwd):
+            self.git(['config', 'user.name', 'Your Name'], cwd=cwd)
+
 class MirrorUriTest(FetcherTest):
 
     replaceuris = {
@@ -709,9 +716,7 @@ class FetcherLocalTest(FetcherTest):
         src_dir = tempfile.mkdtemp(dir=self.tempdir,
                                    prefix='gitfetch_localusehead_')
         self.gitdir = os.path.abspath(src_dir)
-        self.git('init')
-        self.git('config user.email "you@example.com"')
-        self.git('config user.name "Your Name"')
+        self.git_init()
         self.git(['commit', '--allow-empty', '-m', 'Dummy commit'])
         # Use other branch than master
         self.git(['checkout', '-b', 'my-devel'])
@@ -1443,9 +1448,7 @@ class GitMakeShallowTest(FetcherTest):
         FetcherTest.setUp(self)
         self.gitdir = os.path.join(self.tempdir, 'gitshallow')
         bb.utils.mkdirhier(self.gitdir)
-        self.git('init')
-        self.git('config user.email "you@example.com"')
-        self.git('config user.name "Your Name"')
+        self.git_init()
 
     def assertRefs(self, expected_refs):
         actual_refs = self.git(['for-each-ref', '--format=%(refname)']).splitlines()
@@ -1561,9 +1564,7 @@ class GitShallowTest(FetcherTest):
         self.srcdir = os.path.join(self.tempdir, 'gitsource')
 
         bb.utils.mkdirhier(self.srcdir)
-        self.git('init', cwd=self.srcdir)
-        self.git('config user.email "you@example.com"', cwd=self.srcdir)
-        self.git('config user.name "Your Name"', cwd=self.srcdir)
+        self.git_init(cwd=self.srcdir)
         self.d.setVar('WORKDIR', self.tempdir)
         self.d.setVar('S', self.gitdir)
         self.d.delVar('PREMIRRORS')
@@ -1788,9 +1789,7 @@ class GitShallowTest(FetcherTest):
 
         smdir = os.path.join(self.tempdir, 'gitsubmodule')
         bb.utils.mkdirhier(smdir)
-        self.git('init', cwd=smdir)
-        self.git('config user.email "you@example.com"', cwd=smdir)
-        self.git('config user.name "Your Name"', cwd=smdir)
+        self.git_init(cwd=smdir)
         # Make this look like it was cloned from a remote...
         self.git('config --add remote.origin.url "%s"' % smdir, cwd=smdir)
         self.git('config --add remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"', cwd=smdir)
@@ -1820,9 +1819,7 @@ class GitShallowTest(FetcherTest):
 
         smdir = os.path.join(self.tempdir, 'gitsubmodule')
         bb.utils.mkdirhier(smdir)
-        self.git('init', cwd=smdir)
-        self.git('config user.email "you@example.com"', cwd=smdir)
-        self.git('config user.name "Your Name"', cwd=smdir)
+        self.git_init(cwd=smdir)
         # Make this look like it was cloned from a remote...
         self.git('config --add remote.origin.url "%s"' % smdir, cwd=smdir)
         self.git('config --add remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"', cwd=smdir)
@@ -2140,9 +2137,7 @@ class GitLfsTest(FetcherTest):
         self.d.setVar('AUTOREV', '${@bb.fetch2.get_autorev(d)}')
 
         bb.utils.mkdirhier(self.srcdir)
-        self.git('init', cwd=self.srcdir)
-        self.git('config user.email "you@example.com"', cwd=self.srcdir)
-        self.git('config user.name "Your Name"', cwd=self.srcdir)
+        self.git_init(cwd=self.srcdir)
         with open(os.path.join(self.srcdir, '.gitattributes'), 'wt') as attrs:
             attrs.write('*.mp3 filter=lfs -text')
         self.git(['add', '.gitattributes'], cwd=self.srcdir)
