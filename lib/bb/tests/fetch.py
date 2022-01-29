@@ -442,10 +442,10 @@ class MirrorUriTest(FetcherTest):
         #("file://sstate-xyz.tgz", "file://.*/.*", "file:///somewhere/1234/sstate-cache") : "file:///somewhere/1234/sstate-cache/sstate-xyz.tgz",
     }
 
-    mirrorvar = "http://.*/.* file:///somepath/downloads/ \n" \
-                "git://someserver.org/bitbake git://git.openembedded.org/bitbake \n" \
-                "https://.*/.* file:///someotherpath/downloads/ \n" \
-                "http://.*/.* file:///someotherpath/downloads/ \n"
+    mirrorvar = "http://.*/.* file:///somepath/downloads/ " \
+                "git://someserver.org/bitbake git://git.openembedded.org/bitbake " \
+                "https://.*/.* file:///someotherpath/downloads/ " \
+                "http://.*/.* file:///someotherpath/downloads/"
 
     def test_urireplace(self):
         for k, v in self.replaceuris.items():
@@ -470,8 +470,8 @@ class MirrorUriTest(FetcherTest):
 
     def test_mirror_of_mirror(self):
         # Test if mirror of a mirror works
-        mirrorvar = self.mirrorvar + " http://.*/.* http://otherdownloads.yoctoproject.org/downloads/ \n"
-        mirrorvar = mirrorvar + " http://otherdownloads.yoctoproject.org/.* http://downloads2.yoctoproject.org/downloads/ \n"
+        mirrorvar = self.mirrorvar + " http://.*/.* http://otherdownloads.yoctoproject.org/downloads/"
+        mirrorvar = mirrorvar + " http://otherdownloads.yoctoproject.org/.* http://downloads2.yoctoproject.org/downloads/"
         fetcher = bb.fetch.FetchData("http://downloads.yoctoproject.org/releases/bitbake/bitbake-1.0.tar.gz", self.d)
         mirrors = bb.fetch2.mirror_from_string(mirrorvar)
         uris, uds = bb.fetch2.build_mirroruris(fetcher, mirrors, self.d)
@@ -480,8 +480,8 @@ class MirrorUriTest(FetcherTest):
                                 'http://otherdownloads.yoctoproject.org/downloads/bitbake-1.0.tar.gz',
                                 'http://downloads2.yoctoproject.org/downloads/bitbake-1.0.tar.gz'])
 
-    recmirrorvar = "https://.*/[^/]*    http://AAAA/A/A/A/ \n" \
-                   "https://.*/[^/]*    https://BBBB/B/B/B/ \n"
+    recmirrorvar = "https://.*/[^/]*    http://AAAA/A/A/A/ " \
+                   "https://.*/[^/]*    https://BBBB/B/B/B/"
 
     def test_recursive(self):
         fetcher = bb.fetch.FetchData("https://downloads.yoctoproject.org/releases/bitbake/bitbake-1.0.tar.gz", self.d)
@@ -503,7 +503,7 @@ class GitDownloadDirectoryNamingTest(FetcherTest):
         self.d.setVar('SRCREV', '82ea737a0b42a8b53e11c9cde141e9e9c0bd8c40')
 
     def setup_mirror_rewrite(self):
-        self.d.setVar("PREMIRRORS", self.recipe_url + " " + self.mirror_url + " \n")
+        self.d.setVar("PREMIRRORS", self.recipe_url + " " + self.mirror_url)
 
     @skipIfNoNetwork()
     def test_that_directory_is_named_after_recipe_url_when_no_mirroring_is_used(self):
@@ -552,7 +552,7 @@ class TarballNamingTest(FetcherTest):
         self.d.setVar('SRCREV', '82ea737a0b42a8b53e11c9cde141e9e9c0bd8c40')
 
     def setup_mirror_rewrite(self):
-        self.d.setVar("PREMIRRORS", self.recipe_url + " " + self.mirror_url + " \n")
+        self.d.setVar("PREMIRRORS", self.recipe_url + " " + self.mirror_url)
 
     @skipIfNoNetwork()
     def test_that_the_recipe_tarball_is_created_when_no_mirroring_is_used(self):
@@ -587,7 +587,7 @@ class GitShallowTarballNamingTest(FetcherTest):
         self.d.setVar('SRCREV', '82ea737a0b42a8b53e11c9cde141e9e9c0bd8c40')
 
     def setup_mirror_rewrite(self):
-        self.d.setVar("PREMIRRORS", self.recipe_url + " " + self.mirror_url + " \n")
+        self.d.setVar("PREMIRRORS", self.recipe_url + " " + self.mirror_url)
 
     @skipIfNoNetwork()
     def test_that_the_tarball_is_named_after_recipe_url_when_no_mirroring_is_used(self):
@@ -867,14 +867,14 @@ class FetcherNetworkTest(FetcherTest):
 
     @skipIfNoNetwork()
     def test_fetch_mirror_of_mirror(self):
-        self.d.setVar("MIRRORS", "http://.*/.* http://invalid2.yoctoproject.org/ \n http://invalid2.yoctoproject.org/.* https://downloads.yoctoproject.org/releases/bitbake")
+        self.d.setVar("MIRRORS", "http://.*/.* http://invalid2.yoctoproject.org/ http://invalid2.yoctoproject.org/.* https://downloads.yoctoproject.org/releases/bitbake")
         fetcher = bb.fetch.Fetch(["http://invalid.yoctoproject.org/releases/bitbake/bitbake-1.0.tar.gz"], self.d)
         fetcher.download()
         self.assertEqual(os.path.getsize(self.dldir + "/bitbake-1.0.tar.gz"), 57749)
 
     @skipIfNoNetwork()
     def test_fetch_file_mirror_of_mirror(self):
-        self.d.setVar("MIRRORS", "http://.*/.* file:///some1where/ \n file:///some1where/.* file://some2where/ \n file://some2where/.* https://downloads.yoctoproject.org/releases/bitbake")
+        self.d.setVar("MIRRORS", "http://.*/.* file:///some1where/ file:///some1where/.* file://some2where/ file://some2where/.* https://downloads.yoctoproject.org/releases/bitbake")
         fetcher = bb.fetch.Fetch(["http://invalid.yoctoproject.org/releases/bitbake/bitbake-1.0.tar.gz"], self.d)
         os.mkdir(self.dldir + "/some2where")
         fetcher.download()
@@ -981,13 +981,13 @@ class FetcherNetworkTest(FetcherTest):
     def test_gitfetch_finds_local_tarball_for_mirrored_url_when_previous_downloaded_by_the_recipe_url(self):
         recipeurl = "git://git.openembedded.org/bitbake"
         mirrorurl = "git://someserver.org/bitbake"
-        self.d.setVar("PREMIRRORS", "git://someserver.org/bitbake git://git.openembedded.org/bitbake \n")
+        self.d.setVar("PREMIRRORS", "git://someserver.org/bitbake git://git.openembedded.org/bitbake")
         self.gitfetcher(recipeurl, mirrorurl)
 
     @skipIfNoNetwork()
     def test_gitfetch_finds_local_tarball_when_previous_downloaded_from_a_premirror(self):
         recipeurl = "git://someserver.org/bitbake"
-        self.d.setVar("PREMIRRORS", "git://someserver.org/bitbake git://git.openembedded.org/bitbake \n")
+        self.d.setVar("PREMIRRORS", "git://someserver.org/bitbake git://git.openembedded.org/bitbake")
         self.gitfetcher(recipeurl, recipeurl)
 
     @skipIfNoNetwork()
@@ -997,7 +997,7 @@ class FetcherNetworkTest(FetcherTest):
         self.sourcedir = self.unpackdir.replace("unpacked", "sourcemirror.git")
         os.chdir(self.tempdir)
         bb.process.run("git clone %s %s 2> /dev/null" % (realurl, self.sourcedir), shell=True)
-        self.d.setVar("PREMIRRORS", "%s git://%s;protocol=file \n" % (recipeurl, self.sourcedir))
+        self.d.setVar("PREMIRRORS", "%s git://%s;protocol=file" % (recipeurl, self.sourcedir))
         self.gitfetcher(recipeurl, recipeurl)
 
     @skipIfNoNetwork()
@@ -1852,7 +1852,7 @@ class GitShallowTest(FetcherTest):
         # Set up the mirror
         mirrordir = os.path.join(self.tempdir, 'mirror')
         bb.utils.rename(self.dldir, mirrordir)
-        self.d.setVar('PREMIRRORS', 'gitsm://.*/.* file://%s/\n' % mirrordir)
+        self.d.setVar('PREMIRRORS', 'gitsm://.*/.* file://%s/' % mirrordir)
 
         # Fetch from the mirror
         bb.utils.remove(self.dldir, recurse=True)
@@ -1967,7 +1967,7 @@ class GitShallowTest(FetcherTest):
         # Set up the mirror
         mirrordir = os.path.join(self.tempdir, 'mirror')
         bb.utils.mkdirhier(mirrordir)
-        self.d.setVar('PREMIRRORS', 'git://.*/.* file://%s/\n' % mirrordir)
+        self.d.setVar('PREMIRRORS', 'git://.*/.* file://%s/' % mirrordir)
 
         bb.utils.rename(os.path.join(self.dldir, mirrortarball),
                   os.path.join(mirrordir, mirrortarball))
@@ -2349,7 +2349,7 @@ class NPMTest(FetcherTest):
         mirrordir = os.path.join(self.tempdir, 'mirror')
         bb.utils.mkdirhier(mirrordir)
         os.replace(ud.localpath, os.path.join(mirrordir, pkgname))
-        self.d.setVar('PREMIRRORS', 'https?$://.*/.* file://%s/\n' % mirrordir)
+        self.d.setVar('PREMIRRORS', 'https?$://.*/.* file://%s/' % mirrordir)
         self.d.setVar('BB_FETCH_PREMIRRORONLY', '1')
         # Fetch again
         self.assertFalse(os.path.exists(ud.localpath))
@@ -2370,7 +2370,7 @@ class NPMTest(FetcherTest):
         bb.utils.mkdirhier(mirrordir)
         mirrorfilename = os.path.join(mirrordir, os.path.basename(ud.localpath))
         os.replace(ud.localpath, mirrorfilename)
-        self.d.setVar('PREMIRRORS', 'https?$://.*/.* file://%s\n' % mirrorfilename)
+        self.d.setVar('PREMIRRORS', 'https?$://.*/.* file://%s' % mirrorfilename)
         self.d.setVar('BB_FETCH_PREMIRRORONLY', '1')
         # Fetch again
         self.assertFalse(os.path.exists(ud.localpath))
@@ -2390,7 +2390,7 @@ class NPMTest(FetcherTest):
         mirrordir = os.path.join(self.tempdir, 'mirror')
         bb.utils.mkdirhier(mirrordir)
         os.replace(ud.localpath, os.path.join(mirrordir, os.path.basename(ud.localpath)))
-        self.d.setVar('MIRRORS', 'https?$://.*/.* file://%s/\n' % mirrordir)
+        self.d.setVar('MIRRORS', 'https?$://.*/.* file://%s/' % mirrordir)
         # Update the resolved url to an invalid url
         with open(ud.resolvefile, 'r') as f:
             url = f.read()
@@ -2706,7 +2706,7 @@ class NPMTest(FetcherTest):
         mirrordir = os.path.join(self.tempdir, 'mirror')
         bb.utils.mkdirhier(mirrordir)
         os.replace(ud.localpath, os.path.join(mirrordir, os.path.basename(ud.localpath)))
-        self.d.setVar('PREMIRRORS', 'https?$://.*/.* file://%s/\n' % mirrordir)
+        self.d.setVar('PREMIRRORS', 'https?$://.*/.* file://%s/' % mirrordir)
         self.d.setVar('BB_FETCH_PREMIRRORONLY', '1')
         # Fetch again
         self.assertFalse(os.path.exists(ud.localpath))
@@ -2735,7 +2735,7 @@ class NPMTest(FetcherTest):
         mirrordir = os.path.join(self.tempdir, 'mirror')
         bb.utils.mkdirhier(mirrordir)
         os.replace(ud.localpath, os.path.join(mirrordir, os.path.basename(ud.localpath)))
-        self.d.setVar('MIRRORS', 'https?$://.*/.* file://%s/\n' % mirrordir)
+        self.d.setVar('MIRRORS', 'https?$://.*/.* file://%s/' % mirrordir)
         # Fetch again with invalid url
         self.assertFalse(os.path.exists(ud.localpath))
         swfile = self.create_shrinkwrap_file({
