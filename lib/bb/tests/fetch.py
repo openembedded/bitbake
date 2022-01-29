@@ -18,7 +18,7 @@ from bb.tests.support.httpserver import HTTPService
 
 def skipIfNoNetwork():
     if os.environ.get("BB_SKIP_NETTESTS") == "yes":
-        return unittest.skip("Network tests being skipped")
+        return unittest.skip("network test")
     return lambda f: f
 
 class URITest(unittest.TestCase):
@@ -2301,7 +2301,7 @@ class NPMTest(FetcherTest):
     def skipIfNoNpm():
         import shutil
         if not shutil.which('npm'):
-            return unittest.skip('npm not installed, tests being skipped')
+            return unittest.skip('npm not installed')
         return lambda f: f
 
     @skipIfNoNpm()
