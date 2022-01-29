@@ -2322,15 +2322,24 @@ class NPMTest(FetcherTest):
         ud = fetcher.ud[fetcher.urls[0]]
         fetcher.download()
         self.assertTrue(os.path.exists(ud.localpath))
-        # Setup the mirror
-        pkgname = os.path.basename(ud.proxy.urls[0].split(';')[0])
+
+        # Setup the mirror by renaming the download directory
         mirrordir = os.path.join(self.tempdir, 'mirror')
-        bb.utils.mkdirhier(mirrordir)
-        os.replace(ud.localpath, os.path.join(mirrordir, pkgname))
-        self.d.setVar('PREMIRRORS', 'https?$://.*/.* file://%s/' % mirrordir)
+        bb.utils.rename(self.dldir, mirrordir)
+        os.mkdir(self.dldir)
+
+        # Configure the premirror to be used
+        self.d.setVar('PREMIRRORS', 'https?$://.*/.* file://%s/npm2' % mirrordir)
         self.d.setVar('BB_FETCH_PREMIRRORONLY', '1')
+
         # Fetch again
         self.assertFalse(os.path.exists(ud.localpath))
+        # The npm fetcher doesn't handle that the .resolved file disappears
+        # while the fetcher object exists, which it does when we rename the
+        # download directory to "mirror" above. Thus we need a new fetcher to go
+        # with the now empty download directory.
+        fetcher = bb.fetch.Fetch([url], self.d)
+        ud = fetcher.ud[fetcher.urls[0]]
         fetcher.download()
         self.assertTrue(os.path.exists(ud.localpath))
 
