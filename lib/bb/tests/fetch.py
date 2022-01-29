@@ -2261,6 +2261,7 @@ class GitURLWithSpacesTest(FetcherTest):
             self.assertEqual(ud.fullmirror, os.path.join(self.dldir, "git2_" + ref['gitsrcname'] + '.tar.gz'))
 
 class CrateTest(FetcherTest):
+    @skipIfNoNetwork()
     def test_crate_url(self):
 
         uri = "crate://crates.io/glob/0.2.11"
@@ -2277,6 +2278,7 @@ class CrateTest(FetcherTest):
         self.assertTrue(os.path.exists(self.tempdir + "/cargo_home/bitbake/glob-0.2.11/.cargo-checksum.json"))
         self.assertTrue(os.path.exists(self.tempdir + "/cargo_home/bitbake/glob-0.2.11/src/lib.rs"))
 
+    @skipIfNoNetwork()
     def test_crate_url_multi(self):
 
         uri = "crate://crates.io/glob/0.2.11 crate://crates.io/time/0.1.35"
