@@ -258,12 +258,12 @@ class CookerDataBuilder(object):
         self.data = self.basedata
         self.mcdata = {}
 
-    def parseBaseConfiguration(self):
+    def parseBaseConfiguration(self, worker=False):
         data_hash = hashlib.sha256()
         try:
             self.data = self.parseConfigurationFiles(self.prefiles, self.postfiles)
 
-            if self.data.getVar("BB_WORKERCONTEXT", False) is None:
+            if self.data.getVar("BB_WORKERCONTEXT", False) is None and not worker:
                 bb.fetch.fetcher_init(self.data)
             bb.parse.init_parser(self.data)
             bb.codeparser.parser_cache_init(self.data)

@@ -440,7 +440,7 @@ class BitbakeWorker(object):
     def handle_cookercfg(self, data):
         self.cookercfg = pickle.loads(data)
         self.databuilder = bb.cookerdata.CookerDataBuilder(self.cookercfg, worker=True)
-        self.databuilder.parseBaseConfiguration()
+        self.databuilder.parseBaseConfiguration(worker=True)
         self.data = self.databuilder.data
 
     def handle_extraconfigdata(self, data):
