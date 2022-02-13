@@ -228,7 +228,7 @@ and then reload it.
 Where possible, subsequent BitBake commands reuse this cache of recipe
 information. The validity of this cache is determined by first computing
 a checksum of the base configuration data (see
-:term:`BB_HASHCONFIG_WHITELIST`) and
+:term:`BB_HASHCONFIG_IGNORE_VARS`) and
 then checking if the checksum matches. If that checksum matches what is
 in the cache and the recipe and class files have not changed, BitBake is
 able to use the cache. BitBake then reloads the cached information about

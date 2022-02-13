@@ -37,6 +37,7 @@ bitbake_renamed_vars = {
     "BB_ENV_WHITELIST": "BB_ENV_PASSTHROUGH",
     "BB_ENV_EXTRAWHITE": "BB_ENV_PASSTHROUGH_ADDITIONS",
     "BB_HASHBASE_WHITELIST": "BB_BASEHASH_IGNORE_VARS",
+    "BB_HASHCONFIG_WHITELIST": "BB_HASHCONFIG_IGNORE_VARS",
     "BB_HASHTASK_WHITELIST": "BB_TASKHASH_IGNORE_TASKS",
 }
 
@@ -1054,10 +1055,10 @@ class DataSmart(MutableMapping):
         d = self.createCopy()
         bb.data.expandKeys(d)
 
-        config_whitelist = set((d.getVar("BB_HASHCONFIG_WHITELIST") or "").split())
+        config_ignore_vars = set((d.getVar("BB_HASHCONFIG_IGNORE_VARS") or "").split())
         keys = set(key for key in iter(d) if not key.startswith("__"))
         for key in keys:
-            if key in config_whitelist:
+            if key in config_ignore_vars:
                 continue
 
             value = d.getVar(key, False) or ""

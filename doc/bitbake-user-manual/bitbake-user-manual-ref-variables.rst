@@ -358,7 +358,7 @@ overview of their function and contents.
       However, the more accurate the data returned, the more efficient the
       build will be.
 
-   :term:`BB_HASHCONFIG_WHITELIST`
+   :term:`BB_HASHCONFIG_IGNORE_VARS`
       Lists variables that are excluded from base configuration checksum,
       which is used to determine if the cache can be reused.
 
