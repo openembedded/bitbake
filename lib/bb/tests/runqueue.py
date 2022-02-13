@@ -154,12 +154,12 @@ class RunQueueTests(unittest.TestCase):
 
             self.shutdown(tempdir)
 
-    def test_setscenewhitelist(self):
+    def test_setscene_ignore_tasks(self):
         with tempfile.TemporaryDirectory(prefix="runqueuetest") as tempdir:
             cmd = ["bitbake", "a1"]
             extraenv = {
                 "BB_SETSCENE_ENFORCE" : "1",
-                "BB_SETSCENE_ENFORCE_WHITELIST" : "a1:do_package_write_rpm a1:do_build"
+                "BB_SETSCENE_ENFORCE_IGNORE_TASKS" : "a1:do_package_write_rpm a1:do_build"
             }
             sstatevalid = "a1:do_package a1:do_package_qa a1:do_packagedata a1:do_package_write_ipk a1:do_populate_lic a1:do_populate_sysroot"
             tasks = self.run_bitbakecmd(cmd, tempdir, sstatevalid, extraenv=extraenv)

@@ -386,8 +386,8 @@ class RunQueueData:
         self.warn_multi_bb = False
 
         self.multi_provider_whitelist = (cfgData.getVar("MULTI_PROVIDER_WHITELIST") or "").split()
-        self.setscenewhitelist = get_setscene_enforce_whitelist(cfgData, targets)
-        self.setscenewhitelist_checked = False
+        self.setscene_ignore_tasks = get_setscene_enforce_ignore_tasks(cfgData, targets)
+        self.setscene_ignore_tasks_checked = False
         self.setscene_enforce = (cfgData.getVar('BB_SETSCENE_ENFORCE') == "1")
         self.init_progress_reporter = bb.progress.DummyMultiStageProcessProgressReporter()
 
@@ -2107,9 +2107,9 @@ class RunQueueExecute:
         if task is not None:
             (mc, fn, taskname, taskfn) = split_tid_mcfn(task)
 
-            if self.rqdata.setscenewhitelist is not None:
-                if self.check_setscenewhitelist(task):
-                    self.task_fail(task, "setscene whitelist")
+            if self.rqdata.setscene_ignore_tasks is not None:
+                if self.check_setscene_ignore_tasks(task):
+                    self.task_fail(task, "setscene ignore_tasks")
                     return True
 
             if task in self.tasks_covered:
@@ -2501,11 +2501,11 @@ class RunQueueExecute:
         self.scenequeue_updatecounters(task)
 
     def sq_check_taskfail(self, task):
-        if self.rqdata.setscenewhitelist is not None:
+        if self.rqdata.setscene_ignore_tasks is not None:
             realtask = task.split('_setscene')[0]
             (mc, fn, taskname, taskfn) = split_tid_mcfn(realtask)
             pn = self.rqdata.dataCaches[mc].pkg_fn[taskfn]
-            if not check_setscene_enforce_whitelist(pn, taskname, self.rqdata.setscenewhitelist):
+            if not check_setscene_enforce_ignore_tasks(pn, taskname, self.rqdata.setscene_ignore_tasks):
                 logger.error('Task %s.%s failed' % (pn, taskname + "_setscene"))
                 self.rq.state = runQueueCleanUp
 
@@ -2568,8 +2568,8 @@ class RunQueueExecute:
         #bb.note("Task %s: " % task + str(taskdepdata).replace("], ", "],\n"))
         return taskdepdata
 
-    def check_setscenewhitelist(self, tid):
-        # Check task that is going to run against the whitelist
+    def check_setscene_ignore_tasks(self, tid):
+        # Check task that is going to run against the ignore tasks list
         (mc, fn, taskname, taskfn) = split_tid_mcfn(tid)
         # Ignore covered tasks
         if tid in self.tasks_covered:
@@ -2583,7 +2583,7 @@ class RunQueueExecute:
             return False
 
         pn = self.rqdata.dataCaches[mc].pkg_fn[taskfn]
-        if not check_setscene_enforce_whitelist(pn, taskname, self.rqdata.setscenewhitelist):
+        if not check_setscene_enforce_ignore_tasks(pn, taskname, self.rqdata.setscene_ignore_tasks):
             if tid in self.rqdata.runq_setscene_tids:
                 msg = ['Task %s.%s attempted to execute unexpectedly and should have been setscened' % (pn, taskname)]
             else:
@@ -3070,12 +3070,12 @@ class runQueuePipe():
             print("Warning, worker left partial message: %s" % self.queue)
         self.input.close()
 
-def get_setscene_enforce_whitelist(d, targets):
+def get_setscene_enforce_ignore_tasks(d, targets):
     if d.getVar('BB_SETSCENE_ENFORCE') != '1':
         return None
-    whitelist = (d.getVar("BB_SETSCENE_ENFORCE_WHITELIST") or "").split()
+    ignore_tasks = (d.getVar("BB_SETSCENE_ENFORCE_IGNORE_TASKS") or "").split()
     outlist = []
-    for item in whitelist[:]:
+    for item in ignore_tasks[:]:
         if item.startswith('%:'):
             for (mc, target, task, fn) in targets:
                 outlist.append(target + ':' + item.split(':')[1])
@@ -3083,12 +3083,12 @@ def get_setscene_enforce_whitelist(d, targets):
             outlist.append(item)
     return outlist
 
-def check_setscene_enforce_whitelist(pn, taskname, whitelist):
+def check_setscene_enforce_ignore_tasks(pn, taskname, ignore_tasks):
     import fnmatch
-    if whitelist is not None:
+    if ignore_tasks is not None:
         item = '%s:%s' % (pn, taskname)
-        for whitelist_item in whitelist:
-            if fnmatch.fnmatch(item, whitelist_item):
+        for ignore_tasks in ignore_tasks:
+            if fnmatch.fnmatch(item, ignore_tasks):
                 return True
         return False
     return True
