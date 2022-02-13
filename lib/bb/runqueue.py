@@ -385,7 +385,7 @@ class RunQueueData:
         self.rq = rq
         self.warn_multi_bb = False
 
-        self.multi_provider_whitelist = (cfgData.getVar("MULTI_PROVIDER_WHITELIST") or "").split()
+        self.multi_provider_allowed = (cfgData.getVar("BB_MULTI_PROVIDER_ALLOWED") or "").split()
         self.setscene_ignore_tasks = get_setscene_enforce_ignore_tasks(cfgData, targets)
         self.setscene_ignore_tasks_checked = False
         self.setscene_enforce = (cfgData.getVar('BB_SETSCENE_ENFORCE') == "1")
@@ -1048,7 +1048,7 @@ class RunQueueData:
             for prov in prov_list:
                 if len(prov_list[prov]) < 2:
                     continue
-                if prov in self.multi_provider_whitelist:
+                if prov in self.multi_provider_allowed:
                     continue
                 seen_pn = []
                 # If two versions of the same PN are being built its fatal, we don't support it.

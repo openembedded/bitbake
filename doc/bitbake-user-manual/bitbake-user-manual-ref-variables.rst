@@ -1054,7 +1054,7 @@ overview of their function and contents.
       upstream source, and then locations specified by :term:`MIRRORS` in that
       order.
 
-   :term:`MULTI_PROVIDER_WHITELIST`
+   :term:`BB_MULTI_PROVIDER_ALLOWED`
       Allows you to suppress BitBake warnings caused when building two
       separate recipes that provide the same output.
 
