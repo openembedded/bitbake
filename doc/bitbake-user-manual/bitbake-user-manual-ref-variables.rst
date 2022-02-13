@@ -337,7 +337,7 @@ overview of their function and contents.
 
       For example usage, see :term:`BB_GIT_SHALLOW`.
 
-   :term:`BB_HASHBASE_WHITELIST`
+   :term:`BB_BASEHASH_IGNORE_VARS`
       Lists variables that are excluded from checksum and dependency data.
       Variables that are excluded can therefore change without affecting
       the checksum mechanism. A common example would be the variable for

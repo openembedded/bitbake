@@ -477,7 +477,7 @@ changes because it should not affect the output for target packages. The
 simplistic approach for excluding the working directory is to set it to
 some fixed value and create the checksum for the "run" script. BitBake
 goes one step better and uses the
-:term:`BB_HASHBASE_WHITELIST` variable
+:term:`BB_BASEHASH_IGNORE_VARS` variable
 to define a list of variables that should never be included when
 generating the signatures.
 
@@ -538,7 +538,7 @@ in a list of global variable dependency excludes - variables never
 included in any checksum. This example uses variables from OpenEmbedded
 to help illustrate the concept::
 
-   BB_HASHBASE_WHITELIST ?= "TMPDIR FILE PATH PWD BB_TASKHASH BBPATH DL_DIR \
+   BB_BASEHASH_IGNORE_VARS ?= "TMPDIR FILE PATH PWD BB_TASKHASH BBPATH DL_DIR \
        SSTATE_DIR THISDIR FILESEXTRAPATHS FILE_DIRNAME HOME LOGNAME SHELL \
        USER FILESPATH STAGING_DIR_HOST STAGING_DIR_TARGET COREBASE PRSERV_HOST \
        PRSERV_DUMPDIR PRSERV_DUMPFILE PRSERV_LOCKDOWN PARALLEL_MAKE \
