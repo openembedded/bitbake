@@ -79,8 +79,8 @@ directives.
 Prior to parsing configuration files, BitBake looks at certain
 variables, including:
 
--  :term:`BB_ENV_WHITELIST`
--  :term:`BB_ENV_EXTRAWHITE`
+-  :term:`BB_ENV_PASSTHROUGH`
+-  :term:`BB_ENV_PASSTHROUGH_ADDITIONS`
 -  :term:`BB_PRESERVE_ENV`
 -  :term:`BB_ORIGENV`
 -  :term:`BITBAKE_UI`

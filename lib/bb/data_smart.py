@@ -34,6 +34,8 @@ __whitespace_split__ = re.compile(r'(\s)')
 __override_regexp__ = re.compile(r'[a-z0-9]+')
 
 bitbake_renamed_vars = {
+    "BB_ENV_WHITELIST": "BB_ENV_PASSTHROUGH",
+    "BB_ENV_EXTRAWHITE": "BB_ENV_PASSTHROUGH_ADDITIONS",
     "BB_HASHBASE_WHITELIST": "BB_BASEHASH_IGNORE_VARS",
     "BB_HASHTASK_WHITELIST": "BB_TASKHASH_IGNORE_TASKS",
 }

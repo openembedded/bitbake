@@ -236,23 +236,23 @@ overview of their function and contents.
       based on the interval occur each time a respective interval is
       reached beyond the initial warning (i.e. 1 Gbytes and 100 Kbytes).
 
-   :term:`BB_ENV_EXTRAWHITE`
-      Specifies an additional set of variables to allow through (whitelist)
-      from the external environment into BitBake's datastore. This list of
-      variables are on top of the internal list set in
-      :term:`BB_ENV_WHITELIST`.
+   :term:`BB_ENV_PASSTHROUGH_ADDITIONS`
+      Specifies an additional set of variables to allow through from the
+      external environment into BitBake's datastore. This list of variables
+      are on top of the internal list set in
+      :term:`BB_ENV_PASSTHROUGH`.
 
       .. note::
 
          You must set this variable in the external environment in order
          for it to work.
 
-   :term:`BB_ENV_WHITELIST`
-      Specifies the internal whitelist of variables to allow through from
+   :term:`BB_ENV_PASSTHROUGH`
+      Specifies the internal list of variables to allow through from
       the external environment into BitBake's datastore. If the value of
       this variable is not specified (which is the default), the following
       list is used: :term:`BBPATH`, :term:`BB_PRESERVE_ENV`,
-      :term:`BB_ENV_WHITELIST`, and :term:`BB_ENV_EXTRAWHITE`.
+      :term:`BB_ENV_PASSTHROUGH`, and :term:`BB_ENV_PASSTHROUGH_ADDITIONS`.
 
       .. note::
 
@@ -452,8 +452,9 @@ overview of their function and contents.
 
    :term:`BB_ORIGENV`
       Contains a copy of the original external environment in which BitBake
-      was run. The copy is taken before any whitelisted variable values are
-      filtered into BitBake's datastore.
+      was run. The copy is taken before any variable values configured to
+      pass through from the external environment are filtered into BitBake's
+      datastore.
 
       .. note::
 
@@ -461,8 +462,8 @@ overview of their function and contents.
          queried using the normal datastore operations.
 
    :term:`BB_PRESERVE_ENV`
-      Disables whitelisting and instead allows all variables through from
-      the external environment into BitBake's datastore.
+      Disables environment filtering and instead allows all variables through
+      from the external environment into BitBake's datastore.
 
       .. note::
 

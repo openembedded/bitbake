@@ -589,8 +589,8 @@ def preserved_envvars():
     v = [
         'BBPATH',
         'BB_PRESERVE_ENV',
-        'BB_ENV_WHITELIST',
-        'BB_ENV_EXTRAWHITE',
+        'BB_ENV_PASSTHROUGH',
+        'BB_ENV_PASSTHROUGH_ADDITIONS',
     ]
     return v + preserved_envvars_exported()
 
@@ -621,21 +621,21 @@ def filter_environment(good_vars):
 
 def approved_variables():
     """
-    Determine and return the list of whitelisted variables which are approved
+    Determine and return the list of variables which are approved
     to remain in the environment.
     """
     if 'BB_PRESERVE_ENV' in os.environ:
         return os.environ.keys()
     approved = []
-    if 'BB_ENV_WHITELIST' in os.environ:
-        approved = os.environ['BB_ENV_WHITELIST'].split()
-        approved.extend(['BB_ENV_WHITELIST'])
+    if 'BB_ENV_PASSTHROUGH' in os.environ:
+        approved = os.environ['BB_ENV_PASSTHROUGH'].split()
+        approved.extend(['BB_ENV_PASSTHROUGH'])
     else:
         approved = preserved_envvars()
-    if 'BB_ENV_EXTRAWHITE' in os.environ:
-        approved.extend(os.environ['BB_ENV_EXTRAWHITE'].split())
-        if 'BB_ENV_EXTRAWHITE' not in approved:
-            approved.extend(['BB_ENV_EXTRAWHITE'])
+    if 'BB_ENV_PASSTHROUGH_ADDITIONS' in os.environ:
+        approved.extend(os.environ['BB_ENV_PASSTHROUGH_ADDITIONS'].split())
+        if 'BB_ENV_PASSTHROUGH_ADDITIONS' not in approved:
+            approved.extend(['BB_ENV_PASSTHROUGH_ADDITIONS'])
     return approved
 
 def clean_environment():
