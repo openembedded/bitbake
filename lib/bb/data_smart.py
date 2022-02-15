@@ -488,6 +488,8 @@ class DataSmart(MutableMapping):
         else:
             self.initVar(var)
 
+    def hasOverrides(self, var):
+        return var in self.overridedata
 
     def setVar(self, var, value, **loginfo):
         #print("var=" + str(var) + "  val=" + str(value))
