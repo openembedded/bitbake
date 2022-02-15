@@ -247,6 +247,9 @@ class CookerDataBuilder(object):
         self.savedenv = bb.data.init()
         for k in cookercfg.env:
             self.savedenv.setVar(k, cookercfg.env[k])
+            if k in bb.data_smart.bitbake_renamed_vars:
+                bb.error('Variable %s from the shell environment has been renamed to %s' % (k, bb.data_smart.bitbake_renamed_vars[k]))
+                bb.fatal("Exiting to allow enviroment variables to be corrected")
 
         filtered_keys = bb.utils.approved_variables()
         bb.data.inheritFromOS(self.basedata, self.savedenv, filtered_keys)
@@ -305,6 +308,24 @@ class CookerDataBuilder(object):
             raise bb.BBHandledException()
         except Exception:
             logger.exception("Error parsing configuration files")
+            raise bb.BBHandledException()
+
+
+        # Handle obsolete variable names
+        d = self.data
+        renamedvars = d.getVarFlags('BB_RENAMED_VARIABLES') or {}
+        renamedvars.update(bb.data_smart.bitbake_renamed_vars)
+        issues = False
+        for v in renamedvars:
+            if d.getVar(v) != None or d.hasOverrides(v):
+                issues = True
+                history = d.varhistory.get_variable_refs(v)
+                for h in history:
+                    for line in history[h]:
+                        bb.erroronce('Variable %s has been renamed to %s (file: %s line: %s)' % (v, renamedvars[v], h, line))
+                if not history:
+                    bb.erroronce('Variable %s has been renamed to %s' % (v, renamedvars[v]))
+        if issues:
             raise bb.BBHandledException()
 
         # Create a copy so we can reset at a later date when UIs disconnect

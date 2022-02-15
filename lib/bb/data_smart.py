@@ -33,6 +33,9 @@ __expand_python_regexp__ = re.compile(r"\${@.+?}")
 __whitespace_split__ = re.compile(r'(\s)')
 __override_regexp__ = re.compile(r'[a-z0-9]+')
 
+bitbake_renamed_vars = {
+}
+
 def infer_caller_details(loginfo, parent = False, varval = True):
     """Save the caller the trouble of specifying everything."""
     # Save effort.
@@ -336,6 +339,16 @@ class VariableHistory(object):
                 lines.append(line)
         return lines
 
+    def get_variable_refs(self, var):
+        """Return a dict of file/line references"""
+        var_history = self.variable(var)
+        refs = {}
+        for event in var_history:
+            if event['file'] not in refs:
+                refs[event['file']] = []
+            refs[event['file']].append(event['line'])
+        return refs
+
     def get_variable_items_files(self, var):
         """
         Use variable history to map items added to a list variable and
@@ -377,6 +390,8 @@ class DataSmart(MutableMapping):
         self.inchistory = IncludeHistory()
         self.varhistory = VariableHistory(self)
         self._tracking = False
+        self._var_renames = {}
+        self._var_renames.update(bitbake_renamed_vars)
 
         self.expand_cache = {}
 
@@ -491,6 +506,16 @@ class DataSmart(MutableMapping):
     def hasOverrides(self, var):
         return var in self.overridedata
 
+    def _print_rename_error(self, var, loginfo):
+        info = ""
+        if "file" in loginfo:
+            info = " file: %s" % loginfo["file"]
+        if "line" in loginfo:
+            info += " line: %s" % loginfo["line"]
+        if info:
+            info = " (%s)" % info.strip()
+        bb.erroronce('Variable %s has been renamed to %s%s' % (var, self._var_renames[var], info))
+
     def setVar(self, var, value, **loginfo):
         #print("var=" + str(var) + "  val=" + str(value))
 
@@ -501,6 +526,10 @@ class DataSmart(MutableMapping):
             if "line" in loginfo:
                 info += " line: %s" % loginfo["line"]
             bb.fatal("Variable %s contains an operation using the old override syntax. Please convert this layer/metadata before attempting to use with a newer bitbake." % info)
+
+        shortvar = var.split(":", 1)[0]
+        if shortvar in self._var_renames:
+            self._print_rename_error(shortvar, loginfo)
 
         self.expand_cache = {}
         parsing=False
@@ -686,6 +715,12 @@ class DataSmart(MutableMapping):
 
     def setVarFlag(self, var, flag, value, **loginfo):
         self.expand_cache = {}
+
+        if var == "BB_RENAMED_VARIABLES":
+            self._var_renames[flag] = value
+
+        if var in self._var_renames:
+            self._print_rename_error(var, loginfo)
 
         if 'op' not in loginfo:
             loginfo['op'] = "set"
@@ -926,6 +961,7 @@ class DataSmart(MutableMapping):
         data.inchistory = self.inchistory.copy()
 
         data._tracking = self._tracking
+        data._var_renames = self._var_renames
 
         data.overrides = None
         data.overridevars = copy.copy(self.overridevars)
