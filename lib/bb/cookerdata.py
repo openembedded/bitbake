@@ -57,7 +57,7 @@ class ConfigParameters(object):
 
     def updateToServer(self, server, environment):
         options = {}
-        for o in ["abort", "force", "invalidate_stamp",
+        for o in ["halt", "force", "invalidate_stamp",
                   "dry_run", "dump_signatures",
                   "extra_assume_provided", "profile",
                   "prefile", "postfile", "server_timeout",
@@ -124,7 +124,7 @@ class CookerConfiguration(object):
         self.prefile = []
         self.postfile = []
         self.cmd = None
-        self.abort = True
+        self.halt = True
         self.force = False
         self.profile = False
         self.nosetscene = False

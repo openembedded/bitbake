@@ -485,7 +485,7 @@ class RunQueueData:
                             msgs.append("  Task %s (dependent Tasks %s)\n" % (dep, self.runq_depends_names(self.runtaskentries[dep].depends)))
                         msgs.append("\n")
                     if len(valid_chains) > 10:
-                        msgs.append("Aborted dependency loops search after 10 matches.\n")
+                        msgs.append("Halted dependency loops search after 10 matches.\n")
                         raise TooManyLoops
                     continue
                 scan = False
@@ -989,7 +989,7 @@ class RunQueueData:
 
         # Check to make sure we still have tasks to run
         if not self.runtaskentries:
-            if not taskData[''].abort:
+            if not taskData[''].halt:
                 bb.msg.fatal("RunQueue", "All buildable tasks have been run but the build is incomplete (--continue mode). Errors for the tasks that failed will have been printed above.")
             else:
                 bb.msg.fatal("RunQueue", "No active tasks and not in --continue mode?! Please report this bug.")
@@ -1424,7 +1424,7 @@ class RunQueue:
         """
         Run the tasks in a queue prepared by rqdata.prepare()
         Upon failure, optionally try to recover the build using any alternate providers
-        (if the abort on failure configuration option isn't set)
+        (if the halt on failure configuration option isn't set)
         """
 
         retval = True
@@ -1929,7 +1929,7 @@ class RunQueueExecute:
 
         bb.event.fire(runQueueTaskFailed(task, self.stats, exitcode, self.rq, fakeroot_log=("".join(fakeroot_log) or None)), self.cfgData)
 
-        if self.rqdata.taskData[''].abort:
+        if self.rqdata.taskData[''].halt:
             self.rq.state = runQueueCleanUp
 
     def task_skip(self, task, reason):
@@ -2392,7 +2392,7 @@ class RunQueueExecute:
                 self.tasks_scenequeue_done.remove(tid)
             for dep in self.sqdata.sq_covered_tasks[tid]:
                 if dep in self.runq_complete and dep not in self.runq_tasksrun:
-                    bb.error("Task %s marked as completed but now needing to rerun? Aborting build." % dep)
+                    bb.error("Task %s marked as completed but now needing to rerun? Halting build." % dep)
                     self.failed_tids.append(tid)
                     self.rq.state = runQueueCleanUp
                     return
@@ -2710,7 +2710,7 @@ def build_scenequeue_data(sqdata, rqdata, rq, cooker, stampcache, sqrq):
         if tid in rqdata.runq_setscene_tids:
             pass
         elif sq_revdeps_squash[tid]:
-            bb.msg.fatal("RunQueue", "Something went badly wrong during scenequeue generation, aborting. Please report this problem.")
+            bb.msg.fatal("RunQueue", "Something went badly wrong during scenequeue generation, halting. Please report this problem.")
         else:
             del sq_revdeps_squash[tid]
         rqdata.init_progress_reporter.update(taskcounter)
