@@ -138,7 +138,7 @@ overview of their function and contents.
          where:
 
             <action> is:
-               ABORT:     Immediately abort the build when
+               HALT:      Immediately halt the build when
                           a threshold is broken.
                STOPTASKS: Stop the build after the currently
                           executing tasks have finished when
@@ -169,13 +169,13 @@ overview of their function and contents.
 
       Here are some examples::
 
-         BB_DISKMON_DIRS = "ABORT,${TMPDIR},1G,100K WARN,${SSTATE_DIR},1G,100K"
+         BB_DISKMON_DIRS = "HALT,${TMPDIR},1G,100K WARN,${SSTATE_DIR},1G,100K"
          BB_DISKMON_DIRS = "STOPTASKS,${TMPDIR},1G"
-         BB_DISKMON_DIRS = "ABORT,${TMPDIR},,100K"
+         BB_DISKMON_DIRS = "HALT,${TMPDIR},,100K"
 
       The first example works only if you also set the
       :term:`BB_DISKMON_WARNINTERVAL`
-      variable. This example causes the build system to immediately abort
+      variable. This example causes the build system to immediately halt
       when either the disk space in ``${TMPDIR}`` drops below 1 Gbyte or
       the available free inodes drops below 100 Kbytes. Because two
       directories are provided with the variable, the build system also
@@ -189,7 +189,7 @@ overview of their function and contents.
       directory drops below 1 Gbyte. No disk monitoring occurs for the free
       inodes in this case.
 
-      The final example immediately aborts the build when the number of
+      The final example immediately halts the build when the number of
       free inodes in the ``${TMPDIR}`` directory drops below 100 Kbytes. No
       disk space monitoring for the directory itself occurs in this case.
 

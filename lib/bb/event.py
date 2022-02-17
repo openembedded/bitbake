@@ -486,7 +486,7 @@ class BuildCompleted(BuildBase, OperationCompleted):
         BuildBase.__init__(self, n, p, failures)
 
 class DiskFull(Event):
-    """Disk full case build aborted"""
+    """Disk full case build halted"""
     def __init__(self, dev, type, freespace, mountpoint):
         Event.__init__(self)
         self._dev = dev
