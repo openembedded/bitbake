@@ -199,7 +199,7 @@ class URI(object):
      file://hostname/absolute/path.diff (would be IETF compliant)
 
     Note that the last case only applies to a list of
-    "whitelisted" schemes (currently only file://), that requires
+    explicitly allowed schemes (currently only file://), that requires
     its URIs to not have a network location.
     """
 
