@@ -1733,7 +1733,7 @@ def environment(**envvars):
         for var in envvars:
             if var in backup:
                 os.environ[var] = backup[var]
-            else:
+            elif var in os.environ:
                 del os.environ[var]
 
 def is_local_uid(uid=''):
