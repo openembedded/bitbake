@@ -319,12 +319,14 @@ class CookerDataBuilder(object):
         for v in renamedvars:
             if d.getVar(v) != None or d.hasOverrides(v):
                 issues = True
+                loginfo = {}
                 history = d.varhistory.get_variable_refs(v)
                 for h in history:
                     for line in history[h]:
-                        bb.erroronce('Variable %s has been renamed to %s (file: %s line: %s)' % (v, renamedvars[v], h, line))
+                        loginfo = {'file' : h, 'line' : line}
+                        bb.data.data_smart._print_rename_error(v, loginfo, renamedvars)
                 if not history:
-                    bb.erroronce('Variable %s has been renamed to %s' % (v, renamedvars[v]))
+                    bb.data.data_smart._print_rename_error(v, loginfo, renamedvars)
         if issues:
             raise bb.BBHandledException()
 

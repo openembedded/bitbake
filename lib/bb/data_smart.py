@@ -41,6 +41,8 @@ bitbake_renamed_vars = {
     "BB_HASHTASK_WHITELIST": "BB_TASKHASH_IGNORE_TASKS",
     "BB_SETSCENE_ENFORCE_WHITELIST": "BB_SETSCENE_ENFORCE_IGNORE_TASKS",
     "MULTI_PROVIDER_WHITELIST": "BB_MULTI_PROVIDER_ALLOWED",
+    "BB_STAMP_WHITELIST": "is a deprecated variable and support has been removed",
+    "BB_STAMP_POLICY": "is a deprecated variable and support has been removed",
 }
 
 def infer_caller_details(loginfo, parent = False, varval = True):
@@ -390,6 +392,23 @@ class VariableHistory(object):
             else:
                 self.variables[var] = []
 
+def _print_rename_error(var, loginfo, renamedvars, fullvar=None):
+    info = ""
+    if "file" in loginfo:
+        info = " file: %s" % loginfo["file"]
+    if "line" in loginfo:
+        info += " line: %s" % loginfo["line"]
+    if fullvar and fullvar != var:
+        info += " referenced as: %s" % fullvar
+    if info:
+        info = " (%s)" % info.strip()
+    renameinfo = renamedvars[var]
+    if " " in renameinfo:
+        # A space signals a string to display instead of a rename
+        bb.erroronce('Variable %s %s%s' % (var, renameinfo, info))
+    else:
+        bb.erroronce('Variable %s has been renamed to %s%s' % (var, renameinfo, info))
+
 class DataSmart(MutableMapping):
     def __init__(self):
         self.dict = {}
@@ -513,18 +532,6 @@ class DataSmart(MutableMapping):
     def hasOverrides(self, var):
         return var in self.overridedata
 
-    def _print_rename_error(self, var, loginfo, fullvar=None):
-        info = ""
-        if "file" in loginfo:
-            info = " file: %s" % loginfo["file"]
-        if "line" in loginfo:
-            info += " line: %s" % loginfo["line"]
-        if fullvar and fullvar != var:
-            info += " referenced as: %s" % fullvar
-        if info:
-            info = " (%s)" % info.strip()
-        bb.erroronce('Variable %s has been renamed to %s%s' % (var, self._var_renames[var], info))
-
     def setVar(self, var, value, **loginfo):
         #print("var=" + str(var) + "  val=" + str(value))
 
@@ -538,7 +545,7 @@ class DataSmart(MutableMapping):
 
         shortvar = var.split(":", 1)[0]
         if shortvar in self._var_renames:
-            self._print_rename_error(shortvar, loginfo, fullvar=var)
+            _print_rename_error(shortvar, loginfo, self._var_renames, fullvar=var)
 
         self.expand_cache = {}
         parsing=False
@@ -729,7 +736,7 @@ class DataSmart(MutableMapping):
             self._var_renames[flag] = value
 
         if var in self._var_renames:
-            self._print_rename_error(var, loginfo)
+            _print_rename_error(var, loginfo, self._var_renames)
 
         if 'op' not in loginfo:
             loginfo['op'] = "set"
