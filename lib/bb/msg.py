@@ -229,6 +229,7 @@ def logger_create(name, output=sys.stderr, level=logging.INFO, preserve_handlers
     """Standalone logger creation function"""
     logger = logging.getLogger(name)
     console = logging.StreamHandler(output)
+    console.addFilter(bb.msg.LogFilterShowOnce())
     format = bb.msg.BBLogFormatter("%(levelname)s: %(message)s")
     if color == 'always' or (color == 'auto' and output.isatty()):
         format.enable_color()
