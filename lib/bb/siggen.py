@@ -584,7 +584,7 @@ class SignatureGeneratorUniHashMixIn(object):
         if self.setscenetasks and tid not in self.setscenetasks:
             return
 
-        # This can happen if locked sigs are in action. Detect and just abort
+        # This can happen if locked sigs are in action. Detect and just exit
         if taskhash != self.taskhash[tid]:
             return
 

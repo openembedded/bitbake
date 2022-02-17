@@ -735,7 +735,7 @@ overview of their function and contents.
          "
 
       This next example shows an error message that occurs because invalid
-      entries are found, which cause parsing to abort::
+      entries are found, which cause parsing to fail::
 
          ERROR: BBFILES_DYNAMIC entries must be of the form {!}<collection name>:<filename pattern>, not:
          /work/my-layer/bbappends/meta-security-isafw/*/*/*.bbappend

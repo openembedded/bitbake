@@ -33,7 +33,7 @@ databaseCheck()
     $MANAGE migrate --noinput || retval=1
 
     if [ $retval -eq 1 ]; then
-        echo "Failed migrations, aborting system start" 1>&2
+        echo "Failed migrations, halting system start" 1>&2
         return $retval
     fi
     # Make sure that checksettings can pick up any value for TEMPLATECONF
@@ -41,7 +41,7 @@ databaseCheck()
     $MANAGE checksettings --traceback || retval=1
 
     if [ $retval -eq 1 ]; then
-        printf "\nError while checking settings; aborting\n"
+        printf "\nError while checking settings; exiting\n"
         return $retval
     fi
 
