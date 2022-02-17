@@ -513,12 +513,14 @@ class DataSmart(MutableMapping):
     def hasOverrides(self, var):
         return var in self.overridedata
 
-    def _print_rename_error(self, var, loginfo):
+    def _print_rename_error(self, var, loginfo, fullvar=None):
         info = ""
         if "file" in loginfo:
             info = " file: %s" % loginfo["file"]
         if "line" in loginfo:
             info += " line: %s" % loginfo["line"]
+        if fullvar and fullvar != var:
+            info += " referenced as: %s" % fullvar
         if info:
             info = " (%s)" % info.strip()
         bb.erroronce('Variable %s has been renamed to %s%s' % (var, self._var_renames[var], info))
@@ -536,7 +538,7 @@ class DataSmart(MutableMapping):
 
         shortvar = var.split(":", 1)[0]
         if shortvar in self._var_renames:
-            self._print_rename_error(shortvar, loginfo)
+            self._print_rename_error(shortvar, loginfo, fullvar=var)
 
         self.expand_cache = {}
         parsing=False
