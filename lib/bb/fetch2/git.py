@@ -399,7 +399,7 @@ class Git(FetchMethod):
 
         if self._contains_lfs(ud, d, ud.clonedir) and self._need_lfs(ud):
             # Unpack temporary working copy, use it to run 'git checkout' to force pre-fetching
-            # of all LFS blobs needed at the the srcrev.
+            # of all LFS blobs needed at the srcrev.
             #
             # It would be nice to just do this inline here by running 'git-lfs fetch'
             # on the bare clonedir, but that operation requires a working copy on some
