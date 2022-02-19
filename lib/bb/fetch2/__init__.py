@@ -851,6 +851,17 @@ FETCH_EXPORT_VARS = ['HOME', 'PATH',
                      'AWS_SECRET_ACCESS_KEY',
                      'AWS_DEFAULT_REGION']
 
+def get_fetcher_environment(d):
+    newenv = {}
+    origenv = d.getVar("BB_ORIGENV")
+    for name in bb.fetch2.FETCH_EXPORT_VARS:
+        value = d.getVar(name)
+        if not value and origenv:
+            value = origenv.getVar(name)
+        if value:
+            newenv[name] = value
+    return newenv
+
 def runfetchcmd(cmd, d, quiet=False, cleanup=None, log=None, workdir=None):
     """
     Run cmd returning the command output

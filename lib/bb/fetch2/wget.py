@@ -315,14 +315,7 @@ class Wget(FetchMethod):
         # Avoid tramping the environment too much by using bb.utils.environment
         # to scope the changes to the build_opener request, which is when the
         # environment lookups happen.
-        newenv = {}
-        origenv = d.getVar("BB_ORIGENV")
-        for name in bb.fetch2.FETCH_EXPORT_VARS:
-            value = d.getVar(name)
-            if not value and origenv:
-                value = origenv.getVar(name)
-            if value:
-                newenv[name] = value
+        newenv = bb.fetch2.get_fetcher_environment(d)
 
         with bb.utils.environment(**newenv):
             import ssl
