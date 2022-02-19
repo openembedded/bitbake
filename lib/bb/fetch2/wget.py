@@ -316,12 +316,11 @@ class Wget(FetchMethod):
         # to scope the changes to the build_opener request, which is when the
         # environment lookups happen.
         newenv = {}
+        origenv = d.getVar("BB_ORIGENV")
         for name in bb.fetch2.FETCH_EXPORT_VARS:
             value = d.getVar(name)
-            if not value:
-                origenv = d.getVar("BB_ORIGENV")
-                if origenv:
-                    value = origenv.getVar(name)
+            if not value and origenv:
+                value = origenv.getVar(name)
             if value:
                 newenv[name] = value
 
