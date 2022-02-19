@@ -428,7 +428,7 @@ class CookerDataBuilder(object):
         for bbclass in bbclasses:
             data = _inherit(bbclass, data)
 
-        # Nomally we only register event handlers at the end of parsing .bb files
+        # Normally we only register event handlers at the end of parsing .bb files
         # We register any handlers we've found so far here...
         for var in data.getVar('__BBHANDLERS', False) or []:
             handlerfn = data.getVarFlag(var, "filename", False)
