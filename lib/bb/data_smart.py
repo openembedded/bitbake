@@ -546,6 +546,8 @@ class DataSmart(MutableMapping):
         shortvar = var.split(":", 1)[0]
         if shortvar in self._var_renames:
             _print_rename_error(shortvar, loginfo, self._var_renames, fullvar=var)
+            # Mark that we have seen a renamed variable
+            self.setVar("_FAILPARSINGERRORHANDLED", True)
 
         self.expand_cache = {}
         parsing=False
@@ -737,6 +739,8 @@ class DataSmart(MutableMapping):
 
         if var in self._var_renames:
             _print_rename_error(var, loginfo, self._var_renames)
+            # Mark that we have seen a renamed variable
+            self.setVar("_FAILPARSINGERRORHANDLED", True)
 
         if 'op' not in loginfo:
             loginfo['op'] = "set"
