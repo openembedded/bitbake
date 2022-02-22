@@ -1004,7 +1004,7 @@ class DataSmart(MutableMapping):
         value = self.getVar(variable, False)
         for key in keys:
             referrervalue = self.getVar(key, False)
-            if referrervalue and ref in referrervalue:
+            if referrervalue and isinstance(referrervalue, str) and ref in referrervalue:
                 self.setVar(key, referrervalue.replace(ref, value))
 
     def localkeys(self):
