@@ -538,7 +538,7 @@ def md5_file(filename):
     Return the hex string representation of the MD5 checksum of filename.
     """
     import hashlib
-    return _hasher(hashlib.md5(), filename)
+    return _hasher(hashlib.new('MD5', usedforsecurity=False), filename)
 
 def sha256_file(filename):
     """
