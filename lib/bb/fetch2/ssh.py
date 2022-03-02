@@ -113,3 +113,43 @@ class SSH(FetchMethod):
 
         runfetchcmd(cmd, d)
 
+    def checkstatus(self, fetch, urldata, d):
+        """
+        Check the status of the url
+        """
+        m = __pattern__.match(urldata.url)
+        path = m.group('path')
+        host = m.group('host')
+        port = m.group('port')
+        user = m.group('user')
+        password = m.group('pass')
+
+        if port:
+            portarg = '-P %s' % port
+        else:
+            portarg = ''
+
+        if user:
+            fr = user
+            if password:
+                fr += ':%s' % password
+            fr += '@%s' % host
+        else:
+            fr = host
+
+        if path[0] != '~':
+            path = '/%s' % path
+        path = path.replace("%3A", ":")
+
+        cmd = 'ssh -o BatchMode=true %s %s [ -f %s ]' % (
+            portarg,
+            fr,
+            path
+        )
+
+        check_network_access(d, cmd, urldata.url)
+
+        if runfetchcmd(cmd, d):
+            return True
+
+        return False
