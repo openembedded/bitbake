@@ -96,6 +96,11 @@ class SSH(FetchMethod):
             fr += '@%s' % host
         else:
             fr = host
+
+        if path[0] != '~':
+            path = '/%s' % path
+        path = path.replace("%3A", ":")
+
         fr += ':%s' % path
 
         cmd = 'scp -B -r %s %s %s/' % (
