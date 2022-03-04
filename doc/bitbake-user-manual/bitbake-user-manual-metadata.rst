@@ -511,7 +511,7 @@ variable.
 .. note::
 
    Overrides can only use lower-case characters. Additionally,
-   underscores are not permitted in override names as they are used to
+   colons are not permitted in override names as they are used to
    separate overrides from each other and from the variable name.
 
 -  *Selecting a Variable:* The :term:`OVERRIDES` variable is a
@@ -523,8 +523,8 @@ variable.
 
       OVERRIDES = "architecture:os:machine"
       TEST = "default"
-      TEST_os = "osspecific"
-      TEST_nooverride = "othercondvalue"
+      TEST:os = "osspecific"
+      TEST:nooverride = "othercondvalue"
 
    In this example, the :term:`OVERRIDES`
    variable lists three overrides: "architecture", "os", and "machine".
@@ -567,7 +567,7 @@ variable.
 -  *Setting a Variable for a Single Task:* BitBake supports setting a
    variable just for the duration of a single task. Here is an example::
 
-      FOO_task-configure = "val 1"
+      FOO:task-configure = "val 1"
       FOO:task-compile = "val 2"
 
    In the
