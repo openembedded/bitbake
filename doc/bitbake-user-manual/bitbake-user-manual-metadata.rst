@@ -585,6 +585,16 @@ variable.
 
       EXTRA_OEMAKE:prepend:task-compile = "${PARALLEL_MAKE} "
 
+.. note::
+
+   Before BitBake 1.52 (Honister 3.4), the syntax for :term:`OVERRIDES`
+   used ``_`` instead of ``:``, so you will still find a lot of documentation
+   using ``_append``, ``_prepend``, and ``_remove``, for example.
+
+   For details, see the
+   :yocto_docs:`Overrides Syntax Changes </migration-guides/migration-3.4.html#override-syntax-changes>`
+   section in the Yocto Project manual migration notes.
+
 Key Expansion
 -------------
 
