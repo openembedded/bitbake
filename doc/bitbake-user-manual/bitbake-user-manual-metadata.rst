@@ -530,7 +530,7 @@ variable.
    variable lists three overrides: "architecture", "os", and "machine".
    The variable ``TEST`` by itself has a default value of "default". You
    select the os-specific version of the ``TEST`` variable by appending
-   the "os" override to the variable (i.e. ``TEST_os``).
+   the "os" override to the variable (i.e. ``TEST:os``).
 
    To better understand this, consider a practical example that assumes
    an OpenEmbedded metadata-based Linux kernel recipe file. The
