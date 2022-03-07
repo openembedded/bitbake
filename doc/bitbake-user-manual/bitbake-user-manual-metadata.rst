@@ -510,8 +510,8 @@ variable.
 
 .. note::
 
-   Overrides can only use lower-case characters. Additionally,
-   colons are not permitted in override names as they are used to
+   Overrides can only use lower-case characters, digits and dashes.
+   In particular, colons are not permitted in override names as they are used to
    separate overrides from each other and from the variable name.
 
 -  *Selecting a Variable:* The :term:`OVERRIDES` variable is a
