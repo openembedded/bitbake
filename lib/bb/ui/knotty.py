@@ -278,22 +278,31 @@ class TerminalFilter(object):
                 content += ':'
             print(content)
         else:
+            scene_tasks = "%s of %s" % (self.helper.setscene_current, self.helper.setscene_total)
+            cur_tasks = "%s of %s" % (self.helper.tasknumber_current, self.helper.tasknumber_total)
+
+            content = ''
+            if not self.quiet:
+                msg = "Setscene tasks: %s" % scene_tasks
+                content += msg + "\n"
+                print(msg)
+
             if self.quiet:
-                content = "Running tasks (%s of %s, %s of %s)" % (self.helper.setscene_current, self.helper.setscene_total, self.helper.tasknumber_current, self.helper.tasknumber_total)
+                msg = "Running tasks (%s, %s)" % (scene_tasks, cur_tasks)
             elif not len(activetasks):
-                content = "Setscene tasks: %s of %s\nNo currently running tasks (%s of %s)" % (self.helper.setscene_current, self.helper.setscene_total, self.helper.tasknumber_current, self.helper.tasknumber_total)
+                msg = "No currently running tasks (%s)" % cur_tasks
             else:
-                content = "Setscene tasks: %s of %s\nCurrently %2s running tasks (%s of %s)" % (self.helper.setscene_current, self.helper.setscene_total, len(activetasks), self.helper.tasknumber_current, self.helper.tasknumber_total)
+                msg = "Currently %2s running tasks (%s)" % (len(activetasks), cur_tasks)
             maxtask = self.helper.tasknumber_total
             if not self.main_progress or self.main_progress.maxval != maxtask:
                 widgets = [' ', progressbar.Percentage(), ' ', progressbar.Bar()]
                 self.main_progress = BBProgress("Running tasks", maxtask, widgets=widgets, resize_handler=self.sigwinch_handle)
                 self.main_progress.start(False)
-            self.main_progress.setmessage(content)
+            self.main_progress.setmessage(msg)
             progress = self.helper.tasknumber_current - 1
             if progress < 0:
                 progress = 0
-            content = self.main_progress.update(progress)
+            content += self.main_progress.update(progress)
             print('')
         lines = self.getlines(content)
         if self.quiet == 0:
