@@ -2168,7 +2168,7 @@ class CookerParser(object):
 
             bb.event.fire(event, self.cfgdata)
         else:
-            bb.error("Parsing halted due to errors")
+            bb.error("Parsing halted due to errors, see error messages above")
 
         for process in self.processes:
             self.parser_quit.put(None)
