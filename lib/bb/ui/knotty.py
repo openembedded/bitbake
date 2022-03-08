@@ -299,13 +299,11 @@ class TerminalFilter(object):
                 self.main_progress = BBProgress("Running tasks", maxtask, widgets=widgets, resize_handler=self.sigwinch_handle)
                 self.main_progress.start(False)
             self.main_progress.setmessage(msg)
-            progress = self.helper.tasknumber_current - 1
-            if progress < 0:
-                progress = 0
+            progress = max(0, self.helper.tasknumber_current - 1)
             content += self.main_progress.update(progress)
             print('')
         lines = self.getlines(content)
-        if self.quiet == 0:
+        if not self.quiet:
             for tasknum, task in enumerate(tasks[:(self.rows - 1 - lines)]):
                 if isinstance(task, tuple):
                     pbar, progress, rate, start_time = task
