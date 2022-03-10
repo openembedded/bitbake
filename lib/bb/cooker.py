@@ -555,6 +555,8 @@ class BBCooker:
         if not orig_tracking:
             self.enableDataTracking()
             self.reset()
+            # reset() resets to the UI requested value so we have to redo this
+            self.enableDataTracking()
 
         def mc_base(p):
             if p.startswith('mc:'):
