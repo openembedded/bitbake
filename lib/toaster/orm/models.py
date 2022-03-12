@@ -58,7 +58,6 @@ if 'sqlite' in settings.DATABASES['default']['ENGINE']:
             return _base_insert(self, *args, **kwargs)
     QuerySet._insert = _insert
 
-    from django.utils import six
     def _create_object_from_params(self, lookup, params):
         """
         Tries to create an object using passed params.
