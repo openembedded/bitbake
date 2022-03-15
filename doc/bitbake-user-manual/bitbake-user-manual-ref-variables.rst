@@ -93,6 +93,13 @@ overview of their function and contents.
       fetcher does not attempt to use the host listed in :term:`SRC_URI` after
       a successful fetch from the :term:`PREMIRRORS` occurs.
 
+   :term:`BB_BASEHASH_IGNORE_VARS`
+      Lists variables that are excluded from checksum and dependency data.
+      Variables that are excluded can therefore change without affecting
+      the checksum mechanism. A common example would be the variable for
+      the path of the build. BitBake's output should not (and usually does
+      not) depend on the directory in which it was built.
+
    :term:`BB_CHECK_SSL_CERTS`
       Specifies if SSL certificates should be checked when fetching. The default
       value is ``1`` and certificates are not checked if the value is set to ``0``.
@@ -236,23 +243,23 @@ overview of their function and contents.
       based on the interval occur each time a respective interval is
       reached beyond the initial warning (i.e. 1 Gbytes and 100 Kbytes).
 
-   :term:`BB_ENV_PASSTHROUGH_ADDITIONS`
-      Specifies an additional set of variables to allow through from the
-      external environment into BitBake's datastore. This list of variables
-      are on top of the internal list set in
-      :term:`BB_ENV_PASSTHROUGH`.
-
-      .. note::
-
-         You must set this variable in the external environment in order
-         for it to work.
-
    :term:`BB_ENV_PASSTHROUGH`
       Specifies the internal list of variables to allow through from
       the external environment into BitBake's datastore. If the value of
       this variable is not specified (which is the default), the following
       list is used: :term:`BBPATH`, :term:`BB_PRESERVE_ENV`,
       :term:`BB_ENV_PASSTHROUGH`, and :term:`BB_ENV_PASSTHROUGH_ADDITIONS`.
+
+      .. note::
+
+         You must set this variable in the external environment in order
+         for it to work.
+
+   :term:`BB_ENV_PASSTHROUGH_ADDITIONS`
+      Specifies an additional set of variables to allow through from the
+      external environment into BitBake's datastore. This list of variables
+      are on top of the internal list set in
+      :term:`BB_ENV_PASSTHROUGH`.
 
       .. note::
 
@@ -337,13 +344,6 @@ overview of their function and contents.
 
       For example usage, see :term:`BB_GIT_SHALLOW`.
 
-   :term:`BB_BASEHASH_IGNORE_VARS`
-      Lists variables that are excluded from checksum and dependency data.
-      Variables that are excluded can therefore change without affecting
-      the checksum mechanism. A common example would be the variable for
-      the path of the build. BitBake's output should not (and usually does
-      not) depend on the directory in which it was built.
-
    :term:`BB_HASHCHECK_FUNCTION`
       Specifies the name of the function to call during the "setscene" part
       of the task's execution in order to validate the list of task hashes.
@@ -425,6 +425,19 @@ overview of their function and contents.
 
       If you want to force log files to take a specific name, you can set this
       variable in a configuration file.
+
+   :term:`BB_MULTI_PROVIDER_ALLOWED`
+      Allows you to suppress BitBake warnings caused when building two
+      separate recipes that provide the same output.
+
+      BitBake normally issues a warning when building two different recipes
+      where each provides the same output. This scenario is usually
+      something the user does not want. However, cases do exist where it
+      makes sense, particularly in the ``virtual/*`` namespace. You can use
+      this variable to suppress BitBake's warnings.
+
+      To use the variable, list provider names (e.g. recipe names,
+      ``virtual/kernel``, and so forth).
 
    :term:`BB_NICE_LEVEL`
       Allows BitBake to run at a specific priority (i.e. nice level).
@@ -1053,19 +1066,6 @@ overview of their function and contents.
       locations defined by :term:`PREMIRRORS`, the
       upstream source, and then locations specified by :term:`MIRRORS` in that
       order.
-
-   :term:`BB_MULTI_PROVIDER_ALLOWED`
-      Allows you to suppress BitBake warnings caused when building two
-      separate recipes that provide the same output.
-
-      BitBake normally issues a warning when building two different recipes
-      where each provides the same output. This scenario is usually
-      something the user does not want. However, cases do exist where it
-      makes sense, particularly in the ``virtual/*`` namespace. You can use
-      this variable to suppress BitBake's warnings.
-
-      To use the variable, list provider names (e.g. recipe names,
-      ``virtual/kernel``, and so forth).
 
    :term:`OVERRIDES`
       BitBake uses :term:`OVERRIDES` to control what variables are overridden
