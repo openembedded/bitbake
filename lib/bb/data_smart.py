@@ -152,6 +152,9 @@ class DataContext(dict):
         self['d'] = metadata
 
     def __missing__(self, key):
+        # Skip commonly accessed invalid variables
+        if key in ['bb', 'oe', 'int', 'bool', 'time', 'str', 'os']:
+            raise KeyError(key)
         value = self.metadata.getVar(key)
         if value is None or self.metadata.getVarFlag(key, 'func', False):
             raise KeyError(key)
