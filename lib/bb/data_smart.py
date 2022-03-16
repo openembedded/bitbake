@@ -673,10 +673,11 @@ class DataSmart(MutableMapping):
             self.varhistory.record(**loginfo)
             self.setVar(newkey, val, ignore=True, parsing=True)
 
-        for i in (__setvar_keyword__):
-            src = self.getVarFlag(key, i, False)
-            if src is None:
+        srcflags = self.getVarFlags(key, False, True) or {}
+        for i in srcflags:
+            if i not in (__setvar_keyword__):
                 continue
+            src = srcflags[i]
 
             dest = self.getVarFlag(newkey, i, False) or []
             dest.extend(src)
