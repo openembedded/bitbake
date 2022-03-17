@@ -86,6 +86,10 @@ class DataExpansions(unittest.TestCase):
         val = self.d.expand("${@testfunc(d)}")
         self.assertEqual(str(val), "testvalue")
 
+    def test_python_snippet_builtin_metadata(self):
+        self.d.setVar("eval", "INVALID")
+        self.d.expand("${@eval('3')}")
+
     def test_python_unexpanded(self):
         self.d.setVar("bar", "${unsetvar}")
         val = self.d.expand("${@d.getVar('foo') + ' ${bar}'}")
