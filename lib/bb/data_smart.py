@@ -154,19 +154,20 @@ class VariableParse:
             return str(value)
 
 class DataContext(dict):
-    excluded = set([i for i in dir(builtins) if not i.startswith('_')] + ['bb', 'os', 'oe'])
+    excluded = set([i for i in dir(builtins) if not i.startswith('_')] + ['oe'])
 
     def __init__(self, metadata, **kwargs):
         self.metadata = metadata
         dict.__init__(self, **kwargs)
         self['d'] = metadata
+        self.context = set(bb.utils.get_context())
 
     def __missing__(self, key):
-        if key in self.excluded:
+        if key in self.excluded or key in self.context:
             raise KeyError(key)
 
         value = self.metadata.getVar(key)
-        if value is None or self.metadata.getVarFlag(key, 'func', False):
+        if value is None:
             raise KeyError(key)
         else:
             return value
