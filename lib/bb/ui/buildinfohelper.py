@@ -227,6 +227,12 @@ class ORMWrapper(object):
         build.completed_on = timezone.now()
         build.outcome = outcome
         build.save()
+
+        # We force a sync point here to force the outcome status commit,
+        # which resolves a race condition with the build completion takedown
+        transaction.set_autocommit(True)
+        transaction.set_autocommit(False)
+
         signal_runbuilds()
 
     def update_target_set_license_manifest(self, target, license_manifest_path):
