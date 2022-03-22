@@ -1002,7 +1002,7 @@ def compare_sigfiles(a, b, recursecb=None, color=False, collapsed=False):
         if changed:
             for dep in sorted(changed):
                 if not collapsed:
-                    output.append(color_format("{color_title}Hash for dependent task %s changed{color_default} from %s to %s") % (clean_basepath(dep), a[dep], b[dep]))
+                    output.append(color_format("{color_title}Hash for task dependency %s changed{color_default} from %s to %s") % (clean_basepath(dep), a[dep], b[dep]))
                 if callable(recursecb):
                     recout = recursecb(dep, a[dep], b[dep])
                     if recout:
