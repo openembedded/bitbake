@@ -156,6 +156,9 @@ class SignatureGenerator(object):
 
         return DataCacheProxy()
 
+    def exit(self):
+        return
+
 class SignatureGeneratorBasic(SignatureGenerator):
     """
     """
@@ -488,6 +491,12 @@ class SignatureGeneratorUniHashMixIn(object):
         if getattr(self, '_client', None) is None:
             self._client = hashserv.create_client(self.server)
         return self._client
+
+    def exit(self):
+        if getattr(self, '_client', None) is not None:
+            self._client.close()
+            self._client = None
+        return super().exit()
 
     def get_stampfile_hash(self, tid):
         if tid in self.taskhash:
