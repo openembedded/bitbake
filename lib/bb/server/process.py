@@ -243,9 +243,6 @@ class ProcessServer():
 
             ready = self.idle_commands(.1, fds)
 
-        if len(threading.enumerate()) != 1:
-            serverlog("More than one thread left?: " + str(threading.enumerate()))
-
         serverlog("Exiting")
         # Remove the socket file so we don't get any more connections to avoid races
         try:
@@ -262,6 +259,9 @@ class ProcessServer():
             pass
 
         self.cooker.post_serve()
+
+        if len(threading.enumerate()) != 1:
+            serverlog("More than one thread left?: " + str(threading.enumerate()))
 
         # Flush logs before we release the lock
         sys.stdout.flush()
