@@ -253,6 +253,11 @@ class BBCooker:
             return
         if not event.pathname in self.configwatcher.bbwatchedfiles:
             return
+        if "IN_ISDIR" in event.maskname:
+            if "IN_CREATE" in event.maskname:
+                self.add_filewatch([[event.pathname]], watcher=self.configwatcher, dirs=True)
+            elif "IN_DELETE" in event.maskname and event.pathname in self.watcher.bbseen:
+                self.configwatcher.bbseen.remove(event.pathname)
         if not event.pathname in self.inotify_modified_files:
             self.inotify_modified_files.append(event.pathname)
         self.baseconfig_valid = False
@@ -266,6 +271,11 @@ class BBCooker:
         if event.pathname.endswith("bitbake-cookerdaemon.log") \
                 or event.pathname.endswith("bitbake.lock"):
             return
+        if "IN_ISDIR" in event.maskname:
+            if "IN_CREATE" in event.maskname:
+                self.add_filewatch([[event.pathname]], dirs=True)
+            elif "IN_DELETE" in event.maskname and event.pathname in self.watcher.bbseen:
+                self.watcher.bbseen.remove(event.pathname)
         if not event.pathname in self.inotify_modified_files:
             self.inotify_modified_files.append(event.pathname)
         self.parsecache_valid = False
