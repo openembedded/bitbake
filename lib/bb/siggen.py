@@ -492,6 +492,12 @@ class SignatureGeneratorUniHashMixIn(object):
             self._client = hashserv.create_client(self.server)
         return self._client
 
+    def reset(self, data):
+        if getattr(self, '_client', None) is not None:
+            self._client.close()
+            self._client = None 
+        return super().reset(data)
+
     def exit(self):
         if getattr(self, '_client', None) is not None:
             self._client.close()
