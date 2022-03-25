@@ -1413,8 +1413,8 @@ overview of their function and contents.
          :term:`SRC_URI` checksums or :term:`SRCREV` when you have more than one
          file or git repository specified in :term:`SRC_URI`. For example::
 
-            SRC_URI = "git://example.com/foo.git;name=first \
-                       git://example.com/bar.git;name=second \
+            SRC_URI = "git://example.com/foo.git;branch=main;name=first \
+                       git://example.com/bar.git;branch=main;name=second \
                        http://example.com/file.tar.gz;name=third"
 
             SRCREV_first = "f1d2d2f924e986ac86fdf7b36c94bcdf32beec15"
