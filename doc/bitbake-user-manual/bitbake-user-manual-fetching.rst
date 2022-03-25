@@ -432,9 +432,9 @@ This fetcher supports the following parameters:
    raw Git metadata is provided. This parameter implies the "nocheckout"
    parameter as well.
 
--  *"branch":* The branch(es) of the Git tree to clone. If unset, this
-   is assumed to be "master". The number of branch parameters much match
-   the number of name parameters.
+-  *"branch":* The branch(es) of the Git tree to clone. Unless
+   "nobranch" is set to "1", this is a mandatory parameter. The number of
+   branch parameters must match the number of name parameters.
 
 -  *"rev":* The revision to use for the checkout. The default is
    "master".
