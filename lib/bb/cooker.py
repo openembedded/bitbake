@@ -2249,7 +2249,7 @@ class CookerParser(object):
                 result = self.result_queue.get(timeout=0.25)
             except queue.Empty:
                 empty = True
-                pass
+                yield None, None, None
             else:
                 empty = False
                 yield result
@@ -2266,6 +2266,10 @@ class CookerParser(object):
             if isinstance(result, BaseException):
                 # Turn exceptions back into exceptions
                 raise result
+            if parsed is None:
+                # Timeout, loop back through the main loop
+                return True
+
         except StopIteration:
             self.shutdown()
             return False
