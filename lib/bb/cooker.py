@@ -2087,12 +2087,12 @@ class Parser(multiprocessing.Process):
             tb = sys.exc_info()[2]
             exc.recipe = filename
             exc.traceback = list(bb.exceptions.extract_traceback(tb, context=3))
-            return True, exc
+            return True, None, exc
         # Need to turn BaseExceptions into Exceptions here so we gracefully shutdown
         # and for example a worker thread doesn't just exit on its own in response to
         # a SystemExit event for example.
         except BaseException as exc:
-            return True, ParsingFailure(exc, filename)
+            return True, None, ParsingFailure(exc, filename)
         finally:
             bb.event.LogHandler.filter = origfilter
 
@@ -2252,11 +2252,7 @@ class CookerParser(object):
                 pass
             else:
                 empty = False
-                value = result[1]
-                if isinstance(value, BaseException):
-                    raise value
-                else:
-                    yield result
+                yield result
 
         if not (self.parsed >= self.toparse):
             raise bb.parse.ParseError("Not all recipes parsed, parser thread killed/died? Exiting.", None)
@@ -2267,6 +2263,9 @@ class CookerParser(object):
         parsed = None
         try:
             parsed, mc, result = next(self.results)
+            if isinstance(result, BaseException):
+                # Turn exceptions back into exceptions
+                raise result
         except StopIteration:
             self.shutdown()
             return False
