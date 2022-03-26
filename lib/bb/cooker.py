@@ -2041,32 +2041,32 @@ class Parser(multiprocessing.Process):
             self.init()
 
         pending = []
-        while True:
-            try:
-                self.quit.get_nowait()
-            except queue.Empty:
-                pass
-            else:
-                self.results.close()
-                self.results.join_thread()
-                break
-
-            if pending:
-                result = pending.pop()
-            else:
+        try:
+            while True:
                 try:
-                    job = self.jobs.pop()
-                except IndexError:
-                    self.results.close()
-                    self.results.join_thread()
+                    self.quit.get_nowait()
+                except queue.Empty:
+                    pass
+                else:
                     break
-                result = self.parse(*job)
-                # Clear the siggen cache after parsing to control memory usage, its huge
-                bb.parse.siggen.postparsing_clean_cache()
-            try:
-                self.results.put(result, timeout=0.25)
-            except queue.Full:
-                pending.append(result)
+
+                if pending:
+                    result = pending.pop()
+                else:
+                    try:
+                        job = self.jobs.pop()
+                    except IndexError:
+                        break
+                    result = self.parse(*job)
+                    # Clear the siggen cache after parsing to control memory usage, its huge
+                    bb.parse.siggen.postparsing_clean_cache()
+                try:
+                    self.results.put(result, timeout=0.25)
+                except queue.Full:
+                    pending.append(result)
+        finally:
+            self.results.close()
+            self.results.join_thread()
 
     def parse(self, mc, cache, filename, appends):
         try:
