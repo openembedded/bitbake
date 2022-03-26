@@ -556,7 +556,7 @@ def execServer(lockfd, readypipeinfd, lockname, sockname, server_timeout, xmlrpc
 
         server.run()
     finally:
-        # Flush any ,essages/errors to the logfile before exit
+        # Flush any messages/errors to the logfile before exit
         sys.stdout.flush()
         sys.stderr.flush()
 
