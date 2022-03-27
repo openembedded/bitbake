@@ -221,6 +221,7 @@ class ProcessServer(multiprocessing.Process):
                 try:
                     print("Running command %s" % command)
                     self.command_channel_reply.send(self.cooker.command.runCommand(command))
+                    print("Command Completed")
                 except Exception as e:
                    logger.exception('Exception in server main event loop running command %s (%s)' % (command, str(e)))
 
