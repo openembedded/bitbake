@@ -20,6 +20,7 @@ import os
 import sys
 import time
 import select
+import signal
 import socket
 import subprocess
 import errno
@@ -737,10 +738,27 @@ class ConnectionWriter(object):
         # Why bb.event needs this I have no idea
         self.event = self
 
-    def send(self, obj):
-        obj = multiprocessing.reduction.ForkingPickler.dumps(obj)
+    def _send(self, obj):
         with self.wlock:
             self.writer.send_bytes(obj)
+
+    def send(self, obj):
+        obj = multiprocessing.reduction.ForkingPickler.dumps(obj)
+        # See notes/code in CookerParser
+        # We must not terminate holding this lock else processes will hang.
+        # For SIGTERM, raising afterwards avoids this.
+        # For SIGINT, we don't want to have written partial data to the pipe.
+        # pthread_sigmask block/unblock would be nice but doesn't work, https://bugs.python.org/issue47139
+        process = multiprocessing.current_process()
+        if process and hasattr(process, "queue_signals"):
+            with process.signal_threadlock:
+                process.queue_signals = True
+                self._send(obj)
+                process.queue_signals = False
+                for sig in process.signal_received.pop():
+                    process.handle_sig(sig, None)
+        else:
+            self._send(obj)
 
     def fileno(self):
         return self.writer.fileno()
