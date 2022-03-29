@@ -1613,7 +1613,7 @@ class BBCooker:
 
         if self.state in (state.shutdown, state.forceshutdown, state.error):
             if hasattr(self.parser, 'shutdown'):
-                self.parser.shutdown(clean=False, force = True)
+                self.parser.shutdown(clean=False)
                 self.parser.final_cleanup()
             raise bb.BBHandledException()
 
@@ -1741,7 +1741,7 @@ class BBCooker:
             self.state = state.shutdown
 
         if self.parser:
-            self.parser.shutdown(clean=not force, force=force)
+            self.parser.shutdown(clean=not force)
             self.parser.final_cleanup()
 
     def finishcommand(self):
@@ -2186,7 +2186,7 @@ class CookerParser(object):
 
             self.results = itertools.chain(self.results, self.parse_generator())
 
-    def shutdown(self, clean=True, force=False):
+    def shutdown(self, clean=True):
         if not self.toparse:
             return
         if self.haveshutdown:
@@ -2215,11 +2215,24 @@ class CookerParser(object):
                 break
 
         for process in self.processes:
-            if force:
-                process.join(.1)
+            process.join(0.5)
+
+        for process in self.processes:
+            if process.exitcode is None:
+                os.kill(process.pid, signal.SIGINT)
+
+        for process in self.processes:
+            process.join(0.5)
+
+        for process in self.processes:
+            if process.exitcode is None:
                 process.terminate()
-            else:
-                process.join()
+
+        for process in self.processes:
+            process.join()
+            # Added in 3.7, cleans up zombies
+            if hasattr(process, "close"):
+                process.close()
 
         self.parser_quit.close()
         # Allow data left in the cancel queue to be discarded
@@ -2296,18 +2309,18 @@ class CookerParser(object):
         except bb.BBHandledException as exc:
             self.error += 1
             logger.debug('Failed to parse recipe: %s' % exc.recipe)
-            self.shutdown(clean=False, force=True)
+            self.shutdown(clean=False)
             return False
         except ParsingFailure as exc:
             self.error += 1
             logger.error('Unable to parse %s: %s' %
                      (exc.recipe, bb.exceptions.to_string(exc.realexception)))
-            self.shutdown(clean=False, force=True)
+            self.shutdown(clean=False)
             return False
         except bb.parse.ParseError as exc:
             self.error += 1
             logger.error(str(exc))
-            self.shutdown(clean=False, force=True)
+            self.shutdown(clean=False)
             return False
         except bb.data_smart.ExpansionError as exc:
             self.error += 1
@@ -2316,7 +2329,7 @@ class CookerParser(object):
             tb = list(itertools.dropwhile(lambda e: e.filename.startswith(bbdir), exc.traceback))
             logger.error('ExpansionError during parsing %s', value.recipe,
                          exc_info=(etype, value, tb))
-            self.shutdown(clean=False, force=True)
+            self.shutdown(clean=False)
             return False
         except Exception as exc:
             self.error += 1
@@ -2328,7 +2341,7 @@ class CookerParser(object):
                 # Most likely, an exception occurred during raising an exception
                 import traceback
                 logger.error('Exception during parse: %s' % traceback.format_exc())
-            self.shutdown(clean=False, force=True)
+            self.shutdown(clean=False)
             return False
 
         self.current += 1
