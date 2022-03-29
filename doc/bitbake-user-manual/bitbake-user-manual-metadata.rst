@@ -1658,8 +1658,8 @@ user interfaces:
 
 .. _variants-class-extension-mechanism:
 
-Variants - Class Extension Mechanism
-====================================
+Variants --- Class Extension Mechanism
+======================================
 
 BitBake supports multiple incarnations of a recipe file via the
 :term:`BBCLASSEXTEND` variable.

@@ -503,14 +503,14 @@ overview of their function and contents.
       Selects the name of the scheduler to use for the scheduling of
       BitBake tasks. Three options exist:
 
-      -  *basic* - The basic framework from which everything derives. Using
+      -  *basic* --- the basic framework from which everything derives. Using
          this option causes tasks to be ordered numerically as they are
          parsed.
 
-      -  *speed* - Executes tasks first that have more tasks depending on
+      -  *speed* --- executes tasks first that have more tasks depending on
          them. The "speed" option is the default.
 
-      -  *completion* - Causes the scheduler to try to complete a given
+      -  *completion* --- causes the scheduler to try to complete a given
          recipe once its build has started.
 
    :term:`BB_SCHEDULERS`
@@ -557,10 +557,10 @@ overview of their function and contents.
 
       The variable can be set using one of two policies:
 
-      -  *cache* - Retains the value the system obtained previously rather
+      -  *cache* --- retains the value the system obtained previously rather
          than querying the source control system each time.
 
-      -  *clear* - Queries the source controls system every time. With this
+      -  *clear* --- queries the source controls system every time. With this
          policy, there is no cache. The "clear" policy is the default.
 
    :term:`BB_STRICT_CHECKSUM`
@@ -686,7 +686,7 @@ overview of their function and contents.
       This variable is useful in situations where the same recipe appears
       in more than one layer. Setting this variable allows you to
       prioritize a layer against other layers that contain the same recipe
-      - effectively letting you control the precedence for the multiple
+      --- effectively letting you control the precedence for the multiple
       layers. The precedence established through this variable stands
       regardless of a recipe's version (:term:`PV` variable).
       For example, a layer that has a recipe with a higher :term:`PV` value but
@@ -1331,7 +1331,7 @@ overview of their function and contents.
       The section in which packages should be categorized.
 
    :term:`SRC_URI`
-      The list of source files - local or remote. This variable tells
+      The list of source files --- local or remote. This variable tells
       BitBake which bits to pull for the build and how to pull them. For
       example, if the recipe or append file needs to fetch a single tarball
       from the Internet, the recipe or append file uses a :term:`SRC_URI`
@@ -1347,17 +1347,17 @@ overview of their function and contents.
       the :ref:`bitbake-user-manual/bitbake-user-manual-fetching:fetchers`
       section.
 
-      -  ``az://`` : Fetches files from an Azure Storage account using HTTPS.
+      -  ``az://``: Fetches files from an Azure Storage account using HTTPS.
 
-      -  ``bzr://`` : Fetches files from a Bazaar revision control
+      -  ``bzr://``: Fetches files from a Bazaar revision control
          repository.
 
-      -  ``ccrc://`` - Fetches files from a ClearCase repository.
+      -  ``ccrc://``: Fetches files from a ClearCase repository.
 
-      -  ``cvs://`` : Fetches files from a CVS revision control
+      -  ``cvs://``: Fetches files from a CVS revision control
          repository.
 
-      -  ``file://`` - Fetches files, which are usually files shipped
+      -  ``file://``: Fetches files, which are usually files shipped
          with the Metadata, from the local machine.
          The path is relative to the :term:`FILESPATH`
          variable. Thus, the build system searches, in order, from the
@@ -1365,51 +1365,51 @@ overview of their function and contents.
          the directory in which the recipe file (``.bb``) or append file
          (``.bbappend``) resides:
 
-         -  ``${BPN}`` - The base recipe name without any special suffix
+         -  ``${BPN}``: the base recipe name without any special suffix
             or version numbers.
 
-         -  ``${BP}`` - ``${BPN}-${PV}``. The base recipe name and
+         -  ``${BP}`` - ``${BPN}-${PV}``: the base recipe name and
             version but without any special package name suffix.
 
-         -  *files -* Files within a directory, which is named ``files``
+         -  ``files``: files within a directory, which is named ``files``
             and is also alongside the recipe or append file.
 
-      -  ``ftp://`` : Fetches files from the Internet using FTP.
+      -  ``ftp://``: Fetches files from the Internet using FTP.
 
-      -  ``git://`` : Fetches files from a Git revision control
+      -  ``git://``: Fetches files from a Git revision control
          repository.
 
-      -  ``gitsm://`` : Fetches submodules from a Git revision control
+      -  ``gitsm://``: Fetches submodules from a Git revision control
          repository.
 
-      -  ``hg://`` : Fetches files from a Mercurial (``hg``) revision
+      -  ``hg://``: Fetches files from a Mercurial (``hg``) revision
          control repository.
 
-      -  ``http://`` : Fetches files from the Internet using HTTP.
+      -  ``http://``: Fetches files from the Internet using HTTP.
 
-      -  ``https://`` : Fetches files from the Internet using HTTPS.
+      -  ``https://``: Fetches files from the Internet using HTTPS.
 
-      -  ``npm://`` - Fetches JavaScript modules from a registry.
+      -  ``npm://``: Fetches JavaScript modules from a registry.
 
-      -  ``osc://`` : Fetches files from an OSC (OpenSUSE Build service)
+      -  ``osc://``: Fetches files from an OSC (OpenSUSE Build service)
          revision control repository.
 
-      -  ``p4://`` : Fetches files from a Perforce (``p4``) revision
+      -  ``p4://``: Fetches files from a Perforce (``p4``) revision
          control repository.
 
-      -  ``repo://`` : Fetches files from a repo (Git) repository.
+      -  ``repo://``: Fetches files from a repo (Git) repository.
 
-      -  ``ssh://`` : Fetches files from a secure shell.
+      -  ``ssh://``: Fetches files from a secure shell.
 
-      -  ``svn://`` : Fetches files from a Subversion (``svn``) revision
+      -  ``svn://``: Fetches files from a Subversion (``svn``) revision
          control repository.
 
       Here are some additional options worth mentioning:
 
-      -  ``downloadfilename`` : Specifies the filename used when storing
+      -  ``downloadfilename``: Specifies the filename used when storing
          the downloaded file.
 
-      -  ``name`` - Specifies a name to be used for association with
+      -  ``name``: Specifies a name to be used for association with
          :term:`SRC_URI` checksums or :term:`SRCREV` when you have more than one
          file or git repository specified in :term:`SRC_URI`. For example::
 
@@ -1421,15 +1421,15 @@ overview of their function and contents.
             SRCREV_second = "e242ed3bffccdf271b7fbaf34ed72d089537b42f"
             SRC_URI[third.sha256sum] = "13550350a8681c84c861aac2e5b440161c2b33a3e4f302ac680ca5b686de48de"
 
-      -  ``subdir`` : Places the file (or extracts its contents) into the
+      -  ``subdir``: Places the file (or extracts its contents) into the
          specified subdirectory. This option is useful for unusual tarballs
          or other archives that do not have their files already in a
          subdirectory within the archive.
 
-      -  ``subpath`` - Limits the checkout to a specific subpath of the
+      -  ``subpath``: Limits the checkout to a specific subpath of the
          tree when using the Git fetcher is used.
 
-      -  ``unpack`` : Controls whether or not to unpack the file if it is
+      -  ``unpack``: Controls whether or not to unpack the file if it is
          an archive. The default action is to unpack the file.
 
    :term:`SRCDATE`
