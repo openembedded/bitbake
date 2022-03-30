@@ -254,9 +254,14 @@ class BBCooker:
         if not event.pathname in self.configwatcher.bbwatchedfiles:
             return
         if "IN_ISDIR" in event.maskname:
+            if "IN_CREATE" in event.maskname or "IN_DELETE" in event.maskname:
+                if event.pathname in self.configwatcher.bbseen:
+                    self.configwatcher.bbseen.remove(event.pathname)
+                # Could remove all entries starting with the directory but for now...
+                bb.parse.clear_cache()
             if "IN_CREATE" in event.maskname:
                 self.add_filewatch([[event.pathname]], watcher=self.configwatcher, dirs=True)
-            elif "IN_DELETE" in event.maskname and event.pathname in self.watcher.bbseen:
+            elif "IN_DELETE" in event.maskname and event.pathname in self.configwatcher.bbseen:
                 self.configwatcher.bbseen.remove(event.pathname)
         if not event.pathname in self.inotify_modified_files:
             self.inotify_modified_files.append(event.pathname)
@@ -272,6 +277,11 @@ class BBCooker:
                 or event.pathname.endswith("bitbake.lock"):
             return
         if "IN_ISDIR" in event.maskname:
+            if "IN_CREATE" in event.maskname or "IN_DELETE" in event.maskname:
+                if event.pathname in self.watcher.bbseen:
+                    self.watcher.bbseen.remove(event.pathname)
+                # Could remove all entries starting with the directory but for now...
+                bb.parse.clear_cache()
             if "IN_CREATE" in event.maskname:
                 self.add_filewatch([[event.pathname]], dirs=True)
             elif "IN_DELETE" in event.maskname and event.pathname in self.watcher.bbseen:
