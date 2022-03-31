@@ -1766,6 +1766,8 @@ class BBCooker:
         self.state = state.initial
 
     def reset(self):
+        if hasattr(bb.parse, "siggen"):
+            bb.parse.siggen.exit()
         self.initConfigurationData()
         self.handlePRServ()
 
