@@ -329,7 +329,7 @@ def build_dependencies(key, keys, shelldeps, varflagsexcl, ignored_vars, d):
                 deps = deps | (keys & parser.execs) | (keys & parsedvar.execs)
                 value = handle_contains(value, parsedvar.contains, exclusions, d)
                 if hasattr(parsedvar, "removes"):
-                    value = handle_remove(value, deps, parsedvar.removes, varflags, d)
+                    value = handle_remove(value, deps, parsedvar.removes, d)
             if vardeps is None:
                 parser.log.flush()
             if "prefuncs" in varflags:
