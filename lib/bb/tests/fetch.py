@@ -2802,3 +2802,66 @@ class GitSharedTest(FetcherTest):
         fetcher.unpack(self.unpackdir)
         alt = os.path.join(self.unpackdir, 'git/.git/objects/info/alternates')
         self.assertFalse(os.path.exists(alt))
+
+
+class FetchPremirroronlyLocalTest(FetcherTest):
+
+    def git(self, cmd, cwd=None):
+        if isinstance(cmd, str):
+            cmd = 'git ' + cmd
+        else:
+            cmd = ['git'] + cmd
+        if cwd is None:
+            cwd = self.gitdir
+        return bb.process.run(cmd, cwd=cwd)[0]
+
+    def setUp(self):
+        super(FetchPremirroronlyLocalTest, self).setUp()
+        self.mirrordir = os.path.join(self.tempdir, "mirrors")
+        os.mkdir(self.mirrordir)
+        self.reponame = "bitbake"
+        self.gitdir = os.path.join(self.tempdir, "git", self.reponame)
+        self.recipe_url = "git://git.fake.repo/bitbake"
+        self.d.setVar("BB_FETCH_PREMIRRORONLY", "1")
+        self.d.setVar("BB_NO_NETWORK", "1")
+        self.d.setVar("PREMIRRORS", self.recipe_url + " " + "file://{}".format(self.mirrordir) + " \n")
+
+    def make_git_repo(self):
+        self.mirrorname = "git2_git.fake.repo.bitbake.tar.gz"
+        recipeurl = "git:/git.fake.repo/bitbake"
+        os.makedirs(self.gitdir)
+        self.git("init", self.gitdir)
+        for i in range(0):
+            self.git_new_commit()
+        bb.process.run('tar -czvf {} .'.format(os.path.join(self.mirrordir, self.mirrorname)), cwd =  self.gitdir)
+
+    def git_new_commit(self):
+        import random
+        testfilename = "bibake-fetch.test"
+        os.unlink(os.path.join(self.mirrordir, self.mirrorname))
+        with open(os.path.join(self.gitdir, testfilename), "w") as testfile:
+            testfile.write("Useless random data {}".format(random.random()))
+        self.git("add {}".format(testfilename), self.gitdir)
+        self.git("commit -a -m \"This random commit {}. I'm useless.\"".format(random.random()), self.gitdir)
+        bb.process.run('tar -czvf {} .'.format(os.path.join(self.mirrordir, self.mirrorname)), cwd =  self.gitdir)
+        return self.git("rev-parse HEAD", self.gitdir).strip()
+
+    def test_mirror_commit_nonexistent(self):
+        self.make_git_repo()
+        self.d.setVar("SRCREV", "0"*40)
+        fetcher = bb.fetch.Fetch([self.recipe_url], self.d)
+        with self.assertRaises(bb.fetch2.NetworkAccess):
+            fetcher.download()
+
+    def test_mirror_commit_exists(self):
+        self.make_git_repo()
+        self.d.setVar("SRCREV", self.git_new_commit())
+        fetcher = bb.fetch.Fetch([self.recipe_url], self.d)
+        fetcher.download()
+        fetcher.unpack(self.unpackdir)
+
+    def test_mirror_tarball_nonexistent(self):
+        self.d.setVar("SRCREV", "0"*40)
+        fetcher = bb.fetch.Fetch([self.recipe_url], self.d)
+        with self.assertRaises(bb.fetch2.NetworkAccess):
+            fetcher.download()
