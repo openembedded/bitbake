@@ -45,7 +45,7 @@ from pprint import pformat
 import logging
 from datetime import datetime, timedelta
 
-from django.db import transaction, connection
+from django.db import transaction
 
 
 # pylint: disable=invalid-name
