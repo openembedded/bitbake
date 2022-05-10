@@ -496,7 +496,7 @@ class ORMWrapper(object):
             if not parent_path:
                 parent_path = "/"
             parent_obj = self._cached_get(Target_File, target = target_obj, path = parent_path, inodetype = Target_File.ITYPE_DIRECTORY)
-            tf_obj = Target_File.objects.create(
+            Target_File.objects.create(
                         target = target_obj,
                         path = path,
                         size = size,
@@ -561,7 +561,7 @@ class ORMWrapper(object):
 
             parent_obj = Target_File.objects.get(target = target_obj, path = parent_path, inodetype = Target_File.ITYPE_DIRECTORY)
 
-            tf_obj = Target_File.objects.create(
+            Target_File.objects.create(
                         target = target_obj,
                         path = path,
                         size = size,
