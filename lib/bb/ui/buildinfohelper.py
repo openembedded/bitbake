@@ -1062,27 +1062,6 @@ class BuildInfoHelper(object):
 
         return recipe_info
 
-    def _get_path_information(self, task_object):
-        self._ensure_build()
-
-        assert isinstance(task_object, Task)
-        build_stats_format = "{tmpdir}/buildstats/{buildname}/{package}/"
-        build_stats_path = []
-
-        for t in self.internal_state['targets']:
-            buildname = self.internal_state['build'].build_name
-            pe, pv = task_object.recipe.version.split(":",1)
-            if pe:
-                package = task_object.recipe.name + "-" + pe + "_" + pv
-            else:
-                package = task_object.recipe.name + "-" + pv
-
-            build_stats_path.append(build_stats_format.format(tmpdir=self.tmp_dir,
-                                                     buildname=buildname,
-                                                     package=package))
-
-        return build_stats_path
-
 
     ################################
     ## external available methods to store information
