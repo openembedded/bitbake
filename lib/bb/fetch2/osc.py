@@ -90,7 +90,7 @@ class Osc(FetchMethod):
         api_source_cmd = self._buildosccommand(ud, d, "api_source")
 
         output = runfetchcmd(api_source_cmd, d)
-        match = re.match('<directory ?.* rev="(\d+)".*>', output)
+        match = re.match(r'<directory ?.* rev="(\d+)".*>', output)
         if match is None:
             raise FetchError("Unable to parse osc response", ud.url)
         return match.groups()[0]
