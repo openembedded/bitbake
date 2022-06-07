@@ -667,18 +667,14 @@ class BBUIEventQueue:
         self.t.start()
 
     def getEvent(self):
-        self.eventQueueLock.acquire()
+        with self.eventQueueLock:
+            if len(self.eventQueue) == 0:
+                return None
 
-        if len(self.eventQueue) == 0:
-            self.eventQueueLock.release()
-            return None
+            item = self.eventQueue.pop(0)
+            if len(self.eventQueue) == 0:
+                self.eventQueueNotify.clear()
 
-        item = self.eventQueue.pop(0)
-
-        if len(self.eventQueue) == 0:
-            self.eventQueueNotify.clear()
-
-        self.eventQueueLock.release()
         return item
 
     def waitEvent(self, delay):
@@ -686,10 +682,9 @@ class BBUIEventQueue:
         return self.getEvent()
 
     def queue_event(self, event):
-        self.eventQueueLock.acquire()
-        self.eventQueue.append(event)
-        self.eventQueueNotify.set()
-        self.eventQueueLock.release()
+        with self.eventQueueLock:
+            self.eventQueue.append(event)
+            self.eventQueueNotify.set()
 
     def send_event(self, event):
         self.queue_event(pickle.loads(event))
