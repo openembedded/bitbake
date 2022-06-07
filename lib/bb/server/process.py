@@ -437,6 +437,7 @@ class BitBakeProcessServerConnection(object):
         self.socket_connection = sock
 
     def terminate(self):
+        self.events.close()
         self.socket_connection.close()
         self.connection.connection.close()
         self.connection.recv.close()
@@ -662,7 +663,6 @@ class BBUIEventQueue:
         self.reader = ConnectionReader(readfd)
 
         self.t = threading.Thread()
-        self.t.daemon = True
         self.t.run = self.startCallbackHandler
         self.t.start()
 
@@ -693,13 +693,17 @@ class BBUIEventQueue:
         bb.utils.set_process_name("UIEventQueue")
         while True:
             try:
-                self.reader.wait()
-                event = self.reader.get()
-                self.queue_event(event)
-            except EOFError:
+                ready = self.reader.wait(0.25)
+                if ready:
+                    event = self.reader.get()
+                    self.queue_event(event)
+            except (EOFError, OSError):
                 # Easiest way to exit is to close the file descriptor to cause an exit
                 break
+
+    def close(self):
         self.reader.close()
+        self.t.join()
 
 class ConnectionReader(object):
 
