@@ -2806,15 +2806,6 @@ class GitSharedTest(FetcherTest):
 
 class FetchPremirroronlyLocalTest(FetcherTest):
 
-    def git(self, cmd, cwd=None):
-        if isinstance(cmd, str):
-            cmd = 'git ' + cmd
-        else:
-            cmd = ['git'] + cmd
-        if cwd is None:
-            cwd = self.gitdir
-        return bb.process.run(cmd, cwd=cwd)[0]
-
     def setUp(self):
         super(FetchPremirroronlyLocalTest, self).setUp()
         self.mirrordir = os.path.join(self.tempdir, "mirrors")
