@@ -2856,3 +2856,42 @@ class FetchPremirroronlyLocalTest(FetcherTest):
         fetcher = bb.fetch.Fetch([self.recipe_url], self.d)
         with self.assertRaises(bb.fetch2.NetworkAccess):
             fetcher.download()
+
+class FetchPremirroronlyNetworkTest(FetcherTest):
+
+    def setUp(self):
+        super(FetchPremirroronlyNetworkTest, self).setUp()
+        self.mirrordir = os.path.join(self.tempdir, "mirrors")
+        os.mkdir(self.mirrordir)
+        self.reponame = "fstests"
+        self.clonedir = os.path.join(self.tempdir, "git")
+        self.gitdir = os.path.join(self.tempdir, "git", "{}.git".format(self.reponame))
+        self.recipe_url = "git://git.yoctoproject.org/fstests"
+        self.d.setVar("BB_FETCH_PREMIRRORONLY", "1")
+        self.d.setVar("BB_NO_NETWORK", "0")
+        self.d.setVar("PREMIRRORS", self.recipe_url + " " + "file://{}".format(self.mirrordir) + " \n")
+
+    def make_git_repo(self):
+        import shutil
+        self.mirrorname = "git2_git.yoctoproject.org.fstests.tar.gz"
+        os.makedirs(self.clonedir)
+        self.git("clone --bare --shallow-since=\"01.01.2013\" {}".format(self.recipe_url), self.clonedir)
+        bb.process.run('tar -czvf {} .'.format(os.path.join(self.mirrordir, self.mirrorname)), cwd =  self.gitdir)
+        shutil.rmtree(self.clonedir)
+
+    @skipIfNoNetwork()
+    def test_mirror_tarball_updated(self):
+        self.make_git_repo()
+        ## Upstream commit is in the mirror
+        self.d.setVar("SRCREV", "49d65d53c2bf558ae6e9185af0f3af7b79d255ec")
+        fetcher = bb.fetch.Fetch([self.recipe_url], self.d)
+        fetcher.download()
+
+    @skipIfNoNetwork()
+    def test_mirror_tarball_outdated(self):
+        self.make_git_repo()
+        ## Upstream commit not in the mirror
+        self.d.setVar("SRCREV", "15413486df1f5a5b5af699b6f3ba5f0984e52a9f")
+        fetcher = bb.fetch.Fetch([self.recipe_url], self.d)
+        with self.assertRaises(bb.fetch2.NetworkAccess):
+            fetcher.download()
