@@ -697,7 +697,7 @@ class BBUIEventQueue:
                 if ready:
                     event = self.reader.get()
                     self.queue_event(event)
-            except (EOFError, OSError):
+            except (EOFError, OSError, TypeError):
                 # Easiest way to exit is to close the file descriptor to cause an exit
                 break
 
