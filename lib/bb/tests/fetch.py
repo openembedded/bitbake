@@ -2895,3 +2895,28 @@ class FetchPremirroronlyNetworkTest(FetcherTest):
         fetcher = bb.fetch.Fetch([self.recipe_url], self.d)
         with self.assertRaises(bb.fetch2.NetworkAccess):
             fetcher.download()
+
+class FetchPremirroronlyBrokenTarball(FetcherTest):
+
+    def setUp(self):
+        super(FetchPremirroronlyBrokenTarball, self).setUp()
+        self.mirrordir = os.path.join(self.tempdir, "mirrors")
+        os.mkdir(self.mirrordir)
+        self.reponame = "bitbake"
+        self.gitdir = os.path.join(self.tempdir, "git", self.reponame)
+        self.recipe_url = "git://git.fake.repo/bitbake"
+        self.d.setVar("BB_FETCH_PREMIRRORONLY", "1")
+        self.d.setVar("BB_NO_NETWORK", "1")
+        self.d.setVar("PREMIRRORS", self.recipe_url + " " + "file://{}".format(self.mirrordir) + " \n")
+        self.mirrorname = "git2_git.fake.repo.bitbake.tar.gz"
+        with open(os.path.join(self.mirrordir, self.mirrorname), 'w') as targz:
+            targz.write("This is not tar.gz file!")
+
+    def test_mirror_broken_download(self):
+        import sys
+        self.d.setVar("SRCREV", "0"*40)
+        fetcher = bb.fetch.Fetch([self.recipe_url], self.d)
+        with self.assertRaises(bb.fetch2.FetchError):
+            fetcher.download()
+        stdout = sys.stdout.getvalue()
+        self.assertFalse(" not a git repository (or any parent up to mount point /)" in stdout)
