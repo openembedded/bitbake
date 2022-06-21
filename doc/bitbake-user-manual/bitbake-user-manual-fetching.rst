@@ -688,6 +688,8 @@ Here is an example URL::
 
 It can also be used when setting mirrors definitions using the :term:`PREMIRRORS` variable.
 
+.. _crate-fetcher:
+
 Crate Fetcher (``crate://``)
 ----------------------------
 
