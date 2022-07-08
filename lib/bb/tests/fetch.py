@@ -693,6 +693,11 @@ class FetcherLocalTest(FetcherTest):
         flst.sort()
         return flst
 
+    def test_local_checksum_fails_no_file(self):
+        self.d.setVar("SRC_URI", "file://404")
+        with self.assertRaises(bb.BBHandledException):
+            bb.fetch.get_checksum_file_list(self.d)
+
     def test_local(self):
         tree = self.fetchUnpack(['file://a', 'file://dir/c'])
         self.assertEqual(tree, ['a', 'dir/c'])

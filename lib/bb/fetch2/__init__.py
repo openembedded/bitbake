@@ -1235,7 +1235,9 @@ def get_checksum_file_list(d):
                     if os.path.exists(f):
                         bb.warn("Getting checksum for %s SRC_URI entry %s: file not found except in DL_DIR" % (d.getVar('PN'), os.path.basename(f)))
                     else:
-                        bb.warn("Unable to get checksum for %s SRC_URI entry %s: file could not be found" % (d.getVar('PN'), os.path.basename(f)))
+                        bb.fatal(("Unable to get checksum for %s SRC_URI entry %s: file could not be found"
+                            "\nThe following paths were searched:"
+                            "\n%s") % (d.getVar('PN'), os.path.basename(f), '\n'.join(paths)))
                 filelist.append(f + ":" + str(os.path.exists(f)))
 
     return " ".join(filelist)
