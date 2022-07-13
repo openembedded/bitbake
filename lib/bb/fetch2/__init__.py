@@ -1222,25 +1222,21 @@ def get_checksum_file_list(d):
     SRC_URI as a space-separated string
     """
     fetch = Fetch([], d, cache = False, localonly = True)
-
-    dl_dir = d.getVar('DL_DIR')
     filelist = []
     for u in fetch.urls:
         ud = fetch.ud[u]
-
         if ud and isinstance(ud.method, local.Local):
+            found = False
             paths = ud.method.localpaths(ud, d)
             for f in paths:
                 pth = ud.decodedurl
-                if f.startswith(dl_dir):
-                    # The local fetcher's behaviour is to return a path under DL_DIR if it couldn't find the file anywhere else
-                    if os.path.exists(f):
-                        bb.warn("Getting checksum for %s SRC_URI entry %s: file not found except in DL_DIR" % (d.getVar('PN'), os.path.basename(f)))
-                    else:
-                        bb.fatal(("Unable to get checksum for %s SRC_URI entry %s: file could not be found"
+                if os.path.exists(f):
+                    found = True
+                filelist.append(f + ":" + str(os.path.exists(f)))
+            if not found:
+                bb.fatal(("Unable to get checksum for %s SRC_URI entry %s: file could not be found"
                             "\nThe following paths were searched:"
                             "\n%s") % (d.getVar('PN'), os.path.basename(f), '\n'.join(paths)))
-                filelist.append(f + ":" + str(os.path.exists(f)))
 
     return " ".join(filelist)
 
