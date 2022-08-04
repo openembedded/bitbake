@@ -80,7 +80,6 @@ class DataExpansions(unittest.TestCase):
     def test_python_snippet_function_reference(self):
         self.d.setVar("TESTVAL", "testvalue")
         self.d.setVar("testfunc", 'd.getVar("TESTVAL")')
-        self.d.setVarFlag("testfunc", "func", "1")
         context = bb.utils.get_context()
         context["testfunc"] = lambda d: d.getVar("TESTVAL")
         val = self.d.expand("${@testfunc(d)}")
