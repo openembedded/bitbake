@@ -2254,10 +2254,12 @@ class RunQueueExecute:
 
         # No more tasks can be run. If we have deferred setscene tasks we should run them.
         if self.sq_deferred:
-            tid = self.sq_deferred.pop(list(self.sq_deferred.keys())[0])
-            logger.warning("Runqeueue deadlocked on deferred tasks, forcing task %s" % tid)
-            if tid not in self.runq_complete:
-                self.sq_task_failoutright(tid)
+            deferred_tid = list(self.sq_deferred.keys())[0]
+            blocking_tid = self.sq_deferred.pop(deferred_tid)
+            logger.warning("Runqeueue deadlocked on deferred tasks, forcing task %s blocked by %s" % (deferred_tid, blocking_tid))
+            if blocking_tid not in self.runq_complete:
+                logger.warning("Failing blocking task %s" % (blocking_tid))
+                self.sq_task_failoutright(blocking_tid)
             return True
 
         if self.failed_tids:
