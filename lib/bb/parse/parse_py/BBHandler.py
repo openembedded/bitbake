@@ -56,6 +56,9 @@ def inherit(files, fn, lineno, d):
             if abs_fn:
                 file = abs_fn
 
+        if not os.path.exists(file):
+            raise ParseError("Could not inherit file %s" % (file), fn, lineno)
+
         if not file in __inherit_cache:
             logger.debug("Inheriting %s (from %s:%d)" % (file, fn, lineno))
             __inherit_cache.append( file )
