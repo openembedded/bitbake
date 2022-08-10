@@ -63,7 +63,10 @@ def inherit(files, fn, lineno, d):
             logger.debug("Inheriting %s (from %s:%d)" % (file, fn, lineno))
             __inherit_cache.append( file )
             d.setVar('__inherit_cache', __inherit_cache)
-            include(fn, file, lineno, d, "inherit")
+            try:
+                bb.parse.handle(file, d, True)
+            except (IOError, OSError) as exc:
+                raise ParseError("Could not inherit file %s: %s" % (fn, exc.strerror), fn, lineno)
             __inherit_cache = d.getVar('__inherit_cache', False) or []
 
 def get_statements(filename, absolute_filename, base_name):
