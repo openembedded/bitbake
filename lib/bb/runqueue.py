@@ -163,7 +163,7 @@ class RunQueueScheduler(object):
                     self.prev_pressure_time = time.time()
                 self.check_pressure = True
             except:
-                bb.warn("The /proc/pressure files can't be read. Continuing build without monitoring pressure")
+                bb.note("The /proc/pressure files can't be read. Continuing build without monitoring pressure")
                 self.check_pressure = False
         else:
             self.check_pressure = False
