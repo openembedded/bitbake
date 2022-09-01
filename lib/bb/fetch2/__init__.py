@@ -1236,7 +1236,7 @@ def get_checksum_file_list(d):
             if not found:
                 bb.fatal(("Unable to get checksum for %s SRC_URI entry %s: file could not be found"
                             "\nThe following paths were searched:"
-                            "\n%s") % (d.getVar('BPN'), os.path.basename(f), '\n'.join(paths)))
+                            "\n%s") % (d.getVar('PN'), os.path.basename(f), '\n'.join(paths)))
 
     return " ".join(filelist)
 
