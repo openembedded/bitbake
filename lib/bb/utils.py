@@ -694,8 +694,8 @@ def remove(path, recurse=False, ionice=False):
         return
     if recurse:
         for name in glob.glob(path):
-            if _check_unsafe_delete_path(path):
-                raise Exception('bb.utils.remove: called with dangerous path "%s" and recurse=True, refusing to delete!' % path)
+            if _check_unsafe_delete_path(name):
+                raise Exception('bb.utils.remove: called with dangerous path "%s" and recurse=True, refusing to delete!' % name)
         # shutil.rmtree(name) would be ideal but its too slow
         cmd = []
         if ionice:
