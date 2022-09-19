@@ -60,6 +60,10 @@ class BBLoggerMixin(object):
                 return
             if loglevel < bb.msg.loggerDefaultLogLevel:
                 return
+
+        if not isinstance(level, int) or not isinstance(msg, str):
+            mainlogger.warning("Invalid arguments in bbdebug: %s" % repr((level, msg,) + args))
+
         return self.log(loglevel, msg, *args, **kwargs)
 
     def plain(self, msg, *args, **kwargs):
