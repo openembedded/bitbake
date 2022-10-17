@@ -78,7 +78,7 @@ __author__ = "seb@dbzteam.org (Sebastien Martini)"
 __version__ = "0.9.6"
 
 
-# Compatibity mode: set to True to improve compatibility with
+# Compatibility mode: set to True to improve compatibility with
 # Pyinotify 0.7.1. Do not set this variable yourself, call the
 # function compatibility_mode() instead.
 COMPATIBILITY_MODE = False
