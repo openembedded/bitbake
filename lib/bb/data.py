@@ -70,10 +70,6 @@ def keys(d):
     """Return a list of keys in d"""
     return d.keys()
 
-
-__expand_var_regexp__ = re.compile(r"\${[^{}]+}")
-__expand_python_regexp__ = re.compile(r"\${@.+?}")
-
 def expand(s, d, varname = None):
     """Variable expansion using the data store"""
     return d.expand(s, varname)
