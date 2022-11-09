@@ -122,6 +122,7 @@ class GitSM(Git):
             url += ';protocol=%s' % proto
             url += ";name=%s" % module
             url += ";subpath=%s" % module
+            url += ";nobranch=1"
 
             ld = d.createCopy()
             # Not necessary to set SRC_URI, since we're passing the URI to
