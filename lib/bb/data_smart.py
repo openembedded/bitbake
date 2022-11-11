@@ -481,13 +481,6 @@ class DataSmart(MutableMapping):
     def expand(self, s, varname = None):
         return self.expandWithRefs(s, varname).value
 
-    def finalize(self, parent = False):
-        return
-
-    def internal_finalize(self, parent = False):
-        """Performs final steps upon the datastore, including application of overrides"""
-        self.overrides = None
-
     def need_overrides(self):
         if self.overrides is not None:
             return
@@ -638,7 +631,7 @@ class DataSmart(MutableMapping):
                 nextnew.update(vardata.references)
                 nextnew.update(vardata.contains.keys())
             new = nextnew
-        self.internal_finalize(True)
+        self.overrides = None
 
     def _setvar_update_overrides(self, var, **loginfo):
         # aka pay the cookie monster
