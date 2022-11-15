@@ -617,8 +617,7 @@ class BBCooker:
 
         if fn:
             try:
-                bb_caches = bb.cache.MulticonfigCache(self.databuilder, self.data_hash, self.caches_array)
-                envdata = bb_caches[mc].loadDataFull(fn, self.collections[mc].get_file_appends(fn))
+                envdata = self.databuilder.parseRecipe(fn, self.collections[mc].get_file_appends(fn))
             except Exception as e:
                 parselog.exception("Unable to read %s", fn)
                 raise

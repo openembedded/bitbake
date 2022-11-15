@@ -567,8 +567,7 @@ class CommandsSync:
             envdata = bb.cache.parse_recipe(config_data, fn, appendfiles, mc)['']
         else:
             # Use the standard path
-            parser = bb.cache.NoCache(command.cooker.databuilder)
-            envdata = parser.loadDataFull(fn, appendfiles)
+            envdata = command.cooker.databuilder.parseRecipe(fn, appendfiles)
         idx = command.remotedatastores.store(envdata)
         return DataStoreConnectionHandle(idx)
     parseRecipeFile.readonly = True

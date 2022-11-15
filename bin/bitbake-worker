@@ -238,7 +238,6 @@ def fork_off_task(cfg, data, databuilder, workerdata, fn, task, taskname, taskha
                 os.umask(umask)
 
             try:
-                bb_cache = bb.cache.NoCache(databuilder)
                 (realfn, virtual, mc) = bb.cache.virtualfn2realfn(fn)
                 the_data = databuilder.mcdata[mc]
                 the_data.setVar("BB_WORKERCONTEXT", "1")
@@ -257,7 +256,7 @@ def fork_off_task(cfg, data, databuilder, workerdata, fn, task, taskname, taskha
                     bb.parse.siggen.set_taskhashes(workerdata["newhashes"])
                 ret = 0
 
-                the_data = bb_cache.loadDataFull(fn, appends)
+                the_data = databuilder.parseRecipe(fn, appends)
                 the_data.setVar('BB_TASKHASH', taskhash)
                 the_data.setVar('BB_UNIHASH', unihash)
 

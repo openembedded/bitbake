@@ -1610,9 +1610,8 @@ class RunQueue:
             self.rqexe.finish()
 
     def rq_dump_sigfn(self, fn, options):
-        bb_cache = bb.cache.NoCache(self.cooker.databuilder)
         mc = bb.runqueue.mc_from_tid(fn)
-        the_data = bb_cache.loadDataFull(fn, self.cooker.collections[mc].get_file_appends(fn))
+        the_data = self.cooker.databuilder.parseRecipe(fn, self.cooker.collections[mc].get_file_appends(fn))
         siggen = bb.parse.siggen
         dataCaches = self.rqdata.dataCaches
         siggen.dump_sigfn(fn, dataCaches, options)

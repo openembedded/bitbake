@@ -280,75 +280,14 @@ def variant2virtual(realfn, variant):
         return "mc:" + elems[1] + ":" + realfn
     return "virtual:" + variant + ":" + realfn
 
-def parse_recipe(bb_data, bbfile, appends, mc=''):
-    """
-    Parse a recipe
-    """
 
-    bb_data.setVar("__BBMULTICONFIG", mc)
-
-    bbfile_loc = os.path.abspath(os.path.dirname(bbfile))
-    bb.parse.cached_mtime_noerror(bbfile_loc)
-
-    if appends:
-        bb_data.setVar('__BBAPPEND', " ".join(appends))
-    bb_data = bb.parse.handle(bbfile, bb_data)
-    return bb_data
-
-
-class NoCache(object):
-
-    def __init__(self, databuilder):
-        self.databuilder = databuilder
-        self.data = databuilder.data
-
-    def loadDataFull(self, virtualfn, appends):
-        """
-        Return a complete set of data for fn.
-        To do this, we need to parse the file.
-        """
-        logger.debug("Parsing %s (full)" % virtualfn)
-        (fn, virtual, mc) = virtualfn2realfn(virtualfn)
-        bb_data = self.load_bbfile(virtualfn, appends, virtonly=True)
-        return bb_data[virtual]
-
-    def load_bbfile(self, bbfile, appends, virtonly = False, mc=None):
-        """
-        Load and parse one .bb build file
-        Return the data and whether parsing resulted in the file being skipped
-        """
-
-        if virtonly:
-            (bbfile, virtual, mc) = virtualfn2realfn(bbfile)
-            bb_data = self.databuilder.mcdata[mc].createCopy()
-            bb_data.setVar("__ONLYFINALISE", virtual or "default")
-            datastores = parse_recipe(bb_data, bbfile, appends, mc)
-            return datastores
-
-        if mc is not None:
-            bb_data = self.databuilder.mcdata[mc].createCopy()
-            return parse_recipe(bb_data, bbfile, appends, mc)
-
-        bb_data = self.data.createCopy()
-        datastores = parse_recipe(bb_data, bbfile, appends)
-
-        for mc in self.databuilder.mcdata:
-            if not mc:
-                continue
-            bb_data = self.databuilder.mcdata[mc].createCopy()
-            newstores = parse_recipe(bb_data, bbfile, appends, mc)
-            for ns in newstores:
-                datastores["mc:%s:%s" % (mc, ns)] = newstores[ns]
-
-        return datastores
-
-class Cache(NoCache):
+class Cache(object):
     """
     BitBake Cache implementation
     """
     def __init__(self, databuilder, mc, data_hash, caches_array):
-        super().__init__(databuilder)
-        data = databuilder.data
+        self.databuilder = databuilder
+        self.data = databuilder.data
 
         # Pass caches_array information into Cache Constructor
         # It will be used later for deciding whether we
@@ -356,7 +295,7 @@ class Cache(NoCache):
         self.mc = mc
         self.logger = PrefixLoggerAdapter("Cache: %s: " % (mc if mc else "default"), logger)
         self.caches_array = caches_array
-        self.cachedir = data.getVar("CACHE")
+        self.cachedir = self.data.getVar("CACHE")
         self.clean = set()
         self.checked = set()
         self.depends_cache = {}
@@ -486,7 +425,7 @@ class Cache(NoCache):
         """Parse the specified filename, returning the recipe information"""
         self.logger.debug("Parsing %s", filename)
         infos = []
-        datastores = self.load_bbfile(filename, appends, mc=self.mc)
+        datastores = self.databuilder.parseRecipeVariants(filename, appends, mc=self.mc)
         depends = []
         variants = []
         # Process the "real" fn last so we can store variants list

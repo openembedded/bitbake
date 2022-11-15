@@ -466,3 +466,54 @@ class CookerDataBuilder(object):
 
         return data
 
+    @staticmethod
+    def _parse_recipe(bb_data, bbfile, appends, mc=''):
+        bb_data.setVar("__BBMULTICONFIG", mc)
+
+        bbfile_loc = os.path.abspath(os.path.dirname(bbfile))
+        bb.parse.cached_mtime_noerror(bbfile_loc)
+
+        if appends:
+            bb_data.setVar('__BBAPPEND', " ".join(appends))
+        bb_data = bb.parse.handle(bbfile, bb_data)
+        return bb_data
+
+    def parseRecipeVariants(self, bbfile, appends, virtonly=False, mc=None):
+        """
+        Load and parse one .bb build file
+        Return the data and whether parsing resulted in the file being skipped
+        """
+
+        if virtonly:
+            (bbfile, virtual, mc) = bb.cache.virtualfn2realfn(bbfile)
+            bb_data = self.mcdata[mc].createCopy()
+            bb_data.setVar("__ONLYFINALISE", virtual or "default")
+            datastores = self._parse_recipe(bb_data, bbfile, appends, mc)
+            return datastores
+
+        if mc is not None:
+            bb_data = self.mcdata[mc].createCopy()
+            return self._parse_recipe(bb_data, bbfile, appends, mc)
+
+        bb_data = self.data.createCopy()
+        datastores = self._parse_recipe(bb_data, bbfile, appends)
+
+        for mc in self.mcdata:
+            if not mc:
+                continue
+            bb_data = self.mcdata[mc].createCopy()
+            newstores = self._parse_recipe(bb_data, bbfile, appends, mc)
+            for ns in newstores:
+                datastores["mc:%s:%s" % (mc, ns)] = newstores[ns]
+
+        return datastores
+
+    def parseRecipe(self, virtualfn, appends):
+        """
+        Return a complete set of data for fn.
+        To do this, we need to parse the file.
+        """
+        logger.debug("Parsing %s (full)" % virtualfn)
+        (fn, virtual, mc) = bb.cache.virtualfn2realfn(virtualfn)
+        bb_data = self.parseRecipeVariants(virtualfn, appends, virtonly=True)
+        return bb_data[virtual]
