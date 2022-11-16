@@ -280,7 +280,11 @@ def variant2virtual(realfn, variant):
         return "mc:" + elems[1] + ":" + realfn
     return "virtual:" + variant + ":" + realfn
 
-
+#
+# Cooker calls cacheValid on its recipe list, then either calls loadCached
+# from it's main thread or parse from separate processes to generate an up to
+# date cache
+#
 class Cache(object):
     """
     BitBake Cache implementation
@@ -447,43 +451,19 @@ class Cache(object):
 
         return infos
 
-    def load(self, filename, appends):
+    def loadCached(self, filename, appends):
         """Obtain the recipe information for the specified filename,
-        using cached values if available, otherwise parsing.
+        using cached values.
+        """
 
-        Note that if it does parse to obtain the info, it will not
-        automatically add the information to the cache or to your
-        CacheData.  Use the add or add_info method to do so after
-        running this, or use loadData instead."""
-        cached = self.cacheValid(filename, appends)
-        if cached:
-            infos = []
-            # info_array item is a list of [CoreRecipeInfo, XXXRecipeInfo]
-            info_array = self.depends_cache[filename]
-            for variant in info_array[0].variants:
-                virtualfn = variant2virtual(filename, variant)
-                infos.append((virtualfn, self.depends_cache[virtualfn]))
-        else:
-            return self.parse(filename, appends, configdata, self.caches_array)
+        infos = []
+        # info_array item is a list of [CoreRecipeInfo, XXXRecipeInfo]
+        info_array = self.depends_cache[filename]
+        for variant in info_array[0].variants:
+            virtualfn = variant2virtual(filename, variant)
+            infos.append((virtualfn, self.depends_cache[virtualfn]))
 
-        return cached, infos
-
-    def loadData(self, fn, appends, cacheData):
-        """Load the recipe info for the specified filename,
-        parsing and adding to the cache if necessary, and adding
-        the recipe information to the supplied CacheData instance."""
-        skipped, virtuals = 0, 0
-
-        cached, infos = self.load(fn, appends)
-        for virtualfn, info_array in infos:
-            if info_array[0].skipped:
-                self.logger.debug("Skipping %s: %s", virtualfn, info_array[0].skipreason)
-                skipped += 1
-            else:
-                self.add_info(virtualfn, info_array, cacheData, not cached)
-                virtuals += 1
-
-        return cached, skipped, virtuals
+        return infos
 
     def cacheValid(self, fn, appends):
         """

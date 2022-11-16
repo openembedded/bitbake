@@ -2287,8 +2287,8 @@ class CookerParser(object):
 
     def load_cached(self):
         for mc, cache, filename, appends in self.fromcache:
-            cached, infos = cache.load(filename, appends)
-            yield not cached, mc, infos
+            infos = cache.loadCached(filename, appends)
+            yield False, mc, infos
 
     def parse_generator(self):
         empty = False
