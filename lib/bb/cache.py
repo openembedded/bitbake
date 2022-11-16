@@ -309,20 +309,12 @@ class Cache(object):
         self.filelist_regex = re.compile(r'(?:(?<=:True)|(?<=:False))\s+')
 
         if self.cachedir in [None, '']:
-            self.has_cache = False
-            self.logger.info("Not using a cache. "
-                             "Set CACHE = <directory> to enable.")
-            return
-
-        self.has_cache = True
+            bb.fatal("Please ensure CACHE is set to the cache directory for BitBake to use")
 
     def getCacheFile(self, cachefile):
         return getCacheFile(self.cachedir, cachefile, self.mc, self.data_hash)
 
     def prepare_cache(self, progress):
-        if not self.has_cache:
-            return 0
-
         loaded = 0
 
         self.cachefile = self.getCacheFile("bb_cache.dat")
@@ -361,9 +353,6 @@ class Cache(object):
         return loaded
 
     def cachesize(self):
-        if not self.has_cache:
-            return 0
-
         cachesize = 0
         for cache_class in self.caches_array:
             cachefile = self.getCacheFile(cache_class.cachefile)
@@ -472,10 +461,6 @@ class Cache(object):
         """
         if fn not in self.checked:
             self.cacheValidUpdate(fn, appends)
-
-        # Is cache enabled?
-        if not self.has_cache:
-            return False
         if fn in self.clean:
             return True
         return False
@@ -485,10 +470,6 @@ class Cache(object):
         Is the cache valid for fn?
         Make thorough (slower) checks including timestamps.
         """
-        # Is cache enabled?
-        if not self.has_cache:
-            return False
-
         self.checked.add(fn)
 
         # File isn't in depends_cache
@@ -595,10 +576,6 @@ class Cache(object):
         Save the cache
         Called from the parser when complete (or exiting)
         """
-
-        if not self.has_cache:
-            return
-
         if self.cacheclean:
             self.logger.debug2("Cache is clean, not saving.")
             return
@@ -640,9 +617,6 @@ class Cache(object):
 
             if watcher:
                 watcher(info_array[0].file_depends)
-
-        if not self.has_cache:
-            return
 
         if (info_array[0].skipped or 'SRCREVINACTION' not in info_array[0].pv) and not info_array[0].nocache:
             if parsed:
