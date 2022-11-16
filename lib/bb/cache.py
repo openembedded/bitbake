@@ -649,18 +649,6 @@ class Cache(object):
                 self.cacheclean = False
             self.depends_cache[filename] = info_array
 
-    def add(self, file_name, data, cacheData, parsed=None):
-        """
-        Save data we need into the cache
-        """
-
-        realfn = virtualfn2realfn(file_name)[0]
-
-        info_array = []
-        for cache_class in self.caches_array:
-            info_array.append(cache_class(realfn, data))
-        self.add_info(file_name, info_array, cacheData, parsed)
-
 class MulticonfigCache(Mapping):
     def __init__(self, databuilder, data_hash, caches_array):
         def progress(p):
