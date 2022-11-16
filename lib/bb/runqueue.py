@@ -1311,10 +1311,6 @@ class RunQueue:
         workerpipe = runQueuePipe(worker.stdout, None, self.cfgData, self, rqexec, fakerootlogs=fakerootlogs)
 
         workerdata = {
-            "taskdeps" : self.rqdata.dataCaches[mc].task_deps,
-            "fakerootenv" : self.rqdata.dataCaches[mc].fakerootenv,
-            "fakerootdirs" : self.rqdata.dataCaches[mc].fakerootdirs,
-            "fakerootnoenv" : self.rqdata.dataCaches[mc].fakerootnoenv,
             "sigdata" : bb.parse.siggen.get_taskdata(),
             "logdefaultlevel" : bb.msg.loggerDefaultLogLevel,
             "build_verbose_shell" : self.cooker.configuration.build_verbose_shell,
@@ -2139,18 +2135,30 @@ class RunQueueExecute:
             startevent = sceneQueueTaskStarted(task, self.stats, self.rq)
             bb.event.fire(startevent, self.cfgData)
 
-            taskdepdata = self.sq_build_taskdepdata(task)
-
             taskdep = self.rqdata.dataCaches[mc].task_deps[taskfn]
-            taskhash = self.rqdata.get_task_hash(task)
-            unihash = self.rqdata.get_task_unihash(task)
+            runtask = {
+                'fn' : taskfn,
+                'task' : task,
+                'taskname' : taskname,
+                'taskhash' : self.rqdata.get_task_hash(task),
+                'unihash' : self.rqdata.get_task_unihash(task),
+                'quieterrors' : True,
+                'appends' : self.cooker.collections[mc].get_file_appends(taskfn),
+                'taskdepdata' : self.sq_build_taskdepdata(task),
+                'dry_run' : False,
+                'taskdep': taskdep,
+                'fakerootenv' : self.rqdata.dataCaches[mc].fakerootenv[taskfn],
+                'fakerootdirs' : self.rqdata.dataCaches[mc].fakerootdirs[taskfn],
+                'fakerootnoenv' : self.rqdata.dataCaches[mc].fakerootnoenv[taskfn]
+            }
+
             if 'fakeroot' in taskdep and taskname in taskdep['fakeroot'] and not self.cooker.configuration.dry_run:
                 if not mc in self.rq.fakeworker:
                     self.rq.start_fakeworker(self, mc)
-                self.rq.fakeworker[mc].process.stdin.write(b"<runtask>" + pickle.dumps((taskfn, task, taskname, taskhash, unihash, True, self.cooker.collections[mc].get_file_appends(taskfn), taskdepdata, False)) + b"</runtask>")
+                self.rq.fakeworker[mc].process.stdin.write(b"<runtask>" + pickle.dumps(runtask) + b"</runtask>")
                 self.rq.fakeworker[mc].process.stdin.flush()
             else:
-                self.rq.worker[mc].process.stdin.write(b"<runtask>" + pickle.dumps((taskfn, task, taskname, taskhash, unihash, True, self.cooker.collections[mc].get_file_appends(taskfn), taskdepdata, False)) + b"</runtask>")
+                self.rq.worker[mc].process.stdin.write(b"<runtask>" + pickle.dumps(runtask) + b"</runtask>")
                 self.rq.worker[mc].process.stdin.flush()
 
             self.build_stamps[task] = bb.build.stampfile(taskname, self.rqdata.dataCaches[mc], taskfn, noextra=True)
@@ -2220,11 +2228,23 @@ class RunQueueExecute:
                 startevent = runQueueTaskStarted(task, self.stats, self.rq)
                 bb.event.fire(startevent, self.cfgData)
 
-            taskdepdata = self.build_taskdepdata(task)
-
             taskdep = self.rqdata.dataCaches[mc].task_deps[taskfn]
-            taskhash = self.rqdata.get_task_hash(task)
-            unihash = self.rqdata.get_task_unihash(task)
+            runtask = {
+                'fn' : taskfn,
+                'task' : task,
+                'taskname' : taskname,
+                'taskhash' : self.rqdata.get_task_hash(task),
+                'unihash' : self.rqdata.get_task_unihash(task),
+                'quieterrors' : False,
+                'appends' : self.cooker.collections[mc].get_file_appends(taskfn),
+                'taskdepdata' : self.build_taskdepdata(task),
+                'dry_run' : self.rqdata.setscene_enforce,
+                'taskdep': taskdep,
+                'fakerootenv' : self.rqdata.dataCaches[mc].fakerootenv[taskfn],
+                'fakerootdirs' : self.rqdata.dataCaches[mc].fakerootdirs[taskfn],
+                'fakerootnoenv' : self.rqdata.dataCaches[mc].fakerootnoenv[taskfn]
+            }
+
             if 'fakeroot' in taskdep and taskname in taskdep['fakeroot'] and not (self.cooker.configuration.dry_run or self.rqdata.setscene_enforce):
                 if not mc in self.rq.fakeworker:
                     try:
@@ -2234,10 +2254,10 @@ class RunQueueExecute:
                         self.rq.state = runQueueFailed
                         self.stats.taskFailed()
                         return True
-                self.rq.fakeworker[mc].process.stdin.write(b"<runtask>" + pickle.dumps((taskfn, task, taskname, taskhash, unihash, False, self.cooker.collections[mc].get_file_appends(taskfn), taskdepdata, self.rqdata.setscene_enforce)) + b"</runtask>")
+                self.rq.fakeworker[mc].process.stdin.write(b"<runtask>" + pickle.dumps(runtask) + b"</runtask>")
                 self.rq.fakeworker[mc].process.stdin.flush()
             else:
-                self.rq.worker[mc].process.stdin.write(b"<runtask>" + pickle.dumps((taskfn, task, taskname, taskhash, unihash, False, self.cooker.collections[mc].get_file_appends(taskfn), taskdepdata, self.rqdata.setscene_enforce)) + b"</runtask>")
+                self.rq.worker[mc].process.stdin.write(b"<runtask>" + pickle.dumps(runtask) + b"</runtask>")
                 self.rq.worker[mc].process.stdin.flush()
 
             self.build_stamps[task] = bb.build.stampfile(taskname, self.rqdata.dataCaches[mc], taskfn, noextra=True)

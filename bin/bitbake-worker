@@ -145,7 +145,16 @@ def sigterm_handler(signum, frame):
     os.killpg(0, signal.SIGTERM)
     sys.exit()
 
-def fork_off_task(cfg, data, databuilder, workerdata, fn, task, taskname, taskhash, unihash, appends, taskdepdata, extraconfigdata, quieterrors=False, dry_run_exec=False):
+def fork_off_task(cfg, data, databuilder, workerdata, extraconfigdata, runtask):
+
+    fn = runtask['fn']
+    task = runtask['task']
+    taskname = runtask['taskname']
+    taskhash = runtask['taskhash']
+    unihash = runtask['unihash']
+    appends = runtask['appends']
+    taskdepdata = runtask['taskdepdata']
+    quieterrors = runtask['quieterrors']
     # We need to setup the environment BEFORE the fork, since
     # a fork() or exec*() activates PSEUDO...
 
@@ -157,8 +166,7 @@ def fork_off_task(cfg, data, databuilder, workerdata, fn, task, taskname, taskha
     uid = os.getuid()
     gid = os.getgid()
 
-
-    taskdep = workerdata["taskdeps"][fn]
+    taskdep = runtask['taskdep']
     if 'umask' in taskdep and taskname in taskdep['umask']:
         umask = taskdep['umask'][taskname]
     elif workerdata["umask"]:
@@ -170,24 +178,24 @@ def fork_off_task(cfg, data, databuilder, workerdata, fn, task, taskname, taskha
         except TypeError:
              pass
 
-    dry_run = cfg.dry_run or dry_run_exec
+    dry_run = cfg.dry_run or runtask['dry_run']
 
     # We can't use the fakeroot environment in a dry run as it possibly hasn't been built
     if 'fakeroot' in taskdep and taskname in taskdep['fakeroot'] and not dry_run:
         fakeroot = True
-        envvars = (workerdata["fakerootenv"][fn] or "").split()
+        envvars = (runtask['fakerootenv'] or "").split()
         for key, value in (var.split('=') for var in envvars):
             envbackup[key] = os.environ.get(key)
             os.environ[key] = value
             fakeenv[key] = value
 
-        fakedirs = (workerdata["fakerootdirs"][fn] or "").split()
+        fakedirs = (runtask['fakerootdirs'] or "").split()
         for p in fakedirs:
             bb.utils.mkdirhier(p)
         logger.debug2('Running %s:%s under fakeroot, fakedirs: %s' %
                         (fn, taskname, ', '.join(fakedirs)))
     else:
-        envvars = (workerdata["fakerootnoenv"][fn] or "").split()
+        envvars = (runtask['fakerootnoenv'] or "").split()
         for key, value in (var.split('=') for var in envvars):
             envbackup[key] = os.environ.get(key)
             os.environ[key] = value
@@ -474,11 +482,15 @@ class BitbakeWorker(object):
         sys.exit(0)
 
     def handle_runtask(self, data):
-        fn, task, taskname, taskhash, unihash, quieterrors, appends, taskdepdata, dry_run_exec = pickle.loads(data)
+        runtask = pickle.loads(data)
+
+        fn = runtask['fn']
+        task = runtask['task']
+        taskname = runtask['taskname']
+
         workerlog_write("Handling runtask %s %s %s\n" % (task, fn, taskname))
 
-        pid, pipein, pipeout = fork_off_task(self.cookercfg, self.data, self.databuilder, self.workerdata, fn, task, taskname, taskhash, unihash, appends, taskdepdata, self.extraconfigdata, quieterrors, dry_run_exec)
-
+        pid, pipein, pipeout = fork_off_task(self.cookercfg, self.data, self.databuilder, self.workerdata, self.extraconfigdata, runtask)
         self.build_pids[pid] = task
         self.build_pipes[pid] = runQueueWorkerPipe(pipein, pipeout)
 
