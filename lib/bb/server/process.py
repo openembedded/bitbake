@@ -448,13 +448,14 @@ start_log_datetime_format = '%Y-%m-%d %H:%M:%S.%f'
 
 class BitBakeServer(object):
 
-    def __init__(self, lock, sockname, featureset, server_timeout, xmlrpcinterface):
+    def __init__(self, lock, sockname, featureset, server_timeout, xmlrpcinterface, profile):
 
         self.server_timeout = server_timeout
         self.xmlrpcinterface = xmlrpcinterface
         self.featureset = featureset
         self.sockname = sockname
         self.bitbake_lock = lock
+        self.profile = profile
         self.readypipe, self.readypipein = os.pipe()
 
         # Place the log in the builddirectory alongside the lock file
@@ -518,9 +519,9 @@ class BitBakeServer(object):
         os.set_inheritable(self.bitbake_lock.fileno(), True)
         os.set_inheritable(self.readypipein, True)
         serverscript = os.path.realpath(os.path.dirname(__file__) + "/../../../bin/bitbake-server")
-        os.execl(sys.executable, "bitbake-server", serverscript, "decafbad", str(self.bitbake_lock.fileno()), str(self.readypipein), self.logfile, self.bitbake_lock.name, self.sockname,  str(self.server_timeout or 0), str(self.xmlrpcinterface[0]), str(self.xmlrpcinterface[1]))
+        os.execl(sys.executable, "bitbake-server", serverscript, "decafbad", str(self.bitbake_lock.fileno()), str(self.readypipein), self.logfile, self.bitbake_lock.name, self.sockname,  str(self.server_timeout or 0), str(int(self.profile)), str(self.xmlrpcinterface[0]), str(self.xmlrpcinterface[1]))
 
-def execServer(lockfd, readypipeinfd, lockname, sockname, server_timeout, xmlrpcinterface):
+def execServer(lockfd, readypipeinfd, lockname, sockname, server_timeout, xmlrpcinterface, profile):
 
     import bb.cookerdata
     import bb.cooker
@@ -549,6 +550,7 @@ def execServer(lockfd, readypipeinfd, lockname, sockname, server_timeout, xmlrpc
         try:
             featureset = []
             cooker = bb.cooker.BBCooker(featureset, server.register_idle_function)
+            cooker.configuration.profile = profile
         except bb.BBHandledException:
             return None
         writer.send("r")
