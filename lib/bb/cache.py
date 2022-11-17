@@ -263,6 +263,80 @@ class SiggenRecipeInfo(RecipeInfoCommon):
         cachedata.siggen_varvals[fn] = self.siggen_varvals
         cachedata.siggen_taskdeps[fn] = self.siggen_taskdeps
 
+    # The siggen variable data is large and impacts:
+    #  - bitbake's overall memory usage
+    #  - the amount of data sent over IPC between parsing processes and the server
+    #  - the size of the cache files on disk
+    #  - the size of "sigdata" hash information files on disk
+    # The data consists of strings (some large) or frozenset lists of variables
+    # As such, we a) deplicate the data here and b) pass references to the object at second
+    # access (e.g. over IPC or saving into pickle).
+
+    store = {}
+    save_map = {}
+    save_count = 1
+    restore_map = {}
+    restore_count = {}
+
+    @classmethod
+    def reset(cls):
+        # Needs to be called before starting new streamed data in a given process 
+        # (e.g. writing out the cache again)
+        cls.save_map = {}
+        cls.save_count = 1
+        cls.restore_map = {}
+        cls.restore_count = {}
+
+    @classmethod
+    def _save(cls, deps):
+        ret = []
+        if not deps:
+            return deps
+        for dep in deps:
+            fs = deps[dep]
+            if fs in cls.save_map:
+                ret.append((dep, None, cls.save_map[fs]))
+            else:
+                cls.save_map[fs] = cls.save_count
+                ret.append((dep, fs, None))
+                cls.save_count = cls.save_count + 1
+        return ret
+
+    @classmethod
+    def _restore(cls, deps, pid):
+        ret = {}
+        if not deps:
+            return deps
+        if pid not in cls.restore_map:
+            cls.restore_map[pid] = {}
+            cls.restore_count[pid] = 1
+        map = cls.restore_map[pid]
+        for fs, dep, mapnum in deps:
+            if mapnum:
+                ret[dep] = map[mapnum]
+            else:
+                try:
+                    fs = cls.store[fs]
+                except KeyError:
+                    cls.store[fs] = fs
+                map[cls.restore_count[pid]] = fs
+                cls.restore_count[pid] = cls.restore_count[pid] + 1
+                ret[dep] = fs
+        return ret
+
+    def __getstate__(self):
+        ret = {}
+        for key in ["siggen_gendeps", "siggen_taskdeps", "siggen_varvals"]:
+            ret[key] = self._save(self.__dict__[key])
+        ret['pid'] = os.getpid()
+        return ret
+
+    def __setstate__(self, state):
+        pid = state['pid']
+        for key in ["siggen_gendeps", "siggen_taskdeps", "siggen_varvals"]:
+            setattr(self, key, self._restore(state[key], pid))
+
+
 def virtualfn2realfn(virtualfn):
     """
     Convert a virtual file name to a real one + the associated subclass keyword
@@ -621,6 +695,7 @@ class Cache(object):
                             p.dump(info)
 
         del self.depends_cache
+        SiggenRecipeInfo.reset()
 
     @staticmethod
     def mtime(cachefile):

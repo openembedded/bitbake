@@ -2263,6 +2263,7 @@ class CookerParser(object):
 
 
         bb.codeparser.parser_cache_savemerge()
+        bb.cache.SiggenRecipeInfo.reset()
         bb.fetch.fetcher_parse_done()
         if self.cooker.configuration.profile:
             profiles = []
