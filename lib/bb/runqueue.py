@@ -2555,6 +2555,7 @@ class RunQueueExecute:
             if tid in self.sqdata.valid and not origvalid:
                 hashequiv_logger.verbose("Setscene task %s became valid" % tid)
             if harddepfail:
+                logger.debug2("%s has an unavailable hard dependency so skipping" % (tid))
                 self.sq_task_failoutright(tid)
 
         if changed:
@@ -2954,11 +2955,13 @@ def update_scenequeue_data(tids, sqdata, rqdata, rq, cooker, stampcache, sqrq, s
         if noexec:
             sqdata.noexec.add(tid)
             sqrq.sq_task_skip(tid)
+            logger.debug2("%s is noexec so skipping setscene" % (tid))
             continue
 
         if stamppresent:
             sqdata.stamppresent.add(tid)
             sqrq.sq_task_skip(tid)
+            logger.debug2("%s has a valid stamp, skipping" % (tid))
             continue
 
         tocheck.add(tid)
@@ -2979,6 +2982,7 @@ def update_scenequeue_data(tids, sqdata, rqdata, rq, cooker, stampcache, sqrq, s
         if tid in sqrq.sq_deferred:
             continue
         sqdata.outrightfail.add(tid)
+        logger.debug2("%s already handled (fallthrough), skipping" % (tid))
 
 class TaskFailure(Exception):
     """
