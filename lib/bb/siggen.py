@@ -25,13 +25,13 @@ hashequiv_logger = logging.getLogger('BitBake.SigGen.HashEquiv')
 
 class SetEncoder(json.JSONEncoder):
     def default(self, obj):
-        if isinstance(obj, set):
+        if isinstance(obj, set) or isinstance(obj, frozenset):
             return dict(_set_object=list(sorted(obj)))
         return json.JSONEncoder.default(self, obj)
 
 def SetDecoder(dct):
     if '_set_object' in dct:
-        return set(dct['_set_object'])
+        return frozenset(dct['_set_object'])
     return dct
 
 def init(d):
@@ -1056,7 +1056,7 @@ def calc_basehash(sigdata):
         basedata = ''
 
     alldeps = sigdata['taskdeps']
-    for dep in alldeps:
+    for dep in sorted(alldeps):
         basedata = basedata + dep
         val = sigdata['varvals'][dep]
         if val is not None:

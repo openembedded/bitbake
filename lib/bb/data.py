@@ -276,7 +276,8 @@ def build_dependencies(key, keys, shelldeps, varflagsexcl, ignored_vars, d):
             value, parser = d.getVarFlag(vf[0], vf[1], False, retparser=True)
             deps |= parser.references
             deps = deps | (keys & parser.execs)
-            return deps, value
+            deps -= ignored_vars
+            return frozenset(deps), value
         varflags = d.getVarFlags(key, ["vardeps", "vardepvalue", "vardepsexclude", "exports", "postfuncs", "prefuncs", "lineno", "filename"]) or {}
         vardeps = varflags.get("vardeps")
         exclusions = varflags.get("vardepsexclude", "").split()
@@ -359,12 +360,13 @@ def build_dependencies(key, keys, shelldeps, varflagsexcl, ignored_vars, d):
 
         deps |= set((vardeps or "").split())
         deps -= set(exclusions)
+        deps -= ignored_vars
     except bb.parse.SkipRecipe:
         raise
     except Exception as e:
         bb.warn("Exception during build_dependencies for %s" % key)
         raise
-    return deps, value
+    return frozenset(deps), value
     #bb.note("Variable %s references %s and calls %s" % (key, str(deps), str(execs)))
     #d.setVarFlag(key, "vardeps", deps)
 
@@ -383,7 +385,7 @@ def generate_dependencies(d, ignored_vars):
         newdeps = deps[task]
         seen = set()
         while newdeps:
-            nextdeps = newdeps - ignored_vars
+            nextdeps = newdeps
             seen |= nextdeps
             newdeps = set()
             for dep in nextdeps:
@@ -407,7 +409,6 @@ def generate_dependency_hash(tasklist, gendeps, lookupcache, ignored_vars, fn):
         else:
             data = [data]
 
-        gendeps[task] -= ignored_vars
         newdeps = gendeps[task]
         seen = set()
         while newdeps:
@@ -415,9 +416,6 @@ def generate_dependency_hash(tasklist, gendeps, lookupcache, ignored_vars, fn):
             seen |= nextdeps
             newdeps = set()
             for dep in nextdeps:
-                if dep in ignored_vars:
-                    continue
-                gendeps[dep] -= ignored_vars
                 newdeps |= gendeps[dep]
             newdeps -= seen
 
@@ -429,7 +427,7 @@ def generate_dependency_hash(tasklist, gendeps, lookupcache, ignored_vars, fn):
                 data.append(str(var))
         k = fn + ":" + task
         basehash[k] = hashlib.sha256("".join(data).encode("utf-8")).hexdigest()
-        taskdeps[task] = alldeps
+        taskdeps[task] = frozenset(seen)
 
     return taskdeps, basehash
 
