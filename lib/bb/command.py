@@ -564,7 +564,7 @@ class CommandsSync:
         if config_data:
             # We have to use a different function here if we're passing in a datastore
             # NOTE: we took a copy above, so we don't do it here again
-            envdata = bb.cache.parse_recipe(config_data, fn, appendfiles, mc)['']
+            envdata = command.cooker.databuilder._parse_recipe(config_data, fn, appendfiles, mc)['']
         else:
             # Use the standard path
             envdata = command.cooker.databuilder.parseRecipe(fn, appendfiles)
