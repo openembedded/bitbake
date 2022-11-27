@@ -28,11 +28,6 @@ the speed is more critical here.
 
 import sys, os, re
 import hashlib
-if sys.argv[0][-5:] == "pydoc":
-    path = os.path.dirname(os.path.dirname(sys.argv[1]))
-else:
-    path = os.path.dirname(os.path.dirname(sys.argv[0]))
-sys.path.insert(0, path)
 from itertools import groupby
 
 from bb import data_smart
