@@ -290,6 +290,18 @@ class PyLibNode(AstNode):
             toimport = getattr(bb.utils._context[self.namespace], "BBIMPORTS", [])
             for i in toimport:
                 bb.utils._context[self.namespace] = __import__(self.namespace + "." + i)
+                mod = getattr(bb.utils._context[self.namespace], i)
+                fn = getattr(mod, "__file__")
+                funcs = {}
+                for f in dir(mod):
+                    if f.startswith("_"):
+                        continue
+                    fcall = getattr(mod, f)
+                    if not callable(fcall):
+                        continue
+                    funcs[f] = fcall
+                bb.codeparser.add_module_functions(fn, funcs, "%s.%s" % (self.namespace, i))
+
         except AttributeError as e:
             bb.error("Error importing OE modules: %s" % str(e))
 

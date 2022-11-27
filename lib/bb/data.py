@@ -261,7 +261,7 @@ def emit_func_python(func, o=sys.__stdout__, d = init()):
                newdeps |= set((d.getVarFlag(dep, "vardeps") or "").split())
         newdeps -= seen
 
-def build_dependencies(key, keys, shelldeps, varflagsexcl, ignored_vars, d):
+def build_dependencies(key, keys, mod_funcs, shelldeps, varflagsexcl, ignored_vars, d):
     def handle_contains(value, contains, exclusions, d):
         newvalue = []
         if value:
@@ -289,6 +289,12 @@ def build_dependencies(key, keys, shelldeps, varflagsexcl, ignored_vars, d):
 
     deps = set()
     try:
+        if key in mod_funcs:
+            exclusions = set()
+            moddep = bb.codeparser.modulecode_deps[key]
+            value = handle_contains("", moddep[3], exclusions, d)
+            return frozenset((moddep[0] | keys & moddep[1]) - ignored_vars), value
+
         if key[-1] == ']':
             vf = key[:-1].split('[')
             if vf[1] == "vardepvalueexclude":
@@ -367,7 +373,8 @@ def build_dependencies(key, keys, shelldeps, varflagsexcl, ignored_vars, d):
 
 def generate_dependencies(d, ignored_vars):
 
-    keys = set(key for key in d if not key.startswith("__"))
+    mod_funcs = set(bb.codeparser.modulecode_deps.keys())
+    keys = set(key for key in d if not key.startswith("__")) | mod_funcs
     shelldeps = set(key for key in d.getVar("__exportlist", False) if d.getVarFlag(key, "export", False) and not d.getVarFlag(key, "unexport", False))
     varflagsexcl = d.getVar('BB_SIGNATURE_EXCLUDE_FLAGS')
 
@@ -376,7 +383,7 @@ def generate_dependencies(d, ignored_vars):
 
     tasklist = d.getVar('__BBTASKS', False) or []
     for task in tasklist:
-        deps[task], values[task] = build_dependencies(task, keys, shelldeps, varflagsexcl, ignored_vars, d)
+        deps[task], values[task] = build_dependencies(task, keys, mod_funcs, shelldeps, varflagsexcl, ignored_vars, d)
         newdeps = deps[task]
         seen = set()
         while newdeps:
@@ -385,7 +392,7 @@ def generate_dependencies(d, ignored_vars):
             newdeps = set()
             for dep in nextdeps:
                 if dep not in deps:
-                    deps[dep], values[dep] = build_dependencies(dep, keys, shelldeps, varflagsexcl, ignored_vars, d)
+                    deps[dep], values[dep] = build_dependencies(dep, keys, mod_funcs, shelldeps, varflagsexcl, ignored_vars, d)
                 newdeps |=  deps[dep]
             newdeps -= seen
         #print "For %s: %s" % (task, str(deps[task]))
