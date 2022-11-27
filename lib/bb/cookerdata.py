@@ -184,7 +184,7 @@ def catch_parse_error(func):
 
 @catch_parse_error
 def parse_config_file(fn, data, include=True):
-    return bb.parse.handle(fn, data, include)
+    return bb.parse.handle(fn, data, include, baseconfig=True)
 
 @catch_parse_error
 def _inherit(bbclass, data):
