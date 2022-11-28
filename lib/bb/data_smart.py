@@ -92,10 +92,11 @@ def infer_caller_details(loginfo, parent = False, varval = True):
             loginfo['func'] = func
 
 class VariableParse:
-    def __init__(self, varname, d, val = None):
+    def __init__(self, varname, d, unexpanded_value = None, val = None):
         self.varname = varname
         self.d = d
         self.value = val
+        self.unexpanded_value = unexpanded_value
 
         self.references = set()
         self.execs = set()
@@ -447,9 +448,9 @@ class DataSmart(MutableMapping):
     def expandWithRefs(self, s, varname):
 
         if not isinstance(s, str): # sanity check
-            return VariableParse(varname, self, s)
+            return VariableParse(varname, self, s, s)
 
-        varparse = VariableParse(varname, self)
+        varparse = VariableParse(varname, self, s)
 
         while s.find('${') != -1:
             olds = s
@@ -774,6 +775,9 @@ class DataSmart(MutableMapping):
                 bb.warn("Calling getVarFlag with flag unset is invalid")
                 return None
             cachename = var + "[" + flag + "]"
+
+        if not expand and retparser and cachename in self.expand_cache:
+            return self.expand_cache[cachename].unexpanded_value, self.expand_cache[cachename]
 
         if expand and cachename in self.expand_cache:
             return self.expand_cache[cachename].value
