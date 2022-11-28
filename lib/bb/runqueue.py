@@ -698,6 +698,8 @@ class RunQueueData:
                 frommc = mcdependency[1]
                 mcdep = mcdependency[2]
                 deptask = mcdependency[4]
+                if mcdep not in taskData:
+                    bb.fatal("Multiconfig '%s' is referenced in multiconfig dependency '%s' but not enabled in BBMULTICONFIG?" % (mcdep, dep))
                 if mc == frommc:
                     fn = taskData[mcdep].build_targets[pn][0]
                     newdep = '%s:%s' % (fn,deptask)
