@@ -2093,11 +2093,7 @@ class Parser(multiprocessing.Process):
         pending = []
         try:
             while True:
-                try:
-                    self.quit.get_nowait()
-                except queue.Empty:
-                    pass
-                else:
+                if self.quit.is_set():
                     break
 
                 if pending:
@@ -2194,7 +2190,7 @@ class CookerParser(object):
         if self.toparse:
             bb.event.fire(bb.event.ParseStarted(self.toparse), self.cfgdata)
 
-            self.parser_quit = multiprocessing.Queue(maxsize=self.num_processes)
+            self.parser_quit = multiprocessing.Event()
             self.result_queue = multiprocessing.Queue()
 
             def chunkify(lst,n):
@@ -2226,8 +2222,7 @@ class CookerParser(object):
         else:
             bb.error("Parsing halted due to errors, see error messages above")
 
-        for process in self.processes:
-            self.parser_quit.put(None)
+        self.parser_quit.set()
 
         # Cleanup the queue before call process.join(), otherwise there might be
         # deadlocks.
@@ -2256,10 +2251,6 @@ class CookerParser(object):
             # Added in 3.7, cleans up zombies
             if hasattr(process, "close"):
                 process.close()
-
-        self.parser_quit.close()
-        # Allow data left in the cancel queue to be discarded
-        self.parser_quit.cancel_join_thread()
 
         def sync_caches():
             for c in self.bb_caches.values():
