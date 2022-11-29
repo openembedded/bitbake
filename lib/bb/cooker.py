@@ -2222,6 +2222,13 @@ class CookerParser(object):
         else:
             bb.error("Parsing halted due to errors, see error messages above")
 
+        def sync_caches():
+            for c in self.bb_caches.values():
+                c.sync()
+
+        self.syncthread = threading.Thread(target=sync_caches, name="SyncThread")
+        self.syncthread.start()
+
         self.parser_quit.set()
 
         # Cleanup the queue before call process.join(), otherwise there might be
@@ -2252,13 +2259,7 @@ class CookerParser(object):
             if hasattr(process, "close"):
                 process.close()
 
-        def sync_caches():
-            for c in self.bb_caches.values():
-                c.sync()
 
-        sync = threading.Thread(target=sync_caches, name="SyncThread")
-        self.syncthread = sync
-        sync.start()
         bb.codeparser.parser_cache_savemerge()
         bb.fetch.fetcher_parse_done()
         if self.cooker.configuration.profile:
