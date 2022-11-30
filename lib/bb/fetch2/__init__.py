@@ -518,7 +518,7 @@ def fetcher_init(d):
     else:
         raise FetchError("Invalid SRCREV cache policy of: %s" % srcrev_policy)
 
-    _checksum_cache.init_cache(d)
+    _checksum_cache.init_cache(d.getVar("BB_CACHEDIR"))
 
     for m in methods:
         if hasattr(m, "init"):

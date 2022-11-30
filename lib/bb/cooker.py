@@ -2268,7 +2268,7 @@ class CookerParser(object):
             if hasattr(process, "close"):
                 process.close()
 
-
+        bb.codeparser.parser_cache_save()
         bb.codeparser.parser_cache_savemerge()
         bb.cache.SiggenRecipeInfo.reset()
         bb.fetch.fetcher_parse_done()

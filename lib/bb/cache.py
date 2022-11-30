@@ -838,11 +838,10 @@ class MultiProcessCache(object):
         self.cachedata = self.create_cachedata()
         self.cachedata_extras = self.create_cachedata()
 
-    def init_cache(self, d, cache_file_name=None):
-        cachedir = (d.getVar("PERSISTENT_DIR") or
-                    d.getVar("CACHE"))
-        if cachedir in [None, '']:
+    def init_cache(self, cachedir, cache_file_name=None):
+        if not cachedir:
             return
+
         bb.utils.mkdirhier(cachedir)
         self.cachefile = os.path.join(cachedir,
                                       cache_file_name or self.__class__.cache_file_name)
