@@ -80,7 +80,7 @@ class SkippedPackage:
 
 
 class CookerFeatures(object):
-    _feature_list = [HOB_EXTRA_CACHES, BASEDATASTORE_TRACKING, SEND_SANITYEVENTS] = list(range(3))
+    _feature_list = [HOB_EXTRA_CACHES, BASEDATASTORE_TRACKING, SEND_SANITYEVENTS, RECIPE_SIGGEN_INFO] = list(range(4))
 
     def __init__(self):
         self._features=set()
@@ -367,12 +367,12 @@ class BBCooker:
         if CookerFeatures.BASEDATASTORE_TRACKING in self.featureset:
             self.enableDataTracking()
 
-        all_extra_cache_names = []
+        caches_name_array = ['bb.cache:CoreRecipeInfo']
         # We hardcode all known cache types in a single place, here.
         if CookerFeatures.HOB_EXTRA_CACHES in self.featureset:
-            all_extra_cache_names.append("bb.cache_extra:HobRecipeInfo")
-
-        caches_name_array = ['bb.cache:CoreRecipeInfo'] + all_extra_cache_names
+            caches_name_array.append("bb.cache_extra:HobRecipeInfo")
+        if CookerFeatures.RECIPE_SIGGEN_INFO in self.featureset:
+            caches_name_array.append("bb.cache:SiggenRecipeInfo")
 
         # At least CoreRecipeInfo will be loaded, so caches_array will never be empty!
         # This is the entry point, no further check needed!
