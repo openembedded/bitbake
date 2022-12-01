@@ -383,6 +383,8 @@ class CookerDataBuilder(object):
                 parselog.critical("Please check BBLAYERS in %s" % (layerconf))
                 raise bb.BBHandledException()
 
+            layerseries = None
+            compat_entries = {}
             for layer in layers:
                 parselog.debug2("Adding layer %s", layer)
                 if 'HOME' in approved and '~' in layer:
@@ -395,8 +397,27 @@ class CookerDataBuilder(object):
                 data.expandVarref('LAYERDIR')
                 data.expandVarref('LAYERDIR_RE')
 
+                # Sadly we can't have nice things.
+                # Some layers think they're going to be 'clever' and copy the values from
+                # another layer, e.g. using ${LAYERSERIES_COMPAT_core}. The whole point of
+                # this mechanism is to make it clear which releases a layer supports and
+                # show when a layer master branch is bitrotting and is unmaintained.
+                # We therefore avoid people doing this here.
+                collections = (data.getVar('BBFILE_COLLECTIONS') or "").split()
+                for c in collections:
+                    compat_entry = data.getVar("LAYERSERIES_COMPAT_%s" % c)
+                    if compat_entry:
+                        compat_entries[c] = set(compat_entry.split())
+                        data.delVar("LAYERSERIES_COMPAT_%s" % c)
+                if not layerseries:
+                    layerseries = set((data.getVar("LAYERSERIES_CORENAMES") or "").split())
+                    if layerseries:
+                        data.delVar("LAYERSERIES_CORENAMES")
+
             data.delVar('LAYERDIR_RE')
             data.delVar('LAYERDIR')
+            for c in compat_entries:
+                data.setVar("LAYERSERIES_COMPAT_%s" % c, compat_entries[c])
 
             bbfiles_dynamic = (data.getVar('BBFILES_DYNAMIC') or "").split()
             collections = (data.getVar('BBFILE_COLLECTIONS') or "").split()
@@ -415,13 +436,15 @@ class CookerDataBuilder(object):
             if invalid:
                 bb.fatal("BBFILES_DYNAMIC entries must be of the form {!}<collection name>:<filename pattern>, not:\n    %s" % "\n    ".join(invalid))
 
-            layerseries = set((data.getVar("LAYERSERIES_CORENAMES") or "").split())
             collections_tmp = collections[:]
             for c in collections:
                 collections_tmp.remove(c)
                 if c in collections_tmp:
                     bb.fatal("Found duplicated BBFILE_COLLECTIONS '%s', check bblayers.conf or layer.conf to fix it." % c)
-                compat = set((data.getVar("LAYERSERIES_COMPAT_%s" % c) or "").split())
+
+                compat = set()
+                if c in compat_entries:
+                    compat = compat_entries[c]
                 if compat and not layerseries:
                     bb.fatal("No core layer found to work with layer '%s'. Missing entry in bblayers.conf?" % c)
                 if compat and not (compat & layerseries):
@@ -429,6 +452,8 @@ class CookerDataBuilder(object):
                               % (c, " ".join(layerseries), " ".join(compat)))
                 elif not compat and not data.getVar("BB_WORKERCONTEXT"):
                     bb.warn("Layer %s should set LAYERSERIES_COMPAT_%s in its conf/layer.conf file to list the core layer names it is compatible with." % (c, c))
+
+            data.setVar("LAYERSERIES_CORENAMES", " ".join(layerseries))
 
         if not data.getVar("BBPATH"):
             msg = "The BBPATH variable is not set"
