@@ -1935,7 +1935,7 @@ Testing and Debugging BitBake Python code
 The OpenEmbedded build system implements a convenient ``pydevshell`` target which
 you can use to access the BitBake datastore and experiment with your own Python
 code. See :yocto_docs:`Using a Python Development Shell
-</dev-manual/common-tasks.html#using-a-python-development-shell>` in the Yocto
+</dev-manual/python-development-shell.html#using-a-python-development-shell>` in the Yocto
 Project manual for details.
 
 Task Checksums and Setscene

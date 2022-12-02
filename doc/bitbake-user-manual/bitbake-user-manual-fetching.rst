@@ -740,7 +740,7 @@ Here is an example URL with both fetchers::
        "
 
 See :yocto_docs:`Creating Node Package Manager (NPM) Packages
-</dev-manual/common-tasks.html#creating-node-package-manager-npm-packages>`
+</dev-manual/packages.html#creating-node-package-manager-npm-packages>`
 in the Yocto Project manual for details about using
 :yocto_docs:`devtool <https://docs.yoctoproject.org/ref-manual/devtool-reference.html>`
 to automatically create a recipe from an NPM URL.
@@ -777,7 +777,7 @@ the package which has such dependencies, for example::
 Such a file can automatically be generated using
 :yocto_docs:`devtool <https://docs.yoctoproject.org/ref-manual/devtool-reference.html>`
 as described in the :yocto_docs:`Creating Node Package Manager (NPM) Packages
-</dev-manual/common-tasks.html#creating-node-package-manager-npm-packages>`
+</dev-manual/packages.html#creating-node-package-manager-npm-packages>`
 section of the Yocto Project.
 
 Other Fetchers
