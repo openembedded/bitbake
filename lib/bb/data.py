@@ -262,6 +262,31 @@ def emit_func_python(func, o=sys.__stdout__, d = init()):
         newdeps -= seen
 
 def build_dependencies(key, keys, shelldeps, varflagsexcl, ignored_vars, d):
+    def handle_contains(value, contains, exclusions, d):
+        newvalue = []
+        if value:
+            newvalue.append(str(value))
+        for k in sorted(contains):
+            if k in exclusions or k in ignored_vars:
+                continue
+            l = (d.getVar(k) or "").split()
+            for item in sorted(contains[k]):
+                for word in item.split():
+                    if not word in l:
+                        newvalue.append("\n%s{%s} = Unset" % (k, item))
+                        break
+                else:
+                    newvalue.append("\n%s{%s} = Set" % (k, item))
+        return "".join(newvalue)
+
+    def handle_remove(value, deps, removes, d):
+        for r in sorted(removes):
+            r2 = d.expandWithRefs(r, None)
+            value += "\n_remove of %s" % r
+            deps |= r2.references
+            deps = deps | (keys & r2.execs)
+        return value
+
     deps = set()
     try:
         if key[-1] == ']':
@@ -276,31 +301,6 @@ def build_dependencies(key, keys, shelldeps, varflagsexcl, ignored_vars, d):
         varflags = d.getVarFlags(key, ["vardeps", "vardepvalue", "vardepsexclude", "exports", "postfuncs", "prefuncs", "lineno", "filename"]) or {}
         vardeps = varflags.get("vardeps")
         exclusions = varflags.get("vardepsexclude", "").split()
-
-        def handle_contains(value, contains, exclusions, d):
-            newvalue = []
-            if value:
-                newvalue.append(str(value))
-            for k in sorted(contains):
-                if k in exclusions or k in ignored_vars:
-                    continue
-                l = (d.getVar(k) or "").split()
-                for item in sorted(contains[k]):
-                    for word in item.split():
-                        if not word in l:
-                            newvalue.append("\n%s{%s} = Unset" % (k, item))
-                            break
-                    else:
-                        newvalue.append("\n%s{%s} = Set" % (k, item))
-            return "".join(newvalue)
-
-        def handle_remove(value, deps, removes, d):
-            for r in sorted(removes):
-                r2 = d.expandWithRefs(r, None)
-                value += "\n_remove of %s" % r
-                deps |= r2.references
-                deps = deps | (keys & r2.execs)
-            return value
 
         if "vardepvalue" in varflags:
             value = varflags.get("vardepvalue")
