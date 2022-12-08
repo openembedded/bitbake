@@ -41,6 +41,35 @@ def serverlog(msg):
     print(str(os.getpid()) + " " +  datetime.datetime.now().strftime('%H:%M:%S.%f') + " " + msg)
     sys.stdout.flush()
 
+#
+# When we have lockfile issues, try and find infomation about which process is
+# using the lockfile
+#
+def get_lockfile_process_msg(lockfile):
+    # Some systems may not have lsof available
+    procs = None
+    try:
+        procs = subprocess.check_output(["lsof", '-w', lockfile], stderr=subprocess.STDOUT)
+    except subprocess.CalledProcessError:
+        # File was deleted?
+        pass
+    except OSError as e:
+        if e.errno != errno.ENOENT:
+            raise
+    if procs is None:
+        # Fall back to fuser if lsof is unavailable
+        try:
+            procs = subprocess.check_output(["fuser", '-v', lockfile], stderr=subprocess.STDOUT)
+        except subprocess.CalledProcessError:
+            # File was deleted?
+            pass
+        except OSError as e:
+            if e.errno != errno.ENOENT:
+                raise
+    if procs:
+        return procs.decode("utf-8")
+    return None
+
 class ProcessServer():
     profile_filename = "profile.log"
     profile_processed_filename = "profile.log.processed"
@@ -306,30 +335,10 @@ class ProcessServer():
                 return
 
             if not lock:
-                # Some systems may not have lsof available
-                procs = None
-                try:
-                    procs = subprocess.check_output(["lsof", '-w', lockfile], stderr=subprocess.STDOUT)
-                except subprocess.CalledProcessError:
-                    # File was deleted?
-                    continue
-                except OSError as e:
-                    if e.errno != errno.ENOENT:
-                        raise
-                if procs is None:
-                    # Fall back to fuser if lsof is unavailable
-                    try:
-                        procs = subprocess.check_output(["fuser", '-v', lockfile], stderr=subprocess.STDOUT)
-                    except subprocess.CalledProcessError:
-                        # File was deleted?
-                        continue
-                    except OSError as e:
-                        if e.errno != errno.ENOENT:
-                            raise
-
+                procs = get_lockfile_process_msg(lockfile)
                 msg = ["Delaying shutdown due to active processes which appear to be holding bitbake.lock"]
                 if procs:
-                    msg.append(":\n%s" % str(procs.decode("utf-8")))
+                    msg.append(":\n%s" % procs)
                 serverlog("".join(msg))
 
     def idle_commands(self, delay, fds=None):
