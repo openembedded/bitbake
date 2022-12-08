@@ -17,6 +17,7 @@ import warnings
 import fcntl
 import time
 import traceback
+import datetime
 
 import bb
 from bb import event
@@ -384,6 +385,9 @@ def bitbake_main(configParams, configuration):
 
     return 1
 
+def timestamp():
+    return datetime.datetime.now().strftime('%H:%M:%S.%f')
+
 def setup_bitbake(configParams, extrafeatures=None):
     # Ensure logging messages get sent to the UI as events
     handler = bb.event.LogHandler()
@@ -434,7 +438,7 @@ def setup_bitbake(configParams, extrafeatures=None):
                 else:
                     logger.info("Reconnecting to bitbake server...")
                     if not os.path.exists(sockname):
-                        logger.info("Previous bitbake instance shutting down?, waiting to retry...")
+                        logger.info("Previous bitbake instance shutting down?, waiting to retry... (%s)" % timestamp())
                         i = 0
                         lock = None
                         # Wait for 5s or until we can get the lock
@@ -459,9 +463,9 @@ def setup_bitbake(configParams, extrafeatures=None):
                 retries -= 1
                 tryno = 8 - retries
                 if isinstance(e, (bb.server.process.ProcessTimeout, BrokenPipeError, EOFError, SystemExit)):
-                    logger.info("Retrying server connection (#%d)..." % tryno)
+                    logger.info("Retrying server connection (#%d)... (%s)" % (tryno, timestamp()))
                 else:
-                    logger.info("Retrying server connection (#%d)... (%s)" % (tryno, traceback.format_exc()))
+                    logger.info("Retrying server connection (#%d)... (%s, %s)" % (tryno, traceback.format_exc(), timestamp()))
 
             if not retries:
                 bb.fatal("Unable to connect to bitbake server, or start one (server startup failures would be in bitbake-cookerdaemon.log).")
