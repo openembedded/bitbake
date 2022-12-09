@@ -70,6 +70,9 @@ class SignatureGenerator(object):
     def postparsing_clean_cache(self):
         return
 
+    def setup_datacache(self, datacaches):
+        self.datacaches = datacaches
+
     def get_unihash(self, tid):
         return self.taskhash[tid]
 

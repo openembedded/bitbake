@@ -651,6 +651,8 @@ class RunQueueData:
             # Nothing to do
             return 0
 
+        bb.parse.siggen.setup_datacache(self.dataCaches)
+
         self.init_progress_reporter.start()
         self.init_progress_reporter.next_stage()
 
