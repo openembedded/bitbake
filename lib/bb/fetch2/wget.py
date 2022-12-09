@@ -645,10 +645,10 @@ class Wget(FetchMethod):
             # search for version matches on folders inside the path, like:
             # "5.7" in http://download.gnome.org/sources/${PN}/5.7/${PN}-${PV}.tar.gz
             dirver_regex = re.compile(r"(?P<dirver>[^/]*(\d+\.)*\d+([-_]r\d+)*)/")
-            m = dirver_regex.search(path)
+            m = dirver_regex.findall(path)
             if m:
                 pn = d.getVar('PN')
-                dirver = m.group('dirver')
+                dirver = m[-1][0]
 
                 dirver_pn_regex = re.compile(r"%s\d?" % (re.escape(pn)))
                 if not dirver_pn_regex.search(dirver):
