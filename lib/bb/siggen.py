@@ -335,8 +335,8 @@ class SignatureGeneratorBasic(SignatureGenerator):
         self.unihash_cache.copyfile(targetdir)
 
     def dump_sigtask(self, fn, task, stampbase, runtime):
-
         tid = fn + ":" + task
+        mc = bb.runqueue.mc_from_tid(fn)
         referencestamp = stampbase
         if isinstance(runtime, str) and runtime.startswith("customfile"):
             sigfile = stampbase
@@ -353,16 +353,27 @@ class SignatureGeneratorBasic(SignatureGenerator):
         data['task'] = task
         data['basehash_ignore_vars'] = self.basehash_ignore_vars
         data['taskhash_ignore_tasks'] = self.taskhash_ignore_tasks
-        data['taskdeps'] = self.taskdeps[fn][task]
+        if hasattr(self, "datacaches"):
+            data['taskdeps'] = self.datacaches[mc].siggen_taskdeps[fn][task]
+        else:
+            data['taskdeps'] = self.taskdeps[fn][task]
         data['basehash'] = self.basehash[tid]
         data['gendeps'] = {}
         data['varvals'] = {}
-        data['varvals'][task] = self.lookupcache[fn][task]
-        for dep in self.taskdeps[fn][task]:
-            if dep in self.basehash_ignore_vars:
-                continue
-            data['gendeps'][dep] = self.gendeps[fn][dep]
-            data['varvals'][dep] = self.lookupcache[fn][dep]
+        if hasattr(self, "datacaches"):
+            data['varvals'][task] = self.datacaches[mc].siggen_varvals[fn][task]
+            for dep in self.datacaches[mc].siggen_taskdeps[fn][task]:
+                if dep in self.basehash_ignore_vars:
+                   continue
+                data['gendeps'][dep] = self.datacaches[mc].siggen_gendeps[fn][dep]
+                data['varvals'][dep] = self.datacaches[mc].siggen_varvals[fn][dep]
+        else:
+            data['varvals'][task] = self.lookupcache[fn][task]
+            for dep in self.taskdeps[fn][task]:
+                if dep in self.basehash_ignore_vars:
+                    continue
+                data['gendeps'][dep] = self.gendeps[fn][dep]
+                data['varvals'][dep] = self.lookupcache[fn][dep]
 
         if runtime and tid in self.taskhash:
             data['runtaskdeps'] = self.runtaskdeps[tid]
@@ -408,18 +419,6 @@ class SignatureGeneratorBasic(SignatureGenerator):
             except OSError:
                 pass
             raise err
-
-    def dump_sigfn(self, fn, dataCaches, options):
-        if fn in self.taskdeps:
-            for task in self.taskdeps[fn]:
-                tid = fn + ":" + task
-                mc = bb.runqueue.mc_from_tid(tid)
-                if tid not in self.taskhash:
-                    continue
-                if dataCaches[mc].basetaskhash[tid] != self.basehash[tid]:
-                    bb.error("Bitbake's cached basehash does not match the one we just generated (%s)!" % tid)
-                    bb.error("The mismatched hashes were %s and %s" % (dataCaches[mc].basetaskhash[tid], self.basehash[tid]))
-                self.dump_sigtask(fn, task, dataCaches[mc].stamp[fn], True)
 
 class SignatureGeneratorBasicHash(SignatureGeneratorBasic):
     name = "basichash"

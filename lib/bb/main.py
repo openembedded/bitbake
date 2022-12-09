@@ -395,6 +395,11 @@ def setup_bitbake(configParams, extrafeatures=None):
         # In status only mode there are no logs and no UI
         logger.addHandler(handler)
 
+    if configParams.dump_signatures:
+        if extrafeatures is None:
+            extrafeatures = []
+        extrafeatures.append(bb.cooker.CookerFeatures.RECIPE_SIGGEN_INFO)
+
     if configParams.server_only:
         featureset = []
         ui_module = None
