@@ -53,11 +53,6 @@ class SignatureGenerator(object):
     """
     name = "noop"
 
-    # If the derived class supports multiconfig datacaches, set this to True
-    # The default is False for backward compatibility with derived signature
-    # generators that do not understand multiconfig caches
-    supports_multiconfig_datacaches = False
-
     def __init__(self, data):
         self.basehash = {}
         self.taskhash = {}
@@ -127,38 +122,6 @@ class SignatureGenerator(object):
 
     def set_setscene_tasks(self, setscene_tasks):
         return
-
-    @classmethod
-    def get_data_caches(cls, dataCaches, mc):
-        """
-        This function returns the datacaches that should be passed to signature
-        generator functions. If the signature generator supports multiconfig
-        caches, the entire dictionary of data caches is sent, otherwise a
-        special proxy is sent that support both index access to all
-        multiconfigs, and also direct access for the default multiconfig.
-
-        The proxy class allows code in this class itself to always use
-        multiconfig aware code (to ease maintenance), but derived classes that
-        are unaware of multiconfig data caches can still access the default
-        multiconfig as expected.
-
-        Do not override this function in derived classes; it will be removed in
-        the future when support for multiconfig data caches is mandatory
-        """
-        class DataCacheProxy(object):
-            def __init__(self):
-                pass
-
-            def __getitem__(self, key):
-                return dataCaches[key]
-
-            def __getattr__(self, name):
-                return getattr(dataCaches[mc], name)
-
-        if cls.supports_multiconfig_datacaches:
-            return dataCaches
-
-        return DataCacheProxy()
 
     def exit(self):
         return
@@ -298,11 +261,6 @@ class SignatureGeneratorBasic(SignatureGenerator):
         for dep in sorted(deps, key=clean_basepath):
             (depmc, _, _, depmcfn) = bb.runqueue.split_tid_mcfn(dep)
             depname = dataCaches[depmc].pkg_fn[depmcfn]
-            if not self.supports_multiconfig_datacaches and mc != depmc:
-                # If the signature generator doesn't understand multiconfig
-                # data caches, any dependency not in the same multiconfig must
-                # be skipped for backward compatibility
-                continue
             if not self.rundep_check(fn, recipename, task, dep, depname, dataCaches):
                 continue
             if dep not in self.taskhash:
@@ -725,13 +683,6 @@ class SignatureGeneratorTestEquivHash(SignatureGeneratorUniHashMixIn, SignatureG
         super().init_rundepcheck(data)
         self.server = data.getVar('BB_HASHSERVE')
         self.method = "sstate_output_hash"
-
-#
-# Dummy class used for bitbake-selftest
-#
-class SignatureGeneratorTestMulticonfigDepends(SignatureGeneratorBasicHash):
-    name = "TestMulticonfigDepends"
-    supports_multiconfig_datacaches = True
 
 def dump_this_task(outfile, d):
     import bb.parse
