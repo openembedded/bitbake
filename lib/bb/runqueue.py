@@ -1408,7 +1408,7 @@ class RunQueue:
             logger.debug2("%s.%s is nostamp\n", fn, taskname)
             return False
 
-        if taskname != "do_setscene" and taskname.endswith("_setscene"):
+        if taskname.endswith("_setscene"):
             return True
 
         if cache is None:

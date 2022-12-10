@@ -429,7 +429,7 @@ class SignatureGeneratorBasicHash(SignatureGeneratorBasic):
         return self.basehash[tid]
 
     def stampfile(self, stampbase, fn, taskname, extrainfo, clean=False):
-        if taskname != "do_setscene" and taskname.endswith("_setscene"):
+        if taskname.endswith("_setscene"):
             tid = fn + ":" + taskname[:-9]
         else:
             tid = fn + ":" + taskname

@@ -782,7 +782,7 @@ def stamp_internal(taskname, d, file_name, baseonly=False, noextra=False):
     When called in task context, d will be a data store, file_name will not be set
     """
     taskflagname = taskname
-    if taskname.endswith("_setscene") and taskname != "do_setscene":
+    if taskname.endswith("_setscene"):
         taskflagname = taskname.replace("_setscene", "")
 
     if file_name:
@@ -818,7 +818,7 @@ def stamp_cleanmask_internal(taskname, d, file_name):
     When called in task context, d will be a data store, file_name will not be set
     """
     taskflagname = taskname
-    if taskname.endswith("_setscene") and taskname != "do_setscene":
+    if taskname.endswith("_setscene"):
         taskflagname = taskname.replace("_setscene", "")
 
     if file_name:
@@ -865,7 +865,7 @@ def make_stamp(task, d, file_name = None):
 
     # If we're in task context, write out a signature file for each task
     # as it completes
-    if not task.endswith("_setscene") and task != "do_setscene" and not file_name:
+    if not task.endswith("_setscene") and not file_name:
         stampbase = stamp_internal(task, d, None, True)
         file_name = d.getVar('BB_FILENAME')
         bb.parse.siggen.dump_sigtask(file_name, task, stampbase, True)
