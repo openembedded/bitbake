@@ -1448,6 +1448,8 @@ class BBCooker:
         self.recipecaches[mc].rundeps[fn] = defaultdict(list)
         self.recipecaches[mc].runrecs[fn] = defaultdict(list)
 
+        bb.parse.siggen.setup_datacache(self.recipecaches)
+
         # Invalidate task for target if force mode active
         if self.configuration.force:
             logger.verbose("Invalidate task %s, %s", task, fn)

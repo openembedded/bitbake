@@ -14,6 +14,7 @@ import bb.data
 import difflib
 import simplediff
 import json
+import types
 import bb.compress.zstd
 from bb.checksum import FileChecksumCache
 from bb import runqueue
@@ -72,6 +73,24 @@ class SignatureGenerator(object):
 
     def setup_datacache(self, datacaches):
         self.datacaches = datacaches
+
+    def setup_datacache_from_datastore(self, mcfn, d):
+        # In task context we have no cache so setup internal data structures
+        # from the fully parsed data store provided
+
+        mc = d.getVar("__BBMULTICONFIG", False) or ""
+        tasks = d.getVar('__BBTASKS', False)
+
+        self.datacaches = {}
+        self.datacaches[mc] = types.SimpleNamespace()
+        setattr(self.datacaches[mc], "stamp", {})
+        self.datacaches[mc].stamp[mcfn] = d.getVar('STAMP')
+        setattr(self.datacaches[mc], "stamp_extrainfo", {})
+        self.datacaches[mc].stamp_extrainfo[mcfn] = {}
+        for t in tasks:
+            flag = d.getVarFlag(t, "stamp-extra-info")
+            if flag:
+                self.datacaches[mc].stamp_extrainfo[mcfn][t] = flag
 
     def get_unihash(self, tid):
         return self.taskhash[tid]
@@ -138,12 +157,9 @@ class SignatureGeneratorBasic(SignatureGenerator):
         self.basehash = {}
         self.taskhash = {}
         self.unihash = {}
-        self.taskdeps = {}
         self.runtaskdeps = {}
         self.file_checksum_values = {}
         self.taints = {}
-        self.gendeps = {}
-        self.lookupcache = {}
         self.setscenetasks = set()
         self.basehash_ignore_vars = set((data.getVar("BB_BASEHASH_IGNORE_VARS") or "").split())
         self.taskhash_ignore_tasks = None
@@ -186,11 +202,7 @@ class SignatureGeneratorBasic(SignatureGenerator):
                 bb.error("%s -Sprintdiff\n" % cmd)
             self.basehash[tid] = basehash[tid]
 
-        self.taskdeps[fn] = taskdeps
-        self.gendeps[fn] = gendeps
-        self.lookupcache[fn] = lookupcache
-
-        return taskdeps
+        return taskdeps, gendeps, lookupcache
 
     def set_setscene_tasks(self, setscene_tasks):
         self.setscenetasks = set(setscene_tasks)
@@ -202,7 +214,7 @@ class SignatureGeneratorBasic(SignatureGenerator):
             fn = bb.cache.realfn2virtual(fn, variant, mc)
 
         try:
-            taskdeps = self._build_data(fn, d)
+            taskdeps, gendeps, lookupcache = self._build_data(fn, d)
         except bb.parse.SkipRecipe:
             raise
         except:
@@ -218,18 +230,20 @@ class SignatureGeneratorBasic(SignatureGenerator):
             basehashes[task] = self.basehash[fn + ":" + task]
 
         d.setVar("__siggen_basehashes", basehashes)
-        d.setVar("__siggen_gendeps", self.gendeps[fn])
-        d.setVar("__siggen_varvals", self.lookupcache[fn])
-        d.setVar("__siggen_taskdeps", self.taskdeps[fn])
+        d.setVar("__siggen_gendeps", gendeps)
+        d.setVar("__siggen_varvals", lookupcache)
+        d.setVar("__siggen_taskdeps", taskdeps)
 
+    def setup_datacache_from_datastore(self, mcfn, d):
+        super().setup_datacache_from_datastore(mcfn, d)
 
-    def postparsing_clean_cache(self):
-        #
-        # After parsing we can remove some things from memory to reduce our memory footprint
-        #
-        self.gendeps = {}
-        self.lookupcache = {}
-        self.taskdeps = {}
+        mc = bb.runqueue.mc_from_tid(mcfn)
+        setattr(self.datacaches[mc], "siggen_varvals", {})
+        self.datacaches[mc].siggen_varvals[mcfn] = d.getVar("__siggen_varvals")
+        setattr(self.datacaches[mc], "siggen_taskdeps", {})
+        self.datacaches[mc].siggen_taskdeps[mcfn] = d.getVar("__siggen_taskdeps")
+        setattr(self.datacaches[mc], "siggen_gendeps", {})
+        self.datacaches[mc].siggen_gendeps[mcfn] = d.getVar("__siggen_gendeps")
 
     def rundep_check(self, fn, recipename, task, dep, depname, dataCaches):
         # Return True if we should keep the dependency, False to drop it
@@ -353,27 +367,16 @@ class SignatureGeneratorBasic(SignatureGenerator):
         data['task'] = task
         data['basehash_ignore_vars'] = self.basehash_ignore_vars
         data['taskhash_ignore_tasks'] = self.taskhash_ignore_tasks
-        if hasattr(self, "datacaches"):
-            data['taskdeps'] = self.datacaches[mc].siggen_taskdeps[fn][task]
-        else:
-            data['taskdeps'] = self.taskdeps[fn][task]
+        data['taskdeps'] = self.datacaches[mc].siggen_taskdeps[fn][task]
         data['basehash'] = self.basehash[tid]
         data['gendeps'] = {}
         data['varvals'] = {}
-        if hasattr(self, "datacaches"):
-            data['varvals'][task] = self.datacaches[mc].siggen_varvals[fn][task]
-            for dep in self.datacaches[mc].siggen_taskdeps[fn][task]:
-                if dep in self.basehash_ignore_vars:
-                   continue
-                data['gendeps'][dep] = self.datacaches[mc].siggen_gendeps[fn][dep]
-                data['varvals'][dep] = self.datacaches[mc].siggen_varvals[fn][dep]
-        else:
-            data['varvals'][task] = self.lookupcache[fn][task]
-            for dep in self.taskdeps[fn][task]:
-                if dep in self.basehash_ignore_vars:
-                    continue
-                data['gendeps'][dep] = self.gendeps[fn][dep]
-                data['varvals'][dep] = self.lookupcache[fn][dep]
+        data['varvals'][task] = self.datacaches[mc].siggen_varvals[fn][task]
+        for dep in self.datacaches[mc].siggen_taskdeps[fn][task]:
+            if dep in self.basehash_ignore_vars:
+               continue
+            data['gendeps'][dep] = self.datacaches[mc].siggen_gendeps[fn][dep]
+            data['varvals'][dep] = self.datacaches[mc].siggen_varvals[fn][dep]
 
         if runtime and tid in self.taskhash:
             data['runtaskdeps'] = self.runtaskdeps[tid]
