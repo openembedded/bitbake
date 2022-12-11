@@ -106,8 +106,40 @@ class SignatureGenerator(object):
         """Write/update the file checksum cache onto disk"""
         return
 
+    def stampfile_base(self, mcfn):
+        mc = bb.runqueue.mc_from_tid(mcfn)
+        return self.datacaches[mc].stamp[mcfn]
+
+    def stampfile_mcfn(self, taskname, mcfn, extrainfo=True):
+        mc = bb.runqueue.mc_from_tid(mcfn)
+        stamp = self.datacaches[mc].stamp[mcfn]
+        if not stamp:
+            return
+
+        stamp_extrainfo = ""
+        if extrainfo:
+            taskflagname = taskname
+            if taskname.endswith("_setscene"):
+                taskflagname = taskname.replace("_setscene", "")
+            stamp_extrainfo = self.datacaches[mc].stamp_extrainfo[mcfn].get(taskflagname) or ""
+
+        return self.stampfile(stamp, mcfn, taskname, stamp_extrainfo)
+
     def stampfile(self, stampbase, file_name, taskname, extrainfo):
         return ("%s.%s.%s" % (stampbase, taskname, extrainfo)).rstrip('.')
+
+    def stampcleanmask_mcfn(self, taskname, mcfn):
+        mc = bb.runqueue.mc_from_tid(mcfn)
+        stamp = self.datacaches[mc].stamp[mcfn]
+        if not stamp:
+            return []
+
+        taskflagname = taskname
+        if taskname.endswith("_setscene"):
+            taskflagname = taskname.replace("_setscene", "")
+        stamp_extrainfo = self.datacaches[mc].stamp_extrainfo[mcfn].get(taskflagname) or ""
+
+        return self.stampcleanmask(stamp, mcfn, taskname, stamp_extrainfo)
 
     def stampcleanmask(self, stampbase, file_name, taskname, extrainfo):
         return ("%s.%s.%s" % (stampbase, taskname, extrainfo)).rstrip('.')
@@ -115,8 +147,10 @@ class SignatureGenerator(object):
     def dump_sigtask(self, fn, task, stampbase, runtime):
         return
 
-    def invalidate_task(self, task, d, fn):
-        bb.build.del_stamp(task, d, fn)
+    def invalidate_task(self, task, mcfn):
+        mc = bb.runqueue.mc_from_tid(mcfn)
+        stamp = self.datacaches[mc].stamp[mcfn]
+        bb.utils.remove(stamp)
 
     def dump_sigs(self, dataCache, options):
         return
@@ -448,9 +482,20 @@ class SignatureGeneratorBasicHash(SignatureGeneratorBasic):
     def stampcleanmask(self, stampbase, fn, taskname, extrainfo):
         return self.stampfile(stampbase, fn, taskname, extrainfo, clean=True)
 
-    def invalidate_task(self, task, d, fn):
-        bb.note("Tainting hash to force rebuild of task %s, %s" % (fn, task))
-        bb.build.write_taint(task, d, fn)
+    def invalidate_task(self, task, mcfn):
+        bb.note("Tainting hash to force rebuild of task %s, %s" % (mcfn, task))
+
+        mc = bb.runqueue.mc_from_tid(mcfn)
+        stamp = self.datacaches[mc].stamp[mcfn]
+
+        taintfn = stamp + '.' + task + '.taint'
+
+        import uuid
+        bb.utils.mkdirhier(os.path.dirname(taintfn))
+        # The specific content of the taint file is not really important,
+        # we just need it to be random, so a random UUID is used
+        with open(taintfn, 'w') as taintf:
+            taintf.write(str(uuid.uuid4()))
 
 class SignatureGeneratorUniHashMixIn(object):
     def __init__(self, data):
@@ -693,7 +738,7 @@ def dump_this_task(outfile, d):
     import bb.parse
     fn = d.getVar("BB_FILENAME")
     task = "do_" + d.getVar("BB_CURRENTTASK")
-    referencestamp = bb.build.stamp_internal(task, d, None, True)
+    referencestamp = bb.parse.siggen.stampfile_base(fn)
     bb.parse.siggen.dump_sigtask(fn, task, outfile, "customfile:" + referencestamp)
 
 def init_colors(enable_color):

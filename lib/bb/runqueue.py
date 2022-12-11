@@ -155,7 +155,7 @@ class RunQueueScheduler(object):
         self.stamps = {}
         for tid in self.rqdata.runtaskentries:
             (mc, fn, taskname, taskfn) = split_tid_mcfn(tid)
-            self.stamps[tid] = bb.build.stampfile(taskname, self.rqdata.dataCaches[mc], taskfn, noextra=True)
+            self.stamps[tid] = bb.parse.siggen.stampfile_mcfn(taskname, taskfn, extrainfo=False)
             if tid in self.rq.runq_buildable:
                 self.buildable.append(tid)
 
@@ -937,7 +937,7 @@ class RunQueueData:
                     bb.debug(1, "Task %s is marked nostamp, cannot invalidate this task" % taskname)
             else:
                 logger.verbose("Invalidate task %s, %s", taskname, fn)
-                bb.parse.siggen.invalidate_task(taskname, self.dataCaches[mc], taskfn)
+                bb.parse.siggen.invalidate_task(taskname, taskfn)
 
         self.target_tids = []
         for (mc, target, task, fn) in self.targets:
@@ -1398,7 +1398,7 @@ class RunQueue:
         if taskname is None:
             taskname = tn
 
-        stampfile = bb.build.stampfile(taskname, self.rqdata.dataCaches[mc], taskfn)
+        stampfile = bb.parse.siggen.stampfile_mcfn(taskname, taskfn)
 
         # If the stamp is missing, it's not current
         if not os.access(stampfile, os.F_OK):
@@ -1421,8 +1421,8 @@ class RunQueue:
         for dep in self.rqdata.runtaskentries[tid].depends:
             if iscurrent:
                 (mc2, fn2, taskname2, taskfn2) = split_tid_mcfn(dep)
-                stampfile2 = bb.build.stampfile(taskname2, self.rqdata.dataCaches[mc2], taskfn2)
-                stampfile3 = bb.build.stampfile(taskname2 + "_setscene", self.rqdata.dataCaches[mc2], taskfn2)
+                stampfile2 = bb.parse.siggen.stampfile_mcfn(taskname2, taskfn2)
+                stampfile3 = bb.parse.siggen.stampfile_mcfn(taskname2 + "_setscene", taskfn2)
                 t2 = get_timestamp(stampfile2)
                 t3 = get_timestamp(stampfile3)
                 if t3 and not t2:
@@ -2164,7 +2164,7 @@ class RunQueueExecute:
                 self.rq.worker[mc].process.stdin.write(b"<runtask>" + pickle.dumps(runtask) + b"</runtask>")
                 self.rq.worker[mc].process.stdin.flush()
 
-            self.build_stamps[task] = bb.build.stampfile(taskname, self.rqdata.dataCaches[mc], taskfn, noextra=True)
+            self.build_stamps[task] = bb.parse.siggen.stampfile_mcfn(taskname, taskfn, extrainfo=False)
             self.build_stamps2.append(self.build_stamps[task])
             self.sq_running.add(task)
             self.sq_live.add(task)
@@ -2224,7 +2224,7 @@ class RunQueueExecute:
                 self.runq_running.add(task)
                 self.stats.taskActive()
                 if not (self.cooker.configuration.dry_run or self.rqdata.setscene_enforce):
-                    bb.build.make_stamp(taskname, self.rqdata.dataCaches[mc], taskfn)
+                    bb.build.make_stamp_mcfn(taskname, taskfn)
                 self.task_complete(task)
                 return True
             else:
@@ -2263,7 +2263,7 @@ class RunQueueExecute:
                 self.rq.worker[mc].process.stdin.write(b"<runtask>" + pickle.dumps(runtask) + b"</runtask>")
                 self.rq.worker[mc].process.stdin.flush()
 
-            self.build_stamps[task] = bb.build.stampfile(taskname, self.rqdata.dataCaches[mc], taskfn, noextra=True)
+            self.build_stamps[task] = bb.parse.siggen.stampfile_mcfn(taskname, taskfn, extrainfo=False)
             self.build_stamps2.append(self.build_stamps[task])
             self.runq_running.add(task)
             self.stats.taskActive()
@@ -2520,7 +2520,7 @@ class RunQueueExecute:
                 self.scenequeue_notneeded.remove(tid)
 
             (mc, fn, taskname, taskfn) = split_tid_mcfn(tid)
-            self.sqdata.stamps[tid] = bb.build.stampfile(taskname + "_setscene", self.rqdata.dataCaches[mc], taskfn, noextra=True)
+            self.sqdata.stamps[tid] = bb.parse.siggen.stampfile_mcfn(taskname, taskfn, extrainfo=False)
 
             if tid in self.stampcache:
                 del self.stampcache[tid]
@@ -2836,7 +2836,8 @@ def build_scenequeue_data(sqdata, rqdata, rq, cooker, stampcache, sqrq):
         (mc, fn, taskname, taskfn) = split_tid_mcfn(tid)
         realtid = tid + "_setscene"
         idepends = rqdata.taskData[mc].taskentries[realtid].idepends
-        sqdata.stamps[tid] = bb.build.stampfile(taskname + "_setscene", rqdata.dataCaches[mc], taskfn, noextra=True)
+        sqdata.stamps[tid] = bb.parse.siggen.stampfile_mcfn(taskname, taskfn, extrainfo=False)
+
         for (depname, idependtask) in idepends:
 
             if depname not in rqdata.taskData[mc].build_targets:
@@ -2915,7 +2916,7 @@ def build_scenequeue_data(sqdata, rqdata, rq, cooker, stampcache, sqrq):
     found = {}
     for tid in rqdata.runq_setscene_tids:
         (mc, fn, taskname, taskfn) = split_tid_mcfn(tid)
-        stamps = bb.build.find_stale_stamps(taskname, rqdata.dataCaches[mc], taskfn)
+        stamps = bb.build.find_stale_stamps(taskname, taskfn)
         if stamps:
             if mc not in found:
                 found[mc] = {}
@@ -2931,7 +2932,7 @@ def check_setscene_stamps(tid, rqdata, rq, stampcache, noexecstamp=False):
     taskdep = rqdata.dataCaches[mc].task_deps[taskfn]
 
     if 'noexec' in taskdep and taskname in taskdep['noexec']:
-        bb.build.make_stamp(taskname + "_setscene", rqdata.dataCaches[mc], taskfn)
+        bb.build.make_stamp_mcfn(taskname + "_setscene", taskfn)
         return True, False
 
     if rq.check_stamp_task(tid, taskname + "_setscene", cache=stampcache):

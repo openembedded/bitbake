@@ -1453,7 +1453,7 @@ class BBCooker:
         # Invalidate task for target if force mode active
         if self.configuration.force:
             logger.verbose("Invalidate task %s, %s", task, fn)
-            bb.parse.siggen.invalidate_task(task, self.recipecaches[mc], fn)
+            bb.parse.siggen.invalidate_task(task, fn)
 
         # Setup taskdata structure
         taskdata = {}
