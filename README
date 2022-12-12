@@ -13,6 +13,8 @@ Bitbake plain documentation can be found under the doc directory or its integrat
 html version at the Yocto Project website:
     https://docs.yoctoproject.org
 
+Bitbake requires Python version 3.8 or newer.
+
 Contributing
 ------------
 
