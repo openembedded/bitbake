@@ -441,7 +441,8 @@ def setup_bitbake(configParams, extrafeatures=None):
                         logger.info("Previous bitbake instance shutting down?, waiting to retry... (%s)" % timestamp())
                         procs = bb.server.process.get_lockfile_process_msg(lockfile)
                         if procs:
-                            logger.info("Processes holding bitbake.lock:\n%s" % procs)
+                            logger.info("Processes holding bitbake.lock (missing socket %s):\n%s" % (sockname, procs))
+                        logger.info("Directory listing: %s" % (str(os.listdir(topdir))))
                         i = 0
                         lock = None
                         # Wait for 5s or until we can get the lock

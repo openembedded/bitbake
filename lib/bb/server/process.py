@@ -154,9 +154,10 @@ class ProcessServer():
             fds.append(self.xmlrpc)
         seendata = False
         serverlog("Entering server connection loop")
+        serverlog("Lockfile is: %s\nSocket is %s (%s)" % (self.bitbake_lock_name, self.sockname, os.path.exists(self.sockname)))
 
         def disconnect_client(self, fds):
-            serverlog("Disconnecting Client")
+            serverlog("Disconnecting Client (socket: %s)" % os.path.exists(self.sockname))
             if self.controllersock:
                 fds.remove(self.controllersock)
                 self.controllersock.close()
@@ -246,7 +247,7 @@ class ProcessServer():
                 try:
                     serverlog("Running command %s" % command)
                     self.command_channel_reply.send(self.cooker.command.runCommand(command))
-                    serverlog("Command Completed")
+                    serverlog("Command Completed (socket: %s)" % os.path.exists(self.sockname))
                 except Exception as e:
                    stack = traceback.format_exc()
                    serverlog('Exception in server main event loop running command %s (%s)' % (command, stack))
@@ -273,7 +274,7 @@ class ProcessServer():
 
             ready = self.idle_commands(.1, fds)
 
-        serverlog("Exiting")
+        serverlog("Exiting (socket: %s)" % os.path.exists(self.sockname))
         # Remove the socket file so we don't get any more connections to avoid races
         try:
             os.unlink(self.sockname)
