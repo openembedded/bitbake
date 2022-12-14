@@ -278,8 +278,8 @@ class ProcessServer():
         # Remove the socket file so we don't get any more connections to avoid races
         try:
             os.unlink(self.sockname)
-        except:
-            pass
+        except Exception as err:
+            serverlog("Removing socket file '%s' failed (%s)" % (self.sockname, err))
         self.sock.close()
 
         try:
@@ -543,6 +543,7 @@ def execServer(lockfd, readypipeinfd, lockname, sockname, server_timeout, xmlrpc
 
         # Create server control socket
         if os.path.exists(sockname):
+            serverlog("WARNING: removing existing socket file '%s'" % sockname)
             os.unlink(sockname)
 
         sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
