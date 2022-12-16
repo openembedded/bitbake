@@ -84,6 +84,12 @@ def add_module_functions(fn, functions, namespace):
         modulecode_deps[name] = [parser.references.copy(), execs, parser.var_execs.copy(), parser.contains.copy()]
         #bb.warn("%s: %s\nRefs:%s Execs: %s %s %s" % (name, src, parser.references, parser.execs, parser.var_execs, parser.contains))
 
+def update_module_dependencies(d):
+    for mod in modulecode_deps:
+        excludes = set((d.getVarFlag(mod, "vardepsexclude") or "").split())
+        if excludes:
+            modulecode_deps[mod] = [modulecode_deps[mod][0] - excludes, modulecode_deps[mod][1] - excludes, modulecode_deps[mod][2] - excludes, modulecode_deps[mod][3]]
+
 # A custom getstate/setstate using tuples is actually worth 15% cachesize by
 # avoiding duplication of the attribute names!
 class SetCache(object):

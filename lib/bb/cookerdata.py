@@ -311,6 +311,7 @@ class CookerDataBuilder(object):
             logger.exception("Error parsing configuration files")
             raise bb.BBHandledException()
 
+        bb.codeparser.update_module_dependencies(self.data)
 
         # Handle obsolete variable names
         d = self.data
