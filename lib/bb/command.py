@@ -166,6 +166,12 @@ class CommandsSync:
     These must not influence any running synchronous command.
     """
 
+    def ping(self, command, params):
+        """
+        Allow a UI to check the server is still alive
+        """
+        return "Still alive!"
+
     def stateShutdown(self, command, params):
         """
         Trigger cooker 'shutdown' mode
