@@ -1467,6 +1467,7 @@ class BBCooker:
         buildname = self.databuilder.mcdata[mc].getVar("BUILDNAME")
         if fireevents:
             bb.event.fire(bb.event.BuildStarted(buildname, [item]), self.databuilder.mcdata[mc])
+            bb.event.enable_heartbeat()
 
         # Execute the runqueue
         runlist = [[mc, item, task, fn]]
@@ -1500,6 +1501,7 @@ class BBCooker:
             if not retval:
                 if fireevents:
                     bb.event.fire(bb.event.BuildCompleted(len(rq.rqdata.runtaskentries), buildname, item, failures, interrupted), self.databuilder.mcdata[mc])
+                    bb.event.disable_heartbeat()
                 self.command.finishAsyncCommand(msg)
                 # We trashed self.recipecaches above
                 self.parsecache_valid = False
@@ -1545,6 +1547,7 @@ class BBCooker:
                     for mc in self.multiconfigs:
                         bb.event.fire(bb.event.BuildCompleted(len(rq.rqdata.runtaskentries), buildname, targets, failures, interrupted), self.databuilder.mcdata[mc])
                 finally:
+                    bb.event.disable_heartbeat()
                     self.command.finishAsyncCommand(msg)
                 return False
             if retval is True:
@@ -1578,6 +1581,7 @@ class BBCooker:
 
         for mc in self.multiconfigs:
             bb.event.fire(bb.event.BuildStarted(buildname, ntargets), self.databuilder.mcdata[mc])
+        bb.event.enable_heartbeat()
 
         rq = bb.runqueue.RunQueue(self, self.data, self.recipecaches, taskdata, runlist)
         if 'universe' in targets:

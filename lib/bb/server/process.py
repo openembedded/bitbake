@@ -382,7 +382,7 @@ class ProcessServer():
 
         # Create new heartbeat event?
         now = time.time()
-        if now >= self.next_heartbeat:
+        if bb.event._heartbeat_enabled and now >= self.next_heartbeat:
             # We might have missed heartbeats. Just trigger once in
             # that case and continue after the usual delay.
             self.next_heartbeat += self.heartbeat_seconds
@@ -396,7 +396,7 @@ class ProcessServer():
                     if not isinstance(exc, bb.BBHandledException):
                         logger.exception('Running heartbeat function')
                     self.quit = True
-        if nextsleep and now + nextsleep > self.next_heartbeat:
+        if nextsleep and bb.event._heartbeat_enabled and now + nextsleep > self.next_heartbeat:
             # Shorten timeout so that we we wake up in time for
             # the heartbeat.
             nextsleep = self.next_heartbeat - now

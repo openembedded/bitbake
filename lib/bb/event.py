@@ -69,6 +69,7 @@ _eventfilter = None
 _uiready = False
 _thread_lock = threading.Lock()
 _thread_lock_enabled = False
+_heartbeat_enabled = False
 
 def enable_threadlock():
     global _thread_lock_enabled
@@ -77,6 +78,14 @@ def enable_threadlock():
 def disable_threadlock():
     global _thread_lock_enabled
     _thread_lock_enabled = False
+
+def enable_heartbeat():
+    global _heartbeat_enabled
+    _heartbeat_enabled = True
+
+def disable_heartbeat():
+    global _heartbeat_enabled
+    _heartbeat_enabled = False
 
 def execute_handler(name, handler, event, d):
     event.data = d
