@@ -273,11 +273,11 @@ class SignatureGeneratorBasic(SignatureGenerator):
         super().setup_datacache_from_datastore(mcfn, d)
 
         mc = bb.runqueue.mc_from_tid(mcfn)
-        setattr(self.datacaches[mc], "siggen_varvals", {})
+        for attr in ["siggen_varvals", "siggen_taskdeps", "siggen_gendeps"]:
+            if not hasattr(self.datacaches[mc], attr):
+                setattr(self.datacaches[mc], attr, {})
         self.datacaches[mc].siggen_varvals[mcfn] = d.getVar("__siggen_varvals")
-        setattr(self.datacaches[mc], "siggen_taskdeps", {})
         self.datacaches[mc].siggen_taskdeps[mcfn] = d.getVar("__siggen_taskdeps")
-        setattr(self.datacaches[mc], "siggen_gendeps", {})
         self.datacaches[mc].siggen_gendeps[mcfn] = d.getVar("__siggen_gendeps")
 
     def rundep_check(self, fn, recipename, task, dep, depname, dataCaches):
