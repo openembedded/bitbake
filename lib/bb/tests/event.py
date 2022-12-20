@@ -157,7 +157,7 @@ class EventHandlingTest(unittest.TestCase):
                                  self._test_process.event_handler,
                                  event,
                                  None)
-        self._test_process.event_handler.assert_called_once_with(event)
+        self._test_process.event_handler.assert_called_once_with(event, None)
 
     def test_fire_class_handlers(self):
         """ Test fire_class_handlers method """
@@ -175,10 +175,10 @@ class EventHandlingTest(unittest.TestCase):
         bb.event.fire_class_handlers(event1, None)
         bb.event.fire_class_handlers(event2, None)
         bb.event.fire_class_handlers(event2, None)
-        expected_event_handler1 = [call(event1)]
-        expected_event_handler2 = [call(event1),
-                                   call(event2),
-                                   call(event2)]
+        expected_event_handler1 = [call(event1, None)]
+        expected_event_handler2 = [call(event1, None),
+                                   call(event2, None),
+                                   call(event2, None)]
         self.assertEqual(self._test_process.event_handler1.call_args_list,
                          expected_event_handler1)
         self.assertEqual(self._test_process.event_handler2.call_args_list,
@@ -205,7 +205,7 @@ class EventHandlingTest(unittest.TestCase):
         bb.event.fire_class_handlers(event2, None)
         bb.event.fire_class_handlers(event2, None)
         expected_event_handler1 = []
-        expected_event_handler2 = [call(event1)]
+        expected_event_handler2 = [call(event1, None)]
         self.assertEqual(self._test_process.event_handler1.call_args_list,
                          expected_event_handler1)
         self.assertEqual(self._test_process.event_handler2.call_args_list,
@@ -223,7 +223,7 @@ class EventHandlingTest(unittest.TestCase):
         self.assertEqual(result, bb.event.Registered)
         bb.event.fire_class_handlers(event1, None)
         bb.event.fire_class_handlers(event2, None)
-        expected = [call(event1), call(event2)]
+        expected = [call(event1, None), call(event2, None)]
         self.assertEqual(self._test_process.event_handler1.call_args_list,
                          expected)
 
@@ -237,7 +237,7 @@ class EventHandlingTest(unittest.TestCase):
         self.assertEqual(result, bb.event.Registered)
         bb.event.fire_class_handlers(event1, None)
         bb.event.fire_class_handlers(event2, None)
-        expected = [call(event1), call(event2), call(event1)]
+        expected = [call(event1, None), call(event2, None), call(event1, None)]
         self.assertEqual(self._test_process.event_handler1.call_args_list,
                          expected)
 
@@ -251,7 +251,7 @@ class EventHandlingTest(unittest.TestCase):
         self.assertEqual(result, bb.event.Registered)
         bb.event.fire_class_handlers(event1, None)
         bb.event.fire_class_handlers(event2, None)
-        expected = [call(event1), call(event2), call(event1), call(event2)]
+        expected = [call(event1,None), call(event2, None), call(event1, None), call(event2, None)]
         self.assertEqual(self._test_process.event_handler1.call_args_list,
                          expected)
 
@@ -359,9 +359,10 @@ class EventHandlingTest(unittest.TestCase):
 
         event1 = bb.event.ConfigParsed()
         bb.event.fire(event1, None)
-        expected = [call(event1)]
+        expected = [call(event1, None)]
         self.assertEqual(self._test_process.event_handler1.call_args_list,
                          expected)
+        expected = [call(event1)]
         self.assertEqual(self._test_ui1.event.send.call_args_list,
                          expected)
 

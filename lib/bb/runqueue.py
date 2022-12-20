@@ -1511,7 +1511,7 @@ class RunQueue:
 
             if not self.dm_event_handler_registered:
                  res = bb.event.register(self.dm_event_handler_name,
-                                         lambda x: self.dm.check(self) if self.state in [runQueueRunning, runQueueCleanUp] else False,
+                                         lambda x, y: self.dm.check(self) if self.state in [runQueueRunning, runQueueCleanUp] else False,
                                          ('bb.event.HeartbeatEvent',), data=self.cfgData)
                  self.dm_event_handler_registered = True
 
