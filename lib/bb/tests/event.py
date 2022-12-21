@@ -451,30 +451,15 @@ class EventHandlingTest(unittest.TestCase):
             and disable threadlocks tests """
         bb.event.fire(bb.event.OperationStarted(), None)
 
-    def test_enable_threadlock(self):
+    def test_event_threadlock(self):
         """ Test enable_threadlock method """
         self._set_threadlock_test_mockups()
-        bb.event.enable_threadlock()
         self._set_and_run_threadlock_test_workers()
         # Calls to UI handlers should be in order as all the registered
         # handlers for the event coming from the first worker should be
         # called before processing the event from the second worker.
         self.assertEqual(self._threadlock_test_calls,
                          ["w1_ui1", "w1_ui2", "w2_ui1", "w2_ui2"])
-
-
-    def test_disable_threadlock(self):
-        """ Test disable_threadlock method """
-        self._set_threadlock_test_mockups()
-        bb.event.disable_threadlock()
-        self._set_and_run_threadlock_test_workers()
-        # Calls to UI handlers should be intertwined together. Thanks to the
-        # delay in the registered handlers for the event coming from the first
-        # worker, the event coming from the second worker starts being
-        # processed before finishing handling the first worker event.
-        self.assertEqual(self._threadlock_test_calls,
-                         ["w1_ui1", "w2_ui1", "w1_ui2", "w2_ui2"])
-
 
 class EventClassesTest(unittest.TestCase):
     """ Event classes test class """
