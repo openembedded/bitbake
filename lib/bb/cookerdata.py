@@ -263,6 +263,7 @@ class CookerDataBuilder(object):
         self.mcdata = {}
 
     def parseBaseConfiguration(self, worker=False):
+        mcdata = {}
         data_hash = hashlib.sha256()
         try:
             self.data = self.parseConfigurationFiles(self.prefiles, self.postfiles)
@@ -288,18 +289,18 @@ class CookerDataBuilder(object):
 
             bb.parse.init_parser(self.data)
             data_hash.update(self.data.get_hash().encode('utf-8'))
-            self.mcdata[''] = self.data
+            mcdata[''] = self.data
 
             multiconfig = (self.data.getVar("BBMULTICONFIG") or "").split()
             for config in multiconfig:
                 if config[0].isdigit():
                     bb.fatal("Multiconfig name '%s' is invalid as multiconfigs cannot start with a digit" % config)
-                mcdata = self.parseConfigurationFiles(self.prefiles, self.postfiles, config)
-                bb.event.fire(bb.event.ConfigParsed(), mcdata)
-                self.mcdata[config] = mcdata
-                data_hash.update(mcdata.get_hash().encode('utf-8'))
+                parsed_mcdata = self.parseConfigurationFiles(self.prefiles, self.postfiles, config)
+                bb.event.fire(bb.event.ConfigParsed(), parsed_mcdata)
+                mcdata[config] = parsed_mcdata
+                data_hash.update(parsed_mcdata.get_hash().encode('utf-8'))
             if multiconfig:
-                bb.event.fire(bb.event.MultiConfigParsed(self.mcdata), self.data)
+                bb.event.fire(bb.event.MultiConfigParsed(mcdata), self.data)
 
             self.data_hash = data_hash.hexdigest()
         except (SyntaxError, bb.BBHandledException):
@@ -332,17 +333,23 @@ class CookerDataBuilder(object):
         if issues:
             raise bb.BBHandledException()
 
+        for mc in mcdata:
+            mcdata[mc].renameVar("__depends", "__base_depends")
+            mcdata[mc].setVar("__bbclasstype", "recipe")
+
         # Create a copy so we can reset at a later date when UIs disconnect
-        self.origdata = self.data
-        self.data = bb.data.createCopy(self.origdata)
-        self.mcdata[''] = self.data
+        self.mcorigdata = mcdata
+        for mc in mcdata:
+            self.mcdata[mc] = bb.data.createCopy(mcdata[mc])
+        self.data = self.mcdata['']
 
     def reset(self):
         # We may not have run parseBaseConfiguration() yet
-        if not hasattr(self, 'origdata'):
+        if not hasattr(self, 'mcorigdata'):
             return
-        self.data = bb.data.createCopy(self.origdata)
-        self.mcdata[''] = self.data
+        for mc in self.mcorigdata:
+            self.mcdata[mc] = bb.data.createCopy(self.mcorigdata[mc])
+        self.data = self.mcdata['']
 
     def _findLayerConf(self, data):
         return findConfigFile("bblayers.conf", data)
