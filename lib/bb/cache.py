@@ -285,7 +285,6 @@ class SiggenRecipeInfo(RecipeInfoCommon):
         cls.save_map = {}
         cls.save_count = 1
         cls.restore_map = {}
-        cls.restore_count = {}
 
     @classmethod
     def _save(cls, deps):
@@ -294,11 +293,13 @@ class SiggenRecipeInfo(RecipeInfoCommon):
             return deps
         for dep in deps:
             fs = deps[dep]
-            if fs in cls.save_map:
+            if fs is None:
+                ret.append((dep, None, None))
+            elif fs in cls.save_map:
                 ret.append((dep, None, cls.save_map[fs]))
             else:
                 cls.save_map[fs] = cls.save_count
-                ret.append((dep, fs, None))
+                ret.append((dep, fs, cls.save_count))
                 cls.save_count = cls.save_count + 1
         return ret
 
@@ -309,18 +310,18 @@ class SiggenRecipeInfo(RecipeInfoCommon):
             return deps
         if pid not in cls.restore_map:
             cls.restore_map[pid] = {}
-            cls.restore_count[pid] = 1
         map = cls.restore_map[pid]
         for dep, fs, mapnum in deps:
-            if mapnum:
+            if fs is None and mapnum is None:
+                ret[dep] = None
+            elif fs is None:
                 ret[dep] = map[mapnum]
             else:
                 try:
                     fs = cls.store[fs]
                 except KeyError:
                     cls.store[fs] = fs
-                map[cls.restore_count[pid]] = fs
-                cls.restore_count[pid] = cls.restore_count[pid] + 1
+                map[mapnum] = fs
                 ret[dep] = fs
         return ret
 
