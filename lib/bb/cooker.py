@@ -1768,6 +1768,9 @@ class BBCooker:
             self.parser.final_cleanup()
 
     def finishcommand(self):
+        if hasattr(self.parser, 'shutdown'):
+            self.parser.shutdown(clean=False)
+            self.parser.final_cleanup()
         self.state = state.initial
 
     def reset(self):
