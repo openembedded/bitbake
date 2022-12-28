@@ -2226,6 +2226,7 @@ class CookerParser(object):
 
         def sync_caches():
             for c in self.bb_caches.values():
+                bb.cache.SiggenRecipeInfo.reset()
                 c.sync()
 
         self.syncthread = threading.Thread(target=sync_caches, name="SyncThread")

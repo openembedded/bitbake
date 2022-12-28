@@ -311,7 +311,7 @@ class SiggenRecipeInfo(RecipeInfoCommon):
             cls.restore_map[pid] = {}
             cls.restore_count[pid] = 1
         map = cls.restore_map[pid]
-        for fs, dep, mapnum in deps:
+        for dep, fs, mapnum in deps:
             if mapnum:
                 ret[dep] = map[mapnum]
             else:
@@ -759,6 +759,7 @@ class MulticonfigCache(Mapping):
         loaded = 0
 
         for c in self.__caches.values():
+            SiggenRecipeInfo.reset()
             loaded += c.prepare_cache(progress)
             previous_progress = current_progress
 
