@@ -1489,23 +1489,21 @@ class BBCooker:
                 failures += len(exc.args)
                 retval = False
             except SystemExit as exc:
-                self.command.finishAsyncCommand(str(exc))
                 if quietlog:
                     bb.runqueue.logger.setLevel(rqloglevel)
-                return False
+                return bb.server.process.idleFinish(str(exc))
 
             if not retval:
                 if fireevents:
                     bb.event.fire(bb.event.BuildCompleted(len(rq.rqdata.runtaskentries), buildname, item, failures, interrupted), self.databuilder.mcdata[mc])
                     bb.event.disable_heartbeat()
-                self.command.finishAsyncCommand(msg)
                 # We trashed self.recipecaches above
                 self.parsecache_valid = False
                 self.configuration.limited_deps = False
                 bb.parse.siggen.reset(self.data)
                 if quietlog:
                     bb.runqueue.logger.setLevel(rqloglevel)
-                return False
+                return bb.server.process.idleFinish(msg)
             if retval is True:
                 return True
             return retval
@@ -1535,8 +1533,7 @@ class BBCooker:
                 failures += len(exc.args)
                 retval = False
             except SystemExit as exc:
-                self.command.finishAsyncCommand(str(exc))
-                return False
+                return bb.server.process.idleFinish(str(exc))
 
             if not retval:
                 try:
@@ -1544,8 +1541,8 @@ class BBCooker:
                         bb.event.fire(bb.event.BuildCompleted(len(rq.rqdata.runtaskentries), buildname, targets, failures, interrupted), self.databuilder.mcdata[mc])
                 finally:
                     bb.event.disable_heartbeat()
-                    self.command.finishAsyncCommand(msg)
-                return False
+                return bb.server.process.idleFinish(msg)
+
             if retval is True:
                 return True
             return retval

@@ -128,22 +128,19 @@ class Command:
             else:
                 return False
         except KeyboardInterrupt as exc:
-            self.finishAsyncCommand("Interrupted")
-            return False
+            return bb.server.process.idleFinish("Interrupted")
         except SystemExit as exc:
             arg = exc.args[0]
             if isinstance(arg, str):
-                self.finishAsyncCommand(arg)
+                return bb.server.process.idleFinish(arg)
             else:
-                self.finishAsyncCommand("Exited with %s" % arg)
-            return False
+                return bb.server.process.idleFinish("Exited with %s" % arg)
         except Exception as exc:
             import traceback
             if isinstance(exc, bb.BBHandledException):
-                self.finishAsyncCommand("")
+                return bb.server.process.idleFinish("")
             else:
-                self.finishAsyncCommand(traceback.format_exc())
-            return False
+                return bb.server.process.idleFinish(traceback.format_exc())
 
     def finishAsyncCommand(self, msg=None, code=None):
         if msg or msg == "":

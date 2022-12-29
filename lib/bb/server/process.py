@@ -71,6 +71,10 @@ def get_lockfile_process_msg(lockfile):
         return procs.decode("utf-8")
     return None
 
+class idleFinish():
+    def __init__(self, msg):
+         self.msg = msg
+
 class ProcessServer():
     profile_filename = "profile.log"
     profile_processed_filename = "profile.log.processed"
@@ -361,7 +365,12 @@ class ProcessServer():
         for function, data in list(self._idlefuns.items()):
             try:
                 retval = function(self, data, False)
-                if retval is False:
+                if isinstance(retval, idleFinish):
+                    serverlog("Removing idle function %s at idleFinish" % str(function))
+                    del self._idlefuns[function]
+                    self.cooker.command.finishAsyncCommand(retval.msg)
+                    nextsleep = None
+                elif retval is False:
                     serverlog("Removing idle function %s" % str(function))
                     del self._idlefuns[function]
                     nextsleep = None
