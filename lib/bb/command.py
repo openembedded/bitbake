@@ -152,8 +152,8 @@ class Command:
             bb.event.fire(CommandExit(code), self.cooker.data)
         else:
             bb.event.fire(CommandCompleted(), self.cooker.data)
-        self.currentAsyncCommand = None
         self.cooker.finishcommand()
+        self.currentAsyncCommand = None
 
     def reset(self):
         if self.remotedatastores:
