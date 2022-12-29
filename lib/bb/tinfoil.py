@@ -773,7 +773,7 @@ class Tinfoil:
                             if isinstance(event, bb.command.CommandCompleted):
                                 result = True
                                 break
-                            if isinstance(event, bb.command.CommandFailed):
+                            if isinstance(event, (bb.command.CommandFailed, bb.command.CommandExit)):
                                 self.logger.error(str(event))
                                 result = False
                                 break
