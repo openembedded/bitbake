@@ -2186,6 +2186,8 @@ class CookerParser(object):
         self.haveshutdown = False
         self.syncthread = None
 
+        bb.cache.SiggenRecipeInfo.reset()
+
     def start(self):
         self.results = self.load_cached()
         self.processes = []
@@ -2382,6 +2384,7 @@ class CookerParser(object):
         return True
 
     def reparse(self, filename):
+        bb.cache.SiggenRecipeInfo.reset()
         to_reparse = set()
         for mc in self.cooker.multiconfigs:
             to_reparse.add((mc, filename, self.cooker.collections[mc].get_file_appends(filename)))
