@@ -106,6 +106,7 @@ class ProcessServer():
         """Register a function to be called while the server is idle"""
         assert hasattr(function, '__call__')
         self._idlefuns[function] = data
+        serverlog("Registering idle function %s" % str(function))
 
     def run(self):
 
@@ -361,6 +362,7 @@ class ProcessServer():
             try:
                 retval = function(self, data, False)
                 if retval is False:
+                    serverlog("Removing idle function %s" % str(function))
                     del self._idlefuns[function]
                     nextsleep = None
                 elif retval is True:
@@ -378,6 +380,7 @@ class ProcessServer():
                 if not isinstance(exc, bb.BBHandledException):
                     logger.exception('Running idle function')
                 del self._idlefuns[function]
+                serverlog("Exception %s broke the idle_thread, exiting" % traceback.format_exc())
                 self.quit = True
 
         # Create new heartbeat event?
@@ -395,6 +398,7 @@ class ProcessServer():
                 except Exception as exc:
                     if not isinstance(exc, bb.BBHandledException):
                         logger.exception('Running heartbeat function')
+                    serverlog("Exception %s broke in idle_commands, exiting" % traceback.format_exc())
                     self.quit = True
         if nextsleep and bb.event._heartbeat_enabled and now + nextsleep > self.next_heartbeat:
             # Shorten timeout so that we we wake up in time for
