@@ -92,8 +92,11 @@ class ProcessServer():
         self.maxuiwait = 30
         self.xmlrpc = False
 
+        self.idle = None
+        # Need a lock for _idlefuns changes
         self._idlefuns = {}
         self._idlefuncsLock = threading.Lock()
+        self.idle_cond = threading.Condition(self._idlefuncsLock)
 
         self.bitbake_lock = lock
         self.bitbake_lock_name = lockname
@@ -151,6 +154,12 @@ class ProcessServer():
 
         return ret
 
+    def wait_for_idle(self, timeout=30):
+        # Wait for the idle loop to have cleared
+        with self.idle_cond:
+            # FIXME - the 1 is the inotify processing in cooker which always runs
+            self.idle_cond.wait_for(lambda: len(self._idlefuns) <= 1, timeout)
+
     def main(self):
         self.cooker.pre_serve()
 
@@ -174,6 +183,12 @@ class ProcessServer():
                 self.controllersock.close()
                 self.controllersock = False
             if self.haveui:
+                # Wait for the idle loop to have cleared (30s max)
+                self.wait_for_idle(30)
+                if self.cooker.command.currentAsyncCommand is not None:
+                    serverlog("Idle loop didn't finish queued commands after 30s, exiting.")
+                    self.quit = True
+
                 fds.remove(self.command_channel)
                 bb.event.unregister_UIHhandler(self.event_handle, True)
                 self.command_channel_reply.writer.close()
@@ -185,7 +200,7 @@ class ProcessServer():
                 self.cooker.clientComplete()
                 self.haveui = False
             ready = select.select(fds,[],[],0)[0]
-            if newconnections:
+            if newconnections and not self.quit:
                 serverlog("Starting new client")
                 conn = newconnections.pop(-1)
                 fds.append(conn)
@@ -257,7 +272,7 @@ class ProcessServer():
                     continue
                 try:
                     serverlog("Running command %s" % command)
-                    self.command_channel_reply.send(self.cooker.command.runCommand(command))
+                    self.command_channel_reply.send(self.cooker.command.runCommand(command, self))
                     serverlog("Command Completed (socket: %s)" % os.path.exists(self.sockname))
                 except Exception as e:
                    stack = traceback.format_exc()
@@ -285,6 +300,9 @@ class ProcessServer():
 
             ready = self.idle_commands(.1, fds)
 
+        if self.idle:
+            self.idle.join()
+
         serverlog("Exiting (socket: %s)" % os.path.exists(self.sockname))
         # Remove the socket file so we don't get any more connections to avoid races
         # The build directory could have been renamed so if the file isn't the one we created
@@ -300,7 +318,7 @@ class ProcessServer():
         self.sock.close()
 
         try:
-            self.cooker.shutdown(True)
+            self.cooker.shutdown(True, idle=False)
             self.cooker.notifier.stop()
             self.cooker.confignotifier.stop()
         except:
@@ -359,47 +377,60 @@ class ProcessServer():
                     msg.append(":\n%s" % procs)
                 serverlog("".join(msg))
 
-    def idle_commands(self, delay, fds=None):
+    def idle_thread(self):
         def remove_idle_func(function):
             with self._idlefuncsLock:
                 del self._idlefuns[function]
+                self.idle_cond.notify_all()
 
+        while not self.quit:
+            nextsleep = 0.1
+            fds = []
+
+            with self._idlefuncsLock:
+                items = list(self._idlefuns.items())
+
+            for function, data in items:
+                try:
+                    retval = function(self, data, False)
+                    if isinstance(retval, idleFinish):
+                        serverlog("Removing idle function %s at idleFinish" % str(function))
+                        remove_idle_func(function)
+                        self.cooker.command.finishAsyncCommand(retval.msg)
+                        nextsleep = None
+                    elif retval is False:
+                        serverlog("Removing idle function %s" % str(function))
+                        remove_idle_func(function)
+                        nextsleep = None
+                    elif retval is True:
+                        nextsleep = None
+                    elif isinstance(retval, float) and nextsleep:
+                        if (retval < nextsleep):
+                            nextsleep = retval
+                    elif nextsleep is None:
+                        continue
+                    else:
+                        fds = fds + retval
+                except SystemExit:
+                    raise
+                except Exception as exc:
+                    if not isinstance(exc, bb.BBHandledException):
+                        logger.exception('Running idle function')
+                    remove_idle_func(function)
+                    serverlog("Exception %s broke the idle_thread, exiting" % traceback.format_exc())
+                    self.quit = True
+
+            if nextsleep is not None:
+                select.select(fds,[],[],nextsleep)[0]
+
+    def idle_commands(self, delay, fds=None):
         nextsleep = delay
         if not fds:
             fds = []
 
-        with self._idlefuncsLock:
-            items = list(self._idlefuns.items())
-
-        for function, data in items:
-            try:
-                retval = function(self, data, False)
-                if isinstance(retval, idleFinish):
-                    serverlog("Removing idle function %s at idleFinish" % str(function))
-                    remove_idle_func(function)
-                    self.cooker.command.finishAsyncCommand(retval.msg)
-                    nextsleep = None
-                elif retval is False:
-                    serverlog("Removing idle function %s" % str(function))
-                    remove_idle_func(function)
-                    nextsleep = None
-                elif retval is True:
-                    nextsleep = None
-                elif isinstance(retval, float) and nextsleep:
-                    if (retval < nextsleep):
-                        nextsleep = retval
-                elif nextsleep is None:
-                    continue
-                else:
-                    fds = fds + retval
-            except SystemExit:
-                raise
-            except Exception as exc:
-                if not isinstance(exc, bb.BBHandledException):
-                    logger.exception('Running idle function')
-                remove_idle_func(function)
-                serverlog("Exception %s broke the idle_thread, exiting" % traceback.format_exc())
-                self.quit = True
+        if not self.idle:
+            self.idle = threading.Thread(target=self.idle_thread)
+            self.idle.start()
 
         # Create new heartbeat event?
         now = time.time()
@@ -592,7 +623,7 @@ def execServer(lockfd, readypipeinfd, lockname, sockname, server_timeout, xmlrpc
         writer = ConnectionWriter(readypipeinfd)
         try:
             featureset = []
-            cooker = bb.cooker.BBCooker(featureset, server.register_idle_function)
+            cooker = bb.cooker.BBCooker(featureset, server.register_idle_function, server.wait_for_idle)
             cooker.configuration.profile = profile
         except bb.BBHandledException:
             return None
