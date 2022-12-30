@@ -630,15 +630,13 @@ def main(server, eventHandler, params, tf = TerminalFilter):
     termfilter = tf(main, helper, console_handlers, params.options.quiet)
     atexit.register(termfilter.finish)
 
-    while True:
+    while main.shutdown < 2:
         try:
             if (lastprint + printinterval) <= time.time():
                 termfilter.keepAlive(printinterval)
                 printinterval += printintervaldelta
             event = eventHandler.waitEvent(0)
             if event is None:
-                if main.shutdown > 1:
-                    break
                 if not parseprogress:
                     termfilter.updateFooter()
                 event = eventHandler.waitEvent(0.25)
