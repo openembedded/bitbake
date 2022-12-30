@@ -93,6 +93,7 @@ class ProcessServer():
         self.xmlrpc = False
 
         self._idlefuns = {}
+        self._idlefuncsLock = threading.Lock()
 
         self.bitbake_lock = lock
         self.bitbake_lock_name = lockname
@@ -109,7 +110,8 @@ class ProcessServer():
     def register_idle_function(self, function, data):
         """Register a function to be called while the server is idle"""
         assert hasattr(function, '__call__')
-        self._idlefuns[function] = data
+        with self._idlefuncsLock:
+            self._idlefuns[function] = data
         serverlog("Registering idle function %s" % str(function))
 
     def run(self):
@@ -358,21 +360,28 @@ class ProcessServer():
                 serverlog("".join(msg))
 
     def idle_commands(self, delay, fds=None):
+        def remove_idle_func(function):
+            with self._idlefuncsLock:
+                del self._idlefuns[function]
+
         nextsleep = delay
         if not fds:
             fds = []
 
-        for function, data in list(self._idlefuns.items()):
+        with self._idlefuncsLock:
+            items = list(self._idlefuns.items())
+
+        for function, data in items:
             try:
                 retval = function(self, data, False)
                 if isinstance(retval, idleFinish):
                     serverlog("Removing idle function %s at idleFinish" % str(function))
-                    del self._idlefuns[function]
+                    remove_idle_func(function)
                     self.cooker.command.finishAsyncCommand(retval.msg)
                     nextsleep = None
                 elif retval is False:
                     serverlog("Removing idle function %s" % str(function))
-                    del self._idlefuns[function]
+                    remove_idle_func(function)
                     nextsleep = None
                 elif retval is True:
                     nextsleep = None
@@ -388,7 +397,7 @@ class ProcessServer():
             except Exception as exc:
                 if not isinstance(exc, bb.BBHandledException):
                     logger.exception('Running idle function')
-                del self._idlefuns[function]
+                remove_idle_func(function)
                 serverlog("Exception %s broke the idle_thread, exiting" % traceback.format_exc())
                 self.quit = True
 
