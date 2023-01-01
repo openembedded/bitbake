@@ -425,7 +425,7 @@ class CookerDataBuilder(object):
             data.delVar('LAYERDIR_RE')
             data.delVar('LAYERDIR')
             for c in compat_entries:
-                data.setVar("LAYERSERIES_COMPAT_%s" % c, compat_entries[c])
+                data.setVar("LAYERSERIES_COMPAT_%s" % c, sorted(compat_entries[c]))
 
             bbfiles_dynamic = (data.getVar('BBFILES_DYNAMIC') or "").split()
             collections = (data.getVar('BBFILE_COLLECTIONS') or "").split()
@@ -461,7 +461,7 @@ class CookerDataBuilder(object):
                 elif not compat and not data.getVar("BB_WORKERCONTEXT"):
                     bb.warn("Layer %s should set LAYERSERIES_COMPAT_%s in its conf/layer.conf file to list the core layer names it is compatible with." % (c, c))
 
-            data.setVar("LAYERSERIES_CORENAMES", " ".join(layerseries))
+            data.setVar("LAYERSERIES_CORENAMES", " ".join(sorted(layerseries)))
 
         if not data.getVar("BBPATH"):
             msg = "The BBPATH variable is not set"
