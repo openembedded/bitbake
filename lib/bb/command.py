@@ -117,7 +117,7 @@ class Command:
                 # updateCache will trigger a shutdown of the parser
                 # and then raise BBHandledException triggering an exit
                 self.cooker.updateCache()
-                return False
+                return bb.server.process.idleFinish("Cooker in error state")
             if self.currentAsyncCommand is not None:
                 (command, options) = self.currentAsyncCommand
                 commandmethod = getattr(CommandsAsync, command)
@@ -129,7 +129,7 @@ class Command:
                     commandmethod(self.cmds_async, self, options)
                     return False
             else:
-                return False
+                return bb.server.process.idleFinish("Nothing to do, no async command?")
         except KeyboardInterrupt as exc:
             return bb.server.process.idleFinish("Interrupted")
         except SystemExit as exc:
