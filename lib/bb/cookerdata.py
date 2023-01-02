@@ -425,7 +425,7 @@ class CookerDataBuilder(object):
             data.delVar('LAYERDIR_RE')
             data.delVar('LAYERDIR')
             for c in compat_entries:
-                data.setVar("LAYERSERIES_COMPAT_%s" % c, sorted(compat_entries[c]))
+                data.setVar("LAYERSERIES_COMPAT_%s" % c, " ".join(sorted(compat_entries[c])))
 
             bbfiles_dynamic = (data.getVar('BBFILES_DYNAMIC') or "").split()
             collections = (data.getVar('BBFILE_COLLECTIONS') or "").split()
