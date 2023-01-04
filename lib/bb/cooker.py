@@ -2107,25 +2107,29 @@ class Parser(multiprocessing.Process):
         multiprocessing.util.Finalize(None, bb.fetch.fetcher_parse_save, exitpriority=1)
 
         pending = []
+        havejobs = True
         try:
-            while True:
+            while havejobs or pending:
                 if self.quit.is_set():
                     break
 
-                if pending:
-                    result = pending.pop()
-                else:
-                    try:
-                        job = self.jobs.pop()
-                    except IndexError:
-                        break
+                job = None
+                try:
+                    job = self.jobs.pop()
+                except IndexError:
+                    havejobs = False
+                if job:
                     result = self.parse(*job)
                     # Clear the siggen cache after parsing to control memory usage, its huge
                     bb.parse.siggen.postparsing_clean_cache()
-                try:
-                    self.results.put(result, timeout=0.25)
-                except queue.Full:
                     pending.append(result)
+
+                if pending:
+                    try:
+                        result = pending.pop()
+                        self.results.put(result, timeout=0.05)
+                    except queue.Full:
+                        pending.append(result)
         finally:
             self.results.close()
             self.results.join_thread()
