@@ -251,14 +251,14 @@ class BBCooker:
         self.notifier = pyinotify.Notifier(self.watcher, self.notifications)
 
     def process_inotify_updates(self):
-        with self.inotify_threadlock:
+        with bb.utils.lock_timeout(self.inotify_threadlock):
             for n in [self.confignotifier, self.notifier]:
                 if n and n.check_events(timeout=0):
                     # read notified events and enqueue them
                     n.read_events()
 
     def process_inotify_updates_apply(self):
-        with self.inotify_threadlock:
+        with bb.utils.lock_timeout(self.inotify_threadlock):
             for n in [self.confignotifier, self.notifier]:
                 if n and n.check_events(timeout=0):
                     n.read_events()

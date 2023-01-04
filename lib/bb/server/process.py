@@ -113,7 +113,7 @@ class ProcessServer():
     def register_idle_function(self, function, data):
         """Register a function to be called while the server is idle"""
         assert hasattr(function, '__call__')
-        with self._idlefuncsLock:
+        with bb.utils.lock_timeout(self._idlefuncsLock):
             self._idlefuns[function] = data
         serverlog("Registering idle function %s" % str(function))
 
@@ -379,7 +379,7 @@ class ProcessServer():
 
     def idle_thread(self):
         def remove_idle_func(function):
-            with self._idlefuncsLock:
+            with bb.utils.lock_timeout(self._idlefuncsLock):
                 del self._idlefuns[function]
                 self.idle_cond.notify_all()
 
@@ -387,7 +387,7 @@ class ProcessServer():
             nextsleep = 0.1
             fds = []
 
-            with self._idlefuncsLock:
+            with bb.utils.lock_timeout(self._idlefuncsLock):
                 items = list(self._idlefuns.items())
 
             for function, data in items:
@@ -743,7 +743,7 @@ class BBUIEventQueue:
         self.t.start()
 
     def getEvent(self):
-        with self.eventQueueLock:
+        with bb.utils.lock_timeout(self.eventQueueLock):
             if len(self.eventQueue) == 0:
                 return None
 
@@ -758,7 +758,7 @@ class BBUIEventQueue:
         return self.getEvent()
 
     def queue_event(self, event):
-        with self.eventQueueLock:
+        with bb.utils.lock_timeout(self.eventQueueLock):
             self.eventQueue.append(event)
             self.eventQueueNotify.set()
 
@@ -794,7 +794,7 @@ class ConnectionReader(object):
         return self.reader.poll(timeout)
 
     def get(self):
-        with self.rlock:
+        with bb.utils.lock_timeout(self.rlock):
             res = self.reader.recv_bytes()
         return multiprocessing.reduction.ForkingPickler.loads(res)
 
@@ -815,7 +815,7 @@ class ConnectionWriter(object):
 
     def _send(self, obj):
         gc.disable()
-        with self.wlock:
+        with bb.utils.lock_timeout(self.wlock):
             self.writer.send_bytes(obj)
         gc.enable()
 
@@ -828,7 +828,7 @@ class ConnectionWriter(object):
         # pthread_sigmask block/unblock would be nice but doesn't work, https://bugs.python.org/issue47139
         process = multiprocessing.current_process()
         if process and hasattr(process, "queue_signals"):
-            with process.signal_threadlock:
+            with bb.utils.lock_timeout(process.signal_threadlock):
                 process.queue_signals = True
                 self._send(obj)
                 process.queue_signals = False

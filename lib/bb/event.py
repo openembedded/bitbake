@@ -184,7 +184,7 @@ def fire_ui_handlers(event, d):
         ui_queue.append(event)
         return
 
-    with _thread_lock:
+    with bb.utils.lock_timeout(_thread_lock):
         errors = []
         for h in _ui_handlers:
             #print "Sending event %s" % event
@@ -315,7 +315,7 @@ def set_eventfilter(func):
     _eventfilter = func
 
 def register_UIHhandler(handler, mainui=False):
-    with _thread_lock:
+    with bb.utils.lock_timeout(_thread_lock):
         bb.event._ui_handler_seq = bb.event._ui_handler_seq + 1
         _ui_handlers[_ui_handler_seq] = handler
         level, debug_domains = bb.msg.constructLogOptions()
@@ -329,7 +329,7 @@ def unregister_UIHhandler(handlerNum, mainui=False):
     if mainui:
         global _uiready
         _uiready = False
-    with _thread_lock:
+    with bb.utils.lock_timeout(_thread_lock):
         if handlerNum in _ui_handlers:
             del _ui_handlers[handlerNum]
     return

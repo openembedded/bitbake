@@ -121,11 +121,10 @@ def worker_child_fire(event, d):
 
     data = b"<event>" + pickle.dumps(event) + b"</event>"
     try:
-        worker_pipe_lock.acquire()
-        while(len(data)):
-            written = worker_pipe.write(data)
-            data = data[written:]
-        worker_pipe_lock.release()
+        with bb.utils.lock_timeout(worker_pipe_lock):
+            while(len(data)):
+                written = worker_pipe.write(data)
+                data = data[written:]
     except IOError:
         sigterm_handler(None, None)
         raise

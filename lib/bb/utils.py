@@ -1841,3 +1841,16 @@ def mkstemp(suffix=None, prefix=None, dir=None, text=False):
     else:
         prefix = tempfile.gettempprefix() + entropy
     return tempfile.mkstemp(suffix=suffix, prefix=prefix, dir=dir, text=text)
+
+# If we don't have a timeout of some kind and a process/thread exits badly (for example
+# OOM killed) and held a lock, we'd just hang in the lock futex forever. It is better
+# we exit at some point than hang. 5 minutes with no progress means we're probably deadlocked.
+@contextmanager
+def lock_timeout(lock):
+    held = lock.acquire(timeout=5*60)
+    try:
+        if not held:
+            os._exit(1)
+        yield held
+    finally:
+        lock.release()
