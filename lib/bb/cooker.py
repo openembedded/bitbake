@@ -190,12 +190,6 @@ class BBCooker:
 
         self.inotify_modified_files = []
 
-        def _process_inotify_updates(server, cooker, halt):
-            cooker.process_inotify_updates()
-            return 1.0
-
-        self.idleCallBackRegister(_process_inotify_updates, self)
-
         # TOSTOP must not be set or our children will hang when they output
         try:
             fd = sys.stdout.fileno()

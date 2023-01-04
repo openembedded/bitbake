@@ -157,8 +157,7 @@ class ProcessServer():
     def wait_for_idle(self, timeout=30):
         # Wait for the idle loop to have cleared
         with self.idle_cond:
-            # FIXME - the 1 is the inotify processing in cooker which always runs
-            self.idle_cond.wait_for(lambda: len(self._idlefuns) <= 1, timeout)
+            self.idle_cond.wait_for(lambda: len(self._idlefuns) == 0, timeout)
 
     def main(self):
         self.cooker.pre_serve()
@@ -386,6 +385,8 @@ class ProcessServer():
         while not self.quit:
             nextsleep = 0.1
             fds = []
+
+            self.cooker.process_inotify_updates()
 
             with bb.utils.lock_timeout(self._idlefuncsLock):
                 items = list(self._idlefuns.items())
