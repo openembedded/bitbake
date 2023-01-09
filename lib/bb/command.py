@@ -51,13 +51,14 @@ class Command:
     """
     A queue of asynchronous commands for bitbake
     """
-    def __init__(self, cooker):
+    def __init__(self, cooker, process_server):
         self.cooker = cooker
         self.cmds_sync = CommandsSync()
         self.cmds_async = CommandsAsync()
         self.remotedatastores = None
 
-        # FIXME Add lock for this
+        self.process_server = process_server
+        # Access with locking using process_server.{get/set/clear}_async_cmd()
         self.currentAsyncCommand = None
 
     def runCommand(self, commandline, process_server, ro_only=False):
@@ -99,18 +100,14 @@ class Command:
                 return None, traceback.format_exc()
             else:
                 return result, None
-        if self.currentAsyncCommand is not None:
-            # Wait for the idle loop to have cleared (30s max)
-            process_server.wait_for_idle(timeout=30)
-            if self.currentAsyncCommand is not None:
-                return None, "Busy (%s in progress)" % self.currentAsyncCommand[0]
         if command not in CommandsAsync.__dict__:
             return None, "No such command"
-        self.currentAsyncCommand = (command, commandline)
-        self.cooker.idleCallBackRegister(self.runAsyncCommand, None)
+        if not process_server.set_async_cmd((command, commandline)):
+            return None, "Busy (%s in progress)" % self.process_server.get_async_cmd()[0]
+        self.cooker.idleCallBackRegister(self.runAsyncCommand, process_server)
         return True, None
 
-    def runAsyncCommand(self, _, _2, halt):
+    def runAsyncCommand(self, _, process_server, halt):
         try:
             self.cooker.process_inotify_updates_apply()
             if self.cooker.state in (bb.cooker.state.error, bb.cooker.state.shutdown, bb.cooker.state.forceshutdown):
@@ -118,8 +115,9 @@ class Command:
                 # and then raise BBHandledException triggering an exit
                 self.cooker.updateCache()
                 return bb.server.process.idleFinish("Cooker in error state")
-            if self.currentAsyncCommand is not None:
-                (command, options) = self.currentAsyncCommand
+            cmd = process_server.get_async_cmd()
+            if cmd is not None:
+                (command, options) = cmd
                 commandmethod = getattr(CommandsAsync, command)
                 needcache = getattr( commandmethod, "needcache" )
                 if needcache and self.cooker.state != bb.cooker.state.running:
@@ -153,7 +151,7 @@ class Command:
         else:
             bb.event.fire(CommandCompleted(), self.cooker.data)
         self.cooker.finishcommand()
-        self.currentAsyncCommand = None
+        self.process_server.clear_async_cmd()
 
     def reset(self):
         if self.remotedatastores:
@@ -746,7 +744,7 @@ class CommandsAsync:
         """
         event = params[0]
         bb.event.fire(eval(event), command.cooker.data)
-        command.currentAsyncCommand = None
+        process_server.clear_async_cmd()
     triggerEvent.needcache = False
 
     def resetCooker(self, command, params):

@@ -154,10 +154,30 @@ class ProcessServer():
 
         return ret
 
+    def _idle_check(self):
+        return len(self._idlefuns) == 0 and self.cooker.command.currentAsyncCommand is None
+
     def wait_for_idle(self, timeout=30):
         # Wait for the idle loop to have cleared
-        with self.idle_cond:
-            self.idle_cond.wait_for(lambda: len(self._idlefuns) == 0, timeout)
+        with bb.utils.lock_timeout(self._idlefuncsLock):
+            return self.idle_cond.wait_for(self._idle_check, timeout) is not False
+
+    def set_async_cmd(self, cmd):
+        with bb.utils.lock_timeout(self._idlefuncsLock):
+            ret = self.idle_cond.wait_for(self._idle_check, 30)
+            if ret is False:
+                return False
+            self.cooker.command.currentAsyncCommand = cmd
+            return True
+
+    def clear_async_cmd(self):
+        with bb.utils.lock_timeout(self._idlefuncsLock):
+            self.cooker.command.currentAsyncCommand = None
+            self.idle_cond.notify_all()
+
+    def get_async_cmd(self):
+        with bb.utils.lock_timeout(self._idlefuncsLock):
+            return self.cooker.command.currentAsyncCommand
 
     def main(self):
         self.cooker.pre_serve()
@@ -183,11 +203,9 @@ class ProcessServer():
                 self.controllersock = False
             if self.haveui:
                 # Wait for the idle loop to have cleared (30s max)
-                self.wait_for_idle(30)
-                if self.cooker.command.currentAsyncCommand is not None:
+                if not self.wait_for_idle(30):
                     serverlog("Idle loop didn't finish queued commands after 30s, exiting.")
                     self.quit = True
-
                 fds.remove(self.command_channel)
                 bb.event.unregister_UIHhandler(self.event_handle, True)
                 self.command_channel_reply.writer.close()
@@ -624,7 +642,7 @@ def execServer(lockfd, readypipeinfd, lockname, sockname, server_timeout, xmlrpc
         writer = ConnectionWriter(readypipeinfd)
         try:
             featureset = []
-            cooker = bb.cooker.BBCooker(featureset, server.register_idle_function, server.wait_for_idle)
+            cooker = bb.cooker.BBCooker(featureset, server)
             cooker.configuration.profile = profile
         except bb.BBHandledException:
             return None

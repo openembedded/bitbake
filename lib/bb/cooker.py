@@ -149,7 +149,7 @@ class BBCooker:
     Manages one bitbake build run
     """
 
-    def __init__(self, featureSet=None, idleCallBackRegister=None, waitIdle=None):
+    def __init__(self, featureSet=None, server=None):
         self.recipecaches = None
         self.eventlog = None
         self.skiplist = {}
@@ -163,8 +163,12 @@ class BBCooker:
 
         self.configuration = bb.cookerdata.CookerConfiguration()
 
-        self.idleCallBackRegister = idleCallBackRegister
-        self.waitIdle = waitIdle
+        self.process_server = server
+        self.idleCallBackRegister = None
+        self.waitIdle = None
+        if server:
+            self.idleCallBackRegister = server.register_idle_function
+            self.waitIdle = server.wait_for_idle
 
         bb.debug(1, "BBCooker starting %s" % time.time())
         sys.stdout.flush()
@@ -203,7 +207,7 @@ class BBCooker:
         except UnsupportedOperation:
             pass
 
-        self.command = bb.command.Command(self)
+        self.command = bb.command.Command(self, self.process_server)
         self.state = state.initial
 
         self.parser = None
