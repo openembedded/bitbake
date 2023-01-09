@@ -107,10 +107,10 @@ class Command:
         if command not in CommandsAsync.__dict__:
             return None, "No such command"
         self.currentAsyncCommand = (command, commandline)
-        self.cooker.idleCallBackRegister(self.cooker.runCommands, self.cooker)
+        self.cooker.idleCallBackRegister(self.runAsyncCommand, None)
         return True, None
 
-    def runAsyncCommand(self):
+    def runAsyncCommand(self, _, _2, halt):
         try:
             self.cooker.process_inotify_updates_apply()
             if self.cooker.state in (bb.cooker.state.error, bb.cooker.state.shutdown, bb.cooker.state.forceshutdown):

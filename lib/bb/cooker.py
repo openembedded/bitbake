@@ -535,15 +535,6 @@ class BBCooker:
             logger.debug("Base environment change, triggering reparse")
             self.reset()
 
-    def runCommands(self, server, data, halt):
-        """
-        Run any queued asynchronous command
-        This is done by the idle handler so it runs in true context rather than
-        tied to any UI.
-        """
-
-        return self.command.runAsyncCommand()
-
     def showVersions(self):
 
         (latest_versions, preferred_versions, required) = self.findProviders()
