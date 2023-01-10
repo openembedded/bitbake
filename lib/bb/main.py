@@ -136,10 +136,6 @@ def create_bitbake_parser():
                         help="Execute the specified task (default is 'build') for these target "
                              "recipes (.bb files).")
 
-    general_group.add_argument("-b", "--buildfile",
-                        help="Execute tasks from a specific .bb recipe directly. WARNING: Does "
-                             "not handle any dependencies from other recipes.")
-
     general_group.add_argument("-s", "--show-versions", action="store_true",
                         help="Show current and preferred versions of all recipes.")
 
@@ -227,6 +223,9 @@ def create_bitbake_parser():
                         help="Set the exit code depending on whether upstream floating "
                             "revisions have changed or not.")
 
+    exec_group.add_argument("-b", "--buildfile",
+                        help="Execute tasks from a specific .bb recipe directly. WARNING: Does "
+                             "not handle any dependencies from other recipes.")
 
     logging_group.add_argument("-D", "--debug", action="count", default=0,
                         help="Increase the debug level. You can specify this "
