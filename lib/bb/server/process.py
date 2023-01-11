@@ -439,6 +439,28 @@ class ProcessServer():
                     serverlog("Exception %s broke the idle_thread, exiting" % traceback.format_exc())
                     self.quit = True
 
+            # Create new heartbeat event?
+            now = time.time()
+            if bb.event._heartbeat_enabled and now >= self.next_heartbeat:
+                # We might have missed heartbeats. Just trigger once in
+                # that case and continue after the usual delay.
+                self.next_heartbeat += self.heartbeat_seconds
+                if self.next_heartbeat <= now:
+                    self.next_heartbeat = now + self.heartbeat_seconds
+                if hasattr(self.cooker, "data"):
+                    heartbeat = bb.event.HeartbeatEvent(now)
+                    try:
+                        bb.event.fire(heartbeat, self.cooker.data)
+                    except Exception as exc:
+                        if not isinstance(exc, bb.BBHandledException):
+                            logger.exception('Running heartbeat function')
+                        serverlog("Exception %s broke in idle_thread, exiting" % traceback.format_exc())
+                        self.quit = True
+            if nextsleep and bb.event._heartbeat_enabled and now + nextsleep > self.next_heartbeat:
+                # Shorten timeout so that we we wake up in time for
+                # the heartbeat.
+                nextsleep = self.next_heartbeat - now
+
             if nextsleep is not None:
                 select.select(fds,[],[],nextsleep)[0]
 
@@ -450,28 +472,6 @@ class ProcessServer():
         if not self.idle:
             self.idle = threading.Thread(target=self.idle_thread)
             self.idle.start()
-
-        # Create new heartbeat event?
-        now = time.time()
-        if bb.event._heartbeat_enabled and now >= self.next_heartbeat:
-            # We might have missed heartbeats. Just trigger once in
-            # that case and continue after the usual delay.
-            self.next_heartbeat += self.heartbeat_seconds
-            if self.next_heartbeat <= now:
-                self.next_heartbeat = now + self.heartbeat_seconds
-            if hasattr(self.cooker, "data"):
-                heartbeat = bb.event.HeartbeatEvent(now)
-                try:
-                    bb.event.fire(heartbeat, self.cooker.data)
-                except Exception as exc:
-                    if not isinstance(exc, bb.BBHandledException):
-                        logger.exception('Running heartbeat function')
-                    serverlog("Exception %s broke in idle_commands, exiting" % traceback.format_exc())
-                    self.quit = True
-        if nextsleep and bb.event._heartbeat_enabled and now + nextsleep > self.next_heartbeat:
-            # Shorten timeout so that we we wake up in time for
-            # the heartbeat.
-            nextsleep = self.next_heartbeat - now
 
         if nextsleep is not None:
             if self.xmlrpc:
