@@ -1743,7 +1743,7 @@ class BBCooker:
         return
 
     def post_serve(self):
-        self.shutdown(force=True, idle=False)
+        self.shutdown(force=True)
         prserv.serv.auto_shutdown()
         if hasattr(bb.parse, "siggen"):
             bb.parse.siggen.exit()
@@ -1753,17 +1753,14 @@ class BBCooker:
         if hasattr(self, "data"):
             bb.event.fire(CookerExit(), self.data)
 
-    def shutdown(self, force=False, idle=True):
+    def shutdown(self, force=False):
         if force:
             self.state = state.forceshutdown
         else:
             self.state = state.shutdown
 
-        if idle:
-            self.waitIdle(30)
-
         if self.parser:
-            self.parser.shutdown(clean=not force)
+            self.parser.shutdown(clean=False)
             self.parser.final_cleanup()
 
     def finishcommand(self):
@@ -1775,6 +1772,7 @@ class BBCooker:
     def reset(self):
         if hasattr(bb.parse, "siggen"):
             bb.parse.siggen.exit()
+        self.finishcommand()
         self.initConfigurationData()
         self.handlePRServ()
 
