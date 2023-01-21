@@ -2187,11 +2187,10 @@ class CookerParser(object):
         self.num_processes = min(int(self.cfgdata.getVar("BB_NUMBER_PARSE_THREADS") or
                                  multiprocessing.cpu_count()), self.toparse)
 
+        bb.cache.SiggenRecipeInfo.reset()
         self.start()
         self.haveshutdown = False
         self.syncthread = None
-
-        bb.cache.SiggenRecipeInfo.reset()
 
     def start(self):
         self.results = self.load_cached()
