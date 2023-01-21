@@ -2230,6 +2230,14 @@ class CookerParser(object):
         else:
             bb.error("Parsing halted due to errors, see error messages above")
 
+        # Cleanup the queue before call process.join(), otherwise there might be
+        # deadlocks.
+        while True:
+            try:
+               self.result_queue.get(timeout=0.25)
+            except queue.Empty:
+                break
+
         def sync_caches():
             for c in self.bb_caches.values():
                 bb.cache.SiggenRecipeInfo.reset()
@@ -2239,14 +2247,6 @@ class CookerParser(object):
         self.syncthread.start()
 
         self.parser_quit.set()
-
-        # Cleanup the queue before call process.join(), otherwise there might be
-        # deadlocks.
-        while True:
-            try:
-               self.result_queue.get(timeout=0.25)
-            except queue.Empty:
-                break
 
         for process in self.processes:
             process.join(0.5)
