@@ -33,8 +33,8 @@ class QueryPlugin(LayerPlugin):
         logger.plain('=' * 74)
         for layer, _, regex, pri in self.tinfoil.cooker.bbfile_config_priorities:
             layerdir = self.bbfile_collections.get(layer, None)
-            layername = self.get_layer_name(layerdir)
-            logger.plain("%s  %s  %d" % (layername.ljust(20), layerdir.ljust(40), pri))
+            layername = layer
+            logger.plain("%s  %s  %d" % (layername.ljust(20), layerdir.ljust(0), pri))
 
     def version_str(self, pe, pv, pr = None):
         verstr = "%s" % pv
