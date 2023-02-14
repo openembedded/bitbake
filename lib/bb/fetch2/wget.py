@@ -361,10 +361,11 @@ class Wget(FetchMethod):
 
                 try:
                     import netrc
-                    n = netrc.netrc()
-                    login, unused, password = n.authenticators(urllib.parse.urlparse(uri).hostname)
-                    add_basic_auth("%s:%s" % (login, password), r)
-                except (TypeError, ImportError, IOError, netrc.NetrcParseError):
+                    auth_data = netrc.netrc().authenticators(urllib.parse.urlparse(uri).hostname)
+                    if auth_data:
+                        login, _, password = auth_data
+                        add_basic_auth("%s:%s" % (login, password), r)
+                except (FileNotFoundError, netrc.NetrcParseError):
                     pass
 
                 with opener.open(r, timeout=30) as response:
