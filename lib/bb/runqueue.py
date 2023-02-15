@@ -2084,8 +2084,6 @@ class RunQueueExecute:
                             logger.debug(1, "%s didn't become valid, skipping setscene" % nexttask)
                             self.sq_task_failoutright(nexttask)
                             return True
-                        else:
-                            self.sqdata.outrightfail.remove(nexttask)
                     if nexttask in self.sqdata.outrightfail:
                         logger.debug(2, 'No package found, so skipping setscene task %s', nexttask)
                         self.sq_task_failoutright(nexttask)
@@ -2843,6 +2841,8 @@ def update_scenequeue_data(tids, sqdata, rqdata, rq, cooker, stampcache, sqrq, s
             sqdata.stamppresent.remove(tid)
         if tid in sqdata.valid:
             sqdata.valid.remove(tid)
+        if tid in sqdata.outrightfail:
+            sqdata.outrightfail.remove(tid)
 
         (mc, fn, taskname, taskfn) = split_tid_mcfn(tid)
 
@@ -2887,10 +2887,10 @@ def update_scenequeue_data(tids, sqdata, rqdata, rq, cooker, stampcache, sqrq, s
             if tid in sqrq.scenequeue_covered:
                 continue
 
-            sqdata.outrightfail.add(tid)
-
             h = pending_hash_index(tid, rqdata)
             if h not in sqdata.hashes:
+                if tid in tids:
+                    sqdata.outrightfail.add(tid)
                 sqdata.hashes[h] = tid
             else:
                 sqrq.sq_deferred[tid] = sqdata.hashes[h]
