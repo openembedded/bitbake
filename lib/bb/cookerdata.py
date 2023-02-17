@@ -160,12 +160,7 @@ def catch_parse_error(func):
     def wrapped(fn, *args):
         try:
             return func(fn, *args)
-        except IOError as exc:
-            import traceback
-            parselog.critical(traceback.format_exc())
-            parselog.critical("Unable to parse %s: %s" % (fn, exc))
-            raise bb.BBHandledException()
-        except bb.data_smart.ExpansionError as exc:
+        except Exception as exc:
             import traceback
 
             bbdir = os.path.dirname(__file__) + os.sep
@@ -176,9 +171,6 @@ def catch_parse_error(func):
                 if not fn.startswith(bbdir):
                     break
             parselog.critical("Unable to parse %s" % fn, exc_info=(exc_class, exc, tb))
-            raise bb.BBHandledException()
-        except bb.parse.ParseError as exc:
-            parselog.critical(str(exc))
             raise bb.BBHandledException()
     return wrapped
 
