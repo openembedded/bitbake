@@ -660,11 +660,6 @@ class Git(FetchMethod):
         Check if the repository has 'lfs' (large file) content
         """
 
-        if not ud.nobranch:
-            branchname = ud.branches[ud.names[0]]
-        else:
-            branchname = "master"
-
         # The bare clonedir doesn't use the remote names; it has the branch immediately.
         if wd == ud.clonedir:
             refname = ud.branches[ud.names[0]]
