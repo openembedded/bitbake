@@ -1941,8 +1941,7 @@ class RunQueueExecute:
                 try:
                     module = __import__(modname, fromlist=(name,))
                 except ImportError as exc:
-                    logger.critical("Unable to import scheduler '%s' from '%s': %s" % (name, modname, exc))
-                    raise SystemExit(1)
+                    bb.fatal("Unable to import scheduler '%s' from '%s': %s" % (name, modname, exc))
                 else:
                     schedulers.add(getattr(module, name))
         return schedulers
