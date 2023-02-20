@@ -229,24 +229,26 @@ class BBCooker:
             self.handlePRServ()
 
     def setupConfigWatcher(self):
-        if self.configwatcher:
-            self.configwatcher.close()
-            self.confignotifier = None
-            self.configwatcher = None
-        self.configwatcher = pyinotify.WatchManager()
-        self.configwatcher.bbseen = set()
-        self.configwatcher.bbwatchedfiles = set()
-        self.confignotifier = pyinotify.Notifier(self.configwatcher, self.config_notifications)
+        with bb.utils.lock_timeout(self.inotify_threadlock):
+            if self.configwatcher:
+                self.configwatcher.close()
+                self.confignotifier = None
+                self.configwatcher = None
+            self.configwatcher = pyinotify.WatchManager()
+            self.configwatcher.bbseen = set()
+            self.configwatcher.bbwatchedfiles = set()
+            self.confignotifier = pyinotify.Notifier(self.configwatcher, self.config_notifications)
 
     def setupParserWatcher(self):
-        if self.watcher:
-            self.watcher.close()
-            self.notifier = None
-            self.watcher = None
-        self.watcher = pyinotify.WatchManager()
-        self.watcher.bbseen = set()
-        self.watcher.bbwatchedfiles = set()
-        self.notifier = pyinotify.Notifier(self.watcher, self.notifications)
+        with bb.utils.lock_timeout(self.inotify_threadlock):
+            if self.watcher:
+                self.watcher.close()
+                self.notifier = None
+                self.watcher = None
+            self.watcher = pyinotify.WatchManager()
+            self.watcher.bbseen = set()
+            self.watcher.bbwatchedfiles = set()
+            self.notifier = pyinotify.Notifier(self.watcher, self.notifications)
 
     def process_inotify_updates(self):
         with bb.utils.lock_timeout(self.inotify_threadlock):
