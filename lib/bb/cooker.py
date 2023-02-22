@@ -345,6 +345,7 @@ class BBCooker:
         elif signum == signal.SIGHUP:
             bb.warn("Cooker received SIGHUP, shutting down...")
         self.state = state.forceshutdown
+        bb.event._should_exit.set()
 
     def setFeatures(self, features):
         # we only accept a new feature set if we're in state initial, so we can reset without problems
@@ -1520,6 +1521,7 @@ class BBCooker:
             msg = None
             interrupted = 0
             if halt or self.state == state.forceshutdown:
+                bb.event._should_exit.set()
                 rq.finish_runqueue(True)
                 msg = "Forced shutdown"
                 interrupted = 2
@@ -1760,6 +1762,7 @@ class BBCooker:
             self.state = state.forceshutdown
         else:
             self.state = state.shutdown
+        bb.event._should_exit.set()
 
         if self.parser:
             self.parser.shutdown(clean=False)
@@ -1770,6 +1773,7 @@ class BBCooker:
             self.parser.shutdown(clean=False)
             self.parser.final_cleanup()
         self.state = state.initial
+        bb.event._should_exit.clear()
 
     def reset(self):
         if hasattr(bb.parse, "siggen"):
