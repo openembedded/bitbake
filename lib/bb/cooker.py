@@ -339,6 +339,14 @@ class BBCooker:
                         providerlog.error("Root privilege is required to modify max_user_watches.")
                     raise
 
+    def handle_inotify_updates(self):
+        # reload files for which we got notifications
+        for p in self.inotify_modified_files:
+            bb.parse.update_cache(p)
+            if p in bb.parse.BBHandler.cached_statements:
+                del bb.parse.BBHandler.cached_statements[p]
+        self.inotify_modified_files = []
+
     def sigterm_exception(self, signum, stackframe):
         if signum == signal.SIGTERM:
             bb.warn("Cooker received SIGTERM, shutting down...")
@@ -368,6 +376,7 @@ class BBCooker:
             if mod not in self.orig_sysmodules:
                 del sys.modules[mod]
 
+        self.handle_inotify_updates()
         self.setupConfigWatcher()
 
         # Need to preserve BB_CONSOLELOG over resets
@@ -1614,12 +1623,7 @@ class BBCooker:
         if self.state == state.running:
             return
 
-        # reload files for which we got notifications
-        for p in self.inotify_modified_files:
-            bb.parse.update_cache(p)
-            if p in bb.parse.BBHandler.cached_statements:
-                del bb.parse.BBHandler.cached_statements[p]
-        self.inotify_modified_files = []
+        self.handle_inotify_updates()
 
         if not self.baseconfig_valid:
             logger.debug("Reloading base configuration data")
