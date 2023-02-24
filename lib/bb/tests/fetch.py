@@ -2666,6 +2666,45 @@ class NPMTest(FetcherTest):
 
     @skipIfNoNpm()
     @skipIfNoNetwork()
+    def test_npmsw_git(self):
+        swfile = self.create_shrinkwrap_file({
+            'dependencies': {
+                'cookie': {
+                    'version': 'github:jshttp/cookie.git#aec1177c7da67e3b3273df96cf476824dbc9ae09',
+                    'from': 'github:jshttp/cookie.git'
+                }
+            }
+        })
+        fetcher = bb.fetch.Fetch(['npmsw://' + swfile], self.d)
+        fetcher.download()
+        self.assertTrue(os.path.exists(os.path.join(self.dldir, 'git2', 'github.com.jshttp.cookie.git')))
+
+        swfile = self.create_shrinkwrap_file({
+            'dependencies': {
+                'cookie': {
+                    'version': 'jshttp/cookie.git#aec1177c7da67e3b3273df96cf476824dbc9ae09',
+                    'from': 'jshttp/cookie.git'
+                }
+            }
+        })
+        fetcher = bb.fetch.Fetch(['npmsw://' + swfile], self.d)
+        fetcher.download()
+        self.assertTrue(os.path.exists(os.path.join(self.dldir, 'git2', 'github.com.jshttp.cookie.git')))
+
+        swfile = self.create_shrinkwrap_file({
+            'dependencies': {
+                'nodejs': {
+                    'version': 'gitlab:gitlab-examples/nodejs.git#892a1f16725e56cc3a2cb0d677be42935c8fc262',
+                    'from': 'gitlab:gitlab-examples/nodejs'
+                }
+            }
+        })
+        fetcher = bb.fetch.Fetch(['npmsw://' + swfile], self.d)
+        fetcher.download()
+        self.assertTrue(os.path.exists(os.path.join(self.dldir, 'git2', 'gitlab.com.gitlab-examples.nodejs.git')))
+
+    @skipIfNoNpm()
+    @skipIfNoNetwork()
     def test_npmsw_dev(self):
         swfile = self.create_shrinkwrap_file({
             'dependencies': {
