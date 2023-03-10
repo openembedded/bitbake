@@ -293,13 +293,8 @@ class CookerDataBuilder(object):
                 bb.event.fire(bb.event.MultiConfigParsed(self.mcdata), self.data)
 
             self.data_hash = data_hash.hexdigest()
-        except (SyntaxError, bb.BBHandledException):
-            raise bb.BBHandledException()
         except bb.data_smart.ExpansionError as e:
             logger.error(str(e))
-            raise bb.BBHandledException()
-        except Exception:
-            logger.exception("Error parsing configuration files")
             raise bb.BBHandledException()
 
 
