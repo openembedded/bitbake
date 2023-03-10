@@ -435,7 +435,7 @@ class CookerDataBuilder(object):
                 msg += (" and bitbake did not find a conf/bblayers.conf file in"
                         " the expected location.\nMaybe you accidentally"
                         " invoked bitbake from the wrong directory?")
-            raise SystemExit(msg)
+            bb.fatal(msg)
 
         if not data.getVar("TOPDIR"):
             data.setVar("TOPDIR", os.path.abspath(os.getcwd()))
