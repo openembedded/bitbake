@@ -990,6 +990,9 @@ def to_boolean(string, default=None):
     if not string:
         return default
 
+    if isinstance(string, int):
+        return string != 0
+
     normalized = string.lower()
     if normalized in ("y", "yes", "1", "true"):
         return True
