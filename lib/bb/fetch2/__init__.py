@@ -1295,17 +1295,12 @@ class FetchData(object):
 
             if checksum_name in self.parm:
                 checksum_expected = self.parm[checksum_name]
-            elif self.type not in ["http", "https", "ftp", "ftps", "sftp", "s3", "az"]:
+            elif self.type not in ["http", "https", "ftp", "ftps", "sftp", "s3", "az", "crate"]:
                 checksum_expected = None
             else:
                 checksum_expected = d.getVarFlag("SRC_URI", checksum_name)
 
             setattr(self, "%s_expected" % checksum_id, checksum_expected)
-
-        for checksum_id in CHECKSUM_LIST:
-            configure_checksum(checksum_id)
-
-        self.ignore_checksums = False
 
         self.names = self.parm.get("name",'default').split(',')
 
@@ -1327,6 +1322,11 @@ class FetchData(object):
 
         if hasattr(self.method, "urldata_init"):
             self.method.urldata_init(self, d)
+
+        for checksum_id in CHECKSUM_LIST:
+            configure_checksum(checksum_id)
+
+        self.ignore_checksums = False
 
         if "localpath" in self.parm:
             # if user sets localpath for file, use it instead.

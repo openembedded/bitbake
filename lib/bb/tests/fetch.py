@@ -2377,6 +2377,13 @@ class CrateTest(FetcherTest):
         d = self.d
 
         fetcher = bb.fetch2.Fetch(uris, self.d)
+        ud = fetcher.ud[fetcher.urls[0]]
+
+        self.assertIn("name", ud.parm)
+        self.assertEqual(ud.parm["name"], "glob")
+        self.assertIn("downloadfilename", ud.parm)
+        self.assertEqual(ud.parm["downloadfilename"], "glob-0.2.11.crate")
+
         fetcher.download()
         fetcher.unpack(self.tempdir)
         self.assertEqual(sorted(os.listdir(self.tempdir)), ['cargo_home', 'download' , 'unpacked'])
@@ -2418,6 +2425,19 @@ class CrateTest(FetcherTest):
         d = self.d
 
         fetcher = bb.fetch2.Fetch(uris, self.d)
+        ud = fetcher.ud[fetcher.urls[0]]
+
+        self.assertIn("name", ud.parm)
+        self.assertEqual(ud.parm["name"], "glob")
+        self.assertIn("downloadfilename", ud.parm)
+        self.assertEqual(ud.parm["downloadfilename"], "glob-0.2.11.crate")
+
+        ud = fetcher.ud[fetcher.urls[1]]
+        self.assertIn("name", ud.parm)
+        self.assertEqual(ud.parm["name"], "time")
+        self.assertIn("downloadfilename", ud.parm)
+        self.assertEqual(ud.parm["downloadfilename"], "time-0.1.35.crate")
+
         fetcher.download()
         fetcher.unpack(self.tempdir)
         self.assertEqual(sorted(os.listdir(self.tempdir)), ['cargo_home', 'download' , 'unpacked'])
@@ -2426,6 +2446,18 @@ class CrateTest(FetcherTest):
         self.assertTrue(os.path.exists(self.tempdir + "/cargo_home/bitbake/glob-0.2.11/src/lib.rs"))
         self.assertTrue(os.path.exists(self.tempdir + "/cargo_home/bitbake/time-0.1.35/.cargo-checksum.json"))
         self.assertTrue(os.path.exists(self.tempdir + "/cargo_home/bitbake/time-0.1.35/src/lib.rs"))
+
+    @skipIfNoNetwork()
+    def test_crate_incorrect_cksum(self):
+        uri = "crate://crates.io/aho-corasick/0.7.20"
+        self.d.setVar('SRC_URI', uri)
+        self.d.setVarFlag("SRC_URI", "aho-corasick.sha256sum", hashlib.sha256("Invalid".encode("utf-8")).hexdigest())
+
+        uris = self.d.getVar('SRC_URI').split()
+
+        fetcher = bb.fetch2.Fetch(uris, self.d)
+        with self.assertRaisesRegexp(bb.fetch2.FetchError, "Fetcher failure for URL"):
+            fetcher.download()
 
 class NPMTest(FetcherTest):
     def skipIfNoNpm():
