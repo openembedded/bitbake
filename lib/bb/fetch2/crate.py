@@ -33,7 +33,7 @@ class Crate(Wget):
         return ud.type in ['crate']
 
     def recommends_checksum(self, urldata):
-        return False
+        return True
 
     def urldata_init(self, ud, d):
         """
