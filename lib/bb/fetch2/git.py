@@ -733,7 +733,7 @@ class Git(FetchMethod):
         """
         Compute the HEAD revision for the url
         """
-        if not d.getVar("__BBSEENSRCREV"):
+        if not d.getVar("__BBSRCREV_SEEN"):
             raise bb.fetch2.FetchError("Recipe uses a floating tag/branch '%s' for repo '%s' without a fixed SRCREV yet doesn't call bb.fetch2.get_srcrev() (use SRCPV in PV for OE)." % (ud.unresolvedrev[name], ud.host+ud.path))
 
         # Ensure we mark as not cached

@@ -785,7 +785,7 @@ class FetcherLocalTest(FetcherTest):
 
         # Fetch and check revision
         self.d.setVar("SRCREV", "AUTOINC")
-        self.d.setVar("__BBSEENSRCREV", "1")
+        self.d.setVar("__BBSRCREV_SEEN", "1")
         url = "git://" + self.gitdir + ";branch=master;protocol=file;" + suffix
         fetcher = bb.fetch.Fetch([url], self.d)
         fetcher.download()
@@ -1654,7 +1654,7 @@ class GitShallowTest(FetcherTest):
         self.d.setVar('BB_GIT_SHALLOW', '1')
         self.d.setVar('BB_GENERATE_MIRROR_TARBALLS', '0')
         self.d.setVar('BB_GENERATE_SHALLOW_TARBALLS', '1')
-        self.d.setVar("__BBSEENSRCREV", "1")
+        self.d.setVar("__BBSRCREV_SEEN", "1")
 
     def assertRefs(self, expected_refs, cwd=None):
         if cwd is None:
@@ -2218,7 +2218,7 @@ class GitLfsTest(FetcherTest):
 
         self.d.setVar('SRCREV', '${AUTOREV}')
         self.d.setVar('AUTOREV', '${@bb.fetch2.get_autorev(d)}')
-        self.d.setVar("__BBSEENSRCREV", "1")
+        self.d.setVar("__BBSRCREV_SEEN", "1")
 
         bb.utils.mkdirhier(self.srcdir)
         self.git_init(cwd=self.srcdir)
@@ -2936,7 +2936,7 @@ class GitSharedTest(FetcherTest):
         super(GitSharedTest, self).setUp()
         self.recipe_url = "git://git.openembedded.org/bitbake;branch=master"
         self.d.setVar('SRCREV', '82ea737a0b42a8b53e11c9cde141e9e9c0bd8c40')
-        self.d.setVar("__BBSEENSRCREV", "1")
+        self.d.setVar("__BBSRCREV_SEEN", "1")
 
     @skipIfNoNetwork()
     def test_shared_unpack(self):
