@@ -990,7 +990,7 @@ overview of their function and contents.
       ``bblayers.conf`` configuration file.
 
       To exclude a recipe from a world build using this variable, set the
-      variable to "1" in the recipe.
+      variable to "1" in the recipe. Set it to "0" to add it back to world build.
 
       .. note::
 
