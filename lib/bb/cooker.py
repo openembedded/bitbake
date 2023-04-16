@@ -1764,9 +1764,9 @@ class BBCooker:
     def shutdown(self, force=False):
         if force:
             self.state = state.forceshutdown
+            bb.event._should_exit.set()
         else:
             self.state = state.shutdown
-        bb.event._should_exit.set()
 
         if self.parser:
             self.parser.shutdown(clean=False)
