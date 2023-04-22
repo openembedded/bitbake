@@ -99,6 +99,11 @@ overview of their function and contents.
       the path of the build. BitBake's output should not (and usually does
       not) depend on the directory in which it was built.
 
+   :term:`BB_CACHEDIR`
+      Specifies the code parser cache directory (distinct from :term:`CACHE`
+      and :term:`PERSISTENT_DIR` although they can be set to the same value
+      if desired). The default value is "${TOPDIR}/cache".
+
    :term:`BB_CHECK_SSL_CERTS`
       Specifies if SSL certificates should be checked when fetching. The default
       value is ``1`` and certificates are not checked if the value is set to ``0``.
