@@ -348,6 +348,14 @@ overview of their function and contents.
 
       For example usage, see :term:`BB_GIT_SHALLOW`.
 
+   :term:`BB_GLOBAL_PYMODULES`
+      Specifies the list of Python modules to place in the global namespace.
+      It is intended that only the core layer should set this and it is meant
+      to be a very small list, typically just ``os`` and ``sys``.
+      :term:`BB_GLOBAL_PYMODULES` is expected to be set before the first
+      ``addpylib`` directive.
+      See also ":ref:`bitbake-user-manual/bitbake-user-manual-metadata:extending python library code`".
+
    :term:`BB_HASHCHECK_FUNCTION`
       Specifies the name of the function to call during the "setscene" part
       of the task's execution in order to validate the list of task hashes.
