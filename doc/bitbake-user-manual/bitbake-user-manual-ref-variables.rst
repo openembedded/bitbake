@@ -108,6 +108,17 @@ overview of their function and contents.
       Specifies if SSL certificates should be checked when fetching. The default
       value is ``1`` and certificates are not checked if the value is set to ``0``.
 
+   :term:`BB_HASH_CODEPARSER_VALS`
+      Specifies values for variables to use when populating the codeparser cache.
+      This can be used selectively to set dummy values for variables to avoid
+      the codeparser cache growing on every parse. Variables that would typically
+      be included are those where the value is not significant for where the
+      codeparser cache is used (i.e. when calculating variable dependencies for
+      code fragments.) The value is space-separated without quoting values, for
+      example::
+
+         BB_HASH_CODEPARSER_VALS = "T=/ WORKDIR=/ DATE=1234 TIME=1234"
+
    :term:`BB_CONSOLELOG`
       Specifies the path to a log file into which BitBake's user interface
       writes output during the build.
