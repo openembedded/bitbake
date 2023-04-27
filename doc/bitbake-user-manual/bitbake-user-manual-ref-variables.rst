@@ -563,7 +563,7 @@ overview of their function and contents.
       :term:`BB_RUNFMT` variable is undefined and the run filenames get
       created using the following form::
 
-         run.{task}.{pid}
+         run.{func}.{pid}
 
       If you want to force run files to take a specific name, you can set this
       variable in a configuration file.
