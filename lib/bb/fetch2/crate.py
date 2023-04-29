@@ -98,8 +98,8 @@ class Crate(Wget):
         save_cwd = os.getcwd()
         os.chdir(rootdir)
 
-        pn = d.getVar('BPN')
-        if pn == ud.parm.get('name'):
+        bp = d.getVar('BP')
+        if bp == ud.parm.get('name'):
             cmd = "tar -xz --no-same-owner -f %s" % thefile
         else:
             cargo_bitbake = self._cargo_bitbake_path(rootdir)
