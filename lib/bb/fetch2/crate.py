@@ -59,11 +59,11 @@ class Crate(Wget):
         # version is expected to be the last token
         # but ignore possible url parameters which will be used
         # by the top fetcher class
-        version, _, _ = parts[len(parts) -1].partition(";")
+        version = parts[-1].split(";")[0]
         # second to last field is name
-        name = parts[len(parts) - 2]
+        name = parts[-2]
         # host (this is to allow custom crate registries to be specified
-        host = '/'.join(parts[2:len(parts) - 2])
+        host = '/'.join(parts[2:-2])
 
         # if using upstream just fix it up nicely
         if host == 'crates.io':
