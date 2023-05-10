@@ -504,6 +504,9 @@ class BBCooker:
             self.recipecaches[mc] = bb.cache.CacheData(self.caches_array)
 
         self.handleCollections(self.data.getVar("BBFILE_COLLECTIONS"))
+        self.collections = {}
+        for mc in self.multiconfigs:
+            self.collections[mc] = CookerCollectFiles(self.bbfile_config_priorities, mc)
 
         self._parsecache_set(False)
 
@@ -1378,8 +1381,8 @@ class BBCooker:
         if bf.startswith("/") or bf.startswith("../"):
             bf = os.path.abspath(bf)
 
-        self.collections = {mc: CookerCollectFiles(self.bbfile_config_priorities, mc)}
-        filelist, masked, searchdirs = self.collections[mc].collect_bbfiles(self.databuilder.mcdata[mc], self.databuilder.mcdata[mc])
+        collections = {mc: CookerCollectFiles(self.bbfile_config_priorities, mc)}
+        filelist, masked, searchdirs = collections[mc].collect_bbfiles(self.databuilder.mcdata[mc], self.databuilder.mcdata[mc])
         try:
             os.stat(bf)
             bf = os.path.abspath(bf)
@@ -1676,13 +1679,10 @@ class BBCooker:
                 for dep in self.configuration.extra_assume_provided:
                     self.recipecaches[mc].ignored_dependencies.add(dep)
 
-            self.collections = {}
-
             mcfilelist = {}
             total_masked = 0
             searchdirs = set()
             for mc in self.multiconfigs:
-                self.collections[mc] = CookerCollectFiles(self.bbfile_config_priorities, mc)
                 (filelist, masked, search) = self.collections[mc].collect_bbfiles(self.databuilder.mcdata[mc], self.databuilder.mcdata[mc])
 
                 mcfilelist[mc] = filelist
