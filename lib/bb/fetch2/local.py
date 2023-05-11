@@ -51,11 +51,13 @@ class Local(FetchMethod):
         path = urldata.decodedurl
         newpath = path
         if path[0] == "/":
+            logger.debug2("Using absolute %s" % (path))
             return [path]
         filespath = d.getVar('FILESPATH')
         if filespath:
             logger.debug2("Searching for %s in paths:\n    %s" % (path, "\n    ".join(filespath.split(":"))))
             newpath, hist = bb.utils.which(filespath, path, history=True)
+            logger.debug2("Using %s for %s" % (newpath, path))
             searched.extend(hist)
         return searched
 
