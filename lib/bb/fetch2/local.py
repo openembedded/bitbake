@@ -41,9 +41,9 @@ class Local(FetchMethod):
         """
         Return the local filename of a given url assuming a successful fetch.
         """
-        return self.localpaths(urldata, d)[-1]
+        return self.localfile_searchpaths(urldata, d)[-1]
 
-    def localpaths(self, urldata, d):
+    def localfile_searchpaths(self, urldata, d):
         """
         Return the local filename of a given url assuming a successful fetch.
         """
