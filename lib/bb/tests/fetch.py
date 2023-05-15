@@ -424,6 +424,10 @@ class FetcherTest(unittest.TestCase):
 
     def git_init(self, cwd=None):
         self.git('init', cwd=cwd)
+        # Explicitly set initial branch to master as
+        # a common setup is to use other default
+        # branch than master.
+        self.git(['checkout', '-b', 'master'], cwd=cwd)
         if not self.git(['config', 'user.email'], cwd=cwd):
             self.git(['config', 'user.email', 'you@example.com'], cwd=cwd)
         if not self.git(['config', 'user.name'], cwd=cwd):
