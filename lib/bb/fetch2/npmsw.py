@@ -49,6 +49,8 @@ def foreach_dependencies(shrinkwrap, callback=None, dev=False):
         if package != "":
             name = package.split('node_modules/')[-1]
             package_infos = packages.get(package, {})
+            if dev == False and package_infos.get("dev", False):
+                continue
             callback(name, package_infos, package)
 
 class NpmShrinkWrap(FetchMethod):
