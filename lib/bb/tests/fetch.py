@@ -24,7 +24,8 @@ def skipIfNoNetwork():
     return lambda f: f
 
 class TestTimeout(Exception):
-    pass
+    # Indicate to pytest that this is not a test suite
+    __test__ = False
 
 class Timeout():
 
