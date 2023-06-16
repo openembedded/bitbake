@@ -58,3 +58,8 @@ testsuite as follows:
 
     export PATH=$(pwd)/bin:$PATH
     bin/bitbake-selftest
+
+The testsuite can alternatively be executed using pytest, e.g. obtained from PyPI (in this
+case, the PATH is configured automatically):
+
+    pytest
