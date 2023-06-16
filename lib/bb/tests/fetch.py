@@ -3183,7 +3183,7 @@ class FetchPremirroronlyBrokenTarball(FetcherTest):
         import sys
         self.d.setVar("SRCREV", "0"*40)
         fetcher = bb.fetch.Fetch([self.recipe_url], self.d)
-        with self.assertRaises(bb.fetch2.FetchError):
+        with self.assertRaises(bb.fetch2.FetchError), self.assertLogs() as logs:
             fetcher.download()
-        stdout = sys.stdout.getvalue()
-        self.assertFalse(" not a git repository (or any parent up to mount point /)" in stdout)
+        output = "".join(logs.output)
+        self.assertFalse(" not a git repository (or any parent up to mount point /)" in output)
