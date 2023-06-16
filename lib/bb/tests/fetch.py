@@ -429,9 +429,15 @@ class FetcherTest(unittest.TestCase):
         # a common setup is to use other default
         # branch than master.
         self.git(['checkout', '-b', 'master'], cwd=cwd)
-        if not self.git(['config', 'user.email'], cwd=cwd):
+
+        try:
+            self.git(['config', 'user.email'], cwd=cwd)
+        except bb.process.ExecutionError:
             self.git(['config', 'user.email', 'you@example.com'], cwd=cwd)
-        if not self.git(['config', 'user.name'], cwd=cwd):
+
+        try:
+            self.git(['config', 'user.name'], cwd=cwd)
+        except bb.process.ExecutionError:
             self.git(['config', 'user.name', 'Your Name'], cwd=cwd)
 
 class MirrorUriTest(FetcherTest):
@@ -3038,7 +3044,7 @@ class FetchPremirroronlyLocalTest(FetcherTest):
         self.mirrorname = "git2_git.fake.repo.bitbake.tar.gz"
         recipeurl = "git:/git.fake.repo/bitbake"
         os.makedirs(self.gitdir)
-        self.git("init", self.gitdir)
+        self.git_init(cwd=self.gitdir)
         for i in range(0):
             self.git_new_commit()
         bb.process.run('tar -czvf {} .'.format(os.path.join(self.mirrordir, self.mirrorname)), cwd =  self.gitdir)
