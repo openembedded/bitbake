@@ -2486,7 +2486,7 @@ class CrateTest(FetcherTest):
         uris = self.d.getVar('SRC_URI').split()
 
         fetcher = bb.fetch2.Fetch(uris, self.d)
-        with self.assertRaisesRegexp(bb.fetch2.FetchError, "Fetcher failure for URL"):
+        with self.assertRaisesRegex(bb.fetch2.FetchError, "Fetcher failure for URL"):
             fetcher.download()
 
 class NPMTest(FetcherTest):
