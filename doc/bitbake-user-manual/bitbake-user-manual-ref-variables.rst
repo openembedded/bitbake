@@ -920,9 +920,9 @@ overview of their function and contents.
       section.
 
    :term:`BBPATH`
-      Used by BitBake to locate class (``.bbclass``) and configuration
-      (``.conf``) files. This variable is analogous to the ``PATH``
-      variable.
+      A colon-separated list used by BitBake to locate class (``.bbclass``)
+      and configuration (``.conf``) files. This variable is analogous to the
+      ``PATH`` variable.
 
       If you run BitBake from a directory outside of the build directory,
       you must be sure to set :term:`BBPATH` to point to the build directory.
@@ -1165,8 +1165,8 @@ overview of their function and contents.
       order.
 
    :term:`OVERRIDES`
-      BitBake uses :term:`OVERRIDES` to control what variables are overridden
-      after BitBake parses recipes and configuration files.
+      A colon-separated list that BitBake uses to control what variables are
+      overridden after BitBake parses recipes and configuration files.
 
       Following is a simple example that uses an overrides list based on
       machine architectures: OVERRIDES = "arm:x86:mips:powerpc" You can
@@ -1225,9 +1225,9 @@ overview of their function and contents.
          PREFERRED_PROVIDER_virtual/libgl ?= "mesa"
 
    :term:`PREFERRED_PROVIDERS`
-      Determines which recipe should be given preference for cases where
-      multiple recipes provide the same item. Functionally,
-      :term:`PREFERRED_PROVIDERS` is identical to
+      A colon-separated list to determine which recipe should be given
+      preference for cases where multiple recipes provide the same item.
+      Functionally, :term:`PREFERRED_PROVIDERS` is identical to
       :term:`PREFERRED_PROVIDER`. However, the :term:`PREFERRED_PROVIDERS` variable
       lets you define preferences for multiple situations using the following
       form::
