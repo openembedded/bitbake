@@ -1072,6 +1072,11 @@ overview of their function and contents.
       environment variable. The value is a colon-separated list of
       directories that are searched left-to-right in order.
 
+   :term:`FILE_LAYERNAME`
+      During parsing and task execution, this is set to the name of the
+      layer containing the recipe file. Code can use this to identify which
+      layer a recipe is from.
+
    :term:`GITDIR`
       The directory in which a local copy of a Git repository is stored
       when it is cloned.
