@@ -1230,9 +1230,9 @@ overview of their function and contents.
          PREFERRED_PROVIDER_virtual/libgl ?= "mesa"
 
    :term:`PREFERRED_PROVIDERS`
-      A colon-separated list to determine which recipe should be given
-      preference for cases where multiple recipes provide the same item.
-      Functionally, :term:`PREFERRED_PROVIDERS` is identical to
+      Determines which recipe should be given preference for cases where
+      multiple recipes provide the same item. Functionally,
+      :term:`PREFERRED_PROVIDERS` is identical to
       :term:`PREFERRED_PROVIDER`. However, the :term:`PREFERRED_PROVIDERS` variable
       lets you define preferences for multiple situations using the following
       form::
