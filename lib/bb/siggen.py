@@ -418,7 +418,7 @@ class SignatureGeneratorBasic(SignatureGenerator):
         data['varvals'][task] = self.datacaches[mc].siggen_varvals[mcfn][task]
         for dep in self.datacaches[mc].siggen_taskdeps[mcfn][task]:
             if dep in self.basehash_ignore_vars:
-               continue
+                continue
             data['gendeps'][dep] = self.datacaches[mc].siggen_gendeps[mcfn][dep]
             data['varvals'][dep] = self.datacaches[mc].siggen_varvals[mcfn][dep]
 
