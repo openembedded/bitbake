@@ -261,10 +261,6 @@ class SignatureGeneratorBasic(SignatureGenerator):
             bb.warn("Error during finalise of %s" % mcfn)
             raise
 
-        #Slow but can be useful for debugging mismatched basehashes
-        #for task in self.taskdeps[mcfn]:
-        #    self.dump_sigtask(mcfn, task, d.getVar("STAMP"), False)
-
         basehashes = {}
         for task in taskdeps:
             basehashes[task] = self.basehash[mcfn + ":" + task]
@@ -273,6 +269,11 @@ class SignatureGeneratorBasic(SignatureGenerator):
         d.setVar("__siggen_gendeps", gendeps)
         d.setVar("__siggen_varvals", lookupcache)
         d.setVar("__siggen_taskdeps", taskdeps)
+
+        #Slow but can be useful for debugging mismatched basehashes
+        #self.setup_datacache_from_datastore(mcfn, d)
+        #for task in taskdeps:
+        #    self.dump_sigtask(mcfn, task, d.getVar("STAMP"), False)
 
     def setup_datacache_from_datastore(self, mcfn, d):
         super().setup_datacache_from_datastore(mcfn, d)
