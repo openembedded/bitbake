@@ -2001,12 +2001,12 @@ class RunQueueExecute:
                 # Allow the next deferred task to run. Any other deferred tasks should be deferred after that task.
                 # We shouldn't allow all to run at once as it is prone to races.
                 if not found:
-                    bb.note("Deferred task %s now buildable" % t)
+                    bb.debug(1, "Deferred task %s now buildable" % t)
                     del self.sq_deferred[t]
                     update_scenequeue_data([t], self.sqdata, self.rqdata, self.rq, self.cooker, self.stampcache, self, summary=False)
                     found = t
                 else:
-                    bb.note("Deferring %s after %s" % (t, found))
+                    bb.debug(1, "Deferring %s after %s" % (t, found))
                     self.sq_deferred[t] = found
 
     def task_complete(self, task):
@@ -2944,7 +2944,7 @@ def build_scenequeue_data(sqdata, rqdata, rq, cooker, stampcache, sqrq):
                 sqdata.hashes[h] = tid
             else:
                 sqrq.sq_deferred[tid] = sqdata.hashes[h]
-                bb.note("Deferring %s after %s" % (tid, sqdata.hashes[h]))
+                bb.debug(1, "Deferring %s after %s" % (tid, sqdata.hashes[h]))
 
     update_scenequeue_data(sqdata.sq_revdeps, sqdata, rqdata, rq, cooker, stampcache, sqrq, summary=True)
 
