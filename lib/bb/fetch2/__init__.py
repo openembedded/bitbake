@@ -1402,6 +1402,9 @@ class FetchMethod(object):
         Is localpath something that can be represented by a checksum?
         """
 
+        # We cannot compute checksums for None
+        if urldata.localpath is None:
+            return False
         # We cannot compute checksums for directories
         if os.path.isdir(urldata.localpath):
             return False
