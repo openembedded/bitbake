@@ -361,7 +361,7 @@ class SignatureGeneratorBasic(SignatureGenerator):
         for dep in sorted(self.runtaskdeps[tid]):
             data += self.get_unihash(dep[1])
 
-        for (f, cs) in self.file_checksum_values[tid]:
+        for (f, cs) in sorted(self.file_checksum_values[tid], key=clean_checksum_file_path):
             if cs:
                 if "/./" in f:
                     data += "./" + f.split("/./")[1]
@@ -426,7 +426,7 @@ class SignatureGeneratorBasic(SignatureGenerator):
         if runtime and tid in self.taskhash:
             data['runtaskdeps'] = [dep[0] for dep in sorted(self.runtaskdeps[tid])]
             data['file_checksum_values'] = []
-            for f,cs in self.file_checksum_values[tid]:
+            for f,cs in sorted(self.file_checksum_values[tid], key=clean_checksum_file_path):
                 if "/./" in f:
                     data['file_checksum_values'].append(("./" + f.split("/./")[1], cs))
                 else:
@@ -744,6 +744,12 @@ class SignatureGeneratorTestEquivHash(SignatureGeneratorUniHashMixIn, SignatureG
         super().init_rundepcheck(data)
         self.server = data.getVar('BB_HASHSERVE')
         self.method = "sstate_output_hash"
+
+def clean_checksum_file_path(file_checksum_tuple):
+    f, cs = file_checksum_tuple
+    if "/./" in f:
+        return "./" + f.split("/./")[1]
+    return f
 
 def dump_this_task(outfile, d):
     import bb.parse
