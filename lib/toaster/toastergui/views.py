@@ -670,11 +670,11 @@ def xhr_dirinfo(request, build_id, target_id):
     return HttpResponse(_get_dir_entries(build_id, target_id, top), content_type = "application/json")
 
 from django.utils.functional import Promise
-from django.utils.encoding import force_text
+from django.utils.encoding import force_str
 class LazyEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, Promise):
-            return force_text(obj)
+            return force_str(obj)
         return super(LazyEncoder, self).default(obj)
 
 from toastergui.templatetags.projecttags import filtered_filesizeformat
