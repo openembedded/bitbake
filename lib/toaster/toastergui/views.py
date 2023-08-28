@@ -1404,7 +1404,7 @@ if True:
                     if not os.path.isdir('%s/conf' % request.POST['importdir']):
                         raise BadParameterException("Bad path or missing 'conf' directory (%s)" % request.POST['importdir'])
                     from django.core import management
-                    management.call_command('buildimport', '--command=import', '--name=%s' % request.POST['projectname'], '--path=%s' % request.POST['importdir'], interactive=False)
+                    management.call_command('buildimport', '--command=import', '--name=%s' % request.POST['projectname'], '--path=%s' % request.POST['importdir'])
                     prj = Project.objects.get(name = request.POST['projectname'])
                     prj.merged_attr = True
                     prj.save()
