@@ -715,8 +715,9 @@ The fetcher requires that the machine has valid credentials for accessing the
 chosen bucket. Instructions for authentication can be found in the
 `Google Cloud documentation <https://cloud.google.com/docs/authentication/provide-credentials-adc#local-dev>`__.
 
-The fetcher can be used for fetching sstate artifacts from a GCS bucket by
-specifying the :term:`SSTATE_MIRRORS` variable as shown below::
+If it used from the OpenEmbedded build system, the fetcher can be used for
+fetching sstate artifacts from a GCS bucket by specifying the
+``SSTATE_MIRRORS`` variable as shown below::
 
    SSTATE_MIRRORS ?= "\
        file://.* gs://<bucket name>/PATH \
