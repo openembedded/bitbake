@@ -410,12 +410,6 @@ class ProcessServer():
             nextsleep = 0.1
             fds = []
 
-            try:
-                self.cooker.process_inotify_updates()
-            except Exception as exc:
-                serverlog("Exception %s in inofify updates broke the idle_thread, exiting" % traceback.format_exc())
-                self.quit = True
-
             with bb.utils.lock_timeout(self._idlefuncsLock):
                 items = list(self._idlefuns.items())
 

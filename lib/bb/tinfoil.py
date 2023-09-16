@@ -449,6 +449,12 @@ class Tinfoil:
         self.run_actions(config_params)
         self.recipes_parsed = True
 
+    def modified_files(self):
+        """
+        Notify the server it needs to revalidate it's caches since the client has modified files
+        """
+        self.run_command("revalidateCaches")
+
     def run_command(self, command, *params, handle_events=True):
         """
         Run a command on the server (as implemented in bb.command).
