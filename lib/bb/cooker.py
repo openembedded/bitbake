@@ -172,7 +172,6 @@ class BBCooker:
             self.waitIdle = server.wait_for_idle
 
         bb.debug(1, "BBCooker starting %s" % time.time())
-        sys.stdout.flush()
 
         self.configwatched = {}
         self.parsewatched = {}
@@ -209,13 +208,11 @@ class BBCooker:
         signal.signal(signal.SIGHUP, self.sigterm_exception)
 
         bb.debug(1, "BBCooker startup complete %s" % time.time())
-        sys.stdout.flush()
 
     def init_configdata(self):
         if not hasattr(self, "data"):
             self.initConfigurationData()
             bb.debug(1, "BBCooker parsed base configuration %s" % time.time())
-            sys.stdout.flush()
             self.handlePRServ()
 
     def _baseconfig_set(self, value):
