@@ -1442,6 +1442,37 @@ class BBCooker:
 
         self.idleCallBackRegister(buildFileIdle, rq)
 
+    def getTaskSignatures(self, target, tasks):
+        sig = []
+        getAllTaskSignatures = False
+
+        if not tasks:
+            tasks = ["do_build"]
+            getAllTaskSignatures = True
+
+        for task in tasks:
+            taskdata, runlist = self.buildTaskData(target, task, self.configuration.halt)
+            rq = bb.runqueue.RunQueue(self, self.data, self.recipecaches, taskdata, runlist)
+            rq.rqdata.prepare()
+
+            for l in runlist:
+                mc, pn, taskname, fn = l
+
+                taskdep = rq.rqdata.dataCaches[mc].task_deps[fn]
+                for t in taskdep['tasks']:
+                    if t in taskdep['nostamp'] or "setscene" in t:
+                        continue
+                    tid = bb.runqueue.build_tid(mc, fn, t)
+
+                    if t in task or getAllTaskSignatures:
+                        try:
+                            rq.rqdata.prepare_task_hash(tid)
+                            sig.append([pn, t, rq.rqdata.get_task_unihash(tid)])
+                        except KeyError:
+                            sig.append(self.getTaskSignatures(target, [t])[0])
+
+        return sig
+
     def buildTargets(self, targets, task):
         """
         Attempt to build the targets specified
