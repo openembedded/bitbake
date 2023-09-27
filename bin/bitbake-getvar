@@ -55,6 +55,6 @@ if __name__ == "__main__":
             if value is None and not args.ignore_undefined:
                 sys.exit(f"The variable '{args.variable}' is not defined")
         if args.value:
-            print(str(value))
+            print(str(value if value is not None else ""))
         else:
             bb.data.emit_var(args.variable, d=d, all=True)
