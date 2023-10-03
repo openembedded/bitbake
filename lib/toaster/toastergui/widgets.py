@@ -305,6 +305,7 @@ class ToasterTable(TemplateView):
 
         self.setup_columns(**kwargs)
 
+        self.apply_orderby('pk')
         if search:
             self.apply_search(search)
         if filters:
