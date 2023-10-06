@@ -101,6 +101,10 @@ class AsyncClient(bb.asyncrpc.AsyncClient):
         await self._set_mode(self.MODE_NORMAL)
         return (await self.send_message({"backfill-wait": None}))["tasks"]
 
+    async def remove(self, where):
+        await self._set_mode(self.MODE_NORMAL)
+        return await self.send_message({"remove": {"where": where}})
+
 
 class Client(bb.asyncrpc.Client):
     def __init__(self):
@@ -115,6 +119,7 @@ class Client(bb.asyncrpc.Client):
             "get_stats",
             "reset_stats",
             "backfill_wait",
+            "remove",
         )
 
     def _get_async_client(self):
