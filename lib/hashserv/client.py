@@ -105,6 +105,10 @@ class AsyncClient(bb.asyncrpc.AsyncClient):
         await self._set_mode(self.MODE_NORMAL)
         return await self.send_message({"remove": {"where": where}})
 
+    async def clean_unused(self, max_age):
+        await self._set_mode(self.MODE_NORMAL)
+        return await self.send_message({"clean-unused": {"max_age_seconds": max_age}})
+
 
 class Client(bb.asyncrpc.Client):
     def __init__(self):
@@ -120,6 +124,7 @@ class Client(bb.asyncrpc.Client):
             "reset_stats",
             "backfill_wait",
             "remove",
+            "clean_unused",
         )
 
     def _get_async_client(self):

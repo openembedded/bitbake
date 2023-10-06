@@ -158,6 +158,25 @@ class HashEquivalenceCommonTests(object):
         result_outhash = self.client.get_outhash(self.METHOD, outhash, taskhash)
         self.assertIsNone(result_outhash)
 
+    def test_clean_unused(self):
+        taskhash, outhash, unihash = self.test_create_hash()
+
+        # Clean the database, which should not remove anything because all hashes an in-use
+        result = self.client.clean_unused(0)
+        self.assertEqual(result["count"], 0)
+        self.assertClientGetHash(self.client, taskhash, unihash)
+
+        # Remove the unihash. The row in the outhash table should still be present
+        self.client.remove({"unihash": unihash})
+        result_outhash = self.client.get_outhash(self.METHOD, outhash, taskhash, False)
+        self.assertIsNotNone(result_outhash)
+
+        # Now clean with no minimum age which will remove the outhash
+        result = self.client.clean_unused(0)
+        self.assertEqual(result["count"], 1)
+        result_outhash = self.client.get_outhash(self.METHOD, outhash, taskhash, False)
+        self.assertIsNone(result_outhash)
+
     def test_huge_message(self):
         # Simple test that hashes can be created
         taskhash = 'c665584ee6817aa99edfc77a44dd853828279370'
