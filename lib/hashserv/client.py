@@ -83,10 +83,10 @@ class AsyncClient(bb.asyncrpc.AsyncClient):
             {"get": {"taskhash": taskhash, "method": method, "all": all_properties}}
         )
 
-    async def get_outhash(self, method, outhash, taskhash):
+    async def get_outhash(self, method, outhash, taskhash, with_unihash=True):
         await self._set_mode(self.MODE_NORMAL)
         return await self.send_message(
-            {"get-outhash": {"outhash": outhash, "taskhash": taskhash, "method": method}}
+            {"get-outhash": {"outhash": outhash, "taskhash": taskhash, "method": method, "with_unihash": with_unihash}}
         )
 
     async def get_stats(self):

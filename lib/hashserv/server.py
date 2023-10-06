@@ -270,27 +270,42 @@ class ServerClient(bb.asyncrpc.AsyncServerConnection):
         method = request['method']
         outhash = request['outhash']
         taskhash = request['taskhash']
+        with_unihash = request.get("with_unihash", True)
 
         with closing(self.db.cursor()) as cursor:
-            d = await self.get_outhash(cursor, method, outhash, taskhash)
+            d = await self.get_outhash(cursor, method, outhash, taskhash, with_unihash)
 
         self.write_message(d)
 
-    async def get_outhash(self, cursor, method, outhash, taskhash):
+    async def get_outhash(self, cursor, method, outhash, taskhash, with_unihash=True):
         d = None
-        cursor.execute(
-            '''
-            SELECT *, unihashes_v2.unihash AS unihash FROM outhashes_v2
-            INNER JOIN unihashes_v2 ON unihashes_v2.method=outhashes_v2.method AND unihashes_v2.taskhash=outhashes_v2.taskhash
-            WHERE outhashes_v2.method=:method AND outhashes_v2.outhash=:outhash
-            ORDER BY outhashes_v2.created ASC
-            LIMIT 1
-            ''',
-            {
-                'method': method,
-                'outhash': outhash,
-            }
-        )
+        if with_unihash:
+            cursor.execute(
+                '''
+                SELECT *, unihashes_v2.unihash AS unihash FROM outhashes_v2
+                INNER JOIN unihashes_v2 ON unihashes_v2.method=outhashes_v2.method AND unihashes_v2.taskhash=outhashes_v2.taskhash
+                WHERE outhashes_v2.method=:method AND outhashes_v2.outhash=:outhash
+                ORDER BY outhashes_v2.created ASC
+                LIMIT 1
+                ''',
+                {
+                    'method': method,
+                    'outhash': outhash,
+                }
+            )
+        else:
+            cursor.execute(
+                """
+                SELECT * FROM outhashes_v2
+                WHERE outhashes_v2.method=:method AND outhashes_v2.outhash=:outhash
+                ORDER BY outhashes_v2.created ASC
+                LIMIT 1
+                """,
+                {
+                    'method': method,
+                    'outhash': outhash,
+                }
+            )
         row = cursor.fetchone()
 
         if row is not None:
