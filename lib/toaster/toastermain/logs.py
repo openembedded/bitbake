@@ -38,8 +38,13 @@ def log_view_mixin(view):
             request = kwargs.get('request')
 
         response = view(*args, **kwargs)
+        view_name = 'unknown'
+        if hasattr(request, 'resolver_match'):
+            if hasattr(request.resolver_match, 'view_name'):
+                view_name = request.resolver_match.view_name
+
         log_api_request(
-            request, response, request.resolver_match.view_name, 'toaster')
+            request, response, view_name, 'toaster')
         return response
     return log_view_request
 
