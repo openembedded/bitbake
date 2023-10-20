@@ -157,7 +157,7 @@ class RunQueueScheduler(object):
             (mc, fn, taskname, taskfn) = split_tid_mcfn(tid)
             self.stamps[tid] = bb.parse.siggen.stampfile_mcfn(taskname, taskfn, extrainfo=False)
             if tid in self.rq.runq_buildable:
-                self.buildable.append(tid)
+                self.buildable.add(tid)
 
         self.rev_prio_map = None
         self.is_pressure_usable()
