@@ -62,6 +62,7 @@ def check_indent(codestr):
 modulecode_deps = {}
 
 def add_module_functions(fn, functions, namespace):
+    import os
     fstat = os.stat(fn)
     fixedhash = fn + ":" + str(fstat.st_size) +  ":" + str(fstat.st_mtime)
     for f in functions:
