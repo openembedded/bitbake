@@ -462,8 +462,8 @@ class Git(FetchMethod):
                 # Only do this if the unpack resulted in a .git/lfs directory being
                 # created; this only happens if at least one blob needed to be
                 # downloaded.
-                if os.path.exists(os.path.join(tmpdir, "git", ".git", "lfs")):
-                    runfetchcmd("tar -cf - lfs | tar -xf - -C %s" % ud.clonedir, d, workdir="%s/git/.git" % tmpdir)
+                if os.path.exists(os.path.join(ud.destdir, ".git", "lfs")):
+                    runfetchcmd("tar -cf - lfs | tar -xf - -C %s" % ud.clonedir, d, workdir="%s/.git" % ud.destdir)
 
     def build_mirror_data(self, ud, d):
 
