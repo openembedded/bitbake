@@ -316,12 +316,12 @@ for t in os.walk(os.path.dirname(currentdir)):
 LOGGING = LOGGING_SETTINGS
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve(strict=True).parent.parent
+BUILDDIR = os.environ.get("BUILDDIR", "/tmp")
 
 # LOG VIEWER
 # https://pypi.org/project/django-log-viewer/
 LOG_VIEWER_FILES_PATTERN = '*.log*'
-LOG_VIEWER_FILES_DIR = os.path.join(BASE_DIR, 'logs')
+LOG_VIEWER_FILES_DIR = os.path.join(BUILDDIR, "toaster_logs/")
 LOG_VIEWER_PAGE_LENGTH = 25      # total log lines per-page
 LOG_VIEWER_MAX_READ_LINES = 100000  # total log lines will be read
 LOG_VIEWER_PATTERNS = ['INFO', 'DEBUG', 'WARNING', 'ERROR', 'CRITICAL']
