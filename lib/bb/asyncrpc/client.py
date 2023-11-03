@@ -67,10 +67,13 @@ class AsyncClient(object):
             self.socket = await self._connect_sock()
             await self.setup_connection()
 
-    async def close(self):
+    async def disconnect(self):
         if self.socket is not None:
             await self.socket.close()
             self.socket = None
+
+    async def close(self):
+        await self.disconnect()
 
     async def _send_wrapper(self, proc):
         count = 0
@@ -159,6 +162,9 @@ class Client(object):
     @max_chunk.setter
     def max_chunk(self, value):
         self.client.max_chunk = value
+
+    def disconnect(self):
+        self.loop.run_until_complete(self.client.close())
 
     def close(self):
         if self.loop:
