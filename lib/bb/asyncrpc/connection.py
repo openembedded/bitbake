@@ -7,6 +7,7 @@
 import asyncio
 import itertools
 import json
+from datetime import datetime
 from .exceptions import ClientError, ConnectionClosedError
 
 
@@ -30,6 +31,12 @@ def chunkify(msg, max_chunk):
         yield "\n"
 
 
+def json_serialize(obj):
+    if isinstance(obj, datetime):
+        return obj.isoformat()
+    raise TypeError("Type %s not serializeable" % type(obj))
+
+
 class StreamConnection(object):
     def __init__(self, reader, writer, timeout, max_chunk=DEFAULT_MAX_CHUNK):
         self.reader = reader
@@ -42,7 +49,7 @@ class StreamConnection(object):
         return self.writer.get_extra_info("peername")
 
     async def send_message(self, msg):
-        for c in chunkify(json.dumps(msg), self.max_chunk):
+        for c in chunkify(json.dumps(msg, default=json_serialize), self.max_chunk):
             self.writer.write(c.encode("utf-8"))
         await self.writer.drain()
 
@@ -105,7 +112,7 @@ class WebsocketConnection(object):
         return ":".join(str(s) for s in self.socket.remote_address)
 
     async def send_message(self, msg):
-        await self.send(json.dumps(msg))
+        await self.send(json.dumps(msg, default=json_serialize))
 
     async def recv_message(self):
         m = await self.recv()

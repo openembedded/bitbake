@@ -33,7 +33,7 @@ class HashEquivalenceTestSetup(object):
     def start_server(self, dbpath=None, upstream=None, read_only=False, prefunc=server_prefunc):
         self.server_index += 1
         if dbpath is None:
-            dbpath = os.path.join(self.temp_dir.name, "db%d.sqlite" % self.server_index)
+            dbpath = self.make_dbpath()
 
         def cleanup_server(server):
             if server.process.exitcode is not None:
@@ -52,6 +52,9 @@ class HashEquivalenceTestSetup(object):
         self.addCleanup(cleanup_server, server)
 
         return server
+
+    def make_dbpath(self):
+        return os.path.join(self.temp_dir.name, "db%d.sqlite" % self.server_index)
 
     def start_client(self, server_address):
         def cleanup_client(client):
@@ -515,6 +518,20 @@ class TestHashEquivalenceWebsocketServer(HashEquivalenceTestSetup, HashEquivalen
         # case it is more reliable to resolve the IP address explicitly.
         host = socket.gethostbyname("localhost")
         return "ws://%s:0" % host
+
+
+class TestHashEquivalenceWebsocketsSQLAlchemyServer(TestHashEquivalenceWebsocketServer):
+    def setUp(self):
+        try:
+            import sqlalchemy
+            import aiosqlite
+        except ImportError as e:
+            self.skipTest(str(e))
+
+        super().setUp()
+
+    def make_dbpath(self):
+        return "sqlite+aiosqlite:///%s" % os.path.join(self.temp_dir.name, "db%d.sqlite" % self.server_index)
 
 
 class TestHashEquivalenceExternalServer(HashEquivalenceTestSetup, HashEquivalenceCommonTests, unittest.TestCase):

@@ -35,15 +35,32 @@ def parse_address(addr):
         return (ADDR_TYPE_TCP, (host, int(port)))
 
 
-def create_server(addr, dbname, *, sync=True, upstream=None, read_only=False):
+def create_server(
+    addr,
+    dbname,
+    *,
+    sync=True,
+    upstream=None,
+    read_only=False,
+    db_username=None,
+    db_password=None
+):
     def sqlite_engine():
         from .sqlite import DatabaseEngine
 
         return DatabaseEngine(dbname, sync)
 
+    def sqlalchemy_engine():
+        from .sqlalchemy import DatabaseEngine
+
+        return DatabaseEngine(dbname, db_username, db_password)
+
     from . import server
 
-    db_engine = sqlite_engine()
+    if "://" in dbname:
+        db_engine = sqlalchemy_engine()
+    else:
+        db_engine = sqlite_engine()
 
     s = server.Server(db_engine, upstream=upstream, read_only=read_only)
 
