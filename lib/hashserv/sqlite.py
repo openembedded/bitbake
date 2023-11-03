@@ -120,6 +120,18 @@ class Database(object):
         self.db = sqlite3.connect(self.dbname)
         self.db.row_factory = sqlite3.Row
 
+        with closing(self.db.cursor()) as cursor:
+            cursor.execute("SELECT sqlite_version()")
+
+            version = []
+            for v in cursor.fetchone()[0].split("."):
+                try:
+                    version.append(int(v))
+                except ValueError:
+                    version.append(v)
+
+            self.sqlite_version = tuple(version)
+
     async def __aenter__(self):
         return self
 
@@ -362,3 +374,28 @@ class Database(object):
             )
             self.db.commit()
             return cursor.rowcount != 0
+
+    async def get_usage(self):
+        usage = {}
+        with closing(self.db.cursor()) as cursor:
+            if self.sqlite_version >= (3, 33):
+                table_name = "sqlite_schema"
+            else:
+                table_name = "sqlite_master"
+
+            cursor.execute(
+                f"""
+                SELECT name FROM {table_name} WHERE type = 'table' AND name NOT LIKE 'sqlite_%'
+                """
+            )
+            for row in cursor.fetchall():
+                cursor.execute(
+                    """
+                    SELECT COUNT() FROM %s
+                    """
+                    % row["name"],
+                )
+                usage[row["name"]] = {
+                    "rows": cursor.fetchone()[0],
+                }
+        return usage
