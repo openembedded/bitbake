@@ -10,7 +10,7 @@ import json
 import os
 import socket
 import sys
-from .connection import StreamConnection, DEFAULT_MAX_CHUNK
+from .connection import StreamConnection, WebsocketConnection, DEFAULT_MAX_CHUNK
 from .exceptions import ConnectionClosedError
 
 
@@ -44,6 +44,15 @@ class AsyncClient(object):
                 os.chdir(cwd)
             reader, writer = await asyncio.open_unix_connection(sock=sock)
             return StreamConnection(reader, writer, self.timeout, self.max_chunk)
+
+        self._connect_sock = connect_sock
+
+    async def connect_websocket(self, uri):
+        import websockets
+
+        async def connect_sock():
+            websocket = await websockets.connect(uri, ping_interval=None)
+            return WebsocketConnection(websocket, self.timeout)
 
         self._connect_sock = connect_sock
 
