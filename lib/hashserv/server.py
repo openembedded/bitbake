@@ -475,6 +475,9 @@ class ServerClient(bb.asyncrpc.AsyncServerConnection):
             if k in data:
                 outhash_data[k] = data[k]
 
+        if self.user:
+            outhash_data["owner"] = self.user.username
+
         # Insert the new entry, unless it already exists
         if await self.db.insert_outhash(outhash_data):
             # If this row is new, check if it is equivalent to another
