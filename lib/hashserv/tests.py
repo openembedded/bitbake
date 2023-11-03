@@ -815,7 +815,8 @@ class TestHashEquivalenceClient(HashEquivalenceTestSetup, unittest.TestCase):
         return "unix://" + os.path.join(self.temp_dir.name, 'sock%d' % server_idx)
 
     def test_stats(self):
-        self.run_hashclient(["--address", self.server_address, "stats"], check=True)
+        p = self.run_hashclient(["--address", self.server_address, "stats"], check=True)
+        json.loads(p.stdout)
 
     def test_stress(self):
         self.run_hashclient(["--address", self.server_address, "stress"], check=True)
