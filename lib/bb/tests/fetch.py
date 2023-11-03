@@ -2277,7 +2277,7 @@ class GitLfsTest(FetcherTest):
 
     @skipIfNoGitLFS()
     @skipIfNoNetwork()
-    def test_real_git_lfs_repo_succeeds(self):
+    def test_real_git_lfs_repo_skips(self):
         self.d.setVar('SRC_URI', "git://gitlab.com/gitlab-examples/lfs.git;protocol=https;branch=master;lfs=0")
         f = self.get_real_git_lfs_file()
         # This is the actual non-smudged placeholder file on the repo if git-lfs does not run
@@ -2290,24 +2290,41 @@ class GitLfsTest(FetcherTest):
         with open(f) as fh:
             self.assertEqual(lfs_file, fh.read())
 
+    @skipIfNoGitLFS()
     def test_lfs_enabled(self):
         import shutil
 
         uri = 'git://%s;protocol=file;lfs=1;branch=master' % self.srcdir
         self.d.setVar('SRC_URI', uri)
 
-        # Careful: suppress initial attempt at downloading until
-        # we know whether git-lfs is installed.
+        # With git-lfs installed, test that we can fetch and unpack
+        fetcher, ud = self.fetch()
+        shutil.rmtree(self.gitdir, ignore_errors=True)
+        fetcher.unpack(self.d.getVar('WORKDIR'))
+
+    @skipIfNoGitLFS()
+    def test_lfs_disabled(self):
+        import shutil
+
+        uri = 'git://%s;protocol=file;lfs=0;branch=master' % self.srcdir
+        self.d.setVar('SRC_URI', uri)
+
+        # Verify that the fetcher can survive even if the source
+        # repository has Git LFS usage configured.
+        fetcher, ud = self.fetch()
+        fetcher.unpack(self.d.getVar('WORKDIR'))
+
+    def test_lfs_enabled_not_installed(self):
+        import shutil
+
+        uri = 'git://%s;protocol=file;lfs=1;branch=master' % self.srcdir
+        self.d.setVar('SRC_URI', uri)
+
+        # Careful: suppress initial attempt at downloading
         fetcher, ud = self.fetch(uri=None, download=False)
-        self.assertIsNotNone(ud.method._find_git_lfs)
 
-        # If git-lfs can be found, the unpack should be successful. Only
-        # attempt this with the real live copy of git-lfs installed.
-        if ud.method._find_git_lfs(self.d):
-            fetcher.download()
-            shutil.rmtree(self.gitdir, ignore_errors=True)
-            fetcher.unpack(self.d.getVar('WORKDIR'))
-
+        # Artificially assert that git-lfs is not installed, so
+        # we can verify a failure to unpack in it's absence.
         old_find_git_lfs = ud.method._find_git_lfs
         try:
             # If git-lfs cannot be found, the unpack should throw an error
@@ -2319,29 +2336,21 @@ class GitLfsTest(FetcherTest):
         finally:
             ud.method._find_git_lfs = old_find_git_lfs
 
-    def test_lfs_disabled(self):
+    def test_lfs_disabled_not_installed(self):
         import shutil
 
         uri = 'git://%s;protocol=file;lfs=0;branch=master' % self.srcdir
         self.d.setVar('SRC_URI', uri)
 
-        # In contrast to test_lfs_enabled(), allow the implicit download
-        # done by self.fetch() to occur here. The point of this test case
-        # is to verify that the fetcher can survive even if the source
-        # repository has Git LFS usage configured.
-        fetcher, ud = self.fetch()
-        self.assertIsNotNone(ud.method._find_git_lfs)
+        # Careful: suppress initial attempt at downloading
+        fetcher, ud = self.fetch(uri=None, download=False)
 
+        # Artificially assert that git-lfs is not installed, so
+        # we can verify a failure to unpack in it's absence.
         old_find_git_lfs = ud.method._find_git_lfs
         try:
-            # If git-lfs can be found, the unpack should be successful. A
-            # live copy of git-lfs is not required for this case, so
-            # unconditionally forge its presence.
-            ud.method._find_git_lfs = lambda d: True
-            shutil.rmtree(self.gitdir, ignore_errors=True)
-            fetcher.unpack(self.d.getVar('WORKDIR'))
-            # If git-lfs cannot be found, the unpack should be successful
-
+            # Even if git-lfs cannot be found, the unpack should be successful
+            fetcher.download()
             ud.method._find_git_lfs = lambda d: False
             shutil.rmtree(self.gitdir, ignore_errors=True)
             fetcher.unpack(self.d.getVar('WORKDIR'))
