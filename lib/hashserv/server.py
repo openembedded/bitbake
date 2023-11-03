@@ -165,8 +165,8 @@ class ServerCursor(object):
 
 
 class ServerClient(bb.asyncrpc.AsyncServerConnection):
-    def __init__(self, reader, writer, db, request_stats, backfill_queue, upstream, read_only):
-        super().__init__(reader, writer, 'OEHASHEQUIV', logger)
+    def __init__(self, socket, db, request_stats, backfill_queue, upstream, read_only):
+        super().__init__(socket, 'OEHASHEQUIV', logger)
         self.db = db
         self.request_stats = request_stats
         self.max_chunk = bb.asyncrpc.DEFAULT_MAX_CHUNK
@@ -209,12 +209,11 @@ class ServerClient(bb.asyncrpc.AsyncServerConnection):
             if k in msg:
                 logger.debug('Handling %s' % k)
                 if 'stream' in k:
-                    await self.handlers[k](msg[k])
+                    return await self.handlers[k](msg[k])
                 else:
                     with self.request_stats.start_sample() as self.request_sample, \
                             self.request_sample.measure():
-                        await self.handlers[k](msg[k])
-                return
+                        return await self.handlers[k](msg[k])
 
         raise bb.asyncrpc.ClientError("Unrecognized command %r" % msg)
 
@@ -224,9 +223,7 @@ class ServerClient(bb.asyncrpc.AsyncServerConnection):
         fetch_all = request.get('all', False)
 
         with closing(self.db.cursor()) as cursor:
-            d = await self.get_unihash(cursor, method, taskhash, fetch_all)
-
-        self.write_message(d)
+            return await self.get_unihash(cursor, method, taskhash, fetch_all)
 
     async def get_unihash(self, cursor, method, taskhash, fetch_all=False):
         d = None
@@ -274,9 +271,7 @@ class ServerClient(bb.asyncrpc.AsyncServerConnection):
         with_unihash = request.get("with_unihash", True)
 
         with closing(self.db.cursor()) as cursor:
-            d = await self.get_outhash(cursor, method, outhash, taskhash, with_unihash)
-
-        self.write_message(d)
+            return await self.get_outhash(cursor, method, outhash, taskhash, with_unihash)
 
     async def get_outhash(self, cursor, method, outhash, taskhash, with_unihash=True):
         d = None
@@ -334,14 +329,14 @@ class ServerClient(bb.asyncrpc.AsyncServerConnection):
         )
 
     async def handle_get_stream(self, request):
-        self.write_message('ok')
+        await self.socket.send_message("ok")
 
         while True:
             upstream = None
 
-            l = await self.reader.readline()
+            l = await self.socket.recv()
             if not l:
-                return
+                break
 
             try:
                 # This inner loop is very sensitive and must be as fast as
@@ -352,10 +347,8 @@ class ServerClient(bb.asyncrpc.AsyncServerConnection):
                 request_measure = self.request_sample.measure()
                 request_measure.start()
 
-                l = l.decode('utf-8').rstrip()
                 if l == 'END':
-                    self.writer.write('ok\n'.encode('utf-8'))
-                    return
+                    break
 
                 (method, taskhash) = l.split()
                 #logger.debug('Looking up %s %s' % (method, taskhash))
@@ -366,28 +359,29 @@ class ServerClient(bb.asyncrpc.AsyncServerConnection):
                     cursor.close()
 
                 if row is not None:
-                    msg = ('%s\n' % row['unihash']).encode('utf-8')
+                    msg = row['unihash']
                     #logger.debug('Found equivalent task %s -> %s', (row['taskhash'], row['unihash']))
                 elif self.upstream_client is not None:
                     upstream = await self.upstream_client.get_unihash(method, taskhash)
                     if upstream:
-                        msg = ("%s\n" % upstream).encode("utf-8")
+                        msg = upstream
                     else:
-                        msg = "\n".encode("utf-8")
+                        msg = ""
                 else:
-                    msg = '\n'.encode('utf-8')
+                    msg = ""
 
-                self.writer.write(msg)
+                await self.socket.send(msg)
             finally:
                 request_measure.end()
                 self.request_sample.end()
-
-            await self.writer.drain()
 
             # Post to the backfill queue after writing the result to minimize
             # the turn around time on a request
             if upstream is not None:
                 await self.backfill_queue.put((method, taskhash))
+
+        await self.socket.send("ok")
+        return self.NO_RESPONSE
 
     async def handle_report(self, data):
         with closing(self.db.cursor()) as cursor:
@@ -468,7 +462,7 @@ class ServerClient(bb.asyncrpc.AsyncServerConnection):
                 'unihash': unihash,
             }
 
-        self.write_message(d)
+        return d
 
     async def handle_equivreport(self, data):
         with closing(self.db.cursor()) as cursor:
@@ -491,15 +485,13 @@ class ServerClient(bb.asyncrpc.AsyncServerConnection):
 
             d = {k: row[k] for k in ('taskhash', 'method', 'unihash')}
 
-        self.write_message(d)
+        return d
 
 
     async def handle_get_stats(self, request):
-        d = {
+        return {
             'requests': self.request_stats.todict(),
         }
-
-        self.write_message(d)
 
     async def handle_reset_stats(self, request):
         d = {
@@ -507,14 +499,14 @@ class ServerClient(bb.asyncrpc.AsyncServerConnection):
         }
 
         self.request_stats.reset()
-        self.write_message(d)
+        return d
 
     async def handle_backfill_wait(self, request):
         d = {
             'tasks': self.backfill_queue.qsize(),
         }
         await self.backfill_queue.join()
-        self.write_message(d)
+        return d
 
     async def handle_remove(self, request):
         condition = request["where"]
@@ -541,7 +533,7 @@ class ServerClient(bb.asyncrpc.AsyncServerConnection):
             count += do_remove(UNIHASH_TABLE_COLUMNS, "unihashes_v2", cursor)
             self.db.commit()
 
-        self.write_message({"count": count})
+        return {"count": count}
 
     async def handle_clean_unused(self, request):
         max_age = request["max_age_seconds"]
@@ -558,7 +550,7 @@ class ServerClient(bb.asyncrpc.AsyncServerConnection):
             )
             count = cursor.rowcount
 
-        self.write_message({"count": count})
+        return {"count": count}
 
     def query_equivalent(self, cursor, method, taskhash):
         # This is part of the inner loop and must be as fast as possible
@@ -583,41 +575,33 @@ class Server(bb.asyncrpc.AsyncServer):
         self.db = db
         self.upstream = upstream
         self.read_only = read_only
+        self.backfill_queue = None
 
-    def accept_client(self, reader, writer):
-        return ServerClient(reader, writer, self.db, self.request_stats, self.backfill_queue, self.upstream, self.read_only)
+    def accept_client(self, socket):
+        return ServerClient(socket, self.db, self.request_stats, self.backfill_queue, self.upstream, self.read_only)
 
-    @contextmanager
-    def _backfill_worker(self):
-        async def backfill_worker_task():
-            client = await create_async_client(self.upstream)
-            try:
-                while True:
-                    item = await self.backfill_queue.get()
-                    if item is None:
-                        self.backfill_queue.task_done()
-                        break
-                    method, taskhash = item
-                    await copy_unihash_from_upstream(client, self.db, method, taskhash)
+    async def backfill_worker_task(self):
+        client = await create_async_client(self.upstream)
+        try:
+            while True:
+                item = await self.backfill_queue.get()
+                if item is None:
                     self.backfill_queue.task_done()
-            finally:
-                await client.close()
+                    break
+                method, taskhash = item
+                await copy_unihash_from_upstream(client, self.db, method, taskhash)
+                self.backfill_queue.task_done()
+        finally:
+            await client.close()
 
-        async def join_worker(worker):
+    def start(self):
+        tasks = super().start()
+        if self.upstream:
+            self.backfill_queue = asyncio.Queue()
+            tasks += [self.backfill_worker_task()]
+        return tasks
+
+    async def stop(self):
+        if self.backfill_queue is not None:
             await self.backfill_queue.put(None)
-            await worker
-
-        if self.upstream is not None:
-            worker = asyncio.ensure_future(backfill_worker_task())
-            try:
-                yield
-            finally:
-                self.loop.run_until_complete(join_worker(worker))
-        else:
-            yield
-
-    def run_loop_forever(self):
-        self.backfill_queue = asyncio.Queue()
-
-        with self._backfill_worker():
-            super().run_loop_forever()
+        await super().stop()

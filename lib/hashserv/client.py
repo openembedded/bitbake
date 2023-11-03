@@ -28,24 +28,24 @@ class AsyncClient(bb.asyncrpc.AsyncClient):
 
     async def send_stream(self, msg):
         async def proc():
-            self.writer.write(("%s\n" % msg).encode("utf-8"))
-            await self.writer.drain()
-            l = await self.reader.readline()
-            if not l:
-                raise ConnectionError("Connection closed")
-            return l.decode("utf-8").rstrip()
+            await self.socket.send(msg)
+            return await self.socket.recv()
 
         return await self._send_wrapper(proc)
 
     async def _set_mode(self, new_mode):
+        async def stream_to_normal():
+            await self.socket.send("END")
+            return await self.socket.recv()
+
         if new_mode == self.MODE_NORMAL and self.mode == self.MODE_GET_STREAM:
-            r = await self.send_stream("END")
+            r = await self._send_wrapper(stream_to_normal)
             if r != "ok":
-                raise ConnectionError("Bad response from server %r" % r)
+                raise ConnectionError("Unable to transition to normal mode: Bad response from server %r" % r)
         elif new_mode == self.MODE_GET_STREAM and self.mode == self.MODE_NORMAL:
-            r = await self.send_message({"get-stream": None})
+            r = await self.invoke({"get-stream": None})
             if r != "ok":
-                raise ConnectionError("Bad response from server %r" % r)
+                raise ConnectionError("Unable to transition to stream mode: Bad response from server %r" % r)
         elif new_mode != self.mode:
             raise Exception(
                 "Undefined mode transition %r -> %r" % (self.mode, new_mode)
@@ -67,7 +67,7 @@ class AsyncClient(bb.asyncrpc.AsyncClient):
         m["method"] = method
         m["outhash"] = outhash
         m["unihash"] = unihash
-        return await self.send_message({"report": m})
+        return await self.invoke({"report": m})
 
     async def report_unihash_equiv(self, taskhash, method, unihash, extra={}):
         await self._set_mode(self.MODE_NORMAL)
@@ -75,39 +75,39 @@ class AsyncClient(bb.asyncrpc.AsyncClient):
         m["taskhash"] = taskhash
         m["method"] = method
         m["unihash"] = unihash
-        return await self.send_message({"report-equiv": m})
+        return await self.invoke({"report-equiv": m})
 
     async def get_taskhash(self, method, taskhash, all_properties=False):
         await self._set_mode(self.MODE_NORMAL)
-        return await self.send_message(
+        return await self.invoke(
             {"get": {"taskhash": taskhash, "method": method, "all": all_properties}}
         )
 
     async def get_outhash(self, method, outhash, taskhash, with_unihash=True):
         await self._set_mode(self.MODE_NORMAL)
-        return await self.send_message(
+        return await self.invoke(
             {"get-outhash": {"outhash": outhash, "taskhash": taskhash, "method": method, "with_unihash": with_unihash}}
         )
 
     async def get_stats(self):
         await self._set_mode(self.MODE_NORMAL)
-        return await self.send_message({"get-stats": None})
+        return await self.invoke({"get-stats": None})
 
     async def reset_stats(self):
         await self._set_mode(self.MODE_NORMAL)
-        return await self.send_message({"reset-stats": None})
+        return await self.invoke({"reset-stats": None})
 
     async def backfill_wait(self):
         await self._set_mode(self.MODE_NORMAL)
-        return (await self.send_message({"backfill-wait": None}))["tasks"]
+        return (await self.invoke({"backfill-wait": None}))["tasks"]
 
     async def remove(self, where):
         await self._set_mode(self.MODE_NORMAL)
-        return await self.send_message({"remove": {"where": where}})
+        return await self.invoke({"remove": {"where": where}})
 
     async def clean_unused(self, max_age):
         await self._set_mode(self.MODE_NORMAL)
-        return await self.send_message({"clean-unused": {"max_age_seconds": max_age}})
+        return await self.invoke({"clean-unused": {"max_age_seconds": max_age}})
 
 
 class Client(bb.asyncrpc.Client):
