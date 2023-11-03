@@ -8,11 +8,46 @@ import asyncio
 import logging
 import math
 import time
+import os
+import base64
+import hashlib
 from . import create_async_client
 import bb.asyncrpc
 
-
 logger = logging.getLogger("hashserv.server")
+
+
+# This permission only exists to match nothing
+NONE_PERM = "@none"
+
+READ_PERM = "@read"
+REPORT_PERM = "@report"
+DB_ADMIN_PERM = "@db-admin"
+USER_ADMIN_PERM = "@user-admin"
+ALL_PERM = "@all"
+
+ALL_PERMISSIONS = {
+    READ_PERM,
+    REPORT_PERM,
+    DB_ADMIN_PERM,
+    USER_ADMIN_PERM,
+    ALL_PERM,
+}
+
+DEFAULT_ANON_PERMS = (
+    READ_PERM,
+    REPORT_PERM,
+    DB_ADMIN_PERM,
+)
+
+TOKEN_ALGORITHM = "sha256"
+
+# 48 bytes of random data will result in 64 characters when base64
+# encoded. This number also ensures that the base64 encoding won't have any
+# trailing '=' characters.
+TOKEN_SIZE = 48
+
+SALT_SIZE = 8
 
 
 class Measurement(object):
@@ -108,6 +143,85 @@ class Stats(object):
         }
 
 
+token_refresh_semaphore = asyncio.Lock()
+
+
+async def new_token():
+    # Prevent malicious users from using this API to deduce the entropy
+    # pool on the server and thus be able to guess a token. *All* token
+    # refresh requests lock the same global semaphore and then sleep for a
+    # short time. The effectively rate limits the total number of requests
+    # than can be made across all clients to 10/second, which should be enough
+    # since you have to be an authenticated users to make the request in the
+    # first place
+    async with token_refresh_semaphore:
+        await asyncio.sleep(0.1)
+        raw = os.getrandom(TOKEN_SIZE, os.GRND_NONBLOCK)
+
+    return base64.b64encode(raw, b"._").decode("utf-8")
+
+
+def new_salt():
+    return os.getrandom(SALT_SIZE, os.GRND_NONBLOCK).hex()
+
+
+def hash_token(algo, salt, token):
+    h = hashlib.new(algo)
+    h.update(salt.encode("utf-8"))
+    h.update(token.encode("utf-8"))
+    return ":".join([algo, salt, h.hexdigest()])
+
+
+def permissions(*permissions, allow_anon=True, allow_self_service=False):
+    """
+    Function decorator that can be used to decorate an RPC function call and
+    check that the current users permissions match the require permissions.
+
+    If allow_anon is True, the user will also be allowed to make the RPC call
+    if the anonymous user permissions match the permissions.
+
+    If allow_self_service is True, and the "username" property in the request
+    is the currently logged in user, or not specified, the user will also be
+    allowed to make the request. This allows users to access normal privileged
+    API, as long as they are only modifying their own user properties (e.g.
+    users can be allowed to reset their own token without @user-admin
+    permissions, but not the token for any other user.
+    """
+
+    def wrapper(func):
+        async def wrap(self, request):
+            if allow_self_service and self.user is not None:
+                username = request.get("username", self.user.username)
+                if username == self.user.username:
+                    request["username"] = self.user.username
+                    return await func(self, request)
+
+            if not self.user_has_permissions(*permissions, allow_anon=allow_anon):
+                if not self.user:
+                    username = "Anonymous user"
+                    user_perms = self.anon_perms
+                else:
+                    username = self.user.username
+                    user_perms = self.user.permissions
+
+                self.logger.info(
+                    "User %s with permissions %r denied from calling %s. Missing permissions(s) %r",
+                    username,
+                    ", ".join(user_perms),
+                    func.__name__,
+                    ", ".join(permissions),
+                )
+                raise bb.asyncrpc.InvokeError(
+                    f"{username} is not allowed to access permissions(s) {', '.join(permissions)}"
+                )
+
+            return await func(self, request)
+
+        return wrap
+
+    return wrapper
+
+
 class ServerClient(bb.asyncrpc.AsyncServerConnection):
     def __init__(
         self,
@@ -117,6 +231,7 @@ class ServerClient(bb.asyncrpc.AsyncServerConnection):
         backfill_queue,
         upstream,
         read_only,
+        anon_perms,
     ):
         super().__init__(socket, "OEHASHEQUIV", logger)
         self.db_engine = db_engine
@@ -125,6 +240,8 @@ class ServerClient(bb.asyncrpc.AsyncServerConnection):
         self.backfill_queue = backfill_queue
         self.upstream = upstream
         self.read_only = read_only
+        self.user = None
+        self.anon_perms = anon_perms
 
         self.handlers.update(
             {
@@ -135,6 +252,9 @@ class ServerClient(bb.asyncrpc.AsyncServerConnection):
                 # Not always read-only, but internally checks if the server is
                 # read-only
                 "report": self.handle_report,
+                "auth": self.handle_auth,
+                "get-user": self.handle_get_user,
+                "get-all-users": self.handle_get_all_users,
             }
         )
 
@@ -146,8 +266,35 @@ class ServerClient(bb.asyncrpc.AsyncServerConnection):
                     "backfill-wait": self.handle_backfill_wait,
                     "remove": self.handle_remove,
                     "clean-unused": self.handle_clean_unused,
+                    "refresh-token": self.handle_refresh_token,
+                    "set-user-perms": self.handle_set_perms,
+                    "new-user": self.handle_new_user,
+                    "delete-user": self.handle_delete_user,
                 }
             )
+
+    def raise_no_user_error(self, username):
+        raise bb.asyncrpc.InvokeError(f"No user named '{username}' exists")
+
+    def user_has_permissions(self, *permissions, allow_anon=True):
+        permissions = set(permissions)
+        if allow_anon:
+            if ALL_PERM in self.anon_perms:
+                return True
+
+            if not permissions - self.anon_perms:
+                return True
+
+        if self.user is None:
+            return False
+
+        if ALL_PERM in self.user.permissions:
+            return True
+
+        if not permissions - self.user.permissions:
+            return True
+
+        return False
 
     def validate_proto_version(self):
         return self.proto_version > (1, 0) and self.proto_version <= (1, 1)
@@ -178,6 +325,7 @@ class ServerClient(bb.asyncrpc.AsyncServerConnection):
 
         raise bb.asyncrpc.ClientError("Unrecognized command %r" % msg)
 
+    @permissions(READ_PERM)
     async def handle_get(self, request):
         method = request["method"]
         taskhash = request["taskhash"]
@@ -206,6 +354,7 @@ class ServerClient(bb.asyncrpc.AsyncServerConnection):
 
         return d
 
+    @permissions(READ_PERM)
     async def handle_get_outhash(self, request):
         method = request["method"]
         outhash = request["outhash"]
@@ -236,6 +385,7 @@ class ServerClient(bb.asyncrpc.AsyncServerConnection):
         await self.db.insert_unihash(data["method"], data["taskhash"], data["unihash"])
         await self.db.insert_outhash(data)
 
+    @permissions(READ_PERM)
     async def handle_get_stream(self, request):
         await self.socket.send_message("ok")
 
@@ -304,8 +454,11 @@ class ServerClient(bb.asyncrpc.AsyncServerConnection):
             "unihash": unihash,
         }
 
+    # Since this can be called either read only or to report, the check to
+    # report is made inside the function
+    @permissions(READ_PERM)
     async def handle_report(self, data):
-        if self.read_only:
+        if self.read_only or not self.user_has_permissions(REPORT_PERM):
             return await self.report_readonly(data)
 
         outhash_data = {
@@ -358,6 +511,7 @@ class ServerClient(bb.asyncrpc.AsyncServerConnection):
             "unihash": unihash,
         }
 
+    @permissions(READ_PERM, REPORT_PERM)
     async def handle_equivreport(self, data):
         await self.db.insert_unihash(data["method"], data["taskhash"], data["unihash"])
 
@@ -375,11 +529,13 @@ class ServerClient(bb.asyncrpc.AsyncServerConnection):
 
         return {k: row[k] for k in ("taskhash", "method", "unihash")}
 
+    @permissions(READ_PERM)
     async def handle_get_stats(self, request):
         return {
             "requests": self.request_stats.todict(),
         }
 
+    @permissions(DB_ADMIN_PERM)
     async def handle_reset_stats(self, request):
         d = {
             "requests": self.request_stats.todict(),
@@ -388,6 +544,7 @@ class ServerClient(bb.asyncrpc.AsyncServerConnection):
         self.request_stats.reset()
         return d
 
+    @permissions(READ_PERM)
     async def handle_backfill_wait(self, request):
         d = {
             "tasks": self.backfill_queue.qsize(),
@@ -395,6 +552,7 @@ class ServerClient(bb.asyncrpc.AsyncServerConnection):
         await self.backfill_queue.join()
         return d
 
+    @permissions(DB_ADMIN_PERM)
     async def handle_remove(self, request):
         condition = request["where"]
         if not isinstance(condition, dict):
@@ -402,17 +560,176 @@ class ServerClient(bb.asyncrpc.AsyncServerConnection):
 
         return {"count": await self.db.remove(condition)}
 
+    @permissions(DB_ADMIN_PERM)
     async def handle_clean_unused(self, request):
         max_age = request["max_age_seconds"]
         oldest = datetime.now() - timedelta(seconds=-max_age)
         return {"count": await self.db.clean_unused(oldest)}
 
+    # The authentication API is always allowed
+    async def handle_auth(self, request):
+        username = str(request["username"])
+        token = str(request["token"])
+
+        async def fail_auth():
+            nonlocal username
+            # Rate limit bad login attempts
+            await asyncio.sleep(1)
+            raise bb.asyncrpc.InvokeError(f"Unable to authenticate as {username}")
+
+        user, db_token = await self.db.lookup_user_token(username)
+
+        if not user or not db_token:
+            await fail_auth()
+
+        try:
+            algo, salt, _ = db_token.split(":")
+        except ValueError:
+            await fail_auth()
+
+        if hash_token(algo, salt, token) != db_token:
+            await fail_auth()
+
+        self.user = user
+
+        self.logger.info("Authenticated as %s", username)
+
+        return {
+            "result": True,
+            "username": self.user.username,
+            "permissions": sorted(list(self.user.permissions)),
+        }
+
+    @permissions(USER_ADMIN_PERM, allow_self_service=True, allow_anon=False)
+    async def handle_refresh_token(self, request):
+        username = str(request["username"])
+
+        token = await new_token()
+
+        updated = await self.db.set_user_token(
+            username,
+            hash_token(TOKEN_ALGORITHM, new_salt(), token),
+        )
+        if not updated:
+            self.raise_no_user_error(username)
+
+        return {"username": username, "token": token}
+
+    def get_perm_arg(self, arg):
+        if not isinstance(arg, list):
+            raise bb.asyncrpc.InvokeError("Unexpected type for permissions")
+
+        arg = set(arg)
+        try:
+            arg.remove(NONE_PERM)
+        except KeyError:
+            pass
+
+        unknown_perms = arg - ALL_PERMISSIONS
+        if unknown_perms:
+            raise bb.asyncrpc.InvokeError(
+                "Unknown permissions %s" % ", ".join(sorted(list(unknown_perms)))
+            )
+
+        return sorted(list(arg))
+
+    def return_perms(self, permissions):
+        if ALL_PERM in permissions:
+            return sorted(list(ALL_PERMISSIONS))
+        return sorted(list(permissions))
+
+    @permissions(USER_ADMIN_PERM, allow_anon=False)
+    async def handle_set_perms(self, request):
+        username = str(request["username"])
+        permissions = self.get_perm_arg(request["permissions"])
+
+        if not await self.db.set_user_perms(username, permissions):
+            self.raise_no_user_error(username)
+
+        return {
+            "username": username,
+            "permissions": self.return_perms(permissions),
+        }
+
+    @permissions(USER_ADMIN_PERM, allow_self_service=True, allow_anon=False)
+    async def handle_get_user(self, request):
+        username = str(request["username"])
+
+        user = await self.db.lookup_user(username)
+        if user is None:
+            return None
+
+        return {
+            "username": user.username,
+            "permissions": self.return_perms(user.permissions),
+        }
+
+    @permissions(USER_ADMIN_PERM, allow_anon=False)
+    async def handle_get_all_users(self, request):
+        users = await self.db.get_all_users()
+        return {
+            "users": [
+                {
+                    "username": u.username,
+                    "permissions": self.return_perms(u.permissions),
+                }
+                for u in users
+            ]
+        }
+
+    @permissions(USER_ADMIN_PERM, allow_anon=False)
+    async def handle_new_user(self, request):
+        username = str(request["username"])
+        permissions = self.get_perm_arg(request["permissions"])
+
+        token = await new_token()
+
+        inserted = await self.db.new_user(
+            username,
+            permissions,
+            hash_token(TOKEN_ALGORITHM, new_salt(), token),
+        )
+        if not inserted:
+            raise bb.asyncrpc.InvokeError(f"Cannot create new user '{username}'")
+
+        return {
+            "username": username,
+            "permissions": self.return_perms(permissions),
+            "token": token,
+        }
+
+    @permissions(USER_ADMIN_PERM, allow_anon=False)
+    async def handle_delete_user(self, request):
+        username = str(request["username"])
+
+        if not await self.db.delete_user(username):
+            self.raise_no_user_error(username)
+
+        return {"username": username}
+
 
 class Server(bb.asyncrpc.AsyncServer):
-    def __init__(self, db_engine, upstream=None, read_only=False):
+    def __init__(
+        self,
+        db_engine,
+        upstream=None,
+        read_only=False,
+        anon_perms=DEFAULT_ANON_PERMS,
+        admin_username=None,
+        admin_password=None,
+    ):
         if upstream and read_only:
             raise bb.asyncrpc.ServerError(
                 "Read-only hashserv cannot pull from an upstream server"
+            )
+
+        disallowed_perms = set(anon_perms) - set(
+            [NONE_PERM, READ_PERM, REPORT_PERM, DB_ADMIN_PERM]
+        )
+
+        if disallowed_perms:
+            raise bb.asyncrpc.ServerError(
+                f"Permission(s) {' '.join(disallowed_perms)} are not allowed for anonymous users"
             )
 
         super().__init__(logger)
@@ -422,6 +739,13 @@ class Server(bb.asyncrpc.AsyncServer):
         self.upstream = upstream
         self.read_only = read_only
         self.backfill_queue = None
+        self.anon_perms = set(anon_perms)
+        self.admin_username = admin_username
+        self.admin_password = admin_password
+
+        self.logger.info(
+            "Anonymous user permissions are: %s", ", ".join(self.anon_perms)
+        )
 
     def accept_client(self, socket):
         return ServerClient(
@@ -431,12 +755,34 @@ class Server(bb.asyncrpc.AsyncServer):
             self.backfill_queue,
             self.upstream,
             self.read_only,
+            self.anon_perms,
         )
+
+    async def create_admin_user(self):
+        admin_permissions = (ALL_PERM,)
+        async with self.db_engine.connect(self.logger) as db:
+            added = await db.new_user(
+                self.admin_username,
+                admin_permissions,
+                hash_token(TOKEN_ALGORITHM, new_salt(), self.admin_password),
+            )
+            if added:
+                self.logger.info("Created admin user '%s'", self.admin_username)
+            else:
+                await db.set_user_perms(
+                    self.admin_username,
+                    admin_permissions,
+                )
+                await db.set_user_token(
+                    self.admin_username,
+                    hash_token(TOKEN_ALGORITHM, new_salt(), self.admin_password),
+                )
+                self.logger.info("Admin user '%s' updated", self.admin_username)
 
     async def backfill_worker_task(self):
         async with await create_async_client(
             self.upstream
-        ) as client, self.db_engine.connect(logger) as db:
+        ) as client, self.db_engine.connect(self.logger) as db:
             while True:
                 item = await self.backfill_queue.get()
                 if item is None:
@@ -456,6 +802,9 @@ class Server(bb.asyncrpc.AsyncServer):
             tasks += [self.backfill_worker_task()]
 
         self.loop.run_until_complete(self.db_engine.create())
+
+        if self.admin_username:
+            self.loop.run_until_complete(self.create_admin_user())
 
         return tasks
 

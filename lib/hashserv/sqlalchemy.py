@@ -7,6 +7,7 @@
 
 import logging
 from datetime import datetime
+from . import User
 
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy.pool import NullPool
@@ -25,12 +26,11 @@ from sqlalchemy import (
     literal,
     and_,
     delete,
+    update,
 )
 import sqlalchemy.engine
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.exc import IntegrityError
-
-logger = logging.getLogger("hashserv.sqlalchemy")
 
 Base = declarative_base()
 
@@ -68,9 +68,19 @@ class OuthashesV2(Base):
     )
 
 
+class Users(Base):
+    __tablename__ = "users"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    username = Column(Text, nullable=False)
+    token = Column(Text, nullable=False)
+    permissions = Column(Text)
+
+    __table_args__ = (UniqueConstraint("username"),)
+
+
 class DatabaseEngine(object):
     def __init__(self, url, username=None, password=None):
-        self.logger = logger
+        self.logger = logging.getLogger("hashserv.sqlalchemy")
         self.url = sqlalchemy.engine.make_url(url)
 
         if username is not None:
@@ -85,7 +95,7 @@ class DatabaseEngine(object):
 
         async with self.engine.begin() as conn:
             # Create tables
-            logger.info("Creating tables...")
+            self.logger.info("Creating tables...")
             await conn.run_sync(Base.metadata.create_all)
 
     def connect(self, logger):
@@ -96,6 +106,15 @@ def map_row(row):
     if row is None:
         return None
     return dict(**row._mapping)
+
+
+def map_user(row):
+    if row is None:
+        return None
+    return User(
+        username=row.username,
+        permissions=set(row.permissions.split()),
+    )
 
 
 class Database(object):
@@ -278,7 +297,7 @@ class Database(object):
                 await self.db.execute(statement)
             return True
         except IntegrityError:
-            logger.debug(
+            self.logger.debug(
                 "%s, %s, %s already in unihash database", method, taskhash, unihash
             )
             return False
@@ -298,7 +317,87 @@ class Database(object):
                 await self.db.execute(statement)
             return True
         except IntegrityError:
-            logger.debug(
+            self.logger.debug(
                 "%s, %s already in outhash database", data["method"], data["outhash"]
             )
             return False
+
+    async def _get_user(self, username):
+        statement = select(
+            Users.username,
+            Users.permissions,
+            Users.token,
+        ).where(
+            Users.username == username,
+        )
+        self.logger.debug("%s", statement)
+        async with self.db.begin():
+            result = await self.db.execute(statement)
+            return result.first()
+
+    async def lookup_user_token(self, username):
+        row = await self._get_user(username)
+        if not row:
+            return None, None
+        return map_user(row), row.token
+
+    async def lookup_user(self, username):
+        return map_user(await self._get_user(username))
+
+    async def set_user_token(self, username, token):
+        statement = (
+            update(Users)
+            .where(
+                Users.username == username,
+            )
+            .values(
+                token=token,
+            )
+        )
+        self.logger.debug("%s", statement)
+        async with self.db.begin():
+            result = await self.db.execute(statement)
+            return result.rowcount != 0
+
+    async def set_user_perms(self, username, permissions):
+        statement = (
+            update(Users)
+            .where(Users.username == username)
+            .values(permissions=" ".join(permissions))
+        )
+        self.logger.debug("%s", statement)
+        async with self.db.begin():
+            result = await self.db.execute(statement)
+            return result.rowcount != 0
+
+    async def get_all_users(self):
+        statement = select(
+            Users.username,
+            Users.permissions,
+        )
+        self.logger.debug("%s", statement)
+        async with self.db.begin():
+            result = await self.db.execute(statement)
+            return [map_user(row) for row in result]
+
+    async def new_user(self, username, permissions, token):
+        statement = insert(Users).values(
+            username=username,
+            permissions=" ".join(permissions),
+            token=token,
+        )
+        self.logger.debug("%s", statement)
+        try:
+            async with self.db.begin():
+                await self.db.execute(statement)
+            return True
+        except IntegrityError as e:
+            self.logger.debug("Cannot create new user %s: %s", username, e)
+            return False
+
+    async def delete_user(self, username):
+        statement = delete(Users).where(Users.username == username)
+        self.logger.debug("%s", statement)
+        async with self.db.begin():
+            result = await self.db.execute(statement)
+            return result.rowcount != 0

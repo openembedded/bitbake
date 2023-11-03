@@ -6,6 +6,8 @@
 #
 
 from . import create_server, create_client
+from .server import DEFAULT_ANON_PERMS, ALL_PERMISSIONS
+from bb.asyncrpc import InvokeError
 import hashlib
 import logging
 import multiprocessing
@@ -29,8 +31,9 @@ class HashEquivalenceTestSetup(object):
     METHOD = 'TestMethod'
 
     server_index = 0
+    client_index = 0
 
-    def start_server(self, dbpath=None, upstream=None, read_only=False, prefunc=server_prefunc):
+    def start_server(self, dbpath=None, upstream=None, read_only=False, prefunc=server_prefunc, anon_perms=DEFAULT_ANON_PERMS, admin_username=None, admin_password=None):
         self.server_index += 1
         if dbpath is None:
             dbpath = self.make_dbpath()
@@ -45,7 +48,10 @@ class HashEquivalenceTestSetup(object):
         server = create_server(self.get_server_addr(self.server_index),
                                dbpath,
                                upstream=upstream,
-                               read_only=read_only)
+                               read_only=read_only,
+                               anon_perms=anon_perms,
+                               admin_username=admin_username,
+                               admin_password=admin_password)
         server.dbpath = dbpath
 
         server.serve_as_process(prefunc=prefunc, args=(self.server_index,))
@@ -56,18 +62,31 @@ class HashEquivalenceTestSetup(object):
     def make_dbpath(self):
         return os.path.join(self.temp_dir.name, "db%d.sqlite" % self.server_index)
 
-    def start_client(self, server_address):
+    def start_client(self, server_address, username=None, password=None):
         def cleanup_client(client):
             client.close()
 
-        client = create_client(server_address)
+        client = create_client(server_address, username=username, password=password)
         self.addCleanup(cleanup_client, client)
 
         return client
 
     def start_test_server(self):
-        server = self.start_server()
-        return server.address
+        self.server = self.start_server()
+        return self.server.address
+
+    def start_auth_server(self):
+        self.auth_server = self.start_server(self.server.dbpath, anon_perms=[], admin_username="admin", admin_password="password")
+        self.admin_client = self.start_client(self.auth_server.address, username="admin", password="password")
+        return self.admin_client
+
+    def auth_client(self, user):
+        return self.start_client(self.auth_server.address, user["username"], user["token"])
+
+    def auth_perms(self, *permissions):
+        self.client_index += 1
+        user = self.admin_client.new_user(f"user-{self.client_index}", permissions)
+        return self.auth_client(user)
 
     def setUp(self):
         if sys.version_info < (3, 5, 0):
@@ -86,17 +105,20 @@ class HashEquivalenceTestSetup(object):
 
 
 class HashEquivalenceCommonTests(object):
-    def test_create_hash(self):
+    def create_test_hash(self, client):
         # Simple test that hashes can be created
         taskhash = '35788efcb8dfb0a02659d81cf2bfd695fb30faf9'
         outhash = '2765d4a5884be49b28601445c2760c5f21e7e5c0ee2b7e3fce98fd7e5970796f'
         unihash = 'f46d3fbb439bd9b921095da657a4de906510d2cd'
 
-        self.assertClientGetHash(self.client, taskhash, None)
+        self.assertClientGetHash(client, taskhash, None)
 
-        result = self.client.report_unihash(taskhash, self.METHOD, outhash, unihash)
+        result = client.report_unihash(taskhash, self.METHOD, outhash, unihash)
         self.assertEqual(result['unihash'], unihash, 'Server returned bad unihash')
         return taskhash, outhash, unihash
+
+    def test_create_hash(self):
+        return self.create_test_hash(self.client)
 
     def test_create_equivalent(self):
         # Tests that a second reported task with the same outhash will be
@@ -470,6 +492,242 @@ class HashEquivalenceCommonTests(object):
         # The originally reported unihash for Task 3 should be unchanged even if it
         # shares a taskhash with Task 2
         self.assertClientGetHash(self.client, taskhash2, unihash2)
+
+    def test_auth_read_perms(self):
+        admin_client = self.start_auth_server()
+
+        # Create hashes with non-authenticated server
+        taskhash, outhash, unihash = self.test_create_hash()
+
+        # Validate hash can be retrieved using authenticated client
+        with self.auth_perms("@read") as client:
+            self.assertClientGetHash(client, taskhash, unihash)
+
+        with self.auth_perms() as client, self.assertRaises(InvokeError):
+            self.assertClientGetHash(client, taskhash, unihash)
+
+    def test_auth_report_perms(self):
+        admin_client = self.start_auth_server()
+
+        # Without read permission, the user is completely denied
+        with self.auth_perms() as client, self.assertRaises(InvokeError):
+            self.create_test_hash(client)
+
+        # Read permission allows the call to succeed, but it doesn't record
+        # anythin in the database
+        with self.auth_perms("@read") as client:
+            taskhash, outhash, unihash = self.create_test_hash(client)
+            self.assertClientGetHash(client, taskhash, None)
+
+        # Report permission alone is insufficient
+        with self.auth_perms("@report") as client, self.assertRaises(InvokeError):
+            self.create_test_hash(client)
+
+        # Read and report permission actually modify the database
+        with self.auth_perms("@read", "@report") as client:
+            taskhash, outhash, unihash = self.create_test_hash(client)
+            self.assertClientGetHash(client, taskhash, unihash)
+
+    def test_auth_no_token_refresh_from_anon_user(self):
+        self.start_auth_server()
+
+        with self.start_client(self.auth_server.address) as client, self.assertRaises(InvokeError):
+            client.refresh_token()
+
+    def assertUserCanAuth(self, user):
+        with self.start_client(self.auth_server.address) as client:
+            client.auth(user["username"], user["token"])
+
+    def assertUserCannotAuth(self, user):
+        with self.start_client(self.auth_server.address) as client, self.assertRaises(InvokeError):
+            client.auth(user["username"], user["token"])
+
+    def test_auth_self_token_refresh(self):
+        admin_client = self.start_auth_server()
+
+        # Create a new user with no permissions
+        user = admin_client.new_user("test-user", [])
+
+        with self.auth_client(user) as client:
+            new_user = client.refresh_token()
+
+        self.assertEqual(user["username"], new_user["username"])
+        self.assertNotEqual(user["token"], new_user["token"])
+        self.assertUserCanAuth(new_user)
+        self.assertUserCannotAuth(user)
+
+        # Explicitly specifying with your own username is fine also
+        with self.auth_client(new_user) as client:
+            new_user2 = client.refresh_token(user["username"])
+
+        self.assertEqual(user["username"], new_user2["username"])
+        self.assertNotEqual(user["token"], new_user2["token"])
+        self.assertUserCanAuth(new_user2)
+        self.assertUserCannotAuth(new_user)
+        self.assertUserCannotAuth(user)
+
+    def test_auth_token_refresh(self):
+        admin_client = self.start_auth_server()
+
+        user = admin_client.new_user("test-user", [])
+
+        with self.auth_perms() as client, self.assertRaises(InvokeError):
+            client.refresh_token(user["username"])
+
+        with self.auth_perms("@user-admin") as client:
+            new_user = client.refresh_token(user["username"])
+
+        self.assertEqual(user["username"], new_user["username"])
+        self.assertNotEqual(user["token"], new_user["token"])
+        self.assertUserCanAuth(new_user)
+        self.assertUserCannotAuth(user)
+
+    def test_auth_self_get_user(self):
+        admin_client = self.start_auth_server()
+
+        user = admin_client.new_user("test-user", [])
+        user_info = user.copy()
+        del user_info["token"]
+
+        with self.auth_client(user) as client:
+            info = client.get_user()
+            self.assertEqual(info, user_info)
+
+            # Explicitly asking for your own username is fine also
+            info = client.get_user(user["username"])
+            self.assertEqual(info, user_info)
+
+    def test_auth_get_user(self):
+        admin_client = self.start_auth_server()
+
+        user = admin_client.new_user("test-user", [])
+        user_info = user.copy()
+        del user_info["token"]
+
+        with self.auth_perms() as client, self.assertRaises(InvokeError):
+            client.get_user(user["username"])
+
+        with self.auth_perms("@user-admin") as client:
+            info = client.get_user(user["username"])
+            self.assertEqual(info, user_info)
+
+            info = client.get_user("nonexist-user")
+            self.assertIsNone(info)
+
+    def test_auth_reconnect(self):
+        admin_client = self.start_auth_server()
+
+        user = admin_client.new_user("test-user", [])
+        user_info = user.copy()
+        del user_info["token"]
+
+        with self.auth_client(user) as client:
+            info = client.get_user()
+            self.assertEqual(info, user_info)
+
+            client.disconnect()
+
+            info = client.get_user()
+            self.assertEqual(info, user_info)
+
+    def test_auth_delete_user(self):
+        admin_client = self.start_auth_server()
+
+        user = admin_client.new_user("test-user", [])
+
+        # No self service
+        with self.auth_client(user) as client, self.assertRaises(InvokeError):
+            client.delete_user(user["username"])
+
+        with self.auth_perms() as client, self.assertRaises(InvokeError):
+            client.delete_user(user["username"])
+
+        with self.auth_perms("@user-admin") as client:
+            client.delete_user(user["username"])
+
+        # User doesn't exist, so even though the permission is correct, it's an
+        # error
+        with self.auth_perms("@user-admin") as client, self.assertRaises(InvokeError):
+            client.delete_user(user["username"])
+
+    def assertUserPerms(self, user, permissions):
+        with self.auth_client(user) as client:
+            info = client.get_user()
+            self.assertEqual(info, {
+                "username": user["username"],
+                "permissions": permissions,
+            })
+
+    def test_auth_set_user_perms(self):
+        admin_client = self.start_auth_server()
+
+        user = admin_client.new_user("test-user", [])
+
+        self.assertUserPerms(user, [])
+
+        # No self service to change permissions
+        with self.auth_client(user) as client, self.assertRaises(InvokeError):
+            client.set_user_perms(user["username"], ["@all"])
+        self.assertUserPerms(user, [])
+
+        with self.auth_perms() as client, self.assertRaises(InvokeError):
+            client.set_user_perms(user["username"], ["@all"])
+        self.assertUserPerms(user, [])
+
+        with self.auth_perms("@user-admin") as client:
+            client.set_user_perms(user["username"], ["@all"])
+        self.assertUserPerms(user, sorted(list(ALL_PERMISSIONS)))
+
+        # Bad permissions
+        with self.auth_perms("@user-admin") as client, self.assertRaises(InvokeError):
+            client.set_user_perms(user["username"], ["@this-is-not-a-permission"])
+        self.assertUserPerms(user, sorted(list(ALL_PERMISSIONS)))
+
+    def test_auth_get_all_users(self):
+        admin_client = self.start_auth_server()
+
+        user = admin_client.new_user("test-user", [])
+
+        with self.auth_client(user) as client, self.assertRaises(InvokeError):
+            client.get_all_users()
+
+        # Give the test user the correct permission
+        admin_client.set_user_perms(user["username"], ["@user-admin"])
+
+        with self.auth_client(user) as client:
+            all_users = client.get_all_users()
+
+        # Convert to a dictionary for easier comparison
+        all_users = {u["username"]: u for u in all_users}
+
+        self.assertEqual(all_users,
+            {
+                "admin": {
+                    "username": "admin",
+                    "permissions": sorted(list(ALL_PERMISSIONS)),
+                },
+                "test-user": {
+                    "username": "test-user",
+                    "permissions": ["@user-admin"],
+                }
+            }
+        )
+
+    def test_auth_new_user(self):
+        self.start_auth_server()
+
+        permissions = ["@read", "@report", "@db-admin", "@user-admin"]
+        permissions.sort()
+
+        with self.auth_perms() as client, self.assertRaises(InvokeError):
+            client.new_user("test-user", permissions)
+
+        with self.auth_perms("@user-admin") as client:
+            user = client.new_user("test-user", permissions)
+            self.assertIn("token", user)
+            self.assertEqual(user["username"], "test-user")
+            self.assertEqual(user["permissions"], permissions)
+
 
 class TestHashEquivalenceUnixServer(HashEquivalenceTestSetup, HashEquivalenceCommonTests, unittest.TestCase):
     def get_server_addr(self, server_idx):

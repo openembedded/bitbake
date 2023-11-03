@@ -17,6 +17,7 @@ warnings.simplefilter("default")
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(__file__)), "lib"))
 
 import hashserv
+from hashserv.server import DEFAULT_ANON_PERMS
 
 VERSION = "1.0.0"
 
@@ -36,6 +37,22 @@ The bind address may take one of the following formats:
 To bind to all addresses, leave the ADDRESS empty, e.g. "--bind :8686" or
 "--bind ws://:8686". To bind to a specific IPv6 address, enclose the address in
 "[]", e.g. "--bind [::1]:8686" or "--bind ws://[::1]:8686"
+
+Note that the default Anonymous permissions are designed to not break existing
+server instances when upgrading, but are not particularly secure defaults. If
+you want to use authentication, it is recommended that you use "--anon-perms
+@read" to only give anonymous users read access, or "--anon-perms @none" to
+give un-authenticated users no access at all.
+
+Setting "--anon-perms @all" or "--anon-perms @user-admin" is not allowed, since
+this would allow anonymous users to manage all users accounts, which is a bad
+idea.
+
+If you are using user authentication, you should run your server in websockets
+mode with an SSL terminating load balancer in front of it (as this server does
+not implement SSL). Otherwise all usernames and passwords will be transmitted
+in the clear. When configured this way, clients can connect using a secure
+websocket, as in "wss://SERVER:PORT"
         """,
     )
 
@@ -79,6 +96,22 @@ To bind to all addresses, leave the ADDRESS empty, e.g. "--bind :8686" or
         default=os.environ.get("HASHSERVER_DB_PASSWORD", None),
         help="Database password ($HASHSERVER_DB_PASSWORD)",
     )
+    parser.add_argument(
+        "--anon-perms",
+        metavar="PERM[,PERM[,...]]",
+        default=os.environ.get("HASHSERVER_ANON_PERMS", ",".join(DEFAULT_ANON_PERMS)),
+        help='Permissions to give anonymous users (default $HASHSERVER_ANON_PERMS, "%(default)s")',
+    )
+    parser.add_argument(
+        "--admin-user",
+        default=os.environ.get("HASHSERVER_ADMIN_USER", None),
+        help="Create default admin user with name ADMIN_USER ($HASHSERVER_ADMIN_USER)",
+    )
+    parser.add_argument(
+        "--admin-password",
+        default=os.environ.get("HASHSERVER_ADMIN_PASSWORD", None),
+        help="Create default admin user with password ADMIN_PASSWORD ($HASHSERVER_ADMIN_PASSWORD)",
+    )
 
     args = parser.parse_args()
 
@@ -94,6 +127,7 @@ To bind to all addresses, leave the ADDRESS empty, e.g. "--bind :8686" or
     logger.addHandler(console)
 
     read_only = (os.environ.get("HASHSERVER_READ_ONLY", "0") == "1") or args.read_only
+    anon_perms = args.anon_perms.split(",")
 
     server = hashserv.create_server(
         args.bind,
@@ -102,6 +136,9 @@ To bind to all addresses, leave the ADDRESS empty, e.g. "--bind :8686" or
         read_only=read_only,
         db_username=args.db_username,
         db_password=args.db_password,
+        anon_perms=anon_perms,
+        admin_username=args.admin_user,
+        admin_password=args.admin_password,
     )
     server.serve_forever()
     return 0

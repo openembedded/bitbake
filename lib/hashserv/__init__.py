@@ -8,6 +8,7 @@ from contextlib import closing
 import re
 import itertools
 import json
+from collections import namedtuple
 from urllib.parse import urlparse
 
 UNIX_PREFIX = "unix://"
@@ -17,6 +18,8 @@ WSS_PREFIX = "wss://"
 ADDR_TYPE_UNIX = 0
 ADDR_TYPE_TCP = 1
 ADDR_TYPE_WS = 2
+
+User = namedtuple("User", ("username", "permissions"))
 
 
 def parse_address(addr):
@@ -43,7 +46,10 @@ def create_server(
     upstream=None,
     read_only=False,
     db_username=None,
-    db_password=None
+    db_password=None,
+    anon_perms=None,
+    admin_username=None,
+    admin_password=None,
 ):
     def sqlite_engine():
         from .sqlite import DatabaseEngine
@@ -62,7 +68,17 @@ def create_server(
     else:
         db_engine = sqlite_engine()
 
-    s = server.Server(db_engine, upstream=upstream, read_only=read_only)
+    if anon_perms is None:
+        anon_perms = server.DEFAULT_ANON_PERMS
+
+    s = server.Server(
+        db_engine,
+        upstream=upstream,
+        read_only=read_only,
+        anon_perms=anon_perms,
+        admin_username=admin_username,
+        admin_password=admin_password,
+    )
 
     (typ, a) = parse_address(addr)
     if typ == ADDR_TYPE_UNIX:
@@ -76,33 +92,40 @@ def create_server(
     return s
 
 
-def create_client(addr):
+def create_client(addr, username=None, password=None):
     from . import client
 
-    c = client.Client()
+    c = client.Client(username, password)
 
-    (typ, a) = parse_address(addr)
-    if typ == ADDR_TYPE_UNIX:
-        c.connect_unix(*a)
-    elif typ == ADDR_TYPE_WS:
-        c.connect_websocket(*a)
-    else:
-        c.connect_tcp(*a)
+    try:
+        (typ, a) = parse_address(addr)
+        if typ == ADDR_TYPE_UNIX:
+            c.connect_unix(*a)
+        elif typ == ADDR_TYPE_WS:
+            c.connect_websocket(*a)
+        else:
+            c.connect_tcp(*a)
+        return c
+    except Exception as e:
+        c.close()
+        raise e
 
-    return c
 
-
-async def create_async_client(addr):
+async def create_async_client(addr, username=None, password=None):
     from . import client
 
-    c = client.AsyncClient()
+    c = client.AsyncClient(username, password)
 
-    (typ, a) = parse_address(addr)
-    if typ == ADDR_TYPE_UNIX:
-        await c.connect_unix(*a)
-    elif typ == ADDR_TYPE_WS:
-        await c.connect_websocket(*a)
-    else:
-        await c.connect_tcp(*a)
+    try:
+        (typ, a) = parse_address(addr)
+        if typ == ADDR_TYPE_UNIX:
+            await c.connect_unix(*a)
+        elif typ == ADDR_TYPE_WS:
+            await c.connect_websocket(*a)
+        else:
+            await c.connect_tcp(*a)
 
-    return c
+        return c
+    except Exception as e:
+        await c.close()
+        raise e

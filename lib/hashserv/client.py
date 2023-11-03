@@ -6,6 +6,7 @@
 import logging
 import socket
 import bb.asyncrpc
+import json
 from . import create_async_client
 
 
@@ -16,15 +17,19 @@ class AsyncClient(bb.asyncrpc.AsyncClient):
     MODE_NORMAL = 0
     MODE_GET_STREAM = 1
 
-    def __init__(self):
+    def __init__(self, username=None, password=None):
         super().__init__('OEHASHEQUIV', '1.1', logger)
         self.mode = self.MODE_NORMAL
+        self.username = username
+        self.password = password
 
     async def setup_connection(self):
         await super().setup_connection()
         cur_mode = self.mode
         self.mode = self.MODE_NORMAL
         await self._set_mode(cur_mode)
+        if self.username:
+            await self.auth(self.username, self.password)
 
     async def send_stream(self, msg):
         async def proc():
@@ -41,6 +46,7 @@ class AsyncClient(bb.asyncrpc.AsyncClient):
         if new_mode == self.MODE_NORMAL and self.mode == self.MODE_GET_STREAM:
             r = await self._send_wrapper(stream_to_normal)
             if r != "ok":
+                self.check_invoke_error(r)
                 raise ConnectionError("Unable to transition to normal mode: Bad response from server %r" % r)
         elif new_mode == self.MODE_GET_STREAM and self.mode == self.MODE_NORMAL:
             r = await self.invoke({"get-stream": None})
@@ -109,9 +115,52 @@ class AsyncClient(bb.asyncrpc.AsyncClient):
         await self._set_mode(self.MODE_NORMAL)
         return await self.invoke({"clean-unused": {"max_age_seconds": max_age}})
 
+    async def auth(self, username, token):
+        await self._set_mode(self.MODE_NORMAL)
+        result = await self.invoke({"auth": {"username": username, "token": token}})
+        self.username = username
+        self.password = token
+        return result
+
+    async def refresh_token(self, username=None):
+        await self._set_mode(self.MODE_NORMAL)
+        m = {}
+        if username:
+            m["username"] = username
+        result = await self.invoke({"refresh-token": m})
+        if self.username and result["username"] == self.username:
+            self.password = result["token"]
+        return result
+
+    async def set_user_perms(self, username, permissions):
+        await self._set_mode(self.MODE_NORMAL)
+        return await self.invoke({"set-user-perms": {"username": username, "permissions": permissions}})
+
+    async def get_user(self, username=None):
+        await self._set_mode(self.MODE_NORMAL)
+        m = {}
+        if username:
+            m["username"] = username
+        return await self.invoke({"get-user": m})
+
+    async def get_all_users(self):
+        await self._set_mode(self.MODE_NORMAL)
+        return (await self.invoke({"get-all-users": {}}))["users"]
+
+    async def new_user(self, username, permissions):
+        await self._set_mode(self.MODE_NORMAL)
+        return await self.invoke({"new-user": {"username": username, "permissions": permissions}})
+
+    async def delete_user(self, username):
+        await self._set_mode(self.MODE_NORMAL)
+        return await self.invoke({"delete-user": {"username": username}})
+
 
 class Client(bb.asyncrpc.Client):
-    def __init__(self):
+    def __init__(self, username=None, password=None):
+        self.username = username
+        self.password = password
+
         super().__init__()
         self._add_methods(
             "connect_tcp",
@@ -126,7 +175,14 @@ class Client(bb.asyncrpc.Client):
             "backfill_wait",
             "remove",
             "clean_unused",
+            "auth",
+            "refresh_token",
+            "set_user_perms",
+            "get_user",
+            "get_all_users",
+            "new_user",
+            "delete_user",
         )
 
     def _get_async_client(self):
-        return AsyncClient()
+        return AsyncClient(self.username, self.password)

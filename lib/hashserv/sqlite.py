@@ -7,6 +7,7 @@
 import sqlite3
 import logging
 from contextlib import closing
+from . import User
 
 logger = logging.getLogger("hashserv.sqlite")
 
@@ -34,6 +35,14 @@ OUTHASH_TABLE_DEFINITION = (
 
 OUTHASH_TABLE_COLUMNS = tuple(name for name, _, _ in OUTHASH_TABLE_DEFINITION)
 
+USERS_TABLE_DEFINITION = (
+    ("username", "TEXT NOT NULL", "UNIQUE"),
+    ("token", "TEXT NOT NULL", ""),
+    ("permissions", "TEXT NOT NULL", ""),
+)
+
+USERS_TABLE_COLUMNS = tuple(name for name, _, _ in USERS_TABLE_DEFINITION)
+
 
 def _make_table(cursor, name, definition):
     cursor.execute(
@@ -53,6 +62,15 @@ def _make_table(cursor, name, definition):
     )
 
 
+def map_user(row):
+    if row is None:
+        return None
+    return User(
+        username=row["username"],
+        permissions=set(row["permissions"].split()),
+    )
+
+
 class DatabaseEngine(object):
     def __init__(self, dbname, sync):
         self.dbname = dbname
@@ -66,6 +84,7 @@ class DatabaseEngine(object):
         with closing(db.cursor()) as cursor:
             _make_table(cursor, "unihashes_v2", UNIHASH_TABLE_DEFINITION)
             _make_table(cursor, "outhashes_v2", OUTHASH_TABLE_DEFINITION)
+            _make_table(cursor, "users", USERS_TABLE_DEFINITION)
 
             cursor.execute("PRAGMA journal_mode = WAL")
             cursor.execute(
@@ -227,6 +246,7 @@ class Database(object):
                     "oldest": oldest,
                 },
             )
+            self.db.commit()
             return cursor.rowcount
 
     async def insert_unihash(self, method, taskhash, unihash):
@@ -257,3 +277,88 @@ class Database(object):
             cursor.execute(query, data)
             self.db.commit()
             return cursor.lastrowid != prevrowid
+
+    def _get_user(self, username):
+        with closing(self.db.cursor()) as cursor:
+            cursor.execute(
+                """
+                SELECT username, permissions, token FROM users WHERE username=:username
+                """,
+                {
+                    "username": username,
+                },
+            )
+            return cursor.fetchone()
+
+    async def lookup_user_token(self, username):
+        row = self._get_user(username)
+        if row is None:
+            return None, None
+        return map_user(row), row["token"]
+
+    async def lookup_user(self, username):
+        return map_user(self._get_user(username))
+
+    async def set_user_token(self, username, token):
+        with closing(self.db.cursor()) as cursor:
+            cursor.execute(
+                """
+                UPDATE users SET token=:token WHERE username=:username
+                """,
+                {
+                    "username": username,
+                    "token": token,
+                },
+            )
+            self.db.commit()
+            return cursor.rowcount != 0
+
+    async def set_user_perms(self, username, permissions):
+        with closing(self.db.cursor()) as cursor:
+            cursor.execute(
+                """
+                UPDATE users SET permissions=:permissions WHERE username=:username
+                """,
+                {
+                    "username": username,
+                    "permissions": " ".join(permissions),
+                },
+            )
+            self.db.commit()
+            return cursor.rowcount != 0
+
+    async def get_all_users(self):
+        with closing(self.db.cursor()) as cursor:
+            cursor.execute("SELECT username, permissions FROM users")
+            return [map_user(r) for r in cursor.fetchall()]
+
+    async def new_user(self, username, permissions, token):
+        with closing(self.db.cursor()) as cursor:
+            try:
+                cursor.execute(
+                    """
+                    INSERT INTO users (username, token, permissions) VALUES (:username, :token, :permissions)
+                    """,
+                    {
+                        "username": username,
+                        "token": token,
+                        "permissions": " ".join(permissions),
+                    },
+                )
+                self.db.commit()
+                return True
+            except sqlite3.IntegrityError:
+                return False
+
+    async def delete_user(self, username):
+        with closing(self.db.cursor()) as cursor:
+            cursor.execute(
+                """
+                DELETE FROM users WHERE username=:username
+                """,
+                {
+                    "username": username,
+                },
+            )
+            self.db.commit()
+            return cursor.rowcount != 0
