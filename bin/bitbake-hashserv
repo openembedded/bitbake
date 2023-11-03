@@ -127,7 +127,10 @@ websocket, as in "wss://SERVER:PORT"
     logger.addHandler(console)
 
     read_only = (os.environ.get("HASHSERVER_READ_ONLY", "0") == "1") or args.read_only
-    anon_perms = args.anon_perms.split(",")
+    if "," in args.anon_perms:
+        anon_perms = args.anon_perms.split(",")
+    else:
+        anon_perms = args.anon_perms.split()
 
     server = hashserv.create_server(
         args.bind,
