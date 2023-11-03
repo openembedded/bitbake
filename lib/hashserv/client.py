@@ -18,10 +18,11 @@ class AsyncClient(bb.asyncrpc.AsyncClient):
     MODE_GET_STREAM = 1
 
     def __init__(self, username=None, password=None):
-        super().__init__('OEHASHEQUIV', '1.1', logger)
+        super().__init__("OEHASHEQUIV", "1.1", logger)
         self.mode = self.MODE_NORMAL
         self.username = username
         self.password = password
+        self.saved_become_user = None
 
     async def setup_connection(self):
         await super().setup_connection()
@@ -29,7 +30,12 @@ class AsyncClient(bb.asyncrpc.AsyncClient):
         self.mode = self.MODE_NORMAL
         await self._set_mode(cur_mode)
         if self.username:
+            # Save off become user temporarily because auth() resets it
+            become = self.saved_become_user
             await self.auth(self.username, self.password)
+
+            if become:
+                await self.become_user(become)
 
     async def send_stream(self, msg):
         async def proc():
@@ -92,7 +98,14 @@ class AsyncClient(bb.asyncrpc.AsyncClient):
     async def get_outhash(self, method, outhash, taskhash, with_unihash=True):
         await self._set_mode(self.MODE_NORMAL)
         return await self.invoke(
-            {"get-outhash": {"outhash": outhash, "taskhash": taskhash, "method": method, "with_unihash": with_unihash}}
+            {
+                "get-outhash": {
+                    "outhash": outhash,
+                    "taskhash": taskhash,
+                    "method": method,
+                    "with_unihash": with_unihash,
+                }
+            }
         )
 
     async def get_stats(self):
@@ -120,6 +133,7 @@ class AsyncClient(bb.asyncrpc.AsyncClient):
         result = await self.invoke({"auth": {"username": username, "token": token}})
         self.username = username
         self.password = token
+        self.saved_become_user = None
         return result
 
     async def refresh_token(self, username=None):
@@ -128,13 +142,19 @@ class AsyncClient(bb.asyncrpc.AsyncClient):
         if username:
             m["username"] = username
         result = await self.invoke({"refresh-token": m})
-        if self.username and result["username"] == self.username:
+        if (
+            self.username
+            and not self.saved_become_user
+            and result["username"] == self.username
+        ):
             self.password = result["token"]
         return result
 
     async def set_user_perms(self, username, permissions):
         await self._set_mode(self.MODE_NORMAL)
-        return await self.invoke({"set-user-perms": {"username": username, "permissions": permissions}})
+        return await self.invoke(
+            {"set-user-perms": {"username": username, "permissions": permissions}}
+        )
 
     async def get_user(self, username=None):
         await self._set_mode(self.MODE_NORMAL)
@@ -149,11 +169,22 @@ class AsyncClient(bb.asyncrpc.AsyncClient):
 
     async def new_user(self, username, permissions):
         await self._set_mode(self.MODE_NORMAL)
-        return await self.invoke({"new-user": {"username": username, "permissions": permissions}})
+        return await self.invoke(
+            {"new-user": {"username": username, "permissions": permissions}}
+        )
 
     async def delete_user(self, username):
         await self._set_mode(self.MODE_NORMAL)
         return await self.invoke({"delete-user": {"username": username}})
+
+    async def become_user(self, username):
+        await self._set_mode(self.MODE_NORMAL)
+        result = await self.invoke({"become-user": {"username": username}})
+        if username == self.username:
+            self.saved_become_user = None
+        else:
+            self.saved_become_user = username
+        return result
 
 
 class Client(bb.asyncrpc.Client):
@@ -182,6 +213,7 @@ class Client(bb.asyncrpc.Client):
             "get_all_users",
             "new_user",
             "delete_user",
+            "become_user",
         )
 
     def _get_async_client(self):

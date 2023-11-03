@@ -255,6 +255,7 @@ class ServerClient(bb.asyncrpc.AsyncServerConnection):
                 "auth": self.handle_auth,
                 "get-user": self.handle_get_user,
                 "get-all-users": self.handle_get_all_users,
+                "become-user": self.handle_become_user,
             }
         )
 
@@ -706,6 +707,23 @@ class ServerClient(bb.asyncrpc.AsyncServerConnection):
             self.raise_no_user_error(username)
 
         return {"username": username}
+
+    @permissions(USER_ADMIN_PERM, allow_anon=False)
+    async def handle_become_user(self, request):
+        username = str(request["username"])
+
+        user = await self.db.lookup_user(username)
+        if user is None:
+            raise bb.asyncrpc.InvokeError(f"User {username} doesn't exist")
+
+        self.user = user
+
+        self.logger.info("Became user %s", username)
+
+        return {
+            "username": self.user.username,
+            "permissions": self.return_perms(self.user.permissions),
+        }
 
 
 class Server(bb.asyncrpc.AsyncServer):

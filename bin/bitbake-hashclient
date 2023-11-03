@@ -166,6 +166,7 @@ def main():
     parser.add_argument('--log', default='WARNING', help='Set logging level')
     parser.add_argument('--login', '-l', metavar="USERNAME", help="Authenticate as USERNAME")
     parser.add_argument('--password', '-p', metavar="TOKEN", help="Authenticate using token TOKEN")
+    parser.add_argument('--become', '-b', metavar="USERNAME", help="Impersonate user USERNAME (if allowed) when performing actions")
     parser.add_argument('--no-netrc', '-n', action="store_false", dest="netrc", help="Do not use .netrc")
 
     subparsers = parser.add_subparsers()
@@ -251,6 +252,8 @@ def main():
     if func:
         try:
             with hashserv.create_client(args.address, login, password) as client:
+                if args.become:
+                    client.become_user(args.become)
                 return func(args, client)
         except bb.asyncrpc.InvokeError as e:
             print(f"ERROR: {e}")

@@ -728,6 +728,45 @@ class HashEquivalenceCommonTests(object):
             self.assertEqual(user["username"], "test-user")
             self.assertEqual(user["permissions"], permissions)
 
+    def test_auth_become_user(self):
+        admin_client = self.start_auth_server()
+
+        user = admin_client.new_user("test-user", ["@read", "@report"])
+        user_info = user.copy()
+        del user_info["token"]
+
+        with self.auth_perms() as client, self.assertRaises(InvokeError):
+            client.become_user(user["username"])
+
+        with self.auth_perms("@user-admin") as client:
+            become = client.become_user(user["username"])
+            self.assertEqual(become, user_info)
+
+            info = client.get_user()
+            self.assertEqual(info, user_info)
+
+            # Verify become user is preserved across disconnect
+            client.disconnect()
+
+            info = client.get_user()
+            self.assertEqual(info, user_info)
+
+            # test-user doesn't have become_user permissions, so this should
+            # not work
+            with self.assertRaises(InvokeError):
+                client.become_user(user["username"])
+
+        # No self-service of become
+        with self.auth_client(user) as client, self.assertRaises(InvokeError):
+            client.become_user(user["username"])
+
+        # Give test user permissions to become
+        admin_client.set_user_perms(user["username"], ["@user-admin"])
+
+        # It's possible to become yourself (effectively a noop)
+        with self.auth_perms("@user-admin") as client:
+            become = client.become_user(client.username)
+
 
 class TestHashEquivalenceUnixServer(HashEquivalenceTestSetup, HashEquivalenceCommonTests, unittest.TestCase):
     def get_server_addr(self, server_idx):
