@@ -683,9 +683,12 @@ class HashEquivalenceCommonTests(object):
 
         user = self.create_user("test-user", [])
 
-        # No self service
-        with self.auth_client(user) as client, self.assertRaises(InvokeError):
+        # self service
+        with self.auth_client(user) as client:
             client.delete_user(user["username"])
+
+        self.assertIsNone(admin_client.get_user(user["username"]))
+        user = self.create_user("test-user", [])
 
         with self.auth_perms() as client, self.assertRaises(InvokeError):
             client.delete_user(user["username"])

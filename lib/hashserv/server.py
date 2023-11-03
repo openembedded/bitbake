@@ -709,7 +709,7 @@ class ServerClient(bb.asyncrpc.AsyncServerConnection):
             "token": token,
         }
 
-    @permissions(USER_ADMIN_PERM, allow_anon=False)
+    @permissions(USER_ADMIN_PERM, allow_self_service=True, allow_anon=False)
     async def handle_delete_user(self, request):
         username = str(request["username"])
 
