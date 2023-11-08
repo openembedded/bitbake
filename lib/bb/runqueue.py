@@ -1021,6 +1021,7 @@ class RunQueueData:
 
                 for tid in list(runall_tids):
                     mark_active(tid, 1)
+                    self.target_tids.append(tid)
                     if self.cooker.configuration.force:
                         invalidate_task(tid, False)
 
