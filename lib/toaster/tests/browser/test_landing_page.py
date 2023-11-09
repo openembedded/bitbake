@@ -29,6 +29,22 @@ class TestLandingPage(SeleniumTestCase):
         self.project.is_default = True
         self.project.save()
 
+    def test_icon_info_visible_and_clickable(self):
+        """ Test that the information icon is visible and clickable """
+        self.get(reverse('landing'))
+        info_sign = self.find('#toaster-version-info-sign')
+
+        # check that the info sign is visible
+        self.assertTrue(info_sign.is_displayed())
+
+        # check that the info sign is clickable
+        # and info modal is appearing when clicking on the info sign
+        info_sign.click() # click on the info sign make attribute 'aria-describedby' visible
+        info_model_id = info_sign.get_attribute('aria-describedby')
+        info_modal = self.find(f'#{info_model_id}')
+        self.assertTrue(info_modal.is_displayed())
+        self.assertTrue("Toaster version information" in info_modal.text)
+
     def test_only_default_project(self):
         """
         No projects except default
