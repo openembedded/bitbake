@@ -45,6 +45,21 @@ class TestLandingPage(SeleniumTestCase):
         self.assertTrue(info_modal.is_displayed())
         self.assertTrue("Toaster version information" in info_modal.text)
 
+    def test_documentation_link_displayed(self):
+        """ Test that the documentation link is displayed """
+        self.get(reverse('landing'))
+        documentation_link = self.find('#navbar-docs > a')
+
+        # check that the documentation link is visible
+        self.assertTrue(documentation_link.is_displayed())
+        
+        # check browser open new tab toaster manual when clicking on the documentation link
+        self.assertEqual(documentation_link.get_attribute('target') , '_blank')
+        self.assertEqual(
+            documentation_link.get_attribute('href'), 
+            'http://docs.yoctoproject.org/toaster-manual/index.html#toaster-user-manual')
+        self.assertTrue("Documentation" in documentation_link.text)
+
     def test_only_default_project(self):
         """
         No projects except default
