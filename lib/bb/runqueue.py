@@ -1862,11 +1862,6 @@ class RunQueueExecute:
         self.tasks_notcovered = set()
         self.scenequeue_notneeded = set()
 
-        # We can't skip specified target tasks which aren't setscene tasks
-        self.cantskip = set(self.rqdata.target_tids)
-        self.cantskip.difference_update(self.rqdata.runq_setscene_tids)
-        self.cantskip.intersection_update(self.rqdata.runtaskentries)
-
         schedulers = self.get_schedulers()
         for scheduler in schedulers:
             if self.scheduler == scheduler.name:
@@ -2399,7 +2394,7 @@ class RunQueueExecute:
             return
 
         notcovered = set(self.scenequeue_notcovered)
-        notcovered |= self.cantskip
+        notcovered |= self.sqdata.cantskip
         for tid in self.scenequeue_notcovered:
             notcovered |= self.sqdata.sq_covered_tasks[tid]
         notcovered |= self.sqdata.unskippable.difference(self.rqdata.runq_setscene_tids)
@@ -2784,6 +2779,11 @@ def build_scenequeue_data(sqdata, rqdata, rq, cooker, stampcache, sqrq):
     sq_revdeps_squash = {}
     sq_collated_deps = {}
 
+    # We can't skip specified target tasks which aren't setscene tasks
+    sqdata.cantskip = set(rqdata.target_tids)
+    sqdata.cantskip.difference_update(rqdata.runq_setscene_tids)
+    sqdata.cantskip.intersection_update(rqdata.runtaskentries)
+
     # We need to construct a dependency graph for the setscene functions. Intermediate
     # dependencies between the setscene tasks only complicate the code. This code
     # therefore aims to collapse the huge runqueue dependency tree into a smaller one
@@ -2852,7 +2852,7 @@ def build_scenequeue_data(sqdata, rqdata, rq, cooker, stampcache, sqrq):
     for tid in rqdata.runtaskentries:
         if not rqdata.runtaskentries[tid].revdeps:
             sqdata.unskippable.add(tid)
-    sqdata.unskippable |= sqrq.cantskip
+    sqdata.unskippable |= sqdata.cantskip
     while new:
         new = False
         orig = sqdata.unskippable.copy()
