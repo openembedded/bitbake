@@ -1874,7 +1874,23 @@ class RunQueueExecute:
 
         #if self.rqdata.runq_setscene_tids:
         self.sqdata = SQData()
-        build_scenequeue_data(self.sqdata, self.rqdata, self.rq, self.cooker, self.stampcache, self)
+        build_scenequeue_data(self.sqdata, self.rqdata, self)
+
+        update_scenequeue_data(self.sqdata.sq_revdeps, self.sqdata, self.rqdata, self.rq, self.cooker, self.stampcache, self, summary=True)
+
+        # Compute a list of 'stale' sstate tasks where the current hash does not match the one
+        # in any stamp files. Pass the list out to metadata as an event.
+        found = {}
+        for tid in self.rqdata.runq_setscene_tids:
+            (mc, fn, taskname, taskfn) = split_tid_mcfn(tid)
+            stamps = bb.build.find_stale_stamps(taskname, taskfn)
+            if stamps:
+                if mc not in found:
+                    found[mc] = {}
+                found[mc][tid] = stamps
+        for mc in found:
+            event = bb.event.StaleSetSceneTasks(found[mc])
+            bb.event.fire(event, self.cooker.databuilder.mcdata[mc])
 
     def runqueue_process_waitpid(self, task, status, fakerootlog=None):
 
@@ -2773,7 +2789,7 @@ class SQData(object):
         # A list of normal tasks a setscene task covers
         self.sq_covered_tasks = {}
 
-def build_scenequeue_data(sqdata, rqdata, rq, cooker, stampcache, sqrq):
+def build_scenequeue_data(sqdata, rqdata, sqrq):
 
     sq_revdeps = {}
     sq_revdeps_squash = {}
@@ -2961,22 +2977,6 @@ def build_scenequeue_data(sqdata, rqdata, rq, cooker, stampcache, sqrq):
             else:
                 sqrq.sq_deferred[tid] = sqdata.hashes[h]
                 bb.debug(1, "Deferring %s after %s" % (tid, sqdata.hashes[h]))
-
-    update_scenequeue_data(sqdata.sq_revdeps, sqdata, rqdata, rq, cooker, stampcache, sqrq, summary=True)
-
-    # Compute a list of 'stale' sstate tasks where the current hash does not match the one
-    # in any stamp files. Pass the list out to metadata as an event.
-    found = {}
-    for tid in rqdata.runq_setscene_tids:
-        (mc, fn, taskname, taskfn) = split_tid_mcfn(tid)
-        stamps = bb.build.find_stale_stamps(taskname, taskfn)
-        if stamps:
-            if mc not in found:
-                found[mc] = {}
-            found[mc][tid] = stamps
-    for mc in found:
-        event = bb.event.StaleSetSceneTasks(found[mc])
-        bb.event.fire(event, cooker.databuilder.mcdata[mc])
 
 def check_setscene_stamps(tid, rqdata, rq, stampcache, noexecstamp=False):
 
