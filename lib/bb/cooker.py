@@ -303,6 +303,10 @@ class BBCooker:
         self.data_hash = self.databuilder.data_hash
         self.extraconfigdata = {}
 
+        eventlog = self.data.getVar("BB_DEFAULT_EVENTLOG")
+        if not self.configuration.writeeventlog and eventlog:
+            self.setupEventLog(eventlog)
+
         if consolelog:
             self.data.setVar("BB_CONSOLELOG", consolelog)
 
@@ -409,6 +413,18 @@ class BBCooker:
 
         self._parsecache_set(False)
 
+    def setupEventLog(self, eventlog):
+        if self.eventlog and self.eventlog[0] != eventlog:
+            bb.event.unregister_UIHhandler(self.eventlog[1])
+        if not self.eventlog or self.eventlog[0] != eventlog:
+            # we log all events to a file if so directed
+            # register the log file writer as UI Handler
+            if not os.path.exists(os.path.dirname(eventlog)):
+                bb.utils.mkdirhier(os.path.dirname(eventlog))
+            writer = EventWriter(self, eventlog)
+            EventLogWriteHandler = namedtuple('EventLogWriteHandler', ['event'])
+            self.eventlog = (eventlog, bb.event.register_UIHhandler(EventLogWriteHandler(writer)))
+
     def updateConfigOpts(self, options, environment, cmdline):
         self.ui_cmdline = cmdline
         clean = True
@@ -428,14 +444,7 @@ class BBCooker:
                 setattr(self.configuration, o, options[o])
 
         if self.configuration.writeeventlog:
-            if self.eventlog and self.eventlog[0] != self.configuration.writeeventlog:
-                bb.event.unregister_UIHhandler(self.eventlog[1])
-            if not self.eventlog or self.eventlog[0] != self.configuration.writeeventlog:
-                # we log all events to a file if so directed
-                # register the log file writer as UI Handler
-                writer = EventWriter(self, self.configuration.writeeventlog)
-                EventLogWriteHandler = namedtuple('EventLogWriteHandler', ['event'])
-                self.eventlog = (self.configuration.writeeventlog, bb.event.register_UIHhandler(EventLogWriteHandler(writer)))
+            self.setupEventLog(self.configuration.writeeventlog)
 
         bb.msg.loggerDefaultLogLevel = self.configuration.default_loglevel
         bb.msg.loggerDefaultDomains = self.configuration.debug_domains
