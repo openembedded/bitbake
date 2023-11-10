@@ -345,7 +345,7 @@ class BBCooker:
                     sync=False,
                     upstream=upstream,
                 )
-                self.hashserv.serve_as_process()
+                self.hashserv.serve_as_process(log_level=logging.WARNING)
             for mc in self.databuilder.mcdata:
                 self.databuilder.mcorigdata[mc].setVar("BB_HASHSERVE", self.hashservaddr)
                 self.databuilder.mcdata[mc].setVar("BB_HASHSERVE", self.hashservaddr)

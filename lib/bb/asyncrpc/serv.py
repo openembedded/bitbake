@@ -322,7 +322,7 @@ class AsyncServer(object):
         self.loop = asyncio.new_event_loop()
         asyncio.set_event_loop(self.loop)
 
-    def serve_as_process(self, *, prefunc=None, args=()):
+    def serve_as_process(self, *, prefunc=None, args=(), log_level=None):
         """
         Serve requests in a child process
         """
@@ -350,6 +350,9 @@ class AsyncServer(object):
 
             if prefunc is not None:
                 prefunc(self, *args)
+
+            if log_level is not None:
+                self.logger.setLevel(log_level)
 
             self._serve_forever(tasks)
 

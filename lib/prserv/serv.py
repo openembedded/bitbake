@@ -130,7 +130,7 @@ class PRServSingleton(object):
     def start(self):
         self.prserv = PRServer(self.dbfile)
         self.prserv.start_tcp_server(socket.gethostbyname(self.host), self.port)
-        self.process = self.prserv.serve_as_process()
+        self.process = self.prserv.serve_as_process(log_level=logging.WARNING)
 
         if not self.prserv.address:
             raise PRServiceConfigError
