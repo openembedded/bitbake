@@ -80,7 +80,7 @@ class TestLandingPage(SeleniumTestCase):
         bitbake = jumbotron.find_element_by_link_text('BitBake')
         self.assertTrue(bitbake.is_displayed())
         bitbake.click()
-        self.assertTrue("yoctoproject.org/software-item/bitbake" in self.driver.current_url)
+        self.assertTrue("docs.yoctoproject.org/bitbake.html" in self.driver.current_url)
 
     def test_yoctoproject_jumbotron_link_visible_and_clickable(self):
         """ Test Yocto Project link jumbotron is visible and clickable: """
