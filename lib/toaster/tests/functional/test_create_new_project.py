@@ -1,4 +1,4 @@
-#! /usr/bin/env python3 #
+#! /usr/bin/env python3
 # BitBake Toaster UI tests implementation
 #
 # Copyright (C) 2023 Savoir-faire Linux
@@ -49,7 +49,7 @@ class TestCreateNewProject(SeleniumFunctionalTestCase):
 
         element = self.wait_until_visible('#project-created-notification')
         self.assertTrue(
-            self.element_exists('#project-created-notification'), 
+            self.element_exists('#project-created-notification'),
             f"Project:{project_name} creation notification not shown"
         )
         self.assertTrue(
@@ -57,7 +57,7 @@ class TestCreateNewProject(SeleniumFunctionalTestCase):
             f"New project name:{project_name} not in new project notification"
         )
         self.assertTrue(
-            Project.objects.filter(name=project_name).count(), 
+            Project.objects.filter(name=project_name).count(),
             f"New project:{project_name} not found in database"
         )
 
@@ -101,7 +101,7 @@ class TestCreateNewProject(SeleniumFunctionalTestCase):
             True,
         )
 
-    def test_create_new_project_dunfull(self):
+    def test_create_new_project_dunfell(self):
         """ Test create new project using:
           - Project Name: Any string
           - Release: Yocto Project 3.1 "Dunfell" (option value: 5)
@@ -116,7 +116,7 @@ class TestCreateNewProject(SeleniumFunctionalTestCase):
             release_title,
             False,
         )
-    
+
     def test_create_new_project_local(self):
         """ Test create new project using:
           - Project Name: Any string
