@@ -10,6 +10,7 @@
 from django.urls import reverse
 from django.utils import timezone
 from tests.browser.selenium_helpers import SeleniumTestCase
+from selenium.webdriver.common.by import By
 
 from orm.models import Layer, Layer_Version, Project, Build
 
@@ -52,11 +53,11 @@ class TestLandingPage(SeleniumTestCase):
 
         # check that the documentation link is visible
         self.assertTrue(documentation_link.is_displayed())
-        
+
         # check browser open new tab toaster manual when clicking on the documentation link
         self.assertEqual(documentation_link.get_attribute('target') , '_blank')
         self.assertEqual(
-            documentation_link.get_attribute('href'), 
+            documentation_link.get_attribute('href'),
             'http://docs.yoctoproject.org/toaster-manual/index.html#toaster-user-manual')
         self.assertTrue("Documentation" in documentation_link.text)
 
@@ -66,7 +67,7 @@ class TestLandingPage(SeleniumTestCase):
         jumbotron = self.find('.jumbotron')
 
         # check OpenEmbedded
-        openembedded = jumbotron.find_element_by_link_text('OpenEmbedded')
+        openembedded = jumbotron.find_element(By.LINK_TEXT, 'OpenEmbedded')
         self.assertTrue(openembedded.is_displayed())
         openembedded.click()
         self.assertTrue("openembedded.org" in self.driver.current_url)
@@ -77,7 +78,7 @@ class TestLandingPage(SeleniumTestCase):
         jumbotron = self.find('.jumbotron')
 
         # check BitBake
-        bitbake = jumbotron.find_element_by_link_text('BitBake')
+        bitbake = jumbotron.find_element(By.LINK_TEXT, 'BitBake')
         self.assertTrue(bitbake.is_displayed())
         bitbake.click()
         self.assertTrue("docs.yoctoproject.org/bitbake.html" in self.driver.current_url)
@@ -88,7 +89,7 @@ class TestLandingPage(SeleniumTestCase):
         jumbotron = self.find('.jumbotron')
 
         # check Yocto Project
-        yoctoproject = jumbotron.find_element_by_link_text('Yocto Project')
+        yoctoproject = jumbotron.find_element(By.LINK_TEXT, 'Yocto Project')
         self.assertTrue(yoctoproject.is_displayed())
         yoctoproject.click()
         self.assertTrue("yoctoproject.org" in self.driver.current_url)
@@ -101,7 +102,7 @@ class TestLandingPage(SeleniumTestCase):
         jumbotron = self.find('.jumbotron')
 
         # check Big magenta button
-        big_magenta_button = jumbotron.find_element_by_link_text(
+        big_magenta_button = jumbotron.find_element(By.LINK_TEXT,
             'Toaster is ready to capture your command line builds'
         )
         self.assertTrue(big_magenta_button.is_displayed())
@@ -118,7 +119,7 @@ class TestLandingPage(SeleniumTestCase):
         jumbotron = self.find('.jumbotron')
 
         # check Big Blue button
-        big_blue_button = jumbotron.find_element_by_link_text(
+        big_blue_button = jumbotron.find_element(By.LINK_TEXT,
             'Create your first Toaster project to run manage builds'
         )
         self.assertTrue(big_blue_button.is_displayed())
@@ -131,7 +132,7 @@ class TestLandingPage(SeleniumTestCase):
         jumbotron = self.find('.jumbotron')
 
         # check Read the Toaster manual
-        toaster_manual = jumbotron.find_element_by_link_text('Read the Toaster manual')
+        toaster_manual = jumbotron.find_element(By.LINK_TEXT, 'Read the Toaster manual')
         self.assertTrue(toaster_manual.is_displayed())
         toaster_manual.click()
         self.assertTrue("https://docs.yoctoproject.org/toaster-manual/index.html#toaster-user-manual" in self.driver.current_url)
@@ -142,7 +143,7 @@ class TestLandingPage(SeleniumTestCase):
         jumbotron = self.find('.jumbotron')
 
         # check Contribute to Toaster
-        contribute_to_toaster = jumbotron.find_element_by_link_text('Contribute to Toaster')
+        contribute_to_toaster = jumbotron.find_element(By.LINK_TEXT, 'Contribute to Toaster')
         self.assertTrue(contribute_to_toaster.is_displayed())
         contribute_to_toaster.click()
         self.assertTrue("wiki.yoctoproject.org/wiki/contribute_to_toaster" in str(self.driver.current_url).lower())
