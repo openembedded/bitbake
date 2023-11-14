@@ -113,6 +113,20 @@ class TestAllBuildsPage(SeleniumTestCase):
         # a particular build)
         Target.objects.create(build=build1, target='foo')
         Target.objects.create(build=build2, target='bar')
+
+        if kwargs:
+            # Create kwargs.get('success') builds with success status with target
+            # and kwargs.get('failure') builds with failure status with target
+            for i in range(kwargs.get('success', 0)):
+                build = Build.objects.create(**self.project1_build_success)
+                Target.objects.create(build=build,
+                                      target=f'{i}_success_recipe',
+                                      task=f'{i}_success_task')
+            for i in range(kwargs.get('failure', 0)):
+                build = Build.objects.create(**self.project1_build_failure)
+                Target.objects.create(build=build,
+                                      target=f'{i}_fail_recipe',
+                                      task=f'{i}_fail_task')
         return build1, build2
 
     def test_show_tasks_with_suffix(self):
@@ -248,3 +262,27 @@ class TestAllBuildsPage(SeleniumTestCase):
         self.wait_until_present('#allbuildstable tbody tr')
         rows = self.find_all('#allbuildstable tbody tr')
         self.assertTrue(len(rows) >= 1)
+
+    def test_filtering_on_failure_tasks_column(self):
+        """ Test the filtering on failure tasks column in the builds table on the all builds page """
+        self._get_create_builds(success=10, failure=10)
+
+        url = reverse('all-builds')
+        self.get(url)
+
+        # Check filtering on failure tasks column
+        self.wait_until_present('#allbuildstable tbody tr')
+        failed_tasks_filter = self.find('#failed_tasks_filter')
+        failed_tasks_filter.click()
+        # Check popup is visible
+        time.sleep(1)
+        self.wait_until_present('#filter-modal-allbuildstable')
+        self.assertTrue(self.find('#filter-modal-allbuildstable').is_displayed())
+        # Check that we can filter by failure tasks
+        build_without_failure_tasks = self.find('#failed_tasks_filter\\:without_failed_tasks')
+        build_without_failure_tasks.click()
+        # click on apply button
+        self.find('#filter-modal-allbuildstable .btn-primary').click()
+        self.wait_until_present('#allbuildstable tbody tr')
+        # Check if filter is applied, by checking if failed_tasks_filter has btn-primary class
+        self.assertTrue(self.find('#failed_tasks_filter').get_attribute('class').find('btn-primary') != -1)
