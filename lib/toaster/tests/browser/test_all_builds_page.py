@@ -11,6 +11,7 @@ import re, time
 
 from django.urls import reverse
 from django.utils import timezone
+from selenium.webdriver.remote.webdriver import WebElement
 from tests.browser.selenium_helpers import SeleniumTestCase
 
 from orm.models import BitbakeVersion, Release, Project, Build, Target
@@ -102,6 +103,18 @@ class TestAllBuildsPage(SeleniumTestCase):
 
         return found_row
 
+    def _get_create_builds(self, **kwargs):
+        """ Create a build and return the build object """
+        build1 = Build.objects.create(**self.project1_build_success)
+        build2 = Build.objects.create(**self.project1_build_failure)
+
+        # add some targets to these builds so they have recipe links
+        # (and so we can find the row in the ToasterTable corresponding to
+        # a particular build)
+        Target.objects.create(build=build1, target='foo')
+        Target.objects.create(build=build2, target='bar')
+        return build1, build2
+
     def test_show_tasks_with_suffix(self):
         """ Task should be shown as suffix on build name """
         build = Build.objects.create(**self.project1_build_success)
@@ -146,7 +159,6 @@ class TestAllBuildsPage(SeleniumTestCase):
         self.assertEqual(len(run_again_button), 0,
                          'should not see a rebuild button for cli builds')
 
-
     def test_tooltips_on_project_name(self):
         """
         Test tooltips shown next to project name in the main table
@@ -188,14 +200,7 @@ class TestAllBuildsPage(SeleniumTestCase):
         recent builds area; failed builds should not have links on the time column,
         or in the recent builds area
         """
-        build1 = Build.objects.create(**self.project1_build_success)
-        build2 = Build.objects.create(**self.project1_build_failure)
-
-        # add some targets to these builds so they have recipe links
-        # (and so we can find the row in the ToasterTable corresponding to
-        # a particular build)
-        Target.objects.create(build=build1, target='foo')
-        Target.objects.create(build=build2, target='bar')
+        build1, build2 = self._get_create_builds()
 
         url = reverse('all-builds')
         self.get(url)
@@ -223,3 +228,23 @@ class TestAllBuildsPage(SeleniumTestCase):
         links = build2_row.find_elements(By.CSS_SELECTOR, 'td.time a')
         msg = 'should not be a link on the build time for a failed build'
         self.assertEquals(len(links), 0, msg)
+
+    def test_builds_table_search_box(self):
+        """ Test the search box in the builds table on the all builds page """
+        self._get_create_builds()
+
+        url = reverse('all-builds')
+        self.get(url)
+
+        # Check search box is present and works
+        self.wait_until_present('#allbuildstable tbody tr')
+        search_box = self.find('#search-input-allbuildstable')
+        self.assertTrue(search_box.is_displayed())
+
+        # Check that we can search for a build by recipe name
+        search_box.send_keys('foo')
+        search_btn = self.find('#search-submit-allbuildstable')
+        search_btn.click()
+        self.wait_until_present('#allbuildstable tbody tr')
+        rows = self.find_all('#allbuildstable tbody tr')
+        self.assertTrue(len(rows) >= 1)
