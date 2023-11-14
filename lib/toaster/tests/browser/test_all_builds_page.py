@@ -11,10 +11,10 @@ import re, time
 
 from django.urls import reverse
 from django.utils import timezone
-from selenium.webdriver.remote.webdriver import WebElement
+from bldcontrol.models import BuildRequest
 from tests.browser.selenium_helpers import SeleniumTestCase
 
-from orm.models import BitbakeVersion, Release, Project, Build, Target
+from orm.models import BitbakeVersion, Layer, Layer_Version, Recipe, Release, Project, Build, Target, Task
 
 from selenium.webdriver.common.by import By
 
@@ -118,16 +118,50 @@ class TestAllBuildsPage(SeleniumTestCase):
             # Create kwargs.get('success') builds with success status with target
             # and kwargs.get('failure') builds with failure status with target
             for i in range(kwargs.get('success', 0)):
+                now = timezone.now()
+                self.project1_build_success['started_on'] = now
+                self.project1_build_success[
+                    'completed_on'] = now - timezone.timedelta(days=i)
                 build = Build.objects.create(**self.project1_build_success)
                 Target.objects.create(build=build,
                                       target=f'{i}_success_recipe',
                                       task=f'{i}_success_task')
+
+                self._set_buildRequest_and_task_on_build(build)
             for i in range(kwargs.get('failure', 0)):
+                now = timezone.now()
+                self.project1_build_failure['started_on'] = now
+                self.project1_build_failure[
+                    'completed_on'] = now - timezone.timedelta(days=i)
                 build = Build.objects.create(**self.project1_build_failure)
                 Target.objects.create(build=build,
                                       target=f'{i}_fail_recipe',
                                       task=f'{i}_fail_task')
+                self._set_buildRequest_and_task_on_build(build)
         return build1, build2
+
+    def _create_recipe(self):
+        """ Add a recipe to the database and return it """
+        layer = Layer.objects.create()
+        layer_version = Layer_Version.objects.create(layer=layer)
+        return Recipe.objects.create(name='recipe_foo', layer_version=layer_version)
+
+    def _set_buildRequest_and_task_on_build(self, build):
+        """ Set buildRequest and task on build """
+        build.recipes_parsed = 1
+        build.save()
+        buildRequest = BuildRequest.objects.create(
+            build=build, 
+            project=self.project1,
+            state=BuildRequest.REQ_COMPLETED)
+        build.build_request = buildRequest
+        recipe = self._create_recipe()
+        task = Task.objects.create(build=build,
+                                   recipe=recipe, 
+                                   task_name='task',
+                                   outcome=Task.OUTCOME_SUCCESS)
+        task.save()
+        build.save()
 
     def test_show_tasks_with_suffix(self):
         """ Task should be shown as suffix on build name """
@@ -286,3 +320,45 @@ class TestAllBuildsPage(SeleniumTestCase):
         self.wait_until_present('#allbuildstable tbody tr')
         # Check if filter is applied, by checking if failed_tasks_filter has btn-primary class
         self.assertTrue(self.find('#failed_tasks_filter').get_attribute('class').find('btn-primary') != -1)
+
+    def test_filtering_on_completedOn_column(self):
+        """ Test the filtering on completed_on column in the builds table on the all builds page """
+        self._get_create_builds(success=10, failure=10)
+
+        url = reverse('all-builds')
+        self.get(url)
+
+        # Check filtering on failure tasks column
+        self.wait_until_present('#allbuildstable tbody tr')
+        completed_on_filter = self.find('#completed_on_filter')
+        completed_on_filter.click()
+        # Check popup is visible
+        time.sleep(1)
+        self.wait_until_present('#filter-modal-allbuildstable')
+        self.assertTrue(self.find('#filter-modal-allbuildstable').is_displayed())
+        # Check that we can filter by failure tasks
+        build_without_failure_tasks = self.find('#completed_on_filter\\:date_range')
+        build_without_failure_tasks.click()
+        # click on apply button
+        self.find('#filter-modal-allbuildstable .btn-primary').click()
+        self.wait_until_present('#allbuildstable tbody tr')
+        # Check if filter is applied, by checking if completed_on_filter has btn-primary class
+        self.assertTrue(self.find('#completed_on_filter').get_attribute('class').find('btn-primary') != -1)
+        
+        # Filter by date range
+        self.find('#completed_on_filter').click()
+        self.wait_until_present('#filter-modal-allbuildstable')
+        date_ranges = self.driver.find_elements(
+            By.XPATH, '//input[@class="form-control hasDatepicker"]')
+        today = timezone.now()
+        yestersday = today - timezone.timedelta(days=1)
+        time.sleep(1)
+        date_ranges[0].send_keys(yestersday.strftime('%Y-%m-%d'))
+        date_ranges[1].send_keys(today.strftime('%Y-%m-%d'))
+        self.find('#filter-modal-allbuildstable .btn-primary').click()
+        self.wait_until_present('#allbuildstable tbody tr')
+        self.assertTrue(self.find('#completed_on_filter').get_attribute('class').find('btn-primary') != -1)
+        # Check if filter is applied, number of builds displayed should be 6
+        time.sleep(1)
+        self.assertTrue(len(self.find_all('#allbuildstable tbody tr')) == 6)
+
