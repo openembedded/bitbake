@@ -362,3 +362,62 @@ class TestAllBuildsPage(SeleniumTestCase):
         time.sleep(1)
         self.assertTrue(len(self.find_all('#allbuildstable tbody tr')) == 6)
 
+    def test_builds_table_editColumn(self):
+        """ Test the edit column feature in the builds table on the all builds page """
+        self._get_create_builds(success=10, failure=10)
+
+        def test_edit_column(check_box_id):
+            # Check that we can hide/show table column
+            check_box = self.find(f'#{check_box_id}')
+            th_class = str(check_box_id).replace('checkbox-', '')
+            if check_box.is_selected():
+                # check if column is visible in table
+                self.assertTrue(
+                    self.find(
+                        f'#allbuildstable thead th.{th_class}'
+                    ).is_displayed(),
+                    f"The {th_class} column is checked in EditColumn dropdown, but it's not visible in table"
+                )
+                check_box.click()
+                # check if column is hidden in table
+                self.assertFalse(
+                    self.find(
+                        f'#allbuildstable thead th.{th_class}'
+                    ).is_displayed(),
+                    f"The {th_class} column is unchecked in EditColumn dropdown, but it's visible in table"
+                )
+            else:
+                # check if column is hidden in table
+                self.assertFalse(
+                    self.find(
+                        f'#allbuildstable thead th.{th_class}'
+                    ).is_displayed(),
+                    f"The {th_class} column is unchecked in EditColumn dropdown, but it's visible in table"
+                )
+                check_box.click()
+                # check if column is visible in table
+                self.assertTrue(
+                    self.find(
+                        f'#allbuildstable thead th.{th_class}'
+                    ).is_displayed(),
+                    f"The {th_class} column is checked in EditColumn dropdown, but it's not visible in table"
+                )
+        url = reverse('all-builds')
+        self.get(url)
+        self.wait_until_present('#allbuildstable tbody tr')
+
+        # Check edit column
+        edit_column = self.find('#edit-columns-button')
+        self.assertTrue(edit_column.is_displayed())
+        edit_column.click()
+        # Check dropdown is visible
+        self.wait_until_visible('ul.dropdown-menu.editcol')
+
+        # Check that we can hide the edit column
+        test_edit_column('checkbox-errors_no')
+        test_edit_column('checkbox-failed_tasks')
+        test_edit_column('checkbox-image_files')
+        test_edit_column('checkbox-project')
+        test_edit_column('checkbox-started_on')
+        test_edit_column('checkbox-time')
+        test_edit_column('checkbox-warnings_no')
