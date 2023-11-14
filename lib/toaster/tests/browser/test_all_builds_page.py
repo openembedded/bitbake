@@ -7,9 +7,11 @@
 # SPDX-License-Identifier: GPL-2.0-only
 #
 
-import re, time
+import re
+import time
 
 from django.urls import reverse
+from selenium.webdriver.support.select import Select
 from django.utils import timezone
 from bldcontrol.models import BuildRequest
 from tests.browser.selenium_helpers import SeleniumTestCase
@@ -151,13 +153,13 @@ class TestAllBuildsPage(SeleniumTestCase):
         build.recipes_parsed = 1
         build.save()
         buildRequest = BuildRequest.objects.create(
-            build=build, 
+            build=build,
             project=self.project1,
             state=BuildRequest.REQ_COMPLETED)
         build.build_request = buildRequest
         recipe = self._create_recipe()
         task = Task.objects.create(build=build,
-                                   recipe=recipe, 
+                                   recipe=recipe,
                                    task_name='task',
                                    outcome=Task.OUTCOME_SUCCESS)
         task.save()
@@ -189,7 +191,8 @@ class TestAllBuildsPage(SeleniumTestCase):
         but should be shown for other builds
         """
         build1 = Build.objects.create(**self.project1_build_success)
-        default_build = Build.objects.create(**self.default_project_build_success)
+        default_build = Build.objects.create(
+            **self.default_project_build_success)
 
         url = reverse('all-builds')
         self.get(url)
@@ -311,15 +314,18 @@ class TestAllBuildsPage(SeleniumTestCase):
         # Check popup is visible
         time.sleep(1)
         self.wait_until_present('#filter-modal-allbuildstable')
-        self.assertTrue(self.find('#filter-modal-allbuildstable').is_displayed())
+        self.assertTrue(
+            self.find('#filter-modal-allbuildstable').is_displayed())
         # Check that we can filter by failure tasks
-        build_without_failure_tasks = self.find('#failed_tasks_filter\\:without_failed_tasks')
+        build_without_failure_tasks = self.find(
+            '#failed_tasks_filter\\:without_failed_tasks')
         build_without_failure_tasks.click()
         # click on apply button
         self.find('#filter-modal-allbuildstable .btn-primary').click()
         self.wait_until_present('#allbuildstable tbody tr')
         # Check if filter is applied, by checking if failed_tasks_filter has btn-primary class
-        self.assertTrue(self.find('#failed_tasks_filter').get_attribute('class').find('btn-primary') != -1)
+        self.assertTrue(self.find('#failed_tasks_filter').get_attribute(
+            'class').find('btn-primary') != -1)
 
     def test_filtering_on_completedOn_column(self):
         """ Test the filtering on completed_on column in the builds table on the all builds page """
@@ -335,16 +341,19 @@ class TestAllBuildsPage(SeleniumTestCase):
         # Check popup is visible
         time.sleep(1)
         self.wait_until_present('#filter-modal-allbuildstable')
-        self.assertTrue(self.find('#filter-modal-allbuildstable').is_displayed())
+        self.assertTrue(
+            self.find('#filter-modal-allbuildstable').is_displayed())
         # Check that we can filter by failure tasks
-        build_without_failure_tasks = self.find('#completed_on_filter\\:date_range')
+        build_without_failure_tasks = self.find(
+            '#completed_on_filter\\:date_range')
         build_without_failure_tasks.click()
         # click on apply button
         self.find('#filter-modal-allbuildstable .btn-primary').click()
         self.wait_until_present('#allbuildstable tbody tr')
         # Check if filter is applied, by checking if completed_on_filter has btn-primary class
-        self.assertTrue(self.find('#completed_on_filter').get_attribute('class').find('btn-primary') != -1)
-        
+        self.assertTrue(self.find('#completed_on_filter').get_attribute(
+            'class').find('btn-primary') != -1)
+
         # Filter by date range
         self.find('#completed_on_filter').click()
         self.wait_until_present('#filter-modal-allbuildstable')
@@ -357,7 +366,8 @@ class TestAllBuildsPage(SeleniumTestCase):
         date_ranges[1].send_keys(today.strftime('%Y-%m-%d'))
         self.find('#filter-modal-allbuildstable .btn-primary').click()
         self.wait_until_present('#allbuildstable tbody tr')
-        self.assertTrue(self.find('#completed_on_filter').get_attribute('class').find('btn-primary') != -1)
+        self.assertTrue(self.find('#completed_on_filter').get_attribute(
+            'class').find('btn-primary') != -1)
         # Check if filter is applied, number of builds displayed should be 6
         time.sleep(1)
         self.assertTrue(len(self.find_all('#allbuildstable tbody tr')) == 6)
@@ -421,3 +431,33 @@ class TestAllBuildsPage(SeleniumTestCase):
         test_edit_column('checkbox-started_on')
         test_edit_column('checkbox-time')
         test_edit_column('checkbox-warnings_no')
+
+    def test_builds_table_show_rows(self):
+        """ Test the show rows feature in the builds table on the all builds page """
+        self._get_create_builds(success=100, failure=100)
+
+        def test_show_rows(row_to_show, show_row_link):
+            # Check that we can show rows == row_to_show
+            show_row_link.select_by_value(str(row_to_show))
+            self.wait_until_present('#allbuildstable tbody tr')
+            time.sleep(1)
+            self.assertTrue(
+                len(self.find_all('#allbuildstable tbody tr')) == row_to_show
+            )
+
+        url = reverse('all-builds')
+        self.get(url)
+        self.wait_until_present('#allbuildstable tbody tr')
+
+        show_rows = self.driver.find_elements(
+            By.XPATH,
+            '//select[@class="form-control pagesize-allbuildstable"]'
+        )
+        # Check show rows
+        for show_row_link in show_rows:
+            show_row_link = Select(show_row_link)
+            test_show_rows(10, show_row_link)
+            test_show_rows(25, show_row_link)
+            test_show_rows(50, show_row_link)
+            test_show_rows(100, show_row_link)
+            test_show_rows(150, show_row_link)
