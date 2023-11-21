@@ -140,3 +140,30 @@ class TestProjectPage(SeleniumFunctionalTestCase):
         self.assertTrue(
             '/toastergui/newproject/' in str(self.driver.current_url)
         )
+
+    def test_edit_project_name(self):
+        """ Test edit project name:
+          - Click on "Edit" icon button
+          - Change project name
+          - Click on "Save" button
+          - Check project name is changed
+        """
+        # navigate to the project page
+        url = reverse("project", args=(1,))
+        self.get(url)
+
+        # click on "Edit" icon button
+        self.wait_until_visible('#project-name-container')
+        edit_button = self.find('#project-change-form-toggle')
+        edit_button.click()
+        project_name_input = self.find('#project-name-change-input')
+        self.assertTrue(project_name_input.is_displayed())
+        project_name_input.clear()
+        project_name_input.send_keys('New Name')
+        self.find('#project-name-change-btn').click()
+
+        # check project name is changed
+        self.wait_until_visible('#project-name-container')
+        self.assertTrue(
+            'New Name' in str(self.find('#project-name-container').text)
+        )
