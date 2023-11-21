@@ -297,3 +297,37 @@ class TestAllProjectsPage(SeleniumTestCase):
         test_edit_column('checkbox-last_build_outcome')
         test_edit_column('checkbox-recipe_name')
         test_edit_column('checkbox-warnings')
+
+    def test_allProject_table_show_rows(self):
+        """ Test the show rows feature in the projects table on the all projects page """
+        self._create_projects(nb_project=200)
+
+        def test_show_rows(row_to_show, show_row_link):
+            # Check that we can show rows == row_to_show
+            show_row_link.select_by_value(str(row_to_show))
+            self.wait_until_present('#projectstable tbody tr')
+            sleep_time = 1
+            if row_to_show == 150:
+                # wait more time for 150 rows
+                sleep_time = 2
+            time.sleep(sleep_time)
+            self.assertTrue(
+                len(self.find_all('#projectstable tbody tr')) == row_to_show
+            )
+
+        url = reverse('all-projects')
+        self.get(url)
+        self.wait_until_present('#projectstable tbody tr')
+
+        show_rows = self.driver.find_elements(
+            By.XPATH,
+            '//select[@class="form-control pagesize-projectstable"]'
+        )
+        # Check show rows
+        for show_row_link in show_rows:
+            show_row_link = Select(show_row_link)
+            test_show_rows(10, show_row_link)
+            test_show_rows(25, show_row_link)
+            test_show_rows(50, show_row_link)
+            test_show_rows(100, show_row_link)
+            test_show_rows(150, show_row_link)
