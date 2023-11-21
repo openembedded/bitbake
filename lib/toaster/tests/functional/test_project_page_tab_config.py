@@ -380,3 +380,44 @@ class TestProjectConfigTab(SeleniumFunctionalTestCase):
                 link_create_custom_image.text
             )
         )
+
+    def test_project_page_image_recipe(self):
+        """ Test project page section images
+            - Check image recipes are displayed
+            - Check search input
+            - Check image recipe build button works
+            - Check image recipe table features(show/hide column, pagination)
+        """
+        # navigate to the project page
+        url = reverse("project", args=(1,))
+        self.get(url)
+        self.wait_until_visible('#config-nav')
+
+        # navigate to "Images section"
+        images_section = self._get_config_nav_item(3)
+        images_section.click()
+        self.wait_until_visible('#imagerecipestable')
+        rows = self.find_all('#imagerecipestable tbody tr')
+        self.assertTrue(len(rows) > 0)
+
+        # Test search input
+        self.wait_until_visible('#search-input-imagerecipestable')
+        recipe_input = self.find('#search-input-imagerecipestable')
+        recipe_input.send_keys('core-image-minimal')
+        self.find('#search-submit-imagerecipestable').click()
+        rows = self.find_all('#imagerecipestable tbody tr')
+        self.assertTrue(len(rows) > 0)
+
+        # Test build button
+        image_to_build = rows[0]
+        build_btn = image_to_build.find_element(
+            By.XPATH,
+            '//td[@class="add-del-layers"]'
+        )
+        build_btn.click()
+        self._wait_until_build('parsing starting cloning')
+        lastest_builds = self.driver.find_elements(
+            By.XPATH,
+            '//div[@id="latest-builds"]/div'
+        )
+        self.assertTrue(len(lastest_builds) > 0)
