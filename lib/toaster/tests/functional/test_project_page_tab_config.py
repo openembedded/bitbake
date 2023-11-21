@@ -306,3 +306,46 @@ class TestProjectConfigTab(SeleniumFunctionalTestCase):
         )
         cancel_button.click()
         self.assertTrue(len(lastest_builds) == 2)
+
+    def test_project_page_tab_importlayer(self):
+        """ Test project page tab import layer """
+        # navigate to the project page
+        url = reverse("project", args=(1,))
+        self.get(url)
+
+        # navigate to "Import layers" tab
+        import_layers_tab = self._get_tabs()[2]
+        import_layers_tab.find_element(By.TAG_NAME, 'a').click()
+        self.wait_until_visible('#layer-git-repo-url')
+
+        # Check git repo radio button
+        git_repo_radio = self.find('#git-repo-radio')
+        git_repo_radio.click()
+
+        # Set git repo url
+        input_repo_url = self.find('#layer-git-repo-url')
+        input_repo_url.send_keys('git://git.yoctoproject.org/meta-fake')
+        # Blur the input to trigger the validation
+        input_repo_url.send_keys(Keys.TAB)
+
+        # Check name is set
+        input_layer_name = self.find('#import-layer-name')
+        self.assertTrue(input_layer_name.get_attribute('value') == 'meta-fake')
+
+        # Set branch
+        input_branch = self.find('#layer-git-ref')
+        input_branch.send_keys('master')
+
+        # Import layer
+        self.find('#import-and-add-btn').click()
+
+        # Check layer is added
+        self.wait_until_visible('#layer-container')
+        block_l = self.driver.find_element(
+            By.XPATH, '//*[@id="project-page"]/div[2]')
+        layers = block_l.find_element(By.ID, 'layer-container')
+        layers_list = layers.find_element(By.ID, 'layers-in-project-list')
+        layers_list_items = layers_list.find_elements(By.TAG_NAME, 'li')
+        self.assertTrue(
+            'meta-fake' in str(layers_list_items[-1].text)
+        )
