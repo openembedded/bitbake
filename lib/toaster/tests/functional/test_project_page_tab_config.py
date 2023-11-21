@@ -8,10 +8,12 @@
 
 from time import sleep
 import pytest
+from django.utils import timezone
 from django.urls import reverse
 from selenium.webdriver import Keys
 from selenium.webdriver.support.select import Select
 from selenium.common.exceptions import NoSuchElementException
+from orm.models import Build, Project, Target
 from tests.functional.functional_helpers import SeleniumFunctionalTestCase
 from selenium.webdriver.common.by import By
 
@@ -111,6 +113,64 @@ class TestProjectConfigTab(SeleniumFunctionalTestCase):
     def _get_config_nav_item(self, index):
         config_nav = self.find('#config-nav')
         return config_nav.find_elements(By.TAG_NAME, 'li')[index]
+
+    def _get_create_builds(self, **kwargs):
+        """ Create a build and return the build object """
+        # parameters for builds to associate with the projects
+        now = timezone.now()
+        release = '3'
+        project_name = 'projectmaster'
+        self._create_test_new_project(
+            project_name+"2",
+            release,
+            False,
+        )
+
+        self.project1_build_success = {
+            'project': Project.objects.get(id=1),
+            'started_on': now,
+            'completed_on': now,
+            'outcome': Build.SUCCEEDED
+        }
+
+        self.project1_build_failure = {
+            'project': Project.objects.get(id=1),
+            'started_on': now,
+            'completed_on': now,
+            'outcome': Build.FAILED
+        }
+        build1 = Build.objects.create(**self.project1_build_success)
+        build2 = Build.objects.create(**self.project1_build_failure)
+
+        # add some targets to these builds so they have recipe links
+        # (and so we can find the row in the ToasterTable corresponding to
+        # a particular build)
+        Target.objects.create(build=build1, target='foo')
+        Target.objects.create(build=build2, target='bar')
+
+        if kwargs:
+            # Create kwargs.get('success') builds with success status with target
+            # and kwargs.get('failure') builds with failure status with target
+            for i in range(kwargs.get('success', 0)):
+                now = timezone.now()
+                self.project1_build_success['started_on'] = now
+                self.project1_build_success[
+                    'completed_on'] = now - timezone.timedelta(days=i)
+                build = Build.objects.create(**self.project1_build_success)
+                Target.objects.create(build=build,
+                                      target=f'{i}_success_recipe',
+                                      task=f'{i}_success_task')
+
+            for i in range(kwargs.get('failure', 0)):
+                now = timezone.now()
+                self.project1_build_failure['started_on'] = now
+                self.project1_build_failure[
+                    'completed_on'] = now - timezone.timedelta(days=i)
+                build = Build.objects.create(**self.project1_build_failure)
+                Target.objects.create(build=build,
+                                      target=f'{i}_fail_recipe',
+                                      task=f'{i}_fail_task')
+        return build1, build2
 
     def test_project_config_nav(self):
         """ Test project config tab navigation:
@@ -421,3 +481,64 @@ class TestProjectConfigTab(SeleniumFunctionalTestCase):
             '//div[@id="latest-builds"]/div'
         )
         self.assertTrue(len(lastest_builds) > 0)
+
+    def test_image_recipe_editColumn(self):
+        """ Test the edit column feature in image recipe table on project page """
+        self._get_create_builds(success=10, failure=10)
+
+        def test_edit_column(check_box_id):
+            # Check that we can hide/show table column
+            check_box = self.find(f'#{check_box_id}')
+            th_class = str(check_box_id).replace('checkbox-', '')
+            if check_box.is_selected():
+                # check if column is visible in table
+                self.assertTrue(
+                    self.find(
+                        f'#imagerecipestable thead th.{th_class}'
+                    ).is_displayed(),
+                    f"The {th_class} column is checked in EditColumn dropdown, but it's not visible in table"
+                )
+                check_box.click()
+                # check if column is hidden in table
+                self.assertFalse(
+                    self.find(
+                        f'#imagerecipestable thead th.{th_class}'
+                    ).is_displayed(),
+                    f"The {th_class} column is unchecked in EditColumn dropdown, but it's visible in table"
+                )
+            else:
+                # check if column is hidden in table
+                self.assertFalse(
+                    self.find(
+                        f'#imagerecipestable thead th.{th_class}'
+                    ).is_displayed(),
+                    f"The {th_class} column is unchecked in EditColumn dropdown, but it's visible in table"
+                )
+                check_box.click()
+                # check if column is visible in table
+                self.assertTrue(
+                    self.find(
+                        f'#imagerecipestable thead th.{th_class}'
+                    ).is_displayed(),
+                    f"The {th_class} column is checked in EditColumn dropdown, but it's not visible in table"
+                )
+
+        url = reverse('projectimagerecipes', args=(1,))
+        self.get(url)
+        self.wait_until_present('#imagerecipestable tbody tr')
+
+        # Check edit column
+        edit_column = self.find('#edit-columns-button')
+        self.assertTrue(edit_column.is_displayed())
+        edit_column.click()
+        # Check dropdown is visible
+        self.wait_until_visible('ul.dropdown-menu.editcol')
+
+        # Check that we can hide the edit column
+        test_edit_column('checkbox-get_description_or_summary')
+        test_edit_column('checkbox-layer_version__get_vcs_reference')
+        test_edit_column('checkbox-layer_version__layer__name')
+        test_edit_column('checkbox-license')
+        test_edit_column('checkbox-recipe-file')
+        test_edit_column('checkbox-section')
+        test_edit_column('checkbox-version')
