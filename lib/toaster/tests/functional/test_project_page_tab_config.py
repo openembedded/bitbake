@@ -349,3 +349,34 @@ class TestProjectConfigTab(SeleniumFunctionalTestCase):
         self.assertTrue(
             'meta-fake' in str(layers_list_items[-1].text)
         )
+
+    def test_project_page_custom_image_no_image(self):
+        """ Test project page tab "New custom image" when no custom image """
+        # navigate to the project page
+        url = reverse("project", args=(1,))
+        self.get(url)
+
+        # navigate to "Custom image" tab
+        custom_image_section = self._get_config_nav_item(2)
+        custom_image_section.click()
+        self.wait_until_visible('#empty-state-customimagestable')
+
+        # Check message when no custom image
+        self.assertTrue(
+            "You have not created any custom images yet." in str(
+                self.find('#empty-state-customimagestable').text
+            )
+        )
+        div_empty_msg = self.find('#empty-state-customimagestable')
+        link_create_custom_image = div_empty_msg.find_element(
+            By.TAG_NAME, 'a')
+        self.assertTrue(
+            f"/toastergui/project/1/newcustomimage" in str(
+                link_create_custom_image.get_attribute('href')
+            )
+        )
+        self.assertTrue(
+            "Create your first custom image" in str(
+                link_create_custom_image.text
+            )
+        )
