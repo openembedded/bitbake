@@ -347,7 +347,10 @@ class TestProjectConfigTab(SeleniumFunctionalTestCase):
             By.XPATH, '//*[@id="project-page"]/div[1]/div[3]')
         recipe_list = most_built_recipes.find_element(By.ID, 'freq-build-list')
         recipe_list_items = recipe_list.find_elements(By.TAG_NAME, 'li')
-        self.assertTrue(len(recipe_list_items) > 0)
+        self.assertTrue(
+            len(recipe_list_items) > 0,
+            msg="No recipes found in the most built recipes list",
+        )
         checkbox = recipe_list_items[0].find_element(By.TAG_NAME, 'input')
         checkbox.click()
         build_btn = self.find('#freq-build-btn')
@@ -465,6 +468,7 @@ class TestProjectConfigTab(SeleniumFunctionalTestCase):
         recipe_input = self.find('#search-input-imagerecipestable')
         recipe_input.send_keys('core-image-minimal')
         self.find('#search-submit-imagerecipestable').click()
+        self.wait_until_visible('#imagerecipestable tbody tr')
         rows = self.find_all('#imagerecipestable tbody tr')
         self.assertTrue(len(rows) > 0)
 
@@ -542,3 +546,33 @@ class TestProjectConfigTab(SeleniumFunctionalTestCase):
         test_edit_column('checkbox-recipe-file')
         test_edit_column('checkbox-section')
         test_edit_column('checkbox-version')
+
+    def test_image_recipe_show_rows(self):
+        """ Test the show rows feature in image recipe table on project page """
+        self._get_create_builds(success=100, failure=100)
+
+        def test_show_rows(row_to_show, show_row_link):
+            # Check that we can show rows == row_to_show
+            show_row_link.select_by_value(str(row_to_show))
+            self.wait_until_present('#imagerecipestable tbody tr')
+            sleep(1)
+            self.assertTrue(
+                len(self.find_all('#imagerecipestable tbody tr')) == row_to_show
+            )
+
+        url = reverse('projectimagerecipes', args=(2,))
+        self.get(url)
+        self.wait_until_present('#imagerecipestable tbody tr')
+
+        show_rows = self.driver.find_elements(
+            By.XPATH,
+            '//select[@class="form-control pagesize-imagerecipestable"]'
+        )
+        # Check show rows
+        for show_row_link in show_rows:
+            show_row_link = Select(show_row_link)
+            test_show_rows(10, show_row_link)
+            test_show_rows(25, show_row_link)
+            test_show_rows(50, show_row_link)
+            test_show_rows(100, show_row_link)
+            test_show_rows(150, show_row_link)
