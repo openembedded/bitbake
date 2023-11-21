@@ -1557,7 +1557,13 @@ class BBCooker:
 
 
     def getAllKeysWithFlags(self, flaglist):
+        def dummy_autorev(d):
+            return
+
         dump = {}
+        # Horrible but for now we need to avoid any sideeffects of autorev being called
+        saved = bb.fetch2.get_autorev
+        bb.fetch2.get_autorev = dummy_autorev
         for k in self.data.keys():
             try:
                 expand = True
@@ -1577,6 +1583,7 @@ class BBCooker:
                             dump[k][d] = None
             except Exception as e:
                 print(e)
+        bb.fetch2.get_autorev = saved
         return dump
 
 
