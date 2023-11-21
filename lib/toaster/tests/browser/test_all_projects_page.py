@@ -8,9 +8,11 @@
 #
 
 import re
+import time
 
 from django.urls import reverse
 from django.utils import timezone
+from selenium.webdriver.support.select import Select
 from tests.browser.selenium_helpers import SeleniumTestCase
 
 from orm.models import BitbakeVersion, Release, Project, Build
@@ -36,6 +38,17 @@ class TestAllProjectsPage(SeleniumTestCase):
         self.project = None
 
         self.release = None
+
+    def _create_projects(self, nb_project=10):
+        projects = []
+        for i in range(1, nb_project + 1):
+            projects.append(
+                Project(
+                    name='test project {}'.format(i),
+                    release=self.release,
+                )
+            )
+        Project.objects.bulk_create(projects)
 
     def _add_build_to_default_project(self):
         """ Add a build to the default project (not used in all tests) """
@@ -205,3 +218,24 @@ class TestAllProjectsPage(SeleniumTestCase):
         expected_url = reverse('project', args=(self.project.id,))
         msg = 'link on project name should point to configuration but was %s' % link_url
         self.assertTrue(link_url.endswith(expected_url), msg)
+
+    def test_allProject_table_search_box(self):
+        """ Test the search box in the all project table on the all projects page """
+        self._create_projects()
+
+        url = reverse('all-projects')
+        self.get(url)
+
+        # Chseck search box is present and works
+        self.wait_until_present('#projectstable tbody tr')
+        search_box = self.find('#search-input-projectstable')
+        self.assertTrue(search_box.is_displayed())
+
+        # Check that we can search for a project by project name
+        search_box.send_keys('test project 10')
+        search_btn = self.find('#search-submit-projectstable')
+        search_btn.click()
+        self.wait_until_present('#projectstable tbody tr')
+        time.sleep(1)
+        rows = self.find_all('#projectstable tbody tr')
+        self.assertTrue(len(rows) == 1)
