@@ -9,6 +9,7 @@
 from time import sleep
 import pytest
 from django.urls import reverse
+from selenium.webdriver import Keys
 from selenium.webdriver.support.select import Select
 from selenium.common.exceptions import NoSuchElementException
 from tests.functional.functional_helpers import SeleniumFunctionalTestCase
@@ -174,3 +175,134 @@ class TestProjectConfigTab(SeleniumFunctionalTestCase):
             if item.get_attribute('class') != 'active':
                 item.click()
             check_config_nav_item(index, item_name, url)
+
+    def test_project_config_tab_right_section(self):
+        """ Test project config tab right section contains five blocks:
+            - Machine:
+                - check 'Machine' is displayed
+                - check can change Machine
+            - Distro:
+                - check 'Distro' is displayed
+                - check can change Distro
+            - Most built recipes:
+                - check 'Most built recipes' is displayed
+                - check can select a recipe and build it
+            - Project release:
+                - check 'Project release' is displayed
+                - check project has right release displayed
+            - Layers:
+                - check can add a layer if exists
+                - check at least three layers are displayed
+                    - openembedded-core
+                    - meta-poky
+                    - meta-yocto-bsp
+        """
+        # navigate to the project page
+        url = reverse("project", args=(1,))
+        self.get(url)
+
+        # check if the menu is displayed
+        self.wait_until_visible('#project-page')
+        block_l = self.driver.find_element(
+            By.XPATH, '//*[@id="project-page"]/div[2]')
+        machine = self.find('#machine-section')
+        distro = self.find('#distro-section')
+        most_built_recipes = self.driver.find_element(
+            By.XPATH, '//*[@id="project-page"]/div[1]/div[3]')
+        project_release = self.driver.find_element(
+            By.XPATH, '//*[@id="project-page"]/div[1]/div[4]')
+        layers = block_l.find_element(By.ID, 'layer-container')
+
+        def check_machine_distro(self, item_name, new_item_name, block):
+            title = block.find_element(By.TAG_NAME, 'h3')
+            self.assertTrue(item_name.capitalize() in title.text)
+            edit_btn = block.find_element(By.ID, f'change-{item_name}-toggle')
+            edit_btn.click()
+            sleep(1)
+            name_input = block.find_element(By.ID, f'{item_name}-change-input')
+            name_input.clear()
+            name_input.send_keys(new_item_name)
+            change_btn = block.find_element(By.ID, f'{item_name}-change-btn')
+            change_btn.click()
+            sleep(1)
+            project_name = block.find_element(By.ID, f'project-{item_name}-name')
+            self.assertTrue(new_item_name in project_name.text)
+            # check change notificaiton is displayed
+            change_notification = self.find('#change-notification')
+            self.assertTrue(
+                f'You have changed the {item_name} to: {new_item_name}' in change_notification.text
+            )
+
+        # Machine
+        check_machine_distro(self, 'machine', 'qemux86-64', machine)
+        # Distro
+        check_machine_distro(self, 'distro', 'poky-altcfg', distro)
+
+        # Project release
+        title = project_release.find_element(By.TAG_NAME, 'h3')
+        self.assertTrue("Project release" in title.text)
+        self.assertTrue(
+            "Yocto Project master" in self.find('#project-release-title').text
+        )
+
+        # Layers
+        title = layers.find_element(By.TAG_NAME, 'h3')
+        self.assertTrue("Layers" in title.text)
+        # check at least three layers are displayed
+        # openembedded-core
+        # meta-poky
+        # meta-yocto-bsp
+        layers_list = layers.find_element(By.ID, 'layers-in-project-list')
+        layers_list_items = layers_list.find_elements(By.TAG_NAME, 'li')
+        self.assertTrue(len(layers_list_items) == 3)
+        # check can add a layer if exists
+        add_layer_input = layers.find_element(By.ID, 'layer-add-input')
+        add_layer_input.send_keys('meta-oe')
+        self.wait_until_visible('#layer-container > form > div > span > div')
+        dropdown_item = self.driver.find_element(
+            By.XPATH,
+            '//*[@id="layer-container"]/form/div/span/div'
+        )
+        dropdown_item.click()
+        add_layer_btn = layers.find_element(By.ID, 'add-layer-btn')
+        add_layer_btn.click()
+        sleep(1)
+        # check layer is added
+        layers_list_items = layers_list.find_elements(By.TAG_NAME, 'li')
+        self.assertTrue(len(layers_list_items) == 4)
+
+        # Most built recipes
+        title = most_built_recipes.find_element(By.TAG_NAME, 'h3')
+        self.assertTrue("Most built recipes" in title.text)
+        # Create a new builds 5
+        self._create_builds()
+
+        # Refresh the page
+        self.get(url)
+
+        sleep(1)  # wait for page to load
+        self.wait_until_visible('#project-page')
+        # check can select a recipe and build it
+        most_built_recipes = self.driver.find_element(
+            By.XPATH, '//*[@id="project-page"]/div[1]/div[3]')
+        recipe_list = most_built_recipes.find_element(By.ID, 'freq-build-list')
+        recipe_list_items = recipe_list.find_elements(By.TAG_NAME, 'li')
+        self.assertTrue(len(recipe_list_items) > 0)
+        checkbox = recipe_list_items[0].find_element(By.TAG_NAME, 'input')
+        checkbox.click()
+        build_btn = self.find('#freq-build-btn')
+        build_btn.click()
+        sleep(1)  # wait for page to load
+        self.wait_until_visible('#latest-builds')
+        self._wait_until_build('parsing starting cloning queueing')
+        lastest_builds = self.driver.find_elements(
+            By.XPATH,
+            '//div[@id="latest-builds"]/div'
+        )
+        last_build = lastest_builds[0]
+        cancel_button = last_build.find_element(
+            By.XPATH,
+            '//span[@class="cancel-build-btn pull-right alert-link"]',
+        )
+        cancel_button.click()
+        self.assertTrue(len(lastest_builds) == 2)
