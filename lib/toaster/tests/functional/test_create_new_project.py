@@ -9,10 +9,11 @@
 import re
 import pytest
 from django.urls import reverse
-from selenium.webdriver.support.ui import Select
+from selenium.webdriver.support.select import Select
 from tests.functional.functional_helpers import SeleniumFunctionalTestCase
 from orm.models import Project
 from selenium.webdriver.common.by import By
+
 
 @pytest.mark.django_db
 class TestCreateNewProject(SeleniumFunctionalTestCase):
