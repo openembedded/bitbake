@@ -167,3 +167,81 @@ class TestProjectPage(SeleniumFunctionalTestCase):
         self.assertTrue(
             'New Name' in str(self.find('#project-name-container').text)
         )
+
+    def test_project_page_tabs(self):
+        """ Test project tabs:
+          - "configuration" tab
+          - "Builds" tab
+          - "Import layers" tab
+          - "New custom image" tab
+          Check search box used to build recipes
+        """
+        # navigate to the project page
+        url = reverse("project", args=(1,))
+        self.get(url)
+
+        # check "configuration" tab
+        self.wait_until_visible('#topbar-configuration-tab')
+        config_tab = self.find('#topbar-configuration-tab')
+        self.assertTrue(config_tab.get_attribute('class') == 'active')
+        self.assertTrue('Configuration' in config_tab.text)
+        config_tab_link = config_tab.find_element(By.TAG_NAME, 'a')
+        self.assertTrue(
+            f"/toastergui/project/1" in str(config_tab_link.get_attribute(
+                'href'))
+        )
+
+        def get_tabs():
+            # tabs links list
+            return self.driver.find_elements(
+                By.XPATH,
+                '//div[@id="project-topbar"]//li'
+            )
+
+        def check_tab_link(tab_index, tab_name, url):
+            tab = get_tabs()[tab_index]
+            tab_link = tab.find_element(By.TAG_NAME, 'a')
+            self.assertTrue(url in tab_link.get_attribute('href'))
+            self.assertTrue(tab_name in tab_link.text)
+            self.assertTrue(tab.get_attribute('class') == 'active')
+
+        # check "Builds" tab
+        builds_tab = get_tabs()[1]
+        builds_tab.find_element(By.TAG_NAME, 'a').click()
+        check_tab_link(
+            1,
+            'Builds',
+            f"/toastergui/project/1/builds"
+        )
+
+        # check "Import layers" tab
+        import_layers_tab = get_tabs()[2]
+        import_layers_tab.find_element(By.TAG_NAME, 'a').click()
+        check_tab_link(
+            2,
+            'Import layer',
+            f"/toastergui/project/1/importlayer"
+        )
+
+        # check "New custom image" tab
+        new_custom_image_tab = get_tabs()[3]
+        new_custom_image_tab.find_element(By.TAG_NAME, 'a').click()
+        check_tab_link(
+            3,
+            'New custom image',
+            f"/toastergui/project/1/newcustomimage"
+        )
+
+        # check search box can be use to build recipes
+        search_box = self.find('#build-input')
+        search_box.send_keys('core-image-minimal')
+        self.find('#build-button').click()
+        self.wait_until_visible('#latest-builds')
+        lastest_builds = self.driver.find_elements(
+            By.XPATH,
+            '//div[@id="latest-builds"]',
+        )
+        last_build = lastest_builds[0]
+        self.assertTrue(
+            'core-image-minimal' in str(last_build.text)
+        )
