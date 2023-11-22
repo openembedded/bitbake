@@ -48,6 +48,14 @@ Supported SRC_URI options are:
    instead of branch.
    The default is "0", set nobranch=1 if needed.
 
+- subpath
+   Limit the checkout to a specific subpath of the tree.
+   By default, checkout the whole tree, set subpath=<path> if needed
+
+- destsuffix
+   The name of the path in which to place the checkout.
+   By default, the path is git/, set destsuffix=<suffix> if needed
+
 - usehead
    For local git:// urls to use the current branch HEAD as the revision for use with
    AUTOREV. Implies nobranch.
