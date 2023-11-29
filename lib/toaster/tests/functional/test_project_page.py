@@ -8,8 +8,10 @@
 
 import pytest
 from django.urls import reverse
+from django.utils import timezone
 from selenium.webdriver.support.select import Select
 from tests.functional.functional_helpers import SeleniumFunctionalTestCase
+from orm.models import Build, Project, Target
 from selenium.webdriver.common.by import By
 
 
@@ -54,6 +56,134 @@ class TestProjectPage(SeleniumFunctionalTestCase):
                 checkbox.click()
 
         self.driver.find_element(By.ID, "create-project-button").click()
+
+    def _get_create_builds(self, **kwargs):
+        """ Create a build and return the build object """
+        # parameters for builds to associate with the projects
+        now = timezone.now()
+        release = '3'
+        project_name = 'projectmaster'
+        self._create_test_new_project(
+            project_name+"2",
+            release,
+            False,
+        )
+
+        self.project1_build_success = {
+            'project': Project.objects.get(id=1),
+            'started_on': now,
+            'completed_on': now,
+            'outcome': Build.SUCCEEDED
+        }
+
+        self.project1_build_failure = {
+            'project': Project.objects.get(id=1),
+            'started_on': now,
+            'completed_on': now,
+            'outcome': Build.FAILED
+        }
+        build1 = Build.objects.create(**self.project1_build_success)
+        build2 = Build.objects.create(**self.project1_build_failure)
+
+        # add some targets to these builds so they have recipe links
+        # (and so we can find the row in the ToasterTable corresponding to
+        # a particular build)
+        Target.objects.create(build=build1, target='foo')
+        Target.objects.create(build=build2, target='bar')
+
+        if kwargs:
+            # Create kwargs.get('success') builds with success status with target
+            # and kwargs.get('failure') builds with failure status with target
+            for i in range(kwargs.get('success', 0)):
+                now = timezone.now()
+                self.project1_build_success['started_on'] = now
+                self.project1_build_success[
+                    'completed_on'] = now - timezone.timedelta(days=i)
+                build = Build.objects.create(**self.project1_build_success)
+                Target.objects.create(build=build,
+                                      target=f'{i}_success_recipe',
+                                      task=f'{i}_success_task')
+
+            for i in range(kwargs.get('failure', 0)):
+                now = timezone.now()
+                self.project1_build_failure['started_on'] = now
+                self.project1_build_failure[
+                    'completed_on'] = now - timezone.timedelta(days=i)
+                build = Build.objects.create(**self.project1_build_failure)
+                Target.objects.create(build=build,
+                                      target=f'{i}_fail_recipe',
+                                      task=f'{i}_fail_task')
+        return build1, build2
+
+    def _mixin_test_table_edit_column(
+            self,
+            table_id,
+            edit_btn_id,
+            list_check_box_id: list
+    ):
+        # Check edit column
+        edit_column = self.find(f'#{edit_btn_id}')
+        self.assertTrue(edit_column.is_displayed())
+        edit_column.click()
+        # Check dropdown is visible
+        self.wait_until_visible('ul.dropdown-menu.editcol')
+        for check_box_id in list_check_box_id:
+            # Check that we can hide/show table column
+            check_box = self.find(f'#{check_box_id}')
+            th_class = str(check_box_id).replace('checkbox-', '')
+            if check_box.is_selected():
+                # check if column is visible in table
+                self.assertTrue(
+                    self.find(
+                        f'#{table_id} thead th.{th_class}'
+                    ).is_displayed(),
+                    f"The {th_class} column is checked in EditColumn dropdown, but it's not visible in table"
+                )
+                check_box.click()
+                # check if column is hidden in table
+                self.assertFalse(
+                    self.find(
+                        f'#{table_id} thead th.{th_class}'
+                    ).is_displayed(),
+                    f"The {th_class} column is unchecked in EditColumn dropdown, but it's visible in table"
+                )
+            else:
+                # check if column is hidden in table
+                self.assertFalse(
+                    self.find(
+                        f'#{table_id} thead th.{th_class}'
+                    ).is_displayed(),
+                    f"The {th_class} column is unchecked in EditColumn dropdown, but it's visible in table"
+                )
+                check_box.click()
+                # check if column is visible in table
+                self.assertTrue(
+                    self.find(
+                        f'#{table_id} thead th.{th_class}'
+                    ).is_displayed(),
+                    f"The {th_class} column is checked in EditColumn dropdown, but it's not visible in table"
+                )
+
+    def test_image_recipe_editColumn(self):
+        """ Test the edit column feature in image recipe table on project page """
+        self._get_create_builds(success=10, failure=10)
+
+        url = reverse('projectimagerecipes', args=(1,))
+        self.get(url)
+        self.wait_until_present('#imagerecipestable tbody tr')
+
+        column_list = [
+            'get_description_or_summary', 'layer_version__get_vcs_reference',
+            'layer_version__layer__name', 'license', 'recipe-file', 'section',
+            'version'
+        ]
+
+        # Check that we can hide the edit column
+        self._mixin_test_table_edit_column(
+            'imagerecipestable',
+            'edit-columns-button',
+            [f'checkbox-{column}' for column in column_list]
+        )
 
     def test_page_header_on_project_page(self):
         """ Check page header in project page:
