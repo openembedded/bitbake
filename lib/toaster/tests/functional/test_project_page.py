@@ -6,12 +6,15 @@
 # SPDX-License-Identifier: GPL-2.0-only
 #
 
+import random
+import string
 import pytest
 from time import sleep
 from django.urls import reverse
 from django.utils import timezone
+from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.select import Select
-from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from tests.functional.functional_helpers import SeleniumFunctionalTestCase
 from orm.models import Build, Project, Target
 from selenium.webdriver.common.by import By
@@ -23,12 +26,17 @@ class TestProjectPage(SeleniumFunctionalTestCase):
     def setUp(self):
         super().setUp()
         release = '3'
-        project_name = 'projectmaster'
+        project_name = 'project_' + self.generate_random_string()
         self._create_test_new_project(
             project_name,
             release,
             False,
         )
+
+    def generate_random_string(self, length=10):
+        characters = string.ascii_letters + string.digits  # alphabetic and numerical characters
+        random_string = ''.join(random.choice(characters) for _ in range(length))
+        return random_string
 
     def _create_test_new_project(
         self,
@@ -204,7 +212,13 @@ class TestProjectPage(SeleniumFunctionalTestCase):
                     test_show_rows(row_to_show, show_row_link)
 
     def _wait_until_build(self, state):
+        timeout = 10
+        start_time = 0
         while True:
+            if start_time > timeout:
+                raise TimeoutException(
+                    f'Build did not reach {state} state within {timeout} seconds'
+                )
             try:
                 last_build_state = self.driver.find_element(
                     By.XPATH,
@@ -217,7 +231,8 @@ class TestProjectPage(SeleniumFunctionalTestCase):
                     break
             except NoSuchElementException:
                 continue
-            sleep(1)
+            start_time += 1
+            sleep(1) # take a breath and try again
 
     def _mixin_test_table_search_input(self, **kwargs):
         input_selector, input_text, searchBtn_selector, table_selector, *_ = kwargs.values()
@@ -380,11 +395,9 @@ class TestProjectPage(SeleniumFunctionalTestCase):
         self.wait_until_visible('#topbar-configuration-tab')
         config_tab = self.find('#topbar-configuration-tab')
         self.assertTrue(config_tab.get_attribute('class') == 'active')
-        self.assertTrue('Configuration' in config_tab.text)
-        config_tab_link = config_tab.find_element(By.TAG_NAME, 'a')
+        self.assertTrue('Configuration' in str(config_tab.text))
         self.assertTrue(
-            f"/toastergui/project/1" in str(config_tab_link.get_attribute(
-                'href'))
+            f"/toastergui/project/1" in str(self.driver.current_url)
         )
 
         def get_tabs():
@@ -464,10 +477,10 @@ class TestProjectPage(SeleniumFunctionalTestCase):
         image_to_build = rows[0]
         build_btn = image_to_build.find_element(
             By.XPATH,
-            '//td[@class="add-del-layers"]'
+            '//td[@class="add-del-layers"]//a[1]'
         )
         build_btn.click()
-        self._wait_until_build('parsing starting cloning')
+        self._wait_until_build('parsing starting cloning queued')
         lastest_builds = self.driver.find_elements(
             By.XPATH,
             '//div[@id="latest-builds"]/div'
@@ -517,9 +530,9 @@ class TestProjectPage(SeleniumFunctionalTestCase):
         machine_to_select = rows[0]
         select_btn = machine_to_select.find_element(
             By.XPATH,
-            '//td[@class="add-del-layers"]'
+            '//td[@class="add-del-layers"]//a[1]'
         )
-        select_btn.click()
+        select_btn.send_keys(Keys.RETURN)
         self.wait_until_visible('#config-nav')
         project_machine_name = self.find('#project-machine-name')
         self.assertTrue(
@@ -530,32 +543,19 @@ class TestProjectPage(SeleniumFunctionalTestCase):
         # Search for a machine whit layer not in project
         self._mixin_test_table_search_input(
             input_selector='search-input-machinestable',
-            input_text='qemux86-64-screen',
+            input_text='qemux86-64-tpm2',
             searchBtn_selector='search-submit-machinestable',
             table_selector='machinestable'
         )
         rows = self.find_all('#machinestable tbody tr')
         machine_to_add = rows[0]
-        add_btn = machine_to_add.find_element(
-            By.XPATH,
-            '//td[@class="add-del-layers"]'
-        )
+        add_btn = machine_to_add.find_element(By.XPATH, '//td[@class="add-del-layers"]')
         add_btn.click()
-        # check modal is displayed
-        self.wait_until_visible('#dependencies-modal')
-        list_dependencies = self.find_all('#dependencies-list li')
-        # click on add-layers button
-        add_layers_btn = self.driver.find_element(
-            By.XPATH,
-            '//form[@id="dependencies-modal-form"]//button[@class="btn btn-primary"]'
-        )
-        add_layers_btn.click()
         self.wait_until_visible('#change-notification')
         change_notification = self.find('#change-notification')
         self.assertTrue(
-            f'You have added {len(list_dependencies)+1} layers to your project: meta-tanowrt and its dependencies' in change_notification.text
+            f'You have added 1 layer to your project' in str(change_notification.text)
         )
-
         # check Machine table feature(show/hide column, pagination)
         self._navigate_to_config_nav('machinestable', 5)
         column_list = [
@@ -601,7 +601,7 @@ class TestProjectPage(SeleniumFunctionalTestCase):
         )
         add_btn.click()
         # check modal is displayed
-        self.wait_until_visible('#dependencies-modal')
+        self.wait_until_visible('#dependencies-modal', poll=2)
         list_dependencies = self.find_all('#dependencies-list li')
         # click on add-layers button
         add_layers_btn = self.driver.find_element(
@@ -612,7 +612,7 @@ class TestProjectPage(SeleniumFunctionalTestCase):
         self.wait_until_visible('#change-notification')
         change_notification = self.find('#change-notification')
         self.assertTrue(
-            f'You have added {len(list_dependencies)+1} layers to your project: {input_text} and its dependencies' in change_notification.text
+            f'You have added {len(list_dependencies)+1} layers to your project: {input_text} and its dependencies' in str(change_notification.text)
         )
         # check "Remove layer" button works
         rows = self.find_all('#layerstable tbody tr')
@@ -625,7 +625,7 @@ class TestProjectPage(SeleniumFunctionalTestCase):
         self.wait_until_visible('#change-notification', poll=2)
         change_notification = self.find('#change-notification')
         self.assertTrue(
-            f'You have removed 1 layer from your project: {input_text}' in change_notification.text
+            f'You have removed 1 layer from your project: {input_text}' in str(change_notification.text)
         )
         # check layers table feature(show/hide column, pagination)
         self._navigate_to_config_nav('layerstable', 6)
@@ -668,13 +668,13 @@ class TestProjectPage(SeleniumFunctionalTestCase):
         distro_to_add = rows[0]
         add_btn = distro_to_add.find_element(
             By.XPATH,
-            '//td[@class="add-del-layers"]'
+            '//td[@class="add-del-layers"]//a[1]'
         )
         add_btn.click()
         self.wait_until_visible('#change-notification', poll=2)
         change_notification = self.find('#change-notification')
         self.assertTrue(
-            f'You have changed the distro to: {input_text}' in change_notification.text
+            f'You have changed the distro to: {input_text}' in str(change_notification.text)
         )
         # check distro table feature(show/hide column, pagination)
         self._navigate_to_config_nav('distrostable', 7)
