@@ -7,9 +7,11 @@
 #
 
 import pytest
+from time import sleep
 from django.urls import reverse
 from django.utils import timezone
 from selenium.webdriver.support.select import Select
+from selenium.common.exceptions import NoSuchElementException
 from tests.functional.functional_helpers import SeleniumFunctionalTestCase
 from orm.models import Build, Project, Target
 from selenium.webdriver.common.by import By
@@ -163,6 +165,70 @@ class TestProjectPage(SeleniumFunctionalTestCase):
                     ).is_displayed(),
                     f"The {th_class} column is checked in EditColumn dropdown, but it's not visible in table"
                 )
+
+    def _get_config_nav_item(self, index):
+        config_nav = self.find('#config-nav')
+        return config_nav.find_elements(By.TAG_NAME, 'li')[index]
+
+    def _navigate_to_config_nav(self, nav_id, nav_index):
+        # navigate to the project page
+        url = reverse("project", args=(1,))
+        self.get(url)
+        self.wait_until_visible('#config-nav')
+        # click on "Software recipe" tab
+        soft_recipe = self._get_config_nav_item(nav_index)
+        soft_recipe.click()
+        self.wait_until_visible(f'#{nav_id}')
+
+    def _mixin_test_table_show_rows(self, table_selector, **kwargs):
+        """ Test the show rows feature in the builds table on the all builds page """
+        def test_show_rows(row_to_show, show_row_link):
+            # Check that we can show rows == row_to_show
+            show_row_link.select_by_value(str(row_to_show))
+            self.wait_until_visible(f'#{table_selector} tbody tr', poll=2)
+            self.assertTrue(
+                len(self.find_all(f'#{table_selector} tbody tr')) == row_to_show
+            )
+        self.wait_until_present(f'#{table_selector} tbody tr')
+        show_rows = self.driver.find_elements(
+            By.XPATH,
+            f'//select[@class="form-control pagesize-{table_selector}"]'
+        )
+        rows_to_show = [10, 25, 50, 100, 150]
+        to_skip = kwargs.get('to_skip', [])
+        # Check show rows
+        for show_row_link in show_rows:
+            show_row_link = Select(show_row_link)
+            for row_to_show in rows_to_show:
+                if row_to_show not in to_skip:
+                    test_show_rows(row_to_show, show_row_link)
+
+    def _wait_until_build(self, state):
+        while True:
+            try:
+                last_build_state = self.driver.find_element(
+                    By.XPATH,
+                    '//*[@id="latest-builds"]/div[1]//div[@class="build-state"]',
+                )
+                build_state = last_build_state.get_attribute(
+                    'data-build-state')
+                state_text = state.lower().split()
+                if any(x in str(build_state).lower() for x in state_text):
+                    break
+            except NoSuchElementException:
+                continue
+            sleep(1)
+
+    def _mixin_test_table_search_input(self, **kwargs):
+        input_selector, input_text, searchBtn_selector, table_selector, *_ = kwargs.values()
+        # Test search input
+        self.wait_until_visible(f'#{input_selector}')
+        recipe_input = self.find(f'#{input_selector}')
+        recipe_input.send_keys(input_text)
+        self.find(f'#{searchBtn_selector}').click()
+        self.wait_until_visible(f'#{table_selector} tbody tr')
+        rows = self.find_all(f'#{table_selector} tbody tr')
+        self.assertTrue(len(rows) > 0)
 
     def test_image_recipe_editColumn(self):
         """ Test the edit column feature in image recipe table on project page """
@@ -375,3 +441,55 @@ class TestProjectPage(SeleniumFunctionalTestCase):
         self.assertTrue(
             'core-image-minimal' in str(last_build.text)
         )
+
+    def test_softwareRecipe_page(self):
+        """ Test software recipe page
+            - Check title "Compatible software recipes" is displayed
+            - Check search input
+            - Check "build recipe" button works
+            - Check software recipe table feature(show/hide column, pagination)
+        """
+        self._navigate_to_config_nav('softwarerecipestable', 4)
+        # check title "Compatible software recipes" is displayed
+        self.assertTrue("Compatible software recipes" in self.get_page_source())
+        # Test search input
+        self._mixin_test_table_search_input(
+            input_selector='search-input-softwarerecipestable',
+            input_text='busybox',
+            searchBtn_selector='search-submit-softwarerecipestable',
+            table_selector='softwarerecipestable'
+        )
+        # check "build recipe" button works
+        rows = self.find_all('#softwarerecipestable tbody tr')
+        image_to_build = rows[0]
+        build_btn = image_to_build.find_element(
+            By.XPATH,
+            '//td[@class="add-del-layers"]'
+        )
+        build_btn.click()
+        self._wait_until_build('parsing starting cloning')
+        lastest_builds = self.driver.find_elements(
+            By.XPATH,
+            '//div[@id="latest-builds"]/div'
+        )
+        self.assertTrue(len(lastest_builds) > 0)
+
+        # check software recipe table feature(show/hide column, pagination)
+        self._navigate_to_config_nav('softwarerecipestable', 4)
+        column_list = [
+            'get_description_or_summary',
+            'layer_version__get_vcs_reference',
+            'layer_version__layer__name',
+            'license',
+            'recipe-file',
+            'section',
+            'version',
+        ]
+        self._mixin_test_table_edit_column(
+            'softwarerecipestable',
+            'edit-columns-button',
+            [f'checkbox-{column}' for column in column_list]
+        )
+        self._navigate_to_config_nav('softwarerecipestable', 4)
+        # check show rows(pagination)
+        self._mixin_test_table_show_rows(table_selector='softwarerecipestable')
