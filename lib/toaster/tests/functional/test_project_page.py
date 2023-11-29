@@ -644,3 +644,54 @@ class TestProjectPage(SeleniumFunctionalTestCase):
         self._navigate_to_config_nav('layerstable', 6)
         # check show rows(pagination)
         self._mixin_test_table_show_rows(table_selector='layerstable')
+
+    def test_distro_page(self):
+        """ Test distros page
+            - Check if title "Compatible distros" is displayed
+            - Check search input
+            - Check "Add layer" button works
+            - Check distro table feature(show/hide column, pagination)
+        """
+        self._navigate_to_config_nav('distrostable', 7)
+        # check title "Compatible distros" is displayed
+        self.assertTrue("Compatible Distros" in self.get_page_source())
+        # Test search input
+        input_text='poky-altcfg'
+        self._mixin_test_table_search_input(
+            input_selector='search-input-distrostable',
+            input_text=input_text,
+            searchBtn_selector='search-submit-distrostable',
+            table_selector='distrostable'
+        )
+        # check "Add distro" button works
+        rows = self.find_all('#distrostable tbody tr')
+        distro_to_add = rows[0]
+        add_btn = distro_to_add.find_element(
+            By.XPATH,
+            '//td[@class="add-del-layers"]'
+        )
+        add_btn.click()
+        self.wait_until_visible('#change-notification', poll=2)
+        change_notification = self.find('#change-notification')
+        self.assertTrue(
+            f'You have changed the distro to: {input_text}' in change_notification.text
+        )
+        # check distro table feature(show/hide column, pagination)
+        self._navigate_to_config_nav('distrostable', 7)
+        column_list = [
+            'description',
+            'templatefile',
+            'layer_version__get_vcs_reference',
+            'layer_version__layer__name',
+        ]
+        self._mixin_test_table_edit_column(
+            'distrostable',
+            'edit-columns-button',
+            [f'checkbox-{column}' for column in column_list]
+        )
+        self._navigate_to_config_nav('distrostable', 7)
+        # check show rows(pagination)
+        self._mixin_test_table_show_rows(
+            table_selector='distrostable',
+            to_skip=[150]
+        )
