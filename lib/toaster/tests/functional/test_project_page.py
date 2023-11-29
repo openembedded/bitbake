@@ -695,3 +695,64 @@ class TestProjectPage(SeleniumFunctionalTestCase):
             table_selector='distrostable',
             to_skip=[150]
         )
+
+    def test_single_layer_page(self):
+        """ Test layer page
+            - Check if title is displayed
+            - Check add/remove layer button works
+            - Check tabs(layers, recipes, machines) are displayed
+            - Check left section is displayed
+                - Check layer name
+                - Check layer summary
+                - Check layer description
+        """
+        url = reverse("layerdetails", args=(1, 8))
+        self.get(url)
+        self.wait_until_visible('.page-header')
+        # check title is displayed
+        self.assertTrue(self.find('.page-header h1').is_displayed())
+
+        # check add layer button works
+        remove_layer_btn = self.find('#add-remove-layer-btn')
+        remove_layer_btn.click()
+        self.wait_until_visible('#change-notification', poll=2)
+        change_notification = self.find('#change-notification')
+        self.assertTrue(
+            f'You have removed 1 layer from your project' in str(change_notification.text)
+        )
+        # check add layer button works, 18 is the random layer id
+        add_layer_btn = self.find('#add-remove-layer-btn')
+        add_layer_btn.click()
+        self.wait_until_visible('#change-notification')
+        change_notification = self.find('#change-notification')
+        self.assertTrue(
+            f'You have added 1 layer to your project' in str(change_notification.text)
+        )
+        # check tabs(layers, recipes, machines) are displayed
+        tabs = self.find_all('.nav-tabs li')
+        self.assertEqual(len(tabs), 3)
+        # Check first tab
+        tabs[0].click()
+        self.assertTrue(
+            'active' in str(self.find('#information').get_attribute('class'))
+        )
+        # Check second tab
+        tabs[1].click()
+        self.assertTrue(
+            'active' in str(self.find('#recipes').get_attribute('class'))
+        )
+        # Check third tab
+        tabs[2].click()
+        self.assertTrue(
+            'active' in str(self.find('#machines').get_attribute('class'))
+        )
+        # Check left section is displayed
+        section = self.find('.well')
+        # Check layer name
+        self.assertTrue(
+            section.find_element(By.XPATH, '//h2[1]').is_displayed()
+        )
+        # Check layer summary
+        self.assertTrue("Summary" in section.text)
+        # Check layer description
+        self.assertTrue("Description" in section.text)
