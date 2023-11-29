@@ -572,3 +572,75 @@ class TestProjectPage(SeleniumFunctionalTestCase):
         self._navigate_to_config_nav('machinestable', 5)
         # check show rows(pagination)
         self._mixin_test_table_show_rows(table_selector='machinestable')
+
+    def test_layers_page(self):
+        """ Test layers page
+            - Check if title "Compatible layerss" is displayed
+            - Check search input
+            - Check "Add layer" button works
+            - Check "Remove layer" button works
+            - Check layers table feature(show/hide column, pagination)
+        """
+        self._navigate_to_config_nav('layerstable', 6)
+        # check title "Compatible layers" is displayed
+        self.assertTrue("Compatible layers" in self.get_page_source())
+        # Test search input
+        input_text='meta-tanowrt'
+        self._mixin_test_table_search_input(
+            input_selector='search-input-layerstable',
+            input_text=input_text,
+            searchBtn_selector='search-submit-layerstable',
+            table_selector='layerstable'
+        )
+        # check "Add layer" button works
+        rows = self.find_all('#layerstable tbody tr')
+        layer_to_add = rows[0]
+        add_btn = layer_to_add.find_element(
+            By.XPATH,
+            '//td[@class="add-del-layers"]'
+        )
+        add_btn.click()
+        # check modal is displayed
+        self.wait_until_visible('#dependencies-modal')
+        list_dependencies = self.find_all('#dependencies-list li')
+        # click on add-layers button
+        add_layers_btn = self.driver.find_element(
+            By.XPATH,
+            '//form[@id="dependencies-modal-form"]//button[@class="btn btn-primary"]'
+        )
+        add_layers_btn.click()
+        self.wait_until_visible('#change-notification')
+        change_notification = self.find('#change-notification')
+        self.assertTrue(
+            f'You have added {len(list_dependencies)+1} layers to your project: {input_text} and its dependencies' in change_notification.text
+        )
+        # check "Remove layer" button works
+        rows = self.find_all('#layerstable tbody tr')
+        layer_to_remove = rows[0]
+        remove_btn = layer_to_remove.find_element(
+            By.XPATH,
+            '//td[@class="add-del-layers"]'
+        )
+        remove_btn.click()
+        self.wait_until_visible('#change-notification', poll=2)
+        change_notification = self.find('#change-notification')
+        self.assertTrue(
+            f'You have removed 1 layer from your project: {input_text}' in change_notification.text
+        )
+        # check layers table feature(show/hide column, pagination)
+        self._navigate_to_config_nav('layerstable', 6)
+        column_list = [
+            'dependencies',
+            'revision',
+            'layer__vcs_url',
+            'git_subdir',
+            'layer__summary',
+        ]
+        self._mixin_test_table_edit_column(
+            'layerstable',
+            'edit-columns-button',
+            [f'checkbox-{column}' for column in column_list]
+        )
+        self._navigate_to_config_nav('layerstable', 6)
+        # check show rows(pagination)
+        self._mixin_test_table_show_rows(table_selector='layerstable')
