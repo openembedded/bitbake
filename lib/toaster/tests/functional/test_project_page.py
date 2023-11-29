@@ -493,3 +493,82 @@ class TestProjectPage(SeleniumFunctionalTestCase):
         self._navigate_to_config_nav('softwarerecipestable', 4)
         # check show rows(pagination)
         self._mixin_test_table_show_rows(table_selector='softwarerecipestable')
+
+    def test_machines_page(self):
+        """ Test Machine page
+            - Check if title "Compatible machines" is displayed
+            - Check search input
+            - Check "Select machine" button works
+            - Check "Add layer" button works
+            - Check Machine table feature(show/hide column, pagination)
+        """
+        self._navigate_to_config_nav('machinestable', 5)
+        # check title "Compatible software recipes" is displayed
+        self.assertTrue("Compatible machines" in self.get_page_source())
+        # Test search input
+        self._mixin_test_table_search_input(
+            input_selector='search-input-machinestable',
+            input_text='qemux86-64',
+            searchBtn_selector='search-submit-machinestable',
+            table_selector='machinestable'
+        )
+        # check "Select machine" button works
+        rows = self.find_all('#machinestable tbody tr')
+        machine_to_select = rows[0]
+        select_btn = machine_to_select.find_element(
+            By.XPATH,
+            '//td[@class="add-del-layers"]'
+        )
+        select_btn.click()
+        self.wait_until_visible('#config-nav')
+        project_machine_name = self.find('#project-machine-name')
+        self.assertTrue(
+            'qemux86-64' in project_machine_name.text
+        )
+        # check "Add layer" button works
+        self._navigate_to_config_nav('machinestable', 5)
+        # Search for a machine whit layer not in project
+        self._mixin_test_table_search_input(
+            input_selector='search-input-machinestable',
+            input_text='qemux86-64-screen',
+            searchBtn_selector='search-submit-machinestable',
+            table_selector='machinestable'
+        )
+        rows = self.find_all('#machinestable tbody tr')
+        machine_to_add = rows[0]
+        add_btn = machine_to_add.find_element(
+            By.XPATH,
+            '//td[@class="add-del-layers"]'
+        )
+        add_btn.click()
+        # check modal is displayed
+        self.wait_until_visible('#dependencies-modal')
+        list_dependencies = self.find_all('#dependencies-list li')
+        # click on add-layers button
+        add_layers_btn = self.driver.find_element(
+            By.XPATH,
+            '//form[@id="dependencies-modal-form"]//button[@class="btn btn-primary"]'
+        )
+        add_layers_btn.click()
+        self.wait_until_visible('#change-notification')
+        change_notification = self.find('#change-notification')
+        self.assertTrue(
+            f'You have added {len(list_dependencies)+1} layers to your project: meta-tanowrt and its dependencies' in change_notification.text
+        )
+
+        # check Machine table feature(show/hide column, pagination)
+        self._navigate_to_config_nav('machinestable', 5)
+        column_list = [
+            'description',
+            'layer_version__get_vcs_reference',
+            'layer_version__layer__name',
+            'machinefile',
+        ]
+        self._mixin_test_table_edit_column(
+            'machinestable',
+            'edit-columns-button',
+            [f'checkbox-{column}' for column in column_list]
+        )
+        self._navigate_to_config_nav('machinestable', 5)
+        # check show rows(pagination)
+        self._mixin_test_table_show_rows(table_selector='machinestable')
