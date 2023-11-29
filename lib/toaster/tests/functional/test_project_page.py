@@ -756,3 +756,35 @@ class TestProjectPage(SeleniumFunctionalTestCase):
         self.assertTrue("Summary" in section.text)
         # Check layer description
         self.assertTrue("Description" in section.text)
+
+    def test_single_recipe_page(self):
+        """ Test recipe page
+            - Check if title is displayed
+            - Check add recipe layer displayed
+            - Check left section is displayed
+                - Check recipe: name, summary, description, Version, Section,
+                License, Approx. packages included, Approx. size, Recipe file
+        """
+        url = reverse("recipedetails", args=(1, 53428))
+        self.get(url)
+        self.wait_until_visible('.page-header')
+        # check title is displayed
+        self.assertTrue(self.find('.page-header h1').is_displayed())
+        # check add recipe layer displayed
+        add_recipe_layer_btn = self.find('#add-layer-btn')
+        self.assertTrue(add_recipe_layer_btn.is_displayed())
+        # check left section is displayed
+        section = self.find('.well')
+        # Check recipe name
+        self.assertTrue(
+            section.find_element(By.XPATH, '//h2[1]').is_displayed()
+        )
+        # Check recipe sections details info are displayed
+        self.assertTrue("Summary" in section.text)
+        self.assertTrue("Description" in section.text)
+        self.assertTrue("Version" in section.text)
+        self.assertTrue("Section" in section.text)
+        self.assertTrue("License" in section.text)
+        self.assertTrue("Approx. packages included" in section.text)
+        self.assertTrue("Approx. package size" in section.text)
+        self.assertTrue("Recipe file" in section.text)
