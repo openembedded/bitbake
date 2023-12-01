@@ -10,6 +10,7 @@
 # Ionut Chisanovici, Paul Eggleton and Cristian Iorga
 
 import os
+import pytest
 
 from django.db.models import Q
 
@@ -21,6 +22,7 @@ from orm.models import CustomImagePackage
 from tests.builds.buildtest import BuildTest
 
 
+@pytest.mark.django_db(True)
 class BuildCoreImageMinimal(BuildTest):
     """Build core-image-minimal and test the results"""
 
