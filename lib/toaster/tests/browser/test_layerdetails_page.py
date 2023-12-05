@@ -68,6 +68,7 @@ class TestLayerDetailsPage(SeleniumTestCase):
         check that the new values exist"""
 
         self.get(self.url)
+        self.wait_until_visible("#add-remove-layer-btn")
 
         self.click("#add-remove-layer-btn")
         self.click("#edit-layer-source")
@@ -105,7 +106,9 @@ class TestLayerDetailsPage(SeleniumTestCase):
         for save_btn in self.find_all(".change-btn"):
             save_btn.click()
 
-        self.click("#save-changes-for-switch")
+        self.wait_until_visible("#save-changes-for-switch")
+        btn_save_chg_for_switch = self.find("#save-changes-for-switch")
+        btn_save_chg_for_switch.click()
         self.wait_until_visible("#edit-layer-source")
 
         # Refresh the page to see if the new values are returned
@@ -134,7 +137,9 @@ class TestLayerDetailsPage(SeleniumTestCase):
         new_dir = "/home/test/my-meta-dir"
         dir_input.send_keys(new_dir)
 
-        self.click("#save-changes-for-switch")
+        self.wait_until_visible("#save-changes-for-switch")
+        btn_save_chg_for_switch = self.find("#save-changes-for-switch")
+        btn_save_chg_for_switch.click()
         self.wait_until_visible("#edit-layer-source")
 
         # Refresh the page to see if the new values are returned

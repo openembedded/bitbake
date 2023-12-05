@@ -206,6 +206,7 @@ class TestLandingPage(SeleniumTestCase):
 
         self.get(reverse('landing'))
 
+        self.wait_until_visible("#latest-builds")
         elements = self.find_all('#allbuildstable')
         self.assertEqual(len(elements), 1, 'should redirect to builds')
         content = self.get_page_source()
