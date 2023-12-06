@@ -47,7 +47,7 @@ class TestMostRecentBuildsStates(SeleniumTestCase):
         # build queued; check shown as queued
         selector = base_selector + '[data-build-state="Queued"]'
         element = self.wait_until_visible(selector)
-        self.assertRegexpMatches(element.get_attribute('innerHTML'),
+        self.assertRegex(element.get_attribute('innerHTML'),
             'Build queued', 'build should show queued status')
 
         # waiting for recipes to be parsed
@@ -97,7 +97,7 @@ class TestMostRecentBuildsStates(SeleniumTestCase):
 
         selector = base_selector + '[data-build-state="Starting"]'
         element = self.wait_until_visible(selector)
-        self.assertRegexpMatches(element.get_attribute('innerHTML'),
+        self.assertRegex(element.get_attribute('innerHTML'),
             'Tasks starting', 'build should show "tasks starting" status')
 
         # first task finished; check tasks progress bar
@@ -186,7 +186,7 @@ class TestMostRecentBuildsStates(SeleniumTestCase):
         selector = '[data-latest-build-result="%s"] ' \
             '[data-build-state="Cancelling"]' % build.id
         element = self.wait_until_visible(selector)
-        self.assertRegexpMatches(element.get_attribute('innerHTML'),
+        self.assertRegex(element.get_attribute('innerHTML'),
             'Cancelling the build', 'build should show "cancelling" status')
 
         # check cancelled state
@@ -198,5 +198,5 @@ class TestMostRecentBuildsStates(SeleniumTestCase):
         selector = '[data-latest-build-result="%s"] ' \
             '[data-build-state="Cancelled"]' % build.id
         element = self.wait_until_visible(selector)
-        self.assertRegexpMatches(element.get_attribute('innerHTML'),
+        self.assertRegex(element.get_attribute('innerHTML'),
             'Build cancelled', 'build should show "cancelled" status')

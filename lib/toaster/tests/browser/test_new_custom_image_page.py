@@ -136,7 +136,7 @@ class TestNewCustomImagePage(SeleniumTestCase):
         """
         self._create_custom_image(self.recipe.name)
         element = self.wait_until_visible('#invalid-name-help')
-        self.assertRegexpMatches(element.text.strip(),
+        self.assertRegex(element.text.strip(),
                                  'image with this name already exists')
 
     def test_new_duplicates_project_image(self):
@@ -154,4 +154,4 @@ class TestNewCustomImagePage(SeleniumTestCase):
         self._create_custom_image(custom_image_name)
         element = self.wait_until_visible('#invalid-name-help')
         expected = 'An image with this name already exists in this project'
-        self.assertRegexpMatches(element.text.strip(), expected)
+        self.assertRegex(element.text.strip(), expected)
