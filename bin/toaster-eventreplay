@@ -45,7 +45,13 @@ class EventPlayer:
         if not line:
             return
         try:
-            event_str = json.loads(line)['vars'].encode('utf-8')
+            decodedline = json.loads(line)
+            if 'allvariables' in decodedline:
+                self.variables = decodedline['allvariables']
+                return
+            if not 'vars' in decodedline:
+                raise ValueError
+            event_str = decodedline['vars'].encode('utf-8')
             event = pickle.loads(codecs.decode(event_str, 'base64'))
             event_name = "%s.%s" % (event.__module__, event.__class__.__name__)
             if event_name not in self.eventmask:
@@ -99,8 +105,16 @@ class EventPlayer:
 def main(argv):
     with open(argv[-1]) as eventfile:
         # load variables from the first line
-        variables = json.loads(eventfile.readline().strip())['allvariables']
-
+        variables = None
+        while line := eventfile.readline().strip():
+            try:
+                variables = json.loads(line)['allvariables']
+                break
+            except (KeyError, json.JSONDecodeError):
+                continue
+        if not variables:
+            sys.exit("Cannot find allvariables entry in event log file %s" % argv[-1])
+        eventfile.seek(0)
         params = namedtuple('ConfigParams', ['observe_only'])(True)
         player = EventPlayer(eventfile, variables)
 
