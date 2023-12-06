@@ -197,12 +197,12 @@ class TestBuildDashboardPageArtifacts(SeleniumTestCase):
         # check package count and size, link on target name
         selector = '[data-value="target-package-count"]'
         element = self.find(selector)
-        self.assertEquals(element.text, '1',
+        self.assertEqual(element.text, '1',
             'package count should be shown for image builds')
 
         selector = '[data-value="target-package-size"]'
         element = self.find(selector)
-        self.assertEquals(element.text, '1.0 KB',
+        self.assertEqual(element.text, '1.0 KB',
             'package size should be shown for image builds')
 
         selector = '[data-link="target-packages"]'

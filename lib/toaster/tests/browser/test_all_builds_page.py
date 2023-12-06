@@ -259,25 +259,25 @@ class TestAllBuildsPage(SeleniumTestCase):
         element = self._get_build_time_element(build1)
         links = element.find_elements(By.CSS_SELECTOR, 'a')
         msg = 'should be a link on the build time for a successful recent build'
-        self.assertEquals(len(links), 1, msg)
+        self.assertEqual(len(links), 1, msg)
 
         # test recent builds area for failed build
         element = self._get_build_time_element(build2)
         links = element.find_elements(By.CSS_SELECTOR, 'a')
         msg = 'should not be a link on the build time for a failed recent build'
-        self.assertEquals(len(links), 0, msg)
+        self.assertEqual(len(links), 0, msg)
 
         # test the time column for successful build
         build1_row = self._get_row_for_build(build1)
         links = build1_row.find_elements(By.CSS_SELECTOR, 'td.time a')
         msg = 'should be a link on the build time for a successful build'
-        self.assertEquals(len(links), 1, msg)
+        self.assertEqual(len(links), 1, msg)
 
         # test the time column for failed build
         build2_row = self._get_row_for_build(build2)
         links = build2_row.find_elements(By.CSS_SELECTOR, 'td.time a')
         msg = 'should not be a link on the build time for a failed build'
-        self.assertEquals(len(links), 0, msg)
+        self.assertEqual(len(links), 0, msg)
 
     def test_builds_table_search_box(self):
         """ Test the search box in the builds table on the all builds page """
