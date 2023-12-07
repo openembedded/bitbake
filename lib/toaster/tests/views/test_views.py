@@ -34,7 +34,7 @@ PROJECT_NAME2 = "test project 2"
 CLI_BUILDS_PROJECT_NAME = 'Command line builds'
 
 
-@pytest.mark.order(1)
+
 class ViewTests(TestCase):
     """Tests to verify view APIs."""
 
