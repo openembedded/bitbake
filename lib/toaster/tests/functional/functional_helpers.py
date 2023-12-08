@@ -33,11 +33,11 @@ class SeleniumFunctionalTestCase(SeleniumTestCaseBase):
 
         # start toaster
         cmd = "bash -c 'source toaster start'"
-        p = subprocess.Popen(
+        cls.p = subprocess.Popen(
             cmd,
             cwd=os.environ.get("BUILDDIR"),
             shell=True)
-        if p.wait() != 0:
+        if cls.p.wait() != 0:
             raise RuntimeError("Can't initialize toaster")
 
         super(SeleniumFunctionalTestCase, cls).setUpClass()
@@ -58,6 +58,7 @@ class SeleniumFunctionalTestCase(SeleniumTestCaseBase):
         with open(os.path.join(builddir, '.runbuilds.pid'), 'r') as f:
             runbuilds_pid = int(f.read())
             os.kill(runbuilds_pid, signal.SIGTERM)
+        cls.p.kill()
 
 
     def get_URL(self):
