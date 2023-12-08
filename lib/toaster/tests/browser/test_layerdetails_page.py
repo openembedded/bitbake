@@ -106,7 +106,7 @@ class TestLayerDetailsPage(SeleniumTestCase):
         for save_btn in self.find_all(".change-btn"):
             save_btn.click()
 
-        self.wait_until_visible("#save-changes-for-switch")
+        self.wait_until_visible("#save-changes-for-switch", poll=3)
         btn_save_chg_for_switch = self.find("#save-changes-for-switch")
         btn_save_chg_for_switch.click()
         self.wait_until_visible("#edit-layer-source")
@@ -137,7 +137,7 @@ class TestLayerDetailsPage(SeleniumTestCase):
         new_dir = "/home/test/my-meta-dir"
         dir_input.send_keys(new_dir)
 
-        self.wait_until_visible("#save-changes-for-switch")
+        self.wait_until_visible("#save-changes-for-switch", poll=3)
         btn_save_chg_for_switch = self.find("#save-changes-for-switch")
         btn_save_chg_for_switch.click()
         self.wait_until_visible("#edit-layer-source")

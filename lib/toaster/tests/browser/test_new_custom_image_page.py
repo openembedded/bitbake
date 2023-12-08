@@ -45,10 +45,11 @@ class TestNewCustomImagePage(SeleniumTestCase):
         )
 
         # add a fake image recipe to the layer that can be customised
+        builldir = os.environ.get('BUILDDIR', './')
         self.recipe = Recipe.objects.create(
             name='core-image-minimal',
             layer_version=layer_version,
-            file_path='/tmp/core-image-minimal.bb',
+            file_path=f'{builldir}/core-image-minimal.bb',
             is_image=True
         )
         # create a tmp file for the recipe
