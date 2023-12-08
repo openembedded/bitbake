@@ -759,7 +759,8 @@ def mkdirhier(directory):
     """Create a directory like 'mkdir -p', but does not complain if
     directory already exists like os.makedirs
     """
-
+    if directory.find('${') != -1:
+        bb.fatal("Directory name {} contains unexpanded bitbake variable. This may cause build failures and WORKDIR polution.".format(directory))
     try:
         os.makedirs(directory)
     except OSError as e:
