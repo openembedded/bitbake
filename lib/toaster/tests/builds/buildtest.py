@@ -116,7 +116,7 @@ class BuildTest(unittest.TestCase):
         project = Project.objects.create_project(name=BuildTest.PROJECT_NAME,
                                                  release=release)
 
-        passthrough_variable_names = ["SSTATE_DIR", "DL_DIR", "SSTATE_MIRRORS", "BB_HASHSERVE_UPSTREAM"]
+        passthrough_variable_names = ["SSTATE_DIR", "DL_DIR", "SSTATE_MIRRORS", "BB_HASHSERVE", "BB_HASHSERVE_UPSTREAM"]
         for variable_name in passthrough_variable_names:
             current_variable = os.environ.get(variable_name)
             if current_variable:
