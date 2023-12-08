@@ -93,7 +93,7 @@ class FuntionalTestBasic(SeleniumFunctionalTestCase):
         time.sleep(2)
         try:
            self.assertTrue(self.element_exists('#machine-section'),'Machine section for the project configuration page does not exist')
-           self.assertTrue(re.search("qemux86",self.driver.find_element(By.XPATH, "//span[@id='project-machine-name']").text),'The machine type is not assigned')
+           self.assertTrue(re.search("qemux86-64",self.driver.find_element(By.XPATH, "//span[@id='project-machine-name']").text),'The machine type is not assigned')
            self.driver.find_element(By.XPATH, "//span[@id='change-machine-toggle']").click()
            time.sleep(2)
            self.wait_until_visible('#select-machine-form')
@@ -140,7 +140,7 @@ class FuntionalTestBasic(SeleniumFunctionalTestCase):
 
         try:
             self.assertTrue(self.element_exists('#machine-section'),'Machine section for the project configuration page does not exist')
-            self.assertTrue(re.search("qemux86",self.driver.find_element(By.ID, "project-machine-name").text),'The machine type is not assigned')
+            self.assertTrue(re.search("qemux86-64",self.driver.find_element(By.ID, "project-machine-name").text),'The machine type is not assigned')
             self.driver.find_element(By.ID, "change-machine-toggle").click()
             time.sleep(2)
             self.wait_until_visible('#select-machine-form')

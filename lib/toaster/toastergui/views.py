@@ -1610,7 +1610,7 @@ if True:
         # make sure we have a machine set for this project
         ProjectVariable.objects.get_or_create(project=new_project,
                                               name="MACHINE",
-                                              value="qemux86")
+                                              value="qemux86-64")
         context = {'project': new_project}
         return toaster_render(request, "js-unit-tests.html", context)
 
