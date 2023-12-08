@@ -16,6 +16,7 @@ from selenium.webdriver.common.by import By
 
 
 @pytest.mark.django_db
+@pytest.mark.order("last")
 class TestCreateNewProject(SeleniumFunctionalTestCase):
 
     def _create_test_new_project(
