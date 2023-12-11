@@ -24,7 +24,8 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from selenium.common.exceptions import NoSuchElementException, \
-        StaleElementReferenceException, TimeoutException
+        StaleElementReferenceException, TimeoutException, \
+        SessionNotCreatedException
 
 def create_selenium_driver(cls,browser='chrome'):
     # set default browser string based on env (if available)
@@ -39,7 +40,25 @@ def create_selenium_driver(cls,browser='chrome'):
         options.add_argument('--disable-dev-shm-usage')
         options.add_argument('--no-sandbox')
         options.add_argument('--remote-debugging-port=9222')
-        return webdriver.Chrome(options=options)
+        try:
+            return webdriver.Chrome(options=options)
+        except SessionNotCreatedException as e:
+            # check if chrome / chromedriver exists
+            chrome_path = os.popen("find ~/.cache/selenium/chrome/ -name 'chrome' -type f -print -quit").read().strip()
+            if not chrome_path:
+                raise SessionNotCreatedException("Failed to install/find chrome")
+            chromedriver_path = os.popen("find ~/.cache/selenium/chromedriver/ -name 'chromedriver' -type f -print -quit").read().strip()
+            if not chromedriver_path:
+                raise SessionNotCreatedException("Failed to install/find chromedriver")
+            # check if depends on each are fulfilled
+            depends_chrome = os.popen(f"ldd {chrome_path} | grep 'not found'").read().strip()
+            if depends_chrome:
+                raise SessionNotCreatedException(f"Missing chrome dependencies\n{depends_chrome}")
+            depends_chromedriver = os.popen(f"ldd {chromedriver_path} | grep 'not found'").read().strip()
+            if depends_chromedriver:
+                raise SessionNotCreatedException(f"Missing chrome dependencies\n{depends_chromedriver}")
+            # raise original error otherwise
+            raise e
     elif browser == 'firefox':
         return webdriver.Firefox()
     elif browser == 'marionette':
