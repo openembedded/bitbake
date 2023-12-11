@@ -108,7 +108,7 @@ class TestLayerDetailsPage(SeleniumTestCase):
 
         self.wait_until_visible("#save-changes-for-switch", poll=3)
         btn_save_chg_for_switch = self.find("#save-changes-for-switch")
-        btn_save_chg_for_switch.click()
+        self.driver.execute_script("arguments[0].click();", btn_save_chg_for_switch)
         self.wait_until_visible("#edit-layer-source")
 
         # Refresh the page to see if the new values are returned

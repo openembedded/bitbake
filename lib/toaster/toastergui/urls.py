@@ -95,6 +95,7 @@ urlpatterns = [
         # project URLs
         url(r'^newproject/$', views.newproject, name='newproject'),
 
+        url(r'^cmdline/$', views.CommandLineBuilds.as_view(), name='cmdlines'),
         url(r'^projects/$',
             tables.ProjectsTable.as_view(template_name="projects-toastertable.html"),
             name='all-projects'),

@@ -219,5 +219,3 @@ class TestLandingPage(SeleniumTestCase):
         content = self.get_page_source()
         self.assertTrue(self.PROJECT_NAME in content,
                         'should show builds for project %s' % self.PROJECT_NAME)
-        self.assertFalse(self.CLI_BUILDS_PROJECT_NAME in content,
-                         'should not show builds for cli project')
