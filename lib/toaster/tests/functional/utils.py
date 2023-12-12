@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # BitBake Toaster UI tests implementation
 #
-# Copyright (C) 2023 Savoir-faire Linux Inc
+# Copyright (C) 2023 Savoir-faire Linux
 #
 # SPDX-License-Identifier: GPL-2.0-only
 
