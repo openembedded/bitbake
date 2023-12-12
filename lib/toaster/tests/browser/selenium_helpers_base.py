@@ -19,6 +19,7 @@ import os
 import time
 import unittest
 
+import pytest
 from selenium import webdriver
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
@@ -43,22 +44,23 @@ def create_selenium_driver(cls,browser='chrome'):
         try:
             return webdriver.Chrome(options=options)
         except SessionNotCreatedException as e:
+            exit_message = "Halting tests prematurely to avoid cascading errors."
             # check if chrome / chromedriver exists
             chrome_path = os.popen("find ~/.cache/selenium/chrome/ -name 'chrome' -type f -print -quit").read().strip()
             if not chrome_path:
-                raise SessionNotCreatedException("Failed to install/find chrome")
+                pytest.exit(f"Failed to install/find chrome.\n{exit_message}")
             chromedriver_path = os.popen("find ~/.cache/selenium/chromedriver/ -name 'chromedriver' -type f -print -quit").read().strip()
             if not chromedriver_path:
-                raise SessionNotCreatedException("Failed to install/find chromedriver")
+                pytest.exit(f"Failed to install/find chromedriver.\n{exit_message}")
             # check if depends on each are fulfilled
             depends_chrome = os.popen(f"ldd {chrome_path} | grep 'not found'").read().strip()
             if depends_chrome:
-                raise SessionNotCreatedException(f"Missing chrome dependencies\n{depends_chrome}")
+                pytest.exit(f"Missing chrome dependencies.\n{depends_chrome}\n{exit_message}")
             depends_chromedriver = os.popen(f"ldd {chromedriver_path} | grep 'not found'").read().strip()
             if depends_chromedriver:
-                raise SessionNotCreatedException(f"Missing chrome dependencies\n{depends_chromedriver}")
-            # raise original error otherwise
-            raise e
+                pytest.exit(f"Missing chromedriver dependencies.\n{depends_chromedriver}\n{exit_message}")
+            # print original error otherwise
+            pytest.exit(f"Failed to start chromedriver.\n{e}\n{exit_message}")
     elif browser == 'firefox':
         return webdriver.Firefox()
     elif browser == 'marionette':
