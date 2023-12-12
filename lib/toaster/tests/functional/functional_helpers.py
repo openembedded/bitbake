@@ -28,7 +28,7 @@ class SeleniumFunctionalTestCase(SeleniumTestCaseBase):
         # So that the buildinfo helper uses the test database'
         if os.environ.get('DJANGO_SETTINGS_MODULE', '') != \
             'toastermain.settings_test':
-            raise RuntimeError("Please initialise django with the tests settings:  " \
+            raise RuntimeError("Please initialise django with the tests settings:  "
                 "DJANGO_SETTINGS_MODULE='toastermain.settings_test'")
 
         # start toaster
@@ -38,7 +38,13 @@ class SeleniumFunctionalTestCase(SeleniumTestCaseBase):
             cwd=os.environ.get("BUILDDIR"),
             shell=True)
         if cls.p.wait() != 0:
-            raise RuntimeError("Can't initialize toaster")
+            port_use = os.popen("lsof -i -P -n | grep '8000 (LISTEN)'").read().strip()
+            message = ''
+            if port_use:
+                process_id = port_use.split()[1]
+                process = os.popen(f"ps -o cmd= -p {process_id}").read().strip()
+                message = f"Port 8000 occupied by {process}"
+            raise RuntimeError(f"Can't initialize toaster. {message}")
 
         super(SeleniumFunctionalTestCase, cls).setUpClass()
         cls.live_server_url = 'http://localhost:8000/'
