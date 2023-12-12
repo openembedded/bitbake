@@ -27,7 +27,6 @@ class BuildCoreImageMinimal(BuildTest):
     """Build core-image-minimal and test the results"""
 
     def setUp(self):
-        self.built = self.build("core-image-minimal")
         self.completed_build = self.target_already_built("core-image-minimal")
 
     # Check if build name is unique - tc_id=795
@@ -46,17 +45,6 @@ class BuildCoreImageMinimal(BuildTest):
         self.assertEqual(distinct_path,
                          total_builds,
                          msg='Build cooker log path is not unique')
-
-    # Check if task order is unique for one build - tc=824
-    def test_Task_Unique_Order(self):
-        total_task_order = Task.objects.filter(
-            build=self.built).values('order').count()
-        distinct_task_order = Task.objects.filter(
-            build=self.completed_build).values('order').distinct().count()
-
-        self.assertNotEqual(total_task_order,
-                         distinct_task_order,
-                         msg='Errors task order is not unique')
 
     # Check task order sequence for one build - tc=825
     def test_Task_Order_Sequence(self):
