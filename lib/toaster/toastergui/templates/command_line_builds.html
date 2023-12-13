@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load projecttags %}
 {% load humanize %}
+{% load static %}
 
 {% block title %} Import Builds from eventlogs - Toaster {% endblock %}
 
@@ -68,7 +69,7 @@
                     </h4>
                     {% if files %}
                     <div class="table-responsive">
-                        <table class="table col-md-6 table-bordered table-hover">
+                        <table class="table col-md-6 table-bordered table-hover" id="eventlog-table" style="border-collapse: collapse;">
                             <thead>
                             <tr class="row">
                                 <th scope="col">Name</th>
@@ -112,6 +113,8 @@
     </div>
 </div>
 
+<link rel="stylesheet" href="{% static 'css/jquery.dataTables-1.13.8.min.css' %}" type='text/css'/>
+<script src="{% static 'js/jquery.dataTables-1.13.8.min.js' %}"> </script>
 <script>
 
 function _ajax_update(file, all, dir){
@@ -191,6 +194,10 @@ $( "#form_file").on( "submit", function( event ) {
         function() {
             window.location = '/toastergui/builds/'
         }, 10000)
+});
+
+$(document).ready( function () {
+    $('#eventlog-table').DataTable({order: [[0, 'desc']], "pageLength": 50});
 });
 
 </script>
