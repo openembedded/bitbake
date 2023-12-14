@@ -36,7 +36,7 @@ def create_selenium_driver(cls,browser='chrome'):
 
     if browser == 'chrome':
         options = webdriver.ChromeOptions()
-        options.add_argument('headless')
+        options.add_argument('--headless')
         options.add_argument('--disable-infobars')
         options.add_argument('--disable-dev-shm-usage')
         options.add_argument('--no-sandbox')
@@ -166,6 +166,8 @@ class SeleniumTestCaseBase(unittest.TestCase):
         """ Clean up webdriver driver """
 
         cls.driver.quit()
+        # Allow driver resources to be properly freed before proceeding with further tests
+        time.sleep(5)
         super(SeleniumTestCaseBase, cls).tearDownClass()
 
     def get(self, url):
