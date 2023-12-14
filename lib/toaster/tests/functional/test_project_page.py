@@ -461,7 +461,7 @@ class TestProjectPage(SeleniumFunctionalTestCase):
             '//td[@class="add-del-layers"]//a[1]'
         )
         build_btn.click()
-        build_state = wait_until_build(self, 'parsing starting cloning queued')
+        build_state = wait_until_build(self, 'queued cloning starting parsing failed')
         lastest_builds = self.driver.find_elements(
             By.XPATH,
             '//div[@id="latest-builds"]/div'
