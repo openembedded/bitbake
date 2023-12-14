@@ -2018,6 +2018,14 @@ class CommandLineBuilds(TemplateView):
         logs_dir = request.POST.get('dir')
         all_files =  request.POST.get('all')
 
+        # check if a build is already in progress
+        if Build.objects.filter(outcome=Build.IN_PROGRESS):
+            messages.add_message(
+                self.request,
+                messages.ERROR,
+                "A build is already in progress. Please wait for it to complete before starting a new build."
+            )
+            return JsonResponse({'response': 'building'})
         imported_files = EventLogsImports.objects.all()
         try:
             if all_files == 'true':

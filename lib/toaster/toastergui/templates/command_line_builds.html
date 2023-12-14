@@ -152,7 +152,11 @@ function _ajax_update(file, all, dir){
         type: "POST",
         data: {file: file, all: all, dir: dir},
         success:function(data){
-            window.location = '/toastergui/builds/'
+            if (data['response']=='building'){
+                location.reload()
+            } else {
+                window.location = '/toastergui/builds/'
+            }
         },
         complete:function(data){
         },
