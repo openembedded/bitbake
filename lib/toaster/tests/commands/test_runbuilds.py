@@ -22,8 +22,6 @@ import signal
 import logging
 
 
-logger = logging.getLogger("toaster")
-
 class KillRunbuilds(threading.Thread):
     """ Kill the runbuilds process after an amount of time """
     def __init__(self, *args, **kwargs):
@@ -43,7 +41,7 @@ class KillRunbuilds(threading.Thread):
                 pid = pidfile.read()
                 os.kill(int(pid), signal.SIGTERM)
         except ProcessLookupError:
-            logger.warning("Runbuilds not running or already killed")
+            logging.warning("Runbuilds not running or already killed")
 
 
 class TestCommands(TestCase):
