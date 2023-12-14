@@ -19,9 +19,10 @@ from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException
 
 logger = logging.getLogger("toaster")
+toaster_processes = []
 
 class SeleniumFunctionalTestCase(SeleniumTestCaseBase):
-    wait_toaster_time = 5
+    wait_toaster_time = 10
 
     @classmethod
     def setUpClass(cls):
@@ -31,13 +32,22 @@ class SeleniumFunctionalTestCase(SeleniumTestCaseBase):
             raise RuntimeError("Please initialise django with the tests settings:  "
                 "DJANGO_SETTINGS_MODULE='toastermain.settings_test'")
 
+        # Wait for any known toaster processes to exit
+        global toaster_processes
+        for toaster_process in toaster_processes:
+            try:
+                os.waitpid(toaster_process, os.WNOHANG)
+            except ChildProcessError:
+                pass
+
         # start toaster
         cmd = "bash -c 'source toaster start'"
-        cls.p = subprocess.Popen(
+        start_process = subprocess.Popen(
             cmd,
             cwd=os.environ.get("BUILDDIR"),
             shell=True)
-        if cls.p.wait() != 0:
+        toaster_processes = [start_process.pid]
+        if start_process.wait() != 0:
             port_use = os.popen("lsof -i -P -n | grep '8000 (LISTEN)'").read().strip()
             message = ''
             if port_use:
@@ -46,6 +56,12 @@ class SeleniumFunctionalTestCase(SeleniumTestCaseBase):
                 message = f"Port 8000 occupied by {process}"
             raise RuntimeError(f"Can't initialize toaster. {message}")
 
+        builddir = os.environ.get("BUILDDIR")
+        with open(os.path.join(builddir, '.toastermain.pid'), 'r') as f:
+            toaster_processes.append(int(f.read()))
+        with open(os.path.join(builddir, '.runbuilds.pid'), 'r') as f:
+            toaster_processes.append(int(f.read()))
+
         super(SeleniumFunctionalTestCase, cls).setUpClass()
         cls.live_server_url = 'http://localhost:8000/'
 
@@ -53,18 +69,25 @@ class SeleniumFunctionalTestCase(SeleniumTestCaseBase):
     def tearDownClass(cls):
         super(SeleniumFunctionalTestCase, cls).tearDownClass()
 
-        # XXX: source toaster stop gets blocked, to review why?
-        # from now send SIGTERM by hand
-        time.sleep(cls.wait_toaster_time)
-        builddir = os.environ.get("BUILDDIR")
+        global toaster_processes
 
-        with open(os.path.join(builddir, '.toastermain.pid'), 'r') as f:
-            toastermain_pid = int(f.read())
-            os.kill(toastermain_pid, signal.SIGTERM)
-        with open(os.path.join(builddir, '.runbuilds.pid'), 'r') as f:
-            runbuilds_pid = int(f.read())
-            os.kill(runbuilds_pid, signal.SIGTERM)
-        cls.p.kill()
+        cmd = "bash -c 'source toaster stop'"
+        stop_process = subprocess.Popen(
+            cmd,
+            cwd=os.environ.get("BUILDDIR"),
+            shell=True)
+        # Toaster stop has been known to hang in these tests so force kill if it stalls
+        try:
+            if stop_process.wait(cls.wait_toaster_time) != 0:
+                raise Exception('Toaster stop process failed')
+        except Exception as e:
+            if e is subprocess.TimeoutExpired:
+                print('Toaster stop process took too long. Force killing toaster...')
+            else:
+                print('Toaster stop process failed. Force killing toaster...')
+            stop_process.kill()
+            for toaster_process in toaster_processes:
+                os.kill(toaster_process, signal.SIGTERM)
 
 
     def get_URL(self):
