@@ -21,6 +21,7 @@ import unittest
 
 import pytest
 from selenium import webdriver
+from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
@@ -213,6 +214,19 @@ class SeleniumTestCaseBase(unittest.TestCase):
         msg = 'An element matching "%s" should be visible' % selector
         Wait(self.driver, poll=poll).until(is_visible, msg)
         time.sleep(poll)  # wait for visibility to settle
+        return self.find(selector)
+
+    def wait_until_clickable(self, selector, poll=1):
+        """ Wait until element matching CSS selector is visible on the page """
+        WebDriverWait(
+            self.driver,
+            Wait._TIMEOUT,
+            poll_frequency=poll
+        ).until(
+            EC.element_to_be_clickable((By.ID, selector.removeprefix('#')
+                                        )
+                                       )
+        )
         return self.find(selector)
 
     def wait_until_focused(self, selector):
