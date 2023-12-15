@@ -11,7 +11,6 @@ import os
 import logging
 import subprocess
 import signal
-import time
 import re
 
 from tests.browser.selenium_helpers_base import SeleniumTestCaseBase

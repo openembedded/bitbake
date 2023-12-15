@@ -89,6 +89,7 @@ class FuntionalTestBasic(SeleniumFunctionalTestCase):
 #   testcase (1516)
     def test_review_configuration_information(self):
         self.get('')
+        self.wait_until_visible('#global-nav')
         self.driver.find_element(By.XPATH, "//div[@id='global-nav']/ul/li/a[@href="+'"'+'/toastergui/projects/'+'"'+"]").click()
         self.wait_until_visible('#projectstable')
         self.find_element_by_link_text_in_table('projectstable', 'selenium-project').click()
@@ -134,6 +135,7 @@ class FuntionalTestBasic(SeleniumFunctionalTestCase):
 #   testcase (1517)
     def test_verify_machine_information(self):
         self.get('')
+        self.wait_until_visible('#global-nav')
         self.driver.find_element(By.XPATH, "//div[@id='global-nav']/ul/li/a[@href="+'"'+'/toastergui/projects/'+'"'+"]").click()
         self.wait_until_visible('#projectstable')
         self.find_element_by_link_text_in_table('projectstable', 'selenium-project').click()
@@ -152,6 +154,7 @@ class FuntionalTestBasic(SeleniumFunctionalTestCase):
 #   testcase (1518)
     def test_verify_most_built_recipes_information(self):
         self.get('')
+        self.wait_until_visible('#global-nav')
         self.driver.find_element(By.XPATH, "//div[@id='global-nav']/ul/li/a[@href="+'"'+'/toastergui/projects/'+'"'+"]").click()
         self.wait_until_visible('#projectstable')
         self.find_element_by_link_text_in_table('projectstable', 'selenium-project').click()
@@ -168,6 +171,7 @@ class FuntionalTestBasic(SeleniumFunctionalTestCase):
 #   testcase (1519)
     def test_verify_project_release_information(self):
         self.get('')
+        self.wait_until_visible('#global-nav')
         self.driver.find_element(By.XPATH, "//div[@id='global-nav']/ul/li/a[@href="+'"'+'/toastergui/projects/'+'"'+"]").click()
         self.wait_until_visible('#projectstable')
         self.find_element_by_link_text_in_table('projectstable', 'selenium-project').click()
@@ -181,6 +185,7 @@ class FuntionalTestBasic(SeleniumFunctionalTestCase):
 #   testcase (1520)
     def test_verify_layer_information(self):
         self.get('')
+        self.wait_until_visible('#global-nav')
         self.driver.find_element(By.XPATH, "//div[@id='global-nav']/ul/li/a[@href="+'"'+'/toastergui/projects/'+'"'+"]").click()
         self.wait_until_visible('#projectstable')
         self.find_element_by_link_text_in_table('projectstable', 'selenium-project').click()
@@ -212,6 +217,7 @@ class FuntionalTestBasic(SeleniumFunctionalTestCase):
 #   testcase (1521)
     def test_verify_project_detail_links(self):
         self.get('')
+        self.wait_until_visible('#global-nav')
         self.driver.find_element(By.XPATH, "//div[@id='global-nav']/ul/li/a[@href="+'"'+'/toastergui/projects/'+'"'+"]").click()
         self.wait_until_visible('#projectstable')
         self.find_element_by_link_text_in_table('projectstable', 'selenium-project').click()
