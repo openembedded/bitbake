@@ -1390,12 +1390,12 @@ class RunQueue:
             continue
         worker.pipe.close()
 
-    def start_worker(self):
+    def start_worker(self, rqexec):
         if self.worker:
             self.teardown_workers()
         self.teardown = False
         for mc in self.rqdata.dataCaches:
-            self.worker[mc] = self._start_worker(mc)
+            self.worker[mc] = self._start_worker(mc, False, rqexec)
 
     def start_fakeworker(self, rqexec, mc):
         if not mc in self.fakeworker:
@@ -1555,6 +1555,9 @@ class RunQueue:
                                          ('bb.event.HeartbeatEvent',), data=self.cfgData)
                  self.dm_event_handler_registered = True
 
+            self.rqdata.init_progress_reporter.next_stage()
+            self.rqexe = RunQueueExecute(self)
+
             dump = self.cooker.configuration.dump_signatures
             if dump:
                 self.rqdata.init_progress_reporter.finish()
@@ -1566,10 +1569,8 @@ class RunQueue:
                 self.state = runQueueComplete
 
         if self.state is runQueueSceneInit:
-            self.rqdata.init_progress_reporter.next_stage()
-            self.start_worker()
-            self.rqdata.init_progress_reporter.next_stage()
-            self.rqexe = RunQueueExecute(self)
+            self.start_worker(self.rqexe)
+            self.rqdata.init_progress_reporter.finish()
 
             # If we don't have any setscene functions, skip execution
             if not self.rqdata.runq_setscene_tids:
@@ -1822,11 +1823,6 @@ class RunQueueExecute:
         self.sqdone = False
 
         self.stats = RunQueueStats(len(self.rqdata.runtaskentries), len(self.rqdata.runq_setscene_tids))
-
-        for mc in rq.worker:
-            rq.worker[mc].pipe.setrunqueueexec(self)
-        for mc in rq.fakeworker:
-            rq.fakeworker[mc].pipe.setrunqueueexec(self)
 
         if self.number_tasks <= 0:
              bb.fatal("Invalid BB_NUMBER_THREADS %s" % self.number_tasks)
@@ -2974,7 +2970,7 @@ def build_scenequeue_data(sqdata, rqdata, sqrq):
         if not sqdata.sq_revdeps[tid]:
             sqrq.sq_buildable.add(tid)
 
-    rqdata.init_progress_reporter.finish()
+    rqdata.init_progress_reporter.next_stage()
 
     sqdata.noexec = set()
     sqdata.stamppresent = set()
@@ -3192,9 +3188,6 @@ class runQueuePipe():
         self.rq = rq
         self.rqexec = rqexec
         self.fakerootlogs = fakerootlogs
-
-    def setrunqueueexec(self, rqexec):
-        self.rqexec = rqexec
 
     def read(self):
         for workers, name in [(self.rq.worker, "Worker"), (self.rq.fakeworker, "Fakeroot")]:
