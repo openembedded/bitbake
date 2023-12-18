@@ -1753,7 +1753,9 @@ class RunQueue:
         # Define recursion callback
         def recursecb(key, hash1, hash2):
             hashes = [hash1, hash2]
+            bb.debug(1, "Recursively looking for recipe {} hashes {}".format(key, hashes))
             hashfiles = bb.siggen.find_siginfo(key, None, hashes, self.cfgData)
+            bb.debug(1, "Found hashfiles:\n{}".format(hashfiles))
 
             recout = []
             if len(hashfiles) == 2:
@@ -1769,7 +1771,9 @@ class RunQueue:
             (mc, fn, taskname, taskfn) = split_tid_mcfn(tid)
             pn = self.rqdata.dataCaches[mc].pkg_fn[taskfn]
             h = self.rqdata.runtaskentries[tid].unihash
+            bb.debug(1, "Looking for recipe {} task {}".format(pn, taskname))
             matches = bb.siggen.find_siginfo(pn, taskname, [], self.cooker.databuilder.mcdata[mc])
+            bb.debug(1, "Found hashfiles:\n{}".format(matches))
             match = None
             for m in matches:
                 if h in m:
