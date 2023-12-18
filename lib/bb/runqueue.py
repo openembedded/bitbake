@@ -1782,6 +1782,9 @@ class RunQueue:
             if match is None:
                 bb.fatal("Can't find a task we're supposed to have written out? (hash: %s tid: %s)?" % (h, tid))
             matches = {k : v for k, v in iter(matches.items()) if h not in k}
+            matches_local = {k : v for k, v in iter(matches.items()) if h not in k and not v['sstate']}
+            if matches_local:
+                matches = matches_local
             if matches:
                 latestmatch = matches[sorted(matches.keys(), key=lambda h: matches[h]['time'])[-1]]['path']
                 prevh = __find_sha256__.search(latestmatch).group(0)
