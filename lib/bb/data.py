@@ -301,6 +301,7 @@ def build_dependencies(key, keys, shelldeps, varflagsexcl, d):
                 value += "\n_remove of %s" % r
                 deps |= r2.references
                 deps = deps | (keys & r2.execs)
+                value = handle_contains(value, r2.contains, d)
             return value
 
         if "vardepvalue" in varflags:
