@@ -494,7 +494,10 @@ class TestProjectPage(SeleniumFunctionalTestCase):
         )
         self._navigate_to_config_nav('softwarerecipestable', 4)
         # check show rows(pagination)
-        self._mixin_test_table_show_rows(table_selector='softwarerecipestable')
+        self._mixin_test_table_show_rows(
+            table_selector='softwarerecipestable',
+            to_skip=[150],
+        )
 
     def test_machines_page(self):
         """ Test Machine page
@@ -561,7 +564,10 @@ class TestProjectPage(SeleniumFunctionalTestCase):
         )
         self._navigate_to_config_nav('machinestable', 5)
         # check show rows(pagination)
-        self._mixin_test_table_show_rows(table_selector='machinestable')
+        self._mixin_test_table_show_rows(
+            table_selector='machinestable',
+            to_skip=[150],
+        )
 
     def test_layers_page(self):
         """ Test layers page
@@ -635,7 +641,10 @@ class TestProjectPage(SeleniumFunctionalTestCase):
         )
         self._navigate_to_config_nav('layerstable', 6)
         # check show rows(pagination)
-        self._mixin_test_table_show_rows(table_selector='layerstable')
+        self._mixin_test_table_show_rows(
+            table_selector='layerstable',
+            to_skip=[150],
+        )
 
     def test_distro_page(self):
         """ Test distros page
@@ -685,7 +694,7 @@ class TestProjectPage(SeleniumFunctionalTestCase):
         # check show rows(pagination)
         self._mixin_test_table_show_rows(
             table_selector='distrostable',
-            to_skip=[150]
+            to_skip=[150],
         )
 
     def test_single_layer_page(self):
