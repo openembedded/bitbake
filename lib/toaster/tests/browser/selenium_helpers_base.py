@@ -206,6 +206,8 @@ class SeleniumTestCaseBase(unittest.TestCase):
         is_present = lambda driver: self.find(selector)
         msg = 'An element matching "%s" should be on the page' % selector
         element = Wait(self.driver, poll=poll).until(is_present, msg)
+        if poll > 2:
+            time.sleep(poll)  # element need more delay to be present
         return element
 
     def wait_until_visible(self, selector, poll=1):
