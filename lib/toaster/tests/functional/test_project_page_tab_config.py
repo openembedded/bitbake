@@ -376,7 +376,7 @@ class TestProjectConfigTab(SeleniumFunctionalTestCase):
             checkbox.click()
             build_btn = self.find('#freq-build-btn')
             build_btn.click()
-            self.wait_until_present('#latest-builds')
+            self.wait_until_visible('#latest-builds')
             wait_until_build(self, 'queued cloning starting parsing failed')
             lastest_builds = self.driver.find_elements(
                 By.XPATH,
