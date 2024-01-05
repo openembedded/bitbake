@@ -47,6 +47,7 @@ class TestNewProjectPage(SeleniumTestCase):
 
         url = reverse('newproject')
         self.get(url)
+        self.wait_until_visible('#new-project-name', poll=3)
         self.enter_text('#new-project-name', project_name)
 
         select = Select(self.find('#projectversion'))
