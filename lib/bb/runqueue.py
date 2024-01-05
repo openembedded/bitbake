@@ -1749,6 +1749,7 @@ class RunQueue:
         return invalidtasks.difference(found)
 
     def write_diffscenetasks(self, invalidtasks):
+        bb.siggen.check_siggen_version(bb.siggen)
 
         # Define recursion callback
         def recursecb(key, hash1, hash2):
