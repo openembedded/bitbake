@@ -224,6 +224,7 @@ class TestAllBuildsPage(SeleniumTestCase):
 
         url = reverse('all-builds')
         self.get(url)
+        self.wait_until_visible('#allbuildstable', poll=3)
 
         # get the project name cells from the table
         cells = self.find_all('#allbuildstable td[class="project"]')
@@ -232,7 +233,7 @@ class TestAllBuildsPage(SeleniumTestCase):
 
         for cell in cells:
             content = cell.get_attribute('innerHTML')
-            help_icons = cell.find_elements_by_css_selector(selector)
+            help_icons = cell.find_elements(By.CSS_SELECTOR, selector)
 
             if re.search(self.PROJECT_NAME, content):
                 # no help icon next to non-cli project name
@@ -256,6 +257,7 @@ class TestAllBuildsPage(SeleniumTestCase):
 
         url = reverse('all-builds')
         self.get(url)
+        self.wait_until_visible('#allbuildstable', poll=3)
 
         # test recent builds area for successful build
         element = self._get_build_time_element(build1)
