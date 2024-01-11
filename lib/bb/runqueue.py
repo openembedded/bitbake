@@ -1004,26 +1004,32 @@ class RunQueueData:
         # Handle --runall
         if self.cooker.configuration.runall:
             # re-run the mark_active and then drop unused tasks from new list
-            reduced_tasklist = set(self.runtaskentries.keys())
-            for tid in list(self.runtaskentries.keys()):
-                if tid not in runq_build:
-                   reduced_tasklist.remove(tid)
-            runq_build = {}
 
-            for task in self.cooker.configuration.runall:
-                if not task.startswith("do_"):
-                    task = "do_{0}".format(task)
+            runall_tids = set()
+            added = True
+            while added:
+                reduced_tasklist = set(self.runtaskentries.keys())
+                for tid in list(self.runtaskentries.keys()):
+                    if tid not in runq_build:
+                       reduced_tasklist.remove(tid)
+                runq_build = {}
+
+                orig = runall_tids
                 runall_tids = set()
-                for tid in reduced_tasklist:
-                    wanttid = "{0}:{1}".format(fn_from_tid(tid), task)
-                    if wanttid in self.runtaskentries:
-                        runall_tids.add(wanttid)
+                for task in self.cooker.configuration.runall:
+                    if not task.startswith("do_"):
+                        task = "do_{0}".format(task)
+                    for tid in reduced_tasklist:
+                        wanttid = "{0}:{1}".format(fn_from_tid(tid), task)
+                        if wanttid in self.runtaskentries:
+                            runall_tids.add(wanttid)
 
-                for tid in list(runall_tids):
-                    mark_active(tid, 1)
-                    self.target_tids.append(tid)
-                    if self.cooker.configuration.force:
-                        invalidate_task(tid, False)
+                    for tid in list(runall_tids):
+                        mark_active(tid, 1)
+                        self.target_tids.append(tid)
+                        if self.cooker.configuration.force:
+                            invalidate_task(tid, False)
+                added = runall_tids - orig
 
         delcount = set()
         for tid in list(self.runtaskentries.keys()):
