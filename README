@@ -1,3 +1,12 @@
+[DRAFT] Brief
+=====
+This project is a trial to implement bitbake tool in C++. 
+Project is based on C++23 and is leveraging C++20-modules.
+
+[DRAFT] How to build
+------------
+Repository contains Dockerfile to be used as a toolchain. 
+
 Bitbake
 =======
 
