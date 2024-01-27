@@ -375,7 +375,11 @@ class Git(FetchMethod):
             else:
                 tmpdir = tempfile.mkdtemp(dir=d.getVar('DL_DIR'))
                 runfetchcmd("tar -xzf %s" % ud.fullmirror, d, workdir=tmpdir)
-                fetch_cmd = "LANG=C %s fetch -f --progress %s " % (ud.basecmd, shlex.quote(tmpdir))
+                output = runfetchcmd("%s remote" % ud.basecmd, d, quiet=True, workdir=ud.clonedir)
+                if 'mirror' in output:
+                    runfetchcmd("%s remote rm mirror" % ud.basecmd, d, workdir=ud.clonedir)
+                runfetchcmd("%s remote add --mirror=fetch mirror %s" % (ud.basecmd, tmpdir), d, workdir=ud.clonedir)
+                fetch_cmd = "LANG=C %s fetch -f --update-head-ok  --progress mirror " % (ud.basecmd)
                 runfetchcmd(fetch_cmd, d, workdir=ud.clonedir)
         repourl = self._get_repo_url(ud)
 
