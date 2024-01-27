@@ -3083,6 +3083,24 @@ class FetchPremirroronlyLocalTest(FetcherTest):
         self.git("checkout {}".format(head), self.gitdir)
         return newrev
 
+    def test_mirror_multiple_fetches(self):
+        self.make_git_repo()
+        self.d.setVar("SRCREV", self.git_new_commit())
+        fetcher = bb.fetch.Fetch([self.recipe_url], self.d)
+        fetcher.download()
+        fetcher.unpack(self.unpackdir)
+        ## New commit in premirror. it's not in the download_dir
+        self.d.setVar("SRCREV", self.git_new_commit())
+        fetcher2 = bb.fetch.Fetch([self.recipe_url], self.d)
+        fetcher2.download()
+        fetcher2.unpack(self.unpackdir)
+        ## New commit in premirror. it's not in the download_dir
+        self.d.setVar("SRCREV", self.git_new_commit())
+        fetcher3 = bb.fetch.Fetch([self.recipe_url], self.d)
+        fetcher3.download()
+        fetcher3.unpack(self.unpackdir)
+
+
     def test_mirror_commit_nonexistent(self):
         self.make_git_repo()
         self.d.setVar("SRCREV", "0"*40)
