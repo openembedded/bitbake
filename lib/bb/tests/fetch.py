@@ -1108,6 +1108,25 @@ class FetcherNetworkTest(FetcherTest):
             self.assertTrue(os.path.exists(os.path.join(repo_path, 'bitbake-gitsm-test1', 'bitbake')), msg='submodule of submodule missing')
 
     @skipIfNoNetwork()
+    def test_git_submodule_restricted_network_premirrors(self):
+        # this test is to ensure that premirrors will be tried in restricted network
+        # that is, BB_ALLOWED_NETWORKS does not contain the domain the url uses
+        url = "gitsm://github.com/grpc/grpc.git;protocol=https;name=grpc;branch=v1.60.x;rev=0ef13a7555dbaadd4633399242524129eef5e231"
+        # create a download directory to be used as premirror later
+        tempdir = tempfile.mkdtemp(prefix="bitbake-fetch-")
+        dl_premirror = os.path.join(tempdir, "download-premirror")
+        os.mkdir(dl_premirror)
+        self.d.setVar("DL_DIR", dl_premirror)
+        fetcher = bb.fetch.Fetch([url], self.d)
+        fetcher.download()
+        # now use the premirror in restricted network
+        self.d.setVar("DL_DIR", self.dldir)
+        self.d.setVar("PREMIRRORS", "gitsm://.*/.* gitsm://%s/git2/MIRRORNAME;protocol=file" % dl_premirror)
+        self.d.setVar("BB_ALLOWED_NETWORKS", "*.some.domain")
+        fetcher = bb.fetch.Fetch([url], self.d)
+        fetcher.download()
+
+    @skipIfNoNetwork()
     def test_git_submodule_dbus_broker(self):
         # The following external repositories have show failures in fetch and unpack operations
         # We want to avoid regressions!
