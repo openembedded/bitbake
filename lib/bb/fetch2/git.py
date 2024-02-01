@@ -87,6 +87,7 @@ from contextlib import contextmanager
 from   bb.fetch2 import FetchMethod
 from   bb.fetch2 import runfetchcmd
 from   bb.fetch2 import logger
+from   bb.fetch2 import trusted_network
 
 
 sha1_re = re.compile(r'^[0-9a-f]{40}$')
@@ -354,6 +355,11 @@ class Git(FetchMethod):
         # If we don't do this, updating an existing checkout with only premirrors
         # is not possible
         if bb.utils.to_boolean(d.getVar("BB_FETCH_PREMIRRORONLY")):
+            return True
+        # If the url is not in trusted network, that is, BB_NO_NETWORK is set to 0
+        # and BB_ALLOWED_NETWORKS does not contain the host that ud.url uses, then
+        # we need to try premirrors first as using upstream is destined to fail.
+        if not trusted_network(d, ud.url):
             return True
         if os.path.exists(ud.clonedir):
             return False
