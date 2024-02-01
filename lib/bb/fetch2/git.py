@@ -361,6 +361,11 @@ class Git(FetchMethod):
         # we need to try premirrors first as using upstream is destined to fail.
         if not trusted_network(d, ud.url):
             return True
+        # the following check is to ensure incremental fetch in downloads, this is
+        # because the premirror might be old and does not contain the new rev required,
+        # and this will cause a total removal and new clone. So if we can reach to
+        # network, we prefer upstream over premirror, though the premirror might contain
+        # the new rev.
         if os.path.exists(ud.clonedir):
             return False
         return True
