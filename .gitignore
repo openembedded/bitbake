@@ -20,4 +20,4 @@ lib/bb/tests/runqueue-tests/bitbake-cookerdaemon.log
 #cpp
 .vscode*
 .idea*
-**/build-*
+**/build*
