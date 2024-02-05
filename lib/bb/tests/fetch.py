@@ -1247,8 +1247,9 @@ class SVNTest(FetcherTest):
                        cwd=repo_dir)
 
         bb.process.run("svn co %s svnfetch_co" % self.repo_url, cwd=self.tempdir)
-        # Github will emulate SVN.  Use this to check if we're downloding...
-        bb.process.run("svn propset svn:externals 'bitbake https://github.com/PhilipHazel/pcre2.git' .",
+        # Github won't emulate SVN anymore (see https://github.blog/2023-01-20-sunsetting-subversion-support/)
+        # Use still accessible svn repo (only trunk to avoid longer downloads)
+        bb.process.run("svn propset svn:externals 'bitbake https://svn.apache.org/repos/asf/serf/trunk' .",
                        cwd=os.path.join(self.tempdir, 'svnfetch_co', 'trunk'))
         bb.process.run("svn commit --non-interactive -m 'Add external'",
                        cwd=os.path.join(self.tempdir, 'svnfetch_co', 'trunk'))
@@ -1276,8 +1277,8 @@ class SVNTest(FetcherTest):
 
         self.assertTrue(os.path.exists(os.path.join(self.unpackdir, 'trunk')), msg="Missing trunk")
         self.assertTrue(os.path.exists(os.path.join(self.unpackdir, 'trunk', 'README.md')), msg="Missing contents")
-        self.assertFalse(os.path.exists(os.path.join(self.unpackdir, 'trunk/bitbake/trunk')), msg="External dir should NOT exist")
-        self.assertFalse(os.path.exists(os.path.join(self.unpackdir, 'trunk/bitbake/trunk', 'README')), msg="External README should NOT exit")
+        self.assertFalse(os.path.exists(os.path.join(self.unpackdir, 'trunk/bitbake/protocols')), msg="External dir should NOT exist")
+        self.assertFalse(os.path.exists(os.path.join(self.unpackdir, 'trunk/bitbake/protocols', 'fcgi_buckets.h')), msg="External fcgi_buckets.h should NOT exit")
 
     @skipIfNoSvn()
     def test_external_svn(self):
@@ -1290,8 +1291,8 @@ class SVNTest(FetcherTest):
 
         self.assertTrue(os.path.exists(os.path.join(self.unpackdir, 'trunk')), msg="Missing trunk")
         self.assertTrue(os.path.exists(os.path.join(self.unpackdir, 'trunk', 'README.md')), msg="Missing contents")
-        self.assertTrue(os.path.exists(os.path.join(self.unpackdir, 'trunk/bitbake/trunk')), msg="External dir should exist")
-        self.assertTrue(os.path.exists(os.path.join(self.unpackdir, 'trunk/bitbake/trunk', 'README')), msg="External README should exit")
+        self.assertTrue(os.path.exists(os.path.join(self.unpackdir, 'trunk/bitbake/protocols')), msg="External dir should exist")
+        self.assertTrue(os.path.exists(os.path.join(self.unpackdir, 'trunk/bitbake/protocols', 'fcgi_buckets.h')), msg="External fcgi_buckets.h should exit")
 
 class TrustedNetworksTest(FetcherTest):
     def test_trusted_network(self):
