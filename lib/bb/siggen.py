@@ -849,10 +849,18 @@ def compare_sigfiles(a, b, recursecb=None, color=False, collapsed=False):
         formatparams.update(values)
         return formatstr.format(**formatparams)
 
-    with bb.compress.zstd.open(a, "rt", encoding="utf-8", num_threads=1) as f:
-        a_data = json.load(f, object_hook=SetDecoder)
-    with bb.compress.zstd.open(b, "rt", encoding="utf-8", num_threads=1) as f:
-        b_data = json.load(f, object_hook=SetDecoder)
+    try:
+        with bb.compress.zstd.open(a, "rt", encoding="utf-8", num_threads=1) as f:
+            a_data = json.load(f, object_hook=SetDecoder)
+    except (TypeError, OSError) as err:
+        bb.error("Failed to open sigdata file '%s': %s" % (a, str(err)))
+        raise err
+    try:
+        with bb.compress.zstd.open(b, "rt", encoding="utf-8", num_threads=1) as f:
+            b_data = json.load(f, object_hook=SetDecoder)
+    except (TypeError, OSError) as err:
+        bb.error("Failed to open sigdata file '%s': %s" % (b, str(err)))
+        raise err
 
     for data in [a_data, b_data]:
         handle_renames(data)
@@ -1090,8 +1098,12 @@ def calc_taskhash(sigdata):
 def dump_sigfile(a):
     output = []
 
-    with bb.compress.zstd.open(a, "rt", encoding="utf-8", num_threads=1) as f:
-        a_data = json.load(f, object_hook=SetDecoder)
+    try:
+        with bb.compress.zstd.open(a, "rt", encoding="utf-8", num_threads=1) as f:
+            a_data = json.load(f, object_hook=SetDecoder)
+    except (TypeError, OSError) as err:
+        bb.error("Failed to open sigdata file '%s': %s" % (a, str(err)))
+        raise err
 
     handle_renames(a_data)
 
