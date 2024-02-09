@@ -402,6 +402,22 @@ class ProcessServer():
                 serverlog("".join(msg))
 
     def idle_thread(self):
+        if self.cooker.configuration.profile:
+            try:
+                import cProfile as profile
+            except:
+                import profile
+            prof = profile.Profile()
+
+            ret = profile.Profile.runcall(prof, self.idle_thread_internal)
+
+            prof.dump_stats("profile-mainloop.log")
+            bb.utils.process_profilelog("profile-mainloop.log")
+            serverlog("Raw profiling information saved to profilemainloop.log and processed statistics to profilemainloop.log.processed")
+        else:
+            self.idle_thread_internal()
+
+    def idle_thread_internal(self):
         def remove_idle_func(function):
             with bb.utils.lock_timeout(self._idlefuncsLock):
                 del self._idlefuns[function]
