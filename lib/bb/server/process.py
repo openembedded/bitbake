@@ -413,7 +413,7 @@ class ProcessServer():
 
             prof.dump_stats("profile-mainloop.log")
             bb.utils.process_profilelog("profile-mainloop.log")
-            serverlog("Raw profiling information saved to profilemainloop.log and processed statistics to profilemainloop.log.processed")
+            serverlog("Raw profiling information saved to profile-mainloop.log and processed statistics to profile-mainloop.log.processed")
         else:
             self.idle_thread_internal()
 
