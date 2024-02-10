@@ -1914,6 +1914,8 @@ class RunQueueExecute:
             event = bb.event.StaleSetSceneTasks(found[mc])
             bb.event.fire(event, self.cooker.databuilder.mcdata[mc])
 
+        self.build_taskdepdata_cache()
+
     def runqueue_process_waitpid(self, task, status, fakerootlog=None):
 
         # self.build_stamps[pid] may not exist when use shared work directory.
@@ -2413,6 +2415,22 @@ class RunQueueExecute:
             ret.add(dep)
         return ret
 
+    # Build the individual cache entries in advance once to save time
+    def build_taskdepdata_cache(self):
+        taskdepdata_cache = {}
+        for task in self.rqdata.runtaskentries:
+            (mc, fn, taskname, taskfn) = split_tid_mcfn(task)
+            pn = self.rqdata.dataCaches[mc].pkg_fn[taskfn]
+            deps = self.rqdata.runtaskentries[task].depends
+            provides = self.rqdata.dataCaches[mc].fn_provides[taskfn]
+            taskhash = self.rqdata.runtaskentries[task].hash
+            unihash = self.rqdata.runtaskentries[task].unihash
+            deps = self.filtermcdeps(task, mc, deps)
+            hashfn = self.rqdata.dataCaches[mc].hashfn[taskfn]
+            taskdepdata_cache[task] = [pn, taskname, fn, deps, provides, taskhash, unihash, hashfn]
+
+        self.taskdepdata_cache = taskdepdata_cache
+
     # We filter out multiconfig dependencies from taskdepdata we pass to the tasks
     # as most code can't handle them
     def build_taskdepdata(self, task):
@@ -2424,16 +2442,9 @@ class RunQueueExecute:
         while next:
             additional = []
             for revdep in next:
-                (mc, fn, taskname, taskfn) = split_tid_mcfn(revdep)
-                pn = self.rqdata.dataCaches[mc].pkg_fn[taskfn]
-                deps = self.rqdata.runtaskentries[revdep].depends
-                provides = self.rqdata.dataCaches[mc].fn_provides[taskfn]
-                taskhash = self.rqdata.runtaskentries[revdep].hash
-                unihash = self.rqdata.runtaskentries[revdep].unihash
-                deps = self.filtermcdeps(task, mc, deps)
-                hashfn = self.rqdata.dataCaches[mc].hashfn[taskfn]
-                taskdepdata[revdep] = [pn, taskname, fn, deps, provides, taskhash, unihash, hashfn]
-                for revdep2 in deps:
+                self.taskdepdata_cache[revdep][6] = self.rqdata.runtaskentries[revdep].unihash
+                taskdepdata[revdep] = self.taskdepdata_cache[revdep]
+                for revdep2 in self.taskdepdata_cache[revdep][3]:
                     if revdep2 not in taskdepdata:
                         additional.append(revdep2)
             next = additional
