@@ -270,11 +270,11 @@ class RunQueueScheduler(object):
         best = None
         bestprio = None
         for tid in buildable:
-            taskname = taskname_from_tid(tid)
-            if taskname in skip_buildable and skip_buildable[taskname] >= int(self.skip_maxthread[taskname]):
-                continue
             prio = self.rev_prio_map[tid]
             if bestprio is None or bestprio > prio:
+                taskname = taskname_from_tid(tid)
+                if taskname in skip_buildable and skip_buildable[taskname] >= int(self.skip_maxthread[taskname]):
+                    continue
                 stamp = self.stamps[tid]
                 if stamp in self.rq.build_stamps.values():
                     continue
