@@ -1840,6 +1840,7 @@ class RunQueueExecute:
         self.failed_tids = []
         self.sq_deferred = {}
         self.sq_needed_harddeps = set()
+        self.sq_harddep_deferred = set()
 
         self.stampcache = {}
 
@@ -2163,7 +2164,7 @@ class RunQueueExecute:
         if not self.sqdone and self.can_start_task():
             # Find the next setscene to run
             for nexttask in self.sorted_setscene_tids:
-                if nexttask in self.sq_buildable and nexttask not in self.sq_running and self.sqdata.stamps[nexttask] not in self.build_stamps.values():
+                if nexttask in self.sq_buildable and nexttask not in self.sq_running and self.sqdata.stamps[nexttask] not in self.build_stamps.values() and nexttask not in self.sq_harddep_deferred:
                     if nexttask not in self.sqdata.unskippable and self.sqdata.sq_revdeps[nexttask] and \
                             nexttask not in self.sq_needed_harddeps and \
                             self.sqdata.sq_revdeps[nexttask].issubset(self.scenequeue_covered) and \
@@ -2184,6 +2185,7 @@ class RunQueueExecute:
                                 self.sq_buildable.add(dep)
                                 self.sq_needed_harddeps.add(dep)
                                 updated = True
+                        self.sq_harddep_deferred.add(nexttask)
                         if updated:
                             return True
                         continue
@@ -2678,6 +2680,7 @@ class RunQueueExecute:
         if changed:
             self.stats.updateCovered(len(self.scenequeue_covered), len(self.scenequeue_notcovered))
             self.sq_needed_harddeps = set()
+            self.sq_harddep_deferred = set()
             self.holdoff_need_update = True
 
     def scenequeue_updatecounters(self, task, fail=False):
@@ -2711,6 +2714,13 @@ class RunQueueExecute:
                     if self.rqdata.runtaskentries[dep].revdeps.issubset(self.tasks_scenequeue_done):
                         new.add(dep)
             next = new
+
+        # If this task was one which other setscene tasks have a hard dependency upon, we need
+        # to walk through the hard dependencies and allow execution of those which have completed dependencies.
+        if task in self.sqdata.sq_harddeps:
+            for dep in self.sq_harddep_deferred.copy():
+                if self.sqdata.sq_harddeps_rev[dep].issubset(self.scenequeue_covered | self.scenequeue_notcovered):
+                    self.sq_harddep_deferred.remove(dep)
 
         self.stats.updateCovered(len(self.scenequeue_covered), len(self.scenequeue_notcovered))
         self.holdoff_need_update = True
