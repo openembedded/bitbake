@@ -416,9 +416,9 @@ class FetcherTest(unittest.TestCase):
 
     def git(self, cmd, cwd=None):
         if isinstance(cmd, str):
-            cmd = 'git ' + cmd
+            cmd = 'git -c safe.bareRepository=all ' + cmd
         else:
-            cmd = ['git'] + cmd
+            cmd = ['git', '-c', 'safe.bareRepository=all'] + cmd
         if cwd is None:
             cwd = self.gitdir
         return bb.process.run(cmd, cwd=cwd)[0]
