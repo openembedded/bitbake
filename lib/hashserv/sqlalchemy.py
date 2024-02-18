@@ -33,6 +33,7 @@ from sqlalchemy import (
 import sqlalchemy.engine
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.dialects.postgresql import insert as postgres_insert
 
 Base = declarative_base()
 
@@ -283,9 +284,7 @@ class Database(object):
     async def unihash_exists(self, unihash):
         async with self.db.begin():
             result = await self._execute(
-                select(UnihashesV3)
-                .where(UnihashesV3.unihash == unihash)
-                .limit(1)
+                select(UnihashesV3).where(UnihashesV3.unihash == unihash).limit(1)
             )
 
             return result.first() is not None
@@ -435,18 +434,30 @@ class Database(object):
             return result.rowcount
 
     async def insert_unihash(self, method, taskhash, unihash):
+        # Postgres specific ignore on insert duplicate
+        if self.engine.name == "postgresql":
+            statement = (
+                postgres_insert(UnihashesV3)
+                .values(
+                    method=method,
+                    taskhash=taskhash,
+                    unihash=unihash,
+                    gc_mark=self._get_config_subquery("gc-mark", ""),
+                )
+                .on_conflict_do_nothing(index_elements=("method", "taskhash"))
+            )
+        else:
+            statement = insert(UnihashesV3).values(
+                method=method,
+                taskhash=taskhash,
+                unihash=unihash,
+                gc_mark=self._get_config_subquery("gc-mark", ""),
+            )
+
         try:
             async with self.db.begin():
-                await self._execute(
-                    insert(UnihashesV3).values(
-                        method=method,
-                        taskhash=taskhash,
-                        unihash=unihash,
-                        gc_mark=self._get_config_subquery("gc-mark", ""),
-                    )
-                )
-
-            return True
+                result = await self._execute(statement)
+                return result.rowcount != 0
         except IntegrityError:
             self.logger.debug(
                 "%s, %s, %s already in unihash database", method, taskhash, unihash
@@ -461,10 +472,22 @@ class Database(object):
         if "created" in data and not isinstance(data["created"], datetime):
             data["created"] = datetime.fromisoformat(data["created"])
 
+        # Postgres specific ignore on insert duplicate
+        if self.engine.name == "postgresql":
+            statement = (
+                postgres_insert(OuthashesV2)
+                .values(**data)
+                .on_conflict_do_nothing(
+                    index_elements=("method", "taskhash", "outhash")
+                )
+            )
+        else:
+            statement = insert(OuthashesV2).values(**data)
+
         try:
             async with self.db.begin():
-                await self._execute(insert(OuthashesV2).values(**data))
-            return True
+                result = await self._execute(statement)
+                return result.rowcount != 0
         except IntegrityError:
             self.logger.debug(
                 "%s, %s already in outhash database", data["method"], data["outhash"]
