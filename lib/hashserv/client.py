@@ -194,6 +194,34 @@ class AsyncClient(bb.asyncrpc.AsyncClient):
         await self._set_mode(self.MODE_NORMAL)
         return (await self.invoke({"get-db-query-columns": {}}))["columns"]
 
+    async def gc_status(self):
+        await self._set_mode(self.MODE_NORMAL)
+        return await self.invoke({"gc-status": {}})
+
+    async def gc_mark(self, mark, where):
+        """
+        Starts a new garbage collection operation identified by "mark". If
+        garbage collection is already in progress with "mark", the collection
+        is continued.
+
+        All unihash entries that match the "where" clause are marked to be
+        kept. In addition, any new entries added to the database after this
+        command will be automatically marked with "mark"
+        """
+        await self._set_mode(self.MODE_NORMAL)
+        return await self.invoke({"gc-mark": {"mark": mark, "where": where}})
+
+    async def gc_sweep(self, mark):
+        """
+        Finishes garbage collection for "mark". All unihash entries that have
+        not been marked will be deleted.
+
+        It is recommended to clean unused outhash entries after running this to
+        cleanup any dangling outhashes
+        """
+        await self._set_mode(self.MODE_NORMAL)
+        return await self.invoke({"gc-sweep": {"mark": mark}})
+
 
 class Client(bb.asyncrpc.Client):
     def __init__(self, username=None, password=None):
@@ -224,6 +252,9 @@ class Client(bb.asyncrpc.Client):
             "become_user",
             "get_db_usage",
             "get_db_query_columns",
+            "gc_status",
+            "gc_mark",
+            "gc_sweep",
         )
 
     def _get_async_client(self):

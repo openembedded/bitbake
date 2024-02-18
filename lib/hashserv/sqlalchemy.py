@@ -28,6 +28,7 @@ from sqlalchemy import (
     delete,
     update,
     func,
+    inspect,
 )
 import sqlalchemy.engine
 from sqlalchemy.orm import declarative_base
@@ -36,16 +37,17 @@ from sqlalchemy.exc import IntegrityError
 Base = declarative_base()
 
 
-class UnihashesV2(Base):
-    __tablename__ = "unihashes_v2"
+class UnihashesV3(Base):
+    __tablename__ = "unihashes_v3"
     id = Column(Integer, primary_key=True, autoincrement=True)
     method = Column(Text, nullable=False)
     taskhash = Column(Text, nullable=False)
     unihash = Column(Text, nullable=False)
+    gc_mark = Column(Text, nullable=False)
 
     __table_args__ = (
         UniqueConstraint("method", "taskhash"),
-        Index("taskhash_lookup_v3", "method", "taskhash"),
+        Index("taskhash_lookup_v4", "method", "taskhash"),
     )
 
 
@@ -79,6 +81,36 @@ class Users(Base):
     __table_args__ = (UniqueConstraint("username"),)
 
 
+class Config(Base):
+    __tablename__ = "config"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(Text, nullable=False)
+    value = Column(Text)
+    __table_args__ = (
+        UniqueConstraint("name"),
+        Index("config_lookup", "name"),
+    )
+
+
+#
+# Old table versions
+#
+DeprecatedBase = declarative_base()
+
+
+class UnihashesV2(DeprecatedBase):
+    __tablename__ = "unihashes_v2"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    method = Column(Text, nullable=False)
+    taskhash = Column(Text, nullable=False)
+    unihash = Column(Text, nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint("method", "taskhash"),
+        Index("taskhash_lookup_v3", "method", "taskhash"),
+    )
+
+
 class DatabaseEngine(object):
     def __init__(self, url, username=None, password=None):
         self.logger = logging.getLogger("hashserv.sqlalchemy")
@@ -91,6 +123,9 @@ class DatabaseEngine(object):
             self.url = self.url.set(password=password)
 
     async def create(self):
+        def check_table_exists(conn, name):
+            return inspect(conn).has_table(name)
+
         self.logger.info("Using database %s", self.url)
         self.engine = create_async_engine(self.url, poolclass=NullPool)
 
@@ -98,6 +133,24 @@ class DatabaseEngine(object):
             # Create tables
             self.logger.info("Creating tables...")
             await conn.run_sync(Base.metadata.create_all)
+
+            if await conn.run_sync(check_table_exists, UnihashesV2.__tablename__):
+                self.logger.info("Upgrading Unihashes V2 -> V3...")
+                statement = insert(UnihashesV3).from_select(
+                    ["id", "method", "unihash", "taskhash", "gc_mark"],
+                    select(
+                        UnihashesV2.id,
+                        UnihashesV2.method,
+                        UnihashesV2.unihash,
+                        UnihashesV2.taskhash,
+                        literal("").label("gc_mark"),
+                    ),
+                )
+                self.logger.debug("%s", statement)
+                await conn.execute(statement)
+
+                await conn.run_sync(Base.metadata.drop_all, [UnihashesV2.__table__])
+                self.logger.info("Upgrade complete")
 
     def connect(self, logger):
         return Database(self.engine, logger)
@@ -118,6 +171,15 @@ def map_user(row):
     )
 
 
+def _make_condition_statement(table, condition):
+    where = {}
+    for c in table.__table__.columns:
+        if c.key in condition and condition[c.key] is not None:
+            where[c] = condition[c.key]
+
+    return [(k == v) for k, v in where.items()]
+
+
 class Database(object):
     def __init__(self, engine, logger):
         self.engine = engine
@@ -135,17 +197,52 @@ class Database(object):
         await self.db.close()
         self.db = None
 
+    async def _execute(self, statement):
+        self.logger.debug("%s", statement)
+        return await self.db.execute(statement)
+
+    async def _set_config(self, name, value):
+        while True:
+            result = await self._execute(
+                update(Config).where(Config.name == name).values(value=value)
+            )
+
+            if result.rowcount == 0:
+                self.logger.debug("Config '%s' not found. Adding it", name)
+                try:
+                    await self._execute(insert(Config).values(name=name, value=value))
+                except IntegrityError:
+                    # Race. Try again
+                    continue
+
+            break
+
+    def _get_config_subquery(self, name, default=None):
+        if default is not None:
+            return func.coalesce(
+                select(Config.value).where(Config.name == name).scalar_subquery(),
+                default,
+            )
+        return select(Config.value).where(Config.name == name).scalar_subquery()
+
+    async def _get_config(self, name):
+        result = await self._execute(select(Config.value).where(Config.name == name))
+        row = result.first()
+        if row is None:
+            return None
+        return row.value
+
     async def get_unihash_by_taskhash_full(self, method, taskhash):
         statement = (
             select(
                 OuthashesV2,
-                UnihashesV2.unihash.label("unihash"),
+                UnihashesV3.unihash.label("unihash"),
             )
             .join(
-                UnihashesV2,
+                UnihashesV3,
                 and_(
-                    UnihashesV2.method == OuthashesV2.method,
-                    UnihashesV2.taskhash == OuthashesV2.taskhash,
+                    UnihashesV3.method == OuthashesV2.method,
+                    UnihashesV3.taskhash == OuthashesV2.taskhash,
                 ),
             )
             .where(
@@ -164,12 +261,12 @@ class Database(object):
 
     async def get_unihash_by_outhash(self, method, outhash):
         statement = (
-            select(OuthashesV2, UnihashesV2.unihash.label("unihash"))
+            select(OuthashesV2, UnihashesV3.unihash.label("unihash"))
             .join(
-                UnihashesV2,
+                UnihashesV3,
                 and_(
-                    UnihashesV2.method == OuthashesV2.method,
-                    UnihashesV2.taskhash == OuthashesV2.taskhash,
+                    UnihashesV3.method == OuthashesV2.method,
+                    UnihashesV3.taskhash == OuthashesV2.taskhash,
                 ),
             )
             .where(
@@ -208,13 +305,13 @@ class Database(object):
         statement = (
             select(
                 OuthashesV2.taskhash.label("taskhash"),
-                UnihashesV2.unihash.label("unihash"),
+                UnihashesV3.unihash.label("unihash"),
             )
             .join(
-                UnihashesV2,
+                UnihashesV3,
                 and_(
-                    UnihashesV2.method == OuthashesV2.method,
-                    UnihashesV2.taskhash == OuthashesV2.taskhash,
+                    UnihashesV3.method == OuthashesV2.method,
+                    UnihashesV3.taskhash == OuthashesV2.taskhash,
                 ),
             )
             .where(
@@ -234,12 +331,12 @@ class Database(object):
 
     async def get_equivalent(self, method, taskhash):
         statement = select(
-            UnihashesV2.unihash,
-            UnihashesV2.method,
-            UnihashesV2.taskhash,
+            UnihashesV3.unihash,
+            UnihashesV3.method,
+            UnihashesV3.taskhash,
         ).where(
-            UnihashesV2.method == method,
-            UnihashesV2.taskhash == taskhash,
+            UnihashesV3.method == method,
+            UnihashesV3.taskhash == taskhash,
         )
         self.logger.debug("%s", statement)
         async with self.db.begin():
@@ -248,13 +345,9 @@ class Database(object):
 
     async def remove(self, condition):
         async def do_remove(table):
-            where = {}
-            for c in table.__table__.columns:
-                if c.key in condition and condition[c.key] is not None:
-                    where[c] = condition[c.key]
-
+            where = _make_condition_statement(table, condition)
             if where:
-                statement = delete(table).where(*[(k == v) for k, v in where.items()])
+                statement = delete(table).where(*where)
                 self.logger.debug("%s", statement)
                 async with self.db.begin():
                     result = await self.db.execute(statement)
@@ -263,19 +356,74 @@ class Database(object):
             return 0
 
         count = 0
-        count += await do_remove(UnihashesV2)
+        count += await do_remove(UnihashesV3)
         count += await do_remove(OuthashesV2)
 
         return count
+
+    async def get_current_gc_mark(self):
+        async with self.db.begin():
+            return await self._get_config("gc-mark")
+
+    async def gc_status(self):
+        async with self.db.begin():
+            gc_mark_subquery = self._get_config_subquery("gc-mark", "")
+
+            result = await self._execute(
+                select(func.count())
+                .select_from(UnihashesV3)
+                .where(UnihashesV3.gc_mark == gc_mark_subquery)
+            )
+            keep_rows = result.scalar()
+
+            result = await self._execute(
+                select(func.count())
+                .select_from(UnihashesV3)
+                .where(UnihashesV3.gc_mark != gc_mark_subquery)
+            )
+            remove_rows = result.scalar()
+
+            return (keep_rows, remove_rows, await self._get_config("gc-mark"))
+
+    async def gc_mark(self, mark, condition):
+        async with self.db.begin():
+            await self._set_config("gc-mark", mark)
+
+            where = _make_condition_statement(UnihashesV3, condition)
+            if not where:
+                return 0
+
+            result = await self._execute(
+                update(UnihashesV3)
+                .values(gc_mark=self._get_config_subquery("gc-mark", ""))
+                .where(*where)
+            )
+            return result.rowcount
+
+    async def gc_sweep(self):
+        async with self.db.begin():
+            result = await self._execute(
+                delete(UnihashesV3).where(
+                    # A sneaky conditional that provides some errant use
+                    # protection: If the config mark is NULL, this will not
+                    # match any rows because No default is specified in the
+                    # select statement
+                    UnihashesV3.gc_mark
+                    != self._get_config_subquery("gc-mark")
+                )
+            )
+            await self._set_config("gc-mark", None)
+
+            return result.rowcount
 
     async def clean_unused(self, oldest):
         statement = delete(OuthashesV2).where(
             OuthashesV2.created < oldest,
             ~(
-                select(UnihashesV2.id)
+                select(UnihashesV3.id)
                 .where(
-                    UnihashesV2.method == OuthashesV2.method,
-                    UnihashesV2.taskhash == OuthashesV2.taskhash,
+                    UnihashesV3.method == OuthashesV2.method,
+                    UnihashesV3.taskhash == OuthashesV2.taskhash,
                 )
                 .limit(1)
                 .exists()
@@ -287,15 +435,17 @@ class Database(object):
             return result.rowcount
 
     async def insert_unihash(self, method, taskhash, unihash):
-        statement = insert(UnihashesV2).values(
-            method=method,
-            taskhash=taskhash,
-            unihash=unihash,
-        )
-        self.logger.debug("%s", statement)
         try:
             async with self.db.begin():
-                await self.db.execute(statement)
+                await self._execute(
+                    insert(UnihashesV3).values(
+                        method=method,
+                        taskhash=taskhash,
+                        unihash=unihash,
+                        gc_mark=self._get_config_subquery("gc-mark", ""),
+                    )
+                )
+
             return True
         except IntegrityError:
             self.logger.debug(
@@ -418,7 +568,7 @@ class Database(object):
 
     async def get_query_columns(self):
         columns = set()
-        for table in (UnihashesV2, OuthashesV2):
+        for table in (UnihashesV3, OuthashesV2):
             for c in table.__table__.columns:
                 if not isinstance(c.type, Text):
                     continue
