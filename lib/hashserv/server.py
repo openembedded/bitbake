@@ -234,6 +234,7 @@ class ServerClient(bb.asyncrpc.AsyncServerConnection):
                 "get": self.handle_get,
                 "get-outhash": self.handle_get_outhash,
                 "get-stream": self.handle_get_stream,
+                "exists-stream": self.handle_exists_stream,
                 "get-stats": self.handle_get_stats,
                 "get-db-usage": self.handle_get_db_usage,
                 "get-db-query-columns": self.handle_get_db_query_columns,
@@ -377,8 +378,7 @@ class ServerClient(bb.asyncrpc.AsyncServerConnection):
         await self.db.insert_unihash(data["method"], data["taskhash"], data["unihash"])
         await self.db.insert_outhash(data)
 
-    @permissions(READ_PERM)
-    async def handle_get_stream(self, request):
+    async def _stream_handler(self, handler):
         await self.socket.send_message("ok")
 
         while True:
@@ -400,34 +400,49 @@ class ServerClient(bb.asyncrpc.AsyncServerConnection):
                 if l == "END":
                     break
 
-                (method, taskhash) = l.split()
-                # self.logger.debug('Looking up %s %s' % (method, taskhash))
-                row = await self.db.get_equivalent(method, taskhash)
-
-                if row is not None:
-                    msg = row["unihash"]
-                    # self.logger.debug('Found equivalent task %s -> %s', (row['taskhash'], row['unihash']))
-                elif self.upstream_client is not None:
-                    upstream = await self.upstream_client.get_unihash(method, taskhash)
-                    if upstream:
-                        msg = upstream
-                    else:
-                        msg = ""
-                else:
-                    msg = ""
-
+                msg = await handler(l)
                 await self.socket.send(msg)
             finally:
                 request_measure.end()
                 self.request_sample.end()
 
-            # Post to the backfill queue after writing the result to minimize
-            # the turn around time on a request
-            if upstream is not None:
-                await self.server.backfill_queue.put((method, taskhash))
-
         await self.socket.send("ok")
         return self.NO_RESPONSE
+
+    @permissions(READ_PERM)
+    async def handle_get_stream(self, request):
+        async def handler(l):
+            (method, taskhash) = l.split()
+            # self.logger.debug('Looking up %s %s' % (method, taskhash))
+            row = await self.db.get_equivalent(method, taskhash)
+
+            if row is not None:
+                # self.logger.debug('Found equivalent task %s -> %s', (row['taskhash'], row['unihash']))
+                return row["unihash"]
+
+            if self.upstream_client is not None:
+                upstream = await self.upstream_client.get_unihash(method, taskhash)
+                if upstream:
+                    await self.server.backfill_queue.put((method, taskhash))
+                    return upstream
+
+            return ""
+
+        return await self._stream_handler(handler)
+
+    @permissions(READ_PERM)
+    async def handle_exists_stream(self, request):
+        async def handler(l):
+            if await self.db.unihash_exists(l):
+                return "true"
+
+            if self.upstream_client is not None:
+                if await self.upstream_client.unihash_exists(l):
+                    return "true"
+
+            return "false"
+
+        return await self._stream_handler(handler)
 
     async def report_readonly(self, data):
         method = data["method"]

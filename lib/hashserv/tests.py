@@ -442,6 +442,11 @@ class HashEquivalenceCommonTests(object):
         self.assertEqual(result['taskhash'], taskhash9, 'Server failed to copy unihash from upstream')
         self.assertEqual(result['method'], self.METHOD)
 
+    def test_unihash_exsits(self):
+        taskhash, outhash, unihash = self.create_test_hash(self.client)
+        self.assertTrue(self.client.unihash_exists(unihash))
+        self.assertFalse(self.client.unihash_exists('6662e699d6e3d894b24408ff9a4031ef9b038ee8'))
+
     def test_ro_server(self):
         rw_server = self.start_server()
         rw_client = self.start_client(rw_server.address)
@@ -1030,6 +1035,40 @@ class TestHashEquivalenceClient(HashEquivalenceTestSetup, unittest.TestCase):
 
     def test_stress(self):
         self.run_hashclient(["--address", self.server_address, "stress"], check=True)
+
+    def test_unihash_exsits(self):
+        taskhash, outhash, unihash = self.create_test_hash(self.client)
+
+        p = self.run_hashclient([
+            "--address", self.server_address,
+            "unihash-exists", unihash,
+        ], check=True)
+        self.assertEqual(p.stdout.strip(), "true")
+
+        p = self.run_hashclient([
+            "--address", self.server_address,
+            "unihash-exists", '6662e699d6e3d894b24408ff9a4031ef9b038ee8',
+        ], check=True)
+        self.assertEqual(p.stdout.strip(), "false")
+
+    def test_unihash_exsits_quiet(self):
+        taskhash, outhash, unihash = self.create_test_hash(self.client)
+
+        p = self.run_hashclient([
+            "--address", self.server_address,
+            "unihash-exists", unihash,
+            "--quiet",
+        ])
+        self.assertEqual(p.returncode, 0)
+        self.assertEqual(p.stdout.strip(), "")
+
+        p = self.run_hashclient([
+            "--address", self.server_address,
+            "unihash-exists", '6662e699d6e3d894b24408ff9a4031ef9b038ee8',
+            "--quiet",
+        ])
+        self.assertEqual(p.returncode, 1)
+        self.assertEqual(p.stdout.strip(), "")
 
     def test_remove_taskhash(self):
         taskhash, outhash, unihash = self.create_test_hash(self.client)

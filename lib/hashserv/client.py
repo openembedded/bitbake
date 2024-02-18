@@ -16,6 +16,7 @@ logger = logging.getLogger("hashserv.client")
 class AsyncClient(bb.asyncrpc.AsyncClient):
     MODE_NORMAL = 0
     MODE_GET_STREAM = 1
+    MODE_EXIST_STREAM = 2
 
     def __init__(self, username=None, password=None):
         super().__init__("OEHASHEQUIV", "1.1", logger)
@@ -49,19 +50,36 @@ class AsyncClient(bb.asyncrpc.AsyncClient):
             await self.socket.send("END")
             return await self.socket.recv()
 
-        if new_mode == self.MODE_NORMAL and self.mode == self.MODE_GET_STREAM:
+        async def normal_to_stream(command):
+            r = await self.invoke({command: None})
+            if r != "ok":
+                raise ConnectionError(
+                    f"Unable to transition to stream mode: Bad response from server {r!r}"
+                )
+
+            self.logger.debug("Mode is now %s", command)
+
+        if new_mode == self.mode:
+            return
+
+        self.logger.debug("Transitioning mode %s -> %s", self.mode, new_mode)
+
+        # Always transition to normal mode before switching to any other mode
+        if self.mode != self.MODE_NORMAL:
             r = await self._send_wrapper(stream_to_normal)
             if r != "ok":
                 self.check_invoke_error(r)
-                raise ConnectionError("Unable to transition to normal mode: Bad response from server %r" % r)
-        elif new_mode == self.MODE_GET_STREAM and self.mode == self.MODE_NORMAL:
-            r = await self.invoke({"get-stream": None})
-            if r != "ok":
-                raise ConnectionError("Unable to transition to stream mode: Bad response from server %r" % r)
-        elif new_mode != self.mode:
-            raise Exception(
-                "Undefined mode transition %r -> %r" % (self.mode, new_mode)
-            )
+                raise ConnectionError(
+                    f"Unable to transition to normal mode: Bad response from server {r!r}"
+                )
+            self.logger.debug("Mode is now normal")
+
+        if new_mode == self.MODE_GET_STREAM:
+            await normal_to_stream("get-stream")
+        elif new_mode == self.MODE_EXIST_STREAM:
+            await normal_to_stream("exists-stream")
+        elif new_mode != self.MODE_NORMAL:
+            raise Exception("Undefined mode transition {self.mode!r} -> {new_mode!r}")
 
         self.mode = new_mode
 
@@ -94,6 +112,11 @@ class AsyncClient(bb.asyncrpc.AsyncClient):
         return await self.invoke(
             {"get": {"taskhash": taskhash, "method": method, "all": all_properties}}
         )
+
+    async def unihash_exists(self, unihash):
+        await self._set_mode(self.MODE_EXIST_STREAM)
+        r = await self.send_stream(unihash)
+        return r == "true"
 
     async def get_outhash(self, method, outhash, taskhash, with_unihash=True):
         await self._set_mode(self.MODE_NORMAL)
@@ -236,6 +259,7 @@ class Client(bb.asyncrpc.Client):
             "report_unihash",
             "report_unihash_equiv",
             "get_taskhash",
+            "unihash_exists",
             "get_outhash",
             "get_stats",
             "reset_stats",

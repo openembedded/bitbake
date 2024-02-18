@@ -145,6 +145,9 @@ class DatabaseEngine(object):
                 "CREATE INDEX IF NOT EXISTS taskhash_lookup_v4 ON unihashes_v3 (method, taskhash)"
             )
             cursor.execute(
+                "CREATE INDEX IF NOT EXISTS unihash_lookup_v1 ON unihashes_v3 (unihash)"
+            )
+            cursor.execute(
                 "CREATE INDEX IF NOT EXISTS outhash_lookup_v3 ON outhashes_v2 (method, outhash)"
             )
             cursor.execute("CREATE INDEX IF NOT EXISTS config_lookup ON config (name)")
@@ -254,6 +257,19 @@ class Database(object):
                 },
             )
             return cursor.fetchone()
+
+    async def unihash_exists(self, unihash):
+        with closing(self.db.cursor()) as cursor:
+            cursor.execute(
+                """
+                SELECT * FROM unihashes_v3 WHERE unihash=:unihash
+                LIMIT 1
+                """,
+                {
+                    "unihash": unihash,
+                },
+            )
+            return cursor.fetchone() is not None
 
     async def get_outhash(self, method, outhash):
         with closing(self.db.cursor()) as cursor:

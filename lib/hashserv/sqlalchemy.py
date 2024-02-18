@@ -48,6 +48,7 @@ class UnihashesV3(Base):
     __table_args__ = (
         UniqueConstraint("method", "taskhash"),
         Index("taskhash_lookup_v4", "method", "taskhash"),
+        Index("unihash_lookup_v1", "unihash"),
     )
 
 
@@ -278,6 +279,16 @@ class Database(object):
                 .limit(1)
             )
             return map_row(result.first())
+
+    async def unihash_exists(self, unihash):
+        async with self.db.begin():
+            result = await self._execute(
+                select(UnihashesV3)
+                .where(UnihashesV3.unihash == unihash)
+                .limit(1)
+            )
+
+            return result.first() is not None
 
     async def get_outhash(self, method, outhash):
         async with self.db.begin():
