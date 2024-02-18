@@ -530,6 +530,11 @@ class SignatureGeneratorBasicHash(SignatureGeneratorBasic):
 class SignatureGeneratorUniHashMixIn(object):
     def __init__(self, data):
         self.extramethod = {}
+        # NOTE: The cache only tracks hashes that exist. Hashes that don't
+        # exist are always queries from the server since it is possible for
+        # hashes to appear over time, but much less likely for them to
+        # disappear
+        self.unihash_exists_cache = set()
         super().__init__(data)
 
     def get_taskdata(self):
@@ -619,6 +624,33 @@ class SignatureGeneratorUniHashMixIn(object):
             method = method + self.extramethod[tid]
 
         return method
+
+    def unihashes_exist(self, query):
+        if len(query) == 0:
+            return {}
+
+        uncached_query = {}
+        result = {}
+        for key, unihash in query.items():
+            if unihash in self.unihash_exists_cache:
+                result[key] = True
+            else:
+                uncached_query[key] = unihash
+
+        if self.max_parallel <= 1 or len(uncached_query) <= 1:
+            # No parallelism required. Make the query serially with the single client
+            uncached_result = {
+                key: self.client().unihash_exists(value) for key, value in uncached_query.items()
+            }
+        else:
+            uncached_result = self.client_pool().unihashes_exist(uncached_query)
+
+        for key, exists in uncached_result.items():
+            if exists:
+                self.unihash_exists_cache.add(query[key])
+            result[key] = exists
+
+        return result
 
     def get_unihash(self, tid):
         return self.get_unihashes([tid])[tid]
