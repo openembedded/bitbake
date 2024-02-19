@@ -833,6 +833,7 @@ class Git(FetchMethod):
             bb.note("Could not list remote: %s" % str(e))
             return pupver
 
+        rev_tag_re = re.compile(r"([0-9a-f]{40})\s+refs/tags/(.*)")
         pver_re = re.compile(d.getVar('UPSTREAM_CHECK_GITTAGREGEX') or r"(?P<pver>([0-9][\.|_]?)+)")
         nonrel_re = re.compile(r"(alpha|beta|rc|final)+")
 
@@ -841,7 +842,12 @@ class Git(FetchMethod):
             if not line:
                 break
 
-            tag = line.split("/")[-1]
+            m = rev_tag_re.match(line)
+            if not m:
+                continue
+
+            (revision, tag) = m.groups()
+
             # Ignore non-released branches
             if nonrel_re.search(tag):
                 continue
@@ -857,7 +863,6 @@ class Git(FetchMethod):
                 continue
 
             verstring = pver
-            revision = line.split()[0]
             pupver = (verstring, revision)
 
         return pupver
