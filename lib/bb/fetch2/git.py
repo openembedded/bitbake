@@ -827,37 +827,36 @@ class Git(FetchMethod):
         """
         pupver = ('', '')
 
-        tagregex = re.compile(d.getVar('UPSTREAM_CHECK_GITTAGREGEX') or r"(?P<pver>([0-9][\.|_]?)+)")
         try:
             output = self._lsremote(ud, d, "refs/tags/*")
         except (bb.fetch2.FetchError, bb.fetch2.NetworkAccess) as e:
             bb.note("Could not list remote: %s" % str(e))
             return pupver
 
+        pver_re = re.compile(d.getVar('UPSTREAM_CHECK_GITTAGREGEX') or r"(?P<pver>([0-9][\.|_]?)+)")
+        nonrel_re = re.compile(r"(alpha|beta|rc|final)+")
+
         verstring = ""
-        revision = ""
         for line in output.split("\n"):
             if not line:
                 break
 
-            tag_head = line.split("/")[-1]
+            tag = line.split("/")[-1]
             # Ignore non-released branches
-            m = re.search(r"(alpha|beta|rc|final)+", tag_head)
-            if m:
+            if nonrel_re.search(tag):
                 continue
 
             # search for version in the line
-            tag = tagregex.search(tag_head)
-            if tag is None:
+            m = pver_re.search(tag)
+            if not m:
                 continue
 
-            tag = tag.group('pver')
-            tag = tag.replace("_", ".")
+            pver = m.group('pver').replace("_", ".")
 
-            if verstring and bb.utils.vercmp(("0", tag, ""), ("0", verstring, "")) < 0:
+            if verstring and bb.utils.vercmp(("0", pver, ""), ("0", verstring, "")) < 0:
                 continue
 
-            verstring = tag
+            verstring = pver
             revision = line.split()[0]
             pupver = (verstring, revision)
 
