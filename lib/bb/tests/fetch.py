@@ -2159,6 +2159,12 @@ class GitShallowTest(FetcherTest):
         self.assertIn("fstests.doap", dir)
 
 class GitLfsTest(FetcherTest):
+    def skipIfNoGitLFS():
+        import shutil
+        if not shutil.which('git-lfs'):
+            return unittest.skip('git-lfs not installed')
+        return lambda f: f
+
     def setUp(self):
         FetcherTest.setUp(self)
 
@@ -2191,6 +2197,44 @@ class GitLfsTest(FetcherTest):
             fetcher.download()
         ud = fetcher.ud[uri]
         return fetcher, ud
+
+    def get_real_git_lfs_file(self):
+        self.d.setVar('PATH', os.environ.get('PATH'))
+        fetcher, ud = self.fetch()
+        fetcher.unpack(self.d.getVar('WORKDIR'))
+        unpacked_lfs_file = os.path.join(self.d.getVar('WORKDIR'), 'git', "Cat_poster_1.jpg")
+        return unpacked_lfs_file
+
+    @skipIfNoGitLFS()
+    @skipIfNoNetwork()
+    def test_real_git_lfs_repo_succeeds_without_lfs_param(self):
+        self.d.setVar('SRC_URI', "git://gitlab.com/gitlab-examples/lfs.git;protocol=https;branch=master")
+        f = self.get_real_git_lfs_file()
+        self.assertTrue(os.path.exists(f))
+        self.assertEqual("c0baab607a97839c9a328b4310713307", bb.utils.md5_file(f))
+
+    @skipIfNoGitLFS()
+    @skipIfNoNetwork()
+    def test_real_git_lfs_repo_succeeds(self):
+        self.d.setVar('SRC_URI', "git://gitlab.com/gitlab-examples/lfs.git;protocol=https;branch=master;lfs=1")
+        f = self.get_real_git_lfs_file()
+        self.assertTrue(os.path.exists(f))
+        self.assertEqual("c0baab607a97839c9a328b4310713307", bb.utils.md5_file(f))
+
+    @skipIfNoGitLFS()
+    @skipIfNoNetwork()
+    def test_real_git_lfs_repo_succeeds(self):
+        self.d.setVar('SRC_URI', "git://gitlab.com/gitlab-examples/lfs.git;protocol=https;branch=master;lfs=0")
+        f = self.get_real_git_lfs_file()
+        # This is the actual non-smudged placeholder file on the repo if git-lfs does not run
+        lfs_file = (
+                   'version https://git-lfs.github.com/spec/v1\n'
+                   'oid sha256:34be66b1a39a1955b46a12588df9d5f6fc1da790e05cf01f3c7422f4bbbdc26b\n'
+                   'size 11423554\n'
+        )
+
+        with open(f) as fh:
+            self.assertEqual(lfs_file, fh.read())
 
     def test_lfs_enabled(self):
         import shutil
