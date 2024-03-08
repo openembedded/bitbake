@@ -943,7 +943,10 @@ def runfetchcmd(cmd, d, quiet=False, cleanup=None, log=None, workdir=None):
         elif e.stderr:
             output = "output:\n%s" % e.stderr
         else:
-            output = "no output"
+            if log:
+                output = "see logfile for output"
+            else:
+                output = "no output"
         error_message = "Fetch command %s failed with exit code %s, %s" % (e.command, e.exitcode, output)
     except bb.process.CmdError as e:
         error_message = "Fetch command %s could not be run:\n%s" % (e.command, e.msg)
