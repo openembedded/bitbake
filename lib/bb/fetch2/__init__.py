@@ -290,12 +290,12 @@ class URI(object):
 
     def _param_str_split(self, string, elmdelim, kvdelim="="):
         ret = collections.OrderedDict()
-        for k, v in [x.split(kvdelim, 1) for x in string.split(elmdelim) if x]:
+        for k, v in [x.split(kvdelim, 1) if kvdelim in x else (x, None) for x in string.split(elmdelim) if x]:
             ret[k] = v
         return ret
 
     def _param_str_join(self, dict_, elmdelim, kvdelim="="):
-        return elmdelim.join([kvdelim.join([k, v]) for k, v in dict_.items()])
+        return elmdelim.join([kvdelim.join([k, v]) if v else k for k, v in dict_.items()])
 
     @property
     def hostport(self):
