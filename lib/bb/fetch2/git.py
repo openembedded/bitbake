@@ -673,7 +673,7 @@ class Git(FetchMethod):
             elif not need_lfs:
                 bb.note("Repository %s has LFS content but it is not being fetched" % (repourl))
             else:
-                runfetchcmd("%s lfs install" % ud.basecmd, d, workdir=destdir)
+                runfetchcmd("%s lfs install --local" % ud.basecmd, d, workdir=destdir)
 
         if not ud.nocheckout:
             if subpath:
