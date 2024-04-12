@@ -11,14 +11,14 @@ import optparse
 import warnings
 warnings.simplefilter("default")
 
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(__file__)),'lib'))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(__file__)), "lib"))
 
 import prserv
 import prserv.serv
 
 __version__="1.0.0"
 
-PRHOST_DEFAULT='0.0.0.0'
+PRHOST_DEFAULT="0.0.0.0"
 PRPORT_DEFAULT=8585
 
 def main():

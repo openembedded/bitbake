@@ -64,7 +64,7 @@ class PRTable(object):
             try:
                 return self.conn.execute(*query)
             except sqlite3.OperationalError as exc:
-                if 'is locked' in str(exc) and end > time.time():
+                if "is locked" in str(exc) and end > time.time():
                     continue
                 raise exc
 
@@ -220,18 +220,18 @@ class PRTable(object):
         metainfo = {}
         #column info 
         if colinfo:
-            metainfo['tbl_name'] = self.table
-            metainfo['core_ver'] = prserv.__version__
-            metainfo['col_info'] = []
+            metainfo["tbl_name"] = self.table
+            metainfo["core_ver"] = prserv.__version__
+            metainfo["col_info"] = []
             data = self._execute("PRAGMA table_info(%s);" % self.table)
             for row in data:
                 col = {}
-                col['name'] = row['name']
-                col['type'] = row['type']
-                col['notnull'] = row['notnull']
-                col['dflt_value'] = row['dflt_value']
-                col['pk'] = row['pk']
-                metainfo['col_info'].append(col)
+                col["name"] = row["name"]
+                col["type"] = row["type"]
+                col["notnull"] = row["notnull"]
+                col["dflt_value"] = row["dflt_value"]
+                col["pk"] = row["pk"]
+                metainfo["col_info"].append(col)
 
         #data info
         datainfo = []
@@ -261,12 +261,12 @@ class PRTable(object):
         else:
             data = self._execute(sqlstmt)
         for row in data:
-            if row['version']:
+            if row["version"]:
                 col = {}
-                col['version'] = row['version']
-                col['pkgarch'] = row['pkgarch']
-                col['checksum'] = row['checksum']
-                col['value'] = row['value']
+                col["version"] = row["version"]
+                col["pkgarch"] = row["pkgarch"]
+                col["checksum"] = row["checksum"]
+                col["value"] = row["value"]
                 datainfo.append(col)
         return (metainfo, datainfo)
 
@@ -275,7 +275,7 @@ class PRTable(object):
         for line in self.conn.iterdump():
             writeCount = writeCount + len(line) + 1
             fd.write(line)
-            fd.write('\n')
+            fd.write("\n")
         return writeCount
 
 class PRData(object):

@@ -21,14 +21,14 @@ singleton = None
 
 class PRServerClient(bb.asyncrpc.AsyncServerConnection):
     def __init__(self, socket, server):
-        super().__init__(socket, 'PRSERVICE', server.logger)
+        super().__init__(socket, "PRSERVICE", server.logger)
         self.server = server
 
         self.handlers.update({
-            'get-pr': self.handle_get_pr,
-            'import-one': self.handle_import_one,
-            'export': self.handle_export,
-            'is-readonly': self.handle_is_readonly,
+            "get-pr": self.handle_get_pr,
+            "import-one": self.handle_import_one,
+            "export": self.handle_export,
+            "is-readonly": self.handle_is_readonly,
         })
 
     def validate_proto_version(self):
@@ -44,14 +44,14 @@ class PRServerClient(bb.asyncrpc.AsyncServerConnection):
             self.server.table.sync_if_dirty()
 
     async def handle_get_pr(self, request):
-        version = request['version']
-        pkgarch = request['pkgarch']
-        checksum = request['checksum']
+        version = request["version"]
+        pkgarch = request["pkgarch"]
+        checksum = request["checksum"]
 
         response = None
         try:
             value = self.server.table.getValue(version, pkgarch, checksum)
-            response = {'value': value}
+            response = {"value": value}
         except prserv.NotFoundError:
             logger.error("can not find value for (%s, %s)",version, checksum)
         except sqlite3.Error as exc:
@@ -62,22 +62,22 @@ class PRServerClient(bb.asyncrpc.AsyncServerConnection):
     async def handle_import_one(self, request):
         response = None
         if not self.server.read_only:
-            version = request['version']
-            pkgarch = request['pkgarch']
-            checksum = request['checksum']
-            value = request['value']
+            version = request["version"]
+            pkgarch = request["pkgarch"]
+            checksum = request["checksum"]
+            value = request["value"]
 
             value = self.server.table.importone(version, pkgarch, checksum, value)
             if value is not None:
-                response = {'value': value}
+                response = {"value": value}
 
         return response
 
     async def handle_export(self, request):
-        version = request['version']
-        pkgarch = request['pkgarch']
-        checksum = request['checksum']
-        colinfo = request['colinfo']
+        version = request["version"]
+        pkgarch = request["pkgarch"]
+        checksum = request["checksum"]
+        colinfo = request["colinfo"]
 
         try:
             (metainfo, datainfo) = self.server.table.export(version, pkgarch, checksum, colinfo)
@@ -85,10 +85,10 @@ class PRServerClient(bb.asyncrpc.AsyncServerConnection):
             logger.error(str(exc))
             metainfo = datainfo = None
 
-        return {'metainfo': metainfo, 'datainfo': datainfo}
+        return {"metainfo": metainfo, "datainfo": datainfo}
 
     async def handle_is_readonly(self, request):
-        return {'readonly': self.server.read_only}
+        return {"readonly": self.server.read_only}
 
 class PRServer(bb.asyncrpc.AsyncServer):
     def __init__(self, dbfile, read_only=False):
@@ -135,7 +135,7 @@ class PRServSingleton(object):
         if not self.prserv.address:
             raise PRServiceConfigError
         if not self.port:
-            self.port = int(self.prserv.address.rsplit(':', 1)[1])
+            self.port = int(self.prserv.address.rsplit(":", 1)[1])
 
 def run_as_daemon(func, pidfile, logfile):
     """
@@ -171,12 +171,12 @@ def run_as_daemon(func, pidfile, logfile):
     # stdout/stderr or it could be 'real' unix fd forking where we need
     # to physically close the fds to prevent the program launching us from
     # potentially hanging on a pipe. Handle both cases.
-    si = open('/dev/null', 'r')
+    si = open("/dev/null", "r")
     try:
         os.dup2(si.fileno(),sys.stdin.fileno())
     except (AttributeError, io.UnsupportedOperation):
         sys.stdin = si
-    so = open(logfile, 'a+')
+    so = open(logfile, "a+")
     try:
         os.dup2(so.fileno(),sys.stdout.fileno())
     except (AttributeError, io.UnsupportedOperation):
@@ -200,7 +200,7 @@ def run_as_daemon(func, pidfile, logfile):
 
     # write pidfile
     pid = str(os.getpid())
-    with open(pidfile, 'w') as pf:
+    with open(pidfile, "w") as pf:
         pf.write("%s\n" % pid)
 
     func()
@@ -245,12 +245,12 @@ def stop_daemon(host, port):
         # so at least advise the user which ports the corresponding server is listening
         ports = []
         portstr = ""
-        for pf in glob.glob(PIDPREFIX % (ip,'*')):
+        for pf in glob.glob(PIDPREFIX % (ip, "*")):
             bn = os.path.basename(pf)
             root, _ = os.path.splitext(bn)
-            ports.append(root.split('_')[-1])
+            ports.append(root.split("_")[-1])
         if len(ports):
-            portstr = "Wrong port? Other ports listening at %s: %s" % (host, ' '.join(ports))
+            portstr = "Wrong port? Other ports listening at %s: %s" % (host, " ".join(ports))
 
         sys.stderr.write("pidfile %s does not exist. Daemon not running? %s\n"
                          % (pidfile,portstr))
@@ -284,7 +284,7 @@ def is_running(pid):
     return True
 
 def is_local_special(host, port):
-    if (host == 'localhost' or host == '127.0.0.1') and not port:
+    if (host == "localhost" or host == "127.0.0.1") and not port:
         return True
     else:
         return False
@@ -295,7 +295,7 @@ class PRServiceConfigError(Exception):
 def auto_start(d):
     global singleton
 
-    host_params = list(filter(None, (d.getVar('PRSERV_HOST') or '').split(':')))
+    host_params = list(filter(None, (d.getVar("PRSERV_HOST") or "").split(":")))
     if not host_params:
         # Shutdown any existing PR Server
         auto_shutdown()
@@ -304,7 +304,7 @@ def auto_start(d):
     if len(host_params) != 2:
         # Shutdown any existing PR Server
         auto_shutdown()
-        logger.critical('\n'.join(['PRSERV_HOST: incorrect format',
+        logger.critical("\n".join(["PRSERV_HOST: incorrect format",
                 'Usage: PRSERV_HOST = "<hostname>:<port>"']))
         raise PRServiceConfigError
 
@@ -357,8 +357,8 @@ def connect(host, port):
 
     global singleton
 
-    if host.strip().lower() == 'localhost' and not port:
-        host = 'localhost'
+    if host.strip().lower() == "localhost" and not port:
+        host = "localhost"
         port = singleton.port
 
     conn = client.PRClient()

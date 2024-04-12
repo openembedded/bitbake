@@ -11,40 +11,40 @@ logger = logging.getLogger("BitBake.PRserv")
 
 class PRAsyncClient(bb.asyncrpc.AsyncClient):
     def __init__(self):
-        super().__init__('PRSERVICE', '1.0', logger)
+        super().__init__("PRSERVICE", "1.0", logger)
 
     async def getPR(self, version, pkgarch, checksum):
         response = await self.invoke(
-            {'get-pr': {'version': version, 'pkgarch': pkgarch, 'checksum': checksum}}
+            {"get-pr": {"version": version, "pkgarch": pkgarch, "checksum": checksum}}
         )
         if response:
-            return response['value']
+            return response["value"]
 
     async def importone(self, version, pkgarch, checksum, value):
         response = await self.invoke(
-            {'import-one': {'version': version, 'pkgarch': pkgarch, 'checksum': checksum, 'value': value}}
+            {"import-one": {"version": version, "pkgarch": pkgarch, "checksum": checksum, "value": value}}
         )
         if response:
-            return response['value']
+            return response["value"]
 
     async def export(self, version, pkgarch, checksum, colinfo):
         response = await self.invoke(
-            {'export': {'version': version, 'pkgarch': pkgarch, 'checksum': checksum, 'colinfo': colinfo}}
+            {"export": {"version": version, "pkgarch": pkgarch, "checksum": checksum, "colinfo": colinfo}}
         )
         if response:
-            return (response['metainfo'], response['datainfo'])
+            return (response["metainfo"], response["datainfo"])
 
     async def is_readonly(self):
         response = await self.invoke(
-            {'is-readonly': {}}
+            {"is-readonly": {}}
         )
         if response:
-            return response['readonly']
+            return response["readonly"]
 
 class PRClient(bb.asyncrpc.Client):
     def __init__(self):
         super().__init__()
-        self._add_methods('getPR', 'importone', 'export', 'is_readonly')
+        self._add_methods("getPR", "importone", "export", "is_readonly")
 
     def _get_async_client(self):
         return PRAsyncClient()
