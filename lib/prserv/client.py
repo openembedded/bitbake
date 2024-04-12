@@ -20,6 +20,27 @@ class PRAsyncClient(bb.asyncrpc.AsyncClient):
         if response:
             return response["value"]
 
+    async def test_pr(self, version, pkgarch, checksum):
+        response = await self.invoke(
+            {"test-pr": {"version": version, "pkgarch": pkgarch, "checksum": checksum}}
+        )
+        if response:
+            return response["value"]
+
+    async def test_package(self, version, pkgarch):
+        response = await self.invoke(
+            {"test-package": {"version": version, "pkgarch": pkgarch}}
+        )
+        if response:
+            return response["value"]
+
+    async def max_package_pr(self, version, pkgarch):
+        response = await self.invoke(
+            {"max-package-pr": {"version": version, "pkgarch": pkgarch}}
+        )
+        if response:
+            return response["value"]
+
     async def importone(self, version, pkgarch, checksum, value):
         response = await self.invoke(
             {"import-one": {"version": version, "pkgarch": pkgarch, "checksum": checksum, "value": value}}
@@ -44,7 +65,7 @@ class PRAsyncClient(bb.asyncrpc.AsyncClient):
 class PRClient(bb.asyncrpc.Client):
     def __init__(self):
         super().__init__()
-        self._add_methods("getPR", "importone", "export", "is_readonly")
+        self._add_methods("getPR", "test_pr", "test_package", "importone", "export", "is_readonly")
 
     def _get_async_client(self):
         return PRAsyncClient()

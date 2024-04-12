@@ -78,6 +78,52 @@ class PRTable(object):
             self.sync()
             self.dirty = False
 
+    def test_package(self, version, pkgarch):
+        """Returns whether the specified package version is found in the database for the specified architecture"""
+
+        # Just returns the value if found or None otherwise
+        data=self._execute("SELECT value FROM %s WHERE version=? AND pkgarch=?;" % self.table,
+                           (version, pkgarch))
+        row=data.fetchone()
+        if row is not None:
+            return True
+        else:
+            return False
+
+    def test_value(self, version, pkgarch, value):
+        """Returns whether the specified value is found in the database for the specified package and architecture"""
+
+        # Just returns the value if found or None otherwise
+        data=self._execute("SELECT value FROM %s WHERE version=? AND pkgarch=? and value=?;" % self.table,
+                           (version, pkgarch, value))
+        row=data.fetchone()
+        if row is not None:
+            return True
+        else:
+            return False
+
+    def find_value(self, version, pkgarch, checksum):
+        """Returns the value for the specified checksum if found or None otherwise."""
+
+        data=self._execute("SELECT value FROM %s WHERE version=? AND pkgarch=? AND checksum=?;" % self.table,
+                           (version, pkgarch, checksum))
+        row=data.fetchone()
+        if row is not None:
+            return row[0]
+        else:
+            return None
+
+    def find_max_value(self, version, pkgarch):
+        """Returns the greatest value for (version, pkgarch), or None if not found. Doesn't create a new value"""
+
+        data = self._execute("SELECT max(value) FROM %s where version=? AND pkgarch=?;" % (self.table),
+                             (version, pkgarch))
+        row = data.fetchone()
+        if row is not None:
+            return row[0]
+        else:
+            return None
+
     def _get_value_hist(self, version, pkgarch, checksum):
         data=self._execute("SELECT value FROM %s WHERE version=? AND pkgarch=? AND checksum=?;" % self.table,
                            (version, pkgarch, checksum))

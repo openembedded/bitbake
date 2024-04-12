@@ -26,6 +26,9 @@ class PRServerClient(bb.asyncrpc.AsyncServerConnection):
 
         self.handlers.update({
             "get-pr": self.handle_get_pr,
+            "test-pr": self.handle_test_pr,
+            "test-package": self.handle_test_package,
+            "max-package-pr": self.handle_max_package_pr,
             "import-one": self.handle_import_one,
             "export": self.handle_export,
             "is-readonly": self.handle_is_readonly,
@@ -42,6 +45,31 @@ class PRServerClient(bb.asyncrpc.AsyncServerConnection):
             raise
         else:
             self.server.table.sync_if_dirty()
+
+    async def handle_test_pr(self, request):
+        '''Finds the PR value corresponding to the request. If not found, returns None and doesn't insert a new value'''
+        version = request["version"]
+        pkgarch = request["pkgarch"]
+        checksum = request["checksum"]
+
+        value = self.server.table.find_value(version, pkgarch, checksum)
+        return {"value": value}
+
+    async def handle_test_package(self, request):
+        '''Tells whether there are entries for (version, pkgarch) in the db. Returns True or False'''
+        version = request["version"]
+        pkgarch = request["pkgarch"]
+
+        value = self.server.table.test_package(version, pkgarch)
+        return {"value": value}
+
+    async def handle_max_package_pr(self, request):
+        '''Finds the greatest PR value for (version, pkgarch) in the db. Returns None if no entry was found'''
+        version = request["version"]
+        pkgarch = request["pkgarch"]
+
+        value = self.server.table.find_max_value(version, pkgarch)
+        return {"value": value}
 
     async def handle_get_pr(self, request):
         version = request["version"]
