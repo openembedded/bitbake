@@ -20,16 +20,16 @@ PIDPREFIX = "/tmp/PRServer_%s_%s.pid"
 singleton = None
 
 class PRServerClient(bb.asyncrpc.AsyncServerConnection):
-    def __init__(self, socket, table, read_only):
-        super().__init__(socket, 'PRSERVICE', logger)
+    def __init__(self, socket, server):
+        super().__init__(socket, 'PRSERVICE', server.logger)
+        self.server = server
+
         self.handlers.update({
             'get-pr': self.handle_get_pr,
             'import-one': self.handle_import_one,
             'export': self.handle_export,
             'is-readonly': self.handle_is_readonly,
         })
-        self.table = table
-        self.read_only = read_only
 
     def validate_proto_version(self):
         return (self.proto_version == (1, 0))
@@ -38,10 +38,10 @@ class PRServerClient(bb.asyncrpc.AsyncServerConnection):
         try:
             return await super().dispatch_message(msg)
         except:
-            self.table.sync()
+            self.server.table.sync()
             raise
         else:
-            self.table.sync_if_dirty()
+            self.server.table.sync_if_dirty()
 
     async def handle_get_pr(self, request):
         version = request['version']
@@ -50,7 +50,7 @@ class PRServerClient(bb.asyncrpc.AsyncServerConnection):
 
         response = None
         try:
-            value = self.table.getValue(version, pkgarch, checksum)
+            value = self.server.table.getValue(version, pkgarch, checksum)
             response = {'value': value}
         except prserv.NotFoundError:
             logger.error("can not find value for (%s, %s)",version, checksum)
@@ -61,13 +61,13 @@ class PRServerClient(bb.asyncrpc.AsyncServerConnection):
 
     async def handle_import_one(self, request):
         response = None
-        if not self.read_only:
+        if not self.server.read_only:
             version = request['version']
             pkgarch = request['pkgarch']
             checksum = request['checksum']
             value = request['value']
 
-            value = self.table.importone(version, pkgarch, checksum, value)
+            value = self.server.table.importone(version, pkgarch, checksum, value)
             if value is not None:
                 response = {'value': value}
 
@@ -80,7 +80,7 @@ class PRServerClient(bb.asyncrpc.AsyncServerConnection):
         colinfo = request['colinfo']
 
         try:
-            (metainfo, datainfo) = self.table.export(version, pkgarch, checksum, colinfo)
+            (metainfo, datainfo) = self.server.table.export(version, pkgarch, checksum, colinfo)
         except sqlite3.Error as exc:
             logger.error(str(exc))
             metainfo = datainfo = None
@@ -88,7 +88,7 @@ class PRServerClient(bb.asyncrpc.AsyncServerConnection):
         return {'metainfo': metainfo, 'datainfo': datainfo}
 
     async def handle_is_readonly(self, request):
-        return {'readonly': self.read_only}
+        return {'readonly': self.server.read_only}
 
 class PRServer(bb.asyncrpc.AsyncServer):
     def __init__(self, dbfile, read_only=False):
@@ -98,7 +98,7 @@ class PRServer(bb.asyncrpc.AsyncServer):
         self.read_only = read_only
 
     def accept_client(self, socket):
-        return PRServerClient(socket, self.table, self.read_only)
+        return PRServerClient(socket, self)
 
     def start(self):
         tasks = super().start()
