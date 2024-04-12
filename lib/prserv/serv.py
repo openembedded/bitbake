@@ -81,7 +81,7 @@ class PRServerClient(bb.asyncrpc.AsyncServerConnection):
             value = self.server.table.get_value(version, pkgarch, checksum)
             response = {"value": value}
         except prserv.NotFoundError:
-            self.logger.error("can not find value for (%s, %s)",version, checksum)
+            self.logger.error("failure storing value in database for (%s, %s)",version, checksum)
 
         return response
 
