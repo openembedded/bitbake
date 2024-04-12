@@ -82,8 +82,6 @@ class PRServerClient(bb.asyncrpc.AsyncServerConnection):
             response = {"value": value}
         except prserv.NotFoundError:
             self.logger.error("can not find value for (%s, %s)",version, checksum)
-        except sqlite3.Error as exc:
-            self.logger.error(str(exc))
 
         return response
 
