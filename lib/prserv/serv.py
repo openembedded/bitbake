@@ -53,9 +53,9 @@ class PRServerClient(bb.asyncrpc.AsyncServerConnection):
             value = self.server.table.getValue(version, pkgarch, checksum)
             response = {"value": value}
         except prserv.NotFoundError:
-            logger.error("can not find value for (%s, %s)",version, checksum)
+            self.logger.error("can not find value for (%s, %s)",version, checksum)
         except sqlite3.Error as exc:
-            logger.error(str(exc))
+            self.logger.error(str(exc))
 
         return response
 
@@ -82,7 +82,7 @@ class PRServerClient(bb.asyncrpc.AsyncServerConnection):
         try:
             (metainfo, datainfo) = self.server.table.export(version, pkgarch, checksum, colinfo)
         except sqlite3.Error as exc:
-            logger.error(str(exc))
+            self.logger.error(str(exc))
             metainfo = datainfo = None
 
         return {"metainfo": metainfo, "datainfo": datainfo}
@@ -105,7 +105,7 @@ class PRServer(bb.asyncrpc.AsyncServer):
         self.db = prserv.db.PRData(self.dbfile, read_only=self.read_only)
         self.table = self.db["PRMAIN"]
 
-        logger.info("Started PRServer with DBfile: %s, Address: %s, PID: %s" %
+        self.logger.info("Started PRServer with DBfile: %s, Address: %s, PID: %s" %
                      (self.dbfile, self.address, str(os.getpid())))
 
         return tasks
