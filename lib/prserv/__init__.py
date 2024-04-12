@@ -7,7 +7,7 @@
 __version__ = "1.0.0"
 
 import os, time
-import sys,logging
+import sys, logging
 
 def init_logger(logfile, loglevel):
     numeric_level = getattr(logging, loglevel.upper(), None)

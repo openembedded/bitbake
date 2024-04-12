@@ -38,9 +38,9 @@ class PRTable(object):
         self.read_only = read_only
         self.dirty = False
         if nohist:
-            self.table = "%s_nohist" % table 
+            self.table = "%s_nohist" % table
         else:
-            self.table = "%s_hist" % table 
+            self.table = "%s_hist" % table
 
         if self.read_only:
             table_exists = self._execute(
@@ -78,7 +78,7 @@ class PRTable(object):
             self.sync()
             self.dirty = False
 
-    def _getValueHist(self, version, pkgarch, checksum):
+    def _get_value_hist(self, version, pkgarch, checksum):
         data=self._execute("SELECT value FROM %s WHERE version=? AND pkgarch=? AND checksum=?;" % self.table,
                            (version, pkgarch, checksum))
         row=data.fetchone()
@@ -87,7 +87,7 @@ class PRTable(object):
         else:
             #no value found, try to insert
             if self.read_only:
-                data = self._execute("SELECT ifnull(max(value)+1,0) FROM %s where version=? AND pkgarch=?;" % (self.table),
+                data = self._execute("SELECT ifnull(max(value)+1, 0) FROM %s where version=? AND pkgarch=?;" % (self.table),
                                    (version, pkgarch))
                 row = data.fetchone()
                 if row is not None:
@@ -96,9 +96,9 @@ class PRTable(object):
                     return 0
 
             try:
-                self._execute("INSERT INTO %s VALUES (?, ?, ?, (select ifnull(max(value)+1,0) from %s where version=? AND pkgarch=?));"
-                           % (self.table,self.table),
-                           (version,pkgarch, checksum,version, pkgarch))
+                self._execute("INSERT INTO %s VALUES (?, ?, ?, (select ifnull(max(value)+1, 0) from %s where version=? AND pkgarch=?));"
+                           % (self.table, self.table),
+                           (version, pkgarch, checksum, version, pkgarch))
             except sqlite3.IntegrityError as exc:
                 logger.error(str(exc))
 
@@ -112,10 +112,10 @@ class PRTable(object):
             else:
                 raise prserv.NotFoundError
 
-    def _getValueNohist(self, version, pkgarch, checksum):
+    def _get_value_no_hist(self, version, pkgarch, checksum):
         data=self._execute("SELECT value FROM %s \
                             WHERE version=? AND pkgarch=? AND checksum=? AND \
-                            value >= (select max(value) from %s where version=? AND pkgarch=?);" 
+                            value >= (select max(value) from %s where version=? AND pkgarch=?);"
                             % (self.table, self.table),
                             (version, pkgarch, checksum, version, pkgarch))
         row=data.fetchone()
@@ -124,7 +124,7 @@ class PRTable(object):
         else:
             #no value found, try to insert
             if self.read_only:
-                data = self._execute("SELECT ifnull(max(value)+1,0) FROM %s where version=? AND pkgarch=?;" % (self.table),
+                data = self._execute("SELECT ifnull(max(value)+1, 0) FROM %s where version=? AND pkgarch=?;" % (self.table),
                                    (version, pkgarch))
                 row = data.fetchone()
                 if row is not None:
@@ -133,8 +133,8 @@ class PRTable(object):
                     return 0
 
             try:
-                self._execute("INSERT OR REPLACE INTO %s VALUES (?, ?, ?, (select ifnull(max(value)+1,0) from %s where version=? AND pkgarch=?));"
-                               % (self.table,self.table),
+                self._execute("INSERT OR REPLACE INTO %s VALUES (?, ?, ?, (select ifnull(max(value)+1, 0) from %s where version=? AND pkgarch=?));"
+                               % (self.table, self.table),
                                (version, pkgarch, checksum, version, pkgarch))
             except sqlite3.IntegrityError as exc:
                 logger.error(str(exc))
@@ -150,17 +150,17 @@ class PRTable(object):
             else:
                 raise prserv.NotFoundError
 
-    def getValue(self, version, pkgarch, checksum):
+    def get_value(self, version, pkgarch, checksum):
         if self.nohist:
-            return self._getValueNohist(version, pkgarch, checksum)
+            return self._get_value_no_hist(version, pkgarch, checksum)
         else:
-            return self._getValueHist(version, pkgarch, checksum)
+            return self._get_value_hist(version, pkgarch, checksum)
 
-    def _importHist(self, version, pkgarch, checksum, value):
+    def _import_hist(self, version, pkgarch, checksum, value):
         if self.read_only:
             return None
 
-        val = None 
+        val = None
         data = self._execute("SELECT value FROM %s WHERE version=? AND pkgarch=? AND checksum=?;" % self.table,
                            (version, pkgarch, checksum))
         row = data.fetchone()
@@ -183,27 +183,27 @@ class PRTable(object):
                 val = row[0]
         return val
 
-    def _importNohist(self, version, pkgarch, checksum, value):
+    def _import_no_hist(self, version, pkgarch, checksum, value):
         if self.read_only:
             return None
 
         try:
             #try to insert
             self._execute("INSERT INTO %s VALUES (?, ?, ?, ?);"  % (self.table),
-                           (version, pkgarch, checksum,value))
+                           (version, pkgarch, checksum, value))
         except sqlite3.IntegrityError as exc:
             #already have the record, try to update
             try:
-                self._execute("UPDATE %s SET value=? WHERE version=? AND pkgarch=? AND checksum=? AND value<?"  
+                self._execute("UPDATE %s SET value=? WHERE version=? AND pkgarch=? AND checksum=? AND value<?"
                               % (self.table),
-                               (value,version,pkgarch,checksum,value))
+                               (value, version, pkgarch, checksum, value))
             except sqlite3.IntegrityError as exc:
                 logger.error(str(exc))
 
         self.dirty = True
 
         data = self._execute("SELECT value FROM %s WHERE version=? AND pkgarch=? AND checksum=? AND value>=?;" % self.table,
-                            (version,pkgarch,checksum,value))
+                            (version, pkgarch, checksum, value))
         row=data.fetchone()
         if row is not None:
             return row[0]
@@ -212,13 +212,13 @@ class PRTable(object):
 
     def importone(self, version, pkgarch, checksum, value):
         if self.nohist:
-            return self._importNohist(version, pkgarch, checksum, value)
+            return self._import_no_hist(version, pkgarch, checksum, value)
         else:
-            return self._importHist(version, pkgarch, checksum, value)
+            return self._import_hist(version, pkgarch, checksum, value)
 
     def export(self, version, pkgarch, checksum, colinfo):
         metainfo = {}
-        #column info 
+        #column info
         if colinfo:
             metainfo["tbl_name"] = self.table
             metainfo["core_ver"] = prserv.__version__
@@ -238,7 +238,7 @@ class PRTable(object):
 
         if self.nohist:
             sqlstmt = "SELECT T1.version, T1.pkgarch, T1.checksum, T1.value FROM %s as T1, \
-                    (SELECT version,pkgarch,max(value) as maxvalue FROM %s GROUP BY version,pkgarch) as T2 \
+                    (SELECT version, pkgarch, max(value) as maxvalue FROM %s GROUP BY version, pkgarch) as T2 \
                     WHERE T1.version=T2.version AND T1.pkgarch=T2.pkgarch AND T1.value=T2.maxvalue " % (self.table, self.table)
         else:
             sqlstmt = "SELECT * FROM %s as T1 WHERE 1=1 " % self.table
@@ -302,7 +302,7 @@ class PRData(object):
     def disconnect(self):
         self.connection.close()
 
-    def __getitem__(self,tblname):
+    def __getitem__(self, tblname):
         if not isinstance(tblname, str):
             raise TypeError("tblname argument must be a string, not '%s'" %
                             type(tblname))
@@ -316,4 +316,4 @@ class PRData(object):
         if tblname in self._tables:
             del self._tables[tblname]
         logger.info("drop table %s" % (tblname))
-        self.connection.execute("DROP TABLE IF EXISTS %s;" % tblname) 
+        self.connection.execute("DROP TABLE IF EXISTS %s;" % tblname)

@@ -50,7 +50,7 @@ class PRServerClient(bb.asyncrpc.AsyncServerConnection):
 
         response = None
         try:
-            value = self.server.table.getValue(version, pkgarch, checksum)
+            value = self.server.table.get_value(version, pkgarch, checksum)
             response = {"value": value}
         except prserv.NotFoundError:
             self.logger.error("can not find value for (%s, %s)",version, checksum)
@@ -173,16 +173,16 @@ def run_as_daemon(func, pidfile, logfile):
     # potentially hanging on a pipe. Handle both cases.
     si = open("/dev/null", "r")
     try:
-        os.dup2(si.fileno(),sys.stdin.fileno())
+        os.dup2(si.fileno(), sys.stdin.fileno())
     except (AttributeError, io.UnsupportedOperation):
         sys.stdin = si
     so = open(logfile, "a+")
     try:
-        os.dup2(so.fileno(),sys.stdout.fileno())
+        os.dup2(so.fileno(), sys.stdout.fileno())
     except (AttributeError, io.UnsupportedOperation):
         sys.stdout = so
     try:
-        os.dup2(so.fileno(),sys.stderr.fileno())
+        os.dup2(so.fileno(), sys.stderr.fileno())
     except (AttributeError, io.UnsupportedOperation):
         sys.stderr = so
 
@@ -253,7 +253,7 @@ def stop_daemon(host, port):
             portstr = "Wrong port? Other ports listening at %s: %s" % (host, " ".join(ports))
 
         sys.stderr.write("pidfile %s does not exist. Daemon not running? %s\n"
-                         % (pidfile,portstr))
+                         % (pidfile, portstr))
         return 1
 
     try:
