@@ -511,7 +511,8 @@ class MirrorUriTest(FetcherTest):
     mirrorvar = "http://.*/.* file:///somepath/downloads/ " \
                 "git://someserver.org/bitbake git://git.openembedded.org/bitbake " \
                 "https://.*/.* file:///someotherpath/downloads/ " \
-                "http://.*/.* file:///someotherpath/downloads/"
+                "http://.*/.* file:///someotherpath/downloads/ " \
+                "svn://svn.server1.com/ svn://svn.server2.com/"
 
     def test_urireplace(self):
         self.d.setVar("FILESPATH", ".")
@@ -534,6 +535,13 @@ class MirrorUriTest(FetcherTest):
         mirrors = bb.fetch2.mirror_from_string(self.mirrorvar)
         uris, uds = bb.fetch2.build_mirroruris(fetcher, mirrors, self.d)
         self.assertEqual(uris, ['file:///someotherpath/downloads/bitbake-1.0.tar.gz'])
+
+    def test_urilistsvn(self):
+        # Catch svn:// -> svn:// bug
+        fetcher = bb.fetch.FetchData("svn://svn.server1.com/isource/svnroot/reponame/tags/tagname;module=path_in_tagnamefolder;protocol=https;rev=2", self.d)
+        mirrors = bb.fetch2.mirror_from_string(self.mirrorvar)
+        uris, uds = bb.fetch2.build_mirroruris(fetcher, mirrors, self.d)
+        self.assertEqual(uris, ['svn://svn.server2.com/isource/svnroot/reponame/tags/tagname;module=path_in_tagnamefolder;protocol=https;rev=2'])
 
     def test_mirror_of_mirror(self):
         # Test if mirror of a mirror works
