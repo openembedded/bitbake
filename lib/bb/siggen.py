@@ -381,7 +381,7 @@ class SignatureGeneratorBasic(SignatureGenerator):
             self.taints[tid] = taint
             logger.warning("%s is tainted from a forced run" % tid)
 
-        return
+        return set(dep for _, dep in self.runtaskdeps[tid])
 
     def get_taskhash(self, tid, deps, dataCaches):
 
