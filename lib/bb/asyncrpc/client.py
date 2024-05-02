@@ -24,6 +24,9 @@ ADDR_TYPE_UNIX = 0
 ADDR_TYPE_TCP = 1
 ADDR_TYPE_WS = 2
 
+WEBSOCKETS_MIN_VERSION = (9, 1)
+
+
 def parse_address(addr):
     if addr.startswith(UNIX_PREFIX):
         return (ADDR_TYPE_UNIX, (addr[len(UNIX_PREFIX) :],))
@@ -38,6 +41,7 @@ def parse_address(addr):
             host, port = addr.split(":")
 
         return (ADDR_TYPE_TCP, (host, int(port)))
+
 
 class AsyncClient(object):
     def __init__(
@@ -85,6 +89,24 @@ class AsyncClient(object):
 
     async def connect_websocket(self, uri):
         import websockets
+
+        try:
+            version = tuple(
+                int(v)
+                for v in websockets.__version__.split(".")[
+                    0 : len(WEBSOCKETS_MIN_VERSION)
+                ]
+            )
+        except ValueError:
+            raise ImportError(
+                f"Unable to parse websockets version '{websockets.__version__}'"
+            )
+
+        if version < WEBSOCKETS_MIN_VERSION:
+            min_ver_str = ".".join(str(v) for v in WEBSOCKETS_MIN_VERSION)
+            raise ImportError(
+                f"Websockets version {websockets.__version__} is less than minimum required version {min_ver_str}"
+            )
 
         async def connect_sock():
             websocket = await websockets.connect(uri, ping_interval=None)
