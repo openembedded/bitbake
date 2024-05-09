@@ -25,7 +25,9 @@ ADDR_TYPE_TCP = 1
 ADDR_TYPE_WS = 2
 
 WEBSOCKETS_MIN_VERSION = (9, 1)
-
+# Need websockets 10 with python 3.10+
+if sys.version_info >= (3, 10, 0):
+    WEBSOCKETS_MIN_VERSION = (10, 0)
 
 def parse_address(addr):
     if addr.startswith(UNIX_PREFIX):
