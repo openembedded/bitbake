@@ -192,67 +192,9 @@ class PRTable(object):
             self.store_value(version, pkgarch, checksum, value)
         return value
 
-    def _import_hist(self, version, pkgarch, checksum, value):
-        if self.read_only:
-            return None
-
-        val = None
-        with closing(self.conn.cursor()) as cursor:
-            data = cursor.execute("SELECT value FROM %s WHERE version=? AND pkgarch=? AND checksum=?;" % self.table,
-                           (version, pkgarch, checksum))
-            row = data.fetchone()
-            if row is not None:
-                val=row[0]
-            else:
-                #no value found, try to insert
-                try:
-                    cursor.execute("INSERT INTO %s VALUES (?, ?, ?, ?);"  % (self.table),
-                               (version, pkgarch, checksum, value))
-                except sqlite3.IntegrityError as exc:
-                    logger.error(str(exc))
-
-                self.conn.commit()
-
-                data = cursor.execute("SELECT value FROM %s WHERE version=? AND pkgarch=? AND checksum=?;" % self.table,
-                           (version, pkgarch, checksum))
-                row = data.fetchone()
-                if row is not None:
-                    val = row[0]
-        return val
-
-    def _import_no_hist(self, version, pkgarch, checksum, value):
-        if self.read_only:
-            return None
-
-        with closing(self.conn.cursor()) as cursor:
-            try:
-                #try to insert
-                cursor.execute("INSERT INTO %s VALUES (?, ?, ?, ?);"  % (self.table),
-                               (version, pkgarch, checksum, value))
-            except sqlite3.IntegrityError as exc:
-                #already have the record, try to update
-                try:
-                    cursor.execute("UPDATE %s SET value=? WHERE version=? AND pkgarch=? AND checksum=? AND value<?"
-                                  % (self.table),
-                                   (value, version, pkgarch, checksum, value))
-                except sqlite3.IntegrityError as exc:
-                    logger.error(str(exc))
-
-                self.conn.commit()
-
-            data = cursor.execute("SELECT value FROM %s WHERE version=? AND pkgarch=? AND checksum=? AND value>=?;" % self.table,
-                            (version, pkgarch, checksum, value))
-            row=data.fetchone()
-            if row is not None:
-                return row[0]
-            else:
-                return None
-
-    def importone(self, version, pkgarch, checksum, value, history=False):
-        if history:
-            return self._import_hist(version, pkgarch, checksum, value)
-        else:
-            return self._import_no_hist(version, pkgarch, checksum, value)
+    def importone(self, version, pkgarch, checksum, value):
+        self.store_value(version, pkgarch, checksum, value)
+        return value
 
     def export(self, version, pkgarch, checksum, colinfo, history=False):
         metainfo = {}

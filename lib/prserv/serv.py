@@ -179,9 +179,8 @@ class PRServerClient(bb.asyncrpc.AsyncServerConnection):
             pkgarch = request["pkgarch"]
             checksum = request["checksum"]
             value = request["value"]
-            history = request["history"]
 
-            value = self.server.table.importone(version, pkgarch, checksum, value, history)
+            value = self.server.table.importone(version, pkgarch, checksum, value)
             if value is not None:
                 response = {"value": value}
 

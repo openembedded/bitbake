@@ -42,9 +42,9 @@ class PRAsyncClient(bb.asyncrpc.AsyncClient):
         if response:
             return response["value"]
 
-    async def importone(self, version, pkgarch, checksum, value, history=False):
+    async def importone(self, version, pkgarch, checksum, value):
         response = await self.invoke(
-            {"import-one": {"version": version, "pkgarch": pkgarch, "checksum": checksum, "value": value, "history": history}}
+            {"import-one": {"version": version, "pkgarch": pkgarch, "checksum": checksum, "value": value}}
         )
         if response:
             return response["value"]
