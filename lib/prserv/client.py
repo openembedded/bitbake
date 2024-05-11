@@ -65,7 +65,7 @@ class PRAsyncClient(bb.asyncrpc.AsyncClient):
 class PRClient(bb.asyncrpc.Client):
     def __init__(self):
         super().__init__()
-        self._add_methods("getPR", "test_pr", "test_package", "importone", "export", "is_readonly")
+        self._add_methods("getPR", "test_pr", "test_package", "max_package_pr", "importone", "export", "is_readonly")
 
     def _get_async_client(self):
         return PRAsyncClient()
