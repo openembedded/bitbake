@@ -10,6 +10,8 @@ import errno
 import prserv
 import time
 
+from . import increase_revision, revision_greater, revision_smaller
+
 try:
     import sqlite3
 except ImportError:
@@ -32,15 +34,11 @@ if sqlversion[0] < 3 or (sqlversion[0] == 3 and sqlversion[1] < 3):
 #
 
 class PRTable(object):
-    def __init__(self, conn, table, nohist, read_only):
+    def __init__(self, conn, table, read_only):
         self.conn = conn
-        self.nohist = nohist
         self.read_only = read_only
         self.dirty = False
-        if nohist:
-            self.table = "%s_nohist" % table
-        else:
-            self.table = "%s_hist" % table
+        self.table = table
 
         if self.read_only:
             table_exists = self._execute(
@@ -53,8 +51,8 @@ class PRTable(object):
                         (version TEXT NOT NULL, \
                         pkgarch TEXT NOT NULL,  \
                         checksum TEXT NOT NULL, \
-                        value INTEGER, \
-                        PRIMARY KEY (version, pkgarch, checksum));" % self.table)
+                        value TEXT, \
+                        PRIMARY KEY (version, pkgarch, checksum, value));" % self.table)
 
     def _execute(self, *query):
         """Execute a query, waiting to acquire a lock if necessary"""
@@ -67,6 +65,28 @@ class PRTable(object):
                 if "is locked" in str(exc) and end > time.time():
                     continue
                 raise exc
+
+    def _extremum_value(self, rows, is_max):
+        value = None
+
+        for row in rows:
+            current_value = row[0]
+            if value is None:
+                value = current_value
+            else:
+                if is_max:
+                    is_new_extremum = revision_greater(current_value, value)
+                else:
+                    is_new_extremum = revision_smaller(current_value, value)
+                if  is_new_extremum:
+                    value = current_value
+        return value
+
+    def _max_value(self, rows):
+        return self._extremum_value(rows, True)
+
+    def _min_value(self, rows):
+        return self._extremum_value(rows, False)
 
     def sync(self):
         if not self.read_only:
@@ -102,101 +122,93 @@ class PRTable(object):
         else:
             return False
 
-    def find_value(self, version, pkgarch, checksum):
-        """Returns the value for the specified checksum if found or None otherwise."""
 
-        data=self._execute("SELECT value FROM %s WHERE version=? AND pkgarch=? AND checksum=?;" % self.table,
-                           (version, pkgarch, checksum))
-        row=data.fetchone()
-        if row is not None:
-            return row[0]
-        else:
-            return None
-
-    def find_max_value(self, version, pkgarch):
+    def find_package_max_value(self, version, pkgarch):
         """Returns the greatest value for (version, pkgarch), or None if not found. Doesn't create a new value"""
 
-        data = self._execute("SELECT max(value) FROM %s where version=? AND pkgarch=?;" % (self.table),
+        data = self._execute("SELECT value FROM %s where version=? AND pkgarch=?;" % (self.table),
                              (version, pkgarch))
-        row = data.fetchone()
-        if row is not None:
-            return row[0]
+        rows = data.fetchall()
+        value = self._max_value(rows)
+        return value
+
+    def find_value(self, version, pkgarch, checksum, history=False):
+        """Returns the value for the specified checksum if found or None otherwise."""
+
+        if history:
+            return self.find_min_value(version, pkgarch, checksum)
         else:
-            return None
+            return self.find_max_value(version, pkgarch, checksum)
 
-    def _get_value_hist(self, version, pkgarch, checksum):
-        data=self._execute("SELECT value FROM %s WHERE version=? AND pkgarch=? AND checksum=?;" % self.table,
-                           (version, pkgarch, checksum))
-        row=data.fetchone()
-        if row is not None:
-            return row[0]
+
+    def _find_extremum_value(self, version, pkgarch, checksum, is_max):
+        """Returns the maximum (if is_max is True) or minimum (if is_max is False) value
+           for (version, pkgarch, checksum), or None if not found. Doesn't create a new value"""
+
+        data = self._execute("SELECT value FROM %s where version=? AND pkgarch=? AND checksum=?;" % (self.table),
+                             (version, pkgarch, checksum))
+        rows = data.fetchall()
+        return self._extremum_value(rows, is_max)
+
+    def find_max_value(self, version, pkgarch, checksum):
+        return self._find_extremum_value(version, pkgarch, checksum, True)
+
+    def find_min_value(self, version, pkgarch, checksum):
+        return self._find_extremum_value(version, pkgarch, checksum, False)
+
+    def find_new_subvalue(self, version, pkgarch, base):
+        """Take and increase the greatest "<base>.y" value for (version, pkgarch), or return "<base>.0" if not found.
+        This doesn't store a new value."""
+
+        data = self._execute("SELECT value FROM %s where version=? AND pkgarch=? AND value LIKE '%s.%%';" % (self.table, base),
+                             (version, pkgarch))
+        rows = data.fetchall()
+        value = self._max_value(rows)
+
+        if value is not None:
+            return increase_revision(value)
         else:
-            #no value found, try to insert
-            if self.read_only:
-                data = self._execute("SELECT ifnull(max(value)+1, 0) FROM %s where version=? AND pkgarch=?;" % (self.table),
-                                   (version, pkgarch))
-                row = data.fetchone()
-                if row is not None:
-                    return row[0]
-                else:
-                    return 0
+            return base + ".0"
 
-            try:
-                self._execute("INSERT INTO %s VALUES (?, ?, ?, (select ifnull(max(value)+1, 0) from %s where version=? AND pkgarch=?));"
-                           % (self.table, self.table),
-                           (version, pkgarch, checksum, version, pkgarch))
-            except sqlite3.IntegrityError as exc:
-                logger.error(str(exc))
+    def store_value(self, version, pkgarch, checksum, value):
+        """Store new value in the database"""
 
-            self.dirty = True
+        try:
+            self._execute("INSERT INTO %s VALUES (?, ?, ?, ?);"  % (self.table),
+                       (version, pkgarch, checksum, value))
+        except sqlite3.IntegrityError as exc:
+            logger.error(str(exc))
 
-            data=self._execute("SELECT value FROM %s WHERE version=? AND pkgarch=? AND checksum=?;" % self.table,
-                               (version, pkgarch, checksum))
-            row=data.fetchone()
-            if row is not None:
-                return row[0]
-            else:
-                raise prserv.NotFoundError
+        self.dirty = True
 
-    def _get_value_no_hist(self, version, pkgarch, checksum):
-        data=self._execute("SELECT value FROM %s \
-                            WHERE version=? AND pkgarch=? AND checksum=? AND \
-                            value >= (select max(value) from %s where version=? AND pkgarch=?);"
-                            % (self.table, self.table),
-                            (version, pkgarch, checksum, version, pkgarch))
-        row=data.fetchone()
-        if row is not None:
-            return row[0]
+    def _get_value(self, version, pkgarch, checksum, history):
+
+        max_value = self.find_package_max_value(version, pkgarch)
+
+        if max_value is None:
+            # version, pkgarch completely unknown. Return initial value.
+            return "0"
+
+        value = self.find_value(version, pkgarch, checksum, history)
+
+        if value is None:
+            # version, pkgarch found but not checksum. Create a new value from the maximum one
+            return increase_revision(max_value)
+
+        if history:
+            return value
+
+        # "no history" mode - If the value is not the maximum value for the package, need to increase it.
+        if max_value > value:
+            return increase_revision(max_value)
         else:
-            #no value found, try to insert
-            if self.read_only:
-                data = self._execute("SELECT ifnull(max(value)+1, 0) FROM %s where version=? AND pkgarch=?;" % (self.table),
-                                   (version, pkgarch))
-                return data.fetchone()[0]
+            return value
 
-            try:
-                self._execute("INSERT OR REPLACE INTO %s VALUES (?, ?, ?, (select ifnull(max(value)+1, 0) from %s where version=? AND pkgarch=?));"
-                               % (self.table, self.table),
-                               (version, pkgarch, checksum, version, pkgarch))
-            except sqlite3.IntegrityError as exc:
-                logger.error(str(exc))
-                self.conn.rollback()
-
-            self.dirty = True
-
-            data=self._execute("SELECT value FROM %s WHERE version=? AND pkgarch=? AND checksum=?;" % self.table,
-                               (version, pkgarch, checksum))
-            row=data.fetchone()
-            if row is not None:
-                return row[0]
-            else:
-                raise prserv.NotFoundError
-
-    def get_value(self, version, pkgarch, checksum):
-        if self.nohist:
-            return self._get_value_no_hist(version, pkgarch, checksum)
-        else:
-            return self._get_value_hist(version, pkgarch, checksum)
+    def get_value(self, version, pkgarch, checksum, history):
+        value = self._get_value(version, pkgarch, checksum, history)
+        if not self.read_only:
+            self.store_value(version, pkgarch, checksum, value)
+        return value
 
     def _import_hist(self, version, pkgarch, checksum, value):
         if self.read_only:
@@ -252,13 +264,13 @@ class PRTable(object):
         else:
             return None
 
-    def importone(self, version, pkgarch, checksum, value):
-        if self.nohist:
-            return self._import_no_hist(version, pkgarch, checksum, value)
-        else:
+    def importone(self, version, pkgarch, checksum, value, history=False):
+        if history:
             return self._import_hist(version, pkgarch, checksum, value)
+        else:
+            return self._import_no_hist(version, pkgarch, checksum, value)
 
-    def export(self, version, pkgarch, checksum, colinfo):
+    def export(self, version, pkgarch, checksum, colinfo, history=False):
         metainfo = {}
         #column info
         if colinfo:
@@ -278,12 +290,12 @@ class PRTable(object):
         #data info
         datainfo = []
 
-        if self.nohist:
+        if history:
+            sqlstmt = "SELECT * FROM %s as T1 WHERE 1=1 " % self.table
+        else:
             sqlstmt = "SELECT T1.version, T1.pkgarch, T1.checksum, T1.value FROM %s as T1, \
                     (SELECT version, pkgarch, max(value) as maxvalue FROM %s GROUP BY version, pkgarch) as T2 \
                     WHERE T1.version=T2.version AND T1.pkgarch=T2.pkgarch AND T1.value=T2.maxvalue " % (self.table, self.table)
-        else:
-            sqlstmt = "SELECT * FROM %s as T1 WHERE 1=1 " % self.table
         sqlarg = []
         where = ""
         if version:
@@ -322,9 +334,8 @@ class PRTable(object):
 
 class PRData(object):
     """Object representing the PR database"""
-    def __init__(self, filename, nohist=True, read_only=False):
+    def __init__(self, filename, read_only=False):
         self.filename=os.path.abspath(filename)
-        self.nohist=nohist
         self.read_only = read_only
         #build directory hierarchy
         try:
@@ -351,7 +362,7 @@ class PRData(object):
         if tblname in self._tables:
             return self._tables[tblname]
         else:
-            tableobj = self._tables[tblname] = PRTable(self.connection, tblname, self.nohist, self.read_only)
+            tableobj = self._tables[tblname] = PRTable(self.connection, tblname, self.read_only)
             return tableobj
 
     def __delitem__(self, tblname):
