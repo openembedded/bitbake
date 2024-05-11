@@ -21,6 +21,13 @@ VERSION = "1.1.0"
 PRHOST_DEFAULT="0.0.0.0"
 PRPORT_DEFAULT=8585
 
+def init_logger(logfile, loglevel):
+    numeric_level = getattr(logging, loglevel.upper(), None)
+    if not isinstance(numeric_level, int):
+        raise ValueError("Invalid log level: %s" % loglevel)
+    FORMAT = "%(asctime)-15s %(message)s"
+    logging.basicConfig(level=numeric_level, filename=logfile, format=FORMAT)
+
 def main():
     parser = argparse.ArgumentParser(
         description="BitBake PR Server. Version=%s" % VERSION,
@@ -72,7 +79,7 @@ def main():
     )
 
     args = parser.parse_args()
-    prserv.init_logger(os.path.abspath(args.log), args.loglevel)
+    init_logger(os.path.abspath(args.log), args.loglevel)
 
     if args.start:
         ret=prserv.serv.start_daemon(args.file, args.host, args.port, os.path.abspath(args.log), args.read_only)
