@@ -78,6 +78,18 @@ class PRTable(object):
             else:
                 return False
 
+    def test_checksum_value(self, version, pkgarch, checksum, value):
+        """Returns whether the specified value is found in the database for the specified package, architecture and checksum"""
+
+        with closing(self.conn.cursor()) as cursor:
+            data=cursor.execute("SELECT value FROM %s WHERE version=? AND pkgarch=? and checksum=? and value=?;" % self.table,
+                               (version, pkgarch, checksum, value))
+            row=data.fetchone()
+            if row is not None:
+                return True
+            else:
+                return False
+
     def test_value(self, version, pkgarch, value):
         """Returns whether the specified value is found in the database for the specified package and architecture"""
 
@@ -143,15 +155,13 @@ class PRTable(object):
                 return base + ".0"
 
     def store_value(self, version, pkgarch, checksum, value):
-        """Store new value in the database"""
+        """Store value in the database"""
 
-        with closing(self.conn.cursor()) as cursor:
-            try:
+        if not self.read_only and not self.test_checksum_value(version, pkgarch, checksum, value):
+            with closing(self.conn.cursor()) as cursor:
                 cursor.execute("INSERT INTO %s VALUES (?, ?, ?, ?);"  % (self.table),
                            (version, pkgarch, checksum, value))
-            except sqlite3.IntegrityError as exc:
-                logger.error(str(exc))
-            self.conn.commit()
+                self.conn.commit()
 
     def _get_value(self, version, pkgarch, checksum, history):
 
