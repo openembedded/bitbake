@@ -42,10 +42,7 @@ class PRServerClient(bb.asyncrpc.AsyncServerConnection):
         try:
             return await super().dispatch_message(msg)
         except:
-            self.server.table.sync()
             raise
-        else:
-            self.server.table.sync_if_dirty()
 
     async def handle_test_pr(self, request):
         '''Finds the PR value corresponding to the request. If not found, returns None and doesn't insert a new value'''
@@ -233,14 +230,8 @@ class PRServer(bb.asyncrpc.AsyncServer):
         return tasks
 
     async def stop(self):
-        self.table.sync_if_dirty()
         self.db.disconnect()
         await super().stop()
-
-    def signal_handler(self):
-        super().signal_handler()
-        if self.table:
-            self.table.sync()
 
 class PRServSingleton(object):
     def __init__(self, dbfile, logfile, host, port, upstream):
