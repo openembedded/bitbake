@@ -30,21 +30,18 @@ class PRTable(object):
         self.read_only = read_only
         self.table = table
 
+        # Creating the table even if the server is read-only.
+        # This avoids a race condition if a shared database
+        # is accessed by a read-only server first.
+
         with closing(self.conn.cursor()) as cursor:
-            if self.read_only:
-                table_exists = cursor.execute(
-                            "SELECT count(*) FROM sqlite_master \
-                            WHERE type='table' AND name='%s'" % (self.table))
-                if not table_exists:
-                    raise prserv.NotFoundError
-            else:
-                cursor.execute("CREATE TABLE IF NOT EXISTS %s \
-                            (version TEXT NOT NULL, \
-                            pkgarch TEXT NOT NULL,  \
-                            checksum TEXT NOT NULL, \
-                            value TEXT, \
-                            PRIMARY KEY (version, pkgarch, checksum, value));" % self.table)
-                self.conn.commit()
+            cursor.execute("CREATE TABLE IF NOT EXISTS %s \
+                        (version TEXT NOT NULL, \
+                        pkgarch TEXT NOT NULL,  \
+                        checksum TEXT NOT NULL, \
+                        value TEXT, \
+                        PRIMARY KEY (version, pkgarch, checksum, value));" % self.table)
+            self.conn.commit()
 
     def _extremum_value(self, rows, is_max):
         value = None
