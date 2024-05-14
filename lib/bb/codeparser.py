@@ -484,7 +484,7 @@ class ShellParser():
         """
 
         words = list(words)
-        for word in list(words):
+        for word in words:
             wtree = pyshlex.make_wordtree(word[1])
             for part in wtree:
                 if not isinstance(part, list):
