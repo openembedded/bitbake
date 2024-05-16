@@ -49,20 +49,23 @@ class SkipPackage(SkipRecipe):
 __mtime_cache = {}
 def cached_mtime(f):
     if f not in __mtime_cache:
-        __mtime_cache[f] = os.stat(f)[stat.ST_MTIME]
+        res = os.stat(f)
+        __mtime_cache[f] = (res.st_mtime_ns, res.st_size, res.st_ino)
     return __mtime_cache[f]
 
 def cached_mtime_noerror(f):
     if f not in __mtime_cache:
         try:
-            __mtime_cache[f] = os.stat(f)[stat.ST_MTIME]
+            res = os.stat(f)
+            __mtime_cache[f] = (res.st_mtime_ns, res.st_size, res.st_ino)
         except OSError:
             return 0
     return __mtime_cache[f]
 
 def update_mtime(f):
     try:
-        __mtime_cache[f] = os.stat(f)[stat.ST_MTIME]
+        res = os.stat(f)
+        __mtime_cache[f] = (res.st_mtime_ns, res.st_size, res.st_ino)
     except OSError:
         if f in __mtime_cache:
             del __mtime_cache[f]
