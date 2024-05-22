@@ -82,6 +82,7 @@ def main():
             nonlocal found_hashes
             nonlocal missed_hashes
             nonlocal max_time
+            nonlocal times
 
             with hashserv.create_client(args.address) as client:
                 for i in range(args.requests):
@@ -99,29 +100,41 @@ def main():
                         else:
                             missed_hashes += 1
 
-                        max_time = max(elapsed, max_time)
+                        times.append(elapsed)
                         pbar.update()
 
         max_time = 0
         found_hashes = 0
         missed_hashes = 0
         lock = threading.Lock()
-        total_requests = args.clients * args.requests
+        times = []
         start_time = time.perf_counter()
-        with ProgressBar(total=total_requests) as pbar:
+        with ProgressBar(total=args.clients * args.requests) as pbar:
             threads = [threading.Thread(target=thread_main, args=(pbar, lock), daemon=False) for _ in range(args.clients)]
             for t in threads:
                 t.start()
 
             for t in threads:
                 t.join()
+        total_elapsed = time.perf_counter() - start_time
 
-        elapsed = time.perf_counter() - start_time
         with lock:
-            print("%d requests in %.1fs. %.1f requests per second" % (total_requests, elapsed, total_requests / elapsed))
-            print("Average request time %.8fs" % (elapsed / total_requests))
-            print("Max request time was %.8fs" % max_time)
-            print("Found %d hashes, missed %d" % (found_hashes, missed_hashes))
+            mean = statistics.mean(times)
+            median = statistics.median(times)
+            stddev = statistics.pstdev(times)
+
+            print(f"Number of clients:    {args.clients}")
+            print(f"Requests per client:  {args.requests}")
+            print(f"Number of requests:   {len(times)}")
+            print(f"Total elapsed time:   {total_elapsed:.3f}s")
+            print(f"Total request rate:   {len(times)/total_elapsed:.3f} req/s")
+            print(f"Average request time: {mean:.3f}s")
+            print(f"Median request time:  {median:.3f}s")
+            print(f"Request time std dev: {stddev:.3f}s")
+            print(f"Maximum request time: {max(times):.3f}s")
+            print(f"Minimum request time: {min(times):.3f}s")
+            print(f"Hashes found:         {found_hashes}")
+            print(f"Hashes missed:        {missed_hashes}")
 
         if args.report:
             with ProgressBar(total=args.requests) as pbar:
