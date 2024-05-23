@@ -2452,15 +2452,17 @@ class RunQueueExecute:
         taskdepdata_cache = {}
         for task in self.rqdata.runtaskentries:
             (mc, fn, taskname, taskfn) = split_tid_mcfn(task)
-            pn = self.rqdata.dataCaches[mc].pkg_fn[taskfn]
-            deps = self.rqdata.runtaskentries[task].depends
-            provides = self.rqdata.dataCaches[mc].fn_provides[taskfn]
-            taskhash = self.rqdata.runtaskentries[task].hash
-            unihash = self.rqdata.runtaskentries[task].unihash
-            deps = self.filtermcdeps(task, mc, deps)
-            hashfn = self.rqdata.dataCaches[mc].hashfn[taskfn]
-            taskhash_deps = self.rqdata.runtaskentries[task].taskhash_deps
-            taskdepdata_cache[task] = [pn, taskname, fn, deps, provides, taskhash, unihash, hashfn, taskhash_deps]
+            taskdepdata_cache[task] = bb.TaskData(
+                pn = self.rqdata.dataCaches[mc].pkg_fn[taskfn],
+                taskname = taskname,
+                fn = fn,
+                deps = self.filtermcdeps(task, mc, self.rqdata.runtaskentries[task].depends),
+                provides = self.rqdata.dataCaches[mc].fn_provides[taskfn],
+                taskhash = self.rqdata.runtaskentries[task].hash,
+                unihash = self.rqdata.runtaskentries[task].unihash,
+                hashfn = self.rqdata.dataCaches[mc].hashfn[taskfn],
+                taskhash_deps = self.rqdata.runtaskentries[task].taskhash_deps,
+            )
 
         self.taskdepdata_cache = taskdepdata_cache
 
@@ -2475,9 +2477,11 @@ class RunQueueExecute:
         while next:
             additional = []
             for revdep in next:
-                self.taskdepdata_cache[revdep][6] = self.rqdata.runtaskentries[revdep].unihash
+                self.taskdepdata_cache[revdep] = self.taskdepdata_cache[revdep]._replace(
+                    unihash=self.rqdata.runtaskentries[revdep].unihash
+                )
                 taskdepdata[revdep] = self.taskdepdata_cache[revdep]
-                for revdep2 in self.taskdepdata_cache[revdep][3]:
+                for revdep2 in self.taskdepdata_cache[revdep].deps:
                     if revdep2 not in taskdepdata:
                         additional.append(revdep2)
             next = additional
@@ -2841,14 +2845,19 @@ class RunQueueExecute:
             additional = []
             for revdep in next:
                 (mc, fn, taskname, taskfn) = split_tid_mcfn(revdep)
-                pn = self.rqdata.dataCaches[mc].pkg_fn[taskfn]
                 deps = getsetscenedeps(revdep)
-                provides = self.rqdata.dataCaches[mc].fn_provides[taskfn]
-                taskhash = self.rqdata.runtaskentries[revdep].hash
-                unihash = self.rqdata.runtaskentries[revdep].unihash
-                hashfn = self.rqdata.dataCaches[mc].hashfn[taskfn]
-                taskhash_deps = self.rqdata.runtaskentries[revdep].taskhash_deps
-                taskdepdata[revdep] = [pn, taskname, fn, deps, provides, taskhash, unihash, hashfn, taskhash_deps]
+
+                taskdepdata[revdep] = bb.TaskData(
+                    pn = self.rqdata.dataCaches[mc].pkg_fn[taskfn],
+                    taskname = taskname,
+                    fn = fn,
+                    deps = deps,
+                    provides = self.rqdata.dataCaches[mc].fn_provides[taskfn],
+                    taskhash = self.rqdata.runtaskentries[revdep].hash,
+                    unihash = self.rqdata.runtaskentries[revdep].unihash,
+                    hashfn = self.rqdata.dataCaches[mc].hashfn[taskfn],
+                    taskhash_deps = self.rqdata.runtaskentries[revdep].taskhash_deps,
+                )
                 for revdep2 in deps:
                     if revdep2 not in taskdepdata:
                         additional.append(revdep2)
