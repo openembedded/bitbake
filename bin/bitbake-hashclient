@@ -242,18 +242,24 @@ def main():
     def handle_ping(args, client):
         times = []
         for i in range(1, args.count + 1):
-            print(f"Ping {i} of {args.count}... ", end="")
+            if not args.quiet:
+                print(f"Ping {i} of {args.count}... ", end="")
             start_time = time.perf_counter()
             client.ping()
             elapsed = time.perf_counter() - start_time
             times.append(elapsed)
-            print(f"{elapsed:.3f}s")
+            if not args.quiet:
+                print(f"{elapsed:.3f}s")
 
         mean = statistics.mean(times)
+        median = statistics.median(times)
         std_dev = statistics.pstdev(times)
 
-        print("------------------------")
+        if not args.quiet:
+            print("------------------------")
+        print(f"Number of pings:         {len(times)}")
         print(f"Average round trip time: {mean:.3f}s")
+        print(f"Median round trip time:  {median:.3f}s")
         print(f"Round trip time std dev: {std_dev:.3f}s")
         print(f"Min time is:             {min(times):.3f}s")
         print(f"Max time is:             {max(times):.3f}s")
@@ -358,6 +364,7 @@ def main():
 
     ping_parser = subparsers.add_parser('ping', help="Ping server")
     ping_parser.add_argument("-n", "--count", type=int, help="Number of pings. Default is %(default)s", default=10)
+    ping_parser.add_argument("-q", "--quiet", action="store_true", help="Don't print each ping; only print results")
     ping_parser.set_defaults(func=handle_ping)
 
     args = parser.parse_args()
