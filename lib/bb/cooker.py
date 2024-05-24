@@ -1459,7 +1459,6 @@ class BBCooker:
 
                     if t in task or getAllTaskSignatures:
                         try:
-                            rq.rqdata.prepare_task_hash(tid)
                             sig.append([pn, t, rq.rqdata.get_task_unihash(tid)])
                         except KeyError:
                             sig.append(self.getTaskSignatures(target, [t])[0])
