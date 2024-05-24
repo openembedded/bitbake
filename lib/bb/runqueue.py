@@ -1285,7 +1285,8 @@ class RunQueueData:
                     dealtwith.add(tid)
                     todeal.remove(tid)
                     self.prepare_task_hash(tid)
-                bb.event.check_for_interrupts(self.cooker.data)
+
+            bb.event.check_for_interrupts(self.cooker.data)
 
             if time.time() > (lasttime + 30):
                 lasttime = time.time()
@@ -2601,6 +2602,7 @@ class RunQueueExecute:
                 next |= self.rqdata.runtaskentries[tid].revdeps
                 total.remove(tid)
                 next.intersection_update(total)
+                bb.event.check_for_interrupts(self.cooker.data)
 
                 if time.time() > (lasttime + 30):
                     lasttime = time.time()
