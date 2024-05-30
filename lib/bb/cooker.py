@@ -2236,12 +2236,13 @@ class CookerParser(object):
             profiles = []
             for i in self.process_names:
                 logfile = "profile-parse-%s.log" % i
-                if os.path.exists(logfile):
+                if os.path.exists(logfile) and os.path.getsize(logfile):
                     profiles.append(logfile)
 
-            pout = "profile-parse.log.processed"
-            bb.utils.process_profilelog(profiles, pout = pout)
-            print("Processed parsing statistics saved to %s" % (pout))
+            if profiles:
+                pout = "profile-parse.log.processed"
+                bb.utils.process_profilelog(profiles, pout = pout)
+                print("Processed parsing statistics saved to %s" % (pout))
 
     def final_cleanup(self):
         if self.syncthread:
