@@ -540,7 +540,7 @@ class SignatureGeneratorUniHashMixIn(object):
     def __init__(self, data):
         self.extramethod = {}
         # NOTE: The cache only tracks hashes that exist. Hashes that don't
-        # exist are always queries from the server since it is possible for
+        # exist are always queried from the server since it is possible for
         # hashes to appear over time, but much less likely for them to
         # disappear
         self.unihash_exists_cache = set()
@@ -558,11 +558,11 @@ class SignatureGeneratorUniHashMixIn(object):
         super().__init__(data)
 
     def get_taskdata(self):
-        return (self.server, self.method, self.extramethod, self.max_parallel, self.username, self.password, self.env) + super().get_taskdata()
+        return (self.server, self.method, self.extramethod, self.username, self.password, self.env) + super().get_taskdata()
 
     def set_taskdata(self, data):
-        self.server, self.method, self.extramethod, self.max_parallel, self.username, self.password, self.env = data[:7]
-        super().set_taskdata(data[7:])
+        self.server, self.method, self.extramethod, self.username, self.password, self.env = data[:6]
+        super().set_taskdata(data[6:])
 
     def get_hashserv_creds(self):
         if self.username and self.password:
@@ -594,13 +594,6 @@ class SignatureGeneratorUniHashMixIn(object):
             if getattr(self, '_client', None) is None:
                 self._client = hashserv.create_client(self.server, **self.get_hashserv_creds())
             yield self._client
-
-    @contextmanager
-    def client_pool(self):
-        with self._client_env():
-            if getattr(self, '_client_pool', None) is None:
-                self._client_pool = hashserv.client.ClientPool(self.server, self.max_parallel, **self.get_hashserv_creds())
-            yield self._client_pool
 
     def reset(self, data):
         self.__close_clients()
@@ -686,15 +679,10 @@ class SignatureGeneratorUniHashMixIn(object):
             else:
                 uncached_query[key] = unihash
 
-        if self.max_parallel <= 1 or len(uncached_query) <= 1:
-            # No parallelism required. Make the query serially with the single client
-            with self.client() as client:
-                uncached_result = {
-                    key: client.unihash_exists(value) for key, value in uncached_query.items()
-                }
-        else:
-            with self.client_pool() as client_pool:
-                uncached_result = client_pool.unihashes_exist(uncached_query)
+        with self.client() as client:
+            uncached_result = {
+                key: client.unihash_exists(value) for key, value in uncached_query.items()
+            }
 
         for key, exists in uncached_result.items():
             if exists:
@@ -712,32 +700,20 @@ class SignatureGeneratorUniHashMixIn(object):
         unihash
         """
         result = {}
-        queries = {}
-        query_result = {}
+        query_tids = []
 
         for tid in tids:
             unihash = self.get_cached_unihash(tid)
             if unihash:
                 result[tid] = unihash
             else:
-                queries[tid] = (self._get_method(tid), self.taskhash[tid])
+                query_tids.append(tid)
 
-        if len(queries) == 0:
-            return result
-
-        if self.max_parallel <= 1 or len(queries) <= 1:
-            # No parallelism required. Make the query using a single client
+        if query_tids:
             with self.client() as client:
-                keys = list(queries.keys())
-                unihashes = client.get_unihash_batch(queries[k] for k in keys)
+                unihashes = client.get_unihash_batch((self._get_method(tid), self.taskhash[tid]) for tid in query_tids)
 
-                for idx, k in enumerate(keys):
-                    query_result[k] = unihashes[idx]
-        else:
-            with self.client_pool() as client_pool:
-                query_result = client_pool.get_unihashes(queries)
-
-        for tid, unihash in query_result.items():
+        for idx, tid in enumerate(query_tids):
             # In the absence of being able to discover a unique hash from the
             # server, make it be equivalent to the taskhash. The unique "hash" only
             # really needs to be a unique string (not even necessarily a hash), but
@@ -752,6 +728,8 @@ class SignatureGeneratorUniHashMixIn(object):
             #    to the server, there is a better chance that they will agree on
             #    the unique hash.
             taskhash = self.taskhash[tid]
+            unihash = unihashes[idx]
+
             if unihash:
                 # A unique hash equal to the taskhash is not very interesting,
                 # so it is reported it at debug level 2. If they differ, that
@@ -898,7 +876,6 @@ class SignatureGeneratorTestEquivHash(SignatureGeneratorUniHashMixIn, SignatureG
         super().init_rundepcheck(data)
         self.server = data.getVar('BB_HASHSERVE')
         self.method = "sstate_output_hash"
-        self.max_parallel = 1
 
 def clean_checksum_file_path(file_checksum_tuple):
     f, cs = file_checksum_tuple
