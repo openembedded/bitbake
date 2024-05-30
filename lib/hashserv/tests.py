@@ -94,9 +94,6 @@ class HashEquivalenceTestSetup(object):
         return self.start_client(self.auth_server_address, user["username"], user["token"])
 
     def setUp(self):
-        if sys.version_info < (3, 5, 0):
-            self.skipTest('Python 3.5 or later required')
-
         self.temp_dir = tempfile.TemporaryDirectory(prefix='bb-hashserv')
         self.addCleanup(self.temp_dir.cleanup)
 

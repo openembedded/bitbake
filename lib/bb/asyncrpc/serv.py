@@ -388,8 +388,7 @@ class AsyncServer(object):
 
             self._serve_forever(tasks)
 
-            if sys.version_info >= (3, 6):
-                self.loop.run_until_complete(self.loop.shutdown_asyncgens())
+            self.loop.run_until_complete(self.loop.shutdown_asyncgens())
             self.loop.close()
 
         queue = multiprocessing.Queue()

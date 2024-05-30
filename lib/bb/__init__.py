@@ -104,26 +104,6 @@ class BBLoggerAdapter(logging.LoggerAdapter, BBLoggerMixin):
         self.setup_bblogger(logger.name)
         super().__init__(logger, *args, **kwargs)
 
-    if sys.version_info < (3, 6):
-        # These properties were added in Python 3.6. Add them in older versions
-        # for compatibility
-        @property
-        def manager(self):
-            return self.logger.manager
-
-        @manager.setter
-        def manager(self, value):
-            self.logger.manager = value
-
-        @property
-        def name(self):
-            return self.logger.name
-
-        def __repr__(self):
-            logger = self.logger
-            level = logger.getLevelName(logger.getEffectiveLevel())
-            return '<%s %s (%s)>' % (self.__class__.__name__, logger.name, level)
-
 logging.LoggerAdapter = BBLoggerAdapter
 
 logger = logging.getLogger("BitBake")

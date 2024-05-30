@@ -1812,8 +1812,8 @@ class CookerCollectFiles(object):
             bb.event.fire(CookerExit(), eventdata)
 
         # We need to track where we look so that we can know when the cache is invalid. There
-        # is no nice way to do this, this is horrid. We intercept the os.listdir()
-        # (or os.scandir() for python 3.6+) calls while we run glob().
+        # is no nice way to do this, this is horrid. We intercept the os.listdir() and os.scandir()
+        # calls while we run glob().
         origlistdir = os.listdir
         if hasattr(os, 'scandir'):
             origscandir = os.scandir
@@ -2224,9 +2224,8 @@ class CookerParser(object):
 
         for process in self.processes:
             process.join()
-            # Added in 3.7, cleans up zombies
-            if hasattr(process, "close"):
-                process.close()
+            # clean up zombies
+            process.close()
 
         bb.codeparser.parser_cache_save()
         bb.codeparser.parser_cache_savemerge()
