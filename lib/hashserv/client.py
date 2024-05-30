@@ -121,24 +121,28 @@ class AsyncClient(bb.asyncrpc.AsyncClient):
 
         return await self._send_wrapper(proc)
 
-    async def invoke(self, *args, **kwargs):
+    async def invoke(self, *args, skip_mode=False, **kwargs):
         # It's OK if connection errors cause a failure here, because the mode
         # is also reset to normal on a new connection
-        await self._set_mode(self.MODE_NORMAL)
+        if not skip_mode:
+            await self._set_mode(self.MODE_NORMAL)
         return await super().invoke(*args, **kwargs)
 
     async def _set_mode(self, new_mode):
         async def stream_to_normal():
+            # Check if already in normal mode (e.g. due to a connection reset)
+            if self.mode == self.MODE_NORMAL:
+                return "ok"
             await self.socket.send("END")
             return await self.socket.recv()
 
         async def normal_to_stream(command):
-            r = await self.invoke({command: None})
+            r = await self.invoke({command: None}, skip_mode=True)
             if r != "ok":
+                self.check_invoke_error(r)
                 raise ConnectionError(
                     f"Unable to transition to stream mode: Bad response from server {r!r}"
                 )
-
             self.logger.debug("Mode is now %s", command)
 
         if new_mode == self.mode:
