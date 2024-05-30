@@ -671,20 +671,20 @@ class SignatureGeneratorUniHashMixIn(object):
         if len(query) == 0:
             return {}
 
-        uncached_query = {}
+        query_keys = []
         result = {}
         for key, unihash in query.items():
             if unihash in self.unihash_exists_cache:
                 result[key] = True
             else:
-                uncached_query[key] = unihash
+                query_keys.append(key)
 
-        with self.client() as client:
-            uncached_result = {
-                key: client.unihash_exists(value) for key, value in uncached_query.items()
-            }
+        if query_keys:
+            with self.client() as client:
+                query_result = client.unihash_exists_batch(query[k] for k in query_keys)
 
-        for key, exists in uncached_result.items():
+        for idx, key in enumerate(query_keys):
+            exists = query_result[idx]
             if exists:
                 self.unihash_exists_cache.add(query[key])
             result[key] = exists
