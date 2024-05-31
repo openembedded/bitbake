@@ -1525,7 +1525,7 @@ class FetchLatestVersionTest(FetcherTest):
 
     def test_wget_latest_versionstring(self):
         testdata = os.path.dirname(os.path.abspath(__file__)) + "/fetch-testdata"
-        server = HTTPService(testdata)
+        server = HTTPService(testdata, host="127.0.0.1")
         server.start()
         port = server.port
         try:
@@ -1533,10 +1533,10 @@ class FetchLatestVersionTest(FetcherTest):
                 self.d.setVar("PN", k[0])
                 checkuri = ""
                 if k[2]:
-                    checkuri = "http://localhost:%s/" % port + k[2]
+                    checkuri = "http://127.0.0.1:%s/" % port + k[2]
                 self.d.setVar("UPSTREAM_CHECK_URI", checkuri)
                 self.d.setVar("UPSTREAM_CHECK_REGEX", k[3])
-                url = "http://localhost:%s/" % port + k[1]
+                url = "http://127.0.0.1:%s/" % port + k[1]
                 ud = bb.fetch2.FetchData(url, self.d)
                 pupver = ud.method.latest_versionstring(ud, self.d)
                 verstring = pupver[0]
