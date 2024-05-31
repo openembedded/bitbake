@@ -1,13 +1,7 @@
 """Integration code for CSS selectors using Soup Sieve (pypi: soupsieve)."""
 
-import warnings
-try:
-    import soupsieve
-except ImportError as e:
-    soupsieve = None
-    warnings.warn(
-        'The soupsieve package is not installed. CSS selectors cannot be used.'
-    )
+# We don't use soupsieve
+soupsieve = None
 
 
 class CSS(object):
