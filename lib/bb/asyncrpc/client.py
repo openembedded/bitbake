@@ -112,7 +112,11 @@ class AsyncClient(object):
             )
 
         async def connect_sock():
-            websocket = await websockets.connect(uri, ping_interval=None)
+            websocket = await websockets.connect(
+                uri,
+                ping_interval=None,
+                open_timeout=self.timeout,
+            )
             return WebsocketConnection(websocket, self.timeout)
 
         self._connect_sock = connect_sock
