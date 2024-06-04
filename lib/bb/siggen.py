@@ -201,9 +201,6 @@ class SignatureGenerator(object):
     def save_unitaskhashes(self):
         return
 
-    def copy_unitaskhashes(self, targetdir):
-        return
-
     def set_setscene_tasks(self, setscene_tasks):
         return
 
@@ -417,9 +414,6 @@ class SignatureGeneratorBasic(SignatureGenerator):
 
     def save_unitaskhashes(self):
         self.unihash_cache.save(self.unitaskhashes)
-
-    def copy_unitaskhashes(self, targetdir):
-        self.unihash_cache.copyfile(targetdir)
 
     def dump_sigtask(self, mcfn, task, stampbase, runtime):
         tid = mcfn + ":" + task
