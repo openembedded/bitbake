@@ -441,7 +441,7 @@ class Cache(object):
         else:
             symlink = os.path.join(self.cachedir, "bb_cache.dat")
 
-        if os.path.exists(symlink):
+        if os.path.exists(symlink) or os.path.islink(symlink):
             bb.utils.remove(symlink)
         try:
             os.symlink(os.path.basename(self.cachefile), symlink)
