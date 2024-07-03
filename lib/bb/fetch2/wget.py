@@ -244,7 +244,12 @@ class Wget(FetchMethod):
                         fetch.connection_cache.remove_connection(h.host, h.port)
                     raise urllib.error.URLError(err)
                 else:
-                    r = h.getresponse()
+                    try:
+                        r = h.getresponse()
+                    except TimeoutError as e:
+                        if fetch.connection_cache:
+                            fetch.connection_cache.remove_connection(h.host, h.port)
+                        raise TimeoutError(e)
 
                 # Pick apart the HTTPResponse object to get the addinfourl
                 # object initialized properly.
