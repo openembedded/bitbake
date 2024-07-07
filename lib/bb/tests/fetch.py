@@ -2034,9 +2034,9 @@ class GitShallowTest(FetcherTest):
         self.add_empty_file('b')
         self.git('checkout -b a_branch', cwd=self.srcdir)
         self.add_empty_file('c')
+        self.git('tag v0.0 HEAD', cwd=self.srcdir)
         self.add_empty_file('d')
         self.git('checkout master', cwd=self.srcdir)
-        self.git('tag v0.0 a_branch', cwd=self.srcdir)
         self.add_empty_file('e')
         self.git('merge --no-ff --no-edit a_branch', cwd=self.srcdir)
         self.add_empty_file('f')
@@ -2052,7 +2052,7 @@ class GitShallowTest(FetcherTest):
 
         self.fetch_shallow(uri)
 
-        self.assertRevCount(5)
+        self.assertRevCount(4)
         self.assertRefs(['master', 'origin/master', 'origin/a_branch'])
 
     def test_shallow_multi_one_uri_depths(self):
@@ -2199,7 +2199,7 @@ class GitShallowTest(FetcherTest):
 
         self.fetch_shallow()
 
-        self.assertRevCount(5)
+        self.assertRevCount(2)
 
     def test_shallow_invalid_revs(self):
         self.add_empty_file('a')
@@ -2218,7 +2218,10 @@ class GitShallowTest(FetcherTest):
         self.git('tag v0.0 master', cwd=self.srcdir)
         self.d.setVar('BB_GIT_SHALLOW_DEPTH', '0')
         self.d.setVar('BB_GIT_SHALLOW_REVS', 'v0.0')
-        self.fetch_shallow()
+
+        with self.assertRaises(bb.fetch2.FetchError), self.assertLogs("BitBake.Fetcher", level="ERROR") as cm:
+            self.fetch_shallow()
+        self.assertIn("fatal: no commits selected for shallow requests", cm.output[0])
 
     def test_shallow_fetch_missing_revs_fails(self):
         self.add_empty_file('a')
@@ -2249,7 +2252,7 @@ class GitShallowTest(FetcherTest):
         revs = len(self.git('rev-list master').splitlines())
         self.assertNotEqual(orig_revs, revs)
         self.assertRefs(['master', 'origin/master'])
-        self.assertRevCount(orig_revs - 1758)
+        self.assertRevCount(orig_revs - 1760)
 
     def test_that_unpack_throws_an_error_when_the_git_clone_nor_shallow_tarball_exist(self):
         self.add_empty_file('a')
