@@ -21,6 +21,12 @@ BitBake Outdated Release Manuals
 ================================
 
 *******************************
+Release Series 4.3 (nanbield)
+*******************************
+
+- :yocto_docs:`BitBake 2.6 User Manual </bitbake/2.6/>`
+
+*******************************
 Release Series 4.2 (mickledore)
 *******************************
 
