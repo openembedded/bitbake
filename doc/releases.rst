@@ -4,6 +4,12 @@
 BitBake Supported Release Manuals
 =================================
 
+*******************************
+Release Series 5.0 (scarthgap)
+*******************************
+
+- :yocto_docs:`BitBake 2.8 User Manual </bitbake/2.8/>`
+
 ******************************
 Release Series 4.0 (kirkstone)
 ******************************
