@@ -179,6 +179,15 @@ python () {
 addtask do_patch after do_foo after do_unpack before do_configure before do_compile
 addtask do_fetch do_patch
 
+addtask do_myplaintask
+addtask do_myplaintask2
+deltask do_myplaintask2
+addtask do_mytask# comment
+addtask do_mytask2 # comment2
+addtask do_mytask3
+deltask do_mytask3# comment
+deltask do_mytask4 # comment2
+
 MYVAR = "do_patch"
 EMPTYVAR = ""
 deltask do_fetch ${MYVAR} ${EMPTYVAR}
@@ -195,6 +204,7 @@ deltask ${EMPTYVAR}
         self.assertTrue("addtask contained multiple 'before' keywords" in output)
         self.assertTrue("addtask contained multiple 'after' keywords" in output)
         self.assertTrue('addtask ignored: " do_patch"' in output)
+        self.assertEqual(['do_myplaintask', 'do_mytask', 'do_mytask2'], d.getVar("__BBTASKS"))
         #self.assertTrue('dependent task do_foo for do_patch does not exist' in output)
 
     broken_multiline_comment = """
