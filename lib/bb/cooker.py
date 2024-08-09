@@ -281,7 +281,6 @@ class BBCooker:
         self.databuilder = bb.cookerdata.CookerDataBuilder(self.configuration, False)
         self.databuilder.parseBaseConfiguration()
         self.data = self.databuilder.data
-        self.data_hash = self.databuilder.data_hash
         self.extraconfigdata = {}
 
         eventlog = self.data.getVar("BB_DEFAULT_EVENTLOG")
@@ -369,6 +368,11 @@ class BBCooker:
 
         if not clean:
             bb.parse.BBHandler.cached_statements = {}
+
+        # If writes were made to any of the data stores, we need to recalculate the data
+        # store cache
+        if hasattr(self, "databuilder"):
+            self.databuilder.calc_datastore_hashes()
 
     def parseConfiguration(self):
         self.updateCacheSync()
@@ -1338,7 +1342,7 @@ class BBCooker:
         self.buildSetVars()
         self.reset_mtime_caches()
 
-        bb_caches = bb.cache.MulticonfigCache(self.databuilder, self.data_hash, self.caches_array)
+        bb_caches = bb.cache.MulticonfigCache(self.databuilder, self.databuilder.data_hash, self.caches_array)
 
         layername = self.collections[mc].calc_bbfile_priority(fn)[2]
         infos = bb_caches[mc].parse(fn, self.collections[mc].get_file_appends(fn), layername)
@@ -2112,7 +2116,7 @@ class CookerParser(object):
         self.mcfilelist = mcfilelist
         self.cooker = cooker
         self.cfgdata = cooker.data
-        self.cfghash = cooker.data_hash
+        self.cfghash = cooker.databuilder.data_hash
         self.cfgbuilder = cooker.databuilder
 
         # Accounting statistics
