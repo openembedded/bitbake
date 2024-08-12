@@ -779,25 +779,6 @@ class MulticonfigCache(Mapping):
         for k in self.__caches:
             yield k
 
-def init(cooker):
-    """
-    The Objective: Cache the minimum amount of data possible yet get to the
-    stage of building packages (i.e. tryBuild) without reparsing any .bb files.
-
-    To do this, we intercept getVar calls and only cache the variables we see
-    being accessed. We rely on the cache getVar calls being made for all
-    variables bitbake might need to use to reach this stage. For each cached
-    file we need to track:
-
-    * Its mtime
-    * The mtimes of all its dependencies
-    * Whether it caused a parse.SkipRecipe exception
-
-    Files causing parsing errors are evicted from the cache.
-
-    """
-    return Cache(cooker.configuration.data, cooker.configuration.data_hash)
-
 
 class CacheData(object):
     """
