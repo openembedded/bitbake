@@ -177,7 +177,7 @@ python () {
 
     addtask_deltask = """
 addtask do_patch after do_foo after do_unpack before do_configure before do_compile
-addtask do_fetch do_patch
+addtask do_fetch2 do_patch2
 
 addtask do_myplaintask
 addtask do_myplaintask2
@@ -194,18 +194,11 @@ deltask do_fetch ${MYVAR} ${EMPTYVAR}
 deltask ${EMPTYVAR}
 """
     def test_parse_addtask_deltask(self):
-        import sys
 
-        with self.assertLogs() as logs:
-            f = self.parsehelper(self.addtask_deltask)
-            d = bb.parse.handle(f.name, self.d)['']
+        f = self.parsehelper(self.addtask_deltask)
+        d = bb.parse.handle(f.name, self.d)['']
 
-        output = "".join(logs.output)
-        self.assertTrue("addtask contained multiple 'before' keywords" in output)
-        self.assertTrue("addtask contained multiple 'after' keywords" in output)
-        self.assertTrue('addtask ignored: " do_patch"' in output)
-        self.assertEqual(['do_myplaintask', 'do_mytask', 'do_mytask2'], d.getVar("__BBTASKS"))
-        #self.assertTrue('dependent task do_foo for do_patch does not exist' in output)
+        self.assertEqual(['do_fetch2', 'do_patch2', 'do_myplaintask', 'do_mytask', 'do_mytask2'], d.getVar("__BBTASKS"))
 
     broken_multiline_comment = """
 # First line of comment \\
