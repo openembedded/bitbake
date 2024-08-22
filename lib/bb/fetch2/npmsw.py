@@ -97,7 +97,7 @@ class NpmShrinkWrap(FetchMethod):
 
             integrity = params.get("integrity", None)
             resolved = params.get("resolved", None)
-            version = params.get("version", None)
+            version = params.get("version", resolved)
 
             # Handle registry sources
             if is_semver(version) and integrity:
