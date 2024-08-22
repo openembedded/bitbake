@@ -184,6 +184,7 @@ class NpmShrinkWrap(FetchMethod):
                 uri = URI("git://" + str(groups["url"]))
                 uri.params["protocol"] = str(groups["protocol"])
                 uri.params["rev"] = str(groups["rev"])
+                uri.params["nobranch"] = "1"
                 uri.params["destsuffix"] = destsuffix
 
                 url = str(uri)
