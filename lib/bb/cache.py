@@ -28,7 +28,7 @@ import shutil
 
 logger = logging.getLogger("BitBake.Cache")
 
-__cache_version__ = "155"
+__cache_version__ = "156"
 
 def getCacheFile(path, filename, mc, data_hash):
     mcspec = ''
