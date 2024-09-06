@@ -3390,3 +3390,68 @@ class FetchPremirroronlyBrokenTarball(FetcherTest):
             fetcher.download()
         output = "".join(logs.output)
         self.assertFalse(" not a git repository (or any parent up to mount point /)" in output)
+
+class GoModTest(FetcherTest):
+
+    @skipIfNoNetwork()
+    def test_gomod_url(self):
+        urls = ['gomod://github.com/Azure/azure-sdk-for-go/sdk/storage/azblob;version=v1.0.0;'
+                'sha256sum=9bb69aea32f1d59711701f9562d66432c9c0374205e5009d1d1a62f03fb4fdad']
+
+        fetcher = bb.fetch2.Fetch(urls, self.d)
+        ud = fetcher.ud[urls[0]]
+        self.assertEqual(ud.url, 'https://proxy.golang.org/github.com/%21azure/azure-sdk-for-go/sdk/storage/azblob/%40v/v1.0.0.zip')
+        self.assertNotIn('name', ud.parm)
+
+        fetcher.download()
+        fetcher.unpack(self.unpackdir)
+        downloaddir = os.path.join(self.unpackdir, 'pkg/mod/cache/download')
+        self.assertTrue(os.path.exists(os.path.join(downloaddir, 'github.com/!azure/azure-sdk-for-go/sdk/storage/azblob/@v/v1.0.0.zip')))
+        self.assertTrue(os.path.exists(os.path.join(downloaddir, 'github.com/!azure/azure-sdk-for-go/sdk/storage/azblob/@v/v1.0.0.mod')))
+
+    @skipIfNoNetwork()
+    def test_gomod_url_go_mod_only(self):
+        urls = ['gomod://github.com/Azure/azure-sdk-for-go/sdk/storage/azblob;version=v1.0.0;mod=1;'
+                'sha256sum=7873b8544842329b4f385a3aa6cf82cc2bc8defb41a04fa5291c35fd5900e873']
+
+        fetcher = bb.fetch2.Fetch(urls, self.d)
+        ud = fetcher.ud[urls[0]]
+        self.assertEqual(ud.url, 'https://proxy.golang.org/github.com/%21azure/azure-sdk-for-go/sdk/storage/azblob/%40v/v1.0.0.mod')
+        self.assertNotIn('name', ud.parm)
+
+        fetcher.download()
+        fetcher.unpack(self.unpackdir)
+        downloaddir = os.path.join(self.unpackdir, 'pkg/mod/cache/download')
+        self.assertTrue(os.path.exists(os.path.join(downloaddir, 'github.com/!azure/azure-sdk-for-go/sdk/storage/azblob/@v/v1.0.0.mod')))
+
+    @skipIfNoNetwork()
+    def test_gomod_url_sha256sum_varflag(self):
+        urls = ['gomod://gopkg.in/ini.v1;version=v1.67.0']
+        self.d.setVarFlag('SRC_URI', 'gopkg.in/ini.v1@v1.67.0.sha256sum', 'bd845dfc762a87a56e5a32a07770dc83e86976db7705d7f89c5dbafdc60b06c6')
+
+        fetcher = bb.fetch2.Fetch(urls, self.d)
+        ud = fetcher.ud[urls[0]]
+        self.assertEqual(ud.url, 'https://proxy.golang.org/gopkg.in/ini.v1/%40v/v1.67.0.zip')
+        self.assertEqual(ud.parm['name'], 'gopkg.in/ini.v1@v1.67.0')
+
+        fetcher.download()
+        fetcher.unpack(self.unpackdir)
+        downloaddir = os.path.join(self.unpackdir, 'pkg/mod/cache/download')
+        self.assertTrue(os.path.exists(os.path.join(downloaddir, 'gopkg.in/ini.v1/@v/v1.67.0.zip')))
+        self.assertTrue(os.path.exists(os.path.join(downloaddir, 'gopkg.in/ini.v1/@v/v1.67.0.mod')))
+
+    @skipIfNoNetwork()
+    def test_gomod_url_no_go_mod_in_module(self):
+        urls = ['gomod://gopkg.in/ini.v1;version=v1.67.0;'
+                'sha256sum=bd845dfc762a87a56e5a32a07770dc83e86976db7705d7f89c5dbafdc60b06c6']
+
+        fetcher = bb.fetch2.Fetch(urls, self.d)
+        ud = fetcher.ud[urls[0]]
+        self.assertEqual(ud.url, 'https://proxy.golang.org/gopkg.in/ini.v1/%40v/v1.67.0.zip')
+        self.assertNotIn('name', ud.parm)
+
+        fetcher.download()
+        fetcher.unpack(self.unpackdir)
+        downloaddir = os.path.join(self.unpackdir, 'pkg/mod/cache/download')
+        self.assertTrue(os.path.exists(os.path.join(downloaddir, 'gopkg.in/ini.v1/@v/v1.67.0.zip')))
+        self.assertTrue(os.path.exists(os.path.join(downloaddir, 'gopkg.in/ini.v1/@v/v1.67.0.mod')))

@@ -1317,7 +1317,7 @@ class FetchData(object):
 
             if checksum_name in self.parm:
                 checksum_expected = self.parm[checksum_name]
-            elif self.type not in ["http", "https", "ftp", "ftps", "sftp", "s3", "az", "crate", "gs"]:
+            elif self.type not in ["http", "https", "ftp", "ftps", "sftp", "s3", "az", "crate", "gs", "gomod"]:
                 checksum_expected = None
             else:
                 checksum_expected = d.getVarFlag("SRC_URI", checksum_name)
@@ -2088,6 +2088,7 @@ from . import npmsw
 from . import az
 from . import crate
 from . import gcp
+from . import gomod
 
 methods.append(local.Local())
 methods.append(wget.Wget())
@@ -2110,3 +2111,4 @@ methods.append(npmsw.NpmShrinkWrap())
 methods.append(az.Az())
 methods.append(crate.Crate())
 methods.append(gcp.GCP())
+methods.append(gomod.GoMod())
