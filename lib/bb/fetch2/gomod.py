@@ -103,7 +103,9 @@ class GoMod(Wget):
         if 'version' not in ud.parm:
             raise MissingParameterError('version', ud.url)
 
-        module = ud.host + ud.path
+        module = ud.host
+        if ud.path != '/':
+            module += ud.path
         ud.parm['module'] = module
 
         # Set URL and filename for wget download
@@ -174,7 +176,9 @@ class GoModGit(Git):
         if 'version' not in ud.parm:
             raise MissingParameterError('version', ud.url)
 
-        module = ud.host + ud.path
+        module = ud.host
+        if ud.path != '/':
+            module += ud.path
         ud.parm['module'] = module
 
         # Set host, path and srcrev for git download
