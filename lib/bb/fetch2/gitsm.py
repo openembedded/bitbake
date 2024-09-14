@@ -47,20 +47,18 @@ class GitSM(Git):
         subrevision = {}
 
         def parse_gitmodules(gitmodules):
-            """
-            Parse .gitmodules and return a dictionary of submodule paths to dictionaries with path and url members.
-            """
-            import configparser
-            cp = configparser.ConfigParser()
-            cp.read_string(gitmodules)
-
             modules = {}
-            for section in [s for s in cp.sections() if s.startswith("submodule ")]:
-                module = section.split('"')[1]
-                modules[module] = {
-                    'path': cp.get(section, 'path'),
-                    'url': cp.get(section, 'url')
-                }
+            module = ""
+            for line in gitmodules.splitlines():
+                if line.startswith('[submodule'):
+                    module = line.split('"')[1]
+                    modules[module] = {}
+                elif module and line.strip().startswith('path'):
+                    path = line.split('=')[1].strip()
+                    modules[module]['path'] = path
+                elif module and line.strip().startswith('url'):
+                    url = line.split('=')[1].strip()
+                    modules[module]['url'] = url
             return modules
 
         # Collect the defined submodules, and their attributes
