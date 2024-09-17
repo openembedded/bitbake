@@ -3408,6 +3408,8 @@ class GoModTest(FetcherTest):
         downloaddir = os.path.join(self.unpackdir, 'pkg/mod/cache/download')
         self.assertTrue(os.path.exists(os.path.join(downloaddir, 'github.com/!azure/azure-sdk-for-go/sdk/storage/azblob/@v/v1.0.0.zip')))
         self.assertTrue(os.path.exists(os.path.join(downloaddir, 'github.com/!azure/azure-sdk-for-go/sdk/storage/azblob/@v/v1.0.0.mod')))
+        self.assertEqual(bb.utils.sha256_file(os.path.join(downloaddir, 'github.com/!azure/azure-sdk-for-go/sdk/storage/azblob/@v/v1.0.0.mod')),
+                         '7873b8544842329b4f385a3aa6cf82cc2bc8defb41a04fa5291c35fd5900e873')
 
     @skipIfNoNetwork()
     def test_gomod_url_go_mod_only(self):
@@ -3439,6 +3441,8 @@ class GoModTest(FetcherTest):
         downloaddir = os.path.join(self.unpackdir, 'pkg/mod/cache/download')
         self.assertTrue(os.path.exists(os.path.join(downloaddir, 'gopkg.in/ini.v1/@v/v1.67.0.zip')))
         self.assertTrue(os.path.exists(os.path.join(downloaddir, 'gopkg.in/ini.v1/@v/v1.67.0.mod')))
+        self.assertEqual(bb.utils.sha256_file(os.path.join(downloaddir, 'gopkg.in/ini.v1/@v/v1.67.0.mod')),
+                         '13aedd85db8e555104108e0e613bb7e4d1242af7f27c15423dd9ab63b60b72a1')
 
     @skipIfNoNetwork()
     def test_gomod_url_no_go_mod_in_module(self):
@@ -3455,6 +3459,26 @@ class GoModTest(FetcherTest):
         downloaddir = os.path.join(self.unpackdir, 'pkg/mod/cache/download')
         self.assertTrue(os.path.exists(os.path.join(downloaddir, 'gopkg.in/ini.v1/@v/v1.67.0.zip')))
         self.assertTrue(os.path.exists(os.path.join(downloaddir, 'gopkg.in/ini.v1/@v/v1.67.0.mod')))
+        self.assertEqual(bb.utils.sha256_file(os.path.join(downloaddir, 'gopkg.in/ini.v1/@v/v1.67.0.mod')),
+                         '13aedd85db8e555104108e0e613bb7e4d1242af7f27c15423dd9ab63b60b72a1')
+
+    @skipIfNoNetwork()
+    def test_gomod_url_host_only(self):
+        urls = ['gomod://go.opencensus.io;version=v0.24.0;'
+                'sha256sum=203a767d7f8e7c1ebe5588220ad168d1e15b14ae70a636de7ca9a4a88a7e0d0c']
+
+        fetcher = bb.fetch2.Fetch(urls, self.d)
+        ud = fetcher.ud[urls[0]]
+        self.assertEqual(ud.url, 'https://proxy.golang.org/go.opencensus.io/%40v/v0.24.0.zip')
+        self.assertNotIn('name', ud.parm)
+
+        fetcher.download()
+        fetcher.unpack(self.unpackdir)
+        downloaddir = os.path.join(self.unpackdir, 'pkg/mod/cache/download')
+        self.assertTrue(os.path.exists(os.path.join(downloaddir, 'go.opencensus.io/@v/v0.24.0.zip')))
+        self.assertTrue(os.path.exists(os.path.join(downloaddir, 'go.opencensus.io/@v/v0.24.0.mod')))
+        self.assertEqual(bb.utils.sha256_file(os.path.join(downloaddir, 'go.opencensus.io/@v/v0.24.0.mod')),
+                         '0dc9ccc660ad21cebaffd548f2cc6efa27891c68b4fbc1f8a3893b00f1acec96')
 
 class GoModGitTest(FetcherTest):
 
@@ -3480,6 +3504,8 @@ class GoModGitTest(FetcherTest):
         downloaddir = os.path.join(self.unpackdir, 'pkg/mod/cache/download')
         self.assertTrue(os.path.exists(os.path.join(downloaddir, 'golang.org/x/net/@v/v0.9.0.zip')))
         self.assertTrue(os.path.exists(os.path.join(downloaddir, 'golang.org/x/net/@v/v0.9.0.mod')))
+        self.assertEqual(bb.utils.sha256_file(os.path.join(downloaddir, 'golang.org/x/net/@v/v0.9.0.mod')),
+                         'c5d6851ede50ec1c001afb763040194b68961bf06997e2605e8bf06dcd2aeb2e')
 
     @skipIfNoNetwork()
     def test_gomodgit_url_subdir(self):
@@ -3504,6 +3530,8 @@ class GoModGitTest(FetcherTest):
         downloaddir = os.path.join(self.unpackdir, 'pkg/mod/cache/download')
         self.assertTrue(os.path.exists(os.path.join(downloaddir, 'github.com/!azure/azure-sdk-for-go/sdk/storage/azblob/@v/v1.0.0.zip')))
         self.assertTrue(os.path.exists(os.path.join(downloaddir, 'github.com/!azure/azure-sdk-for-go/sdk/storage/azblob/@v/v1.0.0.mod')))
+        self.assertEqual(bb.utils.sha256_file(os.path.join(downloaddir, 'github.com/!azure/azure-sdk-for-go/sdk/storage/azblob/@v/v1.0.0.mod')),
+                         '7873b8544842329b4f385a3aa6cf82cc2bc8defb41a04fa5291c35fd5900e873')
 
     @skipIfNoNetwork()
     def test_gomodgit_url_srcrev_var(self):
@@ -3524,6 +3552,8 @@ class GoModGitTest(FetcherTest):
         downloaddir = os.path.join(self.unpackdir, 'pkg/mod/cache/download')
         self.assertTrue(os.path.exists(os.path.join(downloaddir, 'gopkg.in/ini.v1/@v/v1.67.0.zip')))
         self.assertTrue(os.path.exists(os.path.join(downloaddir, 'gopkg.in/ini.v1/@v/v1.67.0.mod')))
+        self.assertEqual(bb.utils.sha256_file(os.path.join(downloaddir, 'gopkg.in/ini.v1/@v/v1.67.0.mod')),
+                         '13aedd85db8e555104108e0e613bb7e4d1242af7f27c15423dd9ab63b60b72a1')
 
     @skipIfNoNetwork()
     def test_gomodgit_url_no_go_mod_in_module(self):
@@ -3544,3 +3574,28 @@ class GoModGitTest(FetcherTest):
         downloaddir = os.path.join(self.unpackdir, 'pkg/mod/cache/download')
         self.assertTrue(os.path.exists(os.path.join(downloaddir, 'gopkg.in/ini.v1/@v/v1.67.0.zip')))
         self.assertTrue(os.path.exists(os.path.join(downloaddir, 'gopkg.in/ini.v1/@v/v1.67.0.mod')))
+        self.assertEqual(bb.utils.sha256_file(os.path.join(downloaddir, 'gopkg.in/ini.v1/@v/v1.67.0.mod')),
+                         '13aedd85db8e555104108e0e613bb7e4d1242af7f27c15423dd9ab63b60b72a1')
+
+    @skipIfNoNetwork()
+    def test_gomodgit_url_host_only(self):
+        urls = ['gomodgit://go.opencensus.io;version=v0.24.0;'
+                'repo=github.com/census-instrumentation/opencensus-go;'
+                'srcrev=b1a01ee95db0e690d91d7193d037447816fae4c5']
+
+        fetcher = bb.fetch2.Fetch(urls, self.d)
+        ud = fetcher.ud[urls[0]]
+        self.assertEqual(ud.host, 'github.com')
+        self.assertEqual(ud.path, '/census-instrumentation/opencensus-go')
+        self.assertEqual(ud.names, ['go.opencensus.io@v0.24.0'])
+        self.assertEqual(self.d.getVar('SRCREV_go.opencensus.io@v0.24.0'), 'b1a01ee95db0e690d91d7193d037447816fae4c5')
+
+        fetcher.download()
+        fetcher.unpack(self.unpackdir)
+        vcsdir = os.path.join(self.unpackdir, 'pkg/mod/cache/vcs')
+        self.assertTrue(os.path.exists(os.path.join(vcsdir, 'aae3ac7b2122ed3345654e6327855e9682f4a5350d63e93dbcfc51c4419df0e1')))
+        downloaddir = os.path.join(self.unpackdir, 'pkg/mod/cache/download')
+        self.assertTrue(os.path.exists(os.path.join(downloaddir, 'go.opencensus.io/@v/v0.24.0.zip')))
+        self.assertTrue(os.path.exists(os.path.join(downloaddir, 'go.opencensus.io/@v/v0.24.0.mod')))
+        self.assertEqual(bb.utils.sha256_file(os.path.join(downloaddir, 'go.opencensus.io/@v/v0.24.0.mod')),
+                         '0dc9ccc660ad21cebaffd548f2cc6efa27891c68b4fbc1f8a3893b00f1acec96')
