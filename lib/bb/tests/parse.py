@@ -401,3 +401,45 @@ EXPORT_FUNCTIONS do_compile do_compilepython
             self.assertIn("else", d.getVar("do_compilepython"))
             check_function_flags(d)
 
+    export_function_unclosed_tab = """
+do_compile () {
+       bb.note("Something")
+\t}
+"""
+    export_function_unclosed_space = """
+do_compile () {
+       bb.note("Something")
+ }
+"""
+    export_function_residue = """
+do_compile () {
+       bb.note("Something")
+}
+
+include \\
+"""
+
+    def test_unclosed_functions(self):
+        def test_helper(content, expected_error):
+            with tempfile.TemporaryDirectory() as tempdir:
+                recipename = tempdir + "/recipe_unclosed.bb"
+                with open(recipename, "w") as f:
+                    f.write(content)
+                    f.flush()
+                os.chdir(tempdir)
+                with self.assertRaises(bb.parse.ParseError) as error:
+                    bb.parse.handle(recipename, bb.data.createCopy(self.d))
+                self.assertIn(expected_error, str(error.exception))
+
+        with tempfile.TemporaryDirectory() as tempdir:
+            test_helper(self.export_function_unclosed_tab, "Unparsed lines from unclosed function")
+            test_helper(self.export_function_unclosed_space, "Unparsed lines from unclosed function")
+            test_helper(self.export_function_residue, "Unparsed lines")
+
+            recipename_closed = tempdir + "/recipe_closed.bb"
+            with open(recipename_closed, "w") as in_file:
+                lines = self.export_function_unclosed_tab.split("\n")
+                lines[3] = "}"
+                in_file.write("\n".join(lines))
+                in_file.flush()
+            bb.parse.handle(recipename_closed, bb.data.createCopy(self.d))
