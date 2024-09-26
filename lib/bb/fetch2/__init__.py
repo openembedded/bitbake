@@ -958,7 +958,12 @@ def runfetchcmd(cmd, d, quiet=False, cleanup=None, log=None, workdir=None):
                 pass
 
         raise FetchError(error_message)
-
+        
+    verboselogs = bb.utils.to_boolean(d.getVar("BB_VERBOSE_LOGS", "0"))
+    if verboselogs:
+        logger.info("output:\n%s" % output)
+        logger.info("errors:\n%s" % errors)
+        
     return output
 
 def check_network_access(d, info, url):
