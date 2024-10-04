@@ -699,7 +699,7 @@ class TestProjectPage(SeleniumFunctionalTestCase):
         )
 
     def test_single_layer_page(self):
-        """ Test layer page
+        """ Test layer details page using meta-poky as an example (assumes is added to start with)
             - Check if title is displayed
             - Check add/remove layer button works
             - Check tabs(layers, recipes, machines) are displayed
@@ -708,13 +708,14 @@ class TestProjectPage(SeleniumFunctionalTestCase):
                 - Check layer summary
                 - Check layer description
         """
-        url = reverse("layerdetails", args=(TestProjectPage.project_id, 7))
-        self.get(url)
+        self._navigate_to_config_nav('layerstable', 6)
+        layer_link = self.driver.find_element(By.XPATH, '//tr/td[@class="layer__name"]/a[contains(text(),"meta-poky")]')
+        layer_link.click()
         self.wait_until_visible('.page-header')
         # check title is displayed
         self.assertTrue(self.find('.page-header h1').is_displayed())
 
-        # check add layer button works
+        # check remove layer button works
         remove_layer_btn = self.find('#add-remove-layer-btn')
         remove_layer_btn.click()
         self.wait_until_visible('#change-notification', poll=2)
@@ -722,7 +723,7 @@ class TestProjectPage(SeleniumFunctionalTestCase):
         self.assertIn(
             f'You have removed 1 layer from your project', str(change_notification.text)
         )
-        # check add layer button works, 18 is the random layer id
+        # check add layer button works
         add_layer_btn = self.find('#add-remove-layer-btn')
         add_layer_btn.click()
         self.wait_until_visible('#change-notification')
@@ -738,12 +739,18 @@ class TestProjectPage(SeleniumFunctionalTestCase):
         self.assertTrue(
             'active' in str(self.find('#information').get_attribute('class'))
         )
-        # Check second tab
+        # Check second tab (recipes)
+        # Ensure page is scrolled to the top
+        self.driver.find_element(By.XPATH, '//body').send_keys(Keys.CONTROL + Keys.HOME)
+        self.wait_until_visible('.nav-tabs')
         tabs[1].click()
         self.assertTrue(
             'active' in str(self.find('#recipes').get_attribute('class'))
         )
-        # Check third tab
+        # Check third tab (machines)
+        # Ensure page is scrolled to the top
+        self.driver.find_element(By.XPATH, '//body').send_keys(Keys.CONTROL + Keys.HOME)
+        self.wait_until_visible('.nav-tabs')
         tabs[2].click()
         self.assertTrue(
             'active' in str(self.find('#machines').get_attribute('class'))
