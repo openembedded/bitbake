@@ -47,7 +47,11 @@ def _get_frame_args(frame):
         cls = self.__class__.__name__
 
         arginfo.args.pop(0)
-        del arginfo.locals['self']
+        try:
+            del arginfo.locals['self']
+        except TypeError:
+            # FIXME - python 3.13 FrameLocalsProxy can't be modified
+            pass
     else:
         cls = None
 
