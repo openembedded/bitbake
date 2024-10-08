@@ -237,7 +237,7 @@ class URI(object):
         # to RFC compliant URL format. E.g.:
         #   file://foo.diff -> file:foo.diff
         if urlp.scheme in self._netloc_forbidden:
-            uri = re.sub("(?<=:)//(?!/)", "", uri, 1)
+            uri = re.sub(r"(?<=:)//(?!/)", "", uri, count=1)
             reparse = 1
 
         if reparse:
