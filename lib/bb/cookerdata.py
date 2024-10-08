@@ -1,3 +1,4 @@
+
 #
 # Copyright (C) 2003, 2004  Chris Larson
 # Copyright (C) 2003, 2004  Phil Blundell
@@ -267,8 +268,8 @@ class CookerDataBuilder(object):
         try:
             self.data = self.parseConfigurationFiles(self.prefiles, self.postfiles)
 
-            if self.data.getVar("BB_WORKERCONTEXT", False) is None and not worker:
-                bb.fetch.fetcher_init(self.data)
+            servercontext = self.data.getVar("BB_WORKERCONTEXT", False) is None and not worker
+            bb.fetch.fetcher_init(self.data, servercontext)
             bb.parse.init_parser(self.data)
 
             bb.event.fire(bb.event.ConfigParsed(), self.data)

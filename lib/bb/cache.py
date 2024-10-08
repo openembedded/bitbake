@@ -847,6 +847,16 @@ class MultiProcessCache(object):
         data = [{}]
         return data
 
+    def clear_cache(self):
+        if not self.cachefile:
+            bb.fatal("Can't clear invalid cachefile")
+
+        self.cachedata = self.create_cachedata()
+        self.cachedata_extras = self.create_cachedata()
+        with bb.utils.fileslocked([self.cachefile + ".lock"]):
+            bb.utils.remove(self.cachefile)
+            bb.utils.remove(self.cachefile + "-*")
+
     def save_extras(self):
         if not self.cachefile:
             return
