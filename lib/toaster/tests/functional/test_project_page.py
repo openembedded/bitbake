@@ -774,7 +774,12 @@ class TestProjectPage(SeleniumFunctionalTestCase):
                 - Check recipe: name, summary, description, Version, Section,
                 License, Approx. packages included, Approx. size, Recipe file
         """
-        url = reverse("recipedetails", args=(TestProjectPage.project_id, 53428))
+        # Use a recipe which is likely to exist in the layer index but not enabled
+        # in poky out the box - xen-image-minimal from meta-virtualization
+        self._navigate_to_project_page()
+        prj = Project.objects.get(pk=TestProjectPage.project_id)
+        recipe_id = prj.get_all_compatible_recipes().get(name="xen-image-minimal").pk
+        url = reverse("recipedetails", args=(TestProjectPage.project_id, recipe_id))
         self.get(url)
         self.wait_until_visible('.page-header')
         # check title is displayed
