@@ -30,7 +30,7 @@ class HashEquivalenceTestSetup(object):
 
     server_index = 0
 
-    def start_server(self, dbpath=None, upstream=None, read_only=False, prefunc=server_prefunc):
+    def start_server(self, dbpath=None, upstream=None, read_only=False, prefunc=server_prefunc, need_client=True):
         self.server_index += 1
         if dbpath is None:
             dbpath = os.path.join(self.temp_dir.name, "db%d.sqlite" % self.server_index)
@@ -54,8 +54,11 @@ class HashEquivalenceTestSetup(object):
         def cleanup_client(client):
             client.close()
 
-        client = create_client(server.address)
-        self.addCleanup(cleanup_client, client)
+        if need_client:
+            client = create_client(server.address)
+            self.addCleanup(cleanup_client, client)
+        else:
+            client = None
 
         return (client, server)
 
@@ -341,7 +344,7 @@ class HashEquivalenceCommonTests(object):
         old_signal = signal.signal(signal.SIGTERM, do_nothing)
         self.addCleanup(signal.signal, signal.SIGTERM, old_signal)
 
-        _, server = self.start_server(prefunc=prefunc)
+        _, server = self.start_server(prefunc=prefunc, need_client=False)
         server.process.terminate()
         time.sleep(30)
         event.set()
