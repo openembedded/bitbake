@@ -88,8 +88,8 @@ class TestProjectConfigTab(SeleniumFunctionalTestCase):
             '//div[@id="latest-builds"]/div',
         )
         last_build = lastest_builds[0]
-        self.assertTrue(
-            'foo' in str(last_build.text)
+        self.assertIn(
+            'foo', str(last_build.text)
         )
         last_build = lastest_builds[0]
         try:
@@ -138,24 +138,24 @@ class TestProjectConfigTab(SeleniumFunctionalTestCase):
 
         def check_config_nav_item(index, item_name, url):
             item = _get_config_nav_item(index)
-            self.assertTrue(item_name in item.text)
-            self.assertTrue(item.get_attribute('class') == 'active')
-            self.assertTrue(url in self.driver.current_url)
+            self.assertIn(item_name, item.text)
+            self.assertEqual(item.get_attribute('class'), 'active')
+            self.assertIn(url, self.driver.current_url)
 
         # check if the menu contains the right elements
         # COMPATIBLE METADATA
         compatible_metadata = _get_config_nav_item(1)
-        self.assertTrue(
-            "compatible metadata" in compatible_metadata.text.lower()
+        self.assertIn(
+            "compatible metadata", compatible_metadata.text.lower()
         )
         # EXTRA CONFIGURATION
         extra_configuration = _get_config_nav_item(8)
-        self.assertTrue(
-            "extra configuration" in extra_configuration.text.lower()
+        self.assertIn(
+            "extra configuration", extra_configuration.text.lower()
         )
         # Actions
         actions = _get_config_nav_item(10)
-        self.assertTrue("actions" in str(actions.text).lower())
+        self.assertIn("actions", str(actions.text).lower())
 
         conf_nav_list = [
             # config
@@ -313,7 +313,7 @@ class TestProjectConfigTab(SeleniumFunctionalTestCase):
         def check_machine_distro(self, item_name, new_item_name, block_id):
             block = self.find(f'#{block_id}')
             title = block.find_element(By.TAG_NAME, 'h3')
-            self.assertTrue(item_name.capitalize() in title.text)
+            self.assertIn(item_name.capitalize(), title.text)
             edit_btn = self.find(f'#change-{item_name}-toggle')
             edit_btn.click()
             self.wait_until_visible(f'#{item_name}-change-input')
@@ -324,11 +324,11 @@ class TestProjectConfigTab(SeleniumFunctionalTestCase):
             change_btn.click()
             self.wait_until_visible(f'#project-{item_name}-name')
             project_name = self.find(f'#project-{item_name}-name')
-            self.assertTrue(new_item_name in project_name.text)
+            self.assertIn(new_item_name, project_name.text)
             # check change notificaiton is displayed
             change_notification = self.find('#change-notification')
-            self.assertTrue(
-                f'You have changed the {item_name} to: {new_item_name}' in change_notification.text
+            self.assertIn(
+                f'You have changed the {item_name} to: {new_item_name}', change_notification.text
             )
 
         # Machine
@@ -338,13 +338,13 @@ class TestProjectConfigTab(SeleniumFunctionalTestCase):
 
         # Project release
         title = project_release.find_element(By.TAG_NAME, 'h3')
-        self.assertTrue("Project release" in title.text)
-        self.assertTrue(
-            "Yocto Project master" in self.find('#project-release-title').text
+        self.assertIn("Project release", title.text)
+        self.assertIn(
+            "Yocto Project master", self.find('#project-release-title').text
         )
         # Layers
         title = layers.find_element(By.TAG_NAME, 'h3')
-        self.assertTrue("Layers" in title.text)
+        self.assertIn("Layers", title.text)
         # check at least three layers are displayed
         # openembedded-core
         # meta-poky
@@ -372,7 +372,7 @@ class TestProjectConfigTab(SeleniumFunctionalTestCase):
         self.wait_until_visible('#layers-in-project-list')
         # check layer is added
         layers_list_items = layers_list.find_elements(By.TAG_NAME, 'li')
-        self.assertTrue(len(layers_list_items) == 4)
+        self.assertEqual(len(layers_list_items), 4)
 
     def test_most_build_recipes(self):
         """ Test most build recipes block contains"""
@@ -418,14 +418,14 @@ class TestProjectConfigTab(SeleniumFunctionalTestCase):
         most_built_recipes = self.driver.find_element(
             By.XPATH, '//*[@id="project-page"]/div[1]/div[3]')
         title = most_built_recipes.find_element(By.TAG_NAME, 'h3')
-        self.assertTrue("Most built recipes" in title.text)
+        self.assertIn("Most built recipes", title.text)
         # check can select a recipe and build it
         self.wait_until_visible('#freq-build-list', poll=3)
         recipe_list = self.find('#freq-build-list')
         recipe_list_items = recipe_list.find_elements(By.TAG_NAME, 'li')
         self.assertTrue(
             len(recipe_list_items) > 0,
-            msg="Any recipes found in the most built recipes list",
+            msg="No recipes found in the most built recipes list",
         )
         rebuild_from_most_build_recipes(recipe_list_items)
         TestProjectConfigTab.project_id = None  # reset project id
@@ -466,8 +466,8 @@ class TestProjectConfigTab(SeleniumFunctionalTestCase):
         layers = block_l.find_element(By.ID, 'layer-container')
         layers_list = layers.find_element(By.ID, 'layers-in-project-list')
         layers_list_items = layers_list.find_elements(By.TAG_NAME, 'li')
-        self.assertTrue(
-            'meta-fake' in str(layers_list_items[-1].text)
+        self.assertIn(
+            'meta-fake', str(layers_list_items[-1].text)
         )
 
     def test_project_page_custom_image_no_image(self):
@@ -482,8 +482,8 @@ class TestProjectConfigTab(SeleniumFunctionalTestCase):
         self.wait_until_visible('#empty-state-customimagestable')
 
         # Check message when no custom image
-        self.assertTrue(
-            "You have not created any custom images yet." in str(
+        self.assertIn(
+            "You have not created any custom images yet.", str(
                 self.find('#empty-state-customimagestable').text
             )
         )
@@ -491,13 +491,13 @@ class TestProjectConfigTab(SeleniumFunctionalTestCase):
         link_create_custom_image = div_empty_msg.find_element(
             By.TAG_NAME, 'a')
         self.assertTrue(TestProjectConfigTab.project_id is not None)
-        self.assertTrue(
-            f"/toastergui/project/{TestProjectConfigTab.project_id}/newcustomimage" in str(
+        self.assertIn(
+            f"/toastergui/project/{TestProjectConfigTab.project_id}/newcustomimage", str(
                 link_create_custom_image.get_attribute('href')
             )
         )
-        self.assertTrue(
-            "Create your first custom image" in str(
+        self.assertIn(
+            "Create your first custom image", str(
                 link_create_custom_image.text
             )
         )

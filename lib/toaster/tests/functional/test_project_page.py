@@ -272,8 +272,8 @@ class TestProjectPage(SeleniumFunctionalTestCase):
         logo_img = logo.find_element(By.TAG_NAME, 'img')
         self.assertTrue(logo_img.is_displayed(),
                         'Logo of Yocto project not found')
-        self.assertTrue(
-            '/static/img/logo.png' in str(logo_img.get_attribute('src')),
+        self.assertIn(
+            '/static/img/logo.png', str(logo_img.get_attribute('src')),
             'Logo of Yocto project not found'
         )
         # "Toaster"+" Information icon", clickable
@@ -282,34 +282,34 @@ class TestProjectPage(SeleniumFunctionalTestCase):
             "//div[@class='toaster-navbar-brand']//a[@class='brand']",
         )
         self.assertTrue(toaster.is_displayed(), 'Toaster not found')
-        self.assertTrue(toaster.text == 'Toaster')
+        self.assertEqual(toaster.text, 'Toaster')
         info_sign = self.find('.glyphicon-info-sign')
         self.assertTrue(info_sign.is_displayed())
 
         # "Server Icon" + "All builds"
         all_builds = self.find('#navbar-all-builds')
         all_builds_link = all_builds.find_element(By.TAG_NAME, 'a')
-        self.assertTrue("All builds" in all_builds_link.text)
-        self.assertTrue(
-            '/toastergui/builds/' in str(all_builds_link.get_attribute('href'))
+        self.assertIn("All builds", all_builds_link.text)
+        self.assertIn(
+            '/toastergui/builds/', str(all_builds_link.get_attribute('href'))
         )
         server_icon = all_builds.find_element(By.TAG_NAME, 'i')
-        self.assertTrue(
-            server_icon.get_attribute('class') == 'glyphicon glyphicon-tasks'
+        self.assertEqual(
+            server_icon.get_attribute('class'), 'glyphicon glyphicon-tasks'
         )
         self.assertTrue(server_icon.is_displayed())
 
         # "Directory Icon" + "All projects"
         all_projects = self.find('#navbar-all-projects')
         all_projects_link = all_projects.find_element(By.TAG_NAME, 'a')
-        self.assertTrue("All projects" in all_projects_link.text)
-        self.assertTrue(
-            '/toastergui/projects/' in str(all_projects_link.get_attribute(
+        self.assertIn("All projects", all_projects_link.text)
+        self.assertIn(
+            '/toastergui/projects/', str(all_projects_link.get_attribute(
                 'href'))
         )
         dir_icon = all_projects.find_element(By.TAG_NAME, 'i')
-        self.assertTrue(
-            dir_icon.get_attribute('class') == 'icon-folder-open'
+        self.assertEqual(
+            dir_icon.get_attribute('class'), 'icon-folder-open'
         )
         self.assertTrue(dir_icon.is_displayed())
 
@@ -317,23 +317,23 @@ class TestProjectPage(SeleniumFunctionalTestCase):
         toaster_docs_link = self.find('#navbar-docs')
         toaster_docs_link_link = toaster_docs_link.find_element(By.TAG_NAME,
                                                                 'a')
-        self.assertTrue("Documentation" in toaster_docs_link_link.text)
-        self.assertTrue(
-            toaster_docs_link_link.get_attribute('href') == 'http://docs.yoctoproject.org/toaster-manual/index.html#toaster-user-manual'
+        self.assertIn("Documentation", toaster_docs_link_link.text)
+        self.assertEqual(
+            toaster_docs_link_link.get_attribute('href'), 'http://docs.yoctoproject.org/toaster-manual/index.html#toaster-user-manual'
         )
         book_icon = toaster_docs_link.find_element(By.TAG_NAME, 'i')
-        self.assertTrue(
-            book_icon.get_attribute('class') == 'glyphicon glyphicon-book'
+        self.assertEqual(
+            book_icon.get_attribute('class'), 'glyphicon glyphicon-book'
         )
         self.assertTrue(book_icon.is_displayed())
 
         # AT RIGHT -> button "New project"
         new_project_button = self.find('#new-project-button')
         self.assertTrue(new_project_button.is_displayed())
-        self.assertTrue(new_project_button.text == 'New project')
+        self.assertEqual(new_project_button.text, 'New project')
         new_project_button.click()
-        self.assertTrue(
-            '/toastergui/newproject/' in str(self.driver.current_url)
+        self.assertIn(
+            '/toastergui/newproject/', str(self.driver.current_url)
         )
 
     def test_edit_project_name(self):
@@ -358,8 +358,8 @@ class TestProjectPage(SeleniumFunctionalTestCase):
 
         # check project name is changed
         self.wait_until_visible('#project-name-container')
-        self.assertTrue(
-            'New Name' in str(self.find('#project-name-container').text)
+        self.assertIn(
+            'New Name', str(self.find('#project-name-container').text)
         )
 
     def test_project_page_tabs(self):
@@ -376,10 +376,10 @@ class TestProjectPage(SeleniumFunctionalTestCase):
         # check "configuration" tab
         self.wait_until_visible('#topbar-configuration-tab')
         config_tab = self.find('#topbar-configuration-tab')
-        self.assertTrue(config_tab.get_attribute('class') == 'active')
-        self.assertTrue('Configuration' in str(config_tab.text))
-        self.assertTrue(
-            f"/toastergui/project/{TestProjectPage.project_id}" in str(self.driver.current_url)
+        self.assertEqual(config_tab.get_attribute('class'), 'active')
+        self.assertIn('Configuration', str(config_tab.text))
+        self.assertIn(
+            f"/toastergui/project/{TestProjectPage.project_id}", str(self.driver.current_url)
         )
 
         def get_tabs():
@@ -392,9 +392,9 @@ class TestProjectPage(SeleniumFunctionalTestCase):
         def check_tab_link(tab_index, tab_name, url):
             tab = get_tabs()[tab_index]
             tab_link = tab.find_element(By.TAG_NAME, 'a')
-            self.assertTrue(url in tab_link.get_attribute('href'))
-            self.assertTrue(tab_name in tab_link.text)
-            self.assertTrue(tab.get_attribute('class') == 'active')
+            self.assertIn(url, tab_link.get_attribute('href'))
+            self.assertIn(tab_name, tab_link.text)
+            self.assertEqual(tab.get_attribute('class'), 'active')
 
         # check "Builds" tab
         builds_tab = get_tabs()[1]
@@ -433,8 +433,8 @@ class TestProjectPage(SeleniumFunctionalTestCase):
             '//div[@id="latest-builds"]',
         )
         last_build = lastest_builds[0]
-        self.assertTrue(
-            'core-image-minimal' in str(last_build.text)
+        self.assertIn(
+            'core-image-minimal', str(last_build.text)
         )
 
     def test_softwareRecipe_page(self):
@@ -446,7 +446,7 @@ class TestProjectPage(SeleniumFunctionalTestCase):
         """
         self._navigate_to_config_nav('softwarerecipestable', 4)
         # check title "Compatible software recipes" is displayed
-        self.assertTrue("Compatible software recipes" in self.get_page_source())
+        self.assertIn("Compatible software recipes", self.get_page_source())
         # Test search input
         self._mixin_test_table_search_input(
             input_selector='search-input-softwarerecipestable',
@@ -510,7 +510,7 @@ class TestProjectPage(SeleniumFunctionalTestCase):
         """
         self._navigate_to_config_nav('machinestable', 5)
         # check title "Compatible software recipes" is displayed
-        self.assertTrue("Compatible machines" in self.get_page_source())
+        self.assertIn("Compatible machines", self.get_page_source())
         # Test search input
         self._mixin_test_table_search_input(
             input_selector='search-input-machinestable',
@@ -528,8 +528,8 @@ class TestProjectPage(SeleniumFunctionalTestCase):
         select_btn.send_keys(Keys.RETURN)
         self.wait_until_visible('#config-nav')
         project_machine_name = self.find('#project-machine-name')
-        self.assertTrue(
-            'qemux86-64' in project_machine_name.text
+        self.assertIn(
+            'qemux86-64', project_machine_name.text
         )
         # check "Add layer" button works
         self._navigate_to_config_nav('machinestable', 5)
@@ -547,8 +547,8 @@ class TestProjectPage(SeleniumFunctionalTestCase):
         add_btn.click()
         self.wait_until_visible('#change-notification')
         change_notification = self.find('#change-notification')
-        self.assertTrue(
-            f'You have added 1 layer to your project' in str(change_notification.text)
+        self.assertIn(
+            f'You have added 1 layer to your project', str(change_notification.text)
         )
         # check Machine table feature(show/hide column, pagination)
         self._navigate_to_config_nav('machinestable', 5)
@@ -580,7 +580,7 @@ class TestProjectPage(SeleniumFunctionalTestCase):
         """
         self._navigate_to_config_nav('layerstable', 6)
         # check title "Compatible layers" is displayed
-        self.assertTrue("Compatible layers" in self.get_page_source())
+        self.assertIn("Compatible layers", self.get_page_source())
         # Test search input
         input_text='meta-tanowrt'
         self._mixin_test_table_search_input(
@@ -609,8 +609,8 @@ class TestProjectPage(SeleniumFunctionalTestCase):
         add_layers_btn.click()
         self.wait_until_visible('#change-notification')
         change_notification = self.find('#change-notification')
-        self.assertTrue(
-            f'You have added {len(list_dependencies)+1} layers to your project: {input_text} and its dependencies' in str(change_notification.text)
+        self.assertIn(
+            f'You have added {len(list_dependencies)+1} layers to your project: {input_text} and its dependencies', str(change_notification.text)
         )
         # check "Remove layer" button works
         self.wait_until_visible('#layerstable tbody tr', poll=3)
@@ -623,8 +623,8 @@ class TestProjectPage(SeleniumFunctionalTestCase):
         remove_btn.click()
         self.wait_until_visible('#change-notification', poll=2)
         change_notification = self.find('#change-notification')
-        self.assertTrue(
-            f'You have removed 1 layer from your project: {input_text}' in str(change_notification.text)
+        self.assertIn(
+            f'You have removed 1 layer from your project: {input_text}', str(change_notification.text)
         )
         # check layers table feature(show/hide column, pagination)
         self._navigate_to_config_nav('layerstable', 6)
@@ -656,7 +656,7 @@ class TestProjectPage(SeleniumFunctionalTestCase):
         """
         self._navigate_to_config_nav('distrostable', 7)
         # check title "Compatible distros" is displayed
-        self.assertTrue("Compatible Distros" in self.get_page_source())
+        self.assertIn("Compatible Distros", self.get_page_source())
         # Test search input
         input_text='poky-altcfg'
         self._mixin_test_table_search_input(
@@ -675,8 +675,8 @@ class TestProjectPage(SeleniumFunctionalTestCase):
         add_btn.click()
         self.wait_until_visible('#change-notification', poll=2)
         change_notification = self.find('#change-notification')
-        self.assertTrue(
-            f'You have changed the distro to: {input_text}' in str(change_notification.text)
+        self.assertIn(
+            f'You have changed the distro to: {input_text}', str(change_notification.text)
         )
         # check distro table feature(show/hide column, pagination)
         self._navigate_to_config_nav('distrostable', 7)
@@ -736,24 +736,24 @@ class TestProjectPage(SeleniumFunctionalTestCase):
         self.assertEqual(len(tabs), 3)
         # Check first tab
         tabs[0].click()
-        self.assertTrue(
-            'active' in str(self.find('#information').get_attribute('class'))
+        self.assertIn(
+            'active', str(self.find('#information').get_attribute('class'))
         )
         # Check second tab (recipes)
         # Ensure page is scrolled to the top
         self.driver.find_element(By.XPATH, '//body').send_keys(Keys.CONTROL + Keys.HOME)
         self.wait_until_visible('.nav-tabs')
         tabs[1].click()
-        self.assertTrue(
-            'active' in str(self.find('#recipes').get_attribute('class'))
+        self.assertIn(
+            'active', str(self.find('#recipes').get_attribute('class'))
         )
         # Check third tab (machines)
         # Ensure page is scrolled to the top
         self.driver.find_element(By.XPATH, '//body').send_keys(Keys.CONTROL + Keys.HOME)
         self.wait_until_visible('.nav-tabs')
         tabs[2].click()
-        self.assertTrue(
-            'active' in str(self.find('#machines').get_attribute('class'))
+        self.assertIn(
+            'active', str(self.find('#machines').get_attribute('class'))
         )
         # Check left section is displayed
         section = self.find('.well')
@@ -762,9 +762,9 @@ class TestProjectPage(SeleniumFunctionalTestCase):
             section.find_element(By.XPATH, '//h2[1]').is_displayed()
         )
         # Check layer summary
-        self.assertTrue("Summary" in section.text)
+        self.assertIn("Summary", section.text)
         # Check layer description
-        self.assertTrue("Description" in section.text)
+        self.assertIn("Description", section.text)
 
     def test_single_recipe_page(self):
         """ Test recipe page
@@ -794,11 +794,11 @@ class TestProjectPage(SeleniumFunctionalTestCase):
             section.find_element(By.XPATH, '//h2[1]').is_displayed()
         )
         # Check recipe sections details info are displayed
-        self.assertTrue("Summary" in section.text)
-        self.assertTrue("Description" in section.text)
-        self.assertTrue("Version" in section.text)
-        self.assertTrue("Section" in section.text)
-        self.assertTrue("License" in section.text)
-        self.assertTrue("Approx. packages included" in section.text)
-        self.assertTrue("Approx. package size" in section.text)
-        self.assertTrue("Recipe file" in section.text)
+        self.assertIn("Summary", section.text)
+        self.assertIn("Description", section.text)
+        self.assertIn("Version", section.text)
+        self.assertIn("Section", section.text)
+        self.assertIn("License", section.text)
+        self.assertIn("Approx. packages included", section.text)
+        self.assertIn("Approx. package size", section.text)
+        self.assertIn("Recipe file", section.text)
