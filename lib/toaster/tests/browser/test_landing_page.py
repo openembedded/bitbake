@@ -34,6 +34,7 @@ class TestLandingPage(SeleniumTestCase):
     def test_icon_info_visible_and_clickable(self):
         """ Test that the information icon is visible and clickable """
         self.get(reverse('landing'))
+        self.wait_until_visible('#toaster-version-info-sign')
         info_sign = self.find('#toaster-version-info-sign')
 
         # check that the info sign is visible
@@ -50,6 +51,7 @@ class TestLandingPage(SeleniumTestCase):
     def test_documentation_link_displayed(self):
         """ Test that the documentation link is displayed """
         self.get(reverse('landing'))
+        self.wait_until_visible('#navbar-docs')
         documentation_link = self.find('#navbar-docs > a')
 
         # check that the documentation link is visible
@@ -65,6 +67,7 @@ class TestLandingPage(SeleniumTestCase):
     def test_openembedded_jumbotron_link_visible_and_clickable(self):
         """ Test OpenEmbedded link jumbotron is visible and clickable: """
         self.get(reverse('landing'))
+        self.wait_until_visible('.jumbotron')
         jumbotron = self.find('.jumbotron')
 
         # check OpenEmbedded
@@ -76,6 +79,7 @@ class TestLandingPage(SeleniumTestCase):
     def test_bitbake_jumbotron_link_visible_and_clickable(self):
         """ Test BitBake link jumbotron is visible and clickable: """
         self.get(reverse('landing'))
+        self.wait_until_visible('.jumbotron')
         jumbotron = self.find('.jumbotron')
 
         # check BitBake
@@ -88,6 +92,7 @@ class TestLandingPage(SeleniumTestCase):
     def test_yoctoproject_jumbotron_link_visible_and_clickable(self):
         """ Test Yocto Project link jumbotron is visible and clickable: """
         self.get(reverse('landing'))
+        self.wait_until_visible('.jumbotron')
         jumbotron = self.find('.jumbotron')
 
         # check Yocto Project
@@ -101,6 +106,7 @@ class TestLandingPage(SeleniumTestCase):
             if visible and clickable
         """
         self.get(reverse('landing'))
+        self.wait_until_visible('.jumbotron')
         jumbotron = self.find('.jumbotron')
 
         # check Big magenta button
@@ -119,6 +125,7 @@ class TestLandingPage(SeleniumTestCase):
         Layer_Version.objects.create(layer=layer)
 
         self.get(reverse('landing'))
+        self.wait_until_visible('.jumbotron')
         jumbotron = self.find('.jumbotron')
 
         # check Big Blue button
@@ -132,6 +139,7 @@ class TestLandingPage(SeleniumTestCase):
     def test_toaster_manual_link_visible_and_clickable(self):
         """ Test Read the Toaster manual link jumbotron is visible and clickable: """
         self.get(reverse('landing'))
+        self.wait_until_visible('.jumbotron')
         jumbotron = self.find('.jumbotron')
 
         # check Read the Toaster manual
@@ -145,6 +153,7 @@ class TestLandingPage(SeleniumTestCase):
     def test_contrib_to_toaster_link_visible_and_clickable(self):
         """ Test Contribute to Toaster link jumbotron is visible and clickable: """
         self.get(reverse('landing'))
+        self.wait_until_visible('.jumbotron')
         jumbotron = self.find('.jumbotron')
 
         # check Contribute to Toaster
@@ -161,6 +170,7 @@ class TestLandingPage(SeleniumTestCase):
         => should see the landing page
         """
         self.get(reverse('landing'))
+        self.wait_until_visible('.jumbotron')
         self.assertTrue(self.LANDING_PAGE_TITLE in self.get_page_source())
 
     def test_default_project_has_build(self):
@@ -193,6 +203,7 @@ class TestLandingPage(SeleniumTestCase):
         user_project.save()
 
         self.get(reverse('landing'))
+        self.wait_until_visible('#projectstable')
 
         elements = self.find_all('#projectstable')
         self.assertEqual(len(elements), 1, 'should redirect to projects')
