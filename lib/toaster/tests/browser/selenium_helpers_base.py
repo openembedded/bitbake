@@ -122,6 +122,7 @@ class Wait(WebDriverWait):
             if time.time() > end_time:
                 break
 
+        self._driver.get_screenshot_as_file("/tmp/toaster-failing-screenshot-%s.png" % int(time.time()))
         raise TimeoutException(message)
 
     def until_not(self, method, message=''):
