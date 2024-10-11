@@ -230,12 +230,15 @@ class SeleniumTestCaseBase(unittest.TestCase):
 
     def wait_until_clickable(self, selector, poll=1):
         """ Wait until element matching CSS selector is visible on the page """
+        sel = selector
+        if sel.startswith('#'):
+            sel = selector[1:]
         WebDriverWait(
             self.driver,
             Wait._TIMEOUT,
             poll_frequency=poll
         ).until(
-            EC.element_to_be_clickable((By.ID, selector.removeprefix('#')
+            EC.element_to_be_clickable((By.ID, sel
                                         )
                                        )
         )
