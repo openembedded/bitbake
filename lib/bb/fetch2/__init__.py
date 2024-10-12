@@ -885,6 +885,7 @@ FETCH_EXPORT_VARS = ['HOME', 'PATH',
                      'AWS_SESSION_TOKEN',
                      'GIT_CACHE_PATH',
                      'REMOTE_CONTAINERS_IPC',
+                     'GITHUB_TOKEN',
                      'SSL_CERT_DIR']
 
 def get_fetcher_environment(d):
