@@ -53,11 +53,6 @@ class WgetProgressHandler(bb.progress.LineFilterProgressHandler):
 class Wget(FetchMethod):
     """Class to fetch urls via 'wget'"""
 
-    # CDNs like CloudFlare may do a 'browser integrity test' which can fail
-    # with the standard wget/urllib User-Agent, so pretend to be a modern
-    # browser.
-    user_agent = "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:84.0) Gecko/20100101 Firefox/84.0"
-
     def check_certs(self, d):
         """
         Should certificates be checked?
@@ -356,7 +351,7 @@ class Wget(FetchMethod):
                 # Some servers (FusionForge, as used on Alioth) require that the
                 # optional Accept header is set.
                 r.add_header("Accept", "*/*")
-                r.add_header("User-Agent", self.user_agent)
+                r.add_header("User-Agent", "bitbake/{}".format(bb.__version__))
                 def add_basic_auth(login_str, request):
                     '''Adds Basic auth to http request, pass in login:password as string'''
                     import base64
