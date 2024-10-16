@@ -8,15 +8,12 @@
 
 import re
 import pytest
+import requests
 from django.urls import reverse
 from selenium.webdriver.support.select import Select
 from tests.functional.functional_helpers import SeleniumFunctionalTestCase
-from orm.models import Project
 from selenium.webdriver.common.by import By
 
-
-@pytest.mark.django_db
-@pytest.mark.order("last")
 class TestCreateNewProject(SeleniumFunctionalTestCase):
 
     def _create_test_new_project(
@@ -31,6 +28,20 @@ class TestCreateNewProject(SeleniumFunctionalTestCase):
           - Release: Any string
           - Merge Toaster settings: True or False
         """
+
+        # Obtain a CSRF token from a suitable URL
+        projs = requests.get(self.live_server_url + reverse('newproject'))
+        csrftoken = projs.cookies.get('csrftoken')
+
+        # Use the projects typeahead to find out if the project already exists
+        req = requests.get(self.live_server_url + reverse('xhr_projectstypeahead'), {'search': project_name, 'format' : 'json'})
+        data = req.json()
+        # Delete any existing projects
+        for result in data['results']:
+            del_url = reverse('xhr_project', args=(result['id'],))
+            del_response = requests.delete(self.live_server_url + del_url, cookies={'csrftoken': csrftoken}, headers={'X-CSRFToken': csrftoken})
+            self.assertEqual(del_response.status_code, 200)
+
         self.get(reverse('newproject'))
         self.wait_until_visible('#new-project-name', poll=3)
         self.driver.find_element(By.ID,
@@ -59,10 +70,11 @@ class TestCreateNewProject(SeleniumFunctionalTestCase):
             project_name in element.text,
             f"New project name:{project_name} not in new project notification"
         )
-        self.assertTrue(
-            Project.objects.filter(name=project_name).count(),
-            f"New project:{project_name} not found in database"
-        )
+
+        # Use the projects typeahead again to check the project now exists
+        req = requests.get(self.live_server_url + reverse('xhr_projectstypeahead'), {'search': project_name, 'format' : 'json'})
+        data = req.json()
+        self.assertGreater(len(data['results']), 0, f"New project:{project_name} not found in database")
 
         # check release
         self.assertTrue(re.search(
