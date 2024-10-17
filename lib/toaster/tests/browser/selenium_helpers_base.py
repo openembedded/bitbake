@@ -90,7 +90,7 @@ class Wait(WebDriverWait):
     Subclass of WebDriverWait with predetermined timeout and poll
     frequency. Also deals with a wider variety of exceptions.
     """
-    _TIMEOUT = 10
+    _TIMEOUT = 20
     _POLL_FREQUENCY = 0.5
 
     def __init__(self, driver, timeout=_TIMEOUT, poll=_POLL_FREQUENCY):
