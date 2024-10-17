@@ -108,9 +108,9 @@ class TestLayerDetailsPage(SeleniumTestCase):
             save_btn.click()
 
         try:
-            self.wait_until_visible("#save-changes-for-switch", poll=3)
+            self.wait_until_visible("#save-changes-for-switch")
             btn_save_chg_for_switch = self.wait_until_clickable(
-                "#save-changes-for-switch", poll=3)
+                "#save-changes-for-switch")
             btn_save_chg_for_switch.click()
         except ElementClickInterceptedException:
             self.skipTest(
@@ -148,9 +148,9 @@ class TestLayerDetailsPage(SeleniumTestCase):
         dir_input.send_keys(new_dir)
 
         try:
-            self.wait_until_visible("#save-changes-for-switch", poll=3)
+            self.wait_until_visible("#save-changes-for-switch")
             btn_save_chg_for_switch = self.wait_until_clickable(
-                "#save-changes-for-switch", poll=3)
+                "#save-changes-for-switch")
             btn_save_chg_for_switch.click()
         except ElementClickInterceptedException:
             self.skipTest(
