@@ -17,8 +17,6 @@ from selenium.webdriver.common.by import By
 from tests.functional.utils import get_projectId_from_url
 
 
-@pytest.mark.django_db
-@pytest.mark.order("second_to_last")
 class FuntionalTestBasic(SeleniumFunctionalTestCase):
     """Basic functional tests for Toaster"""
     project_id = None
@@ -26,25 +24,7 @@ class FuntionalTestBasic(SeleniumFunctionalTestCase):
     def setUp(self):
         super(FuntionalTestBasic, self).setUp()
         if not FuntionalTestBasic.project_id:
-            self._create_slenium_project()
-            current_url = self.driver.current_url
-            FuntionalTestBasic.project_id = get_projectId_from_url(current_url)
-
-#   testcase (1514)
-    def _create_slenium_project(self):
-        project_name = 'selenium-project'
-        self.get(reverse('newproject'))
-        self.wait_until_visible('#new-project-name', poll=3)
-        self.driver.find_element(By.ID, "new-project-name").send_keys(project_name)
-        self.driver.find_element(By.ID, 'projectversion').click()
-        self.driver.find_element(By.ID, "create-project-button").click()
-        element = self.wait_until_visible('#project-created-notification', poll=10)
-        self.assertTrue(self.element_exists('#project-created-notification'),'Project creation notification not shown')
-        self.assertTrue(project_name in element.text,
-                        "New project name not in new project notification")
-        self.assertTrue(Project.objects.filter(name=project_name).count(),
-                        "New project not found in database")
-        return Project.objects.last().id
+            FuntionalTestBasic.project_id = self.create_new_project('selenium-project', '3', None, False)
 
  #  testcase (1515)
     def test_verify_left_bar_menu(self):
