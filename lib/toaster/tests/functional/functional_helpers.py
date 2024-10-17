@@ -12,9 +12,12 @@ import logging
 import subprocess
 import signal
 import re
+import requests
 
+from django.urls import reverse
 from tests.browser.selenium_helpers_base import SeleniumTestCaseBase
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.select import Select
 from selenium.common.exceptions import NoSuchElementException
 
 logger = logging.getLogger("toaster")
@@ -136,3 +139,72 @@ class SeleniumFunctionalTestCase(SeleniumTestCaseBase):
         except NoSuchElementException:
             return False
         return element
+
+    def _create_test_new_project(
+        self,
+        project_name,
+        release,
+        release_title,
+        merge_toaster_settings,
+    ):
+        """ Create/Test new project using:
+          - Project Name: Any string
+          - Release: Any string
+          - Merge Toaster settings: True or False
+        """
+
+        # Obtain a CSRF token from a suitable URL
+        projs = requests.get(self.live_server_url + reverse('newproject'))
+        csrftoken = projs.cookies.get('csrftoken')
+
+        # Use the projects typeahead to find out if the project already exists
+        req = requests.get(self.live_server_url + reverse('xhr_projectstypeahead'), {'search': project_name, 'format' : 'json'})
+        data = req.json()
+        # Delete any existing projects
+        for result in data['results']:
+            del_url = reverse('xhr_project', args=(result['id'],))
+            del_response = requests.delete(self.live_server_url + del_url, cookies={'csrftoken': csrftoken}, headers={'X-CSRFToken': csrftoken})
+            self.assertEqual(del_response.status_code, 200)
+
+        self.get(reverse('newproject'))
+        self.wait_until_visible('#new-project-name', poll=3)
+        self.driver.find_element(By.ID,
+                                 "new-project-name").send_keys(project_name)
+
+        select = Select(self.find('#projectversion'))
+        select.select_by_value(release)
+
+        # check merge toaster settings
+        checkbox = self.find('.checkbox-mergeattr')
+        if merge_toaster_settings:
+            if not checkbox.is_selected():
+                checkbox.click()
+        else:
+            if checkbox.is_selected():
+                checkbox.click()
+
+        self.driver.find_element(By.ID, "create-project-button").click()
+
+        element = self.wait_until_visible('#project-created-notification', poll=3)
+        self.assertTrue(
+            self.element_exists('#project-created-notification'),
+            f"Project:{project_name} creation notification not shown"
+        )
+        self.assertTrue(
+            project_name in element.text,
+            f"New project name:{project_name} not in new project notification"
+        )
+
+        # Use the projects typeahead again to check the project now exists
+        req = requests.get(self.live_server_url + reverse('xhr_projectstypeahead'), {'search': project_name, 'format' : 'json'})
+        data = req.json()
+        self.assertGreater(len(data['results']), 0, f"New project:{project_name} not found in database")
+
+        # check release
+        self.assertTrue(re.search(
+            release_title,
+            self.driver.find_element(By.XPATH,
+                                     "//span[@id='project-release-title']"
+                                     ).text),
+                        'The project release is not defined')
+
