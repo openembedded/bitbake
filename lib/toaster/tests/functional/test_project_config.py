@@ -117,57 +117,52 @@ class TestProjectConfig(SeleniumFunctionalTestCase):
         self._navigate_bbv_page()
 
         # activate the input to edit download dir
-        try:
-            change_dl_dir_btn = self.wait_until_visible('#change-dl_dir-icon')
-        except TimeoutException:
-            # If download dir is not displayed, test is skipped
-            change_dl_dir_btn = None
+        change_dl_dir_btn = self.wait_until_visible('#change-dl_dir-icon')
 
-        if change_dl_dir_btn:
-            change_dl_dir_btn = self.wait_until_visible('#change-dl_dir-icon')
-            change_dl_dir_btn.click()
+        change_dl_dir_btn = self.wait_until_visible('#change-dl_dir-icon')
+        change_dl_dir_btn.click()
 
-            # downloads dir path doesn't start with / or ${...}
-            input_field = self.wait_until_visible('#new-dl_dir')
-            input_field.clear()
-            self.enter_text('#new-dl_dir', 'home/foo')
-            element = self.wait_until_visible('#hintError-initialChar-dl_dir')
+        # downloads dir path doesn't start with / or ${...}
+        input_field = self.wait_until_visible('#new-dl_dir')
+        input_field.clear()
+        self.enter_text('#new-dl_dir', 'home/foo')
+        element = self.wait_until_visible('#hintError-initialChar-dl_dir')
 
-            msg = 'downloads directory path starts with invalid character but ' \
-                'treated as valid'
-            self.assertTrue((self.INVALID_PATH_START_TEXT in element.text), msg)
+        msg = 'downloads directory path starts with invalid character but ' \
+            'treated as valid'
+        self.assertTrue((self.INVALID_PATH_START_TEXT in element.text), msg)
 
-            # downloads dir path has a space
-            self.driver.find_element(By.ID, 'new-dl_dir').clear()
-            self.enter_text('#new-dl_dir', '/foo/bar a')
+        # downloads dir path has a space
+        self.driver.find_element(By.ID, 'new-dl_dir').clear()
+        self.enter_text('#new-dl_dir', '/foo/bar a')
 
-            element = self.wait_until_visible('#hintError-dl_dir')
-            msg = 'downloads directory path characters invalid but treated as valid'
-            self.assertTrue((self.INVALID_PATH_CHAR_TEXT in element.text), msg)
+        element = self.wait_until_visible('#hintError-dl_dir')
+        msg = 'downloads directory path characters invalid but treated as valid'
+        self.assertTrue((self.INVALID_PATH_CHAR_TEXT in element.text), msg)
 
-            # downloads dir path starts with ${...} but has a space
-            self.driver.find_element(By.ID,'new-dl_dir').clear()
-            self.enter_text('#new-dl_dir', '${TOPDIR}/down foo')
+        # downloads dir path starts with ${...} but has a space
+        self.driver.find_element(By.ID,'new-dl_dir').clear()
+        self.enter_text('#new-dl_dir', '${TOPDIR}/down foo')
 
-            element = self.wait_until_visible('#hintError-dl_dir')
-            msg = 'downloads directory path characters invalid but treated as valid'
-            self.assertTrue((self.INVALID_PATH_CHAR_TEXT in element.text), msg)
+        element = self.wait_until_visible('#hintError-dl_dir')
+        msg = 'downloads directory path characters invalid but treated as valid'
+        self.assertTrue((self.INVALID_PATH_CHAR_TEXT in element.text), msg)
 
-            # downloads dir path starts with /
-            self.driver.find_element(By.ID,'new-dl_dir').clear()
-            self.enter_text('#new-dl_dir', '/bar/foo')
+        # downloads dir path starts with /
+        self.driver.find_element(By.ID,'new-dl_dir').clear()
+        self.enter_text('#new-dl_dir', '/bar/foo')
 
-            hidden_element = self.driver.find_element(By.ID,'hintError-dl_dir')
-            self.assertEqual(hidden_element.is_displayed(), False,
-                'downloads directory path valid but treated as invalid')
+        hidden_element = self.driver.find_element(By.ID,'hintError-dl_dir')
+        self.assertEqual(hidden_element.is_displayed(), False,
+            'downloads directory path valid but treated as invalid')
 
-            # downloads dir path starts with ${...}
-            self.driver.find_element(By.ID,'new-dl_dir').clear()
-            self.enter_text('#new-dl_dir', '${TOPDIR}/down')
+        # downloads dir path starts with ${...}
+        self.driver.find_element(By.ID,'new-dl_dir').clear()
+        self.enter_text('#new-dl_dir', '${TOPDIR}/down')
 
-            hidden_element = self.driver.find_element(By.ID,'hintError-dl_dir')
-            self.assertEqual(hidden_element.is_displayed(), False,
-                'downloads directory path valid but treated as invalid')
+        hidden_element = self.driver.find_element(By.ID,'hintError-dl_dir')
+        self.assertEqual(hidden_element.is_displayed(), False,
+            'downloads directory path valid but treated as invalid')
 
     def test_set_sstate_dir(self):
         """
@@ -176,55 +171,50 @@ class TestProjectConfig(SeleniumFunctionalTestCase):
         """
         self._navigate_bbv_page()
 
-        try:
-            btn_chg_sstate_dir = self.wait_until_visible('#change-sstate_dir-icon')
-            self.click('#change-sstate_dir-icon')
-        except TimeoutException:
-            # If sstate_dir is not displayed, test is skipped
-            btn_chg_sstate_dir = None
+        btn_chg_sstate_dir = self.wait_until_visible('#change-sstate_dir-icon')
+        self.click('#change-sstate_dir-icon')
 
-        if btn_chg_sstate_dir:  # Skip continuation if sstate_dir is not displayed
-            # path doesn't start with / or ${...}
-            input_field = self.wait_until_visible('#new-sstate_dir')
-            input_field.clear()
-            self.enter_text('#new-sstate_dir', 'home/foo')
-            element = self.wait_until_visible('#hintError-initialChar-sstate_dir')
+        # path doesn't start with / or ${...}
+        input_field = self.wait_until_visible('#new-sstate_dir')
+        input_field.clear()
+        self.enter_text('#new-sstate_dir', 'home/foo')
+        element = self.wait_until_visible('#hintError-initialChar-sstate_dir')
 
-            msg = 'sstate directory path starts with invalid character but ' \
-                'treated as valid'
-            self.assertTrue((self.INVALID_PATH_START_TEXT in element.text), msg)
+        msg = 'sstate directory path starts with invalid character but ' \
+            'treated as valid'
+        self.assertTrue((self.INVALID_PATH_START_TEXT in element.text), msg)
 
-            # path has a space
-            self.driver.find_element(By.ID, 'new-sstate_dir').clear()
-            self.enter_text('#new-sstate_dir', '/foo/bar a')
+        # path has a space
+        self.driver.find_element(By.ID, 'new-sstate_dir').clear()
+        self.enter_text('#new-sstate_dir', '/foo/bar a')
 
-            element = self.wait_until_visible('#hintError-sstate_dir')
-            msg = 'sstate directory path characters invalid but treated as valid'
-            self.assertTrue((self.INVALID_PATH_CHAR_TEXT in element.text), msg)
+        element = self.wait_until_visible('#hintError-sstate_dir')
+        msg = 'sstate directory path characters invalid but treated as valid'
+        self.assertTrue((self.INVALID_PATH_CHAR_TEXT in element.text), msg)
 
-            # path starts with ${...} but has a space
-            self.driver.find_element(By.ID,'new-sstate_dir').clear()
-            self.enter_text('#new-sstate_dir', '${TOPDIR}/down foo')
+        # path starts with ${...} but has a space
+        self.driver.find_element(By.ID,'new-sstate_dir').clear()
+        self.enter_text('#new-sstate_dir', '${TOPDIR}/down foo')
 
-            element = self.wait_until_visible('#hintError-sstate_dir')
-            msg = 'sstate directory path characters invalid but treated as valid'
-            self.assertTrue((self.INVALID_PATH_CHAR_TEXT in element.text), msg)
+        element = self.wait_until_visible('#hintError-sstate_dir')
+        msg = 'sstate directory path characters invalid but treated as valid'
+        self.assertTrue((self.INVALID_PATH_CHAR_TEXT in element.text), msg)
 
-            # path starts with /
-            self.driver.find_element(By.ID,'new-sstate_dir').clear()
-            self.enter_text('#new-sstate_dir', '/bar/foo')
+        # path starts with /
+        self.driver.find_element(By.ID,'new-sstate_dir').clear()
+        self.enter_text('#new-sstate_dir', '/bar/foo')
 
-            hidden_element = self.driver.find_element(By.ID, 'hintError-sstate_dir')
-            self.assertEqual(hidden_element.is_displayed(), False,
-                'sstate directory path valid but treated as invalid')
+        hidden_element = self.driver.find_element(By.ID, 'hintError-sstate_dir')
+        self.assertEqual(hidden_element.is_displayed(), False,
+            'sstate directory path valid but treated as invalid')
 
-            # paths starts with ${...}
-            self.driver.find_element(By.ID, 'new-sstate_dir').clear()
-            self.enter_text('#new-sstate_dir', '${TOPDIR}/down')
+        # paths starts with ${...}
+        self.driver.find_element(By.ID, 'new-sstate_dir').clear()
+        self.enter_text('#new-sstate_dir', '${TOPDIR}/down')
 
-            hidden_element = self.driver.find_element(By.ID, 'hintError-sstate_dir')
-            self.assertEqual(hidden_element.is_displayed(), False,
-                'sstate directory path valid but treated as invalid')
+        hidden_element = self.driver.find_element(By.ID, 'hintError-sstate_dir')
+        self.assertEqual(hidden_element.is_displayed(), False,
+            'sstate directory path valid but treated as invalid')
 
     def _change_bbv_value(self, **kwargs):
         var_name, field, btn_id, input_id, value, save_btn, *_ = kwargs.values()
