@@ -24,7 +24,7 @@ class TestCreateNewProject(SeleniumFunctionalTestCase):
         release = '3'
         release_title = 'Yocto Project master'
         project_name = 'projectmaster'
-        self._create_test_new_project(
+        self.create_new_project(
             project_name,
             release,
             release_title,
@@ -40,7 +40,7 @@ class TestCreateNewProject(SeleniumFunctionalTestCase):
         release = '1'
         release_title = 'Yocto Project 5.0 "Scarthgap"'
         project_name = 'projectscarthgap'
-        self._create_test_new_project(
+        self.create_new_project(
             project_name,
             release,
             release_title,
@@ -56,7 +56,7 @@ class TestCreateNewProject(SeleniumFunctionalTestCase):
         release = '5'
         release_title = 'Yocto Project 4.0 "Kirkstone"'
         project_name = 'projectkirkstone'
-        self._create_test_new_project(
+        self.create_new_project(
             project_name,
             release,
             release_title,
@@ -72,7 +72,7 @@ class TestCreateNewProject(SeleniumFunctionalTestCase):
         release = '2'
         release_title = 'Local Yocto Project'
         project_name = 'projectlocal'
-        self._create_test_new_project(
+        self.create_new_project(
             project_name,
             release,
             release_title,
