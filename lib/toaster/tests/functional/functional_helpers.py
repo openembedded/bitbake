@@ -140,7 +140,7 @@ class SeleniumFunctionalTestCase(SeleniumTestCaseBase):
             return False
         return element
 
-    def _create_test_new_project(
+    def create_new_project(
         self,
         project_name,
         release,
@@ -183,6 +183,8 @@ class SeleniumFunctionalTestCase(SeleniumTestCaseBase):
             if checkbox.is_selected():
                 checkbox.click()
 
+        self.wait_until_clickable('#create-project-button')
+
         self.driver.find_element(By.ID, "create-project-button").click()
 
         element = self.wait_until_visible('#project-created-notification', poll=3)
@@ -200,11 +202,17 @@ class SeleniumFunctionalTestCase(SeleniumTestCaseBase):
         data = req.json()
         self.assertGreater(len(data['results']), 0, f"New project:{project_name} not found in database")
 
+        project_id = data['results'][0]['id']
+
+        self.wait_until_visible('#project-release-title')
+
         # check release
-        self.assertTrue(re.search(
-            release_title,
-            self.driver.find_element(By.XPATH,
+        if release_title is not None:
+            self.assertTrue(re.search(
+                release_title,
+                self.driver.find_element(By.XPATH,
                                      "//span[@id='project-release-title']"
                                      ).text),
-                        'The project release is not defined')
+                            'The project release is not defined')
 
+        return project_id
