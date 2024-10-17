@@ -7,7 +7,6 @@
 #
 
 import string
-import random
 import pytest
 from django.urls import reverse
 from selenium.webdriver import Keys
@@ -18,51 +17,12 @@ from selenium.webdriver.common.by import By
 
 from .utils import get_projectId_from_url
 
-
-@pytest.mark.django_db
-@pytest.mark.order("last")
 class TestProjectConfig(SeleniumFunctionalTestCase):
     project_id = None
     PROJECT_NAME = 'TestProjectConfig'
     INVALID_PATH_START_TEXT = 'The directory path should either start with a /'
     INVALID_PATH_CHAR_TEXT = 'The directory path cannot include spaces or ' \
         'any of these characters'
-
-    def _create_project(self, project_name):
-        """ Create/Test new project using:
-          - Project Name: Any string
-          - Release: Any string
-          - Merge Toaster settings: True or False
-        """
-        self.get(reverse('newproject'))
-        self.wait_until_visible('#new-project-name', poll=2)
-        self.find("#new-project-name").send_keys(project_name)
-        select = Select(self.find("#projectversion"))
-        select.select_by_value('3')
-
-        # check merge toaster settings
-        checkbox = self.find('.checkbox-mergeattr')
-        if not checkbox.is_selected():
-            checkbox.click()
-
-        if self.PROJECT_NAME != 'TestProjectConfig':
-            # Reset project name if it's not the default one
-            self.PROJECT_NAME = 'TestProjectConfig'
-
-        self.find("#create-project-button").click()
-
-        try:
-            self.wait_until_visible('#hint-error-project-name', poll=2)
-            url = reverse('project', args=(TestProjectConfig.project_id, ))
-            self.get(url)
-            self.wait_until_visible('#config-nav', poll=3)
-        except TimeoutException:
-            self.wait_until_visible('#config-nav', poll=3)
-
-    def _random_string(self, length):
-        return ''.join(
-            random.choice(string.ascii_letters) for _ in range(length)
-        )
 
     def _get_config_nav_item(self, index):
         config_nav = self.find('#config-nav')
@@ -72,12 +32,10 @@ class TestProjectConfig(SeleniumFunctionalTestCase):
         """ Navigate to project BitBake variables page """
         # check if the menu is displayed
         if TestProjectConfig.project_id is None:
-            self._create_project(project_name=self._random_string(10))
-            current_url = self.driver.current_url
-            TestProjectConfig.project_id = get_projectId_from_url(current_url)
-        else:
-            url = reverse('projectconf', args=(TestProjectConfig.project_id,))
-            self.get(url)
+            TestProjectConfig.project_id = self.create_new_project(self.PROJECT_NAME, '3', None, True)
+
+        url = reverse('projectconf', args=(TestProjectConfig.project_id,))
+        self.get(url)
         self.wait_until_visible('#config-nav', poll=3)
         bbv_page_link = self._get_config_nav_item(9)
         bbv_page_link.click()
