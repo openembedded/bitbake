@@ -561,7 +561,6 @@ class TestProjectPage(TestProjectPageBase):
 
         # check "Remove layer" button works
         self.wait_until_visible('#layerstable tbody tr')
-        self.wait_until_clickable('.add-del-layers')
         rows = self.find_all('#layerstable tbody tr')
         layer_to_remove = rows[0]
         remove_btn = layer_to_remove.find_element(
