@@ -227,6 +227,13 @@ class SeleniumTestCaseBase(unittest.TestCase):
         Wait(self.driver, poll=poll).until(is_visible, msg)
         return self.find(selector)
 
+    def wait_until_not_visible(self, selector, timeout=Wait._TIMEOUT):
+        """ Wait until element matching CSS selector is not visible on the page """
+        is_visible = lambda driver: self.find(selector).is_displayed()
+        msg = 'An element matching "%s" should be visible' % selector
+        Wait(self.driver, timeout=timeout).until_not(is_visible, msg)
+        return self.find(selector)
+
     def wait_until_clickable(self, selector, poll=1):
         """ Wait until element matching CSS selector is visible on the page """
         sel = selector
