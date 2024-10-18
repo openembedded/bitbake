@@ -95,7 +95,7 @@ class TestNewProjectPage(SeleniumTestCase):
         self.wait_until_visible('#hint-error-project-name')
         element = self.find('#hint-error-project-name')
 
-        self.assertIn(("Project names must be unique", element.text),
+        self.assertIn("Project names must be unique", element.text,
                         "Did not find unique project name error message")
 
         # Try and click it anyway, if it submits we'll have a new project in
