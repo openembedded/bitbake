@@ -204,6 +204,8 @@ class SeleniumFunctionalTestCase(SeleniumTestCaseBase):
 
         project_id = data['results'][0]['id']
 
+        self.wait_until_visible('#project-release-title')
+
         # check release
         if release_title is not None:
             self.assertTrue(re.search(
