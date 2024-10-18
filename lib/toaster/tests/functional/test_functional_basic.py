@@ -40,44 +40,44 @@ class FuntionalTestBasic(SeleniumFunctionalTestCase):
         try:
             self.driver.find_element(By.XPATH, "//*[@id='config-nav']/ul/li/a[@href="+'"'+project_URL+'customimages/"'+"]").click()
             self.wait_until_present('#config-nav', poll=10)
-            self.assertTrue(re.search("Custom images",self.driver.find_element(By.XPATH, "//div[@class='col-md-10']").text),'Custom images information is not loading properly')
         except:
             self.fail(msg='No Custom images tab available')
+        self.assertTrue(re.search("Custom images",self.driver.find_element(By.XPATH, "//div[@class='col-md-10']").text),'Custom images information is not loading properly')
 
         try:
             self.driver.find_element(By.XPATH, "//*[@id='config-nav']/ul/li/a[@href="+'"'+project_URL+'images/"'+"]").click()
             self.wait_until_present('#config-nav', poll=10)
-            self.assertTrue(re.search("Compatible image recipes",self.driver.find_element(By.XPATH, "//div[@class='col-md-10']").text),'The Compatible image recipes information is not loading properly')
         except:
             self.fail(msg='No Compatible image tab available')
+        self.assertTrue(re.search("Compatible image recipes",self.driver.find_element(By.XPATH, "//div[@class='col-md-10']").text),'The Compatible image recipes information is not loading properly')
 
         try:
             self.driver.find_element(By.XPATH, "//*[@id='config-nav']/ul/li/a[@href="+'"'+project_URL+'softwarerecipes/"'+"]").click()
             self.wait_until_present('#config-nav', poll=10)
-            self.assertTrue(re.search("Compatible software recipes",self.driver.find_element(By.XPATH, "//div[@class='col-md-10']").text),'The Compatible software recipe information is not loading properly')
         except:
             self.fail(msg='No Compatible software recipe tab available')
+        self.assertTrue(re.search("Compatible software recipes",self.driver.find_element(By.XPATH, "//div[@class='col-md-10']").text),'The Compatible software recipe information is not loading properly')
 
         try:
             self.driver.find_element(By.XPATH, "//*[@id='config-nav']/ul/li/a[@href="+'"'+project_URL+'machines/"'+"]").click()
             self.wait_until_present('#config-nav', poll=10)
-            self.assertTrue(re.search("Compatible machines",self.driver.find_element(By.XPATH, "//div[@class='col-md-10']").text),'The Compatible machine information is not loading properly')
         except:
             self.fail(msg='No Compatible machines tab available')
+        self.assertTrue(re.search("Compatible machines",self.driver.find_element(By.XPATH, "//div[@class='col-md-10']").text),'The Compatible machine information is not loading properly')
 
         try:
             self.driver.find_element(By.XPATH, "//*[@id='config-nav']/ul/li/a[@href="+'"'+project_URL+'layers/"'+"]").click()
             self.wait_until_present('#config-nav', poll=10)
-            self.assertTrue(re.search("Compatible layers",self.driver.find_element(By.XPATH, "//div[@class='col-md-10']").text),'The Compatible layer information is not loading properly')
         except:
             self.fail(msg='No Compatible layers tab available')
+        self.assertTrue(re.search("Compatible layers",self.driver.find_element(By.XPATH, "//div[@class='col-md-10']").text),'The Compatible layer information is not loading properly')
 
         try:
             self.driver.find_element(By.XPATH, "//*[@id='config-nav']/ul/li/a[@href="+'"'+project_URL+'configuration"'+"]").click()
             self.wait_until_present('#config-nav', poll=10)
-            self.assertTrue(re.search("Bitbake variables",self.driver.find_element(By.XPATH, "//div[@class='col-md-10']").text),'The Bitbake variables information is not loading properly')
         except:
             self.fail(msg='No Bitbake variables tab available')
+        self.assertTrue(re.search("Bitbake variables",self.driver.find_element(By.XPATH, "//div[@class='col-md-10']").text),'The Bitbake variables information is not loading properly')
 
 #   testcase (1516)
     def test_review_configuration_information(self):
@@ -86,9 +86,11 @@ class FuntionalTestBasic(SeleniumFunctionalTestCase):
         self.find_element_by_link_text_in_table('projectstable', 'selenium-project').click()
         project_URL=self.get_URL()
         self.wait_until_present('#config-nav', poll=10)
+
+        # Machine section of page
+        self.assertTrue(self.element_exists('#machine-section'),'Machine section for the project configuration page does not exist')
+        self.assertTrue(re.search("qemux86-64",self.driver.find_element(By.XPATH, "//span[@id='project-machine-name']").text),'The machine type is not assigned')
         try:
-           self.assertTrue(self.element_exists('#machine-section'),'Machine section for the project configuration page does not exist')
-           self.assertTrue(re.search("qemux86-64",self.driver.find_element(By.XPATH, "//span[@id='project-machine-name']").text),'The machine type is not assigned')
            self.driver.find_element(By.XPATH, "//span[@id='change-machine-toggle']").click()
            self.wait_until_visible('#select-machine-form', poll=10)
            self.wait_until_visible('#cancel-machine-change', poll=10)
@@ -96,32 +98,33 @@ class FuntionalTestBasic(SeleniumFunctionalTestCase):
         except:
            self.fail(msg='The machine information is wrong in the configuration page')
 
+        # Most built recipes section
         try:
            self.driver.find_element(By.ID, 'no-most-built')
         except:
            self.fail(msg='No Most built information in project detail page')
 
-        try:
-           self.assertTrue(re.search("Yocto Project master",self.driver.find_element(By.XPATH, "//span[@id='project-release-title']").text),'The project release is not defined')
-        except:
-           self.fail(msg='No project release title information in project detail page')
+        # Project Release title
+        self.assertTrue(re.search("Yocto Project master",self.driver.find_element(By.XPATH, "//span[@id='project-release-title']").text), 'The project release is not defined in the project detail page')
 
+        # List of layers in project
+        self.driver.find_element(By.XPATH, "//div[@id='layer-container']")
+        self.assertTrue(re.search("3",self.driver.find_element(By.ID, "project-layers-count").text),'There should be 3 layers listed in the layer count')
         try:
-           self.driver.find_element(By.XPATH, "//div[@id='layer-container']")
-           self.assertTrue(re.search("3",self.driver.find_element(By.ID, "project-layers-count").text),'There should be 3 layers listed in the layer count')
            layer_list = self.driver.find_element(By.ID, "layers-in-project-list")
            layers = layer_list.find_elements(By.TAG_NAME, "li")
-           for layer in layers:
-               if re.match ("openembedded-core",layer.text):
-                    print ("openembedded-core layer is a default layer in the project configuration")
-               elif re.match ("meta-poky",layer.text):
-                  print ("meta-poky layer is a default layer in the project configuration")
-               elif re.match ("meta-yocto-bsp",layer.text):
-                  print ("meta-yocto-bsp is a default layer in the project configuratoin")
-               else:
-                  self.fail(msg='default layers are missing from the project configuration')
         except:
            self.fail(msg='No Layer information in project detail page')
+
+        for layer in layers:
+            if re.match ("openembedded-core", layer.text):
+                print ("openembedded-core layer is a default layer in the project configuration")
+            elif re.match ("meta-poky", layer.text):
+                 print ("meta-poky layer is a default layer in the project configuration")
+            elif re.match ("meta-yocto-bsp", layer.text):
+                 print ("meta-yocto-bsp is a default layer in the project configuratoin")
+            else:
+                 self.fail(msg='default layers are missing from the project configuration')
 
 #   testcase (1517)
     def test_verify_machine_information(self):
@@ -130,9 +133,9 @@ class FuntionalTestBasic(SeleniumFunctionalTestCase):
         self.find_element_by_link_text_in_table('projectstable', 'selenium-project').click()
         self.wait_until_present('#config-nav', poll=10)
 
+        self.assertTrue(self.element_exists('#machine-section'),'Machine section for the project configuration page does not exist')
+        self.assertTrue(re.search("qemux86-64",self.driver.find_element(By.ID, "project-machine-name").text),'The machine type is not assigned')
         try:
-            self.assertTrue(self.element_exists('#machine-section'),'Machine section for the project configuration page does not exist')
-            self.assertTrue(re.search("qemux86-64",self.driver.find_element(By.ID, "project-machine-name").text),'The machine type is not assigned')
             self.driver.find_element(By.ID, "change-machine-toggle").click()
             self.wait_until_visible('#select-machine-form', poll=10)
             self.wait_until_visible('#cancel-machine-change', poll=10)
@@ -147,13 +150,13 @@ class FuntionalTestBasic(SeleniumFunctionalTestCase):
         self.find_element_by_link_text_in_table('projectstable', 'selenium-project').click()
         self.wait_until_present('#config-nav', poll=10)
         project_URL=self.get_URL()
+        self.assertTrue(re.search("You haven't built any recipes yet",self.driver.find_element(By.ID, "no-most-built").text),'Default message of no builds is not present')
         try:
-            self.assertTrue(re.search("You haven't built any recipes yet",self.driver.find_element(By.ID, "no-most-built").text),'Default message of no builds is not present')
             self.driver.find_element(By.XPATH, "//div[@id='no-most-built']/p/a[@href="+'"'+project_URL+'images/"'+"]").click()
-            self.wait_until_present('#config-nav', poll=10)
-            self.assertTrue(re.search("Compatible image recipes",self.driver.find_element(By.XPATH, "//div[@class='col-md-10']").text),'The Choose a recipe to build link  is not working  properly')
         except:
             self.fail(msg='No Most built information in project detail page')
+        self.wait_until_present('#config-nav', poll=10)
+        self.assertTrue(re.search("Compatible image recipes",self.driver.find_element(By.XPATH, "//div[@class='col-md-10']").text),'The Choose a recipe to build link  is not working  properly')
 
 #   testcase (1519)
     def test_verify_project_release_information(self):
@@ -161,11 +164,7 @@ class FuntionalTestBasic(SeleniumFunctionalTestCase):
         self.wait_until_present('#projectstable', poll=10)
         self.find_element_by_link_text_in_table('projectstable', 'selenium-project').click()
         self.wait_until_present('#config-nav', poll=10)
-
-        try:
-            self.assertTrue(re.search("Yocto Project master",self.driver.find_element(By.ID, "project-release-title").text),'The project release is not defined')
-        except:
-            self.fail(msg='No project release title information in project detail page')
+        self.assertTrue(re.search("Yocto Project master",self.driver.find_element(By.ID, "project-release-title").text), 'No project release title information in project detail page')
 
 #   testcase (1520)
     def test_verify_layer_information(self):
@@ -174,28 +173,32 @@ class FuntionalTestBasic(SeleniumFunctionalTestCase):
         self.find_element_by_link_text_in_table('projectstable', 'selenium-project').click()
         self.wait_until_present('#config-nav', poll=10)
         project_URL=self.get_URL()
+        self.driver.find_element(By.XPATH, "//div[@id='layer-container']")
+        self.assertTrue(re.search("3",self.driver.find_element(By.ID, "project-layers-count").text),'There should be 3 layers listed in the layer count')
+
         try:
-           self.driver.find_element(By.XPATH, "//div[@id='layer-container']")
-           self.assertTrue(re.search("3",self.driver.find_element(By.ID, "project-layers-count").text),'There should be 3 layers listed in the layer count')
            layer_list = self.driver.find_element(By.ID, "layers-in-project-list")
            layers = layer_list.find_elements(By.TAG_NAME, "li")
+        except:
+            self.fail(msg='No Layer information in project detail page')
 
-           for layer in layers:
-               if re.match ("openembedded-core",layer.text):
-                    print ("openembedded-core layer is a default layer in the project configuration")
-               elif re.match ("meta-poky",layer.text):
-                  print ("meta-poky layer is a default layer in the project configuration")
-               elif re.match ("meta-yocto-bsp",layer.text):
-                  print ("meta-yocto-bsp is a default layer in the project configuratoin")
-               else:
-                  self.fail(msg='default layers are missing from the project configuration')
+        for layer in layers:
+            if re.match ("openembedded-core",layer.text):
+                print ("openembedded-core layer is a default layer in the project configuration")
+            elif re.match ("meta-poky",layer.text):
+                print ("meta-poky layer is a default layer in the project configuration")
+            elif re.match ("meta-yocto-bsp",layer.text):
+                print ("meta-yocto-bsp is a default layer in the project configuratoin")
+            else:
+                self.fail(msg='default layers are missing from the project configuration')
 
+        try:
            self.driver.find_element(By.XPATH, "//input[@id='layer-add-input']")
            self.driver.find_element(By.XPATH, "//button[@id='add-layer-btn']")
            self.driver.find_element(By.XPATH, "//div[@id='layer-container']/form[@class='form-inline']/p/a[@id='view-compatible-layers']")
            self.driver.find_element(By.XPATH, "//div[@id='layer-container']/form[@class='form-inline']/p/a[@href="+'"'+project_URL+'importlayer"'+"]")
         except:
-            self.fail(msg='No Layer information in project detail page')
+            self.fail(msg='Layer configuration controls missing')
 
 #   testcase (1521)
     def test_verify_project_detail_links(self):
@@ -211,7 +214,11 @@ class FuntionalTestBasic(SeleniumFunctionalTestCase):
         try:
             self.driver.find_element(By.XPATH, "//div[@id='project-topbar']/ul[@class='nav nav-tabs']/li/a[@href="+'"'+project_URL+'builds/"'+"]").click()
             self.wait_until_visible('#project-topbar', poll=10)
-            self.assertTrue(re.search("Builds",self.driver.find_element(By.XPATH, "//div[@id='project-topbar']/ul[@class='nav nav-tabs']/li/a[@href="+'"'+project_URL+'builds/"'+"]").text), 'Builds tab in project topbar is misspelled')
+        except:
+            self.fail(msg='Builds tab information is not present')
+
+        self.assertTrue(re.search("Builds",self.driver.find_element(By.XPATH, "//div[@id='project-topbar']/ul[@class='nav nav-tabs']/li/a[@href="+'"'+project_URL+'builds/"'+"]").text), 'Builds tab in project topbar is misspelled')
+        try:
             self.driver.find_element(By.XPATH, "//div[@id='empty-state-projectbuildstable']")
         except:
             self.fail(msg='Builds tab information is not present')
@@ -219,7 +226,10 @@ class FuntionalTestBasic(SeleniumFunctionalTestCase):
         try:
             self.driver.find_element(By.XPATH, "//div[@id='project-topbar']/ul[@class='nav nav-tabs']/li/a[@href="+'"'+project_URL+'importlayer"'+"]").click()
             self.wait_until_visible('#project-topbar', poll=10)
-            self.assertTrue(re.search("Import layer",self.driver.find_element(By.XPATH, "//div[@id='project-topbar']/ul[@class='nav nav-tabs']/li/a[@href="+'"'+project_URL+'importlayer"'+"]").text), 'Import layer tab in project topbar is misspelled')
+        except:
+            self.fail(msg='Import layer tab not loading properly')
+        self.assertTrue(re.search("Import layer",self.driver.find_element(By.XPATH, "//div[@id='project-topbar']/ul[@class='nav nav-tabs']/li/a[@href="+'"'+project_URL+'importlayer"'+"]").text), 'Import layer tab in project topbar is misspelled')
+        try:
             self.driver.find_element(By.XPATH, "//fieldset[@id='repo-select']")
             self.driver.find_element(By.XPATH, "//fieldset[@id='git-repo']")
         except:
@@ -228,10 +238,10 @@ class FuntionalTestBasic(SeleniumFunctionalTestCase):
         try:
             self.driver.find_element(By.XPATH, "//div[@id='project-topbar']/ul[@class='nav nav-tabs']/li/a[@href="+'"'+project_URL+'newcustomimage/"'+"]").click()
             self.wait_until_visible('#project-topbar', poll=10)
-            self.assertTrue(re.search("New custom image",self.driver.find_element(By.XPATH, "//div[@id='project-topbar']/ul[@class='nav nav-tabs']/li/a[@href="+'"'+project_URL+'newcustomimage/"'+"]").text), 'New custom image tab in project topbar is misspelled')
-            self.assertTrue(re.search("Select the image recipe you want to customise",self.driver.find_element(By.XPATH, "//div[@class='col-md-12']/h2").text),'The new custom image tab is not loading correctly')
         except:
             self.fail(msg='New custom image tab not loading properly')
+        self.assertTrue(re.search("New custom image",self.driver.find_element(By.XPATH, "//div[@id='project-topbar']/ul[@class='nav nav-tabs']/li/a[@href="+'"'+project_URL+'newcustomimage/"'+"]").text), 'New custom image tab in project topbar is misspelled')
+        self.assertTrue(re.search("Select the image recipe you want to customise",self.driver.find_element(By.XPATH, "//div[@class='col-md-12']/h2").text),'The new custom image tab is not loading correctly')
 
 
 
