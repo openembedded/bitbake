@@ -186,7 +186,7 @@ class SeleniumTestCaseBase(unittest.TestCase):
         self.driver.get(abs_url)
 
         try:  # Ensure page is loaded before proceeding
-            self.wait_until_visible("#global-nav", poll=3)
+            self.wait_until_visible("#global-nav")
         except NoSuchElementException:
             self.driver.implicitly_wait(3)
         except TimeoutException:
@@ -211,20 +211,18 @@ class SeleniumTestCaseBase(unittest.TestCase):
         """ Return the element which currently has focus on the page """
         return self.driver.switch_to.active_element
 
-    def wait_until_present(self, selector, poll=0.5):
+    def wait_until_present(self, selector, timeout=Wait._TIMEOUT):
         """ Wait until element matching CSS selector is on the page """
         is_present = lambda driver: self.find(selector)
         msg = 'An element matching "%s" should be on the page' % selector
-        element = Wait(self.driver, poll=poll).until(is_present, msg)
-        if poll > 2:
-            time.sleep(poll)  # element need more delay to be present
+        element = Wait(self.driver, timeout=timeout).until(is_present, msg)
         return element
 
-    def wait_until_visible(self, selector, poll=1):
+    def wait_until_visible(self, selector, timeout=Wait._TIMEOUT):
         """ Wait until element matching CSS selector is visible on the page """
         is_visible = lambda driver: self.find(selector).is_displayed()
         msg = 'An element matching "%s" should be visible' % selector
-        Wait(self.driver, poll=poll).until(is_visible, msg)
+        Wait(self.driver, timeout=timeout).until(is_visible, msg)
         return self.find(selector)
 
     def wait_until_not_visible(self, selector, timeout=Wait._TIMEOUT):
@@ -234,15 +232,14 @@ class SeleniumTestCaseBase(unittest.TestCase):
         Wait(self.driver, timeout=timeout).until_not(is_visible, msg)
         return self.find(selector)
 
-    def wait_until_clickable(self, selector, poll=1):
+    def wait_until_clickable(self, selector, timeout=Wait._TIMEOUT):
         """ Wait until element matching CSS selector is visible on the page """
         sel = selector
         if sel.startswith('#'):
             sel = selector[1:]
         WebDriverWait(
             self.driver,
-            Wait._TIMEOUT,
-            poll_frequency=poll
+            timeout=timeout,
         ).until(
             EC.element_to_be_clickable((By.ID, sel
                                         )
