@@ -7,7 +7,6 @@
 #
 
 import string
-import random
 import pytest
 from django.urls import reverse
 from selenium.webdriver import Keys
@@ -19,60 +18,16 @@ from selenium.webdriver.common.by import By
 
 from .utils import get_projectId_from_url, wait_until_build, wait_until_build_cancelled
 
-
-@pytest.mark.django_db
-@pytest.mark.order("last")
-class TestProjectConfigTab(SeleniumFunctionalTestCase):
+class TestProjectConfigTabBase(SeleniumFunctionalTestCase):
     PROJECT_NAME = 'TestProjectConfigTab'
     project_id = None
 
-    def _create_project(self, project_name, **kwargs):
-        """ Create/Test new project using:
-          - Project Name: Any string
-          - Release: Any string
-          - Merge Toaster settings: True or False
-        """
-        release = kwargs.get('release', '3')
-        self.get(reverse('newproject'))
-        self.wait_until_visible('#new-project-name')
-        self.find("#new-project-name").send_keys(project_name)
-        select = Select(self.find("#projectversion"))
-        select.select_by_value(release)
-
-        # check merge toaster settings
-        checkbox = self.find('.checkbox-mergeattr')
-        if not checkbox.is_selected():
-            checkbox.click()
-
-        if self.PROJECT_NAME != 'TestProjectConfigTab':
-            # Reset project name if it's not the default one
-            self.PROJECT_NAME = 'TestProjectConfigTab'
-
-        self.find("#create-project-button").click()
-
-        try:
-            self.wait_until_visible('#hint-error-project-name', poll=3)
-            url = reverse('project', args=(TestProjectConfigTab.project_id, ))
-            self.get(url)
-            self.wait_until_visible('#config-nav', poll=3)
-        except TimeoutException:
-            self.wait_until_visible('#config-nav', poll=3)
-
-    def _random_string(self, length):
-        return ''.join(
-            random.choice(string.ascii_letters) for _ in range(length)
-        )
-
     def _navigate_to_project_page(self):
         # Navigate to project page
-        if TestProjectConfigTab.project_id is None:
-            self._create_project(project_name=self._random_string(10))
-            current_url = self.driver.current_url
-            TestProjectConfigTab.project_id = get_projectId_from_url(
-                current_url)
-        else:
-            url = reverse('project', args=(TestProjectConfigTab.project_id,))
-            self.get(url)
+        if TestProjectConfigTabBase.project_id is None:
+            TestProjectConfigTabBase.project_id = self.create_new_project(self.PROJECT_NAME, '3', None, True)
+        url = reverse('project', args=(TestProjectConfigTabBase.project_id,))
+        self.get(url)
         self.wait_until_visible('#config-nav')
 
     def _create_builds(self):
@@ -113,6 +68,8 @@ class TestProjectConfigTab(SeleniumFunctionalTestCase):
     def _get_config_nav_item(self, index):
         config_nav = self.find('#config-nav')
         return config_nav.find_elements(By.TAG_NAME, 'li')[index]
+
+class TestProjectConfigTab(TestProjectConfigTabBase):
 
     def test_project_config_nav(self):
         """ Test project config tab navigation:
@@ -160,26 +117,26 @@ class TestProjectConfigTab(SeleniumFunctionalTestCase):
         conf_nav_list = [
             # config
             [0, 'Configuration',
-                f"/toastergui/project/{TestProjectConfigTab.project_id}"],
+                f"/toastergui/project/{TestProjectConfigTabBase.project_id}"],
             # custom images
             [2, 'Custom images',
-                f"/toastergui/project/{TestProjectConfigTab.project_id}/customimages"],
+                f"/toastergui/project/{TestProjectConfigTabBase.project_id}/customimages"],
             # image recipes
             [3, 'Image recipes',
-                f"/toastergui/project/{TestProjectConfigTab.project_id}/images"],
+                f"/toastergui/project/{TestProjectConfigTabBase.project_id}/images"],
             # software recipes
             [4, 'Software recipes',
-                f"/toastergui/project/{TestProjectConfigTab.project_id}/softwarerecipes"],
+                f"/toastergui/project/{TestProjectConfigTabBase.project_id}/softwarerecipes"],
             # machines
             [5, 'Machines',
-                f"/toastergui/project/{TestProjectConfigTab.project_id}/machines"],
+                f"/toastergui/project/{TestProjectConfigTabBase.project_id}/machines"],
             # layers
             [6, 'Layers',
-                f"/toastergui/project/{TestProjectConfigTab.project_id}/layers"],
+                f"/toastergui/project/{TestProjectConfigTabBase.project_id}/layers"],
             # distro
             [7, 'Distros',
-                f"/toastergui/project/{TestProjectConfigTab.project_id}/distros"],
-            #  [9, 'BitBake variables', f"/toastergui/project/{TestProjectConfigTab.project_id}/configuration"],  # bitbake variables
+                f"/toastergui/project/{TestProjectConfigTabBase.project_id}/distros"],
+            #  [9, 'BitBake variables', f"/toastergui/project/{TestProjectConfigTabBase.project_id}/configuration"],  # bitbake variables
         ]
         for index, item_name, url in conf_nav_list:
             item = _get_config_nav_item(index)
@@ -299,9 +256,11 @@ class TestProjectConfigTab(SeleniumFunctionalTestCase):
                     - meta-poky
                     - meta-yocto-bsp
         """
-        # Create a new project for this test
-        project_name = self._random_string(10)
-        self._create_project(project_name=project_name)
+        project_id = self.create_new_project(self.PROJECT_NAME + "-ST", '3', None, True)
+        url = reverse('project', args=(project_id,))
+        self.get(url)
+        self.wait_until_visible('#config-nav')
+
         # check if the menu is displayed
         self.wait_until_visible('#project-page')
         block_l = self.driver.find_element(
@@ -374,61 +333,6 @@ class TestProjectConfigTab(SeleniumFunctionalTestCase):
         layers_list_items = layers_list.find_elements(By.TAG_NAME, 'li')
         self.assertEqual(len(layers_list_items), 4)
 
-    def test_most_build_recipes(self):
-        """ Test most build recipes block contains"""
-        def rebuild_from_most_build_recipes(recipe_list_items):
-            checkbox = recipe_list_items[0].find_element(By.TAG_NAME, 'input')
-            checkbox.click()
-            build_btn = self.find('#freq-build-btn')
-            build_btn.click()
-            self.wait_until_visible('#latest-builds')
-            wait_until_build(self, 'queued cloning starting parsing failed')
-            lastest_builds = self.driver.find_elements(
-                By.XPATH,
-                '//div[@id="latest-builds"]/div'
-            )
-            self.assertTrue(len(lastest_builds) >= 2)
-            last_build = lastest_builds[0]
-            try:
-                cancel_button = last_build.find_element(
-                    By.XPATH,
-                    '//span[@class="cancel-build-btn pull-right alert-link"]',
-                )
-                cancel_button.click()
-            except NoSuchElementException:
-                # Skip if the build is already cancelled
-                pass
-            wait_until_build_cancelled(self)
-        # Create a new project for remaining asserts
-        project_name = self._random_string(10)
-        self._create_project(project_name=project_name, release='2')
-        current_url = self.driver.current_url
-        TestProjectConfigTab.project_id = get_projectId_from_url(current_url)
-        url = current_url.split('?')[0]
-
-        # Create a new builds
-        self._create_builds()
-
-        # back to project page
-        self.driver.get(url)
-
-        self.wait_until_visible('#project-page', poll=3)
-
-        # Most built recipes
-        most_built_recipes = self.driver.find_element(
-            By.XPATH, '//*[@id="project-page"]/div[1]/div[3]')
-        title = most_built_recipes.find_element(By.TAG_NAME, 'h3')
-        self.assertIn("Most built recipes", title.text)
-        # check can select a recipe and build it
-        self.wait_until_visible('#freq-build-list', poll=3)
-        recipe_list = self.find('#freq-build-list')
-        recipe_list_items = recipe_list.find_elements(By.TAG_NAME, 'li')
-        self.assertTrue(
-            len(recipe_list_items) > 0,
-            msg="No recipes found in the most built recipes list",
-        )
-        rebuild_from_most_build_recipes(recipe_list_items)
-        TestProjectConfigTab.project_id = None  # reset project id
 
     def test_project_page_tab_importlayer(self):
         """ Test project page tab import layer """
@@ -472,10 +376,11 @@ class TestProjectConfigTab(SeleniumFunctionalTestCase):
 
     def test_project_page_custom_image_no_image(self):
         """ Test project page tab "New custom image" when no custom image """
-        project_name = self._random_string(10)
-        self._create_project(project_name=project_name)
-        current_url = self.driver.current_url
-        TestProjectConfigTab.project_id = get_projectId_from_url(current_url)
+        project_id = self.create_new_project(self.PROJECT_NAME + "-CustomImage", '3', None, True)
+        url = reverse('project', args=(project_id,))
+        self.get(url)
+        self.wait_until_visible('#config-nav')
+
         # navigate to "Custom image" tab
         custom_image_section = self._get_config_nav_item(2)
         custom_image_section.click()
@@ -490,9 +395,9 @@ class TestProjectConfigTab(SeleniumFunctionalTestCase):
         div_empty_msg = self.find('#empty-state-customimagestable')
         link_create_custom_image = div_empty_msg.find_element(
             By.TAG_NAME, 'a')
-        self.assertTrue(TestProjectConfigTab.project_id is not None)
+        self.assertTrue(TestProjectConfigTabBase.project_id is not None)
         self.assertIn(
-            f"/toastergui/project/{TestProjectConfigTab.project_id}/newcustomimage", str(
+            f"/toastergui/project/{project_id}/newcustomimage", str(
                 link_create_custom_image.get_attribute('href')
             )
         )
@@ -501,7 +406,6 @@ class TestProjectConfigTab(SeleniumFunctionalTestCase):
                 link_create_custom_image.text
             )
         )
-        TestProjectConfigTab.project_id = None  # reset project id
 
     def test_project_page_image_recipe(self):
         """ Test project page section images
@@ -526,3 +430,66 @@ class TestProjectConfigTab(SeleniumFunctionalTestCase):
         self.wait_until_visible('#imagerecipestable tbody tr')
         rows = self.find_all('#imagerecipestable tbody tr')
         self.assertTrue(len(rows) > 0)
+
+@pytest.mark.django_db
+@pytest.mark.order("last") 
+class TestProjectConfigTabDB(TestProjectConfigTabBase):
+
+    def test_most_build_recipes(self):
+        """ Test most build recipes block contains"""
+        def rebuild_from_most_build_recipes(recipe_list_items):
+            checkbox = recipe_list_items[0].find_element(By.TAG_NAME, 'input')
+            checkbox.click()
+            build_btn = self.find('#freq-build-btn')
+            build_btn.click()
+            self.wait_until_visible('#latest-builds')
+            wait_until_build(self, 'queued cloning starting parsing failed')
+            lastest_builds = self.driver.find_elements(
+                By.XPATH,
+                '//div[@id="latest-builds"]/div'
+            )
+            self.assertTrue(len(lastest_builds) >= 2)
+            last_build = lastest_builds[0]
+            try:
+                cancel_button = last_build.find_element(
+                    By.XPATH,
+                    '//span[@class="cancel-build-btn pull-right alert-link"]',
+                )
+                cancel_button.click()
+            except NoSuchElementException:
+                # Skip if the build is already cancelled
+                pass
+            wait_until_build_cancelled(self)
+
+        # Create a new project for remaining asserts
+        project_id = self.create_new_project(self.PROJECT_NAME + "-MostBuilt", '2', None, True)
+        url = reverse('project', args=(project_id,))
+        self.get(url)
+        self.wait_until_visible('#config-nav')
+
+        current_url = self.driver.current_url
+        url = current_url.split('?')[0]
+
+        # Create a new builds
+        self._create_builds()
+
+        # back to project page
+        self.driver.get(url)
+
+        self.wait_until_visible('#project-page', poll=3)
+
+        # Most built recipes
+        most_built_recipes = self.driver.find_element(
+            By.XPATH, '//*[@id="project-page"]/div[1]/div[3]')
+        title = most_built_recipes.find_element(By.TAG_NAME, 'h3')
+        self.assertIn("Most built recipes", title.text)
+        # check can select a recipe and build it
+        self.wait_until_visible('#freq-build-list', poll=3)
+        recipe_list = self.find('#freq-build-list')
+        recipe_list_items = recipe_list.find_elements(By.TAG_NAME, 'li')
+        self.assertTrue(
+            len(recipe_list_items) > 0,
+            msg="No recipes found in the most built recipes list",
+        )
+        rebuild_from_most_build_recipes(recipe_list_items)
+
