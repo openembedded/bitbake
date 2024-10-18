@@ -167,7 +167,7 @@ class SeleniumFunctionalTestCase(SeleniumTestCaseBase):
             self.assertEqual(del_response.status_code, 200)
 
         self.get(reverse('newproject'))
-        self.wait_until_visible('#new-project-name', poll=3)
+        self.wait_until_visible('#new-project-name')
         self.driver.find_element(By.ID,
                                  "new-project-name").send_keys(project_name)
 
@@ -187,7 +187,7 @@ class SeleniumFunctionalTestCase(SeleniumTestCaseBase):
 
         self.driver.find_element(By.ID, "create-project-button").click()
 
-        element = self.wait_until_visible('#project-created-notification', poll=3)
+        element = self.wait_until_visible('#project-created-notification')
         self.assertTrue(
             self.element_exists('#project-created-notification'),
             f"Project:{project_name} creation notification not shown"

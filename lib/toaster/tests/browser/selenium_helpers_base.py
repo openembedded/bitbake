@@ -225,7 +225,6 @@ class SeleniumTestCaseBase(unittest.TestCase):
         is_visible = lambda driver: self.find(selector).is_displayed()
         msg = 'An element matching "%s" should be visible' % selector
         Wait(self.driver, poll=poll).until(is_visible, msg)
-        time.sleep(poll)  # wait for visibility to settle
         return self.find(selector)
 
     def wait_until_clickable(self, selector, poll=1):
