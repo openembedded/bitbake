@@ -216,3 +216,9 @@ class SeleniumFunctionalTestCase(SeleniumTestCaseBase):
                             'The project release is not defined')
 
         return project_id
+        
+    def load_projects_page_helper(self):        
+        self.wait_until_present('#projectstable')
+        # Need to wait for some data in the table too
+        self.wait_until_present('td[class="updated"]')
+

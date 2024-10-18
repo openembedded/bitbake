@@ -20,6 +20,7 @@ from tests.functional.utils import get_projectId_from_url
 class FuntionalTestBasic(SeleniumFunctionalTestCase):
     """Basic functional tests for Toaster"""
     project_id = None
+    project_url = None
 
     def setUp(self):
         super(FuntionalTestBasic, self).setUp()
@@ -29,7 +30,7 @@ class FuntionalTestBasic(SeleniumFunctionalTestCase):
  #  testcase (1515)
     def test_verify_left_bar_menu(self):
         self.get(reverse('all-projects'))
-        self.wait_until_present('#projectstable', poll=10)
+        self.load_projects_page_helper()
         self.find_element_by_link_text_in_table('projectstable', 'selenium-project').click()
         self.wait_until_present('#config-nav')
         self.assertTrue(self.element_exists('#config-nav'),'Configuration Tab does not exist')
@@ -82,7 +83,7 @@ class FuntionalTestBasic(SeleniumFunctionalTestCase):
 #   testcase (1516)
     def test_review_configuration_information(self):
         self.get(reverse('all-projects'))
-        self.wait_until_present('#projectstable', poll=10)
+        self.load_projects_page_helper()
         self.find_element_by_link_text_in_table('projectstable', 'selenium-project').click()
         project_URL=self.get_URL()
 
@@ -131,7 +132,7 @@ class FuntionalTestBasic(SeleniumFunctionalTestCase):
 #   testcase (1517)
     def test_verify_machine_information(self):
         self.get(reverse('all-projects'))
-        self.wait_until_present('#projectstable', poll=10)
+        self.load_projects_page_helper()
         self.find_element_by_link_text_in_table('projectstable', 'selenium-project').click()
 
         self.wait_until_visible('#machine-section')
@@ -149,7 +150,7 @@ class FuntionalTestBasic(SeleniumFunctionalTestCase):
 #   testcase (1518)
     def test_verify_most_built_recipes_information(self):
         self.get(reverse('all-projects'))
-        self.wait_until_present('#projectstable', poll=10)
+        self.load_projects_page_helper()
         self.find_element_by_link_text_in_table('projectstable', 'selenium-project').click()
         self.wait_until_present('#config-nav')
         project_URL=self.get_URL()
@@ -166,7 +167,7 @@ class FuntionalTestBasic(SeleniumFunctionalTestCase):
 #   testcase (1519)
     def test_verify_project_release_information(self):
         self.get(reverse('all-projects'))
-        self.wait_until_present('#projectstable', poll=10)
+        self.load_projects_page_helper()
         self.find_element_by_link_text_in_table('projectstable', 'selenium-project').click()
         self.wait_until_visible('#project-release-title')
         self.assertTrue(re.search("Yocto Project master",self.driver.find_element(By.ID, "project-release-title").text), 'No project release title information in project detail page')
@@ -174,7 +175,7 @@ class FuntionalTestBasic(SeleniumFunctionalTestCase):
 #   testcase (1520)
     def test_verify_layer_information(self):
         self.get(reverse('all-projects'))
-        self.wait_until_present('#projectstable', poll=10)
+        self.load_projects_page_helper()
         self.find_element_by_link_text_in_table('projectstable', 'selenium-project').click()
         self.wait_until_present('#config-nav')
         project_URL=self.get_URL()
@@ -210,7 +211,7 @@ class FuntionalTestBasic(SeleniumFunctionalTestCase):
 #   testcase (1521)
     def test_verify_project_detail_links(self):
         self.get(reverse('all-projects'))
-        self.wait_until_present('#projectstable', poll=10)
+        self.load_projects_page_helper()
         self.find_element_by_link_text_in_table('projectstable', 'selenium-project').click()
         self.wait_until_present('#config-nav')
         project_URL=self.get_URL()
