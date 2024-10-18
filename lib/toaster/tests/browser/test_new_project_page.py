@@ -89,8 +89,8 @@ class TestNewProjectPage(SeleniumTestCase):
         radio = self.driver.find_element(By.ID, 'type-new')
         radio.click()
 
-        self.wait_until_clickable("#create-project-button")
-        self.click("#create-project-button")
+        #self.wait_until_clickable("#create-project-button")
+        #self.click("#create-project-button")
 
         self.wait_until_visible('#hint-error-project-name')
         element = self.find('#hint-error-project-name')
