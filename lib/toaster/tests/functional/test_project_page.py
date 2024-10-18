@@ -94,6 +94,7 @@ class TestProjectPageBase(SeleniumFunctionalTestCase):
         # Check edit column
         edit_column = self.find(f'#{edit_btn_id}')
         self.assertTrue(edit_column.is_displayed())
+        self.wait_until_element_clickable(edit_column)
         edit_column.click()
         # Check dropdown is visible
         self.wait_until_visible('ul.dropdown-menu.editcol')
@@ -281,6 +282,7 @@ class TestProjectPage(TestProjectPageBase):
         # click on "Edit" icon button
         self.wait_until_visible('#project-name-container')
         edit_button = self.find('#project-change-form-toggle')
+        self.wait_until_element_clickable(edit_button)
         edit_button.click()
         project_name_input = self.find('#project-name-change-input')
         self.assertTrue(project_name_input.is_displayed())
@@ -397,6 +399,7 @@ class TestProjectPage(TestProjectPageBase):
             By.XPATH,
             '//td[@class="add-del-layers"]//a[1]'
         )
+        self.wait_until_element_clickable(build_btn)
         build_btn.click()
         build_state = wait_until_build(self, 'queued cloning starting parsing failed')
         lastest_builds = self.driver.find_elements(
@@ -409,6 +412,7 @@ class TestProjectPage(TestProjectPageBase):
             By.XPATH,
             '//span[@class="cancel-build-btn pull-right alert-link"]',
         )
+        self.wait_until_element_clickable(cancel_btn)
         cancel_button.click()
         if 'starting' not in build_state:  # change build state when cancelled in starting state
             wait_until_build_cancelled(self)
@@ -481,6 +485,7 @@ class TestProjectPage(TestProjectPageBase):
         rows = self.find_all('#machinestable tbody tr')
         machine_to_add = rows[0]
         add_btn = machine_to_add.find_element(By.XPATH, '//td[@class="add-del-layers"]')
+        self.wait_until_element_clickable(radd_btn)
         add_btn.click()
         self.wait_until_visible('#change-notification')
         change_notification = self.find('#change-notification')
@@ -489,6 +494,7 @@ class TestProjectPage(TestProjectPageBase):
         )
 
         hide_button = self.find('#hide-alert')
+        self.wait_until_element_clickable(hide_btn)
         hide_button.click()
         self.wait_until_not_visible('#change-notification')
 
@@ -539,6 +545,7 @@ class TestProjectPage(TestProjectPageBase):
             By.XPATH,
             '//td[@class="add-del-layers"]'
         )
+        self.wait_until_element_clickable(add_btn)
         add_btn.click()
         # check modal is displayed
         self.wait_until_visible('#dependencies-modal')
@@ -548,6 +555,7 @@ class TestProjectPage(TestProjectPageBase):
             By.XPATH,
             '//form[@id="dependencies-modal-form"]//button[@class="btn btn-primary"]'
         )
+        self.wait_until_element_clickable(add_layers_btn)
         add_layers_btn.click()
         self.wait_until_visible('#change-notification')
         change_notification = self.find('#change-notification')
@@ -556,6 +564,7 @@ class TestProjectPage(TestProjectPageBase):
         )
 
         hide_button = self.find('#hide-alert')
+        self.wait_until_element_clickable(hide_btn)
         hide_button.click()
         self.wait_until_not_visible('#change-notification')
 
@@ -567,6 +576,7 @@ class TestProjectPage(TestProjectPageBase):
             By.XPATH,
             '//td[@class="add-del-layers"]'
         )
+        self.wait_until_element_clickable(remove_btn)
         remove_btn.click()
         self.wait_until_visible('#change-notification')
         change_notification = self.find('#change-notification')
@@ -575,6 +585,7 @@ class TestProjectPage(TestProjectPageBase):
         )
 
         hide_button = self.find('#hide-alert')
+        self.wait_until_element_clickable(hide_btn)
         hide_button.click()
         self.wait_until_not_visible('#change-notification')
 
@@ -625,6 +636,7 @@ class TestProjectPage(TestProjectPageBase):
             By.XPATH,
             '//td[@class="add-del-layers"]//a[1]'
         )
+        self.wait_until_element_clickable(add_btn)
         add_btn.click()
         self.wait_until_visible('#change-notification')
         change_notification = self.find('#change-notification')
@@ -670,6 +682,7 @@ class TestProjectPage(TestProjectPageBase):
 
         # check remove layer button works
         remove_layer_btn = self.find('#add-remove-layer-btn')
+        self.wait_until_element_clickable(remove_layer_btn)
         remove_layer_btn.click()
         self.wait_until_visible('#change-notification')
         change_notification = self.find('#change-notification')
@@ -677,10 +690,12 @@ class TestProjectPage(TestProjectPageBase):
             f'You have removed 1 layer from your project', str(change_notification.text)
         )
         hide_button = self.find('#hide-alert')
+        self.wait_until_element_clickable(hide_button)
         hide_button.click()
         # check add layer button works
         self.wait_until_not_visible('#change-notification')
         add_layer_btn = self.find('#add-remove-layer-btn')
+        self.wait_until_element_clickable(add_layer_btn)
         add_layer_btn.click()
         self.wait_until_visible('#change-notification')
         change_notification = self.find('#change-notification')
@@ -688,6 +703,7 @@ class TestProjectPage(TestProjectPageBase):
             f'You have added 1 layer to your project', str(change_notification.text)
         )
         hide_button = self.find('#hide-alert')
+        self.wait_until_element_clickable(hide_button)
         hide_button.click()
         self.wait_until_not_visible('#change-notification')
         # check tabs(layers, recipes, machines) are displayed
