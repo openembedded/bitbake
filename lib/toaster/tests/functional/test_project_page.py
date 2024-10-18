@@ -8,6 +8,7 @@
 
 import os
 import string
+import time
 from unittest import skip
 import pytest
 from django.urls import reverse
@@ -461,7 +462,7 @@ class TestProjectPage(TestProjectPageBase):
             '//td[@class="add-del-layers"]//a[1]'
         )
         select_btn.send_keys(Keys.RETURN)
-        self.wait_until_visible('#config-nav')
+        self.wait_until_visible('#project-machine-name')
         project_machine_name = self.find('#project-machine-name')
         self.assertIn(
             'qemux86-64', project_machine_name.text
@@ -560,6 +561,7 @@ class TestProjectPage(TestProjectPageBase):
 
         # check "Remove layer" button works
         self.wait_until_visible('#layerstable tbody tr')
+        self.wait_until_clickable('.add-del-layers')
         rows = self.find_all('#layerstable tbody tr')
         layer_to_remove = rows[0]
         remove_btn = layer_to_remove.find_element(
@@ -617,6 +619,7 @@ class TestProjectPage(TestProjectPageBase):
             table_selector='distrostable'
         )
         # check "Add distro" button works
+        self.wait_until_visible(".add-del-layers")
         rows = self.find_all('#distrostable tbody tr')
         distro_to_add = rows[0]
         add_btn = distro_to_add.find_element(
