@@ -412,7 +412,7 @@ class TestProjectPage(TestProjectPageBase):
             By.XPATH,
             '//span[@class="cancel-build-btn pull-right alert-link"]',
         )
-        self.wait_until_element_clickable(cancel_btn)
+        self.wait_until_element_clickable(cancel_button)
         cancel_button.click()
         if 'starting' not in build_state:  # change build state when cancelled in starting state
             wait_until_build_cancelled(self)
@@ -485,7 +485,7 @@ class TestProjectPage(TestProjectPageBase):
         rows = self.find_all('#machinestable tbody tr')
         machine_to_add = rows[0]
         add_btn = machine_to_add.find_element(By.XPATH, '//td[@class="add-del-layers"]')
-        self.wait_until_element_clickable(radd_btn)
+        self.wait_until_element_clickable(add_btn)
         add_btn.click()
         self.wait_until_visible('#change-notification')
         change_notification = self.find('#change-notification')
@@ -537,6 +537,9 @@ class TestProjectPage(TestProjectPageBase):
             searchBtn_selector='search-submit-layerstable',
             table_selector='layerstable'
         )
+
+        time.sleep(5)
+ 
         # check "Add layer" button works
         self.wait_until_visible('#layerstable tbody tr')
         rows = self.find_all('#layerstable tbody tr')

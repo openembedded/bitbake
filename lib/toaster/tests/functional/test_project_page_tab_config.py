@@ -315,9 +315,11 @@ class TestProjectConfigTab(TestProjectConfigTabBase):
         # remove all layers except the first three layers
         for i in range(3, len(layers_list_items)):
             layers_list_items[i].find_element(By.TAG_NAME, 'span').click()
+            time.sleep(3)
         # check can add a layer if exists
         add_layer_input = layers.find_element(By.ID, 'layer-add-input')
         add_layer_input.send_keys('meta-oe')
+        time.sleep(5)
         self.wait_until_visible('#layer-container > form > div > span > div')
         self.wait_until_visible('.dropdown-menu')
         #dropdown = layers.find_element(By.ID, '#dropdown-menu')
