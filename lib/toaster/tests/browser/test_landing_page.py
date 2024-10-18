@@ -44,6 +44,7 @@ class TestLandingPage(SeleniumTestCase):
         # and info modal is appearing when clicking on the info sign
         info_sign.click()  # click on the info sign make attribute 'aria-describedby' visible
         info_model_id = info_sign.get_attribute('aria-describedby')
+        self.wait_until_visible(f'#{info_model_id}')
         info_modal = self.find(f'#{info_model_id}')
         self.assertTrue(info_modal.is_displayed())
         self.assertTrue("Toaster version information" in info_modal.text)
