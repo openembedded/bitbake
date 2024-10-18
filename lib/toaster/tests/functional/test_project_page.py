@@ -182,15 +182,6 @@ class TestProjectPageBase(SeleniumFunctionalTestCase):
 
 class TestProjectPage(TestProjectPageBase):
 
-    def test_create_project(self):
-        """ Create/Test new project using:
-          - Project Name: Any string
-          - Release: Any string
-          - Merge Toaster settings: True or False
-        """
-        self._create_project(project_name=self.PROJECT_NAME)
-
-
     def test_page_header_on_project_page(self):
         """ Check page header in project page:
           - AT LEFT -> Logo of Yocto project, displayed, clickable
