@@ -8,6 +8,7 @@
 
 import os
 import string
+import time
 from unittest import skip
 import pytest
 from django.urls import reverse
@@ -150,7 +151,7 @@ class TestProjectPageBase(SeleniumFunctionalTestCase):
         def test_show_rows(row_to_show, show_row_link):
             # Check that we can show rows == row_to_show
             show_row_link.select_by_value(str(row_to_show))
-            self.wait_until_visible(f'#{table_selector} tbody tr', poll=3)
+            self.wait_until_visible(f'#{table_selector} tbody tr')
             # check at least some rows are visible
             self.assertTrue(
                 len(self.find_all(f'#{table_selector} tbody tr')) > 0
@@ -359,11 +360,15 @@ class TestProjectPage(TestProjectPageBase):
         search_box.send_keys('core-image-minimal')
         self.find('#build-button').click()
         self.wait_until_visible('#latest-builds')
-        lastest_builds = self.driver.find_elements(
-            By.XPATH,
-            '//div[@id="latest-builds"]',
-        )
-        last_build = lastest_builds[0]
+        buildtext = "Loading"
+        while "Loading" in buildtext:
+            time.sleep(1)
+            lastest_builds = self.driver.find_elements(
+                By.XPATH,
+                '//div[@id="latest-builds"]',
+            )
+            last_build = lastest_builds[0]
+            buildtext = last_build.text
         self.assertIn(
             'core-image-minimal', str(last_build.text)
         )
@@ -471,7 +476,8 @@ class TestProjectPage(TestProjectPageBase):
             searchBtn_selector='search-submit-machinestable',
             table_selector='machinestable'
         )
-        self.wait_until_visible('#machinestable tbody tr', poll=3)
+
+        self.wait_until_visible('#machinestable tbody tr')
         rows = self.find_all('#machinestable tbody tr')
         machine_to_add = rows[0]
         add_btn = machine_to_add.find_element(By.XPATH, '//td[@class="add-del-layers"]')
@@ -481,6 +487,11 @@ class TestProjectPage(TestProjectPageBase):
         self.assertIn(
             f'You have added 1 layer to your project', str(change_notification.text)
         )
+
+        hide_button = self.find('#hide-alert')
+        hide_button.click()
+        self.wait_until_not_visible('#change-notification')
+
         # check Machine table feature(show/hide column, pagination)
         self._navigate_to_config_nav('machinestable', 5)
         column_list = [
@@ -521,7 +532,7 @@ class TestProjectPage(TestProjectPageBase):
             table_selector='layerstable'
         )
         # check "Add layer" button works
-        self.wait_until_visible('#layerstable tbody tr', poll=3)
+        self.wait_until_visible('#layerstable tbody tr')
         rows = self.find_all('#layerstable tbody tr')
         layer_to_add = rows[0]
         add_btn = layer_to_add.find_element(
@@ -530,7 +541,7 @@ class TestProjectPage(TestProjectPageBase):
         )
         add_btn.click()
         # check modal is displayed
-        self.wait_until_visible('#dependencies-modal', poll=3)
+        self.wait_until_visible('#dependencies-modal')
         list_dependencies = self.find_all('#dependencies-list li')
         # click on add-layers button
         add_layers_btn = self.driver.find_element(
@@ -543,8 +554,13 @@ class TestProjectPage(TestProjectPageBase):
         self.assertIn(
             f'You have added {len(list_dependencies)+1} layers to your project: {input_text} and its dependencies', str(change_notification.text)
         )
+
+        hide_button = self.find('#hide-alert')
+        hide_button.click()
+        self.wait_until_not_visible('#change-notification')
+
         # check "Remove layer" button works
-        self.wait_until_visible('#layerstable tbody tr', poll=3)
+        self.wait_until_visible('#layerstable tbody tr')
         rows = self.find_all('#layerstable tbody tr')
         layer_to_remove = rows[0]
         remove_btn = layer_to_remove.find_element(
@@ -552,11 +568,16 @@ class TestProjectPage(TestProjectPageBase):
             '//td[@class="add-del-layers"]'
         )
         remove_btn.click()
-        self.wait_until_visible('#change-notification', poll=2)
+        self.wait_until_visible('#change-notification')
         change_notification = self.find('#change-notification')
         self.assertIn(
             f'You have removed 1 layer from your project: {input_text}', str(change_notification.text)
         )
+
+        hide_button = self.find('#hide-alert')
+        hide_button.click()
+        self.wait_until_not_visible('#change-notification')
+
         # check layers table feature(show/hide column, pagination)
         self._navigate_to_config_nav('layerstable', 6)
         column_list = [
@@ -604,7 +625,7 @@ class TestProjectPage(TestProjectPageBase):
             '//td[@class="add-del-layers"]//a[1]'
         )
         add_btn.click()
-        self.wait_until_visible('#change-notification', poll=2)
+        self.wait_until_visible('#change-notification')
         change_notification = self.find('#change-notification')
         self.assertIn(
             f'You have changed the distro to: {input_text}', str(change_notification.text)
@@ -649,12 +670,15 @@ class TestProjectPage(TestProjectPageBase):
         # check remove layer button works
         remove_layer_btn = self.find('#add-remove-layer-btn')
         remove_layer_btn.click()
-        self.wait_until_visible('#change-notification', poll=2)
+        self.wait_until_visible('#change-notification')
         change_notification = self.find('#change-notification')
         self.assertIn(
             f'You have removed 1 layer from your project', str(change_notification.text)
         )
+        hide_button = self.find('#hide-alert')
+        hide_button.click()
         # check add layer button works
+        self.wait_until_not_visible('#change-notification')
         add_layer_btn = self.find('#add-remove-layer-btn')
         add_layer_btn.click()
         self.wait_until_visible('#change-notification')
@@ -662,6 +686,9 @@ class TestProjectPage(TestProjectPageBase):
         self.assertIn(
             f'You have added 1 layer to your project', str(change_notification.text)
         )
+        hide_button = self.find('#hide-alert')
+        hide_button.click()
+        self.wait_until_not_visible('#change-notification')
         # check tabs(layers, recipes, machines) are displayed
         tabs = self.find_all('.nav-tabs li')
         self.assertEqual(len(tabs), 3)
