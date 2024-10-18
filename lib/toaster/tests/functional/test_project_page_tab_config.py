@@ -7,12 +7,12 @@
 #
 
 import string
+import time
 import pytest
 from django.urls import reverse
 from selenium.webdriver import Keys
 from selenium.webdriver.support.select import Select
 from selenium.common.exceptions import ElementClickInterceptedException, NoSuchElementException, TimeoutException
-from orm.models import Project
 from tests.functional.functional_helpers import SeleniumFunctionalTestCase
 from selenium.webdriver.common.by import By
 
@@ -210,7 +210,7 @@ class TestProjectConfigTab(TestProjectConfigTabBase):
         def test_show_rows(row_to_show, show_row_link):
             # Check that we can show rows == row_to_show
             show_row_link.select_by_value(str(row_to_show))
-            self.wait_until_visible('#imagerecipestable tbody tr', poll=3)
+            self.wait_until_visible('#imagerecipestable tbody tr')
             # check at least some rows are visible
             self.assertTrue(
                 len(self.find_all('#imagerecipestable tbody tr'))  > 0
@@ -289,6 +289,9 @@ class TestProjectConfigTab(TestProjectConfigTabBase):
             self.assertIn(
                 f'You have changed the {item_name} to: {new_item_name}', change_notification.text
             )
+            hide_button = self.find('#hide-alert')
+            hide_button.click()
+            self.wait_until_not_visible('#change-notification')
 
         # Machine
         check_machine_distro(self, 'machine', 'qemux86-64', 'machine-section')
@@ -304,35 +307,44 @@ class TestProjectConfigTab(TestProjectConfigTabBase):
         # Layers
         title = layers.find_element(By.TAG_NAME, 'h3')
         self.assertIn("Layers", title.text)
+        self.wait_until_clickable('#layer-add-input')
         # check at least three layers are displayed
         # openembedded-core
         # meta-poky
         # meta-yocto-bsp
-        layers_list = layers.find_element(By.ID, 'layers-in-project-list')
-        layers_list_items = layers_list.find_elements(By.TAG_NAME, 'li')
+        layer_list_items = []
+        starttime = time.time()
+        while len(layer_list_items) < 3:
+            layers_list = self.driver.find_element(By.ID, 'layers-in-project-list')
+            layer_list_items = layers_list.find_elements(By.TAG_NAME, 'li')
+            if time.time() > (starttime + 30):
+                self.fail("Layer list didn't contain at least 3 items within 30s (contained %d)" % len(layer_list_items))
+
         # remove all layers except the first three layers
-        for i in range(3, len(layers_list_items)):
-            layers_list_items[i].find_element(By.TAG_NAME, 'span').click()
+        for i in range(3, len(layer_list_items)):
+            layer_list_items[i].find_element(By.TAG_NAME, 'span').click()
+
         # check can add a layer if exists
         add_layer_input = layers.find_element(By.ID, 'layer-add-input')
         add_layer_input.send_keys('meta-oe')
         self.wait_until_visible('#layer-container > form > div > span > div')
-        dropdown_item = self.driver.find_element(
-            By.XPATH,
-            '//*[@id="layer-container"]/form/div/span/div'
-        )
-        try:
-            dropdown_item.click()
-        except ElementClickInterceptedException:
-            self.skipTest(
-                "layer-container dropdown item click intercepted. Element not properly visible.")
+        self.wait_until_visible('.dropdown-menu')
+        finder = lambda driver: driver.find_element(By.XPATH, '//*[@id="layer-container"]/form/div/span/div/div/div')
+        dropdown_item = self.wait_until_element_clickable(finder)
+        dropdown_item.click()
+        self.wait_until_clickable('#add-layer-btn')
         add_layer_btn = layers.find_element(By.ID, 'add-layer-btn')
         add_layer_btn.click()
         self.wait_until_visible('#layers-in-project-list')
-        # check layer is added
-        layers_list_items = layers_list.find_elements(By.TAG_NAME, 'li')
-        self.assertEqual(len(layers_list_items), 4)
 
+        # check layer is added
+        layer_list_items = []
+        starttime = time.time()
+        while len(layer_list_items) < 4:
+            layers_list = self.driver.find_element(By.ID, 'layers-in-project-list')
+            layer_list_items = layers_list.find_elements(By.TAG_NAME, 'li')
+            if time.time() > (starttime + 30):
+                self.fail("Layer list didn't contain at least 4 items within 30s (contained %d)" % len(layer_list_items))
 
     def test_project_page_tab_importlayer(self):
         """ Test project page tab import layer """
@@ -476,7 +488,7 @@ class TestProjectConfigTabDB(TestProjectConfigTabBase):
         # back to project page
         self.driver.get(url)
 
-        self.wait_until_visible('#project-page', poll=3)
+        self.wait_until_visible('#project-page')
 
         # Most built recipes
         most_built_recipes = self.driver.find_element(
@@ -484,7 +496,7 @@ class TestProjectConfigTabDB(TestProjectConfigTabBase):
         title = most_built_recipes.find_element(By.TAG_NAME, 'h3')
         self.assertIn("Most built recipes", title.text)
         # check can select a recipe and build it
-        self.wait_until_visible('#freq-build-list', poll=3)
+        self.wait_until_visible('#freq-build-list')
         recipe_list = self.find('#freq-build-list')
         recipe_list_items = recipe_list.find_elements(By.TAG_NAME, 'li')
         self.assertTrue(
