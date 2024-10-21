@@ -48,7 +48,6 @@ def wait_until_build_cancelled(test_instance):
     """
     timeout = 30
     start_time = 0
-    build = None
     while True:
         try:
             if start_time > timeout:
@@ -64,11 +63,7 @@ def wait_until_build_cancelled(test_instance):
             if 'failed' in str(build_state).lower():
                 break
             if 'cancelling' in str(build_state).lower():
-                # Change build state to cancelled
-                if not build:  # get build object only once
-                    build = Build.objects.last()
-                    build.outcome = Build.CANCELLED
-                    build.save()
+                pass
             if 'cancelled' in str(build_state).lower():
                 break
         except NoSuchElementException:
