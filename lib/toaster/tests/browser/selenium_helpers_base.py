@@ -239,6 +239,13 @@ class SeleniumTestCaseBase(unittest.TestCase):
         Wait(self.driver, timeout=timeout).until(is_clickable, msg)
         return self.find(selector)
 
+    def wait_until_element_clickable(self, finder, timeout=Wait._TIMEOUT):
+        """ Wait until element is clickable """
+        is_clickable = lambda driver: (finder(driver).is_displayed() and finder(driver).is_enabled())
+        msg = 'A matching element never became be clickable'
+        Wait(self.driver, timeout=timeout).until(is_clickable, msg)
+        return finder(self.driver)
+
     def wait_until_focused(self, selector):
         """ Wait until element matching CSS selector has focus """
         is_focused = \
