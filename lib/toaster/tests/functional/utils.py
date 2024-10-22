@@ -36,7 +36,7 @@ def wait_until_build(test_instance, state):
             if 'failed' in str(build_state).lower():
                 break
         except NoSuchElementException:
-            continue
+            pass
         except TimeoutException:
             break
         start_time += 1
