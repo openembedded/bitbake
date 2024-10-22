@@ -234,6 +234,7 @@ class SeleniumTestCaseBase(unittest.TestCase):
 
     def wait_until_clickable(self, selector, timeout=Wait._TIMEOUT):
         """ Wait until element matching CSS selector is visible on the page """
+        WebDriverWait(self.driver, timeout=timeout).until(lambda driver: self.driver.execute_script("return jQuery.active == 0"))
         is_clickable = lambda driver: (self.find(selector).is_displayed() and self.find(selector).is_enabled())
         msg = 'An element matching "%s" should be clickable' % selector
         Wait(self.driver, timeout=timeout).until(is_clickable, msg)
@@ -241,6 +242,7 @@ class SeleniumTestCaseBase(unittest.TestCase):
 
     def wait_until_element_clickable(self, finder, timeout=Wait._TIMEOUT):
         """ Wait until element is clickable """
+        WebDriverWait(self.driver, timeout=timeout).until(lambda driver: self.driver.execute_script("return jQuery.active == 0"))
         is_clickable = lambda driver: (finder(driver).is_displayed() and finder(driver).is_enabled())
         msg = 'A matching element never became be clickable'
         Wait(self.driver, timeout=timeout).until(is_clickable, msg)
