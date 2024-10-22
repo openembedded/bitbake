@@ -89,12 +89,10 @@ class TestNewProjectPage(SeleniumTestCase):
         radio = self.driver.find_element(By.ID, 'type-new')
         radio.click()
 
-        self.click("#create-project-button")
-
-        self.wait_until_present('#hint-error-project-name')
+        self.wait_until_visible('#hint-error-project-name')
         element = self.find('#hint-error-project-name')
 
-        self.assertTrue(("Project names must be unique" in element.text),
+        self.assertIn("Project names must be unique", element.text,
                         "Did not find unique project name error message")
 
         # Try and click it anyway, if it submits we'll have a new project in

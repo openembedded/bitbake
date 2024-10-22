@@ -100,7 +100,7 @@ class TestLayerDetailsPage(SeleniumTestCase):
                             (self.initial_values, value))
 
             # Make sure the input visible beofre sending keys
-            self.wait_until_visible("#layer-git input[type=text]")
+            self.wait_until_clickable("#layer-git input[type=text]")
             inputs.send_keys("-edited")
 
         # Save the new values
@@ -211,6 +211,7 @@ class TestLayerDetailsPage(SeleniumTestCase):
         self.get(self.url)
 
         # Add the layer
+        self.wait_until_clickable("#add-remove-layer-btn")
         self.click("#add-remove-layer-btn")
 
         notification = self.wait_until_visible("#change-notification-msg")
@@ -218,12 +219,17 @@ class TestLayerDetailsPage(SeleniumTestCase):
         expected_text = "You have added 1 layer to your project: %s" % \
             self.imported_layer_version.layer.name
 
-        self.assertTrue(expected_text in notification.text,
+        self.assertIn(expected_text, notification.text,
                         "Expected notification text %s not found was "
                         " \"%s\" instead" %
                         (expected_text, notification.text))
 
+        hide_button = self.find('#hide-alert')
+        hide_button.click()
+        self.wait_until_not_visible('#change-notification')
+
         # Remove the layer
+        self.wait_until_clickable("#add-remove-layer-btn")
         self.click("#add-remove-layer-btn")
 
         notification = self.wait_until_visible("#change-notification-msg")
@@ -231,7 +237,7 @@ class TestLayerDetailsPage(SeleniumTestCase):
         expected_text = "You have removed 1 layer from your project: %s" % \
             self.imported_layer_version.layer.name
 
-        self.assertTrue(expected_text in notification.text,
+        self.assertIn(expected_text, notification.text,
                         "Expected notification text %s not found was "
                         " \"%s\" instead" %
                         (expected_text, notification.text))

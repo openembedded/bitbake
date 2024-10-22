@@ -200,6 +200,7 @@ class TestAllBuildsPage(SeleniumTestCase):
 
         # should see a rebuild button for non-command-line builds
         self.wait_until_visible('#allbuildstable tbody tr')
+        self.wait_until_visible('.rebuild-btn')
         selector = 'div[data-latest-build-result="%s"] .rebuild-btn' % build1.id
         run_again_button = self.find_all(selector)
         self.assertEqual(len(run_again_button), 1,
