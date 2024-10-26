@@ -733,7 +733,7 @@ class Git(FetchMethod):
             to_remove.append(ud.fullshallow + ".done")
 
         for r in to_remove:
-            if os.path.exists(r):
+            if os.path.exists(r) or os.path.islink(r):
                 bb.note('Removing %s' % r)
                 bb.utils.remove(r, True)
 
