@@ -249,6 +249,19 @@ class GitSM(Git):
             # should also be skipped as these files were already smudged in the fetch stage if lfs
             # was enabled.
             runfetchcmd("GIT_LFS_SKIP_SMUDGE=1 %s submodule update --recursive --no-fetch" % (ud.basecmd), d, quiet=True, workdir=ud.destdir)
+    def clean(self, ud, d):
+        def clean_submodule(ud, url, module, modpath, workdir, d):
+            url += ";bareclone=1;nobranch=1"
+            try:
+                newfetch = Fetch([url], d, cache=False)
+                newfetch.clean()
+            except Exception as e:
+                logger.warning('gitsm: submodule clean failed: %s %s' % (type(e).__name__, str(e)))
+
+        self.call_process_submodules(ud, d, True, clean_submodule)
+
+        # Clean top git dir
+        Git.clean(self, ud, d)
 
     def implicit_urldata(self, ud, d):
         import shutil, subprocess, tempfile
