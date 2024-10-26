@@ -152,9 +152,11 @@ class GitSM(Git):
         # unpacked temporarily so that we can examine the .gitmodules file
         if ud.shallow and os.path.exists(ud.fullshallow) and extra_check:
             tmpdir = tempfile.mkdtemp(dir=d.getVar("DL_DIR"))
-            runfetchcmd("tar -xzf %s" % ud.fullshallow, d, workdir=tmpdir)
-            self.process_submodules(ud, tmpdir, subfunc, d)
-            shutil.rmtree(tmpdir)
+            try:
+                runfetchcmd("tar -xzf %s" % ud.fullshallow, d, workdir=tmpdir)
+                self.process_submodules(ud, tmpdir, subfunc, d)
+            finally:
+                shutil.rmtree(tmpdir)
         else:
             self.process_submodules(ud, ud.clonedir, subfunc, d)
 
