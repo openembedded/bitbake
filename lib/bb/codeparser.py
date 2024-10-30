@@ -201,6 +201,22 @@ class DummyLogger():
     def flush(self):
         return
 
+
+# Starting with Python 3.8, the ast module exposes all string nodes as a
+# Constant. While earlier versions of the module also have the Constant type
+# those use the Str type to encapsulate strings.
+if sys.version_info < (3, 8):
+    def node_str_value(node):
+        if isinstance(node, ast.Str):
+            return node.s
+        return None
+else:
+    def node_str_value(node):
+        if isinstance(node, ast.Constant) and isinstance(node.value, str):
+            return node.value
+        return None
+
+
 class PythonParser():
     getvars = (".getVar", ".appendVar", ".prependVar", "oe.utils.conditional")
     getvarflags = (".getVarFlag", ".appendVarFlag", ".prependVarFlag")
@@ -225,19 +241,22 @@ class PythonParser():
     def visit_Call(self, node):
         name = self.called_node_name(node.func)
         if name and (name.endswith(self.getvars) or name.endswith(self.getvarflags) or name in self.containsfuncs or name in self.containsanyfuncs):
-            if isinstance(node.args[0], ast.Constant) and isinstance(node.args[0].value, str):
-                varname = node.args[0].value
-                if name in self.containsfuncs and isinstance(node.args[1], ast.Constant):
+            varname = node_str_value(node.args[0])
+            if varname is not None:
+                arg_str_value = None
+                if len(node.args) >= 2:
+                    arg_str_value = node_str_value(node.args[1])
+                if name in self.containsfuncs and arg_str_value is not None:
                     if varname not in self.contains:
                         self.contains[varname] = set()
-                    self.contains[varname].add(node.args[1].value)
-                elif name in self.containsanyfuncs and isinstance(node.args[1], ast.Constant):
+                    self.contains[varname].add(arg_str_value)
+                elif name in self.containsanyfuncs and arg_str_value is not None:
                     if varname not in self.contains:
                         self.contains[varname] = set()
-                    self.contains[varname].update(node.args[1].value.split())
+                    self.contains[varname].update(arg_str_value.split())
                 elif name.endswith(self.getvarflags):
-                    if isinstance(node.args[1], ast.Constant):
-                        self.references.add('%s[%s]' % (varname, node.args[1].value))
+                    if arg_str_value is not None:
+                        self.references.add('%s[%s]' % (varname, arg_str_value))
                     else:
                         self.warn(node.func, node.args[1])
                 else:
@@ -245,10 +264,10 @@ class PythonParser():
             else:
                 self.warn(node.func, node.args[0])
         elif name and name.endswith(".expand"):
-            if isinstance(node.args[0], ast.Constant):
-                value = node.args[0].value
+            arg_str_value = node_str_value(node.args[0])
+            if arg_str_value is not None:
                 d = bb.data.init()
-                parser = d.expandWithRefs(value, self.name)
+                parser = d.expandWithRefs(arg_str_value, self.name)
                 self.references |= parser.references
                 self.execs |= parser.execs
                 for varname in parser.contains:
@@ -256,8 +275,9 @@ class PythonParser():
                         self.contains[varname] = set()
                     self.contains[varname] |= parser.contains[varname]
         elif name in self.execfuncs:
-            if isinstance(node.args[0], ast.Constant):
-                self.var_execs.add(node.args[0].value)
+            arg_str_value = node_str_value(node.args[0])
+            if arg_str_value is not None:
+                self.var_execs.add(arg_str_value)
             else:
                 self.warn(node.func, node.args[0])
         elif name and isinstance(node.func, (ast.Name, ast.Attribute)):
