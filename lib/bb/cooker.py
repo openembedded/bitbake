@@ -900,10 +900,11 @@ class BBCooker:
 
         depgraph = self.generateTaskDepTreeData(pkgs_to_build, task)
 
-        with open('pn-buildlist', 'w') as f:
-            for pn in depgraph["pn"]:
-                f.write(pn + "\n")
-        logger.info("PN build list saved to 'pn-buildlist'")
+        pns = depgraph["pn"].keys()
+        if pns:
+            with open('pn-buildlist', 'w') as f:
+                f.write("%s\n" % "\n".join(sorted(pns)))
+            logger.info("PN build list saved to 'pn-buildlist'")
 
         # Remove old format output files to ensure no confusion with stale data
         try:
