@@ -477,7 +477,7 @@ class ProcessServer():
 
             # Create new heartbeat event?
             now = time.time()
-            if bb.event._heartbeat_enabled and now >= self.next_heartbeat:
+            if items and bb.event._heartbeat_enabled and now >= self.next_heartbeat:
                 # We might have missed heartbeats. Just trigger once in
                 # that case and continue after the usual delay.
                 self.next_heartbeat += self.heartbeat_seconds
