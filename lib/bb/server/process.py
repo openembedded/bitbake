@@ -329,7 +329,7 @@ class ProcessServer():
                 bb.error("Idle thread terminated, main thread exiting too")
                 self.quit = True
 
-            nextsleep = 0.1
+            nextsleep = 1.0
             if self.xmlrpc:
                 nextsleep = self.xmlrpc.get_timeout(nextsleep)
             try:
@@ -439,7 +439,7 @@ class ProcessServer():
                 self.idle_cond.notify_all()
 
         while not self.quit:
-            nextsleep = 0.1
+            nextsleep = 1.0
             fds = []
 
             with bb.utils.lock_timeout(self._idlefuncsLock):
