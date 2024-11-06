@@ -310,7 +310,7 @@ class CommandsSync:
     def revalidateCaches(self, command, params):
         """Called by UI clients when metadata may have changed"""
         command.cooker.revalidateCaches()
-    parseConfiguration.needconfig = False
+    revalidateCaches.needconfig = False
 
     def getRecipes(self, command, params):
         try:
