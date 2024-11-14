@@ -43,7 +43,9 @@ if __name__ == "__main__":
             d = tinfoil.parse_recipe(args.recipe)
         else:
             tinfoil.prepare(quiet=2, config_only=True)
-            d = tinfoil.config_data
+            # Expand keys and run anonymous functions to get identical result to
+            # "bitbake -e"
+            d = tinfoil.finalizeData()
 
         value = None
         if args.flag:
