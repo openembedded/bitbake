@@ -59,13 +59,13 @@ def main():
     plugins = []
     tinfoil = bb.tinfoil.Tinfoil(tracking=True)
     tinfoil.logger.setLevel(logger.getEffectiveLevel())
-    if global_args.force > 1:
-        bbpaths = []
-    else:
-        tinfoil.prepare(True)
-        bbpaths = tinfoil.config_data.getVar('BBPATH').split(':')
-    
-    try: 
+    try:
+        if global_args.force > 1:
+            bbpaths = []
+        else:
+            tinfoil.prepare(True)
+            bbpaths = tinfoil.config_data.getVar('BBPATH').split(':')
+
         for path in ([topdir] + bbpaths):
             pluginpath = os.path.join(path, 'lib', 'bblayers')
             bb.utils.load_plugins(logger, plugins, pluginpath)
