@@ -105,7 +105,7 @@ def worker_flush(worker_queue):
                 if not worker_queue.empty():
                     worker_queue_int.extend(worker_queue.get())
                 written = os.write(worker_pipe, worker_queue_int)
-                worker_queue_int = worker_queue_int[written:]
+                del worker_queue_int[0:written]
             except (IOError, OSError) as e:
                 if e.errno != errno.EAGAIN and e.errno != errno.EPIPE:
                     raise
