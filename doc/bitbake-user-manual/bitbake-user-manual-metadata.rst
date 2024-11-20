@@ -771,6 +771,8 @@ In order for include and class files to be found by BitBake, they need
 to be located in a "classes" subdirectory that can be found in
 :term:`BBPATH`.
 
+.. _ref-bitbake-user-manual-metadata-inherit:
+
 ``inherit`` Directive
 ---------------------
 
@@ -809,19 +811,43 @@ An advantage with the inherit directive as compared to both the
 :ref:`include <bitbake-user-manual/bitbake-user-manual-metadata:\`\`include\`\` directive>` and :ref:`require <bitbake-user-manual/bitbake-user-manual-metadata:\`\`require\`\` directive>`
 directives is that you can inherit class files conditionally. You can
 accomplish this by using a variable expression after the ``inherit``
-statement. Here is an example::
+statement.
 
-   inherit ${VARNAME}
+For inheriting classes conditionally, using the :ref:`inherit_defer
+<ref-bitbake-user-manual-metadata-inherit-defer>` directive is advised as
+:ref:`inherit_defer <ref-bitbake-user-manual-metadata-inherit-defer>` is
+evaluated at the end of parsing.
+
+.. _ref-bitbake-user-manual-metadata-inherit-defer:
+
+``inherit_defer`` Directive
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The :ref:`inherit_defer <ref-bitbake-user-manual-metadata-inherit-defer>`
+directive works like the :ref:`inherit
+<ref-bitbake-user-manual-metadata-inherit>` directive, except that it is only
+evaluated at the end of parsing. Its usage is recommended when a conditional
+expression is used.
+
+This allows conditional expressions to be evaluated "late", meaning changes to
+the variable after the line is parsed will take effect. With the :ref:`inherit
+<ref-bitbake-user-manual-metadata-inherit>` directive this is not the case.
+
+Here is an example::
+
+   inherit_defer ${VARNAME}
 
 If ``VARNAME`` is
-going to be set, it needs to be set before the ``inherit`` statement is
+going to be set, it needs to be set before the ``inherit_defer`` statement is
 parsed. One way to achieve a conditional inherit in this case is to use
 overrides::
 
    VARIABLE = ""
    VARIABLE:someoverride = "myclass"
 
-Another method is by using anonymous Python. Here is an example::
+Another method is by using :ref:`anonymous Python
+<bitbake-user-manual/bitbake-user-manual-metadata:Anonymous Python Functions>`.
+Here is an example::
 
    python () {
        if condition == value:
@@ -830,11 +856,14 @@ Another method is by using anonymous Python. Here is an example::
            d.setVar('VARIABLE', '')
    }
 
-Alternatively, you could use an in-line Python expression in the
+Alternatively, you could use an inline Python expression in the
 following form::
 
-   inherit ${@'classname' if condition else ''}
-   inherit ${@functionname(params)}
+   inherit_defer ${@'classname' if condition else ''}
+
+Or::
+
+   inherit_defer ${@bb.utils.contains('VARIABLE', 'something', 'classname', '', d)}
 
 In all cases, if the expression evaluates to an
 empty string, the statement does not trigger a syntax error because it
