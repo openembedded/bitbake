@@ -1518,7 +1518,7 @@ class FetchMethod(object):
                      (file, urldata.parm.get('unpack')))
 
         base, ext = os.path.splitext(file)
-        if ext in ['.gz', '.bz2', '.Z', '.xz', '.lz']:
+        if ext in ['.gz', '.bz2', '.Z', '.xz', '.lz', '.zst']:
             efile = os.path.join(rootdir, os.path.basename(base))
         else:
             efile = file
