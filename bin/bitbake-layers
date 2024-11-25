@@ -57,9 +57,9 @@ def main():
                          level=logger.getEffectiveLevel())
 
     plugins = []
-    tinfoil = bb.tinfoil.Tinfoil(tracking=True)
-    tinfoil.logger.setLevel(logger.getEffectiveLevel())
-    try:
+    with bb.tinfoil.Tinfoil(tracking=True) as tinfoil:
+        tinfoil.logger.setLevel(logger.getEffectiveLevel())
+
         if global_args.force > 1:
             bbpaths = []
         else:
@@ -90,8 +90,6 @@ def main():
             tinfoil.config_data.enableTracking()
 
         return args.func(args)
-    finally:
-        tinfoil.shutdown()
 
 
 if __name__ == "__main__":
