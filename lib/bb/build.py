@@ -1028,3 +1028,9 @@ def tasksbetween(task_start, task_end, d):
         chain.pop()
     follow_chain(task_start, task_end)
     return outtasks
+
+def listtasks(d):
+    """
+    Return the list of tasks in the current recipe.
+    """
+    return tuple(d.getVar('__BBTASKS', False) or ())
