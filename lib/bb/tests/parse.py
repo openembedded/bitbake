@@ -201,7 +201,7 @@ deltask ${EMPTYVAR}
         f = self.parsehelper(self.addtask_deltask)
         d = bb.parse.handle(f.name, self.d)['']
 
-        self.assertEqual(['do_fetch2', 'do_patch2', 'do_myplaintask', 'do_mytask', 'do_mytask2', 'do_mytask5'], d.getVar("__BBTASKS"))
+        self.assertSequenceEqual(['do_fetch2', 'do_patch2', 'do_myplaintask', 'do_mytask', 'do_mytask2', 'do_mytask5'], bb.build.listtasks(d))
         self.assertEqual(['do_mytask'], d.getVarFlag("do_mytask5", "deps"))
 
     broken_multiline_comment = """
