@@ -2759,8 +2759,12 @@ class RunQueueExecute:
                 logger.debug2("%s was unavailable and is a hard dependency of %s so skipping" % (task, dep))
                 self.sq_task_failoutright(dep)
                 continue
+
+        # For performance, only compute allcovered once if needed
+        if self.sqdata.sq_deps[task]:
+            allcovered = self.scenequeue_covered | self.scenequeue_notcovered
         for dep in sorted(self.sqdata.sq_deps[task]):
-            if self.sqdata.sq_revdeps[dep].issubset(self.scenequeue_covered | self.scenequeue_notcovered):
+            if self.sqdata.sq_revdeps[dep].issubset(allcovered):
                 if dep not in self.sq_buildable:
                     self.sq_buildable.add(dep)
 
