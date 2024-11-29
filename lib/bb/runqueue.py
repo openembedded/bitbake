@@ -14,6 +14,7 @@ import os
 import sys
 import stat
 import errno
+import itertools
 import logging
 import re
 import bb
@@ -2189,11 +2190,16 @@ class RunQueueExecute:
         if not hasattr(self, "sorted_setscene_tids"):
             # Don't want to sort this set every execution
             self.sorted_setscene_tids = sorted(self.rqdata.runq_setscene_tids)
+            # Resume looping where we left off when we returned to feed the mainloop
+            self.setscene_tids_generator = itertools.cycle(self.rqdata.runq_setscene_tids)
 
         task = None
         if not self.sqdone and self.can_start_task():
-            # Find the next setscene to run
-            for nexttask in self.sorted_setscene_tids:
+            loopcount = 0
+            # Find the next setscene to run, exit the loop when we've processed all tids or found something to execute
+            while loopcount < len(self.rqdata.runq_setscene_tids):
+                loopcount += 1
+                nexttask = next(self.setscene_tids_generator)
                 if nexttask in self.sq_buildable and nexttask not in self.sq_running and self.sqdata.stamps[nexttask] not in self.build_stamps.values() and nexttask not in self.sq_harddep_deferred:
                     if nexttask in self.sq_deferred and self.sq_deferred[nexttask] not in self.runq_complete:
                         # Skip deferred tasks quickly before the 'expensive' tests below - this is key to performant multiconfig builds
