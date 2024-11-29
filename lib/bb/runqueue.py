@@ -2195,6 +2195,9 @@ class RunQueueExecute:
             # Find the next setscene to run
             for nexttask in self.sorted_setscene_tids:
                 if nexttask in self.sq_buildable and nexttask not in self.sq_running and self.sqdata.stamps[nexttask] not in self.build_stamps.values() and nexttask not in self.sq_harddep_deferred:
+                    if nexttask in self.sq_deferred and self.sq_deferred[nexttask] not in self.runq_complete:
+                        # Skip deferred tasks quickly before the 'expensive' tests below - this is key to performant multiconfig builds
+                        continue
                     if nexttask not in self.sqdata.unskippable and self.sqdata.sq_revdeps[nexttask] and \
                             nexttask not in self.sq_needed_harddeps and \
                             self.sqdata.sq_revdeps[nexttask].issubset(self.scenequeue_covered) and \
@@ -2224,8 +2227,7 @@ class RunQueueExecute:
                         if t in self.runq_running and t not in self.runq_complete:
                             continue
                     if nexttask in self.sq_deferred:
-                        if self.sq_deferred[nexttask] not in self.runq_complete:
-                            continue
+                        # Deferred tasks that were still deferred were skipped above so we now need to process
                         logger.debug("Task %s no longer deferred" % nexttask)
                         del self.sq_deferred[nexttask]
                         valid = self.rq.validate_hashes(set([nexttask]), self.cooker.data, 0, False, summary=False)
