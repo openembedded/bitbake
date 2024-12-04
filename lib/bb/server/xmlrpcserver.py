@@ -14,6 +14,8 @@ from xmlrpc.server import SimpleXMLRPCServer, SimpleXMLRPCRequestHandler
 import bb.server.xmlrpcclient
 
 import bb
+import bb.cooker
+import bb.event
 
 # This request handler checks if the request has a "Bitbake-token" header
 # field (this comes from the client side) and compares it with its internal
@@ -54,7 +56,7 @@ class BitBakeXMLRPCServer(SimpleXMLRPCServer):
 
     def __init__(self, interface, cooker, parent):
         # Use auto port configuration
-        if (interface[1] == -1):
+        if interface[1] == -1:
             interface = (interface[0], 0)
         SimpleXMLRPCServer.__init__(self, interface,
                                     requestHandler=BitBakeXMLRPCRequestHandler,
@@ -87,11 +89,12 @@ class BitBakeXMLRPCServer(SimpleXMLRPCServer):
     def handle_requests(self):
         self._handle_request_noblock()
 
-class BitBakeXMLRPCServerCommands():
+class BitBakeXMLRPCServerCommands:
 
     def __init__(self, server):
         self.server = server
         self.has_client = False
+        self.event_handle = None
 
     def registerEventHandler(self, host, port):
         """
