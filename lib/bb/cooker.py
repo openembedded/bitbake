@@ -8,7 +8,7 @@
 #
 # SPDX-License-Identifier: GPL-2.0-only
 #
-
+import enum
 import sys, os, glob, os.path, re, time
 import itertools
 import logging
@@ -48,16 +48,15 @@ class CollectionError(bb.BBHandledException):
     Exception raised when layer configuration is incorrect
     """
 
-class state:
-    initial, parsing, running, shutdown, forceshutdown, stopped, error = list(range(7))
 
-    @classmethod
-    def get_name(cls, code):
-        for name in dir(cls):
-            value = getattr(cls, name)
-            if type(value) == type(cls.initial) and value == code:
-                return name
-        raise ValueError("Invalid status code: %s" % code)
+class State(enum.Enum):
+    INITIAL = 0,
+    PARSING = 1,
+    RUNNING = 2,
+    SHUTDOWN = 3,
+    FORCE_SHUTDOWN = 4,
+    STOPPED = 5,
+    ERROR = 6
 
 
 class SkippedPackage:
@@ -180,7 +179,7 @@ class BBCooker:
             pass
 
         self.command = bb.command.Command(self, self.process_server)
-        self.state = state.initial
+        self.state = State.INITIAL
 
         self.parser = None
 
@@ -226,23 +225,22 @@ class BBCooker:
             bb.warn("Cooker received SIGTERM, shutting down...")
         elif signum == signal.SIGHUP:
             bb.warn("Cooker received SIGHUP, shutting down...")
-        self.state = state.forceshutdown
+        self.state = State.FORCE_SHUTDOWN
         bb.event._should_exit.set()
 
     def setFeatures(self, features):
         # we only accept a new feature set if we're in state initial, so we can reset without problems
-        if not self.state in [state.initial, state.shutdown, state.forceshutdown, state.stopped, state.error]:
+        if not self.state in [State.INITIAL, State.SHUTDOWN, State.FORCE_SHUTDOWN, State.STOPPED, State.ERROR]:
             raise Exception("Illegal state for feature set change")
         original_featureset = list(self.featureset)
         for feature in features:
             self.featureset.setFeature(feature)
         bb.debug(1, "Features set %s (was %s)" % (original_featureset, list(self.featureset)))
-        if (original_featureset != list(self.featureset)) and self.state != state.error and hasattr(self, "data"):
+        if (original_featureset != list(self.featureset)) and self.state != State.ERROR and hasattr(self, "data"):
             self.reset()
 
     def initConfigurationData(self):
-
-        self.state = state.initial
+        self.state = State.INITIAL
         self.caches_array = []
 
         sys.path = self.orig_syspath.copy()
@@ -1398,11 +1396,11 @@ class BBCooker:
 
             msg = None
             interrupted = 0
-            if halt or self.state == state.forceshutdown:
+            if halt or self.state == State.FORCE_SHUTDOWN:
                 rq.finish_runqueue(True)
                 msg = "Forced shutdown"
                 interrupted = 2
-            elif self.state == state.shutdown:
+            elif self.state == State.SHUTDOWN:
                 rq.finish_runqueue(False)
                 msg = "Stopped build"
                 interrupted = 1
@@ -1472,12 +1470,12 @@ class BBCooker:
         def buildTargetsIdle(server, rq, halt):
             msg = None
             interrupted = 0
-            if halt or self.state == state.forceshutdown:
+            if halt or self.state == State.FORCE_SHUTDOWN:
                 bb.event._should_exit.set()
                 rq.finish_runqueue(True)
                 msg = "Forced shutdown"
                 interrupted = 2
-            elif self.state == state.shutdown:
+            elif self.state == State.SHUTDOWN:
                 rq.finish_runqueue(False)
                 msg = "Stopped build"
                 interrupted = 1
@@ -1572,7 +1570,7 @@ class BBCooker:
 
 
     def updateCacheSync(self):
-        if self.state == state.running:
+        if self.state == State.RUNNING:
             return
 
         if not self.baseconfig_valid:
@@ -1582,19 +1580,19 @@ class BBCooker:
 
     # This is called for all async commands when self.state != running
     def updateCache(self):
-        if self.state == state.running:
+        if self.state == State.RUNNING:
             return
 
-        if self.state in (state.shutdown, state.forceshutdown, state.error):
+        if self.state in (State.SHUTDOWN, State.FORCE_SHUTDOWN, State.ERROR):
             if hasattr(self.parser, 'shutdown'):
                 self.parser.shutdown(clean=False)
                 self.parser.final_cleanup()
             raise bb.BBHandledException()
 
-        if self.state != state.parsing:
+        if self.state != State.PARSING:
             self.updateCacheSync()
 
-        if self.state != state.parsing and not self.parsecache_valid:
+        if self.state != State.PARSING and not self.parsecache_valid:
             bb.server.process.serverlog("Parsing started")
             self.parsewatched = {}
 
@@ -1628,7 +1626,7 @@ class BBCooker:
             self.parser = CookerParser(self, mcfilelist, total_masked)
             self._parsecache_set(True)
 
-        self.state = state.parsing
+        self.state = State.PARSING
 
         if not self.parser.parse_next():
             collectlog.debug("parsing complete")
@@ -1638,7 +1636,7 @@ class BBCooker:
             self.handlePrefProviders()
             for mc in self.multiconfigs:
                 self.recipecaches[mc].bbfile_priority = self.collections[mc].collection_priorities(self.recipecaches[mc].pkg_fn, self.parser.mcfilelist[mc], self.data)
-            self.state = state.running
+            self.state = State.RUNNING
 
             # Send an event listing all stamps reachable after parsing
             # which the metadata may use to clean up stale data
@@ -1711,10 +1709,10 @@ class BBCooker:
 
     def shutdown(self, force=False):
         if force:
-            self.state = state.forceshutdown
+            self.state = State.FORCE_SHUTDOWN
             bb.event._should_exit.set()
         else:
-            self.state = state.shutdown
+            self.state = State.SHUTDOWN
 
         if self.parser:
             self.parser.shutdown(clean=False)
@@ -1724,7 +1722,7 @@ class BBCooker:
         if hasattr(self.parser, 'shutdown'):
             self.parser.shutdown(clean=False)
             self.parser.final_cleanup()
-        self.state = state.initial
+        self.state = State.INITIAL
         bb.event._should_exit.clear()
 
     def reset(self):

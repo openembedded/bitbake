@@ -103,8 +103,8 @@ class BitBakeXMLRPCServerCommands:
         s, t = bb.server.xmlrpcclient._create_server(host, port)
 
         # we don't allow connections if the cooker is running
-        if (self.server.cooker.state in [bb.cooker.state.parsing, bb.cooker.state.running]):
-            return None, "Cooker is busy: %s" % bb.cooker.state.get_name(self.server.cooker.state)
+        if self.server.cooker.state in [bb.cooker.State.PARSING, bb.cooker.State.RUNNING]:
+            return None, f"Cooker is busy: {self.server.cooker.state.name}"
 
         self.event_handle = bb.event.register_UIHhandler(s, True)
         return self.event_handle, 'OK'
