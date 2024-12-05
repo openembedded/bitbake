@@ -326,6 +326,37 @@ class InheritDeferredNode(AstNode):
         inherits.append(self.inherit)
         data.setVar('__BBDEFINHERITS', inherits)
 
+class AddFragmentsNode(AstNode):
+    def __init__(self, filename, lineno, fragments_path_prefix, fragments_variable):
+        AstNode.__init__(self, filename, lineno)
+        self.fragments_path_prefix = fragments_path_prefix
+        self.fragments_variable = fragments_variable
+
+    def eval(self, data):
+        # No need to use mark_dependency since we would only match a fragment
+        # from a specific layer and there can only be a single layer with a
+        # given namespace.
+        def find_fragment(layers, layerid, full_fragment_name):
+           for layerpath in layers.split():
+               candidate_fragment_path = os.path.join(layerpath, full_fragment_name)
+               if os.path.exists(candidate_fragment_path) and bb.utils.get_file_layer(candidate_fragment_path, data) == layerid:
+                   return candidate_fragment_path
+           return None
+
+        fragments = data.getVar(self.fragments_variable)
+        layers = data.getVar('BBLAYERS')
+
+        if not fragments:
+            return
+        for f in fragments.split():
+            layerid, fragment_name = f.split('/', 1)
+            full_fragment_name = data.expand("{}/{}.conf".format(self.fragments_path_prefix, fragment_name))
+            fragment_path = find_fragment(layers, layerid, full_fragment_name)
+            if fragment_path:
+                bb.parse.ConfHandler.include(self.filename, fragment_path, self.lineno, data, "include fragment")
+            else:
+                bb.error("Could not find fragment {} in enabled layers: {}".format(f, layers))
+
 def handleInclude(statements, filename, lineno, m, force):
     statements.append(IncludeNode(filename, lineno, m.group(1), force))
 
@@ -369,6 +400,11 @@ def handleInherit(statements, filename, lineno, m):
 def handleInheritDeferred(statements, filename, lineno, m):
     classes = m.group(1)
     statements.append(InheritDeferredNode(filename, lineno, classes))
+
+def handleAddFragments(statements, filename, lineno, m):
+    fragments_path_prefix = m.group(1)
+    fragments_variable = m.group(2)
+    statements.append(AddFragmentsNode(filename, lineno, fragments_path_prefix, fragments_variable))
 
 def runAnonFuncs(d):
     code = []
