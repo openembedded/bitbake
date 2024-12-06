@@ -555,8 +555,18 @@ def main(server, eventHandler, params, tf = TerminalFilter):
                 }
             })
 
-        bb.utils.mkdirhier(os.path.dirname(consolelogfile))
-        loglink = os.path.join(os.path.dirname(consolelogfile), 'console-latest.log')
+        consolelogdirname = os.path.dirname(consolelogfile)
+        # `bb.utils.mkdirhier` has this check, but it reports failure using bb.fatal, which logs
+        # to the very logger we are trying to set up.
+        if '${' in str(consolelogdirname):
+            print(
+                "FATAL: Directory name {} contains unexpanded bitbake variable. This may cause build failures and WORKDIR pollution.".format(
+                    consolelogdirname))
+            if '${MACHINE}' in consolelogdirname:
+                print("HINT: It looks like you forgot to set MACHINE in local.conf.")
+
+        bb.utils.mkdirhier(consolelogdirname)
+        loglink = os.path.join(consolelogdirname, 'console-latest.log')
         bb.utils.remove(loglink)
         try:
            os.symlink(os.path.basename(consolelogfile), loglink)
