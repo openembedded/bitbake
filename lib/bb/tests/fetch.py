@@ -3112,6 +3112,32 @@ class NPMTest(FetcherTest):
         fetcher.download()
         self.assertTrue(os.path.exists(ud.localpath))
 
+    @skipIfNoNetwork()
+    def test_npmsw_bundled(self):
+        for packages_key, package_prefix, bundled_key in [
+            ('dependencies', '', 'bundled'),
+            ('packages', 'node_modules/', 'inBundle')
+        ]:
+            swfile = self.create_shrinkwrap_file({
+                packages_key: {
+                    package_prefix + 'array-flatten': {
+                        'version': '1.1.1',
+                        'resolved': 'https://registry.npmjs.org/array-flatten/-/array-flatten-1.1.1.tgz',
+                        'integrity': 'sha1-ml9pkFGx5wczKPKgCJaLZOopVdI='
+                    },
+                    package_prefix + 'content-type': {
+                        'version': '1.0.4',
+                        'resolved': 'https://registry.npmjs.org/content-type/-/content-type-1.0.4.tgz',
+                        'integrity': 'sha512-hIP3EEPs8tB9AT1L+NUqtwOAps4mk2Zob89MWXMHjHWg9milF/j4osnnQLXBCBFBk/tvIG/tUc9mOUJiPBhPXA==',
+                        bundled_key: True
+                    }
+                }
+            })
+            fetcher = bb.fetch.Fetch(['npmsw://' + swfile], self.d)
+            fetcher.download()
+            self.assertTrue(os.path.exists(os.path.join(self.dldir, 'npm2', 'array-flatten-1.1.1.tgz')))
+            self.assertFalse(os.path.exists(os.path.join(self.dldir, 'npm2', 'content-type-1.0.4.tgz')))
+
 class GitSharedTest(FetcherTest):
     def setUp(self):
         super(GitSharedTest, self).setUp()
