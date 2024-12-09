@@ -2840,7 +2840,6 @@ class NPMTest(FetcherTest):
             json.dump(data, f)
         return swfile
 
-    @skipIfNoNpm()
     @skipIfNoNetwork()
     def test_npmsw(self):
         swfile = self.create_shrinkwrap_file({
@@ -2875,7 +2874,6 @@ class NPMTest(FetcherTest):
         self.assertTrue(os.path.exists(os.path.join(self.unpackdir, 'node_modules', 'array-flatten', 'node_modules', 'content-type', 'package.json')))
         self.assertTrue(os.path.exists(os.path.join(self.unpackdir, 'node_modules', 'array-flatten', 'node_modules', 'content-type', 'node_modules', 'cookie', 'package.json')))
 
-    @skipIfNoNpm()
     @skipIfNoNetwork()
     def test_npmsw_git(self):
         swfile = self.create_shrinkwrap_file({
@@ -2914,7 +2912,6 @@ class NPMTest(FetcherTest):
         fetcher.download()
         self.assertTrue(os.path.exists(os.path.join(self.dldir, 'git2', 'gitlab.com.gitlab-examples.nodejs.git')))
 
-    @skipIfNoNpm()
     @skipIfNoNetwork()
     def test_npmsw_dev(self):
         swfile = self.create_shrinkwrap_file({
@@ -2943,7 +2940,6 @@ class NPMTest(FetcherTest):
         self.assertTrue(os.path.exists(os.path.join(self.dldir, 'npm2', 'array-flatten-1.1.1.tgz')))
         self.assertTrue(os.path.exists(os.path.join(self.dldir, 'npm2', 'content-type-1.0.4.tgz')))
 
-    @skipIfNoNpm()
     @skipIfNoNetwork()
     def test_npmsw_destsuffix(self):
         swfile = self.create_shrinkwrap_file({
@@ -2998,7 +2994,6 @@ class NPMTest(FetcherTest):
         fetcher.unpack(self.unpackdir)
         self.assertTrue(os.path.exists(os.path.join(self.unpackdir, 'node_modules', 'array-flatten', 'package.json')))
 
-    @skipIfNoNpm()
     @skipIfNoNetwork()
     def test_npmsw_npm_reusability(self):
         # Fetch once with npmsw
@@ -3021,7 +3016,6 @@ class NPMTest(FetcherTest):
         fetcher.unpack(self.unpackdir)
         self.assertTrue(os.path.exists(os.path.join(self.unpackdir, 'npm', 'package.json')))
 
-    @skipIfNoNpm()
     @skipIfNoNetwork()
     def test_npmsw_bad_checksum(self):
         # Try to fetch with bad checksum
