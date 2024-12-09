@@ -66,6 +66,8 @@ def foreach_dependencies(shrinkwrap, callback=None, dev=False):
                 package_infos = packages.get(package, {})
                 if dev == False and package_infos.get("dev", False):
                     continue
+                elif package_infos.get("inBundle", False):
+                    continue
                 callback(name, package_infos, package)
     else:
         _walk_deps(shrinkwrap.get("dependencies", {}), [])
