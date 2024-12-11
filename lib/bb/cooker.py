@@ -134,7 +134,8 @@ class BBCooker:
         self.baseconfig_valid = False
         self.parsecache_valid = False
         self.eventlog = None
-        self.skiplist = {}
+        # The skiplists, one per multiconfig
+        self.skiplist_by_mc = defaultdict(dict)
         self.featureset = CookerFeatures()
         if featureSet:
             for f in featureSet:
@@ -616,8 +617,8 @@ class BBCooker:
         localdata = {}
 
         for mc in self.multiconfigs:
-            taskdata[mc] = bb.taskdata.TaskData(halt, skiplist=self.skiplist, allowincomplete=allowincomplete)
-            localdata[mc] = data.createCopy(self.databuilder.mcdata[mc])
+            taskdata[mc] = bb.taskdata.TaskData(halt, skiplist=self.skiplist_by_mc[mc], allowincomplete=allowincomplete)
+            localdata[mc] = bb.data.createCopy(self.databuilder.mcdata[mc])
             bb.data.expandKeys(localdata[mc])
 
         current = 0
@@ -937,7 +938,7 @@ class BBCooker:
         for mc in self.multiconfigs:
             # First get list of recipes, including skipped
             recipefns = list(self.recipecaches[mc].pkg_fn.keys())
-            recipefns.extend(self.skiplist.keys())
+            recipefns.extend(self.skiplist_by_mc[mc].keys())
 
             # Work out list of bbappends that have been applied
             applied_appends = []
@@ -2362,7 +2363,7 @@ class CookerParser(object):
         for virtualfn, info_array in result:
             if info_array[0].skipped:
                 self.skipped += 1
-                self.cooker.skiplist[virtualfn] = SkippedPackage(info_array[0])
+                self.cooker.skiplist_by_mc[mc][virtualfn] = SkippedPackage(info_array[0])
             self.bb_caches[mc].add_info(virtualfn, info_array, self.cooker.recipecaches[mc],
                                         parsed=parsed, watcher = self.cooker.add_filewatch)
         return True
