@@ -327,10 +327,11 @@ class InheritDeferredNode(AstNode):
         data.setVar('__BBDEFINHERITS', inherits)
 
 class AddFragmentsNode(AstNode):
-    def __init__(self, filename, lineno, fragments_path_prefix, fragments_variable):
+    def __init__(self, filename, lineno, fragments_path_prefix, fragments_variable, flagged_variables_list_variable):
         AstNode.__init__(self, filename, lineno)
         self.fragments_path_prefix = fragments_path_prefix
         self.fragments_variable = fragments_variable
+        self.flagged_variables_list_variable = flagged_variables_list_variable
 
     def eval(self, data):
         # No need to use mark_dependency since we would only match a fragment
@@ -345,6 +346,7 @@ class AddFragmentsNode(AstNode):
 
         fragments = data.getVar(self.fragments_variable)
         layers = data.getVar('BBLAYERS')
+        flagged_variables = data.getVar(self.flagged_variables_list_variable).split()
 
         if not fragments:
             return
@@ -354,6 +356,10 @@ class AddFragmentsNode(AstNode):
             fragment_path = find_fragment(layers, layerid, full_fragment_name)
             if fragment_path:
                 bb.parse.ConfHandler.include(self.filename, fragment_path, self.lineno, data, "include fragment")
+                for flagged_var in flagged_variables:
+                    val = data.getVar(flagged_var)
+                    data.setVarFlag(flagged_var, f, val)
+                    data.setVar(flagged_var, None)
             else:
                 bb.error("Could not find fragment {} in enabled layers: {}".format(f, layers))
 
@@ -404,7 +410,8 @@ def handleInheritDeferred(statements, filename, lineno, m):
 def handleAddFragments(statements, filename, lineno, m):
     fragments_path_prefix = m.group(1)
     fragments_variable = m.group(2)
-    statements.append(AddFragmentsNode(filename, lineno, fragments_path_prefix, fragments_variable))
+    flagged_variables_list_variable = m.group(3)
+    statements.append(AddFragmentsNode(filename, lineno, fragments_path_prefix, fragments_variable, flagged_variables_list_variable))
 
 def runAnonFuncs(d):
     code = []
