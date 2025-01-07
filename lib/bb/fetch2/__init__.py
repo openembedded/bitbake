@@ -34,7 +34,7 @@ _revisions_cache = bb.checksum.RevisionsCache()
 
 logger = logging.getLogger("BitBake.Fetcher")
 
-CHECKSUM_LIST = [ "md5", "sha256", "sha1", "sha384", "sha512" ]
+CHECKSUM_LIST = [ "goh1", "md5", "sha256", "sha1", "sha384", "sha512" ]
 SHOWN_CHECKSUM_LIST = ["sha256"]
 
 class BBFetchException(Exception):
