@@ -2843,23 +2843,25 @@ class NPMTest(FetcherTest):
     @skipIfNoNetwork()
     def test_npmsw(self):
         swfile = self.create_shrinkwrap_file({
-            'dependencies': {
-                'array-flatten': {
+            'packages': {
+                'node_modules/array-flatten': {
                     'version': '1.1.1',
                     'resolved': 'https://registry.npmjs.org/array-flatten/-/array-flatten-1.1.1.tgz',
                     'integrity': 'sha1-ml9pkFGx5wczKPKgCJaLZOopVdI=',
                     'dependencies': {
-                        'content-type': {
-                            'version': 'https://registry.npmjs.org/content-type/-/content-type-1.0.4.tgz',
-                            'integrity': 'sha512-hIP3EEPs8tB9AT1L+NUqtwOAps4mk2Zob89MWXMHjHWg9milF/j4osnnQLXBCBFBk/tvIG/tUc9mOUJiPBhPXA==',
-                            'dependencies': {
-                                'cookie': {
-                                    'version': 'git+https://github.com/jshttp/cookie.git#aec1177c7da67e3b3273df96cf476824dbc9ae09',
-                                    'from': 'git+https://github.com/jshttp/cookie.git'
-                                }
-                            }
-                        }
+                        'content-type': "1.0.4"
                     }
+                },
+                'node_modules/array-flatten/node_modules/content-type': {
+                    'version': '1.0.4',
+                    'resolved': 'https://registry.npmjs.org/content-type/-/content-type-1.0.4.tgz',
+                    'integrity': 'sha512-hIP3EEPs8tB9AT1L+NUqtwOAps4mk2Zob89MWXMHjHWg9milF/j4osnnQLXBCBFBk/tvIG/tUc9mOUJiPBhPXA==',
+                    'dependencies': {
+                        'cookie': 'git+https://github.com/jshttp/cookie.git#aec1177c7da67e3b3273df96cf476824dbc9ae09'
+                    }
+                },
+                'node_modules/array-flatten/node_modules/content-type/node_modules/cookie': {
+                    'resolved': 'git+https://github.com/jshttp/cookie.git#aec1177c7da67e3b3273df96cf476824dbc9ae09'
                 }
             }
         })
@@ -2877,51 +2879,26 @@ class NPMTest(FetcherTest):
     @skipIfNoNetwork()
     def test_npmsw_git(self):
         swfile = self.create_shrinkwrap_file({
-            'dependencies': {
-                'cookie': {
-                    'version': 'github:jshttp/cookie.git#aec1177c7da67e3b3273df96cf476824dbc9ae09',
-                    'from': 'github:jshttp/cookie.git'
+            'packages': {
+                'node_modules/cookie': {
+                    'resolved': 'git+https://github.com/jshttp/cookie.git#aec1177c7da67e3b3273df96cf476824dbc9ae09'
                 }
             }
         })
         fetcher = bb.fetch.Fetch(['npmsw://' + swfile], self.d)
         fetcher.download()
         self.assertTrue(os.path.exists(os.path.join(self.dldir, 'git2', 'github.com.jshttp.cookie.git')))
-
-        swfile = self.create_shrinkwrap_file({
-            'dependencies': {
-                'cookie': {
-                    'version': 'jshttp/cookie.git#aec1177c7da67e3b3273df96cf476824dbc9ae09',
-                    'from': 'jshttp/cookie.git'
-                }
-            }
-        })
-        fetcher = bb.fetch.Fetch(['npmsw://' + swfile], self.d)
-        fetcher.download()
-        self.assertTrue(os.path.exists(os.path.join(self.dldir, 'git2', 'github.com.jshttp.cookie.git')))
-
-        swfile = self.create_shrinkwrap_file({
-            'dependencies': {
-                'nodejs': {
-                    'version': 'gitlab:gitlab-examples/nodejs.git#892a1f16725e56cc3a2cb0d677be42935c8fc262',
-                    'from': 'gitlab:gitlab-examples/nodejs'
-                }
-            }
-        })
-        fetcher = bb.fetch.Fetch(['npmsw://' + swfile], self.d)
-        fetcher.download()
-        self.assertTrue(os.path.exists(os.path.join(self.dldir, 'git2', 'gitlab.com.gitlab-examples.nodejs.git')))
 
     @skipIfNoNetwork()
     def test_npmsw_dev(self):
         swfile = self.create_shrinkwrap_file({
-            'dependencies': {
-                'array-flatten': {
+            'packages': {
+                'node_modules/array-flatten': {
                     'version': '1.1.1',
                     'resolved': 'https://registry.npmjs.org/array-flatten/-/array-flatten-1.1.1.tgz',
                     'integrity': 'sha1-ml9pkFGx5wczKPKgCJaLZOopVdI='
                 },
-                'content-type': {
+                'node_modules/content-type': {
                     'version': '1.0.4',
                     'resolved': 'https://registry.npmjs.org/content-type/-/content-type-1.0.4.tgz',
                     'integrity': 'sha512-hIP3EEPs8tB9AT1L+NUqtwOAps4mk2Zob89MWXMHjHWg9milF/j4osnnQLXBCBFBk/tvIG/tUc9mOUJiPBhPXA==',
@@ -2943,8 +2920,8 @@ class NPMTest(FetcherTest):
     @skipIfNoNetwork()
     def test_npmsw_destsuffix(self):
         swfile = self.create_shrinkwrap_file({
-            'dependencies': {
-                'array-flatten': {
+            'packages': {
+                'node_modules/array-flatten': {
                     'version': '1.1.1',
                     'resolved': 'https://registry.npmjs.org/array-flatten/-/array-flatten-1.1.1.tgz',
                     'integrity': 'sha1-ml9pkFGx5wczKPKgCJaLZOopVdI='
@@ -2958,8 +2935,8 @@ class NPMTest(FetcherTest):
 
     def test_npmsw_no_network_no_tarball(self):
         swfile = self.create_shrinkwrap_file({
-            'dependencies': {
-                'array-flatten': {
+            'packages': {
+                'node_modules/array-flatten': {
                     'version': '1.1.1',
                     'resolved': 'https://registry.npmjs.org/array-flatten/-/array-flatten-1.1.1.tgz',
                     'integrity': 'sha1-ml9pkFGx5wczKPKgCJaLZOopVdI='
@@ -2981,8 +2958,8 @@ class NPMTest(FetcherTest):
         self.d.setVar('BB_NO_NETWORK', '1')
         # Fetch again
         swfile = self.create_shrinkwrap_file({
-            'dependencies': {
-                'array-flatten': {
+            'packages': {
+                'node_modules/array-flatten': {
                     'version': '1.1.1',
                     'resolved': 'https://registry.npmjs.org/array-flatten/-/array-flatten-1.1.1.tgz',
                     'integrity': 'sha1-ml9pkFGx5wczKPKgCJaLZOopVdI='
@@ -2998,8 +2975,8 @@ class NPMTest(FetcherTest):
     def test_npmsw_npm_reusability(self):
         # Fetch once with npmsw
         swfile = self.create_shrinkwrap_file({
-            'dependencies': {
-                'array-flatten': {
+            'packages': {
+                'node_modules/array-flatten': {
                     'version': '1.1.1',
                     'resolved': 'https://registry.npmjs.org/array-flatten/-/array-flatten-1.1.1.tgz',
                     'integrity': 'sha1-ml9pkFGx5wczKPKgCJaLZOopVdI='
@@ -3020,8 +2997,8 @@ class NPMTest(FetcherTest):
     def test_npmsw_bad_checksum(self):
         # Try to fetch with bad checksum
         swfile = self.create_shrinkwrap_file({
-            'dependencies': {
-                'array-flatten': {
+            'packages': {
+                'node_modules/array-flatten': {
                     'version': '1.1.1',
                     'resolved': 'https://registry.npmjs.org/array-flatten/-/array-flatten-1.1.1.tgz',
                     'integrity': 'sha1-gfNEp2hqgLTFKT6P3AsBYMgsBqg='
@@ -3033,8 +3010,8 @@ class NPMTest(FetcherTest):
             fetcher.download()
         # Fetch correctly to get a tarball
         swfile = self.create_shrinkwrap_file({
-            'dependencies': {
-                'array-flatten': {
+            'packages': {
+                'node_modules/array-flatten': {
                     'version': '1.1.1',
                     'resolved': 'https://registry.npmjs.org/array-flatten/-/array-flatten-1.1.1.tgz',
                     'integrity': 'sha1-ml9pkFGx5wczKPKgCJaLZOopVdI='
@@ -3072,8 +3049,8 @@ class NPMTest(FetcherTest):
         # Fetch again
         self.assertFalse(os.path.exists(ud.localpath))
         swfile = self.create_shrinkwrap_file({
-            'dependencies': {
-                'array-flatten': {
+            'packages': {
+                'node_modules/array-flatten': {
                     'version': '1.1.1',
                     'resolved': 'https://registry.npmjs.org/array-flatten/-/array-flatten-1.1.1.tgz',
                     'integrity': 'sha1-ml9pkFGx5wczKPKgCJaLZOopVdI='
@@ -3100,8 +3077,8 @@ class NPMTest(FetcherTest):
         # Fetch again with invalid url
         self.assertFalse(os.path.exists(ud.localpath))
         swfile = self.create_shrinkwrap_file({
-            'dependencies': {
-                'array-flatten': {
+            'packages': {
+                'node_modules/array-flatten': {
                     'version': '1.1.1',
                     'resolved': 'https://invalid',
                     'integrity': 'sha1-ml9pkFGx5wczKPKgCJaLZOopVdI='
@@ -3114,29 +3091,25 @@ class NPMTest(FetcherTest):
 
     @skipIfNoNetwork()
     def test_npmsw_bundled(self):
-        for packages_key, package_prefix, bundled_key in [
-            ('dependencies', '', 'bundled'),
-            ('packages', 'node_modules/', 'inBundle')
-        ]:
-            swfile = self.create_shrinkwrap_file({
-                packages_key: {
-                    package_prefix + 'array-flatten': {
-                        'version': '1.1.1',
-                        'resolved': 'https://registry.npmjs.org/array-flatten/-/array-flatten-1.1.1.tgz',
-                        'integrity': 'sha1-ml9pkFGx5wczKPKgCJaLZOopVdI='
-                    },
-                    package_prefix + 'content-type': {
-                        'version': '1.0.4',
-                        'resolved': 'https://registry.npmjs.org/content-type/-/content-type-1.0.4.tgz',
-                        'integrity': 'sha512-hIP3EEPs8tB9AT1L+NUqtwOAps4mk2Zob89MWXMHjHWg9milF/j4osnnQLXBCBFBk/tvIG/tUc9mOUJiPBhPXA==',
-                        bundled_key: True
-                    }
+        swfile = self.create_shrinkwrap_file({
+            'packages': {
+                'node_modules/array-flatten': {
+                    'version': '1.1.1',
+                    'resolved': 'https://registry.npmjs.org/array-flatten/-/array-flatten-1.1.1.tgz',
+                    'integrity': 'sha1-ml9pkFGx5wczKPKgCJaLZOopVdI='
+                },
+                'node_modules/content-type': {
+                    'version': '1.0.4',
+                    'resolved': 'https://registry.npmjs.org/content-type/-/content-type-1.0.4.tgz',
+                    'integrity': 'sha512-hIP3EEPs8tB9AT1L+NUqtwOAps4mk2Zob89MWXMHjHWg9milF/j4osnnQLXBCBFBk/tvIG/tUc9mOUJiPBhPXA==',
+                    'inBundle': True
                 }
-            })
-            fetcher = bb.fetch.Fetch(['npmsw://' + swfile], self.d)
-            fetcher.download()
-            self.assertTrue(os.path.exists(os.path.join(self.dldir, 'npm2', 'array-flatten-1.1.1.tgz')))
-            self.assertFalse(os.path.exists(os.path.join(self.dldir, 'npm2', 'content-type-1.0.4.tgz')))
+            }
+        })
+        fetcher = bb.fetch.Fetch(['npmsw://' + swfile], self.d)
+        fetcher.download()
+        self.assertTrue(os.path.exists(os.path.join(self.dldir, 'npm2', 'array-flatten-1.1.1.tgz')))
+        self.assertFalse(os.path.exists(os.path.join(self.dldir, 'npm2', 'content-type-1.0.4.tgz')))
 
 class GitSharedTest(FetcherTest):
     def setUp(self):
