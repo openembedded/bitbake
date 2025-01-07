@@ -3391,7 +3391,6 @@ class GoModTest(FetcherTest):
         fetcher = bb.fetch2.Fetch(urls, self.d)
         ud = fetcher.ud[urls[0]]
         self.assertEqual(ud.url, 'https://proxy.golang.org/github.com/%21azure/azure-sdk-for-go/sdk/storage/azblob/%40v/v1.0.0.zip')
-        self.assertNotIn('name', ud.parm)
 
         fetcher.download()
         fetcher.unpack(self.unpackdir)
@@ -3409,7 +3408,6 @@ class GoModTest(FetcherTest):
         fetcher = bb.fetch2.Fetch(urls, self.d)
         ud = fetcher.ud[urls[0]]
         self.assertEqual(ud.url, 'https://proxy.golang.org/github.com/%21azure/azure-sdk-for-go/sdk/storage/azblob/%40v/v1.0.0.mod')
-        self.assertNotIn('name', ud.parm)
 
         fetcher.download()
         fetcher.unpack(self.unpackdir)
@@ -3442,7 +3440,6 @@ class GoModTest(FetcherTest):
         fetcher = bb.fetch2.Fetch(urls, self.d)
         ud = fetcher.ud[urls[0]]
         self.assertEqual(ud.url, 'https://proxy.golang.org/gopkg.in/ini.v1/%40v/v1.67.0.zip')
-        self.assertNotIn('name', ud.parm)
 
         fetcher.download()
         fetcher.unpack(self.unpackdir)
@@ -3460,7 +3457,6 @@ class GoModTest(FetcherTest):
         fetcher = bb.fetch2.Fetch(urls, self.d)
         ud = fetcher.ud[urls[0]]
         self.assertEqual(ud.url, 'https://proxy.golang.org/go.opencensus.io/%40v/v0.24.0.zip')
-        self.assertNotIn('name', ud.parm)
 
         fetcher.download()
         fetcher.unpack(self.unpackdir)

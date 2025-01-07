@@ -1316,20 +1316,23 @@ class FetchData(object):
         self.setup = False
 
         def configure_checksum(checksum_id):
+            checksum_plain_name = "%ssum" % checksum_id
             if "name" in self.parm:
                 checksum_name = "%s.%ssum" % (self.parm["name"], checksum_id)
             else:
-                checksum_name = "%ssum" % checksum_id
-
-            setattr(self, "%s_name" % checksum_id, checksum_name)
+                checksum_name = checksum_plain_name
 
             if checksum_name in self.parm:
                 checksum_expected = self.parm[checksum_name]
+            elif checksum_plain_name in self.parm:
+                checksum_expected = self.parm[checksum_plain_name]
+                checksum_name = checksum_plain_name
             elif self.type not in ["http", "https", "ftp", "ftps", "sftp", "s3", "az", "crate", "gs", "gomod"]:
                 checksum_expected = None
             else:
                 checksum_expected = d.getVarFlag("SRC_URI", checksum_name)
 
+            setattr(self, "%s_name" % checksum_id, checksum_name)
             setattr(self, "%s_expected" % checksum_id, checksum_expected)
 
         self.names = self.parm.get("name",'default').split(',')
