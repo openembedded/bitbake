@@ -577,6 +577,8 @@ def main(server, eventHandler, params, tf = TerminalFilter):
     else:
         log_exec_tty = False
 
+    should_print_hyperlinks = sys.stdout.isatty() and os.environ.get('NO_COLOR', '') == ''
+
     helper = uihelper.BBUIHelper()
 
     # Look for the specially designated handlers which need to be passed to the
@@ -944,10 +946,12 @@ def main(server, eventHandler, params, tf = TerminalFilter):
     try:
         termfilter.clearFooter()
         summary = ""
-        def print_hyperlink(url, link_text):
-            start = f'\033]8;;{url}\033\\'
-            end = '\033]8;;\033\\'
-            return f'{start}{link_text}{end}'
+        def format_hyperlink(url, link_text):
+            if should_print_hyperlinks:
+                start = f'\033]8;;{url}\033\\'
+                end = '\033]8;;\033\\'
+                return f'{start}{link_text}{end}'
+            return link_text
 
         if taskfailures:
             summary += pluralise("\nSummary: %s task failed:",
@@ -955,7 +959,7 @@ def main(server, eventHandler, params, tf = TerminalFilter):
             for (failure, log_file) in taskfailures.items():
                 summary += "\n  %s" % failure
                 if log_file:
-                    hyperlink = print_hyperlink(f"file://{log_file}", log_file)
+                    hyperlink = format_hyperlink(f"file://{log_file}", log_file)
                     summary += "\n    log: {}".format(hyperlink)
         if warnings:
             summary += pluralise("\nSummary: There was %s WARNING message.",
