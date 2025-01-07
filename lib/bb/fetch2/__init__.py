@@ -1327,7 +1327,7 @@ class FetchData(object):
             elif checksum_plain_name in self.parm:
                 checksum_expected = self.parm[checksum_plain_name]
                 checksum_name = checksum_plain_name
-            elif self.type not in ["http", "https", "ftp", "ftps", "sftp", "s3", "az", "crate", "gs", "gomod"]:
+            elif self.type not in ["http", "https", "ftp", "ftps", "sftp", "s3", "az", "crate", "gs", "gomod", "npm"]:
                 checksum_expected = None
             else:
                 checksum_expected = d.getVarFlag("SRC_URI", checksum_name)
