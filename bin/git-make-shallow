@@ -116,7 +116,7 @@ def filter_refs(refs):
     to_remove = set(all_refs) - set(refs)
     if to_remove:
         check_output(git_cmd + ['update-ref', '--no-deref', '--stdin', '-z'],
-                     input=''.join('delete ' + l + '\0\0' for l in to_remove) + 'commit\0')
+                     input=''.join('delete ' + l + '\0\0' for l in to_remove))
 
 
 def follow_history_intersections(revisions, refs):
