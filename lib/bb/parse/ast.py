@@ -152,7 +152,10 @@ class DataNode(AstNode):
 
         flag = None
         if 'flag' in groupd and groupd['flag'] is not None:
-            flag = groupd['flag']
+            if groupd["lazyques"]:
+                flag = "_defaultval_flag_"+groupd['flag']
+            else:
+                flag = groupd['flag']
         elif groupd["lazyques"]:
             flag = "_defaultval"
 
