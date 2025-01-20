@@ -3034,14 +3034,13 @@ def build_scenequeue_data(sqdata, rqdata, sqrq):
     rqdata.init_progress_reporter.next_stage(len(rqdata.runtaskentries))
 
     # Sanity check all dependencies could be changed to setscene task references
-    for taskcounter, tid in enumerate(rqdata.runtaskentries):
+    for tid in rqdata.runtaskentries:
         if tid in rqdata.runq_setscene_tids:
             pass
         elif sq_revdeps_squash[tid]:
             bb.msg.fatal("RunQueue", "Something went badly wrong during scenequeue generation, halting. Please report this problem.")
         else:
             del sq_revdeps_squash[tid]
-        rqdata.init_progress_reporter.update(taskcounter)
 
     rqdata.init_progress_reporter.next_stage()
 
