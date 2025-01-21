@@ -440,6 +440,30 @@ def runAnonFuncs(d):
         code.append("%s(d)" % funcname)
     bb.utils.better_exec("\n".join(code), {"d": d})
 
+# Handle recipe level PREFERRED_PROVIDERs
+def handleVirtRecipeProviders(tasklist, d):
+    depends = (d.getVar("DEPENDS") or "").split()
+    virtprovs = (d.getVar("BB_RECIPE_VIRTUAL_PROVIDERS") or "").split()
+    newdeps = []
+    for dep in depends:
+        if dep in virtprovs:
+            newdep = d.getVar("PREFERRED_PROVIDER_" + dep)
+            if not newdep:
+                 bb.fatal("Error, recipe virtual provider PREFERRED_PROVIDER_%s not set" % dep)
+            newdeps.append(newdep)
+        else:
+            newdeps.append(dep)
+    d.setVar("DEPENDS", " ".join(newdeps))
+    for task in tasklist:
+        taskdeps = (d.getVarFlag(task, "depends") or "").split()
+        remapped = []
+        for entry in taskdeps:
+            r, t = entry.split(":")
+            if r in virtprovs:
+                r = d.getVar("PREFERRED_PROVIDER_" + r)
+            remapped.append("%s:%s" % (r, t))
+        d.setVarFlag(task, "depends", " ".join(remapped))
+
 def finalize(fn, d, variant = None):
     saved_handlers = bb.event.get_handlers().copy()
     try:
@@ -465,6 +489,7 @@ def finalize(fn, d, variant = None):
 
         tasklist = d.getVar('__BBTASKS', False) or []
         bb.event.fire(bb.event.RecipeTaskPreProcess(fn, list(tasklist)), d)
+        handleVirtRecipeProviders(tasklist, d)
         bb.build.add_tasks(tasklist, d)
 
         bb.parse.siggen.finalise(fn, d, variant)
