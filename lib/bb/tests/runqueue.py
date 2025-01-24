@@ -314,6 +314,15 @@ class RunQueueTests(unittest.TestCase):
                        ["mc_2:a1:%s" % t for t in rerun_tasks]
             self.assertEqual(set(tasks), set(expected))
 
+            # Check what happens with an invalid task depednency
+            passed = False
+            try:
+                self.run_bitbakecmd(["bitbake", "j1"], tempdir, "", extraenv=extraenv, cleanup=True)
+            except AssertionError as e:
+                print("Expected failure: %s" % e)
+                passed = True
+            self.assertEqual(True, passed)
+
             self.shutdown(tempdir)
 
     def test_hashserv_single(self):
