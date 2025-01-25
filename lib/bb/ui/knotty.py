@@ -243,9 +243,10 @@ class TerminalFilter(object):
 
     def keepAlive(self, t):
         if not self.cuu:
-            print("Bitbake still alive (no events for %ds). Active tasks:" % t)
+            msgbuf = ["Bitbake still alive (no events for %ds). Active tasks:" % t]
             for t in self.helper.running_tasks:
-                print(t)
+                msgbuf.append(str(t))
+            print("\n".join(msgbuf))
             sys.stdout.flush()
 
     def updateFooter(self):
@@ -379,13 +380,12 @@ class TerminalFilter(object):
             self.termios.tcsetattr(fd, self.termios.TCSADRAIN, self.stdinbackup)
 
 def print_event_log(event, includelogs, loglines, termfilter):
-    # FIXME refactor this out further
     logfile = event.logfile
     if logfile and os.path.exists(logfile):
         termfilter.clearFooter()
         bb.error("Logfile of failure stored in: %s" % logfile)
         if includelogs and not event.errprinted:
-            bb.plain("Log data follows:")
+            msgbuf = ["Log data follows:"]
             f = open(logfile, "r")
             lines = []
             while True:
@@ -398,11 +398,11 @@ def print_event_log(event, includelogs, loglines, termfilter):
                     if len(lines) > int(loglines):
                         lines.pop(0)
                 else:
-                    bb.plain('| %s' % l)
+                    msgbuf.append('| %s' % l)
             f.close()
             if lines:
-                for line in lines:
-                    bb.plain(line)
+                msgbuf.extend(lines)
+            print("\n".join(msgbuf))
 
 def _log_settings_from_server(server, observe_only):
     # Get values of variables which control our output
