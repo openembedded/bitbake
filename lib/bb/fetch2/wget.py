@@ -75,6 +75,8 @@ class Wget(FetchMethod):
 
         if 'downloadfilename' in ud.parm:
             ud.basename = ud.parm['downloadfilename']
+        elif 'usefulldownloadpath' in ud.parm:
+            ud.basename = ud.path
         else:
             ud.basename = os.path.basename(ud.path)
 
