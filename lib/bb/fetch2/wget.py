@@ -73,15 +73,6 @@ class Wget(FetchMethod):
             if ud.parm['protocol'] == 'git':
                 raise bb.fetch2.ParameterError("Invalid protocol - if you wish to fetch from a git repository using http, you need to instead use the git:// prefix with protocol=http", ud.url)
 
-        if 'downloadfilename' in ud.parm:
-            ud.basename = ud.parm['downloadfilename']
-        else:
-            ud.basename = os.path.basename(ud.path)
-
-        ud.localfile = ud.basename
-        if not ud.localfile:
-            ud.localfile = ud.host + ud.path.replace("/", ".")
-
         self.basecmd = d.getVar("FETCHCMD_wget") or "/usr/bin/env wget -t 2 -T 100"
 
         if ud.type == 'ftp' or ud.type == 'ftps':

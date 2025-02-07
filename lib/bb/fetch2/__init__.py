@@ -1269,7 +1269,6 @@ class FetchData(object):
         self.localpath = None
         self.lockfile = None
         self.mirrortarballs = []
-        self.basename = None
         (self.type, self.host, self.path, self.user, self.pswd, self.parm) = decodeurl(d.expand(url))
         self.date = self.getSRCDate(d)
         self.url = url
@@ -1325,10 +1324,17 @@ class FetchData(object):
 
         self.ignore_checksums = False
 
+        if not self.localfile and self.needdonestamp:
+            if 'downloadfilename' in self.parm:
+                self.localfile = self.parm['downloadfilename']
+            else:
+                self.localfile = os.path.basename(self.path)
+            if not os.path.basename(self.localfile):
+                self.localfile = self.host + self.path.replace("/", ".")
+
         if "localpath" in self.parm:
             # if user sets localpath for file, use it instead.
             self.localpath = self.parm["localpath"]
-            self.basename = os.path.basename(self.localpath)
         elif self.localfile:
             self.localpath = self.method.localpath(self, d)
 
@@ -1342,8 +1348,8 @@ class FetchData(object):
             basepath = self.localpath
         elif self.localpath:
             basepath = dldir + os.sep + os.path.basename(self.localpath)
-        elif self.basename:
-            basepath = dldir + os.sep + self.basename
+        elif self.localfile:
+            basepath = dldir + os.sep + self.localfile
         else:
             bb.fatal("Can't determine lock path for url %s" % url)
 
