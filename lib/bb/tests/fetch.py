@@ -570,16 +570,16 @@ class MirrorUriTest(FetcherTest):
                                 'http://otherdownloads.yoctoproject.org/downloads/bitbake-1.0.tar.gz',
                                 'http://downloads2.yoctoproject.org/downloads/bitbake-1.0.tar.gz'])
 
-    recmirrorvar = "https://.*/[^/]*    http://AAAA/A/A/A/ " \
-                   "https://.*/[^/]*    https://BBBB/B/B/B/"
+    recmirrorvar = "https://.*/[^/]*    http://aaaa/A/A/A/ " \
+                   "https://.*/[^/]*    https://bbbb/B/B/B/"
 
     def test_recursive(self):
         fetcher = bb.fetch.FetchData("https://downloads.yoctoproject.org/releases/bitbake/bitbake-1.0.tar.gz", self.d)
         mirrors = bb.fetch2.mirror_from_string(self.recmirrorvar)
         uris, uds = bb.fetch2.build_mirroruris(fetcher, mirrors, self.d)
-        self.assertEqual(uris, ['http://AAAA/A/A/A/bitbake/bitbake-1.0.tar.gz',
-                                'https://BBBB/B/B/B/bitbake/bitbake-1.0.tar.gz',
-                                'http://AAAA/A/A/A/B/B/bitbake/bitbake-1.0.tar.gz'])
+        self.assertEqual(uris, ['http://aaaa/A/A/A/bitbake/bitbake-1.0.tar.gz',
+                                'https://bbbb/B/B/B/bitbake/bitbake-1.0.tar.gz',
+                                'http://aaaa/A/A/A/B/B/bitbake/bitbake-1.0.tar.gz'])
 
 
 class GitDownloadDirectoryNamingTest(FetcherTest):
