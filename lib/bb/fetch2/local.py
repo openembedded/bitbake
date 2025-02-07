@@ -29,7 +29,6 @@ class Local(FetchMethod):
 
     def urldata_init(self, ud, d):
         # We don't set localfile as for this fetcher the file is already local!
-        ud.basename = os.path.basename(ud.path)
         ud.basepath = ud.path
         ud.needdonestamp = False
         if "*" in ud.path:

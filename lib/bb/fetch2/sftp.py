@@ -72,13 +72,6 @@ class SFTP(FetchMethod):
                 "git repository using ssh, you need to use the " +
                 "git:// prefix with protocol=ssh", ud.url)
 
-        if 'downloadfilename' in ud.parm:
-            ud.basename = ud.parm['downloadfilename']
-        else:
-            ud.basename = os.path.basename(ud.path)
-
-        ud.localfile = ud.basename
-
     def download(self, ud, d):
         """Fetch urls"""
 
