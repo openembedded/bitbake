@@ -77,7 +77,7 @@ class S3(FetchMethod):
         else:
             ud.basename = os.path.basename(ud.path)
 
-        ud.localfile = urllib.parse.unquote(ud.basename)
+        ud.localfile = ud.basename
 
         ud.basecmd = d.getVar("FETCHCMD_s3") or "/usr/bin/env aws s3"
 

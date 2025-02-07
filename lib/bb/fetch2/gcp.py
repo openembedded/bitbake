@@ -46,7 +46,7 @@ class GCP(FetchMethod):
         else:
             ud.basename = os.path.basename(ud.path)
 
-        ud.localfile = urllib.parse.unquote(ud.basename)
+        ud.localfile = ud.basename
 
     def get_gcp_client(self):
         from google.cloud import storage
