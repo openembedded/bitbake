@@ -72,13 +72,6 @@ class S3(FetchMethod):
         return True
 
     def urldata_init(self, ud, d):
-        if 'downloadfilename' in ud.parm:
-            ud.basename = ud.parm['downloadfilename']
-        else:
-            ud.basename = os.path.basename(ud.path)
-
-        ud.localfile = ud.basename
-
         ud.basecmd = d.getVar("FETCHCMD_s3") or "/usr/bin/env aws s3"
 
     def download(self, ud, d):

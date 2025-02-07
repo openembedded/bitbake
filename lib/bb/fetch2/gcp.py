@@ -40,14 +40,6 @@ class GCP(FetchMethod):
     def recommends_checksum(self, urldata):
         return True
 
-    def urldata_init(self, ud, d):
-        if 'downloadfilename' in ud.parm:
-            ud.basename = ud.parm['downloadfilename']
-        else:
-            ud.basename = os.path.basename(ud.path)
-
-        ud.localfile = ud.basename
-
     def get_gcp_client(self):
         from google.cloud import storage
         self.gcp_client = storage.Client(project=None)
