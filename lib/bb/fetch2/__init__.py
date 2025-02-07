@@ -1147,7 +1147,7 @@ def trusted_network(d, url):
     if bb.utils.to_boolean(d.getVar("BB_NO_NETWORK")):
         return True
 
-    pkgname = d.expand(d.getVar('PN', False))
+    pkgname = d.getVar('PN')
     trusted_hosts = None
     if pkgname:
         trusted_hosts = d.getVarFlag('BB_ALLOWED_NETWORKS', pkgname, False)
@@ -1782,7 +1782,7 @@ class Fetch(object):
             self.ud[url] = FetchData(url, self.d)
 
         self.ud[url].setup_localpath(self.d)
-        return self.d.expand(self.ud[url].localpath)
+        return self.ud[url].localpath
 
     def localpaths(self):
         """
