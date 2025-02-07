@@ -82,8 +82,7 @@ class SFTP(FetchMethod):
             port = '-P %d' % urlo.port
             urlo.port = None
 
-        dldir = d.getVar('DL_DIR')
-        lpath = os.path.join(dldir, ud.localfile)
+        lpath = ud.localpath
 
         user = ''
         if urlo.userinfo:
