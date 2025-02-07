@@ -95,7 +95,7 @@ class Wget(FetchMethod):
         fetchcmd = self.basecmd
 
         dldir = os.path.realpath(d.getVar("DL_DIR"))
-        localpath = os.path.join(dldir, ud.localfile) + ".tmp"
+        localpath = ud.localpath + ".tmp"
         bb.utils.mkdirhier(os.path.dirname(localpath))
         fetchcmd += " -O %s" % shlex.quote(localpath)
 

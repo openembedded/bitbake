@@ -46,7 +46,7 @@ class Repo(FetchMethod):
     def download(self, ud, d):
         """Fetch url"""
 
-        if os.access(os.path.join(d.getVar("DL_DIR"), ud.localfile), os.R_OK):
+        if os.access(ud.localpath, os.R_OK):
             logger.debug("%s already exists (or was stashed). Skipping repo init / sync.", ud.localpath)
             return
 
