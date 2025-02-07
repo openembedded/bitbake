@@ -323,6 +323,21 @@ class URITest(unittest.TestCase):
             'params': {"downloadfilename" : "EGPL-T101.zip"},
             'query': {"9BE0BF6657": None},
             'relative': False
+        },
+        "file://example@.service": {
+            'uri': 'file:example%40.service',
+            'scheme': 'file',
+            'hostname': '',
+            'port': None,
+            'hostport': '',
+            'path': 'example@.service',
+            'userinfo': '',
+            'userinfo': '',
+            'username': '',
+            'password': '',
+            'params': {},
+            'query': {},
+            'relative': True
         }
 
     }
@@ -728,6 +743,7 @@ class FetcherLocalTest(FetcherTest):
         os.makedirs(self.localsrcdir)
         touch(os.path.join(self.localsrcdir, 'a'))
         touch(os.path.join(self.localsrcdir, 'b'))
+        touch(os.path.join(self.localsrcdir, 'c@d'))
         os.makedirs(os.path.join(self.localsrcdir, 'dir'))
         touch(os.path.join(self.localsrcdir, 'dir', 'c'))
         touch(os.path.join(self.localsrcdir, 'dir', 'd'))
@@ -758,6 +774,10 @@ class FetcherLocalTest(FetcherTest):
     def test_local(self):
         tree = self.fetchUnpack(['file://a', 'file://dir/c'])
         self.assertEqual(tree, ['a', 'dir/c'])
+
+    def test_local_at(self):
+        tree = self.fetchUnpack(['file://c@d'])
+        self.assertEqual(tree, ['c@d'])
 
     def test_local_backslash(self):
         tree = self.fetchUnpack([r'file://backslash\x2dsystemd-unit.device'])
@@ -1388,6 +1408,7 @@ class URLHandle(unittest.TestCase):
        "cvs://anoncvs:anonymous@cvs.handhelds.org/cvs;tag=V0-99-81;module=familiar/dist/ipkg" : ('cvs', 'cvs.handhelds.org', '/cvs', 'anoncvs', 'anonymous', collections.OrderedDict([('tag', 'V0-99-81'), ('module', 'familiar/dist/ipkg')])),
        "git://git.openembedded.org/bitbake;branch=@foo;protocol=https" : ('git', 'git.openembedded.org', '/bitbake', '', '', {'branch': '@foo', 'protocol' : 'https'}),
        "file://somelocation;someparam=1": ('file', '', 'somelocation', '', '', {'someparam': '1'}),
+       "file://example@.service": ('file', '', 'example@.service', '', '', {}),
        "https://somesite.com/somerepo.git;user=anyUser:idtoken=1234" : ('https', 'somesite.com', '/somerepo.git', '', '', {'user': 'anyUser:idtoken=1234'}),
        r'git://s.o-me_ONE:!#$%^&*()-_={}[]\|:?,.<>~`@git.openembedded.org/bitbake;branch=main;protocol=https': ('git', 'git.openembedded.org', '/bitbake', 's.o-me_ONE', r'!#$%^&*()-_={}[]\|:?,.<>~`', {'branch': 'main', 'protocol' : 'https'}),
     }
@@ -1405,8 +1426,11 @@ class URLHandle(unittest.TestCase):
             self.assertEqual(result, v)
 
     def test_encodeurl(self):
+        import urllib.parse
         for k, v in self.datatable.items():
             result = bb.fetch.encodeurl(v)
+            if result.startswith("file:"):
+                result = urllib.parse.unquote(result)
             self.assertEqual(result, k)
 
 class FetchLatestVersionTest(FetcherTest):
