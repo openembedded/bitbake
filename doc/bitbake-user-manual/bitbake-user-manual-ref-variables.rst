@@ -127,6 +127,11 @@ overview of their function and contents.
       Contains the name of the currently running task. The name does not
       include the ``do_`` prefix.
 
+   :term:`BB_CURRENT_MC`
+      Contains the name of the current multiconfig a task is being run under.
+      The name is taken from the multiconfig configuration file (a file
+      ``mc1.conf`` would make this variable equal to ``mc1``).
+
    :term:`BB_DEFAULT_TASK`
       The default task to use when none is specified (e.g. with the ``-c``
       command line option). The task name specified should not include the
