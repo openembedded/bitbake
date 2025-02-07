@@ -1236,7 +1236,7 @@ def get_checksum_file_list(d):
             found = False
             paths = ud.method.localfile_searchpaths(ud, d)
             for f in paths:
-                pth = ud.decodedurl
+                pth = ud.path
                 if os.path.exists(f):
                     found = True
                 filelist.append(f + ":" + str(os.path.exists(f)))
