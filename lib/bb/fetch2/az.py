@@ -49,8 +49,7 @@ class Az(Wget):
         fetchcmd = self.basecmd + ' --retry-connrefused --waitretry=5'
 
         # We need to provide a localpath to avoid wget using the SAS
-        # ud.localfile either has the downloadfilename or ud.path
-        localpath = os.path.join(d.getVar("DL_DIR"), ud.localfile)
+        localpath = ud.localpath
         bb.utils.mkdirhier(os.path.dirname(localpath))
         fetchcmd += " -O %s" % shlex.quote(localpath)
 
