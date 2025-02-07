@@ -371,6 +371,9 @@ def decodeurl(url):
     elif type.lower() == 'file':
         host = ""
         path = location
+        if user:
+            path = user + '@' + path
+            user = ""
     else:
         host = location
         path = "/"
