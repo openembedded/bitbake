@@ -920,6 +920,8 @@ class DataSmart(MutableMapping):
             self.varhistory.record(**loginfo)
 
             del self.dict[var][flag]
+            if ("_defaultval_flag_" + flag) in self.dict[var]:
+                del self.dict[var]["_defaultval_flag_" + flag]
 
     def appendVarFlag(self, var, flag, value, **loginfo):
         loginfo['op'] = 'append'
@@ -954,16 +956,21 @@ class DataSmart(MutableMapping):
         flags = {}
 
         if local_var:
-            for i in local_var:
-                if i.startswith(("_", ":")) and not internalflags:
+            for i, val in local_var.items():
+                if i.startswith("_defaultval_flag_") and not internalflags:
+                    i = i[len("_defaultval_flag_"):]
+                    if i not in local_var:
+                        flags[i] = val
+                elif i.startswith(("_", ":")) and not internalflags:
                     continue
-                flags[i] = local_var[i]
+                else:
+                    flags[i] = val
+
                 if expand and i in expand:
                     flags[i] = self.expand(flags[i], var + "[" + i + "]")
         if len(flags) == 0:
             return None
         return flags
-
 
     def delVarFlags(self, var, **loginfo):
         self.expand_cache = {}
