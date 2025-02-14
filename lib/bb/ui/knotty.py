@@ -404,7 +404,8 @@ _evt_list = [ "bb.runqueue.runQueueExitWait", "bb.event.LogExecTTY", "logging.Lo
               "bb.event.MultipleProviders", "bb.event.NoProvider", "bb.runqueue.sceneQueueTaskStarted",
               "bb.runqueue.runQueueTaskStarted", "bb.runqueue.runQueueTaskFailed", "bb.runqueue.sceneQueueTaskFailed",
               "bb.event.BuildBase", "bb.build.TaskStarted", "bb.build.TaskSucceeded", "bb.build.TaskFailedSilent",
-              "bb.build.TaskProgress", "bb.event.ProcessStarted", "bb.event.ProcessProgress", "bb.event.ProcessFinished"]
+              "bb.build.TaskProgress", "bb.event.ProcessStarted", "bb.event.ProcessProgress", "bb.event.ProcessFinished",
+              "bb.event.CheckCacheValidityStarted", "bb.event.CheckCacheValidityProgress", "bb.event.CheckCacheValidityCompleted"]
 
 def drain_events_errorhandling(eventHandler):
     # We don't have logging setup, we do need to show any events we see before exiting
@@ -794,6 +795,26 @@ def main(server, eventHandler, params, tf = TerminalFilter):
                 cacheprogress.finish()
                 if params.options.quiet == 0:
                     print("Loaded %d entries from dependency cache." % event.num_entries)
+                continue
+
+            if isinstance(event, bb.event.CheckCacheValidityStarted):
+                if params.options.quiet > 1:
+                    continue
+                cacheprogress = new_progress("Checking cache validity", event.total).start()
+                continue
+
+            if isinstance(event, bb.event.CheckCacheValidityProgress):
+                if params.options.quiet > 1:
+                    continue
+                cacheprogress.update(event.current)
+                continue
+
+            if isinstance(event, bb.event.CheckCacheValidityCompleted):
+                if params.options.quiet > 1:
+                    continue
+                cacheprogress.finish()
+                if params.options.quiet == 0:
+                    print(f"Checked {event.total:d} cache entries for validity.")
                 continue
 
             if isinstance(event, bb.command.CommandFailed):
