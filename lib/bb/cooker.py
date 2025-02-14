@@ -2127,6 +2127,12 @@ class CookerParser(object):
         self.bb_caches = bb.cache.MulticonfigCache(self.cfgbuilder, self.cfghash, cooker.caches_array)
         self.fromcache = set()
         self.willparse = set()
+
+        validate_count = sum(len(self.mcfilelist[mc]) for mc in self.cooker.multiconfigs)
+        validate_chunk = int(max(validate_count / 100, 1))
+
+        bb.event.fire(bb.event.CheckCacheValidityStarted(validate_count), self.cfgdata)
+        num_validated = 0
         for mc in self.cooker.multiconfigs:
             for filename in self.mcfilelist[mc]:
                 appends = self.cooker.collections[mc].get_file_appends(filename)
@@ -2135,6 +2141,10 @@ class CookerParser(object):
                     self.willparse.add((mc, self.bb_caches[mc], filename, appends, layername))
                 else:
                     self.fromcache.add((mc, self.bb_caches[mc], filename, appends, layername))
+                num_validated += 1
+                if num_validated % validate_chunk == 0:
+                    bb.event.fire(bb.event.CheckCacheValidityProgress(num_validated, validate_count), self.cfgdata)
+        bb.event.fire(bb.event.CheckCacheValidityCompleted(validate_count), self.cfgdata)
 
         self.total = len(self.fromcache) + len(self.willparse)
         self.toparse = len(self.willparse)

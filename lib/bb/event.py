@@ -639,6 +639,21 @@ class CacheLoadCompleted(OperationCompleted):
         OperationCompleted.__init__(self, total, "Loading cache Completed")
         self.num_entries = num_entries
 
+class CheckCacheValidityStarted(OperationStarted):
+    """Started checking whether cached entries are valid"""
+    def __init__(self, total):
+        super().__init__("Checking cache validity started")
+        self.total = total
+
+class CheckCacheValidityProgress(OperationProgress):
+    def __init__(self, current, total):
+        super().__init__(current, total, "Checking cache validity")
+
+class CheckCacheValidityCompleted(OperationCompleted):
+    """Finished checking whether cached entries are valid"""
+    def __init__(self, total):
+        super().__init__(total, "Checking cache validity completed")
+
 class TreeDataPreparationStarted(OperationStarted):
     """Tree data preparation started"""
     def __init__(self):
