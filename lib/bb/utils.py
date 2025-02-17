@@ -11,11 +11,8 @@ import re, fcntl, os, string, stat, shutil, time
 import sys
 import errno
 import logging
-import bb
-import bb.msg
 import locale
 import multiprocessing
-import fcntl
 import importlib
 import importlib.machinery
 import importlib.util
@@ -24,7 +21,6 @@ import subprocess
 import glob
 import fnmatch
 import traceback
-import errno
 import signal
 import collections
 import copy
@@ -36,6 +32,8 @@ import tempfile
 from subprocess import getstatusoutput
 from contextlib import contextmanager
 from ctypes import cdll
+import bb
+import bb.msg
 
 logger = logging.getLogger("BitBake.Util")
 python_extensions = importlib.machinery.all_suffixes()
@@ -1457,8 +1455,6 @@ def edit_bblayers_conf(bblayers_conf, add, remove, edit_cb=None):
             but weren't (because they weren't in the list)
     """
 
-    import fnmatch
-
     def remove_trailing_sep(pth):
         if pth and pth[-1] == os.sep:
             pth = pth[:-1]
@@ -1649,7 +1645,7 @@ def ioprio_set(who, cls, value):
         bb.warn("Unable to set IO Prio for arch %s" % _unamearch)
 
 def set_process_name(name):
-    from ctypes import cdll, byref, create_string_buffer
+    from ctypes import byref, create_string_buffer
     # This is nice to have for debugging, not essential
     try:
         libc = cdll.LoadLibrary('libc.so.6')
