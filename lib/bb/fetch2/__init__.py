@@ -1835,25 +1835,28 @@ class Fetch(object):
                             logger.debug(str(e))
                             done = False
 
+                d = self.d
                 if premirroronly:
-                    self.d.setVar("BB_NO_NETWORK", "1")
+                    # Only disable the network in a copy
+                    d = bb.data.createCopy(self.d)
+                    d.setVar("BB_NO_NETWORK", "1")
 
                 firsterr = None
                 verified_stamp = False
                 if done:
-                    verified_stamp = m.verify_donestamp(ud, self.d)
-                if not done and (not verified_stamp or m.need_update(ud, self.d)):
+                    verified_stamp = m.verify_donestamp(ud, d)
+                if not done and (not verified_stamp or m.need_update(ud, d)):
                     try:
-                        if not trusted_network(self.d, ud.url):
+                        if not trusted_network(d, ud.url):
                             raise UntrustedUrl(ud.url)
                         logger.debug("Trying Upstream")
-                        m.download(ud, self.d)
+                        m.download(ud, d)
                         if hasattr(m, "build_mirror_data"):
-                            m.build_mirror_data(ud, self.d)
+                            m.build_mirror_data(ud, d)
                         done = True
                         # early checksum verify, so that if checksum mismatched,
                         # fetcher still have chance to fetch from mirror
-                        m.update_donestamp(ud, self.d)
+                        m.update_donestamp(ud, d)
 
                     except bb.fetch2.NetworkAccess:
                         raise
@@ -1872,17 +1875,17 @@ class Fetch(object):
                         firsterr = e
                         # Remove any incomplete fetch
                         if not verified_stamp and m.cleanup_upon_failure():
-                            m.clean(ud, self.d)
+                            m.clean(ud, d)
                         logger.debug("Trying MIRRORS")
-                        mirrors = mirror_from_string(self.d.getVar('MIRRORS'))
-                        done = m.try_mirrors(self, ud, self.d, mirrors)
+                        mirrors = mirror_from_string(d.getVar('MIRRORS'))
+                        done = m.try_mirrors(self, ud, d, mirrors)
 
-                if not done or not m.done(ud, self.d):
+                if not done or not m.done(ud, d):
                     if firsterr:
                         logger.error(str(firsterr))
                     raise FetchError("Unable to fetch URL from any source.", u)
 
-                m.update_donestamp(ud, self.d)
+                m.update_donestamp(ud, d)
 
             except IOError as e:
                 if e.errno in [errno.ESTALE]:
