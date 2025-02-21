@@ -2321,6 +2321,18 @@ class GitShallowTest(GitShallowBaseTest, FetcherTest):
         FetcherTest.setUp(self)
         GitShallowBaseTest.setUp(self)
 
+    def test_shallow_check_is_shallow(self):
+        self.add_empty_file('a')
+        self.add_empty_file('b')
+
+        # Fetch and unpack without the clonedir and *only* shallow tarball available
+        bb.utils.remove(self.gitdir, recurse=True)
+        fetcher, ud = self.fetch_and_unpack()
+
+        # The unpacked tree *should* be shallow
+        self.assertRevCount(1)
+        assert os.path.exists(os.path.join(self.gitdir, '.git', 'shallow'))
+
 class GitShallowSkipFastTest(GitShallowBaseTest, FetcherTest):
     """
     Test cases for use when skipping fast shallow mode.
