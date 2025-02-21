@@ -320,11 +320,21 @@ overview of their function and contents.
       mirror tarball. If the shallow mirror tarball cannot be fetched, it will
       try to fetch the full mirror tarball and use that.
 
-      When a mirror tarball is not available, a full git clone will be performed
-      regardless of whether this variable is set or not. Support for shallow
-      clones is not currently implemented as git does not directly support
-      shallow cloning a particular git commit hash (it only supports cloning
-      from a tag or branch reference).
+      This setting causes an initial shallow clone instead of an initial full bare clone.
+      The amount of data transferred during the initial clone will be significantly reduced.
+
+      However, every time the source revision (referenced in :term:`SRCREV`)
+      changes, regardless of whether the cache within the download directory
+      (defined by :term:`DL_DIR`) has been cleaned up or not,
+      the data transfer may be significantly higher because entirely
+      new shallow clones are required for each source revision change.
+
+      Over time, numerous shallow clones may cumulatively transfer
+      the same amount of data as an initial full bare clone.
+      This is especially the case with very large repositories.
+
+      Existing initial full bare clones, created without this setting,
+      will still be utilized.
 
       See also :term:`BB_GIT_SHALLOW_DEPTH` and
       :term:`BB_GENERATE_SHALLOW_TARBALLS`.
@@ -351,6 +361,13 @@ overview of their function and contents.
       generating shallow mirror tarballs.
 
       For example usage, see :term:`BB_GIT_SHALLOW`.
+
+   :term:`BB_GIT_SHALLOW_SKIP_FAST`
+      Set to "1" to skip the fast initial shallow fetch.
+      This setting forces an initial full bare clone
+      instead of the default initial shallow clone.
+
+      For further details, see :term:`BB_GIT_SHALLOW`.
 
    :term:`BB_GLOBAL_PYMODULES`
       Specifies the list of Python modules to place in the global namespace.
