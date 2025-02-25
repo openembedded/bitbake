@@ -264,7 +264,7 @@ class GitSM(Git):
         Git.clean(self, ud, d)
 
     def implicit_urldata(self, ud, d):
-        import shutil, subprocess, tempfile
+        import subprocess
 
         urldata = []
         def add_submodule(ud, url, module, modpath, workdir, d):

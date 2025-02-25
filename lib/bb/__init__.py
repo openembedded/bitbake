@@ -194,7 +194,6 @@ def deprecated(func, name=None, advice=""):
 # For compatibility
 def deprecate_import(current, modulename, fromlist, renames = None):
     """Import objects from one module into another, wrapping them with a DeprecationWarning"""
-    import sys
 
     module = __import__(modulename, fromlist = fromlist)
     for position, objname in enumerate(fromlist):

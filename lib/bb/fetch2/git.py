@@ -817,7 +817,6 @@ class Git(FetchMethod):
         """
         Return True if git-lfs can be found, False otherwise.
         """
-        import shutil
         return shutil.which("git-lfs", path=d.getVar('PATH')) is not None
 
     def _get_repo_url(self, ud):

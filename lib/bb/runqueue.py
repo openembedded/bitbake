@@ -477,7 +477,6 @@ class RunQueueData:
         self.runtaskentries = {}
 
     def runq_depends_names(self, ids):
-        import re
         ret = []
         for id in ids:
             nam = os.path.basename(id)
