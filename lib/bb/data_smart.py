@@ -580,12 +580,10 @@ class DataSmart(MutableMapping):
             else:
                 loginfo['op'] = keyword
             self.varhistory.record(**loginfo)
-            # todo make sure keyword is not __doc__ or __module__
             # pay the cookie monster
 
             # more cookies for the cookie monster
-            if ':' in var:
-                self._setvar_update_overrides(base, **loginfo)
+            self._setvar_update_overrides(base, **loginfo)
 
             if base in self.overridevars:
                 self._setvar_update_overridevars(var, value)
