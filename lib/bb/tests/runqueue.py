@@ -314,6 +314,24 @@ class RunQueueTests(unittest.TestCase):
                        ["mc_2:a1:%s" % t for t in rerun_tasks]
             self.assertEqual(set(tasks), set(expected))
 
+            # AssertionError is raised by self.run_bitbakecmd in the event of a failure
+            # in thise case a failure is required, but we need to do further processing
+            # to tell if it's the RIGHT kind of failure.
+            with self.assertRaises(AssertionError):
+                try:
+                    self.run_bitbakecmd(["bitbake", "g1"], tempdir, "", extraenv=extraenv, cleanup=True)
+                except AssertionError as e:
+                    # If the word 'Traceback' or 'KeyError' is in the exception text,
+                    # we've regressed.  So verify it's NOT present, and pass the
+                    # exception to indicate a 'pass'.
+                    if not ('Traceback' in str(e) or 'KeyError' in str(e)):
+                        # Raising 'AssertionError' is a test pass
+                        raise e
+                    else:
+                        # Dump the output for triage, but don't raise an
+                        # exception, this indicates a test failure.
+                        print("%s: %s" % (type(e), e))
+
             self.shutdown(tempdir)
 
     def test_hashserv_single(self):
