@@ -106,52 +106,52 @@ class VariableParse:
         self.contains = {}
 
     def var_sub(self, match):
-            key = match.group()[2:-1]
-            if self.varname and key:
-                if self.varname == key:
-                    raise Exception("variable %s references itself!" % self.varname)
-            var = self.d.getVarFlag(key, "_content")
-            self.references.add(key)
-            if var is not None:
-                return var
-            else:
-                return match.group()
+        key = match.group()[2:-1]
+        if self.varname and key:
+            if self.varname == key:
+                raise Exception("variable %s references itself!" % self.varname)
+        var = self.d.getVarFlag(key, "_content")
+        self.references.add(key)
+        if var is not None:
+            return var
+        else:
+            return match.group()
 
     def python_sub(self, match):
-            if isinstance(match, str):
-                code = match
-            else:
-                code = match.group()[3:-1]
+        if isinstance(match, str):
+            code = match
+        else:
+            code = match.group()[3:-1]
 
-            # Do not run code that contains one or more unexpanded variables
-            # instead return the code with the characters we removed put back
-            if __expand_var_regexp__.findall(code):
-                return "${@" + code + "}"
+        # Do not run code that contains one or more unexpanded variables
+        # instead return the code with the characters we removed put back
+        if __expand_var_regexp__.findall(code):
+            return "${@" + code + "}"
 
-            if self.varname:
-                varname = 'Var <%s>' % self.varname
-            else:
-                varname = '<expansion>'
-            codeobj = compile(code.strip(), varname, "eval")
+        if self.varname:
+            varname = 'Var <%s>' % self.varname
+        else:
+            varname = '<expansion>'
+        codeobj = compile(code.strip(), varname, "eval")
 
-            parser = bb.codeparser.PythonParser(self.varname, logger)
-            parser.parse_python(code)
-            if self.varname:
-                vardeps = self.d.getVarFlag(self.varname, "vardeps")
-                if vardeps is None:
-                    parser.log.flush()
-            else:
+        parser = bb.codeparser.PythonParser(self.varname, logger)
+        parser.parse_python(code)
+        if self.varname:
+            vardeps = self.d.getVarFlag(self.varname, "vardeps")
+            if vardeps is None:
                 parser.log.flush()
-            self.references |= parser.references
-            self.execs |= parser.execs
+        else:
+            parser.log.flush()
+        self.references |= parser.references
+        self.execs |= parser.execs
 
-            for k in parser.contains:
-                if k not in self.contains:
-                    self.contains[k] = parser.contains[k].copy()
-                else:
-                    self.contains[k].update(parser.contains[k])
-            value = utils.better_eval(codeobj, DataContext(self.d), {'d' : self.d})
-            return str(value)
+        for k in parser.contains:
+            if k not in self.contains:
+                self.contains[k] = parser.contains[k].copy()
+            else:
+                self.contains[k].update(parser.contains[k])
+        value = utils.better_eval(codeobj, DataContext(self.d), {'d' : self.d})
+        return str(value)
 
 class DataContext(dict):
     excluded = set([i for i in dir(builtins) if not i.startswith('_')] + ['oe'])
