@@ -635,6 +635,7 @@ class DataSmart(MutableMapping):
                 nextnew.update(vardata.contains.keys())
             new = nextnew
         self.overrides = None
+        self.expand_cache = {}
 
     def _setvar_update_overrides(self, var, **loginfo):
         # aka pay the cookie monster
