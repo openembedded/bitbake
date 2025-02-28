@@ -707,6 +707,12 @@ overview of their function and contents.
       Within an executing task, this variable holds the hash of the task as
       returned by the currently enabled signature generator.
 
+   :term:`BB_USE_HOME_NPMRC`
+      Controls whether or not BitBake uses the user's .npmrc file within their
+      home directory within the npm fetcher. This can be used for authentication
+      of private NPM registries, among other uses. This is turned off by default
+      and requires the user to explicitly set it to "1" to enable.
+
    :term:`BB_VERBOSE_LOGS`
       Controls how verbose BitBake is during builds. If set, shell scripts
       echo commands and shell script output appears on standard out
