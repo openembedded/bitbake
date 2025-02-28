@@ -576,7 +576,7 @@ class BitBakeServer(object):
         self.readypipe, self.readypipein = os.pipe()
 
         # Place the log in the builddirectory alongside the lock file
-        logfile = os.path.join(os.path.dirname(self.bitbake_lock.name), "bitbake-cookerdaemon.log")
+        logfile = os.path.join(os.path.dirname(self.bitbake_lock.name), "bitbake-cookerdaemon.%s.log" % os.getpid())
         self.logfile = logfile
 
         startdatetime = datetime.datetime.now()
