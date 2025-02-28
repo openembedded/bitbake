@@ -26,6 +26,7 @@ import json
 import pickle
 import codecs
 import hashserv
+import faulthandler
 
 logger      = logging.getLogger("BitBake")
 collectlog  = logging.getLogger("BitBake.Collection")
@@ -2014,7 +2015,8 @@ class Parser(multiprocessing.Process):
             signal.signal(signal.SIGTERM, signal.SIG_DFL)
             os.kill(os.getpid(), signal.SIGTERM)
         elif signum == signal.SIGINT:
-            signal.default_int_handler(signum, frame)
+            signal.signal(signal.SIGINT, signal.SIG_DFL)
+            os.kill(os.getpid(), signal.SIGINT)
 
     def run(self):
 
@@ -2048,6 +2050,7 @@ class Parser(multiprocessing.Process):
         bb.utils.set_process_name(multiprocessing.current_process().name)
         multiprocessing.util.Finalize(None, bb.codeparser.parser_cache_save, exitpriority=1)
         multiprocessing.util.Finalize(None, bb.fetch.fetcher_parse_save, exitpriority=1)
+        faulthandler.enable(all_threads=True)
 
         pending = []
         havejobs = True

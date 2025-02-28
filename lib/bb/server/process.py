@@ -156,7 +156,7 @@ class ProcessServer():
         else:
             try:
                 ret = self.main()
-            except Exception:
+            except BaseException:
                 serverlog("Exception at exit: %s" % traceback.format_exc())
                 raise
 
@@ -677,7 +677,7 @@ def execServer(lockfd, readypipeinfd, lockname, sockname, server_timeout, xmlrpc
         serverlog("Started bitbake server pid %d" % os.getpid())
 
         server.run()
-    except Exception:
+    except BaseException:
         serverlog("Exception at exit2: %s" % traceback.format_exc())
         sys.stdout.flush()
         sys.stderr.flush()
