@@ -154,7 +154,11 @@ class ProcessServer():
             serverlog("Raw profiling information saved to profile.log and processed statistics to profile.log.processed")
 
         else:
-            ret = self.main()
+            try:
+                ret = self.main()
+            except Exception:
+                serverlog("Exception at exit: %s" % traceback.format_exc())
+                raise
 
         return ret
 
@@ -673,6 +677,12 @@ def execServer(lockfd, readypipeinfd, lockname, sockname, server_timeout, xmlrpc
         serverlog("Started bitbake server pid %d" % os.getpid())
 
         server.run()
+    except Exception:
+        serverlog("Exception at exit2: %s" % traceback.format_exc())
+        sys.stdout.flush()
+        sys.stderr.flush()
+        raise
+
     finally:
         # Flush any messages/errors to the logfile before exit
         sys.stdout.flush()
