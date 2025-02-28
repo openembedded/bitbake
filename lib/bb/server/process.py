@@ -44,7 +44,7 @@ def currenttime():
 def serverlog(msg):
     print(str(os.getpid()) + " " +  currenttime() + " " + msg)
     #Seems a flush here triggers filesytem sync like behaviour and long hangs in the server
-    #sys.stdout.flush()
+    sys.stdout.flush()
 
 #
 # When we have lockfile issues, try and find infomation about which process is
