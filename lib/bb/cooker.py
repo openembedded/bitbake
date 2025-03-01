@@ -27,6 +27,7 @@ import pickle
 import codecs
 import hashserv
 import faulthandler
+import traceback
 
 logger      = logging.getLogger("BitBake")
 collectlog  = logging.getLogger("BitBake.Collection")
@@ -2005,12 +2006,16 @@ class Parser(multiprocessing.Process):
         self.signal_threadlock = threading.Lock()
 
     def catch_sig(self, signum, frame):
+        bb.server.process.serverlog("Catch signal %s" % signum)
+        bb.server.process.serverlog(traceback.format_exc())
         if self.queue_signals:
             self.signal_received.append(signum)
         else:
             self.handle_sig(signum, frame)
 
     def handle_sig(self, signum, frame):
+        bb.server.process.serverlog("Handle signal %s" % signum)
+        bb.server.process.serverlog(traceback.format_exc())
         if signum == signal.SIGTERM:
             signal.signal(signal.SIGTERM, signal.SIG_DFL)
             os.kill(os.getpid(), signal.SIGTERM)
