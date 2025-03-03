@@ -1884,6 +1884,7 @@ def lock_timeout(lock):
     held = lock.acquire(timeout=5*60)
     try:
         if not held:
+            bb.server.process.serverlog("Couldn't get the lock for 5 mins, timed out, exiting.\n%s" % traceback.format_stack())
             os._exit(1)
         yield held
     finally:
