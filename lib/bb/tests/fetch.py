@@ -2302,6 +2302,18 @@ class GitShallowTest(FetcherTest):
         self.assertIn("No up to date source found", context.exception.msg)
         self.assertIn("clone directory not available or not up to date", context.exception.msg)
 
+    def test_shallow_check_is_shallow(self):
+        self.add_empty_file('a')
+        self.add_empty_file('b')
+
+        # Fetch and unpack without the clonedir and *only* shallow tarball available
+        bb.utils.remove(self.gitdir, recurse=True)
+        fetcher, ud = self.fetch_and_unpack()
+
+        # The unpacked tree *should* be shallow
+        self.assertRevCount(1)
+        assert os.path.exists(os.path.join(self.gitdir, '.git', 'shallow'))
+
 class GitLfsTest(FetcherTest):
     def skipIfNoGitLFS():
         import shutil
