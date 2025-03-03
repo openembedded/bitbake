@@ -1859,8 +1859,8 @@ def path_is_descendant(descendant, ancestor):
 # we exit at some point than hang. 5 minutes with no progress means we're probably deadlocked.
 @contextmanager
 def lock_timeout(lock):
-    held = lock.acquire(timeout=5*60)
     try:
+        held = lock.acquire(timeout=5*60)
         if not held:
             bb.server.process.serverlog("Couldn't get the lock for 5 mins, timed out, exiting.\n%s" % traceback.format_stack())
             os._exit(1)
