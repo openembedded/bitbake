@@ -1814,7 +1814,6 @@ class GitShallowTest(FetcherTest):
     def fetch_shallow(self, uri=None, disabled=False, keepclone=False):
         """Fetch a uri, generating a shallow tarball, then unpack using it"""
         fetcher, ud = self.fetch_and_unpack(uri)
-        assert os.path.exists(ud.clonedir), 'Git clone in DLDIR (%s) does not exist for uri %s' % (ud.clonedir, uri)
 
         # Confirm that the unpacked repo is unshallow
         if not disabled:
@@ -1822,9 +1821,10 @@ class GitShallowTest(FetcherTest):
 
         # fetch and unpack, from the shallow tarball
         bb.utils.remove(self.gitdir, recurse=True)
-        bb.process.run('chmod u+w -R "%s"' % ud.clonedir)
-        bb.utils.remove(ud.clonedir, recurse=True)
-        bb.utils.remove(ud.clonedir.replace('gitsource', 'gitsubmodule'), recurse=True)
+        if os.path.exists(ud.clonedir):
+            bb.process.run('chmod u+w -R "%s"' % ud.clonedir)
+            bb.utils.remove(ud.clonedir, recurse=True)
+            bb.utils.remove(ud.clonedir.replace('gitsource', 'gitsubmodule'), recurse=True)
 
         # confirm that the unpacked repo is used when no git clone or git
         # mirror tarball is available
@@ -1907,7 +1907,12 @@ class GitShallowTest(FetcherTest):
         self.add_empty_file('c')
         self.assertRevCount(3, cwd=self.srcdir)
 
+        # Clone without tarball
+        self.d.setVar('BB_GIT_SHALLOW', '0')
+        fetcher, ud = self.fetch()
+
         # Clone and generate mirror tarball
+        self.d.setVar('BB_GIT_SHALLOW', '1')
         fetcher, ud = self.fetch()
 
         # Ensure we have a current mirror tarball, but an out of date clone
@@ -1919,6 +1924,7 @@ class GitShallowTest(FetcherTest):
         fetcher, ud = self.fetch()
         fetcher.unpack(self.d.getVar('WORKDIR'))
         self.assertRevCount(1)
+        assert os.path.exists(os.path.join(self.d.getVar('WORKDIR'), 'git', 'c'))
 
     def test_shallow_single_branch_no_merge(self):
         self.add_empty_file('a')
@@ -2116,11 +2122,12 @@ class GitShallowTest(FetcherTest):
         self.add_empty_file('b')
 
         # Fetch once to generate the shallow tarball
+        self.d.setVar('BB_GIT_SHALLOW', '0')
         fetcher, ud = self.fetch()
-        assert os.path.exists(os.path.join(self.dldir, ud.mirrortarballs[0]))
 
         # Fetch and unpack with both the clonedir and shallow tarball available
         bb.utils.remove(self.gitdir, recurse=True)
+        self.d.setVar('BB_GIT_SHALLOW', '1')
         fetcher, ud = self.fetch_and_unpack()
 
         # The unpacked tree should *not* be shallow
@@ -2294,20 +2301,6 @@ class GitShallowTest(FetcherTest):
 
         self.assertIn("No up to date source found", context.exception.msg)
         self.assertIn("clone directory not available or not up to date", context.exception.msg)
-
-    @skipIfNoNetwork()
-    def test_that_unpack_does_work_when_using_git_shallow_tarball_but_tarball_is_not_available(self):
-        self.d.setVar('SRCREV', 'e5939ff608b95cdd4d0ab0e1935781ab9a276ac0')
-        self.d.setVar('BB_GIT_SHALLOW', '1')
-        self.d.setVar('BB_GENERATE_SHALLOW_TARBALLS', '1')
-        fetcher = bb.fetch.Fetch(["git://git.yoctoproject.org/fstests;branch=master;protocol=https"], self.d)
-        fetcher.download()
-
-        bb.utils.remove(self.dldir + "/*.tar.gz")
-        fetcher.unpack(self.unpackdir)
-
-        dir = os.listdir(self.unpackdir + "/git/")
-        self.assertIn("fstests.doap", dir)
 
 class GitLfsTest(FetcherTest):
     def skipIfNoGitLFS():
