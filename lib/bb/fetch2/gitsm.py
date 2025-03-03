@@ -150,7 +150,10 @@ class GitSM(Git):
     def call_process_submodules(self, ud, d, extra_check, subfunc):
         # If we're using a shallow mirror tarball it needs to be
         # unpacked temporarily so that we can examine the .gitmodules file
-        if ud.shallow and os.path.exists(ud.fullshallow) and extra_check:
+        # Unpack even when ud.clonedir is not available,
+        # which may occur during a fast shallow clone
+        unpack = extra_check or not os.path.exists(ud.clonedir)
+        if ud.shallow and os.path.exists(ud.fullshallow) and unpack:
             tmpdir = tempfile.mkdtemp(dir=d.getVar("DL_DIR"))
             try:
                 runfetchcmd("tar -xzf %s" % ud.fullshallow, d, workdir=tmpdir)
