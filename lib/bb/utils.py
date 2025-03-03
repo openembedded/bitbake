@@ -1860,6 +1860,7 @@ def path_is_descendant(descendant, ancestor):
 @contextmanager
 def lock_timeout(lock):
     try:
+        s = signal.pthread_sigmask(signal.SIG_BLOCK, signal.valid_signals())
         held = lock.acquire(timeout=5*60)
         if not held:
             bb.server.process.serverlog("Couldn't get the lock for 5 mins, timed out, exiting.\n%s" % traceback.format_stack())
@@ -1867,3 +1868,4 @@ def lock_timeout(lock):
         yield held
     finally:
         lock.release()
+        signal.pthread_sigmask(signal.SIG_SETMASK, s)
