@@ -1857,6 +1857,9 @@ def path_is_descendant(descendant, ancestor):
 # If we don't have a timeout of some kind and a process/thread exits badly (for example
 # OOM killed) and held a lock, we'd just hang in the lock futex forever. It is better
 # we exit at some point than hang. 5 minutes with no progress means we're probably deadlocked.
+# This function can still deadlock python since it can't signal the other threads to exit
+# (signals are handled in the main thread) and even os._exit() will wait on non-daemon threads
+# to exit.
 @contextmanager
 def lock_timeout(lock):
     try:
@@ -1868,4 +1871,16 @@ def lock_timeout(lock):
         yield held
     finally:
         lock.release()
+        signal.pthread_sigmask(signal.SIG_SETMASK, s)
+
+# A version of lock_timeout without the check that the lock was locked and a shorter timeout
+@contextmanager
+def lock_timeout_nocheck(lock):
+    try:
+        s = signal.pthread_sigmask(signal.SIG_BLOCK, signal.valid_signals())
+        l = lock.acquire(timeout=10)
+        yield l
+    finally:
+        if l:
+            lock.release()
         signal.pthread_sigmask(signal.SIG_SETMASK, s)
