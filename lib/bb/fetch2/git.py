@@ -207,6 +207,7 @@ class Git(FetchMethod):
         if ud.bareclone:
             ud.cloneflags += " --mirror"
 
+        ud.shallow_skip_fast = False
         ud.shallow = d.getVar("BB_GIT_SHALLOW") == "1"
         ud.shallow_extra_refs = (d.getVar("BB_GIT_SHALLOW_EXTRA_REFS") or "").split()
 
@@ -446,6 +447,24 @@ class Git(FetchMethod):
             if ud.proto.lower() != 'file':
                 bb.fetch2.check_network_access(d, clone_cmd, ud.url)
             progresshandler = GitProgressHandler(d)
+
+            # Try creating a fast initial shallow clone
+            # Enabling ud.shallow_skip_fast will skip this
+            # If the Git error "Server does not allow request for unadvertised object"
+            # occurs, shallow_skip_fast is enabled automatically.
+            # This may happen if the Git server does not allow the request
+            # or if the Git client has issues with this functionality.
+            if ud.shallow and not ud.shallow_skip_fast:
+                try:
+                    self.clone_shallow_with_tarball(ud, d)
+                    # When the shallow clone has succeeded, use the shallow tarball
+                    ud.localpath = ud.fullshallow
+                    return
+                except:
+                    logger.warning("Creating fast initial shallow clone failed, try initial regular clone now.")
+
+            # When skipping fast initial shallow or the fast inital shallow clone failed:
+            # Try again with an initial regular clone
             runfetchcmd(clone_cmd, d, log=progresshandler)
 
         # Update the checkout if needed
@@ -508,47 +527,73 @@ class Git(FetchMethod):
                 if os.path.exists(os.path.join(ud.destdir, ".git", "lfs")):
                     runfetchcmd("tar -cf - lfs | tar -xf - -C %s" % ud.clonedir, d, workdir="%s/.git" % ud.destdir)
 
+    def lfs_fetch(self, ud, d, clonedir, revision, fetchall=False, progresshandler=None):
+        """Helper method for fetching Git LFS data"""
+        try:
+            if self._need_lfs(ud) and self._contains_lfs(ud, d, clonedir) and self._find_git_lfs(d) and len(revision):
+                # Using worktree with the revision because .lfsconfig may exists
+                worktree_add_cmd = "%s worktree add wt %s" % (ud.basecmd, revision)
+                runfetchcmd(worktree_add_cmd, d, log=progresshandler, workdir=clonedir)
+                lfs_fetch_cmd = "%s lfs fetch %s" % (ud.basecmd, "--all" if fetchall else "")
+                runfetchcmd(lfs_fetch_cmd, d, log=progresshandler, workdir=(clonedir + "/wt"))
+                worktree_rem_cmd = "%s worktree remove -f wt" % ud.basecmd
+                runfetchcmd(worktree_rem_cmd, d, log=progresshandler, workdir=clonedir)
+        except:
+            logger.warning("Fetching LFS did not succeed.")
+
+    @contextmanager
+    def create_atomic(self, filename):
+        """Create as a temp file and move atomically into position to avoid races"""
+        fd, tfile = tempfile.mkstemp(dir=os.path.dirname(filename))
+        try:
+            yield tfile
+            umask = os.umask(0o666)
+            os.umask(umask)
+            os.chmod(tfile, (0o666 & ~umask))
+            os.rename(tfile, filename)
+        finally:
+            os.close(fd)
+
     def build_mirror_data(self, ud, d):
-
-        # Create as a temp file and move atomically into position to avoid races
-        @contextmanager
-        def create_atomic(filename):
-            fd, tfile = tempfile.mkstemp(dir=os.path.dirname(filename))
-            try:
-                yield tfile
-                umask = os.umask(0o666)
-                os.umask(umask)
-                os.chmod(tfile, (0o666 & ~umask))
-                os.rename(tfile, filename)
-            finally:
-                os.close(fd)
-
         if ud.shallow and ud.write_shallow_tarballs:
             if not os.path.exists(ud.fullshallow):
                 if os.path.islink(ud.fullshallow):
                     os.unlink(ud.fullshallow)
-                tempdir = tempfile.mkdtemp(dir=d.getVar('DL_DIR'))
-                shallowclone = os.path.join(tempdir, 'git')
-                try:
-                    self.clone_shallow_local(ud, shallowclone, d)
-
-                    logger.info("Creating tarball of git repository")
-                    with create_atomic(ud.fullshallow) as tfile:
-                        runfetchcmd("tar -czf %s ." % tfile, d, workdir=shallowclone)
-                    runfetchcmd("touch %s.done" % ud.fullshallow, d)
-                finally:
-                    bb.utils.remove(tempdir, recurse=True)
+                self.clone_shallow_with_tarball(ud, d)
         elif ud.write_tarballs and not os.path.exists(ud.fullmirror):
             if os.path.islink(ud.fullmirror):
                 os.unlink(ud.fullmirror)
 
             logger.info("Creating tarball of git repository")
-            with create_atomic(ud.fullmirror) as tfile:
+            with self.create_atomic(ud.fullmirror) as tfile:
                 mtime = runfetchcmd("{} log --all -1 --format=%cD".format(ud.basecmd), d,
                         quiet=True, workdir=ud.clonedir)
                 runfetchcmd("tar -czf %s --owner oe:0 --group oe:0 --mtime \"%s\" ."
                         % (tfile, mtime), d, workdir=ud.clonedir)
             runfetchcmd("touch %s.done" % ud.fullmirror, d)
+
+    def clone_shallow_with_tarball(self, ud, d):
+        ret = False
+        tempdir = tempfile.mkdtemp(dir=d.getVar('DL_DIR'))
+        shallowclone = os.path.join(tempdir, 'git')
+        try:
+            try:
+                self.clone_shallow_local(ud, shallowclone, d)
+            except:
+                logger.warning("Fash shallow clone failed, try to skip fast mode now.")
+                bb.utils.remove(tempdir, recurse=True)
+                os.mkdir(tempdir)
+                ud.shallow_skip_fast = True
+                self.clone_shallow_local(ud, shallowclone, d)
+            logger.info("Creating tarball of git repository")
+            with self.create_atomic(ud.fullshallow) as tfile:
+                runfetchcmd("tar -czf %s ." % tfile, d, workdir=shallowclone)
+            runfetchcmd("touch %s.done" % ud.fullshallow, d)
+            ret = True
+        finally:
+            bb.utils.remove(tempdir, recurse=True)
+
+        return ret
 
     def clone_shallow_local(self, ud, dest, d):
         """
@@ -557,12 +602,20 @@ class Git(FetchMethod):
         - For BB_GIT_SHALLOW_REVS: git fetch --shallow-exclude=<revs> rev
         """
 
+        progresshandler = GitProgressHandler(d)
+        repourl = self._get_repo_url(ud)
         bb.utils.mkdirhier(dest)
         init_cmd = "%s init -q" % ud.basecmd
         if ud.bareclone:
             init_cmd += " --bare"
         runfetchcmd(init_cmd, d, workdir=dest)
-        runfetchcmd("%s remote add origin %s" % (ud.basecmd, ud.clonedir), d, workdir=dest)
+        # Use repourl when creating a fast initial shallow clone
+        # Prefer already existing full bare clones if available
+        if not ud.shallow_skip_fast and not os.path.exists(ud.clonedir):
+            remote = shlex.quote(repourl)
+        else:
+            remote = ud.clonedir
+        runfetchcmd("%s remote add origin %s" % (ud.basecmd, remote), d, workdir=dest)
 
         # Check the histories which should be excluded
         shallow_exclude = ''
@@ -600,10 +653,14 @@ class Git(FetchMethod):
             # The ud.clonedir is a local temporary dir, will be removed when
             # fetch is done, so we can do anything on it.
             adv_cmd = 'git branch -f advertise-%s %s' % (revision, revision)
-            runfetchcmd(adv_cmd, d, workdir=ud.clonedir)
+            if ud.shallow_skip_fast:
+                runfetchcmd(adv_cmd, d, workdir=ud.clonedir)
 
             runfetchcmd(fetch_cmd, d, workdir=dest)
             runfetchcmd("%s update-ref %s %s" % (ud.basecmd, ref, revision), d, workdir=dest)
+            # Fetch Git LFS data for fast shallow clones
+            if not ud.shallow_skip_fast:
+                self.lfs_fetch(ud, d, dest, ud.revisions[ud.names[0]])
 
         # Apply extra ref wildcards
         all_refs_remote = runfetchcmd("%s ls-remote origin 'refs/*'" % ud.basecmd, \
@@ -629,7 +686,6 @@ class Git(FetchMethod):
             runfetchcmd("%s update-ref %s %s" % (ud.basecmd, ref, revision), d, workdir=dest)
 
         # The url is local ud.clonedir, set it to upstream one
-        repourl = self._get_repo_url(ud)
         runfetchcmd("%s remote set-url origin %s" % (ud.basecmd, shlex.quote(repourl)), d, workdir=dest)
 
     def unpack(self, ud, destdir, d):
