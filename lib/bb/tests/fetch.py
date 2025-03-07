@@ -517,6 +517,10 @@ class MirrorUriTest(FetcherTest):
             : "file:///mirror/example/1.0.0/some-example-1.0.0.tgz;downloadfilename=some-example-1.0.0.tgz",
         ("https://somewhere.org/example-1.0.0.tgz;downloadfilename=some-example-1.0.0.tgz", "https://.*/.*", "file:///mirror/some-example-1.0.0.tgz")
             : "file:///mirror/some-example-1.0.0.tgz;downloadfilename=some-example-1.0.0.tgz",
+        ("git://git.invalid.infradead.org/mtd-utils.git;tag=1234567890123456789012345678901234567890", r"git://(?!internal\.git\.server).*/.*", "http://somewhere.org/somedir/")
+            : "http://somewhere.org/somedir/git2_git.invalid.infradead.org.mtd-utils.git.tar.gz",
+        ("git://internal.git.server.org/mtd-utils.git;tag=1234567890123456789012345678901234567890", r"git://(?!internal\.git\.server).*/.*", "http://somewhere.org/somedir/")
+            : None,
 
         #Renaming files doesn't work
         #("http://somewhere.org/somedir1/somefile_1.2.3.tar.gz", "http://somewhere.org/somedir1/somefile_1.2.3.tar.gz", "http://somewhere2.org/somedir3/somefile_2.3.4.tar.gz") : "http://somewhere2.org/somedir3/somefile_2.3.4.tar.gz"
@@ -525,8 +529,7 @@ class MirrorUriTest(FetcherTest):
 
     mirrorvar = "http://.*/.* file:///somepath/downloads/ " \
                 "git://someserver.org/bitbake git://git.openembedded.org/bitbake " \
-                "https://.*/.* file:///someotherpath/downloads/ " \
-                "http://.*/.* file:///someotherpath/downloads/ " \
+                "https?://.*/.* file:///someotherpath/downloads/ " \
                 "svn://svn.server1.com/ svn://svn.server2.com/"
 
     def test_urireplace(self):
@@ -536,7 +539,7 @@ class MirrorUriTest(FetcherTest):
             ud.setup_localpath(self.d)
             mirrors = bb.fetch2.mirror_from_string("%s %s" % (k[1], k[2]))
             newuris, uds = bb.fetch2.build_mirroruris(ud, mirrors, self.d)
-            self.assertEqual([v], newuris)
+            self.assertEqual([v] if v else [], newuris)
 
     def test_urilist1(self):
         fetcher = bb.fetch.FetchData("http://downloads.yoctoproject.org/releases/bitbake/bitbake-1.0.tar.gz", self.d)
