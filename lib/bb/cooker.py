@@ -1636,6 +1636,7 @@ You can also remove the BB_HASHSERVE_UPSTREAM setting, but this may result in si
         self.state = State.PARSING
 
         if not self.parser.parse_next():
+            bb.server.process.serverlog("Parsing completed")
             collectlog.debug("parsing complete")
             if self.parser.error:
                 raise bb.BBHandledException()
