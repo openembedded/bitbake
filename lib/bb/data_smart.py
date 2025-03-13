@@ -1120,5 +1120,10 @@ class DataSmart(MutableMapping):
                     value = d.getVar(i, False) or ""
                     data.update({i:value})
 
+        moddeps = bb.codeparser.modulecode_deps
+        for dep in sorted(moddeps):
+            # Ignore visitor code, sort sets
+            data.update({'moddep[%s]' % dep : [sorted(moddeps[dep][0]), sorted(moddeps[dep][1]), sorted(moddeps[dep][2]), sorted(moddeps[dep][3]), moddeps[dep][4]]})
+
         data_str = str([(k, data[k]) for k in sorted(data.keys())])
         return hashlib.sha256(data_str.encode("utf-8")).hexdigest()
