@@ -662,7 +662,8 @@ class Tinfoil:
         """
         Run anonymous functions and expand keys
         """
-        return self._reconvert_type(self.run_command('finalizeData'), 'DataStoreConnectionHandle')
+        with self._data_tracked_if_enabled():
+            return self._reconvert_type(self.run_command('finalizeData'), 'DataStoreConnectionHandle')
 
     def parse_recipe_file(self, fn, appends=True, appendlist=None, config_data=None):
         """
