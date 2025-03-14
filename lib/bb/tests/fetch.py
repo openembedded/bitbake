@@ -2508,11 +2508,13 @@ class GitURLWithSpacesTest(FetcherTest):
     test_git_urls = {
         "git://tfs-example.org:22/tfs/example%20path/example.git;branch=master" : {
             'url': 'git://tfs-example.org:22/tfs/example%20path/example.git;branch=master',
+            'repo_url': 'git://tfs-example.org:22/tfs/example%20path/example.git',
             'gitsrcname': 'tfs-example.org.22.tfs.example_path.example.git',
             'path': '/tfs/example path/example.git'
         },
         "git://tfs-example.org:22/tfs/example%20path/example%20repo.git;branch=master" : {
             'url': 'git://tfs-example.org:22/tfs/example%20path/example%20repo.git;branch=master',
+            'repo_url': 'git://tfs-example.org:22/tfs/example%20path/example%20repo.git',
             'gitsrcname': 'tfs-example.org.22.tfs.example_path.example_repo.git',
             'path': '/tfs/example path/example repo.git'
         }
@@ -2535,6 +2537,7 @@ class GitURLWithSpacesTest(FetcherTest):
             self.assertEqual(ud.lockfile, os.path.join(self.dldir, "git2", ref['gitsrcname'] + '.lock'))
             self.assertEqual(ud.clonedir, os.path.join(self.dldir, "git2", ref['gitsrcname']))
             self.assertEqual(ud.fullmirror, os.path.join(self.dldir, "git2_" + ref['gitsrcname'] + '.tar.gz'))
+            self.assertEqual(ud.method._get_repo_url(ud), ref['repo_url'])
 
 class CrateTest(FetcherTest):
     @skipIfNoNetwork()

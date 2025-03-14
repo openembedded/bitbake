@@ -81,6 +81,7 @@ import shlex
 import shutil
 import subprocess
 import tempfile
+import urllib
 import bb
 import bb.progress
 from contextlib import contextmanager
@@ -888,7 +889,7 @@ class Git(FetchMethod):
             username = ud.user + '@'
         else:
             username = ""
-        return "%s://%s%s%s" % (ud.proto, username, ud.host, ud.path)
+        return "%s://%s%s%s" % (ud.proto, username, ud.host, urllib.parse.quote(ud.path))
 
     def _revision_key(self, ud, d, name):
         """
