@@ -142,7 +142,7 @@ def note(*args):
     mainlogger.info(''.join(args))
 
 #
-# A higher prioity note which will show on the console but isn't a warning
+# A higher priority note which will show on the console but isn't a warning
 #
 # Something is happening the user should be aware of but they probably did
 # something to make it happen
