@@ -806,8 +806,8 @@ def _get_srcrev(d, method_name='sortable_revision'):
         return "", revs
 
 
-    if len(scms) == 1 and len(urldata[scms[0]].names) == 1:
-        autoinc, rev = getattr(urldata[scms[0]].method, method_name)(urldata[scms[0]], d, urldata[scms[0]].names[0])
+    if len(scms) == 1:
+        autoinc, rev = getattr(urldata[scms[0]].method, method_name)(urldata[scms[0]], d, urldata[scms[0]].name)
         revs.append(rev)
         if len(rev) > 10:
             rev = rev[:10]
@@ -828,13 +828,12 @@ def _get_srcrev(d, method_name='sortable_revision'):
     seenautoinc = False
     for scm in scms:
         ud = urldata[scm]
-        for name in ud.names:
-            autoinc, rev = getattr(ud.method, method_name)(ud, d, name)
-            revs.append(rev)
-            seenautoinc = seenautoinc or autoinc
-            if len(rev) > 10:
-                rev = rev[:10]
-            name_to_rev[name] = rev
+        autoinc, rev = getattr(ud.method, method_name)(ud, d, ud.name)
+        revs.append(rev)
+        seenautoinc = seenautoinc or autoinc
+        if len(rev) > 10:
+            rev = rev[:10]
+        name_to_rev[ud.name] = rev
     # Replace names by revisions in the SRCREV_FORMAT string. The approach used
     # here can handle names being prefixes of other names and names appearing
     # as substrings in revisions (in which case the name should not be
@@ -1345,7 +1344,9 @@ class FetchData(object):
             setattr(self, "%s_name" % checksum_id, checksum_name)
             setattr(self, "%s_expected" % checksum_id, checksum_expected)
 
-        self.names = self.parm.get("name",'default').split(',')
+        self.name = self.parm.get("name",'default')
+        if "," in self.name:
+            raise ParameterError("The fetcher no longer supports multiple name parameters in a single url", self.url)
 
         self.method = None
         for m in methods:
@@ -1397,13 +1398,7 @@ class FetchData(object):
         self.lockfile = basepath + '.lock'
 
     def setup_revisions(self, d):
-        self.revisions = {}
-        for name in self.names:
-            self.revisions[name] = srcrev_internal_helper(self, d, name)
-
-        # add compatibility code for non name specified case
-        if len(self.names) == 1:
-            self.revision = self.revisions[self.names[0]]
+        self.revision = srcrev_internal_helper(self, d, self.name)
 
     def setup_localpath(self, d):
         if not self.localpath:

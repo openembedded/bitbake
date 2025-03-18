@@ -2060,60 +2060,6 @@ class GitShallowTest(FetcherTest):
             assert './.git/annex/' in bb.process.run('tar -tzf %s' % os.path.join(self.dldir, ud.mirrortarballs[0]))[0]
             assert os.path.exists(os.path.join(self.gitdir, 'c'))
 
-    def test_shallow_multi_one_uri(self):
-        # Create initial git repo
-        self.add_empty_file('a')
-        self.add_empty_file('b')
-        self.git('checkout -b a_branch', cwd=self.srcdir)
-        self.add_empty_file('c')
-        self.git('tag v0.0 HEAD', cwd=self.srcdir)
-        self.add_empty_file('d')
-        self.git('checkout master', cwd=self.srcdir)
-        self.add_empty_file('e')
-        self.git('merge --no-ff --no-edit a_branch', cwd=self.srcdir)
-        self.add_empty_file('f')
-        self.assertRevCount(7, cwd=self.srcdir)
-
-        uri = self.d.getVar('SRC_URI').split()[0]
-        uri = '%s;branch=master,a_branch;name=master,a_branch' % uri
-
-        self.d.setVar('BB_GIT_SHALLOW_DEPTH', '0')
-        self.d.setVar('BB_GIT_SHALLOW_REVS', 'v0.0')
-        self.d.setVar('SRCREV_master', '${AUTOREV}')
-        self.d.setVar('SRCREV_a_branch', '${AUTOREV}')
-
-        self.fetch_shallow(uri)
-
-        self.assertRevCount(4)
-        self.assertRefs(['master', 'origin/master', 'origin/a_branch'])
-
-    def test_shallow_multi_one_uri_depths(self):
-        # Create initial git repo
-        self.add_empty_file('a')
-        self.add_empty_file('b')
-        self.git('checkout -b a_branch', cwd=self.srcdir)
-        self.add_empty_file('c')
-        self.add_empty_file('d')
-        self.git('checkout master', cwd=self.srcdir)
-        self.add_empty_file('e')
-        self.git('merge --no-ff --no-edit a_branch', cwd=self.srcdir)
-        self.add_empty_file('f')
-        self.assertRevCount(7, cwd=self.srcdir)
-
-        uri = self.d.getVar('SRC_URI').split()[0]
-        uri = '%s;branch=master,a_branch;name=master,a_branch' % uri
-
-        self.d.setVar('BB_GIT_SHALLOW_DEPTH', '0')
-        self.d.setVar('BB_GIT_SHALLOW_DEPTH_master', '3')
-        self.d.setVar('BB_GIT_SHALLOW_DEPTH_a_branch', '1')
-        self.d.setVar('SRCREV_master', '${AUTOREV}')
-        self.d.setVar('SRCREV_a_branch', '${AUTOREV}')
-
-        self.fetch_shallow(uri)
-
-        self.assertRevCount(4, ['--all'])
-        self.assertRefs(['master', 'origin/master', 'origin/a_branch'])
-
     def test_shallow_clone_preferred_over_shallow(self):
         self.add_empty_file('a')
         self.add_empty_file('b')
@@ -3313,58 +3259,6 @@ class FetchPremirroronlyLocalTest(FetcherTest):
         with self.assertRaises(bb.fetch2.NetworkAccess):
             fetcher.download()
 
-    def test_mirror_tarball_multiple_branches(self):
-        """
-        test if PREMIRRORS can handle multiple name/branches correctly
-        both branches have required revisions
-        """
-        self.make_git_repo()
-        branch1rev = self.git_new_branch("testbranch1")
-        branch2rev = self.git_new_branch("testbranch2")
-        self.recipe_url = "git://git.fake.repo/bitbake;branch=testbranch1,testbranch2;protocol=https;name=branch1,branch2"
-        self.d.setVar("SRCREV_branch1", branch1rev)
-        self.d.setVar("SRCREV_branch2", branch2rev)
-        fetcher = bb.fetch.Fetch([self.recipe_url], self.d)
-        self.assertTrue(os.path.exists(self.mirrorfile), "Mirror file doesn't exist")
-        fetcher.download()
-        fetcher.unpack(os.path.join(self.tempdir, "unpacked"))
-        unpacked = os.path.join(self.tempdir, "unpacked", "git", self.testfilename)
-        self.assertTrue(os.path.exists(unpacked), "Repo has not been unpackaged properly!")
-        with open(unpacked, 'r') as f:
-            content = f.read()
-            ## We expect to see testbranch1 in the file, not master, not testbranch2
-            self.assertTrue(content.find("testbranch1") != -1, "Wrong branch has been checked out!")
-
-    def test_mirror_tarball_multiple_branches_nobranch(self):
-        """
-        test if PREMIRRORS can handle multiple name/branches correctly
-        Unbalanced name/branches raises ParameterError
-        """
-        self.make_git_repo()
-        branch1rev = self.git_new_branch("testbranch1")
-        branch2rev = self.git_new_branch("testbranch2")
-        self.recipe_url = "git://git.fake.repo/bitbake;branch=testbranch1;protocol=https;name=branch1,branch2"
-        self.d.setVar("SRCREV_branch1", branch1rev)
-        self.d.setVar("SRCREV_branch2", branch2rev)
-        with self.assertRaises(bb.fetch2.ParameterError):
-            fetcher = bb.fetch.Fetch([self.recipe_url], self.d)
-
-    def test_mirror_tarball_multiple_branches_norev(self):
-        """
-        test if PREMIRRORS can handle multiple name/branches correctly
-        one of the branches specifies non existing SRCREV
-        """
-        self.make_git_repo()
-        branch1rev = self.git_new_branch("testbranch1")
-        branch2rev = self.git_new_branch("testbranch2")
-        self.recipe_url = "git://git.fake.repo/bitbake;branch=testbranch1,testbranch2;protocol=https;name=branch1,branch2"
-        self.d.setVar("SRCREV_branch1", branch1rev)
-        self.d.setVar("SRCREV_branch2", "0"*40)
-        fetcher = bb.fetch.Fetch([self.recipe_url], self.d)
-        self.assertTrue(os.path.exists(self.mirrorfile), "Mirror file doesn't exist")
-        with self.assertRaises(bb.fetch2.NetworkAccess):
-            fetcher.download()
-
 
 class FetchPremirroronlyNetworkTest(FetcherTest):
 
@@ -3571,7 +3465,7 @@ class GoModGitTest(FetcherTest):
         ud = fetcher.ud[urls[0]]
         self.assertEqual(ud.host, 'go.googlesource.com')
         self.assertEqual(ud.path, '/net')
-        self.assertEqual(ud.names, ['golang.org/x/net@v0.9.0'])
+        self.assertEqual(ud.name, 'golang.org/x/net@v0.9.0')
         self.assertEqual(self.d.getVar('SRCREV_golang.org/x/net@v0.9.0'), '694cff8668bac64e0864b552bffc280cd27f21b1')
 
         fetcher.download()
@@ -3597,7 +3491,7 @@ class GoModGitTest(FetcherTest):
         self.assertEqual(ud.host, 'github.com')
         self.assertEqual(ud.path, '/Azure/azure-sdk-for-go')
         self.assertEqual(ud.parm['subpath'], 'sdk/storage/azblob')
-        self.assertEqual(ud.names, ['github.com/Azure/azure-sdk-for-go/sdk/storage/azblob@v1.0.0'])
+        self.assertEqual(ud.name, 'github.com/Azure/azure-sdk-for-go/sdk/storage/azblob@v1.0.0')
         self.assertEqual(self.d.getVar('SRCREV_github.com/Azure/azure-sdk-for-go/sdk/storage/azblob@v1.0.0'), 'ec928e0ed34db682b3f783d3739d1c538142e0c3')
 
         fetcher.download()
@@ -3621,7 +3515,7 @@ class GoModGitTest(FetcherTest):
         ud = fetcher.ud[urls[0]]
         self.assertEqual(ud.host, 'gopkg.in')
         self.assertEqual(ud.path, '/ini.v1')
-        self.assertEqual(ud.names, ['gopkg.in/ini.v1@v1.67.0'])
+        self.assertEqual(ud.name, 'gopkg.in/ini.v1@v1.67.0')
         self.assertEqual(ud.parm['srcrev'], 'b2f570e5b5b844226bbefe6fb521d891f529a951')
 
         fetcher.download()
@@ -3643,7 +3537,7 @@ class GoModGitTest(FetcherTest):
         ud = fetcher.ud[urls[0]]
         self.assertEqual(ud.host, 'gopkg.in')
         self.assertEqual(ud.path, '/ini.v1')
-        self.assertEqual(ud.names, ['gopkg.in/ini.v1@v1.67.0'])
+        self.assertEqual(ud.name, 'gopkg.in/ini.v1@v1.67.0')
         self.assertEqual(self.d.getVar('SRCREV_gopkg.in/ini.v1@v1.67.0'), 'b2f570e5b5b844226bbefe6fb521d891f529a951')
 
         fetcher.download()
@@ -3666,7 +3560,7 @@ class GoModGitTest(FetcherTest):
         ud = fetcher.ud[urls[0]]
         self.assertEqual(ud.host, 'github.com')
         self.assertEqual(ud.path, '/census-instrumentation/opencensus-go')
-        self.assertEqual(ud.names, ['go.opencensus.io@v0.24.0'])
+        self.assertEqual(ud.name, 'go.opencensus.io@v0.24.0')
         self.assertEqual(self.d.getVar('SRCREV_go.opencensus.io@v0.24.0'), 'b1a01ee95db0e690d91d7193d037447816fae4c5')
 
         fetcher.download()

@@ -9,15 +9,6 @@ Supported SRC_URI options are:
 - branch
    The git branch to retrieve from. The default is "master"
 
-   This option also supports multiple branch fetching, with branches
-   separated by commas.  In multiple branches case, the name option
-   must have the same number of names to match the branches, which is
-   used to specify the SRC_REV for the branch
-   e.g:
-   SRC_URI="git://some.host/somepath;branch=branchX,branchY;name=nameX,nameY"
-   SRCREV_nameX = "xxxxxxxxxxxxxxxxxxxx"
-   SRCREV_nameY = "YYYYYYYYYYYYYYYYYYYY"
-
 - tag
     The git tag to retrieve. The default is "master"
 
@@ -192,13 +183,10 @@ class Git(FetchMethod):
         if ud.bareclone:
             ud.nocheckout = 1
   
-        ud.unresolvedrev = {}
-        branches = ud.parm.get("branch", "").split(',')
-        if branches == [""] and not ud.nobranch:
-            bb.warn("URL: %s does not set any branch parameter. The future default branch used by tools and repositories is uncertain and we will therefore soon require this is set in all git urls." % ud.url)
-            branches = ["master"]
-        if len(branches) != len(ud.names):
-            raise bb.fetch2.ParameterError("The number of name and branch parameters is not balanced", ud.url)
+        ud.unresolvedrev = ""
+        ud.branch = ud.parm.get("branch", "")
+        if not ud.branch and not ud.nobranch:
+            raise bb.fetch2.ParameterError("The url does not set any branch parameter or set nobranch=1.", ud.url)
 
         ud.noshared = d.getVar("BB_GIT_NOSHARED") == "1"
 
@@ -227,32 +215,27 @@ class Git(FetchMethod):
 
         revs_default = d.getVar("BB_GIT_SHALLOW_REVS")
         ud.shallow_revs = []
-        ud.branches = {}
-        for pos, name in enumerate(ud.names):
-            branch = branches[pos]
-            ud.branches[name] = branch
-            ud.unresolvedrev[name] = branch
 
-            shallow_depth = d.getVar("BB_GIT_SHALLOW_DEPTH_%s" % name)
-            if shallow_depth is not None:
-                try:
-                    shallow_depth = int(shallow_depth or 0)
-                except ValueError:
-                    raise bb.fetch2.FetchError("Invalid depth for BB_GIT_SHALLOW_DEPTH_%s: %s" % (name, shallow_depth))
-                else:
-                    if shallow_depth < 0:
-                        raise bb.fetch2.FetchError("Invalid depth for BB_GIT_SHALLOW_DEPTH_%s: %s" % (name, shallow_depth))
-                    ud.shallow_depths[name] = shallow_depth
+        ud.unresolvedrev = ud.branch
 
-            revs = d.getVar("BB_GIT_SHALLOW_REVS_%s" % name)
-            if revs is not None:
-                ud.shallow_revs.extend(revs.split())
-            elif revs_default is not None:
-                ud.shallow_revs.extend(revs_default.split())
+        shallow_depth = d.getVar("BB_GIT_SHALLOW_DEPTH_%s" % ud.name)
+        if shallow_depth is not None:
+            try:
+                shallow_depth = int(shallow_depth or 0)
+            except ValueError:
+                raise bb.fetch2.FetchError("Invalid depth for BB_GIT_SHALLOW_DEPTH_%s: %s" % (ud.name, shallow_depth))
+            else:
+                if shallow_depth < 0:
+                    raise bb.fetch2.FetchError("Invalid depth for BB_GIT_SHALLOW_DEPTH_%s: %s" % (ud.name, shallow_depth))
+                ud.shallow_depths[ud.name] = shallow_depth
 
-        if (ud.shallow and
-                not ud.shallow_revs and
-                all(ud.shallow_depths[n] == 0 for n in ud.names)):
+        revs = d.getVar("BB_GIT_SHALLOW_REVS_%s" % ud.name)
+        if revs is not None:
+            ud.shallow_revs.extend(revs.split())
+        elif revs_default is not None:
+            ud.shallow_revs.extend(revs_default.split())
+
+        if ud.shallow and not ud.shallow_revs and ud.shallow_depths[ud.name] == 0:
             # Shallow disabled for this URL
             ud.shallow = False
 
@@ -261,8 +244,7 @@ class Git(FetchMethod):
             # rev of this repository. This will get resolved into a revision
             # later. If an actual revision happens to have also been provided
             # then this setting will be overridden.
-            for name in ud.names:
-                ud.unresolvedrev[name] = 'HEAD'
+            ud.unresolvedrev = 'HEAD'
 
         ud.basecmd = d.getVar("FETCHCMD_git") or "git -c gc.autoDetach=false -c core.pager=cat -c safe.bareRepository=all -c clone.defaultRemoteName=origin"
 
@@ -272,16 +254,11 @@ class Git(FetchMethod):
 
         ud.setup_revisions(d)
 
-        for name in ud.names:
-            # Ensure any revision that doesn't look like a SHA-1 is translated into one
-            if not sha1_re.match(ud.revisions[name] or ''):
-                if ud.revisions[name]:
-                    ud.unresolvedrev[name] = ud.revisions[name]
-                ud.revisions[name] = self.latest_revision(ud, d, name)
-
-        if 'tag' in ud.parm:
-            if len(ud.revisions) != 1:
-                raise bb.fetch2.ParameterError("Git fetcher support for multiple tagged revisions not implemented", ud.url)
+        # Ensure any revision that doesn't look like a SHA-1 is translated into one
+        if not sha1_re.match(ud.revision or ''):
+            if ud.revision:
+                ud.unresolvedrev = ud.revision
+            ud.revision = self.latest_revision(ud, d, ud.name)
 
         gitsrcname = '%s%s' % (ud.host.replace(':', '.'), ud.path.replace('/', '.').replace('*', '.').replace(' ','_').replace('(', '_').replace(')', '_'))
         if gitsrcname.startswith('.'):
@@ -292,8 +269,7 @@ class Git(FetchMethod):
         # upstream repo in the future, the mirror will remain intact and still
         # contain the revision
         if ud.rebaseable:
-            for name in ud.names:
-                gitsrcname = gitsrcname + '_' + ud.revisions[name]
+            gitsrcname = gitsrcname + '_' + ud.revision
 
         dl_dir = d.getVar("DL_DIR")
         gitdir = d.getVar("GITDIR") or (dl_dir + "/git2")
@@ -311,15 +287,14 @@ class Git(FetchMethod):
             if ud.shallow_revs:
                 tarballname = "%s_%s" % (tarballname, "_".join(sorted(ud.shallow_revs)))
 
-            for name, revision in sorted(ud.revisions.items()):
-                tarballname = "%s_%s" % (tarballname, ud.revisions[name][:7])
-                depth = ud.shallow_depths[name]
-                if depth:
-                    tarballname = "%s-%s" % (tarballname, depth)
+            tarballname = "%s_%s" % (tarballname, ud.revision[:7])
+            depth = ud.shallow_depths[ud.name]
+            if depth:
+                tarballname = "%s-%s" % (tarballname, depth)
 
             shallow_refs = []
             if not ud.nobranch:
-                shallow_refs.extend(ud.branches.values())
+                shallow_refs.append(ud.branch)
             if ud.shallow_extra_refs:
                 shallow_refs.extend(r.replace('refs/heads/', '').replace('*', 'ALL') for r in ud.shallow_extra_refs)
             if shallow_refs:
@@ -344,18 +319,16 @@ class Git(FetchMethod):
             return True
         if ud.shallow and ud.write_shallow_tarballs and self.clonedir_need_shallow_revs(ud, d):
             return True
-        for name in ud.names:
-            if not self._contains_ref(ud, d, name, ud.clonedir):
-                return True
+        if not self._contains_ref(ud, d, ud.name, ud.clonedir):
+            return True
         return False
 
     def lfs_need_update(self, ud, d):
         if self.clonedir_need_update(ud, d):
             return True
 
-        for name in ud.names:
-            if not self._lfs_objects_downloaded(ud, d, name, ud.clonedir):
-                return True
+        if not self._lfs_objects_downloaded(ud, d, ud.name, ud.clonedir):
+            return True
         return False
 
     def clonedir_need_shallow_revs(self, ud, d):
@@ -497,9 +470,8 @@ class Git(FetchMethod):
                 if exc.errno != errno.ENOENT:
                     raise
 
-        for name in ud.names:
-            if not self._contains_ref(ud, d, name, ud.clonedir):
-                raise bb.fetch2.FetchError("Unable to find revision %s in branch %s even from upstream" % (ud.revisions[name], ud.branches[name]))
+        if not self._contains_ref(ud, d, ud.name, ud.clonedir):
+            raise bb.fetch2.FetchError("Unable to find revision %s in branch %s even from upstream" % (ud.revision, ud.branch))
 
         if ud.shallow and ud.write_shallow_tarballs:
             missing_rev = self.clonedir_need_shallow_revs(ud, d)
@@ -627,45 +599,44 @@ class Git(FetchMethod):
         for revision in ud.shallow_revs:
             shallow_exclude += " --shallow-exclude=%s" % revision
 
-        for name in ud.names:
-            revision = ud.revisions[name]
-            depth = ud.shallow_depths[name]
+        revision = ud.revision
+        depth = ud.shallow_depths[ud.name]
 
-            # The --depth and --shallow-exclude can't be used together
-            if depth and shallow_exclude:
-                raise bb.fetch2.FetchError("BB_GIT_SHALLOW_REVS is set, but BB_GIT_SHALLOW_DEPTH is not 0.")
+        # The --depth and --shallow-exclude can't be used together
+        if depth and shallow_exclude:
+            raise bb.fetch2.FetchError("BB_GIT_SHALLOW_REVS is set, but BB_GIT_SHALLOW_DEPTH is not 0.")
 
-            # For nobranch, we need a ref, otherwise the commits will be
-            # removed, and for non-nobranch, we truncate the branch to our
-            # srcrev, to avoid keeping unnecessary history beyond that.
-            branch = ud.branches[name]
-            if ud.nobranch:
-                ref = "refs/shallow/%s" % name
-            elif ud.bareclone:
-                ref = "refs/heads/%s" % branch
-            else:
-                ref = "refs/remotes/origin/%s" % branch
+        # For nobranch, we need a ref, otherwise the commits will be
+        # removed, and for non-nobranch, we truncate the branch to our
+        # srcrev, to avoid keeping unnecessary history beyond that.
+        branch = ud.branch
+        if ud.nobranch:
+            ref = "refs/shallow/%s" % ud.name
+        elif ud.bareclone:
+            ref = "refs/heads/%s" % branch
+        else:
+            ref = "refs/remotes/origin/%s" % branch
 
-            fetch_cmd = "%s fetch origin %s" % (ud.basecmd, revision)
-            if depth:
-                fetch_cmd += " --depth %s" % depth
+        fetch_cmd = "%s fetch origin %s" % (ud.basecmd, revision)
+        if depth:
+            fetch_cmd += " --depth %s" % depth
 
-            if shallow_exclude:
-                fetch_cmd += shallow_exclude
+        if shallow_exclude:
+            fetch_cmd += shallow_exclude
 
-            # Advertise the revision for lower version git such as 2.25.1:
-            # error: Server does not allow request for unadvertised object.
-            # The ud.clonedir is a local temporary dir, will be removed when
-            # fetch is done, so we can do anything on it.
-            adv_cmd = 'git branch -f advertise-%s %s' % (revision, revision)
-            if ud.shallow_skip_fast:
-                runfetchcmd(adv_cmd, d, workdir=ud.clonedir)
+        # Advertise the revision for lower version git such as 2.25.1:
+        # error: Server does not allow request for unadvertised object.
+        # The ud.clonedir is a local temporary dir, will be removed when
+        # fetch is done, so we can do anything on it.
+        adv_cmd = 'git branch -f advertise-%s %s' % (revision, revision)
+        if ud.shallow_skip_fast:
+            runfetchcmd(adv_cmd, d, workdir=ud.clonedir)
 
-            runfetchcmd(fetch_cmd, d, workdir=dest)
-            runfetchcmd("%s update-ref %s %s" % (ud.basecmd, ref, revision), d, workdir=dest)
-            # Fetch Git LFS data for fast shallow clones
-            if not ud.shallow_skip_fast:
-                self.lfs_fetch(ud, d, dest, ud.revisions[ud.names[0]])
+        runfetchcmd(fetch_cmd, d, workdir=dest)
+        runfetchcmd("%s update-ref %s %s" % (ud.basecmd, ref, revision), d, workdir=dest)
+        # Fetch Git LFS data for fast shallow clones
+        if not ud.shallow_skip_fast:
+            self.lfs_fetch(ud, d, dest, ud.revision)
 
         # Apply extra ref wildcards
         all_refs_remote = runfetchcmd("%s ls-remote origin 'refs/*'" % ud.basecmd, \
@@ -774,17 +745,17 @@ class Git(FetchMethod):
 
         if not ud.nocheckout:
             if subpath:
-                runfetchcmd("%s read-tree %s%s" % (ud.basecmd, ud.revisions[ud.names[0]], readpathspec), d,
+                runfetchcmd("%s read-tree %s%s" % (ud.basecmd, ud.revision, readpathspec), d,
                             workdir=destdir)
                 runfetchcmd("%s checkout-index -q -f -a" % ud.basecmd, d, workdir=destdir)
             elif not ud.nobranch:
-                branchname =  ud.branches[ud.names[0]]
+                branchname =  ud.branch
                 runfetchcmd("%s checkout -B %s %s" % (ud.basecmd, branchname, \
-                            ud.revisions[ud.names[0]]), d, workdir=destdir)
+                            ud.revision), d, workdir=destdir)
                 runfetchcmd("%s branch %s --set-upstream-to origin/%s" % (ud.basecmd, branchname, \
                             branchname), d, workdir=destdir)
             else:
-                runfetchcmd("%s checkout %s" % (ud.basecmd, ud.revisions[ud.names[0]]), d, workdir=destdir)
+                runfetchcmd("%s checkout %s" % (ud.basecmd, ud.revision), d, workdir=destdir)
 
         return True
 
@@ -815,10 +786,10 @@ class Git(FetchMethod):
         cmd = ""
         if ud.nobranch:
             cmd = "%s log --pretty=oneline -n 1 %s -- 2> /dev/null | wc -l" % (
-                ud.basecmd, ud.revisions[name])
+                ud.basecmd, ud.revision)
         else:
             cmd =  "%s branch --contains %s --list %s 2> /dev/null | wc -l" % (
-                ud.basecmd, ud.revisions[name], ud.branches[name])
+                ud.basecmd, ud.revision, ud.branch)
         try:
             output = runfetchcmd(cmd, d, quiet=True, workdir=wd)
         except bb.fetch2.FetchError:
@@ -839,7 +810,7 @@ class Git(FetchMethod):
         # existence.
         # [1] https://github.com/git-lfs/git-lfs/blob/main/docs/spec.md#intercepting-git
         cmd = "%s lfs ls-files -l %s" \
-                % (ud.basecmd, ud.revisions[name])
+                % (ud.basecmd, ud.revision)
         output = runfetchcmd(cmd, d, quiet=True, workdir=wd).rstrip()
         # Do not do any further matching if no objects are managed by LFS
         if not output:
@@ -866,12 +837,12 @@ class Git(FetchMethod):
 
         if ud.nobranch:
             # If no branch is specified, use the current git commit
-            refname = self._build_revision(ud, d, ud.names[0])
+            refname = self._build_revision(ud, d, ud.name)
         elif wd == ud.clonedir:
             # The bare clonedir doesn't use the remote names; it has the branch immediately.
-            refname = ud.branches[ud.names[0]]
+            refname = ud.branch
         else:
-            refname = "origin/%s" % ud.branches[ud.names[0]]
+            refname = "origin/%s" % ud.branch
 
         cmd = "%s grep lfs %s:.gitattributes | wc -l" % (
             ud.basecmd, refname)
@@ -910,7 +881,7 @@ class Git(FetchMethod):
         Return a unique key for the url
         """
         # Collapse adjacent slashes
-        return "git:" + ud.host + slash_re.sub(".", ud.path) + ud.unresolvedrev[name]
+        return "git:" + ud.host + slash_re.sub(".", ud.path) + ud.unresolvedrev
 
     def _lsremote(self, ud, d, search):
         """
@@ -943,26 +914,26 @@ class Git(FetchMethod):
         Compute the HEAD revision for the url
         """
         if not d.getVar("__BBSRCREV_SEEN"):
-            raise bb.fetch2.FetchError("Recipe uses a floating tag/branch '%s' for repo '%s' without a fixed SRCREV yet doesn't call bb.fetch2.get_srcrev() (use SRCPV in PV for OE)." % (ud.unresolvedrev[name], ud.host+ud.path))
+            raise bb.fetch2.FetchError("Recipe uses a floating tag/branch '%s' for repo '%s' without a fixed SRCREV yet doesn't call bb.fetch2.get_srcrev() (use SRCPV in PV for OE)." % (ud.unresolvedrev, ud.host+ud.path))
 
         # Ensure we mark as not cached
         bb.fetch2.mark_recipe_nocache(d)
 
         output = self._lsremote(ud, d, "")
         # Tags of the form ^{} may not work, need to fallback to other form
-        if ud.unresolvedrev[name][:5] == "refs/" or ud.usehead:
-            head = ud.unresolvedrev[name]
-            tag = ud.unresolvedrev[name]
+        if ud.unresolvedrev[:5] == "refs/" or ud.usehead:
+            head = ud.unresolvedrev
+            tag = ud.unresolvedrev
         else:
-            head = "refs/heads/%s" % ud.unresolvedrev[name]
-            tag = "refs/tags/%s" % ud.unresolvedrev[name]
+            head = "refs/heads/%s" % ud.unresolvedrev
+            tag = "refs/tags/%s" % ud.unresolvedrev
         for s in [head, tag + "^{}", tag]:
             for l in output.strip().split('\n'):
                 sha1, ref = l.split()
                 if s == ref:
                     return sha1
         raise bb.fetch2.FetchError("Unable to resolve '%s' in upstream git repository in git ls-remote output for %s" % \
-            (ud.unresolvedrev[name], ud.host+ud.path))
+            (ud.unresolvedrev, ud.host+ud.path))
 
     def latest_versionstring(self, ud, d):
         """
@@ -1013,7 +984,7 @@ class Git(FetchMethod):
         return pupver
 
     def _build_revision(self, ud, d, name):
-        return ud.revisions[name]
+        return ud.revision
 
     def gitpkgv_revision(self, ud, d, name):
         """

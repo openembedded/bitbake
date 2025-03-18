@@ -190,15 +190,14 @@ class GoModGit(Git):
                 ud.path = ''
         if 'protocol' not in ud.parm:
             ud.parm['protocol'] = 'https'
-        name = f"{module}@{ud.parm['version']}"
-        ud.names = [name]
-        srcrev = d.getVar('SRCREV_' + name)
+        ud.name = f"{module}@{ud.parm['version']}"
+        srcrev = d.getVar('SRCREV_' + ud.name)
         if srcrev:
             if 'srcrev' not in ud.parm:
                 ud.parm['srcrev'] = srcrev
         else:
             if 'srcrev' in ud.parm:
-                d.setVar('SRCREV_' + name, ud.parm['srcrev'])
+                d.setVar('SRCREV_' + ud.name, ud.parm['srcrev'])
         if 'branch' not in ud.parm:
             ud.parm['nobranch'] = '1'
 

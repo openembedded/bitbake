@@ -62,36 +62,35 @@ class GitSM(Git):
             return modules
 
         # Collect the defined submodules, and their attributes
-        for name in ud.names:
+        try:
+            gitmodules = runfetchcmd("%s show %s:.gitmodules" % (ud.basecmd, ud.revision), d, quiet=True, workdir=workdir)
+        except:
+            # No submodules to update
+            gitmodules = ""
+
+        for m, md in parse_gitmodules(gitmodules).items():
             try:
-                gitmodules = runfetchcmd("%s show %s:.gitmodules" % (ud.basecmd, ud.revisions[name]), d, quiet=True, workdir=workdir)
+                module_hash = runfetchcmd("%s ls-tree -z -d %s %s" % (ud.basecmd, ud.revision, md['path']), d, quiet=True, workdir=workdir)
             except:
-                # No submodules to update
+                # If the command fails, we don't have a valid file to check.  If it doesn't
+                # fail -- it still might be a failure, see next check...
+                module_hash = ""
+
+            if not module_hash:
+                logger.debug("submodule %s is defined, but is not initialized in the repository. Skipping", m)
                 continue
 
-            for m, md in parse_gitmodules(gitmodules).items():
-                try:
-                    module_hash = runfetchcmd("%s ls-tree -z -d %s %s" % (ud.basecmd, ud.revisions[name], md['path']), d, quiet=True, workdir=workdir)
-                except:
-                    # If the command fails, we don't have a valid file to check.  If it doesn't
-                    # fail -- it still might be a failure, see next check...
-                    module_hash = ""
+            submodules.append(m)
+            paths[m] = md['path']
+            revision[m] = ud.revision
+            uris[m] = md['url']
+            subrevision[m] = module_hash.split()[2]
 
-                if not module_hash:
-                    logger.debug("submodule %s is defined, but is not initialized in the repository. Skipping", m)
-                    continue
-
-                submodules.append(m)
-                paths[m] = md['path']
-                revision[m] = ud.revisions[name]
-                uris[m] = md['url']
-                subrevision[m] = module_hash.split()[2]
-
-                # Convert relative to absolute uri based on parent uri
-                if  uris[m].startswith('..') or uris[m].startswith('./'):
-                    newud = copy.copy(ud)
-                    newud.path = os.path.normpath(os.path.join(newud.path, uris[m]))
-                    uris[m] = Git._get_repo_url(self, newud)
+            # Convert relative to absolute uri based on parent uri
+            if  uris[m].startswith('..') or uris[m].startswith('./'):
+                newud = copy.copy(ud)
+                newud.path = os.path.normpath(os.path.join(newud.path, uris[m]))
+                uris[m] = Git._get_repo_url(self, newud)
 
         for module in submodules:
             # Translate the module url into a SRC_URI
