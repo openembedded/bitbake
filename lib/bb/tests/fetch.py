@@ -3172,6 +3172,65 @@ class GitSharedTest(FetcherTest):
         alt = os.path.join(self.unpackdir, 'git/.git/objects/info/alternates')
         self.assertFalse(os.path.exists(alt))
 
+class GitTagVerificationTests(FetcherTest):
+
+    @skipIfNoNetwork()
+    def test_tag_rev_match(self):
+        # Test a url with rev= and tag= set works
+        fetcher = bb.fetch.Fetch(["git://git.openembedded.org/bitbake;branch=2.8;protocol=https;rev=aa0e540fc31a1c26839efd2c7785a751ce24ebfb;tag=2.8.7"], self.d)
+        fetcher.download()
+        fetcher.unpack(self.unpackdir)
+
+    @skipIfNoNetwork()
+    def test_tag_rev_match2(self):
+        # Test a url with SRCREV and tag= set works
+        self.d.setVar('SRCREV', 'aa0e540fc31a1c26839efd2c7785a751ce24ebfb')
+        fetcher = bb.fetch.Fetch(["git://git.openembedded.org/bitbake;branch=2.8;protocol=https;tag=2.8.7"], self.d)
+        fetcher.download()
+        fetcher.unpack(self.unpackdir)
+
+    @skipIfNoNetwork()
+    def test_tag_rev_match3(self):
+        # Test a url with SRCREV, rev= and tag= set works
+        self.d.setVar('SRCREV', 'aa0e540fc31a1c26839efd2c7785a751ce24ebfb')
+        fetcher = bb.fetch.Fetch(["git://git.openembedded.org/bitbake;branch=2.8;protocol=https;rev=aa0e540fc31a1c26839efd2c7785a751ce24ebfb;tag=2.8.7"], self.d)
+        fetcher.download()
+        fetcher.unpack(self.unpackdir)
+
+    @skipIfNoNetwork()
+    def test_tag_rev_match4(self):
+        # Test a url with SRCREV and rev= mismatching errors
+        self.d.setVar('SRCREV', 'bade540fc31a1c26839efd2c7785a751ce24ebfb')
+        with self.assertRaises(bb.fetch2.FetchError):
+            fetcher = bb.fetch.Fetch(["git://git.openembedded.org/bitbake;branch=2.8;protocol=https;rev=aa0e540fc31a1c26839efd2c7785a751ce24ebfb;tag=2.8.7"], self.d)
+
+    @skipIfNoNetwork()
+    def test_tag_rev_match5(self):
+        # Test a url with SRCREV, rev= and tag= set works when using shallow clones
+        self.d.setVar('BB_GIT_SHALLOW', '1')
+        self.d.setVar('SRCREV', 'aa0e540fc31a1c26839efd2c7785a751ce24ebfb')
+        fetcher = bb.fetch.Fetch(["git://git.openembedded.org/bitbake;branch=2.8;protocol=https;rev=aa0e540fc31a1c26839efd2c7785a751ce24ebfb;tag=2.8.7"], self.d)
+        fetcher.download()
+        fetcher.unpack(self.unpackdir)
+
+    @skipIfNoNetwork()
+    def test_tag_rev_match6(self):
+        # Test a url with SRCREV, rev= and a mismatched tag= when using shallow clones
+        self.d.setVar('BB_GIT_SHALLOW', '1')
+        fetcher = bb.fetch.Fetch(["git://git.openembedded.org/bitbake;branch=2.8;protocol=https;rev=aa0e540fc31a1c26839efd2c7785a751ce24ebfb;tag=2.8.6"], self.d)
+        fetcher.download()
+        with self.assertRaises(bb.fetch2.FetchError):
+            fetcher.unpack(self.unpackdir)
+
+    @skipIfNoNetwork()
+    def test_tag_rev_match7(self):
+        # Test a url with SRCREV, rev= and a mismatched tag=
+        self.d.setVar('SRCREV', 'aa0e540fc31a1c26839efd2c7785a751ce24ebfb')
+        fetcher = bb.fetch.Fetch(["git://git.openembedded.org/bitbake;branch=2.8;protocol=https;rev=aa0e540fc31a1c26839efd2c7785a751ce24ebfb;tag=2.8.6"], self.d)
+        fetcher.download()
+        with self.assertRaises(bb.fetch2.FetchError):
+            fetcher.unpack(self.unpackdir)
+
 
 class FetchPremirroronlyLocalTest(FetcherTest):
 
