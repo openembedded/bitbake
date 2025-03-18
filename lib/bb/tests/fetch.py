@@ -474,16 +474,16 @@ class FetcherTest(unittest.TestCase):
 class MirrorUriTest(FetcherTest):
 
     replaceuris = {
-        ("git://git.invalid.infradead.org/mtd-utils.git;tag=1234567890123456789012345678901234567890", "git://.*/.*", "http://somewhere.org/somedir/")
+        ("git://git.invalid.infradead.org/mtd-utils.git;tag=1234567890123456789012345678901234567890;branch=master", "git://.*/.*", "http://somewhere.org/somedir/")
             : "http://somewhere.org/somedir/git2_git.invalid.infradead.org.mtd-utils.git.tar.gz",
-        ("git://git.invalid.infradead.org/mtd-utils.git;tag=1234567890123456789012345678901234567890", "git://.*/([^/]+/)*([^/]*)", "git://somewhere.org/somedir/\\2;protocol=http")
-            : "git://somewhere.org/somedir/mtd-utils.git;tag=1234567890123456789012345678901234567890;protocol=http",
-        ("git://git.invalid.infradead.org/foo/mtd-utils.git;tag=1234567890123456789012345678901234567890", "git://.*/([^/]+/)*([^/]*)", "git://somewhere.org/somedir/\\2;protocol=http")
-            : "git://somewhere.org/somedir/mtd-utils.git;tag=1234567890123456789012345678901234567890;protocol=http",
-        ("git://git.invalid.infradead.org/foo/mtd-utils.git;tag=1234567890123456789012345678901234567890", "git://.*/([^/]+/)*([^/]*)", "git://somewhere.org/\\2;protocol=http")
-            : "git://somewhere.org/mtd-utils.git;tag=1234567890123456789012345678901234567890;protocol=http",
-        ("git://someserver.org/bitbake;tag=1234567890123456789012345678901234567890", "git://someserver.org/bitbake", "git://git.openembedded.org/bitbake")
-            : "git://git.openembedded.org/bitbake;tag=1234567890123456789012345678901234567890",
+        ("git://git.invalid.infradead.org/mtd-utils.git;tag=1234567890123456789012345678901234567890;branch=master", "git://.*/([^/]+/)*([^/]*)", "git://somewhere.org/somedir/\\2;protocol=http")
+            : "git://somewhere.org/somedir/mtd-utils.git;tag=1234567890123456789012345678901234567890;branch=master;protocol=http",
+        ("git://git.invalid.infradead.org/foo/mtd-utils.git;tag=1234567890123456789012345678901234567890;branch=master", "git://.*/([^/]+/)*([^/]*)", "git://somewhere.org/somedir/\\2;protocol=http")
+            : "git://somewhere.org/somedir/mtd-utils.git;tag=1234567890123456789012345678901234567890;branch=master;protocol=http",
+        ("git://git.invalid.infradead.org/foo/mtd-utils.git;tag=1234567890123456789012345678901234567890;branch=master", "git://.*/([^/]+/)*([^/]*)", "git://somewhere.org/\\2;protocol=http")
+            : "git://somewhere.org/mtd-utils.git;tag=1234567890123456789012345678901234567890;branch=master;protocol=http",
+        ("git://someserver.org/bitbake;tag=1234567890123456789012345678901234567890;branch=master", "git://someserver.org/bitbake", "git://git.openembedded.org/bitbake")
+            : "git://git.openembedded.org/bitbake;tag=1234567890123456789012345678901234567890;branch=master",
         ("file://sstate-xyz.tgz", "file://.*", "file:///somewhere/1234/sstate-cache")
             : "file:///somewhere/1234/sstate-cache/sstate-xyz.tgz",
         ("file://sstate-xyz.tgz", "file://.*", "file:///somewhere/1234/sstate-cache/")
@@ -496,12 +496,12 @@ class MirrorUriTest(FetcherTest):
             : "http://archive.apache.org/dist/subversion/subversion-1.7.1.tar.bz2",
         ("http://www.apache.org/dist/subversion/subversion-1.7.1.tar.bz2", "http://.*/.*", "file:///somepath/downloads/")
             : "file:///somepath/downloads/subversion-1.7.1.tar.bz2",
-        ("git://git.invalid.infradead.org/mtd-utils.git;tag=1234567890123456789012345678901234567890", "git://.*/.*", "git://somewhere.org/somedir/BASENAME;protocol=http")
-            : "git://somewhere.org/somedir/mtd-utils.git;tag=1234567890123456789012345678901234567890;protocol=http",
-        ("git://git.invalid.infradead.org/foo/mtd-utils.git;tag=1234567890123456789012345678901234567890", "git://.*/.*", "git://somewhere.org/somedir/BASENAME;protocol=http")
-            : "git://somewhere.org/somedir/mtd-utils.git;tag=1234567890123456789012345678901234567890;protocol=http",
-        ("git://git.invalid.infradead.org/foo/mtd-utils.git;tag=1234567890123456789012345678901234567890", "git://.*/.*", "git://somewhere.org/somedir/MIRRORNAME;protocol=http")
-            : "git://somewhere.org/somedir/git.invalid.infradead.org.foo.mtd-utils.git;tag=1234567890123456789012345678901234567890;protocol=http",
+        ("git://git.invalid.infradead.org/mtd-utils.git;tag=1234567890123456789012345678901234567890;branch=master", "git://.*/.*", "git://somewhere.org/somedir/BASENAME;protocol=http")
+            : "git://somewhere.org/somedir/mtd-utils.git;tag=1234567890123456789012345678901234567890;branch=master;protocol=http",
+        ("git://git.invalid.infradead.org/foo/mtd-utils.git;tag=1234567890123456789012345678901234567890;branch=master", "git://.*/.*", "git://somewhere.org/somedir/BASENAME;protocol=http")
+            : "git://somewhere.org/somedir/mtd-utils.git;tag=1234567890123456789012345678901234567890;branch=master;protocol=http",
+        ("git://git.invalid.infradead.org/foo/mtd-utils.git;tag=1234567890123456789012345678901234567890;branch=master", "git://.*/.*", "git://somewhere.org/somedir/MIRRORNAME;protocol=http")
+            : "git://somewhere.org/somedir/git.invalid.infradead.org.foo.mtd-utils.git;tag=1234567890123456789012345678901234567890;branch=master;protocol=http",
         ("http://somewhere.org/somedir1/somedir2/somefile_1.2.3.tar.gz", "http://.*/.*", "http://somewhere2.org")
             : "http://somewhere2.org/somefile_1.2.3.tar.gz",
         ("http://somewhere.org/somedir1/somedir2/somefile_1.2.3.tar.gz", "http://.*/.*", "http://somewhere2.org/")
@@ -517,9 +517,9 @@ class MirrorUriTest(FetcherTest):
             : "file:///mirror/example/1.0.0/some-example-1.0.0.tgz;downloadfilename=some-example-1.0.0.tgz",
         ("https://somewhere.org/example-1.0.0.tgz;downloadfilename=some-example-1.0.0.tgz", "https://.*/.*", "file:///mirror/some-example-1.0.0.tgz")
             : "file:///mirror/some-example-1.0.0.tgz;downloadfilename=some-example-1.0.0.tgz",
-        ("git://git.invalid.infradead.org/mtd-utils.git;tag=1234567890123456789012345678901234567890", r"git://(?!internal\.git\.server).*/.*", "http://somewhere.org/somedir/")
+        ("git://git.invalid.infradead.org/mtd-utils.git;tag=1234567890123456789012345678901234567890;branch=master", r"git://(?!internal\.git\.server).*/.*", "http://somewhere.org/somedir/")
             : "http://somewhere.org/somedir/git2_git.invalid.infradead.org.mtd-utils.git.tar.gz",
-        ("git://internal.git.server.org/mtd-utils.git;tag=1234567890123456789012345678901234567890", r"git://(?!internal\.git\.server).*/.*", "http://somewhere.org/somedir/")
+        ("git://internal.git.server.org/mtd-utils.git;tag=1234567890123456789012345678901234567890;branch=master", r"git://(?!internal\.git\.server).*/.*", "http://somewhere.org/somedir/")
             : None,
 
         #Renaming files doesn't work
@@ -705,7 +705,7 @@ class GitShallowTarballNamingTest(FetcherTest):
 class CleanTarballTest(FetcherTest):
     def setUp(self):
         super(CleanTarballTest, self).setUp()
-        self.recipe_url = "git://git.openembedded.org/bitbake;protocol=https"
+        self.recipe_url = "git://git.openembedded.org/bitbake;protocol=https;branch=master"
         self.recipe_tarball = "git2_git.openembedded.org.bitbake.tar.gz"
 
         self.d.setVar('BB_GENERATE_MIRROR_TARBALLS', '1')
@@ -1089,7 +1089,7 @@ class FetcherNetworkTest(FetcherTest):
     @skipIfNoNetwork()
     def test_gitfetch_tagandrev(self):
         # SRCREV is set but does not match rev= parameter
-        url1 = url2 = "git://git.openembedded.org/bitbake;rev=270a05b0b4ba0959fe0624d2a4885d7b70426da5;tag=270a05b0b4ba0959fe0624d2a4885d7b70426da5;protocol=https"
+        url1 = url2 = "git://git.openembedded.org/bitbake;rev=270a05b0b4ba0959fe0624d2a4885d7b70426da5;tag=270a05b0b4ba0959fe0624d2a4885d7b70426da5;protocol=https;branch=master"
         self.assertRaises(bb.fetch.FetchError, self.gitfetcher, url1, url2)
 
     @skipIfNoNetwork()
@@ -1126,7 +1126,7 @@ class FetcherNetworkTest(FetcherTest):
     @skipIfNoNetwork()
     def test_gitfetch_finds_local_repository_when_premirror_rewrites_the_recipe_url(self):
         realurl = "https://git.openembedded.org/bitbake"
-        recipeurl = "git://someserver.org/bitbake;protocol=https"
+        recipeurl = "git://someserver.org/bitbake;protocol=https;branch=master"
         self.sourcedir = self.unpackdir.replace("unpacked", "sourcemirror.git")
         os.chdir(self.tempdir)
         self.git(['clone', realurl, self.sourcedir], cwd=self.tempdir)
@@ -2025,7 +2025,7 @@ class GitShallowTest(FetcherTest):
         self.git('submodule update', cwd=self.srcdir)
         self.git('commit -m submodule -a', cwd=self.srcdir)
 
-        uri = 'gitsm://%s;protocol=file;subdir=${S}' % self.srcdir
+        uri = 'gitsm://%s;protocol=file;subdir=${S};branch=master' % self.srcdir
 
         # Fetch once to generate the shallow tarball
         fetcher, ud = self.fetch(uri)
@@ -3322,7 +3322,7 @@ class FetchPremirroronlyNetworkTest(FetcherTest):
         self.reponame = "fstests"
         self.clonedir = os.path.join(self.tempdir, "git")
         self.gitdir = os.path.join(self.tempdir, "git", "{}.git".format(self.reponame))
-        self.recipe_url = "git://git.yoctoproject.org/fstests;protocol=https"
+        self.recipe_url = "git://git.yoctoproject.org/fstests;protocol=https;branch=master"
         self.d.setVar("BB_FETCH_PREMIRRORONLY", "1")
         self.d.setVar("BB_NO_NETWORK", "0")
         self.d.setVar("PREMIRRORS", self.recipe_url + " " + "file://{}".format(self.mirrordir) + " \n")
@@ -3404,7 +3404,7 @@ class FetchPremirroronlyBrokenTarball(FetcherTest):
         os.mkdir(self.mirrordir)
         self.reponame = "bitbake"
         self.gitdir = os.path.join(self.tempdir, "git", self.reponame)
-        self.recipe_url = "git://git.fake.repo/bitbake;protocol=https"
+        self.recipe_url = "git://git.fake.repo/bitbake;protocol=https;branch=master"
         self.d.setVar("BB_FETCH_PREMIRRORONLY", "1")
         self.d.setVar("BB_NO_NETWORK", "1")
         self.d.setVar("PREMIRRORS", self.recipe_url + " " + "file://{}".format(self.mirrordir) + " \n")
