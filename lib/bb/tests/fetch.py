@@ -1087,12 +1087,6 @@ class FetcherNetworkTest(FetcherTest):
         self.assertRaises(bb.fetch.FetchError, self.gitfetcher, url1, url2)
 
     @skipIfNoNetwork()
-    def test_gitfetch_tagandrev(self):
-        # SRCREV is set but does not match rev= parameter
-        url1 = url2 = "git://git.openembedded.org/bitbake;rev=270a05b0b4ba0959fe0624d2a4885d7b70426da5;tag=270a05b0b4ba0959fe0624d2a4885d7b70426da5;protocol=https;branch=master"
-        self.assertRaises(bb.fetch.FetchError, self.gitfetcher, url1, url2)
-
-    @skipIfNoNetwork()
     def test_gitfetch_usehead(self):
         # Since self.gitfetcher() sets SRCREV we expect this to override
         # `usehead=1' and instead fetch the specified SRCREV. See

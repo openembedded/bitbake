@@ -279,6 +279,10 @@ class Git(FetchMethod):
                     ud.unresolvedrev[name] = ud.revisions[name]
                 ud.revisions[name] = self.latest_revision(ud, d, name)
 
+        if 'tag' in ud.parm:
+            if len(ud.revisions) != 1:
+                raise bb.fetch2.ParameterError("Git fetcher support for multiple tagged revisions not implemented", ud.url)
+
         gitsrcname = '%s%s' % (ud.host.replace(':', '.'), ud.path.replace('/', '.').replace('*', '.').replace(' ','_').replace('(', '_').replace(')', '_'))
         if gitsrcname.startswith('.'):
             gitsrcname = gitsrcname[1:]
@@ -746,6 +750,14 @@ class Git(FetchMethod):
 
         if not source_found:
             raise bb.fetch2.UnpackError("No up to date source found: " + "; ".join(source_error), ud.url)
+
+        # If there is a tag parameter in the url and we also have a fixed srcrev, check the tag
+        # matches the revision
+        if 'tag' in ud.parm and sha1_re.match(ud.revision):
+            output = runfetchcmd("%s rev-list -n 1 %s" % (ud.basecmd, ud.parm['tag']), d, workdir=destdir)
+            output = output.strip()
+            if output != ud.revision:
+                raise bb.fetch2.FetchError("The revision the git tag '%s' resolved to didn't match the SRCREV in use (%s vs %s)" % (ud.parm['tag'], output, ud.revision), ud.url)
 
         repourl = self._get_repo_url(ud)
         runfetchcmd("%s remote set-url origin %s" % (ud.basecmd, shlex.quote(repourl)), d, workdir=destdir)

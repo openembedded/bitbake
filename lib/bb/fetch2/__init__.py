@@ -1248,19 +1248,16 @@ def srcrev_internal_helper(ud, d, name):
         if srcrev and srcrev != "INVALID":
             break
 
-    if 'rev' in ud.parm and 'tag' in ud.parm:
-        raise FetchError("Please specify a ;rev= parameter or a ;tag= parameter in the url %s but not both." % (ud.url))
-
-    if 'rev' in ud.parm or 'tag' in ud.parm:
-        if 'rev' in ud.parm:
-            parmrev = ud.parm['rev']
-        else:
-            parmrev = ud.parm['tag']
+    if 'rev' in ud.parm:
+        parmrev = ud.parm['rev']
         if srcrev == "INVALID" or not srcrev:
             return parmrev
         if srcrev != parmrev:
             raise FetchError("Conflicting revisions (%s from SRCREV and %s from the url) found, please specify one valid value" % (srcrev, parmrev))
         return parmrev
+
+    if 'tag' in ud.parm and (srcrev == "INVALID" or not srcrev):
+        return ud.parm['tag']
 
     if srcrev == "INVALID" or not srcrev:
         raise FetchError("Please set a valid SRCREV for url %s (possible key names are %s, or use a ;rev=X URL parameter)" % (str(attempts), ud.url), ud.url)
