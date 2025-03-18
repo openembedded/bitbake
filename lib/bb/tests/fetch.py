@@ -2815,7 +2815,7 @@ class NPMTest(FetcherTest):
     @skipIfNoNetwork()
     def test_npm_version_latest(self):
         url = ['npm://registry.npmjs.org;package=@savoirfairelinux/node-server-example;version=latest']
-        fetcher = bb.fetch.Fetch(urls, self.d)
+        fetcher = bb.fetch.Fetch(url, self.d)
         fetcher.download()
         fetcher.unpack(self.unpackdir)
         unpackdir = os.path.join(self.unpackdir, 'npm')
