@@ -12,8 +12,8 @@
 __version__ = "2.9.1"
 
 import sys
-if sys.version_info < (3, 8, 0):
-    raise RuntimeError("Sorry, python 3.8.0 or later is required for this version of bitbake")
+if sys.version_info < (3, 9, 0):
+    raise RuntimeError("Sorry, python 3.9.0 or later is required for this version of bitbake")
 
 if sys.version_info < (3, 10, 0):
     # With python 3.8 and 3.9, we see errors of "libgcc_s.so.1 must be installed for pthread_cancel to work"
