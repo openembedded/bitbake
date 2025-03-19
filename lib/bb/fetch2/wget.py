@@ -650,13 +650,17 @@ class Wget(FetchMethod):
 
         sanity check to ensure same name and type.
         """
-        package = ud.path.split("/")[-1]
+        if 'downloadfilename' in ud.parm:
+            package = ud.parm['downloadfilename']
+        else:
+            package = ud.path.split("/")[-1]
         current_version = ['', d.getVar('PV'), '']
 
         """possible to have no version in pkg name, such as spectrum-fw"""
         if not re.search(r"\d+", package):
             current_version[1] = re.sub('_', '.', current_version[1])
             current_version[1] = re.sub('-', '.', current_version[1])
+            bb.debug(3, "latest_versionstring: no version found in %s" % package)
             return (current_version[1], '')
 
         package_regex = self._init_regexes(package, ud, d)
