@@ -3378,6 +3378,8 @@ class GoModTest(FetcherTest):
         fetcher = bb.fetch2.Fetch(urls, self.d)
         ud = fetcher.ud[urls[0]]
         self.assertEqual(ud.url, 'https://proxy.golang.org/github.com/%21azure/azure-sdk-for-go/sdk/storage/azblob/%40v/v1.0.0.zip')
+        self.assertEqual(ud.parm['downloadfilename'], 'github.com.Azure.azure-sdk-for-go.sdk.storage.azblob@v1.0.0.zip')
+        self.assertEqual(ud.parm['name'], 'github.com/Azure/azure-sdk-for-go/sdk/storage/azblob@v1.0.0')
 
         fetcher.download()
         fetcher.unpack(self.unpackdir)
@@ -3395,6 +3397,8 @@ class GoModTest(FetcherTest):
         fetcher = bb.fetch2.Fetch(urls, self.d)
         ud = fetcher.ud[urls[0]]
         self.assertEqual(ud.url, 'https://proxy.golang.org/github.com/%21azure/azure-sdk-for-go/sdk/storage/azblob/%40v/v1.0.0.mod')
+        self.assertEqual(ud.parm['downloadfilename'], 'github.com.Azure.azure-sdk-for-go.sdk.storage.azblob@v1.0.0.mod')
+        self.assertEqual(ud.parm['name'], 'github.com/Azure/azure-sdk-for-go/sdk/storage/azblob@v1.0.0')
 
         fetcher.download()
         fetcher.unpack(self.unpackdir)
@@ -3409,6 +3413,7 @@ class GoModTest(FetcherTest):
         fetcher = bb.fetch2.Fetch(urls, self.d)
         ud = fetcher.ud[urls[0]]
         self.assertEqual(ud.url, 'https://proxy.golang.org/gopkg.in/ini.v1/%40v/v1.67.0.zip')
+        self.assertEqual(ud.parm['downloadfilename'], 'gopkg.in.ini.v1@v1.67.0.zip')
         self.assertEqual(ud.parm['name'], 'gopkg.in/ini.v1@v1.67.0')
 
         fetcher.download()
@@ -3427,6 +3432,8 @@ class GoModTest(FetcherTest):
         fetcher = bb.fetch2.Fetch(urls, self.d)
         ud = fetcher.ud[urls[0]]
         self.assertEqual(ud.url, 'https://proxy.golang.org/gopkg.in/ini.v1/%40v/v1.67.0.zip')
+        self.assertEqual(ud.parm['downloadfilename'], 'gopkg.in.ini.v1@v1.67.0.zip')
+        self.assertEqual(ud.parm['name'], 'gopkg.in/ini.v1@v1.67.0')
 
         fetcher.download()
         fetcher.unpack(self.unpackdir)
@@ -3444,6 +3451,8 @@ class GoModTest(FetcherTest):
         fetcher = bb.fetch2.Fetch(urls, self.d)
         ud = fetcher.ud[urls[0]]
         self.assertEqual(ud.url, 'https://proxy.golang.org/go.opencensus.io/%40v/v0.24.0.zip')
+        self.assertEqual(ud.parm['downloadfilename'], 'go.opencensus.io@v0.24.0.zip')
+        self.assertEqual(ud.parm['name'], 'go.opencensus.io@v0.24.0')
 
         fetcher.download()
         fetcher.unpack(self.unpackdir)
