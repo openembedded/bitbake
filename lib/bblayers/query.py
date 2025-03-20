@@ -145,8 +145,7 @@ skipped recipes will also be listed, with a " (skipped)" suffix.
         skiplist = list(self.tinfoil.cooker.skiplist_by_mc[mc].keys())
 
         if mc:
-            mcspec = f'mc:{mc}:'
-            skiplist = [s[len(mcspec):] if s.startswith(mcspec) else s for s in skiplist]
+            skiplist = [s.removeprefix(f'mc:{mc}:') for s in skiplist]
 
         for fn in skiplist:
             recipe_parts = os.path.splitext(os.path.basename(fn))[0].split('_')
