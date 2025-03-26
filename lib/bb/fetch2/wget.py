@@ -122,12 +122,7 @@ class Wget(FetchMethod):
                 fetchcmd += " --user=%s --password=%s" % (ud.user, ud.pswd)
 
         uri = ud.url.split(";")[0]
-        if os.path.exists(ud.localpath):
-            # file exists, but we didnt complete it.. trying again..
-            fetchcmd += " -c -P " + dldir + " '" + uri + "'"
-        else:
-            fetchcmd += " -P " + dldir + " '" + uri + "'"
-
+        fetchcmd += " -c -P " + dldir + " '" + uri + "'"
         self._runwget(ud, d, fetchcmd, False)
 
         # Sanity check since wget can pretend it succeed when it didn't
