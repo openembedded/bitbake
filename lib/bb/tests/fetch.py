@@ -1524,6 +1524,12 @@ class FetchLatestVersionTest(FetcherTest):
         # http://ftp.debian.org/debian/pool/main/m/minicom/minicom_2.7.1.orig.tar.gz
         WgetTestData("minicom", "/debian/pool/main/m/minicom/minicom_2.7.1.orig.tar.gz")
             : "2.8",
+
+        #
+        # packages where the path doesn't actually contain the filename, so downloadfilename should be respected
+        #
+        WgetTestData("miniupnpd", "/software/miniupnp/download.php?file=miniupnpd_2.1.20191006.tar.gz;downloadfilename=miniupnpd_2.1.20191006.tar.gz", pv="2.1.20191006", check_uri="/software/miniupnp/download.php", check_regex=r"miniupnpd-(?P<pver>\d+(\.\d+)+)\.tar")
+            : "2.3.7",
     }
 
     test_crate_uris = {
