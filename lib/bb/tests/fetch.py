@@ -1472,56 +1472,57 @@ class FetchLatestVersionTest(FetcherTest):
             : "0.28.0",
     }
 
+    WgetTestData = collections.namedtuple("WgetTestData", ["pn", "path", "check_uri", "check_regex"], defaults=[None, None])
     test_wget_uris = {
         #
         # packages with versions inside directory name
         #
         # http://kernel.org/pub/linux/utils/util-linux/v2.23/util-linux-2.24.2.tar.bz2
-        ("util-linux", "/pub/linux/utils/util-linux/v2.23/util-linux-2.24.2.tar.bz2", "", "")
+        WgetTestData("util-linux", "/pub/linux/utils/util-linux/v2.23/util-linux-2.24.2.tar.bz2")
             : "2.24.2",
         # http://www.abisource.com/downloads/enchant/1.6.0/enchant-1.6.0.tar.gz
-        ("enchant", "/downloads/enchant/1.6.0/enchant-1.6.0.tar.gz", "", "")
+        WgetTestData("enchant", "/downloads/enchant/1.6.0/enchant-1.6.0.tar.gz")
             : "1.6.0",
         # http://www.cmake.org/files/v2.8/cmake-2.8.12.1.tar.gz
-        ("cmake", "/files/v2.8/cmake-2.8.12.1.tar.gz", "", "")
+        WgetTestData("cmake", "/files/v2.8/cmake-2.8.12.1.tar.gz")
             : "2.8.12.1",
         # https://download.gnome.org/sources/libxml2/2.9/libxml2-2.9.14.tar.xz
-        ("libxml2", "/software/libxml2/2.9/libxml2-2.9.14.tar.xz", "", "")
+        WgetTestData("libxml2", "/software/libxml2/2.9/libxml2-2.9.14.tar.xz")
             : "2.10.3",
         #
         # packages with versions only in current directory
         #
         # https://downloads.yoctoproject.org/releases/eglibc/eglibc-2.18-svnr23787.tar.bz2
-        ("eglic", "/releases/eglibc/eglibc-2.18-svnr23787.tar.bz2", "", "")
+        WgetTestData("eglic", "/releases/eglibc/eglibc-2.18-svnr23787.tar.bz2")
             : "2.19",
         # https://downloads.yoctoproject.org/releases/gnu-config/gnu-config-20120814.tar.bz2
-        ("gnu-config", "/releases/gnu-config/gnu-config-20120814.tar.bz2", "", "")
+        WgetTestData("gnu-config", "/releases/gnu-config/gnu-config-20120814.tar.bz2")
             : "20120814",
         #
         # packages with "99" in the name of possible version
         #
         # http://freedesktop.org/software/pulseaudio/releases/pulseaudio-4.0.tar.xz
-        ("pulseaudio", "/software/pulseaudio/releases/pulseaudio-4.0.tar.xz", "", "")
+        WgetTestData("pulseaudio", "/software/pulseaudio/releases/pulseaudio-4.0.tar.xz")
             : "5.0",
         # http://xorg.freedesktop.org/releases/individual/xserver/xorg-server-1.15.1.tar.bz2
-        ("xserver-xorg", "/releases/individual/xserver/xorg-server-1.15.1.tar.bz2", "", "")
+        WgetTestData("xserver-xorg", "/releases/individual/xserver/xorg-server-1.15.1.tar.bz2")
             : "1.15.1",
         #
         # packages with valid UPSTREAM_CHECK_URI and UPSTREAM_CHECK_REGEX
         #
         # http://www.cups.org/software/1.7.2/cups-1.7.2-source.tar.bz2
         # https://github.com/apple/cups/releases
-        ("cups", "/software/1.7.2/cups-1.7.2-source.tar.bz2", "/apple/cups/releases", r"(?P<name>cups\-)(?P<pver>((\d+[\.\-_]*)+))\-source\.tar\.gz")
+        WgetTestData("cups", "/software/1.7.2/cups-1.7.2-source.tar.bz2", check_uri="/apple/cups/releases", check_regex=r"(?P<name>cups\-)(?P<pver>((\d+[\.\-_]*)+))\-source\.tar\.gz")
             : "2.0.0",
         # http://download.oracle.com/berkeley-db/db-5.3.21.tar.gz
         # http://ftp.debian.org/debian/pool/main/d/db5.3/
-        ("db", "/berkeley-db/db-5.3.21.tar.gz", "/debian/pool/main/d/db5.3/", r"(?P<name>db5\.3_)(?P<pver>\d+(\.\d+)+).+\.orig\.tar\.xz")
+        WgetTestData("db", "/berkeley-db/db-5.3.21.tar.gz", check_uri="/debian/pool/main/d/db5.3/", check_regex=r"(?P<name>db5\.3_)(?P<pver>\d+(\.\d+)+).+\.orig\.tar\.xz")
             : "5.3.10",
         #
         # packages where the tarball compression changed in the new version
         #
         # http://ftp.debian.org/debian/pool/main/m/minicom/minicom_2.7.1.orig.tar.gz
-        ("minicom", "/debian/pool/main/m/minicom/minicom_2.7.1.orig.tar.gz", "", "")
+        WgetTestData("minicom", "/debian/pool/main/m/minicom/minicom_2.7.1.orig.tar.gz")
             : "2.8",
     }
 
@@ -1554,21 +1555,22 @@ class FetchLatestVersionTest(FetcherTest):
         server.start()
         port = server.port
         try:
-            for k, v in self.test_wget_uris.items():
-                with self.subTest(pn=k[0]):
-                    self.d.setVar("PN", k[0])
-                    checkuri = ""
-                    if k[2]:
-                        checkuri = "http://127.0.0.1:%s/" % port + k[2]
-                    self.d.setVar("UPSTREAM_CHECK_URI", checkuri)
-                    self.d.setVar("UPSTREAM_CHECK_REGEX", k[3])
-                    url = "http://127.0.0.1:%s/" % port + k[1]
+            for data, v in self.test_wget_uris.items():
+                with self.subTest(pn=data.pn):
+                    self.d.setVar("PN", data.pn)
+                    if data.check_uri:
+                        checkuri = "http://127.0.0.1:%s/%s" % (port, data.check_uri)
+                        self.d.setVar("UPSTREAM_CHECK_URI", checkuri)
+                    if data.check_regex:
+                        self.d.setVar("UPSTREAM_CHECK_REGEX", data.check_regex)
+
+                    url = "http://127.0.0.1:%s/%s" % (port, data.path)
                     ud = bb.fetch2.FetchData(url, self.d)
                     pupver = ud.method.latest_versionstring(ud, self.d)
                     verstring = pupver[0]
-                    self.assertTrue(verstring, msg="Could not find upstream version for %s" % k[0])
+                    self.assertTrue(verstring, msg="Could not find upstream version for %s" % data.pn)
                     r = bb.utils.vercmp_string(v, verstring)
-                    self.assertTrue(r == -1 or r == 0, msg="Package %s, version: %s <= %s" % (k[0], v, verstring))
+                    self.assertTrue(r == -1 or r == 0, msg="Package %s, version: %s <= %s" % (data.pn, v, verstring))
         finally:
             server.stop()
 
