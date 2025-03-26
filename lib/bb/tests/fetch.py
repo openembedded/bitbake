@@ -1534,18 +1534,19 @@ class FetchLatestVersionTest(FetcherTest):
     @skipIfNoNetwork()
     def test_git_latest_versionstring(self):
         for k, v in self.test_git_uris.items():
-            self.d.setVar("PN", k[0])
-            self.d.setVar("SRCREV", k[2])
-            self.d.setVar("UPSTREAM_CHECK_GITTAGREGEX", k[3])
-            ud = bb.fetch2.FetchData(k[1], self.d)
-            pupver= ud.method.latest_versionstring(ud, self.d)
-            verstring = pupver[0]
-            self.assertTrue(verstring, msg="Could not find upstream version for %s" % k[0])
-            r = bb.utils.vercmp_string(v, verstring)
-            self.assertTrue(r == -1 or r == 0, msg="Package %s, version: %s <= %s" % (k[0], v, verstring))
-            if k[4]:
-                r = bb.utils.vercmp_string(verstring, k[4])
-                self.assertTrue(r == -1 or r == 0, msg="Package %s, version: %s <= %s" % (k[0], verstring, k[4]))
+            with self.subTest(pn=k[0]):
+                self.d.setVar("PN", k[0])
+                self.d.setVar("SRCREV", k[2])
+                self.d.setVar("UPSTREAM_CHECK_GITTAGREGEX", k[3])
+                ud = bb.fetch2.FetchData(k[1], self.d)
+                pupver= ud.method.latest_versionstring(ud, self.d)
+                verstring = pupver[0]
+                self.assertTrue(verstring, msg="Could not find upstream version for %s" % k[0])
+                r = bb.utils.vercmp_string(v, verstring)
+                self.assertTrue(r == -1 or r == 0, msg="Package %s, version: %s <= %s" % (k[0], v, verstring))
+                if k[4]:
+                    r = bb.utils.vercmp_string(verstring, k[4])
+                    self.assertTrue(r == -1 or r == 0, msg="Package %s, version: %s <= %s" % (k[0], verstring, k[4]))
 
     def test_wget_latest_versionstring(self):
         testdata = os.path.dirname(os.path.abspath(__file__)) + "/fetch-testdata"
@@ -1554,32 +1555,34 @@ class FetchLatestVersionTest(FetcherTest):
         port = server.port
         try:
             for k, v in self.test_wget_uris.items():
-                self.d.setVar("PN", k[0])
-                checkuri = ""
-                if k[2]:
-                    checkuri = "http://127.0.0.1:%s/" % port + k[2]
-                self.d.setVar("UPSTREAM_CHECK_URI", checkuri)
-                self.d.setVar("UPSTREAM_CHECK_REGEX", k[3])
-                url = "http://127.0.0.1:%s/" % port + k[1]
-                ud = bb.fetch2.FetchData(url, self.d)
-                pupver = ud.method.latest_versionstring(ud, self.d)
-                verstring = pupver[0]
-                self.assertTrue(verstring, msg="Could not find upstream version for %s" % k[0])
-                r = bb.utils.vercmp_string(v, verstring)
-                self.assertTrue(r == -1 or r == 0, msg="Package %s, version: %s <= %s" % (k[0], v, verstring))
+                with self.subTest(pn=k[0]):
+                    self.d.setVar("PN", k[0])
+                    checkuri = ""
+                    if k[2]:
+                        checkuri = "http://127.0.0.1:%s/" % port + k[2]
+                    self.d.setVar("UPSTREAM_CHECK_URI", checkuri)
+                    self.d.setVar("UPSTREAM_CHECK_REGEX", k[3])
+                    url = "http://127.0.0.1:%s/" % port + k[1]
+                    ud = bb.fetch2.FetchData(url, self.d)
+                    pupver = ud.method.latest_versionstring(ud, self.d)
+                    verstring = pupver[0]
+                    self.assertTrue(verstring, msg="Could not find upstream version for %s" % k[0])
+                    r = bb.utils.vercmp_string(v, verstring)
+                    self.assertTrue(r == -1 or r == 0, msg="Package %s, version: %s <= %s" % (k[0], v, verstring))
         finally:
             server.stop()
 
     @skipIfNoNetwork()
     def test_crate_latest_versionstring(self):
         for k, v in self.test_crate_uris.items():
-            self.d.setVar("PN", k[0])
-            ud = bb.fetch2.FetchData(k[1], self.d)
-            pupver = ud.method.latest_versionstring(ud, self.d)
-            verstring = pupver[0]
-            self.assertTrue(verstring, msg="Could not find upstream version for %s" % k[0])
-            r = bb.utils.vercmp_string(v, verstring)
-            self.assertTrue(r == -1 or r == 0, msg="Package %s, version: %s <= %s" % (k[0], v, verstring))
+            with self.subTest(pn=k[0]):
+                self.d.setVar("PN", k[0])
+                ud = bb.fetch2.FetchData(k[1], self.d)
+                pupver = ud.method.latest_versionstring(ud, self.d)
+                verstring = pupver[0]
+                self.assertTrue(verstring, msg="Could not find upstream version for %s" % k[0])
+                r = bb.utils.vercmp_string(v, verstring)
+                self.assertTrue(r == -1 or r == 0, msg="Package %s, version: %s <= %s" % (k[0], v, verstring))
 
 class FetchCheckStatusTest(FetcherTest):
     test_wget_uris = ["https://downloads.yoctoproject.org/releases/sato/sato-engine-0.1.tar.gz",
