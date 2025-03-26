@@ -1472,7 +1472,7 @@ class FetchLatestVersionTest(FetcherTest):
             : "0.28.0",
     }
 
-    WgetTestData = collections.namedtuple("WgetTestData", ["pn", "path", "check_uri", "check_regex"], defaults=[None, None])
+    WgetTestData = collections.namedtuple("WgetTestData", ["pn", "path", "pv", "check_uri", "check_regex"], defaults=[None, None, None])
     test_wget_uris = {
         #
         # packages with versions inside directory name
@@ -1558,6 +1558,7 @@ class FetchLatestVersionTest(FetcherTest):
             for data, v in self.test_wget_uris.items():
                 with self.subTest(pn=data.pn):
                     self.d.setVar("PN", data.pn)
+                    self.d.setVar("PV", data.pv)
                     if data.check_uri:
                         checkuri = "http://127.0.0.1:%s/%s" % (port, data.check_uri)
                         self.d.setVar("UPSTREAM_CHECK_URI", checkuri)
