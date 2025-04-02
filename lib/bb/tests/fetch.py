@@ -3139,6 +3139,13 @@ class GitTagVerificationTests(FetcherTest):
         fetcher.download()
         fetcher.unpack(self.unpackdir)
 
+    def test_annotated_tag_rev_match(self):
+        # Test a url with rev= and tag= set works
+        # rev is the annotated tag revision in this case
+        fetcher = bb.fetch.Fetch(["git://git.openembedded.org/bitbake;branch=2.8;protocol=https;rev=6d363159e4b7dc566fc40d069b2615e61774a7d8;tag=2.8.7"], self.d)
+        fetcher.download()
+        fetcher.unpack(self.unpackdir)
+
     @skipIfNoNetwork()
     def test_tag_rev_match2(self):
         # Test a url with SRCREV and tag= set works

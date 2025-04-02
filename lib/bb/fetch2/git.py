@@ -730,7 +730,12 @@ class Git(FetchMethod):
             output = runfetchcmd("%s rev-list -n 1 %s" % (ud.basecmd, ud.parm['tag']), d, workdir=destdir)
             output = output.strip()
             if output != ud.revision:
-                raise bb.fetch2.FetchError("The revision the git tag '%s' resolved to didn't match the SRCREV in use (%s vs %s)" % (ud.parm['tag'], output, ud.revision), ud.url)
+                # It is possible ud.revision is the revision on an annotated tag which won't match the output of rev-list
+                # If it resolves to the same thing there isn't a problem.
+                output2 = runfetchcmd("%s rev-list -n 1 %s" % (ud.basecmd, ud.revision), d, workdir=destdir)
+                output2 = output2.strip()
+                if output != output2:
+                    raise bb.fetch2.FetchError("The revision the git tag '%s' resolved to didn't match the SRCREV in use (%s vs %s)" % (ud.parm['tag'], output, ud.revision), ud.url)
 
         repourl = self._get_repo_url(ud)
         runfetchcmd("%s remote set-url origin %s" % (ud.basecmd, shlex.quote(repourl)), d, workdir=destdir)
