@@ -1405,8 +1405,8 @@ the task and other tasks. Here is an example that shows how to define a
 task and declare some dependencies::
 
    python do_printdate () {
-       import time
-       print time.strftime('%Y%m%d', time.gmtime())
+       import datetime
+       bb.plain('Date: %s' % (datetime.date.today()))
    }
    addtask printdate after do_fetch before do_build
 
