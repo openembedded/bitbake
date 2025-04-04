@@ -1092,6 +1092,10 @@ def try_mirror_url(fetch, origud, ud, ld, check = False):
         # If that tarball is a local file:// we need to provide a symlink to it
         dldir = ld.getVar("DL_DIR")
 
+        if bb.utils.to_boolean(ld.getVar("BB_FETCH_PREMIRRORONLY")):
+            ld = ld.createCopy()
+            ld.setVar("BB_NO_NETWORK", "1")
+
         if origud.mirrortarballs and os.path.basename(ud.localpath) in origud.mirrortarballs and os.path.basename(ud.localpath) != os.path.basename(origud.localpath):
             # Create donestamp in old format to avoid triggering a re-download
             if ud.donestamp:
