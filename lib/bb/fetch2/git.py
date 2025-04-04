@@ -634,9 +634,8 @@ class Git(FetchMethod):
 
         runfetchcmd(fetch_cmd, d, workdir=dest)
         runfetchcmd("%s update-ref %s %s" % (ud.basecmd, ref, revision), d, workdir=dest)
-        # Fetch Git LFS data for fast shallow clones
-        if not ud.shallow_skip_fast:
-            self.lfs_fetch(ud, d, dest, ud.revision)
+        # Fetch Git LFS data
+        self.lfs_fetch(ud, d, dest, ud.revision)
 
         # Apply extra ref wildcards
         all_refs_remote = runfetchcmd("%s ls-remote origin 'refs/*'" % ud.basecmd, \
