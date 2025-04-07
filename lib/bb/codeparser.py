@@ -69,7 +69,7 @@ def add_module_functions(fn, functions, namespace):
         name = "%s.%s" % (namespace, f)
         parser = PythonParser(name, logger)
         try:
-            parser.parse_python(None, filename=fn, lineno=1, fixedhash=fixedhash+f)
+            parser.parse_python(None, filename=fn, lineno=1, fixedhash=fixedhash+f, func=functions[f])
             #bb.warn("Cached %s" % f)
         except KeyError:
             try:
@@ -87,7 +87,7 @@ def add_module_functions(fn, functions, namespace):
                 # Builtin
                 continue
             src = "".join(lines)
-            parser.parse_python(src, filename=fn, lineno=lineno, fixedhash=fixedhash+f)
+            parser.parse_python(src, filename=fn, lineno=lineno, fixedhash=fixedhash+f, func=functions[f])
             #bb.warn("Not cached %s" % f)
         execs = parser.execs.copy()
         # Expand internal module exec references
@@ -348,7 +348,7 @@ class PythonParser():
     # For the python module code it is expensive to have the function text so it is
     # uses a different fixedhash to cache against. We can take the hit on obtaining the
     # text if it isn't in the cache.
-    def parse_python(self, node, lineno=0, filename="<string>", fixedhash=None):
+    def parse_python(self, node, lineno=0, filename="<string>", fixedhash=None, func=None):
         if not fixedhash and (not node or not node.strip()):
             return
 
@@ -389,6 +389,10 @@ class PythonParser():
         for n in ast.walk(code):
             if n.__class__.__name__ == "Call":
                 self.visit_Call(n)
+
+        if func is not None:
+            self.references |= getattr(func, "bb_vardeps", set())
+            self.references -= getattr(func, "bb_vardepsexclude", set())
 
         self.execs.update(self.var_execs)
         self.extra = None
