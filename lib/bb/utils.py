@@ -1898,6 +1898,7 @@ def lock_timeout(lock):
 # A version of lock_timeout without the check that the lock was locked and a shorter timeout
 @contextmanager
 def lock_timeout_nocheck(lock):
+    l = False
     try:
         s = signal.pthread_sigmask(signal.SIG_BLOCK, signal.valid_signals())
         l = lock.acquire(timeout=10)
