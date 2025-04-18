@@ -2074,11 +2074,8 @@ access. Here is a list of available operations:
 Other Functions
 ---------------
 
-You can find many other functions that can be called from Python by
-looking at the source code of the ``bb`` module, which is in
-``bitbake/lib/bb``. For example, ``bitbake/lib/bb/utils.py`` includes
-the commonly used functions ``bb.utils.contains()`` and
-``bb.utils.mkdirhier()``, which come with docstrings.
+Other functions are documented in the
+:doc:`/bitbake-user-manual/bitbake-user-manual-library-functions` document.
 
 Extending Python Library Code
 -----------------------------
