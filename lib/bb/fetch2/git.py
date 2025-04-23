@@ -327,7 +327,7 @@ class Git(FetchMethod):
         if self.clonedir_need_update(ud, d):
             return True
 
-        if not self._lfs_objects_downloaded(ud, d, ud.name, ud.clonedir):
+        if not self._lfs_objects_downloaded(ud, d, ud.clonedir):
             return True
         return False
 
@@ -802,7 +802,7 @@ class Git(FetchMethod):
             raise bb.fetch2.FetchError("The command '%s' gave output with more then 1 line unexpectedly, output: '%s'" % (cmd, output))
         return output.split()[0] != "0"
 
-    def _lfs_objects_downloaded(self, ud, d, name, wd):
+    def _lfs_objects_downloaded(self, ud, d, wd):
         """
         Verifies whether the LFS objects for requested revisions have already been downloaded
         """
@@ -841,7 +841,7 @@ class Git(FetchMethod):
 
         if ud.nobranch:
             # If no branch is specified, use the current git commit
-            refname = self._build_revision(ud, d, ud.name)
+            refname = ud.revision
         elif wd == ud.clonedir:
             # The bare clonedir doesn't use the remote names; it has the branch immediately.
             refname = ud.branch
@@ -995,7 +995,7 @@ class Git(FetchMethod):
         Return a sortable revision number by counting commits in the history
         Based on gitpkgv.bblass in meta-openembedded
         """
-        rev = self._build_revision(ud, d, name)
+        rev = ud.revision
         localpath = ud.localpath
         rev_file = os.path.join(localpath, "oe-gitpkgv_" + rev)
         if not os.path.exists(localpath):
