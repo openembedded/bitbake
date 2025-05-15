@@ -2281,6 +2281,19 @@ class GitShallowTest(FetcherTest):
         self.assertRevCount(1)
         assert os.path.exists(os.path.join(self.gitdir, '.git', 'shallow'))
 
+    def test_shallow_succeeds_with_tag_containing_slash(self):
+        self.add_empty_file('a')
+        self.add_empty_file('b')
+        self.git('tag t1/t2/t3', cwd=self.srcdir)
+        self.assertRevCount(2, cwd=self.srcdir)
+
+        srcrev = self.git('rev-parse HEAD', cwd=self.srcdir).strip()
+        self.d.setVar('SRCREV', srcrev)
+        uri = self.d.getVar('SRC_URI').split()[0]
+        uri = '%s;tag=t1/t2/t3' % uri
+        self.fetch_shallow(uri)
+        self.assertRevCount(1)
+
 class GitLfsTest(FetcherTest):
     def skipIfNoGitLFS():
         if not shutil.which('git-lfs'):
