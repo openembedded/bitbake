@@ -1151,25 +1151,6 @@ def try_mirror_url(fetch, origud, ud, ld, check = False):
         if ud.lockfile and ud.lockfile != origud.lockfile:
             bb.utils.unlockfile(lf)
 
-
-def ensure_symlink(target, link_name):
-    if not os.path.exists(link_name):
-        dirname = os.path.dirname(link_name)
-        bb.utils.mkdirhier(dirname)
-        if os.path.islink(link_name):
-            # Broken symbolic link
-            os.unlink(link_name)
-
-        # In case this is executing without any file locks held (as is
-        # the case for file:// URLs), two tasks may end up here at the
-        # same time, in which case we do not want the second task to
-        # fail when the link has already been created by the first task.
-        try:
-            os.symlink(target, link_name)
-        except FileExistsError:
-            pass
-
-
 def try_mirrors(fetch, d, origud, mirrors, check = False):
     """
     Try to use a mirrored version of the sources.
@@ -1654,6 +1635,23 @@ class FetchMethod(object):
         Clean any existing full or partial download
         """
         bb.utils.remove(urldata.localpath)
+
+    def ensure_symlink(self, target, link_name):
+        if not os.path.exists(link_name):
+            dirname = os.path.dirname(link_name)
+            bb.utils.mkdirhier(dirname)
+            if os.path.islink(link_name):
+                # Broken symbolic link
+                os.unlink(link_name)
+
+            # In case this is executing without any file locks held (as is
+            # the case for file:// URLs), two tasks may end up here at the
+            # same time, in which case we do not want the second task to
+            # fail when the link has already been created by the first task.
+            try:
+                os.symlink(target, link_name)
+            except FileExistsError:
+                pass
 
     def try_premirror(self, urldata, d):
         """
