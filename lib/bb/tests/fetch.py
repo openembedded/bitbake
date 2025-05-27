@@ -2238,6 +2238,33 @@ class GitShallowTest(FetcherTest):
         self.assertIn("Unable to find revision v0.0 even from upstream", cm.output[0])
 
     @skipIfNoNetwork()
+    def test_git_shallow_fetch_premirrors(self):
+        url = "git://git.openembedded.org/bitbake;branch=master;protocol=https"
+
+        # Create a separate premirror directory within tempdir
+        premirror = os.path.join(self.tempdir, "premirror")
+        os.mkdir(premirror)
+
+        # Fetch a non-shallow clone into the premirror subdir
+        self.d.setVar('BB_GIT_SHALLOW', '0')
+        self.d.setVar("DL_DIR", premirror)
+        fetcher, ud = self.fetch(url)
+
+        # Fetch a shallow clone from the premirror subdir with unpacking
+        # using the original recipe URL and the premirror mapping
+        self.d.setVar('BB_GIT_SHALLOW', '1')
+        self.d.setVar("DL_DIR", self.dldir)
+        self.d.setVar('BB_FETCH_PREMIRRORONLY', '1')
+        self.d.setVar('BB_NO_NETWORK', '1')
+        self.d.setVar('BB_GENERATE_MIRROR_TARBALLS', '0')
+        self.d.setVar("PREMIRRORS", "git://.*/.* git://{0};protocol=file".format(premirror + "/git2/" + ud.host + ud.path.replace("/", ".")))
+        fetcher = self.fetch_and_unpack(url)
+
+        # Verify that the unpacked sources are shallow clones
+        self.assertRevCount(1)
+        assert os.path.exists(os.path.join(self.gitdir, '.git', 'shallow'))
+
+    @skipIfNoNetwork()
     def test_bitbake(self):
         self.git('remote add --mirror=fetch origin https://github.com/openembedded/bitbake', cwd=self.srcdir)
         self.git('config core.bare true', cwd=self.srcdir)
