@@ -36,6 +36,8 @@ class Az(Wget):
 
         az_sas = d.getVar('AZ_SAS')
         if az_sas and az_sas not in ud.url:
+            if not az_sas.startswith('?'):
+                raise FetchError("When using AZ_SAS, it must start with a '?' character to mark the start of the query-parameters.")
             ud.url += az_sas
 
         return Wget.checkstatus(self, fetch, ud, d, try_again)
@@ -62,6 +64,8 @@ class Az(Wget):
         az_sas = d.getVar('AZ_SAS')
 
         if az_sas:
+            if not az_sas.startswith('?'):
+                raise FetchError("When using AZ_SAS, it must start with a '?' character to mark the start of the query-parameters.")
             azuri = '%s%s%s%s' % ('https://', ud.host, ud.path, az_sas)
         else:
             azuri = '%s%s%s' % ('https://', ud.host, ud.path)
