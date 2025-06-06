@@ -340,9 +340,7 @@ class InheritDeferredNode(AstNode):
         self.inherit = (classes, filename, lineno)
 
     def eval(self, data):
-        inherits = data.getVar('__BBDEFINHERITS', False) or []
-        inherits.append(self.inherit)
-        data.setVar('__BBDEFINHERITS', inherits)
+        bb.parse.BBHandler.inherit_defer(*self.inherit, data)
 
 class AddFragmentsNode(AstNode):
     def __init__(self, filename, lineno, fragments_path_prefix, fragments_variable, flagged_variables_list_variable):
@@ -571,9 +569,7 @@ def multi_finalize(fn, d):
                 d.setVar("BBEXTENDVARIANT", variantmap[name])
             else:
                 d.setVar("PN", "%s-%s" % (pn, name))
-            inherits = d.getVar('__BBDEFINHERITS', False) or []
-            inherits.append((extendedmap[name], fn, 0))
-            d.setVar('__BBDEFINHERITS', inherits)
+            bb.parse.BBHandler.inherit_defer(extendedmap[name], fn, 0, d)
 
         safe_d.setVar("BBCLASSEXTEND", extended)
         _create_variants(datastores, extendedmap.keys(), extendfunc, onlyfinalise)
