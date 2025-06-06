@@ -431,6 +431,16 @@ class RecipeEvent(Event):
         self.fn = fn
         Event.__init__(self)
 
+class RecipePreDeferredInherits(RecipeEvent):
+    """
+    Called before deferred inherits are processed so code can snoop on class extensions for example
+    Limitations: It won't see inherits of inherited classes and the data is unexpanded
+    """
+    def __init__(self, fn, inherits):
+        self.fn = fn
+        self.inherits = inherits
+        Event.__init__(self)
+
 class RecipePreFinalise(RecipeEvent):
     """ Recipe Parsing Complete but not yet finalised"""
 

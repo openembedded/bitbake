@@ -471,6 +471,9 @@ def finalize(fn, d, variant = None):
         if d.getVar("_FAILPARSINGERRORHANDLED", False) == True:
             raise bb.BBHandledException()
 
+        inherits = [x[0] for x in (d.getVar('__BBDEFINHERITS', False) or [('',)])]
+        bb.event.fire(bb.event.RecipePreDeferredInherits(fn, inherits), d)
+
         while True:
             inherits = d.getVar('__BBDEFINHERITS', False) or []
             if not inherits:
