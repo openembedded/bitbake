@@ -42,12 +42,22 @@ def supports(fn, d):
     """Return True if fn has a supported extension"""
     return os.path.splitext(fn)[-1] in [".bb", ".bbclass", ".inc"]
 
+def inherit_defer(expression, fn, lineno, d):
+    inherit = (expression, fn, lineno)
+    inherits = d.getVar('__BBDEFINHERITS', False) or []
+    inherits.append(inherit)
+    d.setVar('__BBDEFINHERITS', inherits)
+
 def inherit(files, fn, lineno, d, deferred=False):
     __inherit_cache = d.getVar('__inherit_cache', False) or []
     #if "${" in files and not deferred:
     #    bb.warn("%s:%s has non deferred conditional inherit" % (fn, lineno))
     files = d.expand(files).split()
     for file in files:
+        defer = (d.getVar("BB_DEFER_BBCLASSES") or "").split()
+        if not deferred and file in defer:
+            inherit_defer(file, fn, lineno, d)
+            continue
         classtype = d.getVar("__bbclasstype", False)
         origfile = file
         for t in ["classes-" + classtype, "classes"]:
