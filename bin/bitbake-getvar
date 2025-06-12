@@ -10,6 +10,7 @@ import io
 import os
 import sys
 import warnings
+import logging
 warnings.simplefilter("default")
 
 bindir = os.path.dirname(__file__)
@@ -38,6 +39,10 @@ if __name__ == "__main__":
             sys.exit("--flag only makes sense with --value")
 
     quiet = args.quiet or args.value
+    if quiet:
+        logger = logging.getLogger("BitBake")
+        logger.setLevel(logging.WARNING)
+
     with bb.tinfoil.Tinfoil(tracking=True, setup_logging=not quiet) as tinfoil:
         if args.recipe:
             tinfoil.prepare(quiet=3 if quiet else 2)
