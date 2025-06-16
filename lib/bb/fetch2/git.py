@@ -660,7 +660,7 @@ class Git(FetchMethod):
         subdir = ud.parm.get("subdir")
         subpath = ud.parm.get("subpath")
         readpathspec = ""
-        def_destsuffix = "git/"
+        def_destsuffix = (d.getVar("BB_GIT_DEFAULT_DESTSUFFIX") or "git") + "/"
 
         if subpath:
             readpathspec = ":%s" % subpath
