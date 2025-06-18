@@ -998,9 +998,9 @@ This directive allows fine-tuning local configurations with configuration
 snippets contained in layers in a structured, controlled way. Typically it would
 go into ``bitbake.conf``, for example::
 
-   addfragments conf/fragments OE_FRAGMENTS OE_FRAGMENTS_METADATA_VARS
+   addfragments conf/fragments OE_FRAGMENTS OE_FRAGMENTS_METADATA_VARS OE_BUILTIN_FRAGMENTS
 
-``addfragments`` takes three parameters:
+``addfragments`` takes four parameters:
 
 -  path prefix for fragment files inside the layer file tree that bitbake
    uses to construct full paths to the fragment files
@@ -1010,6 +1010,8 @@ go into ``bitbake.conf``, for example::
 
 -  name of variable that contains a list of variable names containing
    fragment-specific metadata (such as descriptions)
+
+-  name of variable that contains definitions for built-in fragments
 
 This allows listing enabled configuration fragments in ``OE_FRAGMENTS``
 variable like this::
@@ -1034,6 +1036,19 @@ The variable containing a list of fragment metadata variables could look like th
 The implementation will add a flag containing the fragment name to each of those variables
 when parsing fragments, so that the variables are namespaced by fragment name, and do not override
 each other when several fragments are enabled.
+
+The variable containing a built-in fragment definitions could look like this::
+
+   OE_BUILTIN_FRAGMENTS = "someprefix:SOMEVARIABLE anotherprefix:ANOTHERVARIABLE"
+
+and then if 'someprefix/somevalue' is added to the variable that holds the list
+of enabled fragments:
+
+  OE_FRAGMENTS = "... someprefix/somevalue"
+
+bitbake will treat that as direct value assignment in its configuration::
+
+  SOMEVARIABLE = "somevalue"
 
 Functions
 =========

@@ -343,11 +343,12 @@ class InheritDeferredNode(AstNode):
         bb.parse.BBHandler.inherit_defer(*self.inherit, data)
 
 class AddFragmentsNode(AstNode):
-    def __init__(self, filename, lineno, fragments_path_prefix, fragments_variable, flagged_variables_list_variable):
+    def __init__(self, filename, lineno, fragments_path_prefix, fragments_variable, flagged_variables_list_variable, builtin_fragments_variable):
         AstNode.__init__(self, filename, lineno)
         self.fragments_path_prefix = fragments_path_prefix
         self.fragments_variable = fragments_variable
         self.flagged_variables_list_variable = flagged_variables_list_variable
+        self.builtin_fragments_variable = builtin_fragments_variable
 
     def eval(self, data):
         # No need to use mark_dependency since we would only match a fragment
@@ -360,13 +361,23 @@ class AddFragmentsNode(AstNode):
                    return candidate_fragment_path
            return None
 
+        def check_and_set_builtin_fragment(fragment, data, builtin_fragments):
+            prefix, value = fragment.split('/', 1)
+            if prefix in builtin_fragments.keys():
+                data.setVar(builtin_fragments[prefix], value)
+                return True
+            return False
+
         fragments = data.getVar(self.fragments_variable)
         layers = data.getVar('BBLAYERS')
         flagged_variables = data.getVar(self.flagged_variables_list_variable).split()
+        builtin_fragments = {f[0]:f[1] for f in [f.split(':') for f in data.getVar(self.builtin_fragments_variable).split()] }
 
         if not fragments:
             return
         for f in fragments.split():
+            if check_and_set_builtin_fragment(f, data, builtin_fragments):
+                continue
             layerid, fragment_name = f.split('/', 1)
             full_fragment_name = data.expand("{}/{}.conf".format(self.fragments_path_prefix, fragment_name))
             fragment_path = find_fragment(layers, layerid, full_fragment_name)
@@ -430,7 +441,8 @@ def handleAddFragments(statements, filename, lineno, m):
     fragments_path_prefix = m.group(1)
     fragments_variable = m.group(2)
     flagged_variables_list_variable = m.group(3)
-    statements.append(AddFragmentsNode(filename, lineno, fragments_path_prefix, fragments_variable, flagged_variables_list_variable))
+    builtin_fragments_variable = m.group(4)
+    statements.append(AddFragmentsNode(filename, lineno, fragments_path_prefix, fragments_variable, flagged_variables_list_variable, builtin_fragments_variable))
 
 def runAnonFuncs(d):
     code = []
