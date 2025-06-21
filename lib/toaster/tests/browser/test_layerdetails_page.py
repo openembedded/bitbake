@@ -108,6 +108,8 @@ class TestLayerDetailsPage(SeleniumTestCase):
             save_btn.click()
 
         self.wait_until_visible("#save-changes-for-switch")
+        # Ensure scrolled into view
+        self.driver.execute_script('window.scrollTo({behavior: "instant", top: 0, left: 0})')
         btn_save_chg_for_switch = self.wait_until_clickable(
             "#save-changes-for-switch")
         btn_save_chg_for_switch.click()
