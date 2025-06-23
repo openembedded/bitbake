@@ -39,10 +39,10 @@ variable and then calls the ``download`` method to download the files.
 
 The instantiation of the fetch class is usually followed by::
 
-   rootdir = l.getVar('WORKDIR')
+   rootdir = l.getVar('UNPACKDIR')
    fetcher.unpack(rootdir)
 
-This code unpacks the downloaded files to the specified by ``WORKDIR``.
+This code unpacks the downloaded files to the specified by ``UNPACKDIR``.
 
 .. note::
 
@@ -51,7 +51,7 @@ This code unpacks the downloaded files to the specified by ``WORKDIR``.
    examine the OpenEmbedded class file ``base.bbclass``
    .
 
-The :term:`SRC_URI` and ``WORKDIR`` variables are not hardcoded into the
+The :term:`SRC_URI` and ``UNPACKDIR`` variables are not hardcoded into the
 fetcher, since those fetcher methods can be (and are) called with
 different variable names. In OpenEmbedded for example, the shared state
 (sstate) code uses the fetch module to fetch the sstate files.
@@ -463,13 +463,6 @@ Here are some example URLs::
 
 .. note::
 
-   When using ``git`` as the fetcher of the main source code of your software,
-   ``S`` should be set accordingly::
-
-       S = "${WORKDIR}/git"
-
-.. note::
-
    Specifying passwords directly in ``git://`` urls is not supported.
    There are several reasons: :term:`SRC_URI` is often written out to logs and
    other places, and that could easily leak passwords; it is also all too
@@ -598,7 +591,7 @@ and port, username, and password, and fetches the Head Revision::
    SRC_URI = "p4://example-depot/main/source/..."
    SRCREV = "${AUTOREV}"
    PV = "p4-${SRCPV}"
-   S = "${WORKDIR}/p4"
+   S = "${UNPACKDIR}/p4"
 
 Here is an example that specifies the server URL and port, username, and
 password, and fetches a Revision based on a Label::
@@ -607,15 +600,15 @@ password, and fetches a Revision based on a Label::
    SRC_URI = "p4://user:passwd@example-depot/main/source/..."
    SRCREV = "release-1.0"
    PV = "p4-${SRCPV}"
-   S = "${WORKDIR}/p4"
+   S = "${UNPACKDIR}/p4"
 
 .. note::
 
-   You should always set S to "${WORKDIR}/p4" in your recipe.
+   You should always set S to "${UNPACKDIR}/p4" in your recipe.
 
 By default, the fetcher strips the depot location from the local file paths. In
 the above example, the content of ``example-depot/main/source/`` will be placed
-in ``${WORKDIR}/p4``.  For situations where preserving parts of the remote depot
+in ``${UNPACKDIR}/p4``.  For situations where preserving parts of the remote depot
 paths locally is desirable, the fetcher supports two parameters:
 
 - *"module":*
