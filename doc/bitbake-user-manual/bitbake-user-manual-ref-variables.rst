@@ -310,6 +310,11 @@ overview of their function and contents.
 
       For example usage, see :term:`BB_GIT_SHALLOW`.
 
+   :term:`BB_GIT_DEFAULT_DESTSUFFIX`
+      The default destination directory where the Git fetcher unpacks the
+      source code. If this variable is not set, the source code is unpacked in a
+      directory named "git".
+
    :term:`BB_GIT_SHALLOW`
       Setting this variable to "1" enables the support for fetching, using and
       generating mirror tarballs of `shallow git repositories <https://riptutorial.com/git/example/4584/shallow-clone>`_.
