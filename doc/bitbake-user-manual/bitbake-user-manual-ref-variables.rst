@@ -538,11 +538,28 @@ overview of their function and contents.
       version 4.20 expose under ``/proc/pressure``. The threshold represents
       the difference in "total" pressure from the previous second. The
       minimum value is 1.0 (extremely slow builds) and the maximum is
-      1000000 (a pressure value unlikely to ever be reached).
+      1000000 (a pressure value unlikely to ever be reached). See
+      https://docs.kernel.org/accounting/psi.html for more information.
 
-      This threshold can be set in ``conf/local.conf`` as::
+      A default value to limit the CPU pressure to be set in ``conf/local.conf``
+      could be::
 
-         BB_PRESSURE_MAX_CPU = "500"
+         BB_PRESSURE_MAX_CPU = "15000"
+
+      Multiple values should be tested on the build host to determine what suits
+      best, depending on the need for performances versus load average during
+      the build.
+
+      .. note::
+
+         You may see numerous messages printed by BitBake in the case the
+         :term:`BB_PRESSURE_MAX_CPU` is too low:
+
+            Pressure status changed to CPU: True, IO: False, Mem: False (CPU: 1105.9/2.0, IO: 0.0/2.0, Mem: 0.0/2.0) - using 1/64 bitbake threads
+
+         This means that the :term:`BB_PRESSURE_MAX_CPU` should be increased to
+         a reasonable value for limiting the CPU pressure on the system.
+         Monitor the varying value after ``IO:`` above to set a sensible value.
 
    :term:`BB_PRESSURE_MAX_IO`
       Specifies a maximum I/O pressure threshold, above which BitBake's
@@ -554,14 +571,34 @@ overview of their function and contents.
       version 4.20 expose under ``/proc/pressure``. The threshold represents
       the difference in "total" pressure from the previous second. The
       minimum value is 1.0 (extremely slow builds) and the maximum is
-      1000000 (a pressure value unlikely to ever be reached).
+      1000000 (a pressure value unlikely to ever be reached). See
+      https://docs.kernel.org/accounting/psi.html for more information.
 
       At this point in time, experiments show that IO pressure tends to
       be short-lived and regulating just the CPU with
       :term:`BB_PRESSURE_MAX_CPU` can help to reduce it.
 
-   :term:`BB_PRESSURE_MAX_MEMORY`
+      A default value to limit the IO pressure to be set in ``conf/local.conf``
+      could be::
 
+         BB_PRESSURE_MAX_IO = "15000"
+
+      Multiple values should be tested on the build host to determine what suits
+      best, depending on the need for performances versus I/O usage during the
+      build.
+
+      .. note::
+
+         You may see numerous messages printed by BitBake in the case the
+         :term:`BB_PRESSURE_MAX_IO` is too low::
+
+            Pressure status changed to CPU: None, IO: True, Mem: False (CPU: 2236.0/None, IO: 153.6/2.0, Mem: 0.0/2.0) - using 19/64 bitbake threads
+
+         This means that the :term:`BB_PRESSURE_MAX_IO` should be increased to
+         a reasonable value for limiting the I/O pressure on the system.
+         Monitor the varying value after ``IO:`` above to set a sensible value.
+
+   :term:`BB_PRESSURE_MAX_MEMORY`
       Specifies a maximum memory pressure threshold, above which BitBake's
       scheduler will not start new tasks (providing there is at least
       one active task). If no value is set, memory pressure is not
@@ -571,13 +608,34 @@ overview of their function and contents.
       version 4.20 expose under ``/proc/pressure``. The threshold represents
       the difference in "total" pressure from the previous second. The
       minimum value is 1.0 (extremely slow builds) and the maximum is
-      1000000 (a pressure value unlikely to ever be reached).
+      1000000 (a pressure value unlikely to ever be reached). See
+      https://docs.kernel.org/accounting/psi.html for more information.
 
       Memory pressure is experienced when time is spent swapping,
       refaulting pages from the page cache or performing direct reclaim.
       This is why memory pressure is rarely seen, but setting this variable
       might be useful as a last resort to prevent OOM errors if they are
       occurring during builds.
+
+      A default value to limit the memory pressure to be set in
+      ``conf/local.conf`` could be::
+
+         BB_PRESSURE_MAX_MEMORY = "15000"
+
+      Multiple values should be tested on the build host to determine what suits
+      best, depending on the need for performances versus memory consumption
+      during the build.
+
+      .. note::
+
+         You may see numerous messages printed by BitBake in the case the
+         :term:`BB_PRESSURE_MAX_MEMORY` is too low::
+
+            Pressure status changed to CPU: None, IO: False, Mem: True (CPU: 29.5/None, IO: 0.0/2.0, Mem: 2553.3/2.0) - using 17/64 bitbake threads
+
+         This means that the :term:`BB_PRESSURE_MAX_MEMORY` should be increased to
+         a reasonable value for limiting the memory pressure on the system.
+         Monitor the varying value after ``Mem:`` above to set a sensible value.
 
    :term:`BB_RUNFMT`
       Specifies the name of the executable script files (i.e. run files)
