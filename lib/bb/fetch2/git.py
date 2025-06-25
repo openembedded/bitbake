@@ -199,6 +199,8 @@ class Git(FetchMethod):
         ud.shallow_skip_fast = False
         ud.shallow = d.getVar("BB_GIT_SHALLOW") == "1"
         ud.shallow_extra_refs = (d.getVar("BB_GIT_SHALLOW_EXTRA_REFS") or "").split()
+        if 'tag' in ud.parm:
+            ud.shallow_extra_refs.append("refs/tags/" + ud.parm['tag'])
 
         depth_default = d.getVar("BB_GIT_SHALLOW_DEPTH")
         if depth_default is not None:
@@ -633,8 +635,6 @@ class Git(FetchMethod):
         for line in all_refs_remote:
             all_refs.append(line.split()[-1])
         extra_refs = []
-        if 'tag' in ud.parm:
-            extra_refs.append("refs/tags/" + ud.parm['tag'])
         for r in ud.shallow_extra_refs:
             if not ud.bareclone:
                 r = r.replace('refs/heads/', 'refs/remotes/origin/')
