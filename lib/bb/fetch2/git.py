@@ -634,7 +634,7 @@ class Git(FetchMethod):
             all_refs.append(line.split()[-1])
         extra_refs = []
         if 'tag' in ud.parm:
-            extra_refs.append(ud.parm['tag'])
+            extra_refs.append("refs/tags/" + ud.parm['tag'])
         for r in ud.shallow_extra_refs:
             if not ud.bareclone:
                 r = r.replace('refs/heads/', 'refs/remotes/origin/')
