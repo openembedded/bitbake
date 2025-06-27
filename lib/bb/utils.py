@@ -1211,6 +1211,23 @@ def which(path, item, direction = 0, history = False, executable=False):
         return "", hist
     return ""
 
+def to_filemode(input):
+    """
+    Take a bitbake variable contents defining a file mode and return
+    the proper python representation of the number
+
+    Arguments:
+
+    -  ``input``: a string or number to convert, e.g. a bitbake variable
+       string, assumed to be an octal representation
+
+    Returns the python file mode as a number
+    """
+    # umask might come in as a number or text string..
+    if type(input) is int:
+        return input
+    return int(input, 8)
+
 @contextmanager
 def umask(new_mask):
     """

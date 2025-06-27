@@ -692,3 +692,14 @@ class EnvironmentTests(unittest.TestCase):
         self.assertIn("A", os.environ)
         self.assertEqual(os.environ["A"], "this is A")
         self.assertNotIn("B", os.environ)
+
+class FilemodeTests(unittest.TestCase):
+    def test_filemode_convert(self):
+        self.assertEqual(0o775, bb.utils.to_filemode("0o775"))
+        self.assertEqual(0o775, bb.utils.to_filemode(0o775))
+        self.assertEqual(0o775, bb.utils.to_filemode("775"))
+        with self.assertRaises(ValueError):
+            bb.utils.to_filemode("xyz")
+        with self.assertRaises(ValueError):
+            bb.utils.to_filemode("999")
+
