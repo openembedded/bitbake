@@ -14,7 +14,7 @@ import time
 import atexit
 import re
 from collections import OrderedDict, defaultdict
-from functools import partial
+from functools import partial, wraps
 from contextlib import contextmanager
 
 import bb.cache
@@ -26,6 +26,135 @@ import bb.command
 import bb.remotedata
 from bb.main import setup_bitbake, BitBakeConfigParameters
 import bb.fetch2
+
+def wait_for(f):
+    """
+    Wrap a function that makes an asynchronous tinfoil call using
+    self.run_command() and wait for events to say that the call has been
+    successful, or an error has occurred.
+    """
+    @wraps(f)
+    def wrapper(self, *args, handle_events=True, extra_events=None, event_callback=None, **kwargs):
+        if handle_events:
+            # A reasonable set of default events matching up with those we handle below
+            eventmask = [
+                        'bb.event.BuildStarted',
+                        'bb.event.BuildCompleted',
+                        'logging.LogRecord',
+                        'bb.event.NoProvider',
+                        'bb.command.CommandCompleted',
+                        'bb.command.CommandFailed',
+                        'bb.build.TaskStarted',
+                        'bb.build.TaskFailed',
+                        'bb.build.TaskSucceeded',
+                        'bb.build.TaskFailedSilent',
+                        'bb.build.TaskProgress',
+                        'bb.runqueue.runQueueTaskStarted',
+                        'bb.runqueue.sceneQueueTaskStarted',
+                        'bb.event.ProcessStarted',
+                        'bb.event.ProcessProgress',
+                        'bb.event.ProcessFinished',
+                        ]
+            if extra_events:
+                eventmask.extend(extra_events)
+            ret = self.set_event_mask(eventmask)
+
+        includelogs = self.config_data.getVar('BBINCLUDELOGS')
+        loglines = self.config_data.getVar('BBINCLUDELOGS_LINES')
+
+        # Call actual function
+        ret = f(self, *args, **kwargs)
+
+        if handle_events:
+            lastevent = time.time()
+            result = False
+            # Borrowed from knotty, instead somewhat hackily we use the helper
+            # as the object to store "shutdown" on
+            helper = bb.ui.uihelper.BBUIHelper()
+            helper.shutdown = 0
+            parseprogress = None
+            termfilter = bb.ui.knotty.TerminalFilter(helper, helper, self.logger.handlers, quiet=self.quiet)
+            try:
+                while True:
+                    try:
+                        event = self.wait_event(0.25)
+                        if event:
+                            lastevent = time.time()
+                            if event_callback and event_callback(event):
+                                continue
+                            if helper.eventHandler(event):
+                                if isinstance(event, bb.build.TaskFailedSilent):
+                                    self.logger.warning("Logfile for failed setscene task is %s" % event.logfile)
+                                elif isinstance(event, bb.build.TaskFailed):
+                                    bb.ui.knotty.print_event_log(event, includelogs, loglines, termfilter)
+                                continue
+                            if isinstance(event, bb.event.ProcessStarted):
+                                if self.quiet > 1:
+                                    continue
+                                parseprogress = bb.ui.knotty.new_progress(event.processname, event.total)
+                                parseprogress.start(False)
+                                continue
+                            if isinstance(event, bb.event.ProcessProgress):
+                                if self.quiet > 1:
+                                    continue
+                                if parseprogress:
+                                    parseprogress.update(event.progress)
+                                else:
+                                    bb.warn("Got ProcessProgress event for something that never started?")
+                                continue
+                            if isinstance(event, bb.event.ProcessFinished):
+                                if self.quiet > 1:
+                                    continue
+                                if parseprogress:
+                                    parseprogress.finish()
+                                parseprogress = None
+                                continue
+                            if isinstance(event, bb.command.CommandCompleted):
+                                result = True
+                                break
+                            if isinstance(event, (bb.command.CommandFailed, bb.command.CommandExit)):
+                                self.logger.error(str(event))
+                                result = False
+                                break
+                            if isinstance(event, logging.LogRecord):
+                                if event.taskpid == 0 or event.levelno > logging.INFO:
+                                    self.logger.handle(event)
+                                continue
+                            if isinstance(event, bb.event.NoProvider):
+                                self.logger.error(str(event))
+                                result = False
+                                break
+                        elif helper.shutdown > 1:
+                            break
+                        termfilter.updateFooter()
+                        if time.time() > (lastevent + (3*60)):
+                            if not self.run_command('ping', handle_events=False):
+                                print("\nUnable to ping server and no events, closing down...\n")
+                                return False
+                    except KeyboardInterrupt:
+                        termfilter.clearFooter()
+                        if helper.shutdown == 1:
+                            print("\nSecond Keyboard Interrupt, stopping...\n")
+                            ret = self.run_command("stateForceShutdown")
+                            if ret and ret[2]:
+                                self.logger.error("Unable to cleanly stop: %s" % ret[2])
+                        elif helper.shutdown == 0:
+                            print("\nKeyboard Interrupt, closing down...\n")
+                            interrupted = True
+                            ret = self.run_command("stateShutdown")
+                            if ret and ret[2]:
+                                self.logger.error("Unable to cleanly shutdown: %s" % ret[2])
+                        helper.shutdown = helper.shutdown + 1
+                termfilter.clearFooter()
+            finally:
+                termfilter.finish()
+            if helper.failed_tasks:
+                result = False
+            return result
+        else:
+            return ret
+
+    return wrapper
 
 
 # We need this in order to shut down the connection to the bitbake server,
@@ -699,6 +828,10 @@ class Tinfoil:
         BuildCompleted events will not be fired.
         """
         return self.run_command('buildFile', buildfile, task, internal)
+
+    @wait_for
+    def build_file_sync(self, *args):
+        self.build_file(*args)
 
     def build_targets(self, targets, task=None, handle_events=True, extra_events=None, event_callback=None):
         """
