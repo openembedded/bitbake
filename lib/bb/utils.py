@@ -1211,6 +1211,16 @@ def which(path, item, direction = 0, history = False, executable=False):
         return "", hist
     return ""
 
+def to_filemode(input):
+    """
+    Take a bitbake variable contents defining a file mode and return
+    the proper python representation of the number
+    """
+    # umask might come in as a number or text string..
+    if type(input) is int:
+        return input
+    return int(input, 8)
+
 @contextmanager
 def umask(new_mask):
     """
