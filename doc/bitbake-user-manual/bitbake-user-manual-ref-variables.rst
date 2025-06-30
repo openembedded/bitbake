@@ -311,9 +311,9 @@ overview of their function and contents.
       For example usage, see :term:`BB_GIT_SHALLOW`.
 
    :term:`BB_GIT_DEFAULT_DESTSUFFIX`
-      The default destination directory where the Git fetcher unpacks the
-      source code. If this variable is not set, the source code is unpacked in a
-      directory named "git".
+      The default destination directory where the :ref:`Git fetcher
+      <git-fetcher>` unpacks the source code. If this variable is not set, the
+      source code is unpacked in a directory named "git".
 
    :term:`BB_GIT_SHALLOW`
       Setting this variable to "1" enables the support for fetching, using and
@@ -547,19 +547,19 @@ overview of their function and contents.
          BB_PRESSURE_MAX_CPU = "15000"
 
       Multiple values should be tested on the build host to determine what suits
-      best, depending on the need for performances versus load average during
+      best, depending on the need for performance versus load average during
       the build.
 
       .. note::
 
-         You may see numerous messages printed by BitBake in the case the
-         :term:`BB_PRESSURE_MAX_CPU` is too low:
+         You may see numerous messages printed by BitBake in case the
+         :term:`BB_PRESSURE_MAX_CPU` is too low::
 
             Pressure status changed to CPU: True, IO: False, Mem: False (CPU: 1105.9/2.0, IO: 0.0/2.0, Mem: 0.0/2.0) - using 1/64 bitbake threads
 
          This means that the :term:`BB_PRESSURE_MAX_CPU` should be increased to
          a reasonable value for limiting the CPU pressure on the system.
-         Monitor the varying value after ``IO:`` above to set a sensible value.
+         Monitor the varying value after ``CPU:`` above to set a sensible value.
 
    :term:`BB_PRESSURE_MAX_IO`
       Specifies a maximum I/O pressure threshold, above which BitBake's
@@ -584,12 +584,12 @@ overview of their function and contents.
          BB_PRESSURE_MAX_IO = "15000"
 
       Multiple values should be tested on the build host to determine what suits
-      best, depending on the need for performances versus I/O usage during the
+      best, depending on the need for performance versus I/O usage during the
       build.
 
       .. note::
 
-         You may see numerous messages printed by BitBake in the case the
+         You may see numerous messages printed by BitBake in case the
          :term:`BB_PRESSURE_MAX_IO` is too low::
 
             Pressure status changed to CPU: None, IO: True, Mem: False (CPU: 2236.0/None, IO: 153.6/2.0, Mem: 0.0/2.0) - using 19/64 bitbake threads
@@ -623,12 +623,12 @@ overview of their function and contents.
          BB_PRESSURE_MAX_MEMORY = "15000"
 
       Multiple values should be tested on the build host to determine what suits
-      best, depending on the need for performances versus memory consumption
+      best, depending on the need for performance versus memory consumption
       during the build.
 
       .. note::
 
-         You may see numerous messages printed by BitBake in the case the
+         You may see numerous messages printed by BitBake in case the
          :term:`BB_PRESSURE_MAX_MEMORY` is too low::
 
             Pressure status changed to CPU: None, IO: False, Mem: True (CPU: 29.5/None, IO: 0.0/2.0, Mem: 2553.3/2.0) - using 17/64 bitbake threads
