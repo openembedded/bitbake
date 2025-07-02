@@ -2009,6 +2009,7 @@ class Parser(multiprocessing.Process):
         self.queue_signals = False
         self.signal_received = []
         self.signal_threadlock = threading.Lock()
+        self.exit = False
 
     def catch_sig(self, signum, frame):
         if self.queue_signals:
@@ -2021,7 +2022,7 @@ class Parser(multiprocessing.Process):
             signal.signal(signal.SIGTERM, signal.SIG_DFL)
             os.kill(os.getpid(), signal.SIGTERM)
         elif signum == signal.SIGINT:
-            signal.default_int_handler(signum, frame)
+            self.exit = True
 
     def run(self):
 
@@ -2059,7 +2060,7 @@ class Parser(multiprocessing.Process):
         pending = []
         havejobs = True
         try:
-            while havejobs or pending:
+            while (havejobs or pending) and not self.exit:
                 if self.quit.is_set():
                     break
 
@@ -2196,11 +2197,12 @@ class CookerParser(object):
 
         # Cleanup the queue before call process.join(), otherwise there might be
         # deadlocks.
-        while True:
-            try:
-               self.result_queue.get(timeout=0.25)
-            except queue.Empty:
-                break
+        def read_results():
+            while True:
+                try:
+                   self.result_queue.get(timeout=0.25)
+                except queue.Empty:
+                    break
 
         def sync_caches():
             for c in self.bb_caches.values():
@@ -2212,15 +2214,19 @@ class CookerParser(object):
 
         self.parser_quit.set()
 
+        read_results()
+
         for process in self.processes:
-            process.join(0.5)
+            process.join(2)
 
         for process in self.processes:
             if process.exitcode is None:
                 os.kill(process.pid, signal.SIGINT)
 
+        read_results()
+
         for process in self.processes:
-            process.join(0.5)
+            process.join(2)
 
         for process in self.processes:
             if process.exitcode is None:
