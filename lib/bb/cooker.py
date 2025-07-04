@@ -2283,7 +2283,7 @@ class CookerParser(object):
                 yield result
 
         if not (self.parsed >= self.toparse):
-            raise bb.parse.ParseError("Not all recipes parsed, parser thread killed/died? Exiting.", None)
+            raise bb.parse.ParseError("Not all recipes parsed, parser thread killed/died? (%s %s of %s) Exiting." % (len(self.processes), self.parsed, self.toparse), None)
 
 
     def parse_next(self):
