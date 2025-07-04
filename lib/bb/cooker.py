@@ -2067,7 +2067,8 @@ class Parser(multiprocessing.Process):
 
                 jobid = None
                 try:
-                    jobid = self.jobid_queue.get(True, 2)
+                    # Have to wait for all parsers to have forked
+                    jobid = self.jobid_queue.get(True, 5)
                 except (ValueError, OSError, queue.Empty):
                     havejobs = False
 
@@ -2291,7 +2292,7 @@ class CookerParser(object):
                 yield result
 
         if not (self.parsed >= self.toparse):
-            raise bb.parse.ParseError("Not all recipes parsed, parser thread killed/died? Exiting.", None)
+            raise bb.parse.ParseError("Not all recipes parsed, parser thread killed/died? (%s %s of %s) Exiting." % (len(self.processes), self.parsed, self.toparse), None)
 
 
     def parse_next(self):
