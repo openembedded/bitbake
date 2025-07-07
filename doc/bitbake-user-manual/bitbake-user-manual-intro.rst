@@ -258,6 +258,8 @@ the append file would match the following recipe names::
   busybox_1.21.1.bb
   busybox_1.21.2.bb
   busybox_1.21.3.bb
+  busybox_1.21.10.bb
+  busybox_1.21.11.bb
 
 .. note::
 
