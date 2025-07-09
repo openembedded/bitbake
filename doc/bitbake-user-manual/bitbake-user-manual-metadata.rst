@@ -874,58 +874,67 @@ becomes a no-op.
 ``include`` Directive
 ---------------------
 
-BitBake understands the ``include`` directive. This directive causes
-BitBake to parse whatever file you specify, and to insert that file at
-that location. The directive is much like its equivalent in Make except
-that if the path specified on the include line is a relative path,
-BitBake locates the first file it can find within :term:`BBPATH`.
+The ``include`` directive causes BitBake to parse a given file,
+and to include that file's contents at the location of the
+``include`` statement. This directive is similar to its equivalent
+in Make, except that if the path specified on the BitBake ``include``
+line is a relative path, BitBake will search for it on the path designated
+by :term:`BBPATH` and will include *only the first matching file*.
 
-The include directive is a more generic method of including
+The ``include`` directive is a more generic method of including
 functionality as compared to the :ref:`inherit <bitbake-user-manual/bitbake-user-manual-metadata:\`\`inherit\`\` directive>`
 directive, which is restricted to class (i.e. ``.bbclass``) files. The
-include directive is applicable for any other kind of shared or
+``include`` directive is applicable for any other kind of shared or
 encapsulated functionality or configuration that does not suit a
 ``.bbclass`` file.
 
-As an example, suppose you needed a recipe to include some self-test
-definitions::
+For example, if you needed a recipe to include some self-test definitions,
+you might write::
 
    include test_defs.inc
 
+The ``include`` directive does not produce an error if the specified file
+cannot be found. If the included file *must* exist, then you should use
+use :ref:`require <require-inclusion>` instead, which will generate an error
+if the file cannot be found.
+
 .. note::
 
-   The include directive does not produce an error when the file cannot be
-   found.  Consequently, it is recommended that if the file you are including is
-   expected to exist, you should use :ref:`require <require-inclusion>` instead
-   of include . Doing so makes sure that an error is produced if the file cannot
-   be found.
+   Note well that the ``include`` directive will include the first matching
+   file and nothing further (which is almost always the behaviour you want).
+   If you need to include all matching files, you need to use the
+   ``include_all`` directive, explained below.
 
 ``include_all`` Directive
 -------------------------
 
 The ``include_all`` directive works like the :ref:`include
 <bitbake-user-manual/bitbake-user-manual-metadata:\`\`include\`\` directive>`
-directive but will include all of the files that match the specified path in
+directive but will include *all* of the files that match the specified path in
 the enabled layers (layers part of :term:`BBLAYERS`).
 
-For example, let's say a ``maintainers.inc`` file is present in different layers
-and is conventionally placed in the ``conf/distro/include`` directory of each
-layer. In that case the ``include_all`` directive can be used to include
-the ``maintainers.inc`` file for all of these layers::
+.. note::
+
+   This behaviour is rarely what you want in normal operation, and should
+   be reserved for only those situations when you explicitly want to parse
+   and include all matching files found across all layers, as the following
+   example shows.
+
+As a realistic example of this directive, imagine that all of your active
+layers contain a file ``conf/distro/include/maintainers.inc``, containing
+maintainer information for the recipes in that layer, and you wanted to
+collect all of the content from all of those files across all of those layers.
+You could use the statement::
 
    include_all conf/distro/include/maintainers.inc
 
-In other words, the ``maintainers.inc`` file for each layer is included through
-the :ref:`include <bitbake-user-manual/bitbake-user-manual-metadata:\`\`include\`\` directive>`
-directive.
+In this case, BitBake will iterate through all of the directories in
+the colon-separated :term:`BBPATH` (from left to right) and collect the
+contents of all matching files, so you end up with the maintainer
+information of all of your active layers, not just the first one.
 
-BitBake will iterate through the colon-separated :term:`BBPATH` list to look for
-matching files to include, from left to right. As a consequence, matching files
-are included in that order.
-
-As the ``include_all`` directive uses the :ref:`include
-<bitbake-user-manual/bitbake-user-manual-metadata:\`\`include\`\` directive>`
-directive in the background, no error is produced if no files are matched.
+As the ``include_all`` directive uses the ``include`` directive in the
+background, as with ``include``, no error is produced if no files are matched.
 
 .. _require-inclusion:
 
