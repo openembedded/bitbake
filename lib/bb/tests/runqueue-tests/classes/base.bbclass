@@ -98,7 +98,7 @@ do_package_qa[rdeptask] = "do_packagedata"
 do_populate_lic_deploy[recrdeptask] += "do_populate_lic do_deploy"
 
 DEBIANRDEP = "do_packagedata"
-oo_package_write_ipk[rdeptask] = "${DEBIANRDEP}"
+do_package_write_ipk[rdeptask] = "${DEBIANRDEP}"
 do_package_write_rpm[rdeptask] = "${DEBIANRDEP}"
 
 addtask fetch
