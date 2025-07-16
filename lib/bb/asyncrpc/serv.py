@@ -211,7 +211,10 @@ class UnixStreamServer(StreamServer):
         self.server.close()
 
     def cleanup(self):
-        os.unlink(self.path)
+        try:
+            os.unlink(self.path)
+        except FileNotFoundError:
+            pass
 
 
 class WebsocketsServer(object):
