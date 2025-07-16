@@ -2027,21 +2027,7 @@ class Parser(multiprocessing.Process):
             self.exit = True
 
     def run(self):
-
-        if not self.profile:
-            self.realrun()
-            return
-
-        try:
-            import cProfile as profile
-        except:
-            import profile
-        prof = profile.Profile()
-        try:
-            profile.Profile.runcall(prof, self.realrun)
-        finally:
-            logfile = "profile-parse-%s.log" % multiprocessing.current_process().name
-            prof.dump_stats(logfile)
+        bb.utils.profile_function(self.profile, self.realrun, "profile-parse-%s.log" % multiprocessing.current_process().name, process=False)
 
     def realrun(self):
         # Signal handling here is hard. We must not terminate any process or thread holding the write

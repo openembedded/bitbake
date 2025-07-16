@@ -1418,6 +1418,34 @@ def cpu_count():
 def nonblockingfd(fd):
     fcntl.fcntl(fd, fcntl.F_SETFL, fcntl.fcntl(fd, fcntl.F_GETFL) | os.O_NONBLOCK)
 
+def profile_function(profile, function, output_fn, process=True):
+    """Common function to profile a code block and optionally process the
+    output using or processing function.
+
+    Arguments:
+
+    -  ``profile``: a boolean saying whether to enable profiling or not
+    -  ``function``: the function call to profile/run
+    -  ``outputfn``: where to write the profiling data
+    -  ``process``: whether to process the profiling data and write a report
+
+    Returns the wrapped function return value
+    """
+    if profile:
+        try:
+            import cProfile as profile
+        except:
+             import profile
+        prof = profile.Profile()
+        ret = profile.Profile.runcall(prof, function)
+        prof.dump_stats(output_fn)
+        if process:
+            process_profilelog(output_fn)
+            serverlog("Raw profiling information saved to %s and processed statistics to %s.processed" % (output_fn, output_fn))
+        return ret
+    else:
+        return function()
+
 def process_profilelog(fn, pout = None):
     # Either call with a list of filenames and set pout or a filename and optionally pout.
     if not pout:
