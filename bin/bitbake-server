@@ -30,7 +30,7 @@ logfile = sys.argv[4]
 lockname = sys.argv[5]
 sockname = sys.argv[6]
 timeout = float(sys.argv[7])
-profile = bool(int(sys.argv[8]))
+profile = sys.argv[8]
 xmlrpcinterface = (sys.argv[9], int(sys.argv[10]))
 if xmlrpcinterface[0] == "None":
     xmlrpcinterface = (None, xmlrpcinterface[1])

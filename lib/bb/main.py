@@ -208,8 +208,10 @@ def create_bitbake_parser():
                              "failed and anything depending on it cannot be built, as much as "
                              "possible will be built before stopping.")
 
-    exec_group.add_argument("-P", "--profile", action="store_true",
-                        help="Profile the command and save reports.")
+    exec_group.add_argument("-P", "--profile", action="append",
+                        default=[],
+                        help="Profile the command and save reports. Specify 'main', 'idle' or 'parsing' "
+                             "to indicate which bitbake code to profile.")
 
     exec_group.add_argument("-S", "--dump-signatures", action="append",
                         default=[], metavar="SIGNATURE_HANDLER",

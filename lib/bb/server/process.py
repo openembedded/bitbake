@@ -137,7 +137,7 @@ class ProcessServer():
             serverlog("Error writing to lock file: %s" % str(e))
             pass
 
-        return bb.utils.profile_function(self.cooker.configuration.profile, self.main, "profile-mainloop.log")
+        return bb.utils.profile_function("main" in self.cooker.configuration.profile, self.main, "profile-mainloop.log")
 
     def _idle_check(self):
         return len(self._idlefuns) == 0 and self.cooker.command.currentAsyncCommand is None
@@ -398,7 +398,7 @@ class ProcessServer():
                 serverlog("".join(msg))
 
     def idle_thread(self):
-        bb.utils.profile_function(self.cooker.configuration.profile, self.idle_thread_internal, "profile-idleloop.log")
+        bb.utils.profile_function("idle" in self.cooker.configuration.profile, self.idle_thread_internal, "profile-idleloop.log")
 
     def idle_thread_internal(self):
         def remove_idle_func(function):
@@ -600,7 +600,7 @@ class BitBakeServer(object):
         os.set_inheritable(self.bitbake_lock.fileno(), True)
         os.set_inheritable(self.readypipein, True)
         serverscript = os.path.realpath(os.path.dirname(__file__) + "/../../../bin/bitbake-server")
-        os.execl(sys.executable, sys.executable, serverscript, "decafbad", str(self.bitbake_lock.fileno()), str(self.readypipein), self.logfile, self.bitbake_lock.name, self.sockname,  str(self.server_timeout or 0), str(int(self.profile)), str(self.xmlrpcinterface[0]), str(self.xmlrpcinterface[1]))
+        os.execl(sys.executable, sys.executable, serverscript, "decafbad", str(self.bitbake_lock.fileno()), str(self.readypipein), self.logfile, self.bitbake_lock.name, self.sockname,  str(self.server_timeout or 0), str(list(self.profile)), str(self.xmlrpcinterface[0]), str(self.xmlrpcinterface[1]))
 
 def execServer(lockfd, readypipeinfd, lockname, sockname, server_timeout, xmlrpcinterface, profile):
 
