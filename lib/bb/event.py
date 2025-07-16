@@ -236,9 +236,12 @@ def fire(event, d):
         # If messages have been queued up, clear the queue
         global _uiready, ui_queue
         if _uiready and ui_queue:
-            for queue_event in ui_queue:
+            with bb.utils.lock_timeout_nocheck(_thread_lock):
+                queue = ui_queue
+                ui_queue = []
+            for queue_event in queue:
                 fire_ui_handlers(queue_event, d)
-            ui_queue = []
+
         fire_ui_handlers(event, d)
 
 def fire_from_worker(event, d):
