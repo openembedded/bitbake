@@ -2241,9 +2241,9 @@ class CookerParser(object):
                     profiles.append(logfile)
 
             if profiles:
-                pout = "profile-parse.log.processed"
-                bb.utils.process_profilelog(profiles, pout = pout)
-                print("Processed parsing statistics saved to %s" % (pout))
+                fn_out = "profile-parse.log.report"
+                bb.utils.process_profilelog(profiles, fn_out=fn_out)
+                print("Processed parsing statistics saved to %s" % (fn_out))
 
     def final_cleanup(self):
         if self.syncthread:

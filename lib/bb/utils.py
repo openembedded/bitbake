@@ -1441,29 +1441,43 @@ def profile_function(profile, function, output_fn, process=True):
         prof.dump_stats(output_fn)
         if process:
             process_profilelog(output_fn)
-            serverlog("Raw profiling information saved to %s and processed statistics to %s.processed" % (output_fn, output_fn))
+            serverlog("Raw profiling information saved to %s and processed statistics to %s.report*" % (output_fn, output_fn))
         return ret
     else:
         return function()
 
-def process_profilelog(fn, pout = None):
+def process_profilelog(fn, fn_out = None):
     # Either call with a list of filenames and set pout or a filename and optionally pout.
-    if not pout:
-        pout = fn + '.processed'
+    import pstats
 
-    with open(pout, 'w') as pout:
-        import pstats
+    if not fn_out:
+        fn_out = fn + '.report'
+
+    def pstatopen():
         if isinstance(fn, list):
-            p = pstats.Stats(*fn, stream=pout)
-        else:
-            p = pstats.Stats(fn, stream=pout)
+            return pstats.Stats(*fn, stream=pout)
+        return pstats.Stats(fn, stream=pout)
+
+    with open(fn_out + '.time', 'w') as pout:
+        p = pstatopen()
         p.sort_stats('time')
         p.print_stats()
+
+    with open(fn_out + '.time-callers', 'w') as pout:
+        p = pstatopen()
+        p.sort_stats('time')
         p.print_callers()
+
+    with open(fn_out + '.cumulative', 'w') as pout:
+        p = pstatopen()
         p.sort_stats('cumulative')
         p.print_stats()
 
-        pout.flush()
+    with open(fn_out + '.cumulative-callers', 'w') as pout:
+        p = pstatopen()
+        p.sort_stats('cumulative')
+        p.print_callers()
+
 
 #
 # Was present to work around multiprocessing pool bugs in python < 2.7.3
