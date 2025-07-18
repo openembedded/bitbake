@@ -436,8 +436,8 @@ This fetcher supports the following parameters:
    "nobranch" is set to "1", this is a mandatory parameter. The number of
    branch parameters must match the number of name parameters.
 
--  *"rev":* The revision to use for the checkout. The default is
-   "master".
+-  *"rev":* The revision to use for the checkout. If :term:`SRCREV` is also set,
+   this parameter must match its value.
 
 -  *"tag":* Specifies a tag to use for the checkout. To correctly
    resolve tags, BitBake must access the network. For that reason, tags
