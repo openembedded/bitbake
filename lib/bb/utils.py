@@ -1479,22 +1479,6 @@ def process_profilelog(fn, fn_out = None):
         p.print_callers()
 
 
-#
-# Was present to work around multiprocessing pool bugs in python < 2.7.3
-#
-def multiprocessingpool(*args, **kwargs):
-
-    #multiprocessing.util.log_to_stderr(10)
-    # Deal with a multiprocessing bug where signals to the processes would be delayed until the work
-    # completes. Putting in a timeout means the signals (like SIGINT/SIGTERM) get processed.
-    def wrapper(func):
-        def wrap(self, timeout=None):
-            return func(self, timeout=timeout if timeout is not None else 1e100)
-        return wrap
-    multiprocessing.pool.IMapIterator.next = wrapper(multiprocessing.pool.IMapIterator.next)
-
-    return multiprocessing.Pool(*args, **kwargs)
-
 def exec_flat_python_func(func, *args, **kwargs):
     """Execute a flat python function (defined with ``def funcname(args): ...``)
 
