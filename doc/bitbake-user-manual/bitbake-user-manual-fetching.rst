@@ -439,10 +439,12 @@ This fetcher supports the following parameters:
 -  *"rev":* The revision to use for the checkout. If :term:`SRCREV` is also set,
    this parameter must match its value.
 
--  *"tag":* Specifies a tag to use for the checkout. To correctly
-   resolve tags, BitBake must access the network. For that reason, tags
-   are often not used. As far as Git is concerned, the "tag" parameter
-   behaves effectively the same as the "rev" parameter.
+-  *"tag":* Specifies a tag to use when fetching. To correctly resolve
+   tags, BitBake must access the network. If a ``rev`` parameter or
+   :term:`SRCREV` is also specified, network access is not necessary to resolve
+   the tag and instead, it is verified that they both resolve to the same commit
+   SHA at unpack time.  The ``tag`` parameter is optional, but strongly
+   recommended if the checked out revision is a tag.
 
 -  *"subpath":* Limits the checkout to a specific subpath of the tree.
    By default, the whole tree is checked out.
