@@ -708,7 +708,7 @@ class SignatureGeneratorUniHashMixIn(object):
             try:
                 with self.client() as client:
                     unihashes = client.get_unihash_batch((self._get_method(tid), self.taskhash[tid]) for tid in query_tids)
-            except (ConnectionError, FileNotFoundError) as e:
+            except (ConnectionError, FileNotFoundError, EOFError) as e:
                 bb.warn('Error contacting Hash Equivalence Server %s: %s' % (self.server, str(e)))
 
         for idx, tid in enumerate(query_tids):
@@ -817,7 +817,7 @@ class SignatureGeneratorUniHashMixIn(object):
                     d.setVar('BB_UNIHASH', new_unihash)
                 else:
                     hashequiv_logger.debug('Reported task %s as unihash %s to %s' % (taskhash, unihash, self.server))
-            except (ConnectionError, FileNotFoundError) as e:
+            except (ConnectionError, FileNotFoundError, EOFError) as e:
                 bb.warn('Error contacting Hash Equivalence Server %s: %s' % (self.server, str(e)))
         finally:
             if sigfile:
@@ -859,7 +859,7 @@ class SignatureGeneratorUniHashMixIn(object):
                 # TODO: What to do here?
                 hashequiv_logger.verbose('Task %s unihash reported as unwanted hash %s' % (tid, finalunihash))
 
-        except (ConnectionError, FileNotFoundError) as e:
+        except (ConnectionError, FileNotFoundError, EOFError) as e:
             bb.warn('Error contacting Hash Equivalence Server %s: %s' % (self.server, str(e)))
 
         return False
