@@ -141,6 +141,25 @@ overview of their function and contents.
       The default umask to apply to tasks if specified and no task specific
       umask flag is set.
 
+   :term:`BB_DEFER_BBCLASSES`
+      The classes listed in this variable have their :ref:`inherit
+      <ref-bitbake-user-manual-metadata-inherit>` calls automatically promoted
+      to deferred inherits. See :ref:`inherit_defer
+      <ref-bitbake-user-manual-metadata-inherit-defer>` for more information on
+      deferred inherits.
+
+      This means that if :term:`BB_DEFER_BBCLASSES` is set as follows::
+
+         BB_DEFER_BBCLASSES = "foo"
+
+      The following statement::
+
+         inherit foo
+
+      Will automatically be equal to calling::
+
+         inherit_defer foo
+
    :term:`BB_DISKMON_DIRS`
       Monitors disk space and available inodes during the build and allows
       you to control the build based on these parameters.

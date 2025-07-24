@@ -871,6 +871,9 @@ In all cases, if the expression evaluates to an
 empty string, the statement does not trigger a syntax error because it
 becomes a no-op.
 
+See also :term:`BB_DEFER_BBCLASSES` for automatically promoting classes
+``inherit`` calls to ``inherit_defer``.
+
 ``include`` Directive
 ---------------------
 
