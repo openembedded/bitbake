@@ -829,7 +829,7 @@ class Git(FetchMethod):
         """
         Check if the repository has 'lfs' (large file) content
         """
-        cmd = "%s grep lfs %s:.gitattributes | wc -l" % (
+        cmd = "%s grep '^[^#].*lfs' %s:.gitattributes | wc -l" % (
             ud.basecmd, ud.revision)
 
         try:
