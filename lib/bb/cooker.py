@@ -2195,6 +2195,11 @@ class CookerParser(object):
                    self.result_queue.get(timeout=0.25)
                 except queue.Empty:
                     break
+                except KeyError:
+                    # The restore state from SiggenRecipeInfo in cache.py can
+                    # fail here if this is an unclean shutdown since the state may have been
+                    # reset. Ignore key errors for that reason, we don't care.
+                    pass
 
         def sync_caches():
             for c in self.bb_caches.values():
