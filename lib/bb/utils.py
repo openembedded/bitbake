@@ -34,6 +34,7 @@ from contextlib import contextmanager
 from ctypes import cdll
 import bb
 import bb.msg
+import bb.filter
 
 logger = logging.getLogger("BitBake.Util")
 python_extensions = importlib.machinery.all_suffixes()
@@ -184,6 +185,7 @@ def vercmp_string_op(a, b, op):
     else:
         raise VersionStringException('Unsupported comparison operator "%s"' % op)
 
+@bb.filter.filter_proc(name="bb.utils.explode_deps")
 def explode_deps(s):
     """
     Takes an RDEPENDS style string of format::
