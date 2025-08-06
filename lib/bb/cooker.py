@@ -1434,8 +1434,7 @@ You can also remove the BB_HASHSERVE_UPSTREAM setting, but this may result in si
                 if quietlog:
                     bb.runqueue.logger.setLevel(rqloglevel)
                 return bb.server.process.idleFinish(msg)
-            if retval is True:
-                return True
+
             return retval
 
         self.idleCallBackRegister(buildFileIdle, rq)
@@ -1504,8 +1503,6 @@ You can also remove the BB_HASHSERVE_UPSTREAM setting, but this may result in si
                     bb.event.disable_heartbeat()
                 return bb.server.process.idleFinish(msg)
 
-            if retval is True:
-                return True
             return retval
 
         self.reset_mtime_caches()
