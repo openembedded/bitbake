@@ -10,6 +10,7 @@ Handles preparation and execution of a queue of tasks
 #
 
 import copy
+import enum
 import os
 import sys
 import stat
@@ -125,15 +126,16 @@ class RunQueueStats:
     def updateActiveSetscene(self, active):
         self.setscene_active = active
 
-# These values indicate the next step due to be run in the
-# runQueue state machine
-runQueuePrepare = 2
-runQueueSceneInit = 3
-runQueueDumpSigs = 4
-runQueueRunning = 6
-runQueueFailed = 7
-runQueueCleanUp = 8
-runQueueComplete = 9
+
+# Indicates the next step due to run in the runQueue state machine
+class RunQueueState(enum.Enum):
+    PREPARE = 0
+    SCENE_INIT = 1
+    DUMP_SIGS = 2
+    RUNNING = 3
+    FAILED = 4
+    CLEAN_UP = 5
+    COMPLETE = 6
 
 class RunQueueScheduler(object):
     """
@@ -1337,13 +1339,13 @@ class RunQueue:
         self.hashvalidate = cfgData.getVar("BB_HASHCHECK_FUNCTION") or None
         self.depvalidate = cfgData.getVar("BB_SETSCENE_DEPVALID") or None
 
-        self.state = runQueuePrepare
+        self.state = RunQueueState.PREPARE
 
         # For disk space monitor
         # Invoked at regular time intervals via the bitbake heartbeat event
         # while the build is running. We generate a unique name for the handler
         # here, just in case that there ever is more than one RunQueue instance,
-        # start the handler when reaching runQueueSceneInit, and stop it when
+        # start the handler when reaching RunQueueState.SCENE_INIT, and stop it when
         # done with the build.
         self.dm = monitordisk.diskMonitor(cfgData)
         self.dm_event_handler_name = '_bb_diskmonitor_' + str(id(self))
@@ -1557,7 +1559,7 @@ class RunQueue:
         retval = True
         bb.event.check_for_interrupts()
 
-        if self.state is runQueuePrepare:
+        if self.state == RunQueueState.PREPARE:
             # NOTE: if you add, remove or significantly refactor the stages of this
             # process then you should recalculate the weightings here. This is quite
             # easy to do - just change the next line temporarily to pass debug=True as
@@ -1568,12 +1570,12 @@ class RunQueue:
                                                             "Initialising tasks",
                                                             [43, 967, 4, 3, 1, 5, 3, 7, 13, 1, 2, 1, 1, 246, 35, 1, 38, 1, 35, 2, 338, 204, 142, 3, 3, 37, 244])
             if self.rqdata.prepare() == 0:
-                self.state = runQueueComplete
+                self.state = RunQueueState.COMPLETE
             else:
-                self.state = runQueueSceneInit
+                self.state = RunQueueState.SCENE_INIT
                 bb.parse.siggen.save_unitaskhashes()
 
-        if self.state is runQueueSceneInit:
+        if self.state == RunQueueState.SCENE_INIT:
             self.rqdata.init_progress_reporter.next_stage()
 
             # we are ready to run,  emit dependency info to any UI or class which
@@ -1584,7 +1586,7 @@ class RunQueue:
 
             if not self.dm_event_handler_registered:
                  res = bb.event.register(self.dm_event_handler_name,
-                                         lambda x, y: self.dm.check(self) if self.state in [runQueueRunning, runQueueCleanUp] else False,
+                                         lambda x, y: self.dm.check(self) if self.state in [RunQueueState.RUNNING, RunQueueState.CLEAN_UP] else False,
                                          ('bb.event.HeartbeatEvent',), data=self.cfgData)
                  self.dm_event_handler_registered = True
 
@@ -1596,17 +1598,17 @@ class RunQueue:
                 self.rqdata.init_progress_reporter.finish()
                 if 'printdiff' in dumpsigs:
                     self.invalidtasks_dump = self.print_diffscenetasks()
-                self.state = runQueueDumpSigs
+                self.state = RunQueueState.DUMP_SIGS
 
-        if self.state is runQueueDumpSigs:
+        if self.state == RunQueueState.DUMP_SIGS:
             dumpsigs = self.cooker.configuration.dump_signatures
             retval = self.dump_signatures(dumpsigs)
             if retval is False:
                 if 'printdiff' in dumpsigs:
                     self.write_diffscenetasks(self.invalidtasks_dump)
-                self.state = runQueueComplete
+                self.state = RunQueueState.COMPLETE
 
-        if self.state is runQueueSceneInit:
+        if self.state == RunQueueState.SCENE_INIT:
             self.start_worker(self.rqexe)
             self.rqdata.init_progress_reporter.finish()
 
@@ -1619,15 +1621,15 @@ class RunQueue:
                     self.rqexe.tasks_notcovered.add(tid)
                 self.rqexe.sqdone = True
             logger.info('Executing Tasks')
-            self.state = runQueueRunning
+            self.state = RunQueueState.RUNNING
 
-        if self.state is runQueueRunning:
+        if self.state == RunQueueState.RUNNING:
             retval = self.rqexe.execute()
 
-        if self.state is runQueueCleanUp:
+        if self.state == RunQueueState.CLEAN_UP:
             retval = self.rqexe.finish()
 
-        build_done = self.state is runQueueComplete or self.state is runQueueFailed
+        build_done = self.state in [RunQueueState.COMPLETE, RunQueueState.FAILED]
 
         if build_done and self.dm_event_handler_registered:
             bb.event.remove(self.dm_event_handler_name, None, data=self.cfgData)
@@ -1643,10 +1645,10 @@ class RunQueue:
                     # Let's avoid the word "failed" if nothing actually did
                     logger.info("Tasks Summary: Attempted %d tasks of which %d didn't need to be rerun and all succeeded.", self.rqexe.stats.completed, self.rqexe.stats.skipped)
 
-        if self.state is runQueueFailed:
+        if self.state == RunQueueState.FAILED:
             raise bb.runqueue.TaskFailure(self.rqexe.failed_tids)
 
-        if self.state is runQueueComplete:
+        if self.state == RunQueueState.COMPLETE:
             # All done
             return False
 
@@ -1666,7 +1668,7 @@ class RunQueue:
                 self.teardown_workers()
             except:
                 pass
-            self.state = runQueueComplete
+            self.state = RunQueueState.COMPLETE
             raise
         except Exception as err:
             logger.exception("An uncaught exception occurred in runqueue")
@@ -1674,12 +1676,12 @@ class RunQueue:
                 self.teardown_workers()
             except:
                 pass
-            self.state = runQueueComplete
+            self.state = RunQueueState.COMPLETE
             raise
 
     def finish_runqueue(self, now = False):
         if not self.rqexe:
-            self.state = runQueueComplete
+            self.state = RunQueueState.COMPLETE
             return
 
         if now:
@@ -2002,14 +2004,14 @@ class RunQueueExecute:
                 pass
 
         if self.failed_tids:
-            self.rq.state = runQueueFailed
+            self.rq.state = RunQueueState.FAILED
             return
 
-        self.rq.state = runQueueComplete
+        self.rq.state = RunQueueState.COMPLETE
         return
 
     def finish(self):
-        self.rq.state = runQueueCleanUp
+        self.rq.state = RunQueueState.CLEAN_UP
 
         active = self.stats.active + len(self.sq_live)
         if active > 0:
@@ -2018,10 +2020,10 @@ class RunQueueExecute:
             return self.rq.active_fds()
 
         if self.failed_tids:
-            self.rq.state = runQueueFailed
+            self.rq.state = RunQueueState.FAILED
             return True
 
-        self.rq.state = runQueueComplete
+        self.rq.state = RunQueueState.COMPLETE
         return True
 
     # Used by setscene only
@@ -2140,7 +2142,7 @@ class RunQueueExecute:
         bb.event.fire(runQueueTaskFailed(task, self.stats, exitcode, self.rq, fakeroot_log=("".join(fakeroot_log) or None)), self.cfgData)
 
         if self.rqdata.taskData[''].halt:
-            self.rq.state = runQueueCleanUp
+            self.rq.state = RunQueueState.CLEAN_UP
 
     def task_skip(self, task, reason):
         self.runq_running.add(task)
@@ -2334,17 +2336,17 @@ class RunQueueExecute:
 
             err = self.summarise_scenequeue_errors()
             if err:
-                self.rq.state = runQueueFailed
+                self.rq.state = RunQueueState.FAILED
                 return True
 
             if self.cooker.configuration.setsceneonly:
-                self.rq.state = runQueueComplete
+                self.rq.state = RunQueueState.COMPLETE
                 return True
             self.sqdone = True
 
             if self.stats.total == 0:
                 # nothing to do
-                self.rq.state = runQueueComplete
+                self.rq.state = RunQueueState.COMPLETE
                 return True
 
         if self.cooker.configuration.setsceneonly:
@@ -2411,7 +2413,7 @@ class RunQueueExecute:
                         self.rq.start_fakeworker(self, mc)
                     except OSError as exc:
                         logger.critical("Failed to spawn fakeroot worker to run %s: %s" % (task, str(exc)))
-                        self.rq.state = runQueueFailed
+                        self.rq.state = RunQueueState.FAILED
                         self.stats.taskFailed()
                         return True
                 RunQueue.send_pickled_data(self.rq.fakeworker[mc].process, runtask, "runtask")
@@ -2439,7 +2441,7 @@ class RunQueueExecute:
             return True
 
         if self.failed_tids:
-            self.rq.state = runQueueFailed
+            self.rq.state = RunQueueState.FAILED
             return True
 
         # Sanity Checks
@@ -2456,9 +2458,9 @@ class RunQueueExecute:
                 err = True
 
         if err:
-            self.rq.state = runQueueFailed
+            self.rq.state = RunQueueState.FAILED
         else:
-            self.rq.state = runQueueComplete
+            self.rq.state = RunQueueState.COMPLETE
 
         return True
 
@@ -2688,7 +2690,7 @@ class RunQueueExecute:
                 if dep in self.runq_complete and dep not in self.runq_tasksrun:
                     bb.error("Task %s marked as completed but now needing to rerun? Halting build." % dep)
                     self.failed_tids.append(tid)
-                    self.rq.state = runQueueCleanUp
+                    self.rq.state = RunQueueState.CLEAN_UP
                     return
 
                 if dep not in self.runq_complete:
@@ -2823,7 +2825,7 @@ class RunQueueExecute:
             pn = self.rqdata.dataCaches[mc].pkg_fn[taskfn]
             if not check_setscene_enforce_ignore_tasks(pn, taskname, self.rqdata.setscene_ignore_tasks):
                 logger.error('Task %s.%s failed' % (pn, taskname + "_setscene"))
-                self.rq.state = runQueueCleanUp
+                self.rq.state = RunQueueState.CLEAN_UP
 
     def sq_task_complete(self, task):
         bb.event.fire(sceneQueueTaskCompleted(task, self.stats, self.rq), self.cfgData)
