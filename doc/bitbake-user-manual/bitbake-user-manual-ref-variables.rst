@@ -770,11 +770,11 @@ overview of their function and contents.
       .. note::
 
          In order for your I/O priority settings to take effect, you need the
-         Completely Fair Queuing (CFQ) Scheduler selected for the backing block
+         Budget Fair Queuing (BFQ) Scheduler selected for the backing block
          device. To select the scheduler, use the following command form where
          device is the device (e.g. sda, sdb, and so forth)::
 
-            $ sudo sh -c "echo cfq > /sys/block/device/queu/scheduler"
+            $ sudo sh -c "echo bfq > /sys/block/device/queue/scheduler"
 
    :term:`BB_TASK_NICE_LEVEL`
       Allows specific tasks to change their priority (i.e. nice level).
