@@ -51,6 +51,21 @@ with open(os.path.join(builddir, 'init-build-env'), 'w') as f:
 """
         self.add_file_to_testrepo('scripts/oe-setup-build', oesetupbuild, script=True)
 
+        installbuildtools = """#!/usr/bin/env python3
+import getopt
+import sys
+import os
+
+opts, args = getopt.getopt(sys.argv[1:], "d:", ["downloads-directory="])
+for option, value in opts:
+    if option == '-d':
+        installdir = value
+
+print("Buildtools installed into {}".format(installdir))
+os.makedirs(installdir)
+"""
+        self.add_file_to_testrepo('scripts/install-buildtools', installbuildtools, script=True)
+
         bitbakeconfigbuild = """#!/usr/bin/env python3
 import os
 import sys
@@ -216,6 +231,11 @@ print("BBPATH is {{}}".format(os.environ["BBPATH"]))
             self.assertIn("Configuration in {} has not changed".format(buildpath), out[0])
             out = self.runbbsetup("update")
             self.assertIn("Configuration in {} has not changed".format(buildpath), out[0])
+
+        # install buildtools
+        out = self.runbbsetup("install-buildtools")
+        self.assertIn("Buildtools installed into", out[0])
+        self.assertTrue(os.path.exists(os.path.join(buildpath, 'buildtools')))
 
         # change a file in the test layer repo, make a new commit and
         # test that status/update correctly report the change and update the config
