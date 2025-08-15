@@ -2647,6 +2647,50 @@ class GitURLWithSpacesTest(FetcherTest):
             self.assertEqual(ud.fullmirror, os.path.join(self.dldir, "git2_" + ref['gitsrcname'] + '.tar.gz'))
             self.assertEqual(ud.method._get_repo_url(ud), ref['repo_url'])
 
+
+class FetchLocallyMissingTagFromRemote(FetcherTest):
+    def setUp(self):
+        FetcherTest.setUp(self)
+        self.gitdir = os.path.join(self.tempdir, 'git')
+        self.srcdir = os.path.join(self.tempdir, 'gitsource')
+
+        bb.utils.mkdirhier(self.srcdir)
+        self.git_init(cwd=self.srcdir)
+        self.d.setVar('WORKDIR', self.tempdir)
+        self.d.setVar('S', self.gitdir)
+
+        uri = 'git://%s;protocol=file;subdir=${S};branch=master' % self.srcdir
+        self.d.setVar('SRC_URI', uri)
+
+        open(os.path.join(self.srcdir, 'dummyfile'), 'w').close()
+        self.git(['add', 'dummyfile'], self.srcdir)
+        self.git(['commit', '-m', 'dummymsg', 'dummyfile'], self.srcdir)
+
+    def _fetch_and_unpack(self, uri_to_fetch):
+        fetcher = bb.fetch2.Fetch([uri_to_fetch], self.d)
+        fetcher.download()
+        fetcher.unpack(self.d.getVar('WORKDIR'))
+
+    def test_tag_present_in_remote_but_not_local(self):
+        # fetch a repo that has no tag in it
+        # then add a tag to this repo, and fetch it again, without
+        # changing SRC_REV, but by adding ';tag=tag1` to SRC_URI
+        # the new tag should be fetched and unpacked
+        srcrev = self.git('rev-parse HEAD', cwd=self.srcdir).strip()
+        self.d.setVar('SRCREV', srcrev)
+        src_uri = self.d.getVar('SRC_URI')
+        self._fetch_and_unpack(src_uri)
+
+        self.git('tag -m -a tag1', cwd=self.srcdir)
+
+        src_uri = '%s;tag=tag1' % self.d.getVar('SRC_URI').split()[0]
+        self.d.setVar('SRC_URI', src_uri)
+        self._fetch_and_unpack(src_uri)
+
+        output = self.git('log --pretty=oneline -n 1 refs/tags/tag1', cwd=self.gitdir)
+        assert "fatal: ambiguous argument" not in output
+
+
 class CrateTest(FetcherTest):
     @skipIfNoNetwork()
     def test_crate_url(self):

@@ -323,6 +323,8 @@ class Git(FetchMethod):
             return True
         if not self._contains_ref(ud, d, ud.name, ud.clonedir):
             return True
+        if 'tag' in ud.parm and not self._contains_ref(ud, d, ud.name, ud.clonedir, tag=True):
+            return True
         return False
 
     def lfs_need_update(self, ud, d):
@@ -775,14 +777,16 @@ class Git(FetchMethod):
     def supports_srcrev(self):
         return True
 
-    def _contains_ref(self, ud, d, name, wd):
+    def _contains_ref(self, ud, d, name, wd, tag=False):
         cmd = ""
+        git_ref_name = 'refs/tags/%s' % ud.parm['tag'] if tag else ud.revision
+
         if ud.nobranch:
             cmd = "%s log --pretty=oneline -n 1 %s -- 2> /dev/null | wc -l" % (
-                ud.basecmd, ud.revision)
+                ud.basecmd, git_ref_name)
         else:
             cmd =  "%s branch --contains %s --list %s 2> /dev/null | wc -l" % (
-                ud.basecmd, ud.revision, ud.branch)
+                ud.basecmd, git_ref_name, ud.branch)
         try:
             output = runfetchcmd(cmd, d, quiet=True, workdir=wd)
         except bb.fetch2.FetchError:
