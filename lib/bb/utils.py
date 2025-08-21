@@ -12,7 +12,7 @@ import sys
 import errno
 import logging
 import locale
-import multiprocessing
+from bb import multiprocessing
 import importlib
 import importlib.machinery
 import importlib.util
@@ -1198,8 +1198,6 @@ def process_profilelog(fn, pout = None):
 #
 def multiprocessingpool(*args, **kwargs):
 
-    import multiprocessing.pool
-    #import multiprocessing.util
     #multiprocessing.util.log_to_stderr(10)
     # Deal with a multiprocessing bug where signals to the processes would be delayed until the work
     # completes. Putting in a timeout means the signals (like SIGINT/SIGTERM) get processed.
