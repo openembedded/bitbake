@@ -163,7 +163,7 @@ class Git(FetchMethod):
             bb.warn("URL: %s uses git protocol which is no longer supported by github. Please change to ;protocol=https in the url." % ud.url)
 
         if not ud.proto in ('git', 'file', 'ssh', 'http', 'https', 'rsync'):
-            raise bb.fetch2.ParameterError("Invalid protocol type", ud.url)
+            raise bb.fetch2.ParameterError(f"Invalid protocol type: '{ud.proto}'", ud.url)
 
         ud.nocheckout = ud.parm.get("nocheckout","0") == "1"
 
