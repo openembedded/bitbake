@@ -1688,6 +1688,12 @@ overview of their function and contents.
       ``AUTOINC`` placeholder is added and if needed. And, this placeholder
       is placed at the start of the returned string.
 
+      The :term:`SRCREV_FORMAT` can also take the form "_component2".
+      This assumes that there is a component in the :term:`SRC_URI` that does not
+      have a name assigned. While this is not considered good practice, it can be
+      usefull if a ``.bbappend`` file needs to extend the :term:`SRC_URI` with
+      an additional repository.
+
    :term:`STAMP`
       Specifies the base path used to create recipe stamp files. The path
       to an actual stamp file is constructed by evaluating this string and
