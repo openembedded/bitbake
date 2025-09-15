@@ -1329,8 +1329,13 @@ overview of their function and contents.
    :term:`PERSISTENT_DIR`
       Specifies the directory BitBake uses to store data that should be
       preserved between builds. In particular, the data stored is the data
-      that uses BitBake's persistent data API and the data used by the PR
-      Server and PR Service.
+      that uses BitBake's persistent data API, the data used by the PR
+      Server and PR Service, and the default location of the Hash Equivalence
+      database (when :term:`BB_HASHSERVE` is set to ``auto``).
+
+      This directory should not be shared between different builds. If you need
+      to share the Hash Equivalence database, you should setup a Hash
+      Equivalence server instead.
 
    :term:`PF`
       Specifies the recipe or package name and includes all version and
