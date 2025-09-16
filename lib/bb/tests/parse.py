@@ -448,3 +448,63 @@ A+ = "b"
             with self.assertRaises(bb.parse.ParseError) as error:
                 bb.parse.handle(f.name, self.d)
         self.assertIn("Empty variable name in assignment", str(error.exception))
+
+    someconf1 = """
+EXTRA_OECONF:append = " foo"
+"""
+
+    someconf2 = """
+EXTRA_OECONF:append = " bar"
+"""
+
+    someconf3 = """
+EXTRA_OECONF:append = " foobar"
+"""
+
+    def test_include_and_require(self):
+        def test_helper(content, result):
+            with self.parsehelper(content) as f:
+                if isinstance(result, type) and issubclass(result, Exception):
+                    with self.assertRaises(result):
+                        d = bb.parse.handle(f.name, bb.data.createCopy(self.d))['']
+                else:
+                    d = bb.parse.handle(f.name, bb.data.createCopy(self.d))['']
+                    self.assertEqual(d.getVar("EXTRA_OECONF"), result)
+
+        with tempfile.TemporaryDirectory() as tempdir:
+            os.makedirs(tempdir + "/conf1")
+            os.makedirs(tempdir + "/conf2")
+
+            with open(tempdir + "/conf1/some.conf", "w") as f:
+                f.write(self.someconf1)
+            with open(tempdir + "/conf2/some.conf", "w") as f:
+                f.write(self.someconf2)
+            with open(tempdir + "/conf2/some3.conf", "w") as f:
+                f.write(self.someconf3)
+
+            self.d.setVar("BBPATH", tempdir + "/conf1" + ":" + tempdir + "/conf2")
+
+            test_helper("include some.conf", " foo")
+            test_helper("include someother.conf", None)
+            test_helper("include some3.conf", " foobar")
+            test_helper("include ${@''}", None)
+            test_helper("include " + tempdir + "/conf2/some.conf", " bar")
+
+            test_helper("require some.conf", " foo")
+            test_helper("require someother.conf", bb.parse.ParseError)
+            test_helper("require some3.conf", " foobar")
+            test_helper("require ${@''}", None)
+            test_helper("require " + tempdir + "/conf2/some.conf", " bar")
+
+            test_helper("include_all some.conf", " foo bar")
+            test_helper("include_all someother.conf", None)
+            test_helper("include_all some3.conf", " foobar")
+
+            self.d.setVar("BBPATH", tempdir + "/conf2" + ":" + tempdir + "/conf1")
+
+            test_helper("include some.conf", " bar")
+            test_helper("include some3.conf", " foobar")
+            test_helper("require some.conf", " bar")
+            test_helper("require some3.conf", " foobar")
+            test_helper("include_all some.conf", " bar foo")
+            test_helper("include_all some3.conf", " foobar")
