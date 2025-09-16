@@ -349,14 +349,11 @@ EXPORT_FUNCTIONS do_compile do_compilepython
             os.makedirs(tempdir + "/classes")
             with open(tempdir + "/classes/someclass.bbclass", "w") as f:
                 f.write(self.export_function_class)
-                f.flush()
             with open(tempdir + "/classes/secondclass.bbclass", "w") as f:
                 f.write(self.export_function_class2)
-                f.flush()
 
             with open(recipename, "w") as f:
                 f.write(self.export_function_recipe)
-                f.flush()
             os.chdir(tempdir)
             d = bb.parse.handle(recipename, bb.data.createCopy(self.d))['']
             self.assertIn("someclass_do_compile", d.getVar("do_compile"))
@@ -366,7 +363,6 @@ EXPORT_FUNCTIONS do_compile do_compilepython
             recipename2 = tempdir + "/recipe2.bb"
             with open(recipename2, "w") as f:
                 f.write(self.export_function_recipe2)
-                f.flush()
 
             d = bb.parse.handle(recipename2, bb.data.createCopy(self.d))['']
             self.assertNotIn("someclass_do_compile", d.getVar("do_compile"))
@@ -377,10 +373,8 @@ EXPORT_FUNCTIONS do_compile do_compilepython
 
             with open(recipename, "a+") as f:
                 f.write("\ninherit secondclass\n")
-                f.flush()
             with open(recipename2, "a+") as f:
                 f.write("\ninherit secondclass\n")
-                f.flush()
 
             d = bb.parse.handle(recipename, bb.data.createCopy(self.d))['']
             self.assertIn("secondclass_do_compile", d.getVar("do_compile"))
@@ -418,7 +412,6 @@ include \\
                 recipename = tempdir + "/recipe_unclosed.bb"
                 with open(recipename, "w") as f:
                     f.write(content)
-                    f.flush()
                 os.chdir(tempdir)
                 with self.assertRaises(bb.parse.ParseError) as error:
                     bb.parse.handle(recipename, bb.data.createCopy(self.d))
@@ -434,7 +427,6 @@ include \\
                 lines = self.export_function_unclosed_tab.split("\n")
                 lines[3] = "}"
                 in_file.write("\n".join(lines))
-                in_file.flush()
             bb.parse.handle(recipename_closed, bb.data.createCopy(self.d))
 
     special_character_assignment = """
