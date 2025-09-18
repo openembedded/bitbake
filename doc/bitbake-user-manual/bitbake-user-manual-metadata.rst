@@ -758,21 +758,6 @@ directives. There is also a higher-level abstraction called
 ``configuration fragments`` that is enabled with ``addfragments``
 directive.
 
-Locating Include and Class Files
---------------------------------
-
-BitBake uses the :term:`BBPATH` variable to locate
-needed include and class files. Additionally, BitBake searches the
-current directory for ``include`` and ``require`` directives.
-
-.. note::
-
-   The BBPATH variable is analogous to the environment variable PATH .
-
-In order for include and class files to be found by BitBake, they need
-to be located in a "classes" subdirectory that can be found in
-:term:`BBPATH`.
-
 .. _ref-bitbake-user-manual-metadata-inherit:
 
 ``inherit`` Directive
@@ -874,6 +859,8 @@ becomes a no-op.
 See also :term:`BB_DEFER_BBCLASSES` for automatically promoting classes
 ``inherit`` calls to ``inherit_defer``.
 
+.. _ref-include-directive:
+
 ``include`` Directive
 ---------------------
 
@@ -907,6 +894,8 @@ if the file cannot be found.
    file and nothing further (which is almost always the behaviour you want).
    If you need to include all matching files, you need to use the
    ``include_all`` directive, explained below.
+
+.. _ref-include-all-directive:
 
 ``include_all`` Directive
 -------------------------
@@ -1061,6 +1050,103 @@ of enabled fragments:
 bitbake will treat that as direct value assignment in its configuration::
 
   SOMEVARIABLE = "somevalue"
+
+Locating Include Files
+----------------------
+
+BitBake uses the :term:`BBPATH` variable to locate needed include files.
+Additionally, BitBake searches the current directory for :ref:`include
+<ref-include-directive>` and :ref:`require <require-inclusion>` directives.
+
+.. note::
+
+   The BBPATH variable is analogous to the environment variable PATH .
+
+For these two directives, BitBake includes the first file it finds.
+
+.. note::
+
+   It is also possible to include *all* occurences of a file with the same name
+   with the :ref:`include_all <ref-include-all-directive>` directive.
+
+Let's consider the following statement called from a recipe file located in
+``/layers/meta-custom2/recipes-example/example_0.1.bb``::
+
+   require myfile.inc
+
+Where ``myfile.inc`` is located in ``/layers/meta-custom2/recipes-example/``.
+
+And let's assume that the value of :term:`BBPATH` is
+``/layers/meta-custom1:/layers/meta-custom2``. Then BitBake will try to find
+``myfile.inc`` in this order::
+
+   /layers/meta-custom2/recipes-example/example/myfile.inc
+   /layers/meta-custom1/myfile.inc
+   /layers/meta-custom2/myfile.inc
+
+In this case the first path of the list matches and BitBake includes this file
+in ``example_0.1.bb``.
+
+Another common example would be::
+
+   require recipes-other/other/otherfile.inc
+
+Where ``otherfile.inc`` is located in
+``/layers/meta-custom1/recipes-other/other/``.
+
+In this case, the following paths would be searched::
+
+   /layers/meta-custom2/recipes-example/example/recipes-other/other/otherfile.inc
+   /layers/meta-custom1/recipes-other/other/otherfile.inc
+   /layers/meta-custom2/recipes-other/other/otherfile.inc
+
+This time, the second item of this list would be matched.
+
+.. note::
+
+   In the above examples, the exact same search order applies for the
+   :ref:`include <ref-include-directive>` directive.
+
+Locating Class Files
+--------------------
+
+Like include files, class files are located using the :term:`BBPATH` variable.
+The classes can be included in the ``classes-recipe``, ``classes-global`` and
+``classes`` directories, as explained in the
+:ref:`bitbake-user-manual/bitbake-user-manual-intro:Class types` section of the
+Bitbake User Manual. Like for the :ref:`include <ref-include-directive>` and
+:ref:`require <require-inclusion>` directives, BitBake stops and inherits the
+first class that it finds.
+
+For classes inherited with the :ref:`inherit
+<ref-bitbake-user-manual-metadata-inherit>` directive, BitBake will try to
+locate the class under each ``classes-recipe`` directory for each path in
+:term:`BBPATH`, and then do the same for each ``classes`` directory for each
+path in :term:`BBPATH`.
+
+For example, if the value :term:`BBPATH` is
+``/layers/meta-custom1:/layers/meta-custom2`` then the ``hello`` class
+would be searched in this order::
+
+   /layers/meta-custom1/classes-recipe/hello.bbclass
+   /layers/meta-custom2/classes-recipe/hello.bbclass
+   /layers/meta-custom1/classes/hello.bbclass
+   /layers/meta-custom2/classes/hello.bbclass
+
+.. note::
+
+   Note that the order of the list above does not depend on where the class in
+   inherited from.
+
+Likewise, for classes inherited with the :term:`INHERIT` variable, the
+``classes-global`` directory is searched first, and the ``classes`` directory is
+searched second. Taking the above example, this would result in the following
+list::
+
+   /layers/meta-custom1/classes-global/hello.bbclass
+   /layers/meta-custom2/classes-global/hello.bbclass
+   /layers/meta-custom1/classes/hello.bbclass
+   /layers/meta-custom2/classes/hello.bbclass
 
 Functions
 =========

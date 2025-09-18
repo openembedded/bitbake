@@ -206,17 +206,33 @@ installing (empty by default) and packaging (empty by default). These
 tasks are often overridden or extended by other classes added during the
 project development process.
 
-.. note::
+Class Types
+~~~~~~~~~~~
 
-   While BitBake comes with just the one ``base.bbclass`` file in the
-   ``classes`` directory, it supports class files also being installed
-   in related directories ``classes-global`` and ``classes-recipe`` and
-   will automatically search all three directories for a selected class
-   file.
+BitBake supports class files installed in three different directories:
 
-   This means that, in this documentation, when you see a reference to
-   class files being in the ``classes`` directory, you can interpret that
-   as meaning in any one of the above three directories.
+-  ``classes-global/``: these classes must be inherited globally through the
+   :term:`INHERIT` variable in a :ref:`configuration file
+   <bitbake-user-manual/bitbake-user-manual-intro:Configuration Files>`.  These
+   classes are included for every recipe being built. For example, you would use
+   the global class named ``myclass`` like so::
+
+      INHERIT += "myclass"
+
+-  ``classes-recipe/``: these classes must be inherited from a recipe using the
+   :ref:`inherit <ref-bitbake-user-manual-metadata-inherit>` directive. They do
+   not support being inherited globally. For example, you would use the recipe
+   class named ``myclass`` like so::
+
+      inherit myclass
+
+-  ``classes/``: this final directory is meant for classes that can be used in
+   the two contexts explain above. In other words, they can be inherit either
+   globally or in a recipe.
+
+For details on how BitBake locates class files, see the
+:ref:`bitbake-user-manual/bitbake-user-manual-metadata:Locating Class Files`
+section of the Bitbake User Manual.
 
 Layers
 ------

@@ -64,11 +64,11 @@ data itself is of various types:
    together.
 
 The ``layer.conf`` files are used to construct key variables such as
-:term:`BBPATH` and :term:`BBFILES`.
-:term:`BBPATH` is used to search for configuration and class files under the
-``conf`` and ``classes`` directories, respectively. :term:`BBFILES` is used
-to locate both recipe and recipe append files (``.bb`` and
-``.bbappend``). If there is no ``bblayers.conf`` file, it is assumed the
+:term:`BBPATH` and :term:`BBFILES`. :term:`BBPATH` is used to search for
+configuration files under the ``conf`` directory and class files under the
+``classes-global``, ``classes-recipe`` and ``classes`` directories.
+:term:`BBFILES` is used to locate both recipe and recipe append files (``.bb``
+and ``.bbappend``). If there is no ``bblayers.conf`` file, it is assumed the
 user has set the :term:`BBPATH` and :term:`BBFILES` directly in the environment.
 
 Next, the ``bitbake.conf`` file is located using the :term:`BBPATH` variable
