@@ -1,0 +1,54 @@
+{
+    "description": "OpenEmbedded - 'nodistro' basic configuration",
+    "sources": {
+        "bitbake": {
+            "git-remote": {
+                "remotes": {
+                    "origin": {
+                        "uri": "git://git.openembedded.org/bitbake;protocol=https"
+                    }
+                },
+                "rev": "master"
+            },
+            "path": "bitbake"
+        },
+        "openembedded-core": {
+            "git-remote": {
+                "remotes": {
+                    "origin": {
+                        "uri": "git://git.openembedded.org/openembedded-core;protocol=https"
+                    }
+                },
+                "rev": "master"
+            },
+            "path": "openembedded-core"
+        },
+        "yocto-docs": {
+            "git-remote": {
+                "remotes": {
+                    "origin": {
+                        "uri": "git://git.yoctoproject.org/yocto-docs;protocol=https"
+                    }
+                },
+                "rev": "master"
+            },
+            "path": "yocto-docs"
+        }
+    },
+    "bitbake-setup": {
+        "configurations": [
+        {
+            "name": "nodistro",
+            "description": "OpenEmbedded 'nodistro'",
+            "bb-layers": ["openembedded-core/meta"],
+            "oe-fragments-one-of": {
+                "machine": {
+                    "description": "Target machines",
+                    "options" : ["machine/qemux86-64", "machine/qemuarm64", "machine/qemuriscv64"]
+                }
+            }
+        }
+        ]
+    },
+    "version": "1.0"
+}
