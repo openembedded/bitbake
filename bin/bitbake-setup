@@ -19,7 +19,7 @@ import datetime
 import glob
 import subprocess
 
-default_registry = 'git://github.com/kanavin/bitbake-setup-configurations.git;protocol=https;branch=main;rev=main'
+default_registry = os.path.normpath(os.path.dirname(__file__) + "/../default-registry")
 
 bindir = os.path.abspath(os.path.dirname(__file__))
 sys.path[0:0] = [os.path.join(os.path.dirname(bindir), 'lib')]
