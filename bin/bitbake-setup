@@ -509,10 +509,15 @@ def do_fetch(fetcher, dir):
 
 def update_registry(registry, cachedir, d):
     registrydir = 'configurations'
-    full_registrydir = os.path.join(cachedir, registrydir)
-    print("Fetching configuration registry\n    {}\ninto\n    {}".format(registry, full_registrydir))
-    fetcher = bb.fetch.Fetch(["{};destsuffix={}".format(registry, registrydir)], d)
-    do_fetch(fetcher, cachedir)
+    if registry.startswith("."):
+        full_registrydir = os.path.join(os.getcwd(), registry, registrydir)
+    elif registry.startswith("/"):
+        full_registrydir = os.path.join(registry, registrydir)
+    else:
+        full_registrydir = os.path.join(cachedir, registrydir)
+        print("Fetching configuration registry\n    {}\ninto\n    {}".format(registry, full_registrydir))
+        fetcher = bb.fetch.Fetch(["{};destsuffix={}".format(registry, registrydir)], d)
+        do_fetch(fetcher, cachedir)
     return full_registrydir
 
 def has_expired(expiry_date):
