@@ -635,11 +635,11 @@ def load_settings(top_dir, non_interactive):
     settings_path = default_settings_path(top_dir)
     settings = configparser.ConfigParser()
     print('Loading settings from\n    {}\n'.format(settings_path))
-    settings.read([settings_path])
+    settings.read_file(open(settings_path))
     return settings
 
 def global_settings_path(args):
-    return args.global_settings if args.global_settings else os.path.join(os.path.expanduser('~'), '.config', 'bitbake-setup', 'config')
+    return os.path.abspath(args.global_settings) if args.global_settings else os.path.join(os.path.expanduser('~'), '.config', 'bitbake-setup', 'config')
 
 def write_global_settings(settings_path, force_replace, non_interactive=True):
     if not os.path.exists(settings_path) or force_replace:
@@ -673,7 +673,7 @@ def load_global_settings(settings_path, non_interactive):
 
     settings = configparser.ConfigParser()
     print('Loading global settings from\n    {}\n'.format(settings_path))
-    settings.read([settings_path])
+    settings.read_file(open(settings_path))
     return settings
 
 def change_settings(top_dir, new_settings):
