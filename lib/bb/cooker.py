@@ -320,7 +320,10 @@ class BBCooker:
                     except ImportError as e:
                         bb.fatal(""""Unable to use hash equivalence server at '%s' due to missing or incorrect python module:
 %s
-Please install the needed module on the build host, or use an environment containing it (e.g a pip venv or OpenEmbedded's buildtools tarball).
+Please install the needed module on the build host, or use an environment containing it:
+ - if you are using bitbake-setup, run 'bitbake-setup install-buildtools'
+ - openembedded-core layer contains 'scripts/install-buildtools' that can also be used
+ - or set up pip venv
 You can also remove the BB_HASHSERVE_UPSTREAM setting, but this may result in significantly longer build times as bitbake will be unable to reuse prebuilt sstate artefacts."""
                                  % (upstream, repr(e)))
                     except ConnectionError as e:
