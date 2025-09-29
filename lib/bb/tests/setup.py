@@ -87,7 +87,7 @@ print("BBPATH is {{}}".format(os.environ["BBPATH"]))
         bbsetup = os.path.abspath(os.path.dirname(__file__) +  "/../../../bin/bitbake-setup")
         return bb.process.run("{} --global-settings {} {}".format(bbsetup, os.path.join(self.tempdir, 'global-config'), cmd))
 
-    def add_json_config_to_registry(self, name, rev):
+    def add_json_config_to_registry(self, name, rev, branch):
         config = """
 {
     "sources": {
@@ -98,6 +98,7 @@ print("BBPATH is {{}}".format(os.environ["BBPATH"]))
                         "uri": "file://%s"
                     }
                 },
+                "branch": "%s",
                 "rev": "%s"
             },
             "path": "test-repo"
@@ -134,7 +135,7 @@ print("BBPATH is {{}}".format(os.environ["BBPATH"]))
     },
     "version": "1.0"
 }
-""" % (self.testrepopath, rev)
+""" % (self.testrepopath, branch, rev)
         os.makedirs(os.path.join(self.registrypath, os.path.dirname(name)), exist_ok=True)
         with open(os.path.join(self.registrypath, name), 'w') as f:
             f.write(config)
@@ -208,12 +209,12 @@ print("BBPATH is {{}}".format(os.environ["BBPATH"]))
         self.assertNotIn("test-config-1", out[0])
         self.assertNotIn("test-config-2", out[0])
 
-        json_1 = self.add_json_config_to_registry('test-config-1.conf.json', 'master')
+        json_1 = self.add_json_config_to_registry('test-config-1.conf.json', 'master', 'master')
         out = self.runbbsetup("list")
         self.assertIn("test-config-1", out[0])
         self.assertNotIn("test-config-2", out[0])
 
-        json_2 = self.add_json_config_to_registry('config-2/test-config-2.conf.json', 'master')
+        json_2 = self.add_json_config_to_registry('config-2/test-config-2.conf.json', 'master', 'master')
         out = self.runbbsetup("list --write-json={}".format(os.path.join(self.tempdir, "test-configs.json")))
         self.assertIn("test-config-1", out[0])
         self.assertIn("test-config-2", out[0])
@@ -270,7 +271,7 @@ print("BBPATH is {{}}".format(os.environ["BBPATH"]))
         branch = "another-branch"
         self.git('checkout -b {}'.format(branch), cwd=self.testrepopath)
         self.add_file_to_testrepo('test-file', test_file_content)
-        json_1 = self.add_json_config_to_registry('test-config-1.conf.json', branch)
+        json_1 = self.add_json_config_to_registry('test-config-1.conf.json', branch, branch)
         for c in ('gadget','gizmo','gadget-notemplate','gizmo-notemplate'):
             buildpath = os.path.join(self.tempdir, 'bitbake-builds', 'test-config-1-{}'.format(c))
             os.environ['BBPATH'] = os.path.join(buildpath, 'build')

@@ -8,6 +8,7 @@
                         "uri": "git://git.openembedded.org/bitbake;protocol=https"
                     }
                 },
+                "branch": "master",
                 "rev": "master"
             },
             "path": "bitbake"
@@ -19,6 +20,7 @@
                         "uri": "git://git.openembedded.org/openembedded-core;protocol=https"
                     }
                 },
+                "branch": "master",
                 "rev": "master"
             },
             "path": "openembedded-core"
@@ -30,6 +32,7 @@
                         "uri": "git://git.yoctoproject.org/meta-yocto;protocol=https"
                     }
                 },
+                "branch": "master",
                 "rev": "master"
             },
             "path": "meta-yocto"
@@ -41,6 +44,7 @@
                         "uri": "git://git.yoctoproject.org/yocto-docs;protocol=https"
                     }
                 },
+                "branch": "master",
                 "rev": "master"
             },
             "path": "yocto-docs"
