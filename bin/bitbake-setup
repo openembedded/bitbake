@@ -101,13 +101,13 @@ def checkout_layers(layers, layerdir, d):
 
         if os.path.exists(os.path.join(layerdir, repodir, 'scripts/oe-setup-build')):
             oesetupbuild = os.path.join(layerdir, repodir, 'scripts/oe-setup-build')
-            oeinitbuildenv = os.path.join(layerdir, repodir, 'oe-init-build-env')
+            oeinitbuildenvdir = os.path.join(layerdir, repodir)
 
     print("        ")
     _write_layer_list(layerdir, repodirs)
 
     if oesetupbuild:
-        links = {'setup-build': oesetupbuild, 'oe-scripts': os.path.dirname(oesetupbuild), 'init-build-env': oeinitbuildenv}
+        links = {'setup-build': oesetupbuild, 'oe-scripts': os.path.dirname(oesetupbuild), 'oe-init-build-env-dir': oeinitbuildenvdir}
         for l,t in links.items():
             symlink = os.path.join(layerdir, l)
             if os.path.lexists(symlink):
@@ -145,8 +145,9 @@ def setup_bitbake_build(bitbake_config, layerdir, builddir):
         with open(os.path.join(build_conf_dir, "conf-notes.txt"), 'w') as f:
             f.write("")
 
-    def _make_init_build_env(builddir, initbuildenv):
-        cmd = ". {} {}".format(initbuildenv, builddir)
+    def _make_init_build_env(builddir, oeinitbuildenvdir):
+        builddir = os.path.realpath(builddir)
+        cmd = "cd {}\nset {}\n. ./oe-init-build-env\n".format(oeinitbuildenvdir, builddir)
         initbuild_in_builddir = os.path.join(builddir, 'init-build-env')
         with open(initbuild_in_builddir, 'w') as f:
             f.write(cmd)
@@ -174,11 +175,11 @@ def setup_bitbake_build(bitbake_config, layerdir, builddir):
     if template:
         bb.process.run("{} setup -c {} -b {} --no-shell".format(oesetupbuild, template, bitbake_builddir))
     else:
-        initbuildenv = os.path.join(layerdir, 'init-build-env')
-        if not os.path.exists(initbuildenv):
+        oeinitbuildenvdir = os.path.join(layerdir, 'oe-init-build-env-dir')
+        if not os.path.exists(os.path.join(oeinitbuildenvdir, "oe-init-build-env")):
             print("Could not find oe-init-build-env in any of the layers; please use another mechanism to initialize the bitbake environment")
             return
-        _make_init_build_env(bitbake_builddir, os.path.realpath(initbuildenv))
+        _make_init_build_env(bitbake_builddir, os.path.realpath(oeinitbuildenvdir))
 
     siteconf_symlink = os.path.join(bitbake_confdir, "site.conf")
     siteconf = os.path.normpath(os.path.join(builddir, '..', "site.conf"))
