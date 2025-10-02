@@ -219,7 +219,7 @@ The bitbake configuration files (local.conf, bblayers.conf and more) can be foun
         f.write(readme)
     print("Usage instructions and additional information are in\n     {}\n".format(readme_file))
     print("The bitbake configuration files (local.conf, bblayers.conf and more) can be found in\n    {}/conf\n".format(bitbake_builddir))
-    print("To run builds, source the environment using\n    source {}".format(init_script))
+    print("To run builds, source the environment using\n    . {}".format(init_script))
 
 def get_registry_config(registry_path, id):
     for root, dirs, files in os.walk(registry_path):
