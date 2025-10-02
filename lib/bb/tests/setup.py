@@ -130,6 +130,12 @@ print("BBPATH is {{}}".format(os.environ["BBPATH"]))
                 "description": "Gizmo notemplate build configuration",
                 "bb-layers": ["layerC","layerD/meta-layer"],
                 "oe-fragments": ["test-fragment-2"]
+            },
+            {
+                "name": "gizmo-notemplate-with-thisdir",
+                "description": "Gizmo notemplate build configuration using THISDIR",
+                "bb-layers": ["layerC","layerD/meta-layer","{THISDIR}/layerE/meta-layer"],
+                "oe-fragments": ["test-fragment-2"]
             }
         ]
     },
@@ -174,7 +180,14 @@ print("BBPATH is {{}}".format(os.environ["BBPATH"]))
             with open(os.path.join(bb_conf_path, 'bblayers.conf')) as f:
                 bblayers = f.read()
                 for l in bitbake_config["bb-layers"]:
-                    self.assertIn(os.path.join(buildpath, 'layers', l), bblayers)
+                    if l.startswith('{THISDIR}/'):
+                        thisdir_layer = os.path.join(
+                            os.path.dirname(json_config["path"]),
+                            l.removeprefix("{THISDIR}/"),
+                        )
+                        self.assertIn(thisdir_layer, bblayers)
+                    else:
+                        self.assertIn(os.path.join(buildpath, "layers", l), bblayers)
 
         for f in bitbake_config["oe-fragments"]:
             self.assertTrue(os.path.exists(os.path.join(bb_conf_path, f)))
@@ -235,7 +248,7 @@ print("BBPATH is {{}}".format(os.environ["BBPATH"]))
 
         # test-config-1 is tested as a registry config, test-config-2 as a local file
         test_configurations = {'test-config-1': {'cmdline': 'test-config-1', 'buildconfigs':('gadget','gizmo','gadget-notemplate','gizmo-notemplate')},
-                               'test-config-2': {'cmdline': os.path.join(self.registrypath,'config-2/test-config-2.conf.json'), 'buildconfigs': ('gadget','gizmo','gadget-notemplate','gizmo-notemplate') } }
+                               'test-config-2': {'cmdline': os.path.join(self.registrypath,'config-2/test-config-2.conf.json'), 'buildconfigs': ('gadget','gizmo','gadget-notemplate','gizmo-notemplate', 'gizmo-notemplate-with-thisdir') } }
         for cf, v in test_configurations.items():
             for c in v['buildconfigs']:
                 out = self.runbbsetup("init --non-interactive {} {}".format(v['cmdline'], c))

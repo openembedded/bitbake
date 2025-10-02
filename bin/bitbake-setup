@@ -114,10 +114,23 @@ def checkout_layers(layers, layerdir, d):
                 os.remove(symlink)
             os.symlink(os.path.relpath(t,layerdir),symlink)
 
-def setup_bitbake_build(bitbake_config, layerdir, builddir):
+def setup_bitbake_build(bitbake_config, layerdir, builddir, thisdir):
     def _setup_build_conf(layers, build_conf_dir):
         os.makedirs(build_conf_dir)
-        layers_s = "\n".join(["  {} \\".format(os.path.join(layerdir,l)) for l in layers])
+        layers_s = []
+        for l in layers:
+            if l.startswith("{THISDIR}/"):
+                if thisdir:
+                    l = l.format(THISDIR=thisdir)
+                else:
+                    raise Exception("Configuration is using {THISDIR} to specify " \
+                    "a layer path relative to itself. This can be done only " \
+                    "when the configuration is specified by its path on local " \
+                    "disk, not when it's in a registry or is fetched over http.")
+            if not os.path.isabs(l):
+                l = os.path.join(layerdir, l)
+            layers_s.append("  {} \\".format(l))
+        layers_s = "\n".join(layers_s)
         bblayers_conf = """BBLAYERS ?= " \\
 {}
   "
@@ -237,7 +250,8 @@ def update_build(config, confdir, builddir, layerdir, d):
             layer_config[k]["git-remote"] = v["git-remote"]
     checkout_layers(layer_config, layerdir, d)
     bitbake_config = config["bitbake-config"]
-    setup_bitbake_build(bitbake_config, layerdir, builddir)
+    thisdir = os.path.dirname(config["path"]) if config["type"] == 'local' else None
+    setup_bitbake_build(bitbake_config, layerdir, builddir, thisdir)
 
 def int_input(allowed_values):
     n = None
