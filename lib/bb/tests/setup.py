@@ -227,9 +227,13 @@ print("BBPATH is {{}}".format(os.environ["BBPATH"]))
         # (the latter two should do nothing and say that config hasn't changed)
         test_file_content = 'initial\n'
         self.add_file_to_testrepo('test-file', test_file_content)
-        for cf in ('test-config-1', 'test-config-2'):
-            for c in ('gadget','gizmo','gadget-notemplate','gizmo-notemplate'):
-                out = self.runbbsetup("init --non-interactive {} {}".format(os.path.join(self.registrypath,'config-2/test-config-2.conf.json') if cf == 'test-config-2' else cf, c))
+
+        # test-config-1 is tested as a registry config, test-config-2 as a local file
+        test_configurations = {'test-config-1': {'cmdline': 'test-config-1', 'buildconfigs':('gadget','gizmo','gadget-notemplate','gizmo-notemplate')},
+                               'test-config-2': {'cmdline': os.path.join(self.registrypath,'config-2/test-config-2.conf.json'), 'buildconfigs': ('gadget','gizmo','gadget-notemplate','gizmo-notemplate') } }
+        for cf, v in test_configurations.items():
+            for c in v['buildconfigs']:
+                out = self.runbbsetup("init --non-interactive {} {}".format(v['cmdline'], c))
                 buildpath = os.path.join(self.tempdir, 'bitbake-builds', '{}-{}'.format(cf, c))
                 with open(os.path.join(buildpath, 'config', "config-upstream.json")) as f:
                     config_upstream = json.load(f)
