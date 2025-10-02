@@ -339,9 +339,12 @@ def choose_config(configs, non_interactive):
     config_n = int_input([i[0] for i in config_list])
     return config_list[config_n][1]
 
-def choose_fragments(possibilities, parameters, non_interactive):
+def choose_fragments(possibilities, parameters, non_interactive, skip_selection):
     choices = {}
     for k,v in possibilities.items():
+        if skip_selection and k in skip_selection:
+            print("Skipping a selection of {}, as requested on command line. The resulting bitbake configuration may require further manual adjustments.".format(k))
+            continue
         choice = [o for o in v["options"] if o in parameters]
         if len(choice) > 1:
             raise Exception("Options specified on command line do not allow a single selection from possibilities {}, please remove one or more from {}".format(v["options"], parameters))
@@ -395,9 +398,10 @@ def obtain_config(settings, args, source_overrides, d):
         upstream_config = {'type':'registry','registry':settings["default"]["registry"],'name':config_id,'data':json.load(open(get_registry_config(registry_path,config_id)))}
 
     upstream_config['bitbake-config'] = choose_bitbake_config(upstream_config['data']['bitbake-setup']['configurations'], config_parameters, args.non_interactive)
-    upstream_config['bitbake-config']['oe-fragment-choices'] = choose_fragments(upstream_config['bitbake-config'].get('oe-fragments-one-of',{}), config_parameters[1:], args.non_interactive)
+    upstream_config['bitbake-config']['oe-fragment-choices'] = choose_fragments(upstream_config['bitbake-config'].get('oe-fragments-one-of',{}), config_parameters[1:], args.non_interactive, args.skip_selection)
     upstream_config['non-interactive-cmdline-options'] = [config_id, upstream_config['bitbake-config']['name']] + sorted(upstream_config['bitbake-config']['oe-fragment-choices'].values())
     upstream_config['source-overrides'] = source_overrides
+    upstream_config['skip-selection'] = args.skip_selection
     return upstream_config
 
 def init_config(settings, args, d):
@@ -492,6 +496,7 @@ def build_status(settings, args, d, update=False):
 
     args.config = current_upstream_config['non-interactive-cmdline-options']
     args.non_interactive = True
+    args.skip_selection = current_upstream_config['skip-selection']
     source_overrides = current_upstream_config["source-overrides"]
     new_upstream_config = obtain_config(settings, args, source_overrides, d)
 
@@ -778,6 +783,7 @@ def main():
     parser_init.add_argument('--non-interactive', action='store_true', help='Do not ask to interactively choose from available options; if bitbake-setup cannot make a decision it will stop with a failure.')
     parser_init.add_argument('--source-overrides', action='store', help='Override sources information (repositories/revisions) with values from a local json file.')
     parser_init.add_argument('--build-dir-name', action='store', help='A custom build directory name under the top directory.')
+    parser_init.add_argument('--skip-selection', action='append', help='Do not select and set an option/fragment from available choices; the resulting bitbake configuration may be incomplete.')
     parser_init.set_defaults(func=init_config)
 
     parser_status = subparsers.add_parser('status', help='Check if the build needs to be synchronized with configuration')
