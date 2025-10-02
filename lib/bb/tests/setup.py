@@ -181,6 +181,11 @@ print("BBPATH is {{}}".format(os.environ["BBPATH"]))
 
 
     def test_setup(self):
+        # unset BBPATH to ensure tests run in isolation from the existing bitbake environment
+        import os
+        if 'BBPATH' in os.environ:
+            del os.environ['BBPATH']
+
         # check that no arguments works
         self.runbbsetup("")
 
