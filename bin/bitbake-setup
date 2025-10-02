@@ -418,7 +418,7 @@ def init_config(settings, args, d):
 
     print("Initializing a build in\n    {}".format(builddir))
     if not args.non_interactive:
-        y_or_n = input('Continue? y/n: ')
+        y_or_n = input('Continue? (y/N): ')
         if y_or_n != 'y':
             exit()
         print()
@@ -623,7 +623,7 @@ def write_settings(top_dir, force_replace, non_interactive=True):
         print('A new settings file will be created in\n    {}\n'.format(settings_path))
         print('A common site.conf file will be created, please edit or replace before running builds\n    {}\n'.format(siteconfpath))
         if not non_interactive:
-            y_or_n = input('Bitbake-setup will be configured with the above settings in {}, y/n: '.format(top_dir))
+            y_or_n = input('Bitbake-setup will be configured with the above settings in {}, (y/N): '.format(top_dir))
             if y_or_n != 'y':
                 print("\nYou can run 'bitbake-setup install-settings' to edit them before setting up builds")
                 exit()
@@ -669,7 +669,7 @@ def write_global_settings(settings_path, force_replace, non_interactive=True):
         print('Top directory prefix (where all top level directories are created) set to\n    {}\n'.format(settings['default']['top-dir-prefix']))
         print('Top directory name (this is added to the top directory prefix to form a top directory where builds are set up) set to\n    {}\n'.format(settings['default']['top-dir-name']))
         if not non_interactive:
-            y_or_n = input('Write out the global settings as specified above (y/n)? ')
+            y_or_n = input('Write out the global settings as specified above (y/N)? ')
             if y_or_n != 'y':
                 print("\nYou can run 'bitbake-setup install-global-settings' to edit them before setting up builds")
                 exit()
