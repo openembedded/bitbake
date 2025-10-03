@@ -364,7 +364,8 @@ class AddFragmentsNode(AstNode):
         def check_and_set_builtin_fragment(fragment, data, builtin_fragments):
             prefix, value = fragment.split('/', 1)
             if prefix in builtin_fragments.keys():
-                data.setVar(builtin_fragments[prefix], value)
+                # parsing=True since we want to emulate X=Y and allow X:override=Z to continue to exist
+                data.setVar(builtin_fragments[prefix], value, parsing=True)
                 return True
             return False
 
