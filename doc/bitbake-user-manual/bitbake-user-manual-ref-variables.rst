@@ -1208,9 +1208,17 @@ overview of their function and contents.
 
    :term:`INHERIT`
       Causes the named class or classes to be inherited globally. Anonymous
-      functions in the class or classes are not executed for the base
-      configuration and in each individual recipe. The OpenEmbedded build
-      system ignores changes to :term:`INHERIT` in individual recipes.
+      functions in the class or classes are executed in two disjoint situations:
+
+      -  When only the
+         :ref:`base configuration <bitbake-user-manual/bitbake-user-manual-execution:parsing the base configuration metadata>`
+         is parsed. For example as a result of the following BitBake invocation::
+
+            $ bitbake -e
+
+      -  When recipes are parsed - then for each parsed recipe.
+
+      Bitbake ignores changes to :term:`INHERIT` in individual recipes.
 
       For more information on :term:`INHERIT`, see the
       ":ref:`bitbake-user-manual/bitbake-user-manual-metadata:\`\`inherit\`\` configuration directive`"
