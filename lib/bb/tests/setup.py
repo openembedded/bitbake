@@ -120,6 +120,11 @@ print("BBPATH is {{}}".format(os.environ["BBPATH"]))
                 "oe-fragments": ["test-fragment-2"]
             },
             {
+                "name": "gizmo-no-fragment",
+                "description": "Gizmo no-fragment template-only build configuration",
+                "oe-template": "test-configuration-gizmo"
+            },
+            {
                 "name": "gadget-notemplate",
                 "description": "Gadget notemplate build configuration",
                 "bb-layers": ["layerA","layerB/meta-layer"],
@@ -189,8 +194,9 @@ print("BBPATH is {{}}".format(os.environ["BBPATH"]))
                     else:
                         self.assertIn(os.path.join(buildpath, "layers", l), bblayers)
 
-        for f in bitbake_config["oe-fragments"]:
-            self.assertTrue(os.path.exists(os.path.join(bb_conf_path, f)))
+        if 'oe-fragment' in bitbake_config.keys():
+            for f in bitbake_config["oe-fragments"]:
+                self.assertTrue(os.path.exists(os.path.join(bb_conf_path, f)))
 
 
     def test_setup(self):
@@ -247,8 +253,16 @@ print("BBPATH is {{}}".format(os.environ["BBPATH"]))
         self.add_file_to_testrepo('test-file', test_file_content)
 
         # test-config-1 is tested as a registry config, test-config-2 as a local file
-        test_configurations = {'test-config-1': {'cmdline': 'test-config-1', 'buildconfigs':('gadget','gizmo','gadget-notemplate','gizmo-notemplate')},
-                               'test-config-2': {'cmdline': os.path.join(self.registrypath,'config-2/test-config-2.conf.json'), 'buildconfigs': ('gadget','gizmo','gadget-notemplate','gizmo-notemplate', 'gizmo-notemplate-with-thisdir') } }
+        test_configurations = {'test-config-1': {'cmdline': 'test-config-1',
+                                                 'buildconfigs':('gadget','gizmo',
+                                                                 'gizmo-no-fragment',
+                                                                 'gadget-notemplate','gizmo-notemplate')},
+                               'test-config-2': {'cmdline': os.path.join(self.registrypath,'config-2/test-config-2.conf.json'),
+                                                 'buildconfigs': ('gadget','gizmo',
+                                                                  'gizmo-no-fragment',
+                                                                  'gadget-notemplate','gizmo-notemplate',
+                                                                  'gizmo-notemplate-with-thisdir')}
+                               }
         for cf, v in test_configurations.items():
             for c in v['buildconfigs']:
                 out = self.runbbsetup("init --non-interactive {} {}".format(v['cmdline'], c))
@@ -272,13 +286,16 @@ print("BBPATH is {{}}".format(os.environ["BBPATH"]))
         prev_test_file_content = test_file_content
         test_file_content = 'modified\n'
         self.add_file_to_testrepo('test-file', test_file_content)
-        for c in ('gadget','gizmo','gadget-notemplate','gizmo-notemplate'):
+        for c in ('gadget', 'gizmo',
+                  'gizmo-env-passthrough',
+                  'gizmo-no-fragment',
+                  'gadget-notemplate', 'gizmo-notemplate'):
             buildpath = os.path.join(self.tempdir, 'bitbake-builds', 'test-config-1-{}'.format(c))
             os.environ['BBPATH'] = os.path.join(buildpath, 'build')
             out = self.runbbsetup("status")
             self.assertIn("Layer repository file://{} checked out into {}/layers/test-repo updated revision master from".format(self.testrepopath, buildpath), out[0])
             out = self.runbbsetup("update")
-            if c in ('gadget','gizmo'):
+            if c in ('gadget', 'gizmo'):
                 self.assertIn("Existing bitbake configuration directory renamed to {}/build/conf-backup.".format(buildpath), out[0])
                 self.assertIn('-{}+{}'.format(prev_test_file_content, test_file_content), out[0])
             with open(os.path.join(buildpath, 'config', "config-upstream.json")) as f:
@@ -294,14 +311,16 @@ print("BBPATH is {{}}".format(os.environ["BBPATH"]))
         self.git('checkout -b {}'.format(branch), cwd=self.testrepopath)
         self.add_file_to_testrepo('test-file', test_file_content)
         json_1 = self.add_json_config_to_registry('test-config-1.conf.json', branch, branch)
-        for c in ('gadget','gizmo','gadget-notemplate','gizmo-notemplate'):
+        for c in ('gadget', 'gizmo',
+                  'gizmo-no-fragment',
+                  'gadget-notemplate', 'gizmo-notemplate'):
             buildpath = os.path.join(self.tempdir, 'bitbake-builds', 'test-config-1-{}'.format(c))
             os.environ['BBPATH'] = os.path.join(buildpath, 'build')
             out = self.runbbsetup("status")
             self.assertIn("Configuration in {} has changed:".format(buildpath), out[0])
             self.assertIn('-                    "rev": "master"\n+                    "rev": "another-branch"', out[0])
             out = self.runbbsetup("update")
-            if c in ('gadget','gizmo'):
+            if c in ('gadget', 'gizmo'):
                 self.assertIn("Existing bitbake configuration directory renamed to {}/build/conf-backup.".format(buildpath), out[0])
                 self.assertIn('-{}+{}'.format(prev_test_file_content, test_file_content), out[0])
             with open(os.path.join(buildpath, 'config', "config-upstream.json")) as f:
