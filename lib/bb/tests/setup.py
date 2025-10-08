@@ -120,6 +120,17 @@ print("BBPATH is {{}}".format(os.environ["BBPATH"]))
                 "oe-fragments": ["test-fragment-2"]
             },
             {
+                "name": "gizmo-env-passthrough",
+                "description": "Gizmo build configuration with environment-passthrough",
+                "bb-layers": ["layerC","layerD/meta-layer"],
+                "oe-fragments": ["test-fragment-1"],
+                "bb-env-passthrough-additions": [
+                    "BUILD_ID",
+                    "BUILD_DATE",
+                    "BUILD_SERVER"
+                ]
+            },
+            {
                 "name": "gizmo-no-fragment",
                 "description": "Gizmo no-fragment template-only build configuration",
                 "oe-template": "test-configuration-gizmo"
@@ -198,6 +209,15 @@ print("BBPATH is {{}}".format(os.environ["BBPATH"]))
             for f in bitbake_config["oe-fragments"]:
                 self.assertTrue(os.path.exists(os.path.join(bb_conf_path, f)))
 
+        if 'bb-environment-passthrough' in bitbake_config.keys():
+            with open(os.path.join(bb_build_path, 'init-build-env'), 'r') as f:
+                init_build_env = f.read()
+            self.assertTrue('BB_ENV_PASSTHROUGH_ADDITIONS' in init_build_env)
+            self.assertTrue('BUILD_ID' in init_build_env)
+            self.assertTrue('BUILD_DATE' in init_build_env)
+            self.assertTrue('BUILD_SERVER' in init_build_env)
+            # a more throrough test could be to initialize a bitbake build-env, export FOO to the shell environment, set the env-passthrough on it and finally check against 'bitbake-getvar FOO'
+
 
     def test_setup(self):
         # unset BBPATH to ensure tests run in isolation from the existing bitbake environment
@@ -255,10 +275,12 @@ print("BBPATH is {{}}".format(os.environ["BBPATH"]))
         # test-config-1 is tested as a registry config, test-config-2 as a local file
         test_configurations = {'test-config-1': {'cmdline': 'test-config-1',
                                                  'buildconfigs':('gadget','gizmo',
+                                                                 'gizmo-env-passthrough',
                                                                  'gizmo-no-fragment',
                                                                  'gadget-notemplate','gizmo-notemplate')},
                                'test-config-2': {'cmdline': os.path.join(self.registrypath,'config-2/test-config-2.conf.json'),
                                                  'buildconfigs': ('gadget','gizmo',
+                                                                  'gizmo-env-passthrough',
                                                                   'gizmo-no-fragment',
                                                                   'gadget-notemplate','gizmo-notemplate',
                                                                   'gizmo-notemplate-with-thisdir')}
@@ -312,6 +334,7 @@ print("BBPATH is {{}}".format(os.environ["BBPATH"]))
         self.add_file_to_testrepo('test-file', test_file_content)
         json_1 = self.add_json_config_to_registry('test-config-1.conf.json', branch, branch)
         for c in ('gadget', 'gizmo',
+                  'gizmo-env-passthrough',
                   'gizmo-no-fragment',
                   'gadget-notemplate', 'gizmo-notemplate'):
             buildpath = os.path.join(self.tempdir, 'bitbake-builds', 'test-config-1-{}'.format(c))
