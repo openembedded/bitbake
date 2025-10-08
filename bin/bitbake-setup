@@ -162,8 +162,31 @@ def setup_bitbake_build(bitbake_config, layerdir, builddir, thisdir):
         builddir = os.path.realpath(builddir)
         cmd = "cd {}\nset {}\n. ./oe-init-build-env\n".format(oeinitbuildenvdir, builddir)
         initbuild_in_builddir = os.path.join(builddir, 'init-build-env')
+
         with open(initbuild_in_builddir, 'w') as f:
-            f.write(cmd)
+            f.write("# init-build-env wrapper created by bitbake-setup\n")
+            f.write(cmd + '\n')
+
+    def _prepend_passthrough_to_init_build_env(builddir):
+        env = bitbake_config.get("bb-env-passthrough-additions")
+        if not env:
+            return
+
+        initbuild_in_builddir = os.path.join(builddir, 'init-build-env')
+        with open(initbuild_in_builddir) as f:
+            content = f.read()
+
+        joined = " \\\n".join(env)
+        env = "export BB_ENV_PASSTHROUGH_ADDITIONS=\" \\\n"
+        env += "${BB_ENV_PASSTHROUGH_ADDITIONS} \\\n"
+        env += joined
+        env += '"'
+
+        with open(initbuild_in_builddir, 'w') as f:
+            f.write("# environment passthrough added by bitbake-setup\n")
+            f.write(env + '\n')
+            f.write('\n')
+            f.write(content)
 
     bitbake_builddir = os.path.join(builddir, "build")
     print("Setting up bitbake configuration in\n    {}\n".format(bitbake_builddir))
@@ -193,6 +216,8 @@ def setup_bitbake_build(bitbake_config, layerdir, builddir, thisdir):
             print("Could not find oe-init-build-env in any of the layers; please use another mechanism to initialize the bitbake environment")
             return
         _make_init_build_env(bitbake_builddir, os.path.realpath(oeinitbuildenvdir))
+
+    _prepend_passthrough_to_init_build_env(bitbake_builddir)
 
     siteconf_symlink = os.path.join(bitbake_confdir, "site.conf")
     siteconf = os.path.normpath(os.path.join(builddir, '..', "site.conf"))
