@@ -436,6 +436,7 @@ def init_config(top_dir, settings, args, d):
         progress = event.progress if event.progress > 0 else 0
         print("{}% {}                ".format(progress, rate), file=stdout, end='\r')
 
+    create_siteconf(top_dir, args.non_interactive)
     source_overrides = json.load(open(args.source_overrides)) if args.source_overrides else {'sources':{}}
     upstream_config = obtain_config(top_dir, settings, args, source_overrides, d)
     print("\nRun 'bitbake-setup init --non-interactive {}' to select this configuration non-interactively.\n".format(" ".join(upstream_config['non-interactive-cmdline-options'])))
@@ -636,30 +637,15 @@ def install_buildtools(top_dir, settings, args, d):
 def default_settings_path(top_dir):
     return os.path.join(top_dir, 'settings.conf')
 
-def create_settings(top_dir, non_interactive=True):
-    settings_path = default_settings_path(top_dir)
-    settings = configparser.ConfigParser()
-    settings['default'] = {
-                          }
-    os.makedirs(os.path.dirname(settings_path), exist_ok=True)
-
+def create_siteconf(top_dir, non_interactive=True):
     siteconfpath = os.path.join(top_dir, 'site.conf')
-    print('A new empty settings file will be created in (you can add settings to it to override defaults from the global settings file)\n    {}\n'.format(settings_path))
     print('A common site.conf file will be created, please edit or replace before running builds\n    {}\n'.format(siteconfpath))
     if not non_interactive:
-        y_or_n = input('Bitbake-setup will be configured with the above settings in {}, (y/N): '.format(top_dir))
+        y_or_n = input('Proceed? (y/N): ')
         if y_or_n != 'y':
-            print("\nYou can run 'bitbake-setup install-settings' to edit them before setting up builds")
             exit()
-        print()
 
-    if os.path.exists(settings_path):
-        backup_conf = settings_path + "-backup.{}".format(time.strftime("%Y%m%d%H%M%S"))
-        os.rename(settings_path, backup_conf)
-        print("Previous settings are in {}".format(backup_conf))
-    with open(settings_path, 'w') as settingsfile:
-        settings.write(settingsfile)
-
+    os.makedirs(os.path.dirname(top_dir), exist_ok=True)
     if os.path.exists(siteconfpath):
         backup_siteconf = siteconfpath + "-backup.{}".format(time.strftime("%Y%m%d%H%M%S"))
         os.rename(siteconfpath, backup_siteconf)
@@ -667,58 +653,26 @@ def create_settings(top_dir, non_interactive=True):
     with open(siteconfpath, 'w') as siteconffile:
         siteconffile.write('# This file is intended for build host-specific bitbake settings\n')
 
-def load_settings(top_dir, non_interactive):
-    settings_path = default_settings_path(top_dir)
-    if not os.path.exists(settings_path):
-        create_settings(top_dir, non_interactive=non_interactive)
-
-    settings = configparser.ConfigParser()
-    print('Loading settings from\n    {}\n'.format(settings_path))
-    settings.read_file(open(settings_path))
-    return settings
-
 def global_settings_path(args):
     return os.path.abspath(args.global_settings) if args.global_settings else os.path.join(os.path.expanduser('~'), '.config', 'bitbake-setup', 'settings.conf')
 
-def create_global_settings(settings_path, non_interactive=True):
+def load_settings(settings_path):
     settings = configparser.ConfigParser()
-    settings['default'] = {
-                         'top-dir-prefix':os.path.expanduser('~'),
-                         'top-dir-name':'bitbake-builds',
-                         'registry':default_registry,
-                         'dl-dir':os.path.join(os.path.expanduser('~'), '.cache', 'bitbake-setup', 'downloads'),
-                         }
-    os.makedirs(os.path.dirname(settings_path), exist_ok=True)
-    print('Configuring global settings in\n    {}\n'.format(settings_path))
-    print('Top directory prefix (where all top level directories are created) set to\n    {}\n'.format(settings['default']['top-dir-prefix']))
-    print('Top directory name (this is added to the top directory prefix to form a top directory where builds are set up) set to\n    {}\n'.format(settings['default']['top-dir-name']))
-    print('Configuration registry set to\n    {}\n'.format(settings['default']['registry']))
-    print('Bitbake-setup download cache (DL_DIR) set to\n    {}\n'.format(settings['default']['dl-dir']))
-    if not non_interactive:
-        y_or_n = input('Write out the global settings as specified above (y/N)? ')
-        if y_or_n != 'y':
-            print("\nYou can run 'bitbake-setup install-global-settings' to edit them before setting up builds")
-            exit()
-        print()
-
     if os.path.exists(settings_path):
-        backup_conf = settings_path + "-backup.{}".format(time.strftime("%Y%m%d%H%M%S"))
-        os.rename(settings_path, backup_conf)
-        print("Previous global settings are in {}".format(backup_conf))
-    with open(settings_path, 'w') as settingsfile:
-        settings.write(settingsfile)
-
-def load_global_settings(settings_path, non_interactive):
-    if not os.path.exists(settings_path):
-        create_global_settings(settings_path, non_interactive=non_interactive)
-
-    settings = configparser.ConfigParser()
-    print('Loading global settings from\n    {}\n'.format(settings_path))
-    settings.read_file(open(settings_path))
+        print('Loading settings from\n    {}\n'.format(settings_path))
+        settings.read_file(open(settings_path))
     return settings
 
-def change_setting(settings_path, settings, args):
+def change_setting(top_dir, args):
+    if vars(args)['global']:
+        settings_path = global_settings_path(args)
+    else:
+        settings_path = default_settings_path(top_dir)
+    settings = load_settings(settings_path)
+
     if args.section and args.key and args.value:
+        if args.section not in settings.keys():
+            settings[args.section] = {}
         settings[args.section][args.key] = args.value
         print("Setting '{}' in section '{}' is changed to '{}'".format(args.key, args.section, args.value))
     if args.unset:
@@ -728,19 +682,21 @@ def change_setting(settings_path, settings, args):
             del settings[section][setting]
             print("Setting '{} in section '{}' is removed".format(setting, section))
 
+    os.makedirs(os.path.dirname(settings_path), exist_ok=True)
     with open(settings_path, 'w') as settingsfile:
         settings.write(settingsfile)
     print("New settings written to {}".format(settings_path))
 
-def setting_global(args):
-    settings = load_global_settings(global_settings_path(args), args.non_interactive)
-    settings_path = global_settings_path(args)
-    change_setting(settings_path, settings, args)
+def list_settings(all_settings):
+    for section, section_settings in all_settings.items():
+        for key, value in section_settings.items():
+            print("{} {} {}".format(section, key, value))
 
-def setting(top_dir, args):
-    settings = load_settings(top_dir, args.non_interactive)
-    settings_path = default_settings_path(top_dir)
-    change_setting(settings_path, settings, args)
+def settings_func(top_dir, all_settings, args):
+    if args.list:
+        list_settings(all_settings)
+    else:
+        change_setting(top_dir, args)
 
 def get_build_dir_via_bbpath():
     bbpath = os.environ.get('BBPATH')
@@ -766,11 +722,13 @@ def get_top_dir(args, settings):
     top_dir_name = settings['default']['top-dir-name']
     return os.path.join(top_dir_prefix, top_dir_name)
 
-def merge_settings(global_settings, local_settings, cmdline_settings):
-    all_settings = global_settings
-    for section, section_settings in local_settings.items():
-        for setting, value in section_settings.items():
-            all_settings[section][setting] = value
+def merge_settings(builtin_settings, global_settings, local_settings, cmdline_settings):
+    all_settings = builtin_settings
+
+    for s in (global_settings, local_settings):
+        for section, section_settings in s.items():
+            for setting, value in section_settings.items():
+                all_settings[section][setting] = value
 
     for (section, setting, value) in cmdline_settings:
         all_settings[section][setting] = value
@@ -824,16 +782,14 @@ def main():
     parser_install_buildtools.add_argument('--force', action='store_true', help='Force a reinstall of buildtools over the previous installation.')
     parser_install_buildtools.set_defaults(func=install_buildtools)
 
-    parser_install_global_settings = subparsers.add_parser('install-global-settings', help='Write a global settings file with default values')
-    parser_install_global_settings.set_defaults(func=create_global_settings)
-
-    parser_setting = subparsers.add_parser('setting', help='Set or unset a setting in a setting file (e.g. the default prefix and name of the top directory, the location of build configuration registry, downloads directory and other settings specific to a top directory)')
-    parser_setting.add_argument('section', nargs='?', help="Section in a settings file, typically 'default'")
-    parser_setting.add_argument('key', nargs='?', help="Name of the setting")
-    parser_setting.add_argument('value', nargs='?', help="Value of the setting")
-    parser_setting.add_argument('--global', action='store_true', help="Modify the setting in a global settings file, rather than one specific to a top directory")
-    parser_setting.add_argument('--unset', nargs=2, help="Unset a setting, e.g. 'bitbake-setup setting --unset default registry' would revert to the registry setting in a global settings file")
-    parser_setting.set_defaults(func=setting)
+    parser_settings = subparsers.add_parser('settings', help='List current settings, or set or unset a setting in a settings file (e.g. the default prefix and name of the top directory, the location of build configuration registry, downloads directory and other settings specific to a top directory)')
+    parser_settings.add_argument('section', nargs='?', help="Section in a settings file, typically 'default'")
+    parser_settings.add_argument('key', nargs='?', help="Name of the setting")
+    parser_settings.add_argument('value', nargs='?', help="Value of the setting")
+    parser_settings.add_argument('--global', action='store_true', help="Modify the setting in a global settings file, rather than one specific to a top directory")
+    parser_settings.add_argument('--unset', nargs=2, help="Unset a setting, e.g. 'bitbake-setup setting --unset default registry' would revert to the registry setting in a global settings file")
+    parser_settings.add_argument('-l' ,'--list', action='store_true', help="List all settings with their values")
+    parser_settings.set_defaults(func=settings_func)
 
     args = parser.parse_args()
 
@@ -850,10 +806,6 @@ def main():
                          level=logger.getEffectiveLevel())
 
     if 'func' in args:
-        if args.func == create_global_settings:
-            create_global_settings(global_settings_path(args))
-            return
-
         if hasattr(args, 'build_dir'):
             if not os.path.exists(os.path.join(args.build_dir,'build', 'init-build-env')):
                 print("Not a valid build directory: build/init-build-env does not exist in {}".format(args.build_dir))
@@ -862,23 +814,30 @@ def main():
         if not hasattr(args, 'non_interactive'):
             args.non_interactive = True
 
-        if args.func == setting and vars(args)['global']:
-            setting_global(args)
+        builtin_settings = {}
+        builtin_settings['default'] = {
+                         'top-dir-prefix':os.path.expanduser('~'),
+                         'top-dir-name':'bitbake-builds',
+                         'registry':default_registry,
+                         }
+
+        global_settings = load_settings(global_settings_path(args))
+        top_dir = get_top_dir(args, merge_settings(builtin_settings, global_settings, {}, args.setting))
+
+        # This cannot be set with the rest of the builtin settings as top_dir needs to be determined first
+        builtin_settings['default']['dl-dir'] = os.path.join(top_dir, '.bitbake-setup-downloads')
+
+        topdir_settings = load_settings(default_settings_path(top_dir))
+        all_settings = merge_settings(builtin_settings, global_settings, topdir_settings, args.setting)
+
+        if args.func == settings_func:
+            settings_func(top_dir, all_settings, args)
             return
 
-        global_settings = load_global_settings(global_settings_path(args), args.non_interactive)
-        top_dir = get_top_dir(args, merge_settings(global_settings, {}, args.setting))
+        print('Bitbake-setup is using {} as top directory ("bitbake-setup setting --help" shows how to change it).\n'.format(top_dir, global_settings_path(args)))
 
-        if args.func == setting:
-            setting(top_dir, args)
-            return
-
-        print('Bitbake-setup is using {} as top directory (can be changed by setting top dir prefix and name in {}).\n'.format(top_dir, global_settings_path(args)))
-
-        settings = load_settings(top_dir, args.non_interactive)
-        settings = merge_settings(global_settings, settings, args.setting)
-        d = init_bb_cache(top_dir, settings, args)
-        args.func(top_dir, settings, args, d)
+        d = init_bb_cache(top_dir, all_settings, args)
+        args.func(top_dir, all_settings, args, d)
         save_bb_cache()
     else:
         from argparse import Namespace

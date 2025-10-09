@@ -232,23 +232,28 @@ print("BBPATH is {{}}".format(os.environ["BBPATH"]))
         self.runbbsetup("--help")
 
         # set up global location for top-dir-prefix
-        out = self.runbbsetup("install-global-settings")
+        out = self.runbbsetup("settings --global default top-dir-prefix {}".format(self.tempdir))
         settings_path = "{}/global-config".format(self.tempdir)
         self.assertIn(settings_path, out[0])
-        out = self.runbbsetup("setting --global default top-dir-prefix {}".format(self.tempdir))
         self.assertIn("Setting 'top-dir-prefix' in section 'default' is changed to", out[0])
         self.assertIn("New settings written to".format(settings_path), out[0])
-        out = self.runbbsetup("setting --global default dl-dir {}".format(os.path.join(self.tempdir, 'downloads')))
+        out = self.runbbsetup("settings --global default dl-dir {}".format(os.path.join(self.tempdir, 'downloads')))
         self.assertIn("Setting 'dl-dir' in section 'default' is changed to", out[0])
         self.assertIn("New settings written to".format(settings_path), out[0])
 
         # check that writing settings works and then adjust them to point to
         # test registry repo
-        out = self.runbbsetup("setting default registry 'git://{};protocol=file;branch=master;rev=master'".format(self.registrypath))
+        out = self.runbbsetup("settings default registry 'git://{};protocol=file;branch=master;rev=master'".format(self.registrypath))
         settings_path = "{}/bitbake-builds/settings.conf".format(self.tempdir)
         self.assertIn(settings_path, out[0])
         self.assertIn("Setting 'registry' in section 'default' is changed to", out[0])
         self.assertIn("New settings written to".format(settings_path), out[0])
+
+        # check that listing settings works
+        out = self.runbbsetup("settings --list")
+        self.assertIn("default top-dir-prefix {}".format(self.tempdir), out[0])
+        self.assertIn("default dl-dir {}".format(os.path.join(self.tempdir, 'downloads')), out[0])
+        self.assertIn("default registry {}".format('git://{};protocol=file;branch=master;rev=master'.format(self.registrypath)), out[0])
 
         # check that 'list' produces correct output with no configs, one config and two configs
         out = self.runbbsetup("list")
