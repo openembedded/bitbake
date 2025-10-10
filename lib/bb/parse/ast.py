@@ -376,6 +376,27 @@ class AddFragmentsNode(AstNode):
 
         if not fragments:
             return
+
+        # Check for multiple builtin fragments setting the same variable
+        for builtin_fragment_key in builtin_fragments.keys():
+            builtin_fragments_list = list(
+                filter(
+                    lambda f: f.startswith(builtin_fragment_key + "/"),
+                    fragments.split(),
+                )
+            )
+            if len(builtin_fragments_list) > 1:
+                bb.warn(
+                    ("Multiple builtin fragments are enabled for %s via variable %s: %s. "
+                     "This likely points to a mis-configuration in the metadata, as only "
+                     "one of them should be set. The build will use the last value.")
+                    % (
+                        builtin_fragment_key,
+                        self.fragments_variable,
+                        " ".join(builtin_fragments_list),
+                    )
+                )
+
         for f in fragments.split():
             if check_and_set_builtin_fragment(f, data, builtin_fragments):
                 continue
