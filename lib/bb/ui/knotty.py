@@ -169,7 +169,6 @@ class TerminalFilter(object):
         self.stdinbackup = None
         self.interactive = sys.stdout.isatty()
         self.footer_present = False
-        self.lastpids = []
         self.lasttime = time.time()
         self.quiet = quiet
 
@@ -254,7 +253,6 @@ class TerminalFilter(object):
             return
         activetasks = self.helper.running_tasks
         failedtasks = self.helper.failed_tasks
-        runningpids = self.helper.running_pids
         currenttime = time.time()
         deltatime = currenttime - self.lasttime
 
@@ -283,7 +281,7 @@ class TerminalFilter(object):
         self._footer_buf.seek(0)
 
         tasks = []
-        for t in runningpids:
+        for t in activetasks.keys():
             start_time = activetasks[t].get("starttime", None)
             if start_time:
                 msg = "%s - %s (pid %s)" % (activetasks[t]["title"], self.elapsed(currenttime - start_time), activetasks[t]["pid"])
@@ -358,7 +356,6 @@ class TerminalFilter(object):
                     content = "%s: %s" % (tasknum, task)
                     print(content, file=self._footer_buf)
                 lines = lines + self.getlines(content)
-        self.lastpids = runningpids[:]
         self.lastcount = self.helper.tasknumber_current
 
         # Clear footer and Print buffer.
