@@ -106,7 +106,7 @@ class ProgressBar(object):
         if widgets is None:
             widgets = list(self._DEFAULT_WIDGETS)
 
-        self.maxval = maxval
+        self.maxval = maxval if maxval != 0 else self._DEFAULT_MAXVAL
         self.widgets = widgets
         self.fd = fd
         self.left_justify = left_justify
