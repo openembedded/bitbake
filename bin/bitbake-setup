@@ -443,7 +443,7 @@ def init_config(top_dir, settings, args, d):
 
     builddir = os.path.join(os.path.abspath(top_dir), args.build_dir_name or "{}-{}".format(upstream_config['name']," ".join(upstream_config['non-interactive-cmdline-options'][1:]).replace(" ","-").replace("/","_")))
     if os.path.exists(os.path.join(builddir, "layers")):
-        print("Build already initialized in {}\nUse 'bitbake-setup status' to check if it needs to be updated or 'bitbake-setup update' to perform the update.".format(builddir))
+        print(f"Build already initialized in:\n    {builddir}\nUse 'bitbake-setup status' to check if it needs to be updated, or 'bitbake-setup update' to perform the update.\nIf you would like to start over and re-initialize a build in this directory, remove it, and run 'bitbake-setup init' again.")
         return
 
     print("Initializing a build in\n    {}".format(builddir))
