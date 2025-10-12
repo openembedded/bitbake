@@ -670,22 +670,20 @@ def change_setting(top_dir, args):
         settings_path = default_settings_path(top_dir)
     settings = load_settings(settings_path)
 
-    if args.section and args.key and args.value:
+    if args.subcommand == 'set':
         if args.section not in settings.keys():
             settings[args.section] = {}
-        settings[args.section][args.key] = args.value
-        print("Setting '{}' in section '{}' is changed to '{}'".format(args.key, args.section, args.value))
-    if args.unset:
-        section = args.unset[0]
-        setting = args.unset[1]
-        if section in settings.keys() and setting in settings[section].keys():
-            del settings[section][setting]
-            print("Setting '{} in section '{}' is removed".format(setting, section))
+        settings[args.section][args.setting] = args.value
+        print(f"From section '{args.section}' the setting '{args.setting}' was changed to '{args.value}'")
+    if args.subcommand == 'unset':
+        if args.section in settings.keys() and args.setting in settings[args.section].keys():
+            del settings[args.section][args.setting]
+            print(f"From section '{args.section}' the setting '{args.setting}' has been removed")
 
     os.makedirs(os.path.dirname(settings_path), exist_ok=True)
     with open(settings_path, 'w') as settingsfile:
         settings.write(settingsfile)
-    print("New settings written to {}".format(settings_path))
+    print(f"Settings written to {settings_path}")
 
 def list_settings(all_settings):
     for section, section_settings in all_settings.items():
@@ -693,9 +691,9 @@ def list_settings(all_settings):
             print("{} {} {}".format(section, key, value))
 
 def settings_func(top_dir, all_settings, args):
-    if args.list:
+    if args.subcommand == 'list':
         list_settings(all_settings)
-    else:
+    elif args.subcommand == 'set' or args.subcommand == 'unset':
         change_setting(top_dir, args)
 
 def get_build_dir_via_bbpath():
@@ -784,14 +782,28 @@ def main():
     parser_install_buildtools.add_argument('--force', action='store_true', help='Force a reinstall of buildtools over the previous installation.')
     parser_install_buildtools.set_defaults(func=install_buildtools)
 
-    parser_settings = subparsers.add_parser('settings', help='List current settings, or set or unset a setting in a settings file (e.g. the default prefix and name of the top directory, the location of build configuration registry, downloads directory and other settings specific to a top directory)')
-    parser_settings.add_argument('section', nargs='?', help="Section in a settings file, typically 'default'")
-    parser_settings.add_argument('key', nargs='?', help="Name of the setting")
-    parser_settings.add_argument('value', nargs='?', help="Value of the setting")
-    parser_settings.add_argument('--global', action='store_true', help="Modify the setting in a global settings file, rather than one specific to a top directory")
-    parser_settings.add_argument('--unset', nargs=2, help="Unset a setting, e.g. 'bitbake-setup settings --unset default registry' would revert to the registry setting in a global settings file")
-    parser_settings.add_argument('-l' ,'--list', action='store_true', help="List all settings with their values")
+    parser_settings_arg_global = argparse.ArgumentParser(add_help=False)
+    parser_settings_arg_global.add_argument('--global', action='store_true', help="Modify the setting in a global settings file, rather than one specific to a top directory")
+
+    parser_settings = subparsers.add_parser('settings', parents=[parser_settings_arg_global],
+                                            help='List current settings, or set or unset a setting in a settings file (e.g. the default prefix and name of the top directory, the location of build configuration registry, downloads directory and other settings specific to a top directory)')
     parser_settings.set_defaults(func=settings_func)
+
+    subparser_settings = parser_settings.add_subparsers(dest="subcommand", required=True, help="The action to perform on the settings file")
+
+    parser_settings_list = subparser_settings.add_parser('list',
+                                                         help="List all settings with their values")
+
+    parser_settings_set = subparser_settings.add_parser('set', parents=[parser_settings_arg_global],
+                                                        help="In a Section, set a setting to a certain value")
+    parser_settings_set.add_argument("section", metavar="<section>", help="Section in a settings file, typically 'default'")
+    parser_settings_set.add_argument("setting", metavar="<setting>", help="Name of a setting")
+    parser_settings_set.add_argument("value", metavar="<value>", help="The setting value")
+
+    parser_settings_unset = subparser_settings.add_parser('unset', parents=[parser_settings_arg_global],
+                                                          help="Unset a setting, e.g. 'bitbake-setup settings unset default registry' would revert to the registry setting in a global settings file")
+    parser_settings_unset.add_argument("section", metavar="<section>", help="Section in a settings file, typically 'default'")
+    parser_settings_unset.add_argument("setting", metavar="<setting>", help="The setting to remove")
 
     args = parser.parse_args()
 

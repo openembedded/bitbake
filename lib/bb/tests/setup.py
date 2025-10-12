@@ -232,25 +232,25 @@ print("BBPATH is {{}}".format(os.environ["BBPATH"]))
         self.runbbsetup("--help")
 
         # set up global location for top-dir-prefix
-        out = self.runbbsetup("settings --global default top-dir-prefix {}".format(self.tempdir))
+        out = self.runbbsetup("settings set --global default top-dir-prefix {}".format(self.tempdir))
         settings_path = "{}/global-config".format(self.tempdir)
         self.assertIn(settings_path, out[0])
-        self.assertIn("Setting 'top-dir-prefix' in section 'default' is changed to", out[0])
-        self.assertIn("New settings written to".format(settings_path), out[0])
-        out = self.runbbsetup("settings --global default dl-dir {}".format(os.path.join(self.tempdir, 'downloads')))
-        self.assertIn("Setting 'dl-dir' in section 'default' is changed to", out[0])
-        self.assertIn("New settings written to".format(settings_path), out[0])
+        self.assertIn("From section 'default' the setting 'top-dir-prefix' was changed to", out[0])
+        self.assertIn("Settings written to".format(settings_path), out[0])
+        out = self.runbbsetup("settings set --global default dl-dir {}".format(os.path.join(self.tempdir, 'downloads')))
+        self.assertIn("From section 'default' the setting 'dl-dir' was changed to", out[0])
+        self.assertIn("Settings written to".format(settings_path), out[0])
 
         # check that writing settings works and then adjust them to point to
         # test registry repo
-        out = self.runbbsetup("settings default registry 'git://{};protocol=file;branch=master;rev=master'".format(self.registrypath))
+        out = self.runbbsetup("settings set default registry 'git://{};protocol=file;branch=master;rev=master'".format(self.registrypath))
         settings_path = "{}/bitbake-builds/settings.conf".format(self.tempdir)
         self.assertIn(settings_path, out[0])
-        self.assertIn("Setting 'registry' in section 'default' is changed to", out[0])
-        self.assertIn("New settings written to".format(settings_path), out[0])
+        self.assertIn("From section 'default' the setting 'registry' was changed to", out[0])
+        self.assertIn("Settings written to".format(settings_path), out[0])
 
         # check that listing settings works
-        out = self.runbbsetup("settings --list")
+        out = self.runbbsetup("settings list")
         self.assertIn("default top-dir-prefix {}".format(self.tempdir), out[0])
         self.assertIn("default dl-dir {}".format(os.path.join(self.tempdir, 'downloads')), out[0])
         self.assertIn("default registry {}".format('git://{};protocol=file;branch=master;rev=master'.format(self.registrypath)), out[0])
