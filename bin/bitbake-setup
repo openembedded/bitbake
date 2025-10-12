@@ -752,7 +752,8 @@ def main():
     parser.add_argument('--color', choices=['auto', 'always', 'never'], default='auto', help='Colorize output (where %(metavar)s is %(choices)s)', metavar='COLOR')
     parser.add_argument('--no-network', action='store_true', help='Do not check whether configuration repositories and layer repositories have been updated; use only the local cache.')
     parser.add_argument('--global-settings', action='store', help='Path to the global settings file.')
-    parser.add_argument('--setting', default=[], action='append', nargs=3, help='Modify a setting (for this bitbake-setup invocation only), for example "--setting default top-dir-prefix /path/to/top/dir".')
+    parser.add_argument('--setting', default=[], dest='cmdline_settings', action='append', nargs=3,
+                        help='Modify a setting (for this bitbake-setup invocation only), for example "--setting default top-dir-prefix /path/to/top/dir".')
 
     subparsers = parser.add_subparsers()
 
@@ -822,13 +823,13 @@ def main():
                          }
 
         global_settings = load_settings(global_settings_path(args))
-        top_dir = get_top_dir(args, merge_settings(builtin_settings, global_settings, {}, args.setting))
+        top_dir = get_top_dir(args, merge_settings(builtin_settings, global_settings, {}, args.cmdline_settings))
 
         # This cannot be set with the rest of the builtin settings as top_dir needs to be determined first
         builtin_settings['default']['dl-dir'] = os.path.join(top_dir, '.bitbake-setup-downloads')
 
         topdir_settings = load_settings(default_settings_path(top_dir))
-        all_settings = merge_settings(builtin_settings, global_settings, topdir_settings, args.setting)
+        all_settings = merge_settings(builtin_settings, global_settings, topdir_settings, args.cmdline_settings)
 
         if args.func == settings_func:
             settings_func(top_dir, all_settings, args)
