@@ -787,7 +787,7 @@ def main():
     parser_settings.add_argument('key', nargs='?', help="Name of the setting")
     parser_settings.add_argument('value', nargs='?', help="Value of the setting")
     parser_settings.add_argument('--global', action='store_true', help="Modify the setting in a global settings file, rather than one specific to a top directory")
-    parser_settings.add_argument('--unset', nargs=2, help="Unset a setting, e.g. 'bitbake-setup setting --unset default registry' would revert to the registry setting in a global settings file")
+    parser_settings.add_argument('--unset', nargs=2, help="Unset a setting, e.g. 'bitbake-setup settings --unset default registry' would revert to the registry setting in a global settings file")
     parser_settings.add_argument('-l' ,'--list', action='store_true', help="List all settings with their values")
     parser_settings.set_defaults(func=settings_func)
 
@@ -834,7 +834,7 @@ def main():
             settings_func(top_dir, all_settings, args)
             return
 
-        print('Bitbake-setup is using {} as top directory ("bitbake-setup setting --help" shows how to change it).\n'.format(top_dir, global_settings_path(args)))
+        print('Bitbake-setup is using {} as top directory ("bitbake-setup settings --help" shows how to change it).\n'.format(top_dir, global_settings_path(args)))
 
         d = init_bb_cache(top_dir, all_settings, args)
         args.func(top_dir, all_settings, args, d)
