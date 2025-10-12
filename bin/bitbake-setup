@@ -751,8 +751,9 @@ def main():
     parser.add_argument('-q', '--quiet', help='Print only errors', action='store_true')
     parser.add_argument('--color', choices=['auto', 'always', 'never'], default='auto', help='Colorize output (where %(metavar)s is %(choices)s)', metavar='COLOR')
     parser.add_argument('--no-network', action='store_true', help='Do not check whether configuration repositories and layer repositories have been updated; use only the local cache.')
-    parser.add_argument('--global-settings', action='store', help='Path to the global settings file.')
-    parser.add_argument('--setting', default=[], dest='cmdline_settings', action='append', nargs=3,
+    parser.add_argument('--global-settings', action='store', metavar='PATH', help='Path to the global settings file.')
+    parser.add_argument('--setting', default=[], action='append', dest='cmdline_settings',
+                        nargs=3, metavar=('SECTION', 'SETTING', 'VALUE'),
                         help='Modify a setting (for this bitbake-setup invocation only), for example "--setting default top-dir-prefix /path/to/top/dir".')
 
     subparsers = parser.add_subparsers()
