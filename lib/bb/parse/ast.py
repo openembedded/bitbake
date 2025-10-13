@@ -364,8 +364,16 @@ class AddFragmentsNode(AstNode):
         def check_and_set_builtin_fragment(fragment, data, builtin_fragments):
             prefix, value = fragment.split('/', 1)
             if prefix in builtin_fragments.keys():
+                fragment_history = data.varhistory.variable(self.fragments_variable)
+                loginfo={}
+                for fh in fragment_history[::-1]:
+                    if fh['op'] in ("set", "append") and fragment in fh["detail"]:
+                        loginfo["file"]   = fh["file"]
+                        loginfo["line"]   = fh["line"]
+                        loginfo["detail"] = f"{value} ({self.fragments_variable} contains \"{fragment}\")"
+                        break
                 # parsing=True since we want to emulate X=Y and allow X:override=Z to continue to exist
-                data.setVar(builtin_fragments[prefix], value, parsing=True)
+                data.setVar(builtin_fragments[prefix], value, parsing=True, **loginfo)
                 return True
             return False
 
