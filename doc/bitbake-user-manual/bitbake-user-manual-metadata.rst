@@ -2228,12 +2228,12 @@ OpenEmbedded metadata-based example.
 These checksums are stored in :term:`STAMP`. You can
 examine the checksums using the following BitBake command::
 
-   $ bitbake-dumpsigs
+   $ bitbake-dumpsig
 
 This command returns the signature data in a readable
 format that allows you to examine the inputs used when the OpenEmbedded
 build system generates signatures. For example, using
-``bitbake-dumpsigs`` allows you to examine the ``do_compile`` task's
+``bitbake-dumpsig`` allows you to examine the ``do_compile`` task's
 "sigdata" for a C application (e.g. ``bash``). Running the command also
 reveals that the "CC" variable is part of the inputs that are hashed.
 Any changes to this variable would invalidate the stamp and cause the
