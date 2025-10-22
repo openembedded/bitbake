@@ -173,6 +173,11 @@ govern the behavior of the unpack stage:
 -  *subdir:* Unpacks the specific URL to the specified subdirectory
    within the root directory.
 
+-  *name:* Assigns a name to a given component of the :term:`SRC_URI`.
+   This component is later referenced by this name when specifying its
+   :term:`SRCREV` or :term:`SRC_URI` checksum, or to correctly place its
+   revision in the package version string with aid of :term:`SRCREV_FORMAT`.
+
 The unpack call automatically decompresses and extracts files with ".Z",
 ".z", ".gz", ".xz", ".zip", ".jar", ".ipk", ".rpm". ".srpm", ".deb" and
 ".bz2" extensions as well as various combinations of tarball extensions.
@@ -453,7 +458,7 @@ This fetcher supports the following parameters:
    By default, the path is ``git/``.
 
 -  *"usehead":* Enables local ``git://`` URLs to use the current branch
-   HEAD as the revision for use with ``AUTOREV``. The "usehead"
+   HEAD as the revision for use with :term:`AUTOREV`. The "usehead"
    parameter implies no branch and only works when the transfer protocol
    is ``file://``.
 
@@ -843,4 +848,42 @@ submodules. However, you might find the code helpful and readable.
 Auto Revisions
 ==============
 
-We need to document ``AUTOREV`` and :term:`SRCREV_FORMAT` here.
+For recipes which need to use the latest revision of their source code,
+the way to achieve it is to use :term:`AUTOREV` as the value of the
+source code repository's :term:`SRCREV`::
+
+   SRCREV = "${AUTOREV}"
+
+.. note::
+
+   With :term:`AUTOREV`, BitBake will always need to take the additional step of
+   querying the remote repository to retrieve the latest available revision.
+
+   Also, recipes using it are not part of the parsing-time cache,
+   and hence are parsed every time.
+
+Multiple Source Control Repositories
+====================================
+
+For some recipes it is necessary to make use of more than one
+version controlled source code repository. In such case, the recipe
+must provide BitBake with information about how it should include
+the different SCM revisions in its package version string, instead of its
+usual approach with a single :term:`SRCREV`.
+
+For this purpose, the recipe must set the :term:`SRCREV_FORMAT`
+variable. Consider the following example::
+
+   SRC_URI = " \
+       git://git.some.example.com/source-tree.git;name=machine \
+       git://git.some.example.com/metadata.git;name=meta \
+       "
+   SRCREV_machine = "3f9db490a81eeb0077be3c5a5aa1388a2372232f"
+   SRCREV_meta = "1ac1d0ff730fe1dd1371823d562db8126750a98c"
+   SRCREV_FORMAT ?= "meta_machine"
+
+The value given to :term:`SRCREV_FORMAT` references names, which were
+assigned using the ``name`` parameter in the :term:`SRC_URI` definition,
+and which represent the version controlled source code repositories.
+In the above example, the :term:`SRC_URI` contained two URLs named
+"meta" and "machine".
