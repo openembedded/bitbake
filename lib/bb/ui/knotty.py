@@ -260,16 +260,16 @@ class TerminalFilter(object):
             self.helper.needUpdate = True
             need_update = self.helper.needUpdate
         else:
-            # Do not let to update faster then _DEFAULT_PRINT_INTERVAL
+            # Do not update faster than _DEFAULT_PRINT_INTERVAL
             # to avoid heavy print() flooding.
             need_update = self.helper.needUpdate and (deltatime > self._DEFAULT_PRINT_INTERVAL)
 
-        if self.footer_present and (not need_update):
-            # Footer update is not need.
+        if self.footer_present and not need_update:
+            # Footer update is not needed.
             return
-        else:
-            # Footer update is need and store its "lasttime" value.
-            self.lasttime = currenttime
+ 
+        # Remember the time when the footer was last updated.
+        self.lasttime = currenttime
 
         self.helper.needUpdate = False
         if (not self.helper.tasknumber_total or self.helper.tasknumber_current == self.helper.tasknumber_total) and not len(activetasks):
@@ -281,16 +281,16 @@ class TerminalFilter(object):
         self._footer_buf.seek(0)
 
         tasks = []
-        for t in activetasks.keys():
-            start_time = activetasks[t].get("starttime", None)
+        for task in activetasks.values():
+            start_time = task.get("starttime", None)
             if start_time:
-                msg = "%s - %s (pid %s)" % (activetasks[t]["title"], self.elapsed(currenttime - start_time), activetasks[t]["pid"])
+                msg = "%s - %s (pid %s)" % (task["title"], self.elapsed(currenttime - start_time), task["pid"])
             else:
-                msg = "%s (pid %s)" % (activetasks[t]["title"], activetasks[t]["pid"])
-            progress = activetasks[t].get("progress", None)
+                msg = "%s (pid %s)" % (task["title"], task["pid"])
+            progress = task.get("progress", None)
             if progress is not None:
-                pbar = activetasks[t].get("progressbar", None)
-                rate = activetasks[t].get("rate", None)
+                pbar = task.get("progressbar", None)
+                rate = task.get("rate", None)
                 if not pbar or pbar.bouncing != (progress < 0):
                     if progress < 0:
                         pbar = BBProgress("0: %s" % msg, 100, widgets=[' ', progressbar.BouncingSlider(), ''], extrapos=3, resize_handler=self.sigwinch_handle)
@@ -299,7 +299,7 @@ class TerminalFilter(object):
                         pbar = BBProgress("0: %s" % msg, 100, widgets=[' ', progressbar.Percentage(), ' ', progressbar.Bar(), ''], extrapos=5, resize_handler=self.sigwinch_handle)
                         pbar.bouncing = False
                     pbar.fd = self._footer_buf
-                    activetasks[t]["progressbar"] = pbar
+                    task["progressbar"] = pbar
                 tasks.append((pbar, msg, progress, rate, start_time))
             else:
                 tasks.append(msg)
