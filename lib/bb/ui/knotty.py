@@ -39,6 +39,7 @@ interactive = sys.stdout.isatty()
 
 class BBProgress(progressbar.ProgressBar):
     def __init__(self, msg, maxval, widgets=None, extrapos=-1, resize_handler=None):
+        self.id = msg
         self.msg = msg
         self.extrapos = extrapos
         if not widgets:
@@ -84,6 +85,7 @@ class NonInteractiveProgress(object):
     fobj = sys.stdout
 
     def __init__(self, msg, maxval):
+        self.id = msg
         self.msg = msg
         self.maxval = maxval
         self.finished = False
@@ -886,23 +888,23 @@ def main(server, eventHandler, params, tf = TerminalFilter):
                 if params.options.quiet > 1:
                     continue
                 termfilter.clearFooter()
+                if parseprogress:
+                    parseprogress.finish()
                 parseprogress = new_progress(event.processname, event.total)
                 parseprogress.start(False)
                 continue
             if isinstance(event, bb.event.ProcessProgress):
                 if params.options.quiet > 1:
                     continue
-                if parseprogress:
+                if parseprogress and parseprogress.id == event.processname:
                     parseprogress.update(event.progress)
-                else:
-                    bb.warn("Got ProcessProgress event for someting that never started?")
                 continue
             if isinstance(event, bb.event.ProcessFinished):
                 if params.options.quiet > 1:
                     continue
-                if parseprogress:
+                if parseprogress and parseprogress.id == event.processname:
                     parseprogress.finish()
-                parseprogress = None
+                    parseprogress = None
                 continue
 
             # ignore
