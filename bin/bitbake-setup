@@ -785,7 +785,7 @@ def main():
     parser_settings_arg_global = argparse.ArgumentParser(add_help=False)
     parser_settings_arg_global.add_argument('--global', action='store_true', help="Modify the setting in a global settings file, rather than one specific to a top directory")
 
-    parser_settings = subparsers.add_parser('settings', parents=[parser_settings_arg_global],
+    parser_settings = subparsers.add_parser('settings',
                                             help='List current settings, or set or unset a setting in a settings file (e.g. the default prefix and name of the top directory, the location of build configuration registry, downloads directory and other settings specific to a top directory)')
     parser_settings.set_defaults(func=settings_func)
 
