@@ -418,7 +418,7 @@ class AddFragmentsNode(AstNode):
                     data.setVarFlag(flagged_var, f, val)
                     data.setVar(flagged_var, None)
             else:
-                bb.error("Could not find fragment {} in enabled layers: {}".format(f, layers))
+                bb.fatal("Could not find fragment {} in enabled layers: {}".format(f, layers))
 
 def handleInclude(statements, filename, lineno, m, force):
     statements.append(IncludeNode(filename, lineno, m.group(1), force))
