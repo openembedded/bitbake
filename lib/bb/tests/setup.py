@@ -100,8 +100,7 @@ print("BBPATH is {{}}".format(os.environ["BBPATH"]))
                 },
                 "branch": "%s",
                 "rev": "%s"
-            },
-            "path": "test-repo"
+            }
         }
     },
     "description": "Test configuration",

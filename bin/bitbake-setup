@@ -93,7 +93,7 @@ def checkout_layers(layers, layerdir, d):
     print("Fetching layer/tool repositories into {}".format(layerdir))
     for r_name in layers:
         r_data = layers[r_name]
-        repodir = r_data["path"]
+        repodir = r_data.get("path", r_name)
         repodirs.append(repodir)
 
         r_remote = r_data['git-remote']
@@ -521,7 +521,7 @@ def are_layers_changed(layers, layerdir, d):
     changed = False
     for r_name in layers:
         r_data = layers[r_name]
-        repodir = r_data["path"]
+        repodir = r_data.get("path", r_name)
 
         r_remote = r_data['git-remote']
         rev = r_remote['rev']
