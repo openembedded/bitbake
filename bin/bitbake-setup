@@ -114,7 +114,7 @@ def checkout_layers(layers, layerdir, d):
                 os.remove(symlink)
             os.symlink(os.path.relpath(t,layerdir),symlink)
 
-def setup_bitbake_build(bitbake_config, layerdir, builddir, thisdir):
+def setup_bitbake_build(bitbake_config, layerdir, setupdir, thisdir):
     def _setup_build_conf(layers, build_conf_dir):
         os.makedirs(build_conf_dir)
         layers_s = []
@@ -188,7 +188,7 @@ def setup_bitbake_build(bitbake_config, layerdir, builddir, thisdir):
             f.write('\n')
             f.write(content)
 
-    bitbake_builddir = os.path.join(builddir, "build")
+    bitbake_builddir = os.path.join(setupdir, "build")
     print("Setting up bitbake configuration in\n    {}\n".format(bitbake_builddir))
 
     template = bitbake_config.get("oe-template")
@@ -220,7 +220,7 @@ def setup_bitbake_build(bitbake_config, layerdir, builddir, thisdir):
     _prepend_passthrough_to_init_build_env(bitbake_builddir)
 
     siteconf_symlink = os.path.join(bitbake_confdir, "site.conf")
-    siteconf = os.path.normpath(os.path.join(builddir, '..', "site.conf"))
+    siteconf = os.path.normpath(os.path.join(setupdir, '..', "site.conf"))
     if os.path.lexists(siteconf_symlink):
         os.remove(symlink)
     os.symlink(os.path.relpath(siteconf, bitbake_confdir) ,siteconf_symlink)
@@ -267,7 +267,7 @@ def get_registry_config(registry_path, id):
                 return os.path.join(root, f)
     raise Exception("Unable to find {} in available configurations; use 'list' sub-command to see what is available".format(id))
 
-def update_build(config, confdir, builddir, layerdir, d):
+def update_build(config, confdir, setupdir, layerdir, d):
     layer_config = config["data"]["sources"]
     layer_overrides = config["source-overrides"]["sources"]
     for k,v in layer_overrides.items():
@@ -276,7 +276,7 @@ def update_build(config, confdir, builddir, layerdir, d):
     checkout_layers(layer_config, layerdir, d)
     bitbake_config = config["bitbake-config"]
     thisdir = os.path.dirname(config["path"]) if config["type"] == 'local' else None
-    setup_bitbake_build(bitbake_config, layerdir, builddir, thisdir)
+    setup_bitbake_build(bitbake_config, layerdir, setupdir, thisdir)
 
 def int_input(allowed_values):
     n = None
@@ -441,22 +441,22 @@ def init_config(top_dir, settings, args, d):
     upstream_config = obtain_config(top_dir, settings, args, source_overrides, d)
     print("\nRun 'bitbake-setup init --non-interactive {}' to select this configuration non-interactively.\n".format(" ".join(upstream_config['non-interactive-cmdline-options'])))
 
-    builddir = os.path.join(os.path.abspath(top_dir), args.build_dir_name or "{}-{}".format(upstream_config['name']," ".join(upstream_config['non-interactive-cmdline-options'][1:]).replace(" ","-").replace("/","_")))
-    if os.path.exists(os.path.join(builddir, "layers")):
-        print(f"Build already initialized in:\n    {builddir}\nUse 'bitbake-setup status' to check if it needs to be updated, or 'bitbake-setup update' to perform the update.\nIf you would like to start over and re-initialize a build in this directory, remove it, and run 'bitbake-setup init' again.")
+    setupdir = os.path.join(os.path.abspath(top_dir), args.setup_dir_name or "{}-{}".format(upstream_config['name']," ".join(upstream_config['non-interactive-cmdline-options'][1:]).replace(" ","-").replace("/","_")))
+    if os.path.exists(os.path.join(setupdir, "layers")):
+        print(f"Setup already initialized in:\n    {setupdir}\nUse 'bitbake-setup status' to check if it needs to be updated, or 'bitbake-setup update' to perform the update.\nIf you would like to start over and re-initialize in this directory, remove it, and run 'bitbake-setup init' again.")
         return
 
-    print("Initializing a build in\n    {}".format(builddir))
+    print("Initializing a setup directory in\n    {}".format(setupdir))
     if not args.non_interactive:
         y_or_n = input('Continue? (y/N): ')
         if y_or_n != 'y':
             exit()
         print()
 
-    os.makedirs(builddir, exist_ok=True)
+    os.makedirs(setupdir, exist_ok=True)
 
-    confdir = os.path.join(builddir, "config")
-    layerdir = os.path.join(builddir, "layers")
+    confdir = os.path.join(setupdir, "config")
+    layerdir = os.path.join(setupdir, "layers")
 
     os.makedirs(confdir)
     os.makedirs(layerdir)
@@ -471,7 +471,7 @@ def init_config(top_dir, settings, args, d):
 
     write_config(upstream_config, confdir)
     commit_config(confdir)
-    update_build(upstream_config, confdir, builddir, layerdir, d)
+    update_build(upstream_config, confdir, setupdir, layerdir, d)
 
     bb.event.remove("bb.build.TaskProgress", None)
 
@@ -513,10 +513,10 @@ def are_layers_changed(layers, layerdir, d):
     return changed
 
 def build_status(top_dir, settings, args, d, update=False):
-    builddir = args.build_dir
+    setupdir = args.setup_dir
 
-    confdir = os.path.join(builddir, "config")
-    layerdir = os.path.join(builddir, "layers")
+    confdir = os.path.join(setupdir, "config")
+    layerdir = os.path.join(setupdir, "layers")
 
     current_upstream_config = json.load(open(os.path.join(confdir, "config-upstream.json")))
 
@@ -530,20 +530,20 @@ def build_status(top_dir, settings, args, d, update=False):
     config_diff = bb.process.run('git -C {} diff'.format(confdir))[0]
 
     if config_diff:
-        print('\nConfiguration in {} has changed:\n{}'.format(builddir, config_diff))
+        print('\nConfiguration in {} has changed:\n{}'.format(setupdir, config_diff))
         if update:
             commit_config(confdir)
-            update_build(new_upstream_config, confdir, builddir, layerdir, d)
+            update_build(new_upstream_config, confdir, setupdir, layerdir, d)
         else:
             bb.process.run('git -C {} restore config-upstream.json'.format(confdir))
         return
 
     if are_layers_changed(current_upstream_config["data"]["sources"], layerdir, d):
         if update:
-            update_build(current_upstream_config, confdir, builddir, layerdir, d)
+            update_build(current_upstream_config, confdir, setupdir, layerdir, d)
         return
 
-    print("\nConfiguration in {} has not changed.".format(builddir))
+    print("\nConfiguration in {} has not changed.".format(setupdir))
 
 def build_update(top_dir, settings, args, d):
     build_status(top_dir, settings, args, d, update=True)
@@ -616,7 +616,7 @@ def list_configs(top_dir, settings, args, d):
         print("Available configurations written into {}".format(args.write_json))
 
 def install_buildtools(top_dir, settings, args, d):
-    buildtools_install_dir = os.path.join(args.build_dir, 'buildtools')
+    buildtools_install_dir = os.path.join(args.setup_dir, 'buildtools')
     if os.path.exists(buildtools_install_dir):
         if not args.force:
             print("Buildtools are already installed in {}.".format(buildtools_install_dir))
@@ -629,8 +629,8 @@ def install_buildtools(top_dir, settings, args, d):
             return
         shutil.rmtree(buildtools_install_dir)
 
-    install_buildtools = os.path.join(args.build_dir, 'layers/oe-scripts/install-buildtools')
-    buildtools_download_dir = os.path.join(args.build_dir, 'buildtools-downloads/{}'.format(time.strftime("%Y%m%d%H%M%S")))
+    install_buildtools = os.path.join(args.setup_dir, 'layers/oe-scripts/install-buildtools')
+    buildtools_download_dir = os.path.join(args.setup_dir, 'buildtools-downloads/{}'.format(time.strftime("%Y%m%d%H%M%S")))
     print("Buildtools archive is downloaded into {} and its content installed into {}".format(buildtools_download_dir, buildtools_install_dir))
     subprocess.check_call("{} -d {} --downloads-directory {}".format(install_buildtools, buildtools_install_dir, buildtools_download_dir), shell=True)
 
@@ -696,24 +696,24 @@ def settings_func(top_dir, all_settings, args):
     elif args.subcommand == 'set' or args.subcommand == 'unset':
         change_setting(top_dir, args)
 
-def get_build_dir_via_bbpath():
+def get_setup_dir_via_bbpath():
     bbpath = os.environ.get('BBPATH')
     if bbpath:
         bitbake_dir = os.path.normpath(bbpath.split(':')[0])
         if os.path.exists(os.path.join(bitbake_dir,'init-build-env')):
-            build_dir = os.path.dirname(bitbake_dir)
-            return build_dir
+            setup_dir = os.path.dirname(bitbake_dir)
+            return setup_dir
     return None
 
 def get_top_dir(args, settings):
-    build_dir_via_bbpath = get_build_dir_via_bbpath()
-    if build_dir_via_bbpath:
-        top_dir = os.path.dirname(build_dir_via_bbpath)
+    setup_dir_via_bbpath = get_setup_dir_via_bbpath()
+    if setup_dir_via_bbpath:
+        top_dir = os.path.dirname(setup_dir_via_bbpath)
         if os.path.exists(default_settings_path(top_dir)):
             return top_dir
 
-    if hasattr(args, 'build_dir'):
-        top_dir = os.path.dirname(os.path.normpath(args.build_dir))
+    if hasattr(args, 'setup_dir'):
+        top_dir = os.path.dirname(os.path.normpath(args.setup_dir))
         return top_dir
 
     top_dir_prefix = settings['default']['top-dir-prefix']
@@ -734,12 +734,12 @@ def merge_settings(builtin_settings, global_settings, local_settings, cmdline_se
     return all_settings
 
 def main():
-    def add_build_dir_arg(parser):
-        build_dir = get_build_dir_via_bbpath()
-        if build_dir:
-            parser.add_argument('--build-dir', default=build_dir, help="Path to the build, default is %(default)s via BBPATH")
+    def add_setup_dir_arg(parser):
+        setup_dir = get_setup_dir_via_bbpath()
+        if setup_dir:
+            parser.add_argument('--setup-dir', default=setup_dir, help="Path to the setup, default is %(default)s via BBPATH")
         else:
-            parser.add_argument('--build-dir', required=True, help="Path to the build")
+            parser.add_argument('--setup-dir', required=True, help="Path to the setup")
 
     parser = argparse.ArgumentParser(
         description="BitBake setup utility. Run with 'init' argument to get started.",
@@ -761,24 +761,24 @@ def main():
     parser_list.add_argument('--write-json', action='store', help='Write available configurations into a json file so they can be programmatically processed.')
     parser_list.set_defaults(func=list_configs)
 
-    parser_init = subparsers.add_parser('init', help='Select a configuration and initialize a build from it')
+    parser_init = subparsers.add_parser('init', help='Select a configuration and initialize a setup from it')
     parser_init.add_argument('config', nargs='*', help="path/URL/id to a configuration file (use 'list' command to get available ids), followed by configuration options. Bitbake-setup will ask to choose from available choices if command line doesn't completely specify them.")
     parser_init.add_argument('--non-interactive', action='store_true', help='Do not ask to interactively choose from available options; if bitbake-setup cannot make a decision it will stop with a failure.')
     parser_init.add_argument('--source-overrides', action='store', help='Override sources information (repositories/revisions) with values from a local json file.')
-    parser_init.add_argument('--build-dir-name', action='store', help='A custom build directory name under the top directory.')
+    parser_init.add_argument('--setup-dir-name', action='store', help='A custom setup directory name under the top directory.')
     parser_init.add_argument('--skip-selection', action='append', help='Do not select and set an option/fragment from available choices; the resulting bitbake configuration may be incomplete.')
     parser_init.set_defaults(func=init_config)
 
-    parser_status = subparsers.add_parser('status', help='Check if the build needs to be synchronized with configuration')
-    add_build_dir_arg(parser_status)
+    parser_status = subparsers.add_parser('status', help='Check if the setup needs to be synchronized with configuration')
+    add_setup_dir_arg(parser_status)
     parser_status.set_defaults(func=build_status)
 
-    parser_update = subparsers.add_parser('update', help='Update a build to be in sync with configuration')
-    add_build_dir_arg(parser_update)
+    parser_update = subparsers.add_parser('update', help='Update a setup to be in sync with configuration')
+    add_setup_dir_arg(parser_update)
     parser_update.set_defaults(func=build_update)
 
     parser_install_buildtools = subparsers.add_parser('install-buildtools', help='Install buildtools which can help fulfil missing or incorrect dependencies on the host machine')
-    add_build_dir_arg(parser_install_buildtools)
+    add_setup_dir_arg(parser_install_buildtools)
     parser_install_buildtools.add_argument('--force', action='store_true', help='Force a reinstall of buildtools over the previous installation.')
     parser_install_buildtools.set_defaults(func=install_buildtools)
 
@@ -786,7 +786,7 @@ def main():
     parser_settings_arg_global.add_argument('--global', action='store_true', help="Modify the setting in a global settings file, rather than one specific to a top directory")
 
     parser_settings = subparsers.add_parser('settings',
-                                            help='List current settings, or set or unset a setting in a settings file (e.g. the default prefix and name of the top directory, the location of build configuration registry, downloads directory and other settings specific to a top directory)')
+                                            help='List current settings, or set or unset a setting in a settings file (e.g. the default prefix and name of the top directory, the location of configuration registry, downloads directory and other settings specific to a top directory)')
     parser_settings.set_defaults(func=settings_func)
 
     subparser_settings = parser_settings.add_subparsers(dest="subcommand", required=True, help="The action to perform on the settings file")
@@ -820,9 +820,9 @@ def main():
                          level=logger.getEffectiveLevel())
 
     if 'func' in args:
-        if hasattr(args, 'build_dir'):
-            if not os.path.exists(os.path.join(args.build_dir,'build', 'init-build-env')):
-                print("Not a valid build directory: build/init-build-env does not exist in {}".format(args.build_dir))
+        if hasattr(args, 'setup_dir'):
+            if not os.path.exists(os.path.join(args.setup_dir,'build', 'init-build-env')):
+                print("Not a valid setup directory: build/init-build-env does not exist in {}".format(args.setup_dir))
                 return
 
         if not hasattr(args, 'non_interactive'):
