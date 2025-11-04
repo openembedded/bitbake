@@ -10,8 +10,7 @@
                 },
                 "branch": "master",
                 "rev": "master"
-            },
-            "path": "bitbake"
+            }
         },
         "openembedded-core": {
             "git-remote": {
@@ -22,8 +21,7 @@
                 },
                 "branch": "master",
                 "rev": "master"
-            },
-            "path": "openembedded-core"
+            }
         },
         "yocto-docs": {
             "git-remote": {
@@ -34,8 +32,7 @@
                 },
                 "branch": "master",
                 "rev": "master"
-            },
-            "path": "yocto-docs"
+            }
         }
     },
     "bitbake-setup": {
