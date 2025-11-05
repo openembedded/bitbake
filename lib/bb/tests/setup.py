@@ -187,6 +187,12 @@ print("BBPATH is {{}}".format(os.environ["BBPATH"]))
         bb_conf_path = os.path.join(bb_build_path, 'conf')
         self.assertTrue(os.path.exists(os.path.join(bb_build_path, 'init-build-env')))
 
+        with open(os.path.join(setuppath, 'config', "sources-fixed-revisions.json")) as f:
+            sources_fixed_revisions = json.load(f)
+        self.assertTrue('test-repo' in sources_fixed_revisions['sources'].keys())
+        revision = self.git('rev-parse HEAD', cwd=self.testrepopath).strip()
+        self.assertEqual(revision, sources_fixed_revisions['sources']['test-repo']['git-remote']['rev'])
+
         if "oe-template" in bitbake_config:
             with open(os.path.join(bb_conf_path, 'conf-summary.txt')) as f:
                 self.assertEqual(f.read(), bitbake_config["oe-template"])
