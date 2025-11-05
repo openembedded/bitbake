@@ -90,13 +90,14 @@ def checkout_layers(layers, layerdir, d):
         remotes = r_remote['remotes']
 
         for remote in remotes:
-            type,host,path,user,pswd,params = bb.fetch.decodeurl(remotes[remote]["uri"])
+            prot,host,path,user,pswd,params = bb.fetch.decodeurl(remotes[remote]["uri"])
             fetchuri = bb.fetch.encodeurl(('git',host,path,user,pswd,params))
             print("    {}".format(r_name))
             if branch:
-                fetcher = bb.fetch.Fetch(["{};protocol={};rev={};branch={};destsuffix={}".format(fetchuri,type,rev,branch,repodir)], d)
+                src_uri = f"{fetchuri};protocol={prot};rev={rev};branch={branch};destsuffix={repodir}"
             else:
-                fetcher = bb.fetch.Fetch(["{};protocol={};rev={};nobranch=1;destsuffix={}".format(fetchuri,type,rev,repodir)], d)
+                src_uri = f"{fetchuri};protocol={prot};rev={rev};nobranch=1;destsuffix={repodir}"
+            fetcher = bb.fetch.Fetch([src_uri], d)
             do_fetch(fetcher, layerdir)
 
         if os.path.exists(os.path.join(layerdir, repodir, 'scripts/oe-setup-build')):
