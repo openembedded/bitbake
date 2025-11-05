@@ -145,7 +145,7 @@ class TerminalFilter(object):
                 pass
         if not cr:
             try:
-                cr = (os.environ['LINES'], os.environ['COLUMNS'])
+                cr = (int(os.environ['LINES']), int(os.environ['COLUMNS']))
             except:
                 cr = (25, 80)
         return cr
