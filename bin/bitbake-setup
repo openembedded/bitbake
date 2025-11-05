@@ -726,9 +726,13 @@ def merge_settings(builtin_settings, global_settings, topdir_settings, cmdline_s
     for s in (global_settings, topdir_settings):
         for section, section_settings in s.items():
             for setting, value in section_settings.items():
+                if section not in all_settings.keys():
+                    all_settings[section] = {}
                 all_settings[section][setting] = value
 
     for (section, setting, value) in cmdline_settings:
+        if section not in all_settings.keys():
+            all_settings[section] = {}
         all_settings[section][setting] = value
 
     return all_settings
