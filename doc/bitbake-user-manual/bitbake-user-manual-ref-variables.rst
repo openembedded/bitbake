@@ -403,6 +403,23 @@ overview of their function and contents.
 
       For example usage, see :term:`BB_GIT_SHALLOW`.
 
+   :term:`BB_GIT_SHALLOW_EXTRA_REFS`
+      With :term:`BB_GIT_SHALLOW` enabled, by default, all unused refs (branches
+      and tags) are removed from the repository, as shallow processing scales
+      with the number of refs it has to process.
+
+      :term:`BB_GIT_SHALLOW_EXTRA_REFS` allows to explicitly specify additional
+      refs to keep. This is particularly useful for recipes with custom checkout
+      processes, or whose Git-based versioning requires a tag be available (i.e.
+      for ``git describe --tags``). The :term:`BB_GIT_SHALLOW_EXTRA_REFS`
+      variable is a space-separated list of refs, fully specified, and supports
+      wildcards.
+
+      Example usage::
+
+         BB_GIT_SHALLOW_EXTRA_REFS = "refs/tags/v1.0"
+         BB_GIT_SHALLOW_EXTRA_REFS += "refs/heads/*"
+
    :term:`BB_GLOBAL_PYMODULES`
       Specifies the list of Python modules to place in the global namespace.
       It is intended that only the core layer should set this and it is meant
