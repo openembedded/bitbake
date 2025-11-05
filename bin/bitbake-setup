@@ -634,9 +634,6 @@ def install_buildtools(top_dir, settings, args, d):
     print("Buildtools archive is downloaded into {} and its content installed into {}".format(buildtools_download_dir, buildtools_install_dir))
     subprocess.check_call("{} -d {} --downloads-directory {}".format(install_buildtools, buildtools_install_dir, buildtools_download_dir), shell=True)
 
-def default_settings_path(top_dir):
-    return os.path.join(top_dir, 'settings.conf')
-
 def create_siteconf(top_dir, non_interactive=True):
     siteconfpath = os.path.join(top_dir, 'site.conf')
     print('A common site.conf file will be created, please edit or replace before running builds\n    {}\n'.format(siteconfpath))
@@ -653,6 +650,9 @@ def create_siteconf(top_dir, non_interactive=True):
     with open(siteconfpath, 'w') as siteconffile:
         siteconffile.write('# This file is intended for build host-specific bitbake settings\n')
 
+def topdir_settings_path(top_dir):
+    return os.path.join(top_dir, 'settings.conf')
+
 def global_settings_path(args):
     return os.path.abspath(args.global_settings) if args.global_settings else os.path.join(os.path.expanduser('~'), '.config', 'bitbake-setup', 'settings.conf')
 
@@ -667,7 +667,7 @@ def change_setting(top_dir, args):
     if vars(args)['global']:
         settings_path = global_settings_path(args)
     else:
-        settings_path = default_settings_path(top_dir)
+        settings_path = topdir_settings_path(top_dir)
     settings = load_settings(settings_path)
 
     if args.subcommand == 'set':
@@ -709,7 +709,7 @@ def get_top_dir(args, settings):
     setup_dir_via_bbpath = get_setup_dir_via_bbpath()
     if setup_dir_via_bbpath:
         top_dir = os.path.dirname(setup_dir_via_bbpath)
-        if os.path.exists(default_settings_path(top_dir)):
+        if os.path.exists(topdir_settings_path(top_dir)):
             return top_dir
 
     if hasattr(args, 'setup_dir'):
@@ -720,10 +720,10 @@ def get_top_dir(args, settings):
     top_dir_name = settings['default']['top-dir-name']
     return os.path.join(top_dir_prefix, top_dir_name)
 
-def merge_settings(builtin_settings, global_settings, local_settings, cmdline_settings):
+def merge_settings(builtin_settings, global_settings, topdir_settings, cmdline_settings):
     all_settings = builtin_settings
 
-    for s in (global_settings, local_settings):
+    for s in (global_settings, topdir_settings):
         for section, section_settings in s.items():
             for setting, value in section_settings.items():
                 all_settings[section][setting] = value
@@ -841,7 +841,7 @@ def main():
         # This cannot be set with the rest of the builtin settings as top_dir needs to be determined first
         builtin_settings['default']['dl-dir'] = os.path.join(top_dir, '.bitbake-setup-downloads')
 
-        topdir_settings = load_settings(default_settings_path(top_dir))
+        topdir_settings = load_settings(topdir_settings_path(top_dir))
         all_settings = merge_settings(builtin_settings, global_settings, topdir_settings, args.cmdline_settings)
 
         if args.func == settings_func:
