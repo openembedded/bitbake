@@ -129,7 +129,7 @@ def checkout_layers(layers, layerdir, d):
     return layers_fixed_revisions
 
 def setup_bitbake_build(bitbake_config, layerdir, setupdir, thisdir):
-    def _setup_build_conf(layers, relative_layers, build_conf_dir):
+    def _setup_build_conf(layers, filerelative_layers, build_conf_dir):
         os.makedirs(build_conf_dir)
         layers_s = []
 
@@ -137,11 +137,11 @@ def setup_bitbake_build(bitbake_config, layerdir, setupdir, thisdir):
             l = os.path.join(layerdir, l)
             layers_s.append("  {} \\".format(l))
 
-        for l in relative_layers:
+        for l in filerelative_layers:
             if thisdir:
                 l = os.path.join(thisdir, l)
             else:
-                raise Exception("Configuration is using bb-layers-relative to specify " \
+                raise Exception("Configuration is using bb-layers-file-relative to specify " \
                 "a layer path relative to itself. This can be done only " \
                 "when the configuration is specified by its path on local " \
                 "disk, not when it's in a registry or is fetched over http.")
@@ -223,8 +223,8 @@ def setup_bitbake_build(bitbake_config, layerdir, setupdir, thisdir):
         os.rename(bitbake_confdir, backup_bitbake_confdir)
 
     if layers:
-        relative_layers = bitbake_config.get("bb-layers-relative") or []
-        _setup_build_conf(layers, relative_layers, bitbake_confdir)
+        filerelative_layers = bitbake_config.get("bb-layers-file-relative") or []
+        _setup_build_conf(layers, filerelative_layers, bitbake_confdir)
 
     if template:
         bb.process.run("{} setup -c {} -b {} --no-shell".format(oesetupbuild, template, bitbake_builddir))

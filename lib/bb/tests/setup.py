@@ -148,10 +148,10 @@ print("BBPATH is {{}}".format(os.environ["BBPATH"]))
                 "oe-fragments": ["test-fragment-2"]
             },
             {
-                "name": "gizmo-notemplate-with-relative-layers",
-                "description": "Gizmo notemplate configuration using relative layers",
+                "name": "gizmo-notemplate-with-filerelative-layers",
+                "description": "Gizmo notemplate configuration using filerelative layers",
                 "bb-layers": ["layerC","layerD/meta-layer"],
-                "bb-layers-relative": ["layerE/meta-layer"],
+                "bb-layers-file-relative": ["layerE/meta-layer"],
                 "oe-fragments": ["test-fragment-2"]
             }
         ]
@@ -206,12 +206,12 @@ print("BBPATH is {{}}".format(os.environ["BBPATH"]))
                 bblayers = f.read()
                 for l in bitbake_config["bb-layers"]:
                     self.assertIn(os.path.join(setuppath, "layers", l), bblayers)
-                for l in bitbake_config.get("bb-layers-relative") or []:
-                    relative_layer = os.path.join(
+                for l in bitbake_config.get("bb-layers-file-relative") or []:
+                    filerelative_layer = os.path.join(
                             os.path.dirname(config_upstream["path"]),
                             l,
                         )
-                    self.assertIn(relative_layer, bblayers)
+                    self.assertIn(filerelative_layer, bblayers)
 
         if 'oe-fragment' in bitbake_config.keys():
             for f in bitbake_config["oe-fragments"]:
@@ -298,7 +298,7 @@ print("BBPATH is {{}}".format(os.environ["BBPATH"]))
                                                                   'gizmo-env-passthrough',
                                                                   'gizmo-no-fragment',
                                                                   'gadget-notemplate','gizmo-notemplate',
-                                                                  'gizmo-notemplate-with-relative-layers')}
+                                                                  'gizmo-notemplate-with-filerelative-layers')}
                                }
         for cf, v in test_configurations.items():
             for c in v['buildconfigs']:
