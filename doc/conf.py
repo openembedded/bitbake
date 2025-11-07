@@ -39,6 +39,7 @@ author = 'Richard Purdie, Chris Larson, and Phil Blundell'
 extlinks = {
     'yocto_docs': ('https://docs.yoctoproject.org%s', None),
     'oe_lists': ('https://lists.openembedded.org%s', None),
+    'wikipedia': ('https://en.wikipedia.org/wiki/%s', None),
 }
 
 # -- General configuration ---------------------------------------------------
