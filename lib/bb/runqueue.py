@@ -31,6 +31,7 @@ import time
 bblogger = logging.getLogger("BitBake")
 logger = logging.getLogger("BitBake.RunQueue")
 hashequiv_logger = logging.getLogger("BitBake.RunQueue.HashEquiv")
+psi_logger = logging.getLogger("BitBake.RunQueue.PSI")
 
 __find_sha256__ = re.compile( r'(?i)(?<![a-z0-9])[a-f0-9]{64}(?![a-z0-9])' )
 
@@ -221,7 +222,8 @@ class RunQueueScheduler(object):
             pressure_state = (exceeds_cpu_pressure, exceeds_io_pressure, exceeds_memory_pressure)
             pressure_values = (round(cpu_pressure,1), self.rq.max_cpu_pressure, round(io_pressure,1), self.rq.max_io_pressure, round(memory_pressure,1), self.rq.max_memory_pressure)
             if hasattr(self, "pressure_state") and pressure_state != self.pressure_state:
-                bb.note("Pressure status changed to CPU: %s, IO: %s, Mem: %s (CPU: %s/%s, IO: %s/%s, Mem: %s/%s) - using %s/%s bitbake threads" % (pressure_state + pressure_values + (len(self.rq.runq_running.difference(self.rq.runq_complete)), self.rq.number_tasks)))
+                psi_logger.verbose("Pressure status changed to CPU: %s, IO: %s, Mem: %s (CPU: %s/%s, IO: %s/%s, Mem: %s/%s) - using %s/%s bitbake threads" % (pressure_state + pressure_values + (len(self.rq.runq_running.difference(self.rq.runq_complete)), self.rq.number_tasks)))
+                bb.event.fire(PSIEvent(pressure_state, pressure_values), self.rq.cfgData)
             self.pressure_state = pressure_state
             return (exceeds_cpu_pressure or exceeds_io_pressure or exceeds_memory_pressure)
         elif self.rq.max_loadfactor:
@@ -3306,6 +3308,12 @@ class taskUniHashUpdate(bb.event.Event):
         self.taskid = task
         self.unihash = unihash
         bb.event.Event.__init__(self)
+
+class PSIEvent(bb.event.Event):
+    def __init__(self, pressure_state, pressure_values):
+        super().__init__()
+        self.pressure_state = pressure_state
+        self.pressure_values = pressure_values
 
 class runQueuePipe():
     """

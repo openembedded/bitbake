@@ -117,6 +117,20 @@ def pluralise(singular, plural, qty):
     else:
         return plural % qty
 
+def get_pressure_message(pressure_state, pressure_values):
+    cpu_pressure, io_pressure, mem_pressure = pressure_state
+    pressure_strs = []
+    if cpu_pressure:
+        pressure_strs.append("CPU pressure (>%sus)" % pressure_values[1])
+    if io_pressure:
+        pressure_strs.append("I/O pressure (>%sus)" % pressure_values[3])
+    if mem_pressure:
+        pressure_strs.append("MEM pressure (>%sus)" % pressure_values[5])
+
+    if not pressure_strs:
+        pressure_strs.append("No pressure")
+
+    return "%s is limiting task startup" % ", ".join(pressure_strs)
 
 class InteractConsoleLogFilter(logging.Filter):
     def __init__(self, tf):
@@ -124,7 +138,7 @@ class InteractConsoleLogFilter(logging.Filter):
         super().__init__()
 
     def filter(self, record):
-        if record.levelno == bb.msg.BBLogFormatter.NOTE and (record.msg.startswith("Running") or record.msg.startswith("recipe ")):
+        if record.levelno == bb.msg.BBLogFormatter.NOTE and (record.msg.startswith("Running") or record.msg.startswith("recipe ") or "limiting task startup" in record.msg):
             return False
         self.tf.clearFooter()
         return True
@@ -322,6 +336,11 @@ class TerminalFilter(object):
                 content += msg + "\n"
                 print(msg, file=self._footer_buf)
 
+                if any(self.helper.pressure_state):
+                    msg = get_pressure_message(self.helper.pressure_state, self.helper.pressure_values)
+                    content += msg + "\n"
+                    print(msg, file=self._footer_buf)
+
             if self.quiet:
                 msg = "Running tasks (%s, %s)" % (scene_tasks, cur_tasks)
             elif not len(activetasks):
@@ -435,7 +454,8 @@ _evt_list = [ "bb.runqueue.runQueueExitWait", "bb.event.LogExecTTY", "logging.Lo
               "bb.event.MultipleProviders", "bb.event.NoProvider", "bb.runqueue.sceneQueueTaskStarted",
               "bb.runqueue.runQueueTaskStarted", "bb.runqueue.runQueueTaskFailed", "bb.runqueue.sceneQueueTaskFailed",
               "bb.event.BuildBase", "bb.build.TaskStarted", "bb.build.TaskSucceeded", "bb.build.TaskFailedSilent",
-              "bb.build.TaskProgress", "bb.event.ProcessStarted", "bb.event.ProcessProgress", "bb.event.ProcessFinished"]
+              "bb.build.TaskProgress", "bb.event.ProcessStarted", "bb.event.ProcessProgress", "bb.event.ProcessFinished",
+              "bb.runqueue.PSIEvent"]
 
 def drain_events_errorhandling(eventHandler):
     # We don't have logging setup, we do need to show any events we see before exiting
@@ -587,6 +607,10 @@ def main(server, eventHandler, params, tf = TerminalFilter):
                         "handlers": ["BitBake.verbconsolelog"],
                     },
                     "BitBake.RunQueue.HashEquiv": {
+                        "level": "VERBOSE",
+                        "handlers": ["BitBake.verbconsolelog"],
+                    },
+                    "BitBake.RunQueue.PSI": {
                         "level": "VERBOSE",
                         "handlers": ["BitBake.verbconsolelog"],
                     }
@@ -905,6 +929,11 @@ def main(server, eventHandler, params, tf = TerminalFilter):
                 if parseprogress and parseprogress.id == event.processname:
                     parseprogress.finish()
                     parseprogress = None
+                continue
+            if isinstance(event, bb.runqueue.PSIEvent):
+                if params.options.quiet > 1:
+                    continue
+                logger.info(get_pressure_message(event.pressure_state, event.pressure_values))
                 continue
 
             # ignore

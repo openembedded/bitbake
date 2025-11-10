@@ -6,6 +6,7 @@
 #
 
 import bb.build
+import bb.runqueue
 import time
 
 class BBUIHelper:
@@ -17,6 +18,8 @@ class BBUIHelper:
         self.pidmap = {}
         self.tasknumber_current = 0
         self.tasknumber_total = 0
+        self.pressure_state = (False, False, False)
+        self.pressure_values = None
 
     def eventHandler(self, event):
         # PIDs are a bad idea as they can be reused before we process all UI events.
@@ -57,6 +60,10 @@ class BBUIHelper:
                 self.running_tasks[self.pidmap[event.pid]]['progress'] = event.progress
                 self.running_tasks[self.pidmap[event.pid]]['rate'] = event.rate
                 self.needUpdate = True
+        elif isinstance(event, bb.runqueue.PSIEvent):
+            self.pressure_state = event.pressure_state
+            self.pressure_values = event.pressure_values
+            self.needUpdate = True
         else:
             return False
         return True
