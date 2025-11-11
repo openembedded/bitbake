@@ -658,19 +658,18 @@ def install_buildtools(top_dir, settings, args, d):
 
 def create_siteconf(top_dir, non_interactive=True):
     siteconfpath = os.path.join(top_dir, 'site.conf')
-    print('A common site.conf file will be created, please edit or replace before running builds\n    {}\n'.format(siteconfpath))
-    if not non_interactive:
-        y_or_n = input('Proceed? (y/N): ')
-        if y_or_n != 'y':
-            exit()
-
-    os.makedirs(os.path.dirname(top_dir), exist_ok=True)
     if os.path.exists(siteconfpath):
-        backup_siteconf = siteconfpath + "-backup.{}".format(time.strftime("%Y%m%d%H%M%S"))
-        os.rename(siteconfpath, backup_siteconf)
-        print("Previous settings are in {}".format(backup_siteconf))
-    with open(siteconfpath, 'w') as siteconffile:
-        siteconffile.write('# This file is intended for build host-specific bitbake settings\n')
+        print('A site.conf file already exists. Please remove it if you would like to replace it with a default one')
+    else:
+        print('A common site.conf file will be created, please edit or replace before running builds\n    {}\n'.format(siteconfpath))
+        if not non_interactive:
+            y_or_n = input('Proceed? (y/N): ')
+            if y_or_n != 'y':
+                exit()
+
+        os.makedirs(os.path.dirname(top_dir), exist_ok=True)
+        with open(siteconfpath, 'w') as siteconffile:
+            siteconffile.write('# This file is intended for build host-specific bitbake settings\n')
 
 def topdir_settings_path(top_dir):
     return os.path.join(top_dir, 'settings.conf')
