@@ -240,8 +240,8 @@ def setup_bitbake_build(bitbake_config, layerdir, setupdir, thisdir):
     siteconf_symlink = os.path.join(bitbake_confdir, "site.conf")
     siteconf = os.path.normpath(os.path.join(setupdir, '..', "site.conf"))
     if os.path.lexists(siteconf_symlink):
-        os.remove(symlink)
-    os.symlink(os.path.relpath(siteconf, bitbake_confdir) ,siteconf_symlink)
+        os.remove(siteconf_symlink)
+    os.symlink(os.path.relpath(siteconf, bitbake_confdir), siteconf_symlink)
 
 
     init_script = os.path.join(bitbake_builddir, "init-build-env")
