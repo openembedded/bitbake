@@ -8,12 +8,9 @@ import logging
 import os
 import sys
 import argparse
-import warnings
 import json
 import shutil
 import time
-import stat
-import tempfile
 import configparser
 import datetime
 import glob
