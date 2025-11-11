@@ -343,7 +343,7 @@ def choose_bitbake_config(configs, parameters, non_interactive):
             raise Exception("Bitbake configuration {} not found; replace with one of {}".format(config_id, configs_dict))
         return configs_dict[config_id]
 
-    enumerated_configs = list(enumerate(flattened_configs))
+    enumerated_configs = list(enumerate(flattened_configs, 1))
     if len(enumerated_configs) == 1:
         only_config = flattened_configs[0]
         print("\nSelecting the only available bitbake configuration {}".format(only_config["name"]))
@@ -356,12 +356,12 @@ def choose_bitbake_config(configs, parameters, non_interactive):
     for n, config_data in enumerated_configs:
         print("{}. {}\t{}".format(n, config_data["name"], config_data["description"]))
     print("\nPlease select one of the above bitbake configurations by its number:")
-    config_n = int_input([i[0] for i in enumerated_configs])
+    config_n = int_input([i[0] for i in enumerated_configs]) - 1
     return flattened_configs[config_n]
 
 def choose_config(configs, non_interactive):
     not_expired_configs = [k for k in configs.keys() if not has_expired(configs[k].get("expires", None))]
-    config_list = list(enumerate(not_expired_configs))
+    config_list = list(enumerate(not_expired_configs, 1))
     if len(config_list) == 1:
         only_config = config_list[0][1]
         print("\nSelecting the only available configuration {}\n".format(only_config))
@@ -380,7 +380,7 @@ def choose_config(configs, non_interactive):
         else:
            print("{}. {}\t{}".format(n, config_name, config_desc))
     print("\nPlease select one of the above configurations by its number:")
-    config_n = int_input([i[0] for i in config_list])
+    config_n = int_input([i[0] for i in config_list]) - 1
     return config_list[config_n][1]
 
 def choose_fragments(possibilities, parameters, non_interactive, skip_selection):
@@ -400,11 +400,11 @@ def choose_fragments(possibilities, parameters, non_interactive, skip_selection)
             raise Exception("Unable to choose from options in non-interactive mode: {}".format(v["options"]))
 
         print("\n" + v["description"] + ":")
-        options_enumerated = list(enumerate(v["options"]))
+        options_enumerated = list(enumerate(v["options"], 1))
         for n,o in options_enumerated:
             print("{}. {}".format(n, o))
         print("\nPlease select one of the above options by its number:")
-        option_n = int_input([i[0] for i in options_enumerated])
+        option_n = int_input([i[0] for i in options_enumerated]) - 1
         choices[k] = options_enumerated[option_n][1]
     return choices
 
