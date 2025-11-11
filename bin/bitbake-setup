@@ -30,6 +30,12 @@ import bb.process
 
 logger = bb.msg.logger_create('bitbake-setup', sys.stdout)
 
+# These settings can only be set in the global context
+GLOBAL_ONLY_SETTINGS = (
+    "top-dir-prefix",
+    "top-dir-name",
+)
+
 def cache_dir(top_dir):
     return os.path.join(top_dir, '.bitbake-setup-cache')
 
@@ -684,6 +690,9 @@ def load_settings(settings_path):
 
 def change_setting(top_dir, args):
     if vars(args)['global']:
+        settings_path = global_settings_path(args)
+    elif args.setting in GLOBAL_ONLY_SETTINGS:
+        print(f"{args.setting} can only be set in the global config; '--global' is implied")
         settings_path = global_settings_path(args)
     else:
         settings_path = topdir_settings_path(top_dir)
