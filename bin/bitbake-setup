@@ -878,7 +878,7 @@ def main():
 
         builtin_settings = {}
         builtin_settings['default'] = {
-                         'top-dir-prefix':os.path.expanduser('~'),
+                         'top-dir-prefix':os.getcwd(),
                          'top-dir-name':'bitbake-builds',
                          'registry':default_registry,
                          }
