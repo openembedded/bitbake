@@ -16,6 +16,7 @@ import datetime
 import glob
 import subprocess
 import copy
+import textwrap
 
 default_registry = os.path.normpath(os.path.dirname(__file__) + "/../default-registry")
 
@@ -458,7 +459,7 @@ def init_config(top_dir, settings, args, d):
         progress = event.progress if event.progress > 0 else 0
         print("{}% {}                ".format(progress, rate), file=stdout, end='\r')
 
-    create_siteconf(top_dir, args.non_interactive)
+    create_siteconf(top_dir, args.non_interactive, settings)
     source_overrides = json.load(open(args.source_overrides)) if args.source_overrides else {'sources':{}}
     upstream_config = obtain_config(top_dir, settings, args, source_overrides, d)
     print("\nRun 'bitbake-setup init --non-interactive {}' to select this configuration non-interactively.\n".format(" ".join(upstream_config['non-interactive-cmdline-options'])))
@@ -665,7 +666,7 @@ def install_buildtools(top_dir, settings, args, d):
     print("Buildtools archive is downloaded into {} and its content installed into {}".format(buildtools_download_dir, buildtools_install_dir))
     subprocess.check_call("{} -d {} --downloads-directory {}".format(install_buildtools, buildtools_install_dir, buildtools_download_dir), shell=True)
 
-def create_siteconf(top_dir, non_interactive=True):
+def create_siteconf(top_dir, non_interactive, settings):
     siteconfpath = os.path.join(top_dir, 'site.conf')
     if os.path.exists(siteconfpath):
         print('A site.conf file already exists. Please remove it if you would like to replace it with a default one')
@@ -678,7 +679,17 @@ def create_siteconf(top_dir, non_interactive=True):
 
         os.makedirs(os.path.dirname(top_dir), exist_ok=True)
         with open(siteconfpath, 'w') as siteconffile:
-            siteconffile.write('# This file is intended for build host-specific bitbake settings\n')
+            siteconffile.write(
+                textwrap.dedent(
+                    """\
+                    # This file is intended for build host-specific bitbake settings
+                    DL_DIR = "{dl_dir}"
+                    """.format(
+                        dl_dir=settings["default"]["dl-dir"],
+                    )
+                )
+            )
+
 
 def topdir_settings_path(top_dir):
     return os.path.join(top_dir, 'settings.conf')
