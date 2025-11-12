@@ -239,12 +239,15 @@ print("BBPATH is {{}}".format(os.environ["BBPATH"]))
         # check that --help works
         self.runbbsetup("--help")
 
-        # set up global location for top-dir-prefix
-        out = self.runbbsetup("settings set --global default top-dir-prefix {}".format(self.tempdir))
+        # change to self.tempdir to work with cwd-based default settings
+        os.chdir(self.tempdir)
+
+        # check that the default top-dir-prefix is cwd (now self.tempdir) with no global settings
+        out = self.runbbsetup("settings list")
+        self.assertIn("default top-dir-prefix {}".format(os.getcwd()), out[0])
+
+        # set up global location for dl-dir
         settings_path = "{}/global-config".format(self.tempdir)
-        self.assertIn(settings_path, out[0])
-        self.assertIn("From section 'default' the setting 'top-dir-prefix' was changed to", out[0])
-        self.assertIn("Settings written to".format(settings_path), out[0])
         out = self.runbbsetup("settings set --global default dl-dir {}".format(os.path.join(self.tempdir, 'downloads')))
         self.assertIn("From section 'default' the setting 'dl-dir' was changed to", out[0])
         self.assertIn("Settings written to".format(settings_path), out[0])
