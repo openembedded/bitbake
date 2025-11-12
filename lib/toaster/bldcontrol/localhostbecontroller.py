@@ -40,7 +40,8 @@ class LocalhostBEController(BuildEnvironmentController):
 
     def __init__(self, be):
         super(LocalhostBEController, self).__init__(be)
-        self.pokydirname = None
+        self.bitbake_dirname = None
+        self.oecore_dirname = None
         self.islayerset = False
 
     def _shellcmd(self, command, cwd=None, nowait=False,env=None):
@@ -100,7 +101,7 @@ class LocalhostBEController(BuildEnvironmentController):
         # 1. get a list of repos with branches, and map dirpaths for each layer
         gitrepos = {}
 
-        # if we're using a remotely fetched version of bitbake add its git
+        # We are using a remotely fetched version of bitbake - add its git
         # details to the list of repos to clone
         if bitbake.giturl and bitbake.commit:
             gitrepos[(bitbake.giturl, bitbake.commit)] = []
@@ -154,11 +155,19 @@ class LocalhostBEController(BuildEnvironmentController):
         clone_total=len(gitrepos.keys())
         self.setCloneStatus(bitbake,'Started',clone_total,clone_count,'')
         for giturl, commit in gitrepos.keys():
-            self.setCloneStatus(bitbake,'progress',clone_total,clone_count,gitrepos[(giturl, commit)][0][0])
+            layer_name = gitrepos[(giturl, commit)][0][0]
+            self.setCloneStatus(bitbake,'progress',clone_total,clone_count,layer_name)
             clone_count += 1
 
             localdirname = os.path.join(self.be.sourcedir, self.getGitCloneDirectory(giturl, commit))
             logger.debug("localhostbecontroller: giturl %s:%s checking out in current directory %s" % (giturl, commit, localdirname))
+
+            # Capture local paths to release's bitbake and openembedded-core layers
+            if 'bitbake' == layer_name:
+                self.bitbake_dirname = localdirname
+            # Capture local path to release's openembedded-core layer (for 'oe-init-build-env')
+            if 'openembedded-core' == layer_name:
+                self.oecore_dirname = localdirname
 
             # see if our directory is a git repository
             if os.path.exists(localdirname):
@@ -192,16 +201,6 @@ class LocalhostBEController(BuildEnvironmentController):
                 # prevent inserted debugging commands from being lost
                 self._shellcmd('git fetch && git reset --hard "%s"' % ref, localdirname,env=git_env)
 
-            # take the localdirname as poky dir if we can find the oe-init-build-env
-            if self.pokydirname is None and os.path.exists(os.path.join(localdirname, "oe-init-build-env")):
-                logger.debug("localhostbecontroller: selected poky dir name %s" % localdirname)
-                self.pokydirname = localdirname
-
-                # make sure we have a working bitbake
-                if not os.path.exists(os.path.join(self.pokydirname, 'bitbake')):
-                    logger.debug("localhostbecontroller: checking bitbake into the poky dirname %s " % self.pokydirname)
-                    self._shellcmd("git clone -b \"%s\" \"%s\" \"%s\" " % (bitbake.commit, bitbake.giturl, os.path.join(self.pokydirname, 'bitbake')),env=git_env)
-
             # verify our repositories
             for name, dirpath, index in gitrepos[(giturl, commit)]:
                 localdirpath = os.path.join(localdirname, dirpath)
@@ -215,21 +214,11 @@ class LocalhostBEController(BuildEnvironmentController):
         self.setCloneStatus(bitbake,'complete',clone_total,clone_count,'')
         logger.debug("localhostbecontroller: current layer list %s " % pformat(layerlist))
 
-        # Resolve self.pokydirname if not resolved yet, consider the scenario
-        # where all layers are local, that's the else clause
-        if self.pokydirname is None:
-            if os.path.exists(os.path.join(self.be.sourcedir, "oe-init-build-env")):
-                logger.debug("localhostbecontroller: selected poky dir name %s" % self.be.sourcedir)
-                self.pokydirname = self.be.sourcedir
-            else:
-                # Alternatively, scan local layers for relative "oe-init-build-env" location
-                for layer in layers:
-                    if os.path.exists(os.path.join(layer.layer_version.layer.local_source_dir,"..","oe-init-build-env")):
-                        logger.debug("localhostbecontroller, setting pokydirname to %s" % (layer.layer_version.layer.local_source_dir))
-                        self.pokydirname = os.path.join(layer.layer_version.layer.local_source_dir,"..")
-                        break
-                else:
-                    logger.error("pokydirname is not set, you will run into trouble!")
+        # If self.bitbake_dirname still missing (e.g. 'local' build), use local bitbake
+        if not self.bitbake_dirname:
+            self.bitbake_dirname = os.environ.get('BBBASEDIR','')
+        if not self.bitbake_dirname:
+            logger.error("bitbake_dirname is not set, you will run into trouble!")
 
         # 5. create custom layer and add custom recipes to it
         for target in targets:
@@ -352,8 +341,11 @@ class LocalhostBEController(BuildEnvironmentController):
         try:
             # insure that the project init/build uses the selected bitbake, and not Toaster's
             del git_env['TEMPLATECONF']
-            del git_env['BBBASEDIR']
             del git_env['BUILDDIR']
+            # Insure that oe-init finds the right bitbake (e.g. 'oe-buildenv-internal')
+            git_env['BBBASEDIR'] = self.bitbake_dirname
+            git_env['BITBAKEDIR'] = self.bitbake_dirname
+
         except KeyError:
             pass
 
@@ -362,7 +354,7 @@ class LocalhostBEController(BuildEnvironmentController):
             builddir = bitbake.req.project.builddir
         else:
             builddir = '%s-toaster-%d' % (self.be.builddir, bitbake.req.project.id)
-        oe_init = os.path.join(self.pokydirname, 'oe-init-build-env')
+        oe_init = os.path.join(self.oecore_dirname, 'oe-init-build-env')
         setup_init = os.path.join(builddir, 'init-build-env')
         # init build environment and build directory structure
         try:
@@ -376,7 +368,7 @@ class LocalhostBEController(BuildEnvironmentController):
                 os.makedirs(builddir, exist_ok = True)
                 build_init_script = os.path.join(builddir,'init-build-env')
                 os.system(f"cp {os.path.join(toaster_run_dir,'init-build-env')} {build_init_script}")
-                os.system(f"sed -i -e 's|^cd .*$|cd {self.pokydirname}|g' {build_init_script}")
+                os.system(f"sed -i -e 's|^cd .*$|cd {self.oecore_dirname}|g' {build_init_script}")
                 os.system(f"sed -i -e 's|^set .*$|set {builddir}|g' {build_init_script}")
                 # Execute the init
                 self._shellcmd(f"bash -c 'source {build_init_script}'", env=git_env)
@@ -476,10 +468,10 @@ class LocalhostBEController(BuildEnvironmentController):
 
         # run bitbake server from the clone if available
         # otherwise pick it from the PATH
-        bitbake = os.path.join(self.pokydirname, 'bitbake', 'bin', 'bitbake')
+        bitbake = os.path.join(self.bitbake_dirname, 'bin', 'bitbake')
         if not os.path.exists(bitbake):
             logger.info("Bitbake not available under %s, will try to use it from PATH" %
-                        self.pokydirname)
+                        self.bitbake_dirname)
             for path in os.environ["PATH"].split(os.pathsep):
                 if os.path.exists(os.path.join(path, 'bitbake')):
                     bitbake = os.path.join(path, 'bitbake')
@@ -494,18 +486,18 @@ class LocalhostBEController(BuildEnvironmentController):
             # Use 'init-build-env' model
             if not is_merged_attr:
                 self._shellcmd(f'{env_clean} bash -c \"source {setup_init}; BITBAKE_UI="knotty" {bitbake} --read {confpath} --read {bblayers} --read {toasterlayers} '
-                               '--server-only -B 0.0.0.0:0\"', self.be.sourcedir)
+                               '--server-only -B 0.0.0.0:0\"', self.be.sourcedir,env=git_env)
             else:
                 self._shellcmd(f'{env_clean} bash -c \"source {setup_init}; BITBAKE_UI="knotty" {bitbake} '
-                           '--server-only -B 0.0.0.0:0\"', self.be.sourcedir)
+                           '--server-only -B 0.0.0.0:0\"', self.be.sourcedir,env=git_env)
         else:
             # Use 'oe-init-build-env' model
             if not is_merged_attr:
                 self._shellcmd(f'{env_clean} bash -c \"source {oe_init} {builddir}; BITBAKE_UI="knotty" {bitbake} --read {confpath} --read {bblayers} --read {toasterlayers} '
-                               '--server-only -B 0.0.0.0:0\"', self.be.sourcedir)
+                               '--server-only -B 0.0.0.0:0\"', self.be.sourcedir,env=git_env)
             else:
                 self._shellcmd(f'{env_clean} bash -c \"source {oe_init} {builddir}; BITBAKE_UI="knotty" {bitbake} '
-                           '--server-only -B 0.0.0.0:0\"', self.be.sourcedir)
+                           '--server-only -B 0.0.0.0:0\"', self.be.sourcedir,env=git_env)
 
         # read port number from bitbake.lock
         self.be.bbport = -1
@@ -551,7 +543,6 @@ class LocalhostBEController(BuildEnvironmentController):
         log = os.path.join(builddir, 'toaster_ui.log')
         local_bitbake = os.path.join(os.path.dirname(os.getenv('BBBASEDIR')),
                                      'bitbake')
-
         if not is_merged_attr:
             self._shellcmd([f'{env_clean} bash -c \"(TOASTER_BRBE="{brbe}" BBSERVER="0.0.0.0:{self.be.bbport}" '
                         f'{bitbake} {bbtargets} -u toasterui  --read {confpath} --read {bblayers} --read {toasterlayers} --token="" >>{log} 2>&1;'

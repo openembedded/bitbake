@@ -9,45 +9,45 @@
   <!-- Bitbake versions which correspond to the metadata release -->
   <object model="orm.bitbakeversion" pk="1">
     <field type="CharField" name="name">scarthgap</field>
-    <field type="CharField" name="giturl">git://git.yoctoproject.org/poky</field>
-    <field type="CharField" name="branch">scarthgap</field>
-    <field type="CharField" name="dirpath">bitbake</field>
+    <field type="CharField" name="giturl">git://git.openembedded.org/bitbake</field>
+    <field type="CharField" name="branch">2.8</field>
+    <field type="CharField" name="dirpath"></field>
   </object>
   <object model="orm.bitbakeversion" pk="2">
     <field type="CharField" name="name">HEAD</field>
-    <field type="CharField" name="giturl">git://git.yoctoproject.org/poky</field>
+    <field type="CharField" name="giturl">git://git.openembedded.org/bitbake</field>
     <field type="CharField" name="branch">HEAD</field>
-    <field type="CharField" name="dirpath">bitbake</field>
+    <field type="CharField" name="dirpath"></field>
   </object>
   <object model="orm.bitbakeversion" pk="3">
     <field type="CharField" name="name">master</field>
-    <field type="CharField" name="giturl">git://git.yoctoproject.org/poky</field>
+    <field type="CharField" name="giturl">git://git.openembedded.org/bitbake</field>
     <field type="CharField" name="branch">master</field>
-    <field type="CharField" name="dirpath">bitbake</field>
+    <field type="CharField" name="dirpath"></field>
   </object>
   <object model="orm.bitbakeversion" pk="4">
     <field type="CharField" name="name">whinlatter</field>
-    <field type="CharField" name="giturl">git://git.yoctoproject.org/poky</field>
-    <field type="CharField" name="branch">whinlatter</field>
-    <field type="CharField" name="dirpath">bitbake</field>
+    <field type="CharField" name="giturl">git://git.openembedded.org/bitbake</field>
+    <field type="CharField" name="branch">2.14</field>
+    <field type="CharField" name="dirpath"></field>
   </object>
   <object model="orm.bitbakeversion" pk="5">
     <field type="CharField" name="name">walnascar</field>
-    <field type="CharField" name="giturl">git://git.yoctoproject.org/poky</field>
-    <field type="CharField" name="branch">walnascar</field>
-    <field type="CharField" name="dirpath">bitbake</field>
+    <field type="CharField" name="giturl">git://git.openembedded.org/bitbake</field>
+    <field type="CharField" name="branch">2.12</field>
+    <field type="CharField" name="dirpath"></field>
   </object>
   <object model="orm.bitbakeversion" pk="6">
     <field type="CharField" name="name">styhead</field>
-    <field type="CharField" name="giturl">git://git.yoctoproject.org/poky</field>
-    <field type="CharField" name="branch">styhead</field>
-    <field type="CharField" name="dirpath">bitbake</field>
+    <field type="CharField" name="giturl">git://git.openembedded.org/bitbake</field>
+    <field type="CharField" name="branch">2.10</field>
+    <field type="CharField" name="dirpath"></field>
   </object>
   <object model="orm.bitbakeversion" pk="7">
     <field type="CharField" name="name">kirkstone</field>
-    <field type="CharField" name="giturl">git://git.yoctoproject.org/poky</field>
-    <field type="CharField" name="branch">kirkstone</field>
-    <field type="CharField" name="dirpath">bitbake</field>
+    <field type="CharField" name="giturl">git://git.openembedded.org/bitbake</field>
+    <field type="CharField" name="branch">2.0</field>
+    <field type="CharField" name="dirpath"></field>
   </object>
 
 
