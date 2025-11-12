@@ -463,7 +463,16 @@ def init_config(top_dir, settings, args, d):
     upstream_config = obtain_config(top_dir, settings, args, source_overrides, d)
     print("\nRun 'bitbake-setup init --non-interactive {}' to select this configuration non-interactively.\n".format(" ".join(upstream_config['non-interactive-cmdline-options'])))
 
-    setupdir = os.path.join(os.path.abspath(top_dir), args.setup_dir_name or "{}-{}".format(upstream_config['name']," ".join(upstream_config['non-interactive-cmdline-options'][1:]).replace(" ","-").replace("/","_")))
+    if args.setup_dir_name:
+        setup_dir_name = args.setup_dir_name
+    else:
+        setup_dir_name = "{}-{}".format(upstream_config['name']," ".join(upstream_config['non-interactive-cmdline-options'][1:]).replace(" ","-").replace("/","_"))
+        if not args.non_interactive:
+            n = input(f"Enter setup directory name: [{setup_dir_name}] ")
+            if n:
+                setup_dir_name = n
+
+    setupdir = os.path.join(os.path.abspath(top_dir), setup_dir_name)
     if os.path.exists(os.path.join(setupdir, "layers")):
         print(f"Setup already initialized in:\n    {setupdir}\nUse 'bitbake-setup status' to check if it needs to be updated, or 'bitbake-setup update' to perform the update.\nIf you would like to start over and re-initialize in this directory, remove it, and run 'bitbake-setup init' again.")
         return
