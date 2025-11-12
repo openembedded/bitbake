@@ -143,7 +143,7 @@ class TerminalFilter(object):
     def getTerminalColumns(self):
         def ioctl_GWINSZ(fd):
             try:
-                cr = struct.unpack('hh', fcntl.ioctl(fd, self.termios.TIOCGWINSZ, '1234'))
+                cr = struct.unpack('hhhh', fcntl.ioctl(fd, self.termios.TIOCGWINSZ, b'12345678'))[0:2]
             except:
                 return None
             return cr
