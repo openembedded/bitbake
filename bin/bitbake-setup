@@ -683,6 +683,15 @@ def create_siteconf(top_dir, non_interactive, settings):
                 textwrap.dedent(
                     """\
                     # This file is intended for build host-specific bitbake settings
+
+                    # Where to place downloads
+                    #
+                    # During a first build the system will download many different source code
+                    # tarballs from various upstream projects. This can take a while, particularly
+                    # if your network connection is slow. These are all stored in DL_DIR. When
+                    # wiping and rebuilding you can preserve this directory to speed up this part of
+                    # subsequent builds. This directory is safe to share between multiple builds on
+                    # the same machine too.
                     DL_DIR = "{dl_dir}"
                     """.format(
                         dl_dir=settings["default"]["dl-dir"],
