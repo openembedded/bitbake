@@ -53,7 +53,7 @@ Quick Start
 #. With the default choices, the ``bitbake-setup init`` command creates the
    following directories::
 
-      ~/bitbake-builds/
+      ./bitbake-builds/
       └── poky-master-poky-distro_poky-machine_qemux86-64/
           ├── build/
           ├── config/
@@ -61,7 +61,7 @@ Quick Start
 
    With:
 
-   -  ``~/bitbake-build``: the :term:`Top Directory`, where ``bitbake-setup``
+   -  ``./bitbake-builds``: the :term:`Top Directory`, where ``bitbake-setup``
       configures everything. This directory can be configured with the
       :ref:`ref-bbsetup-setting-top-dir-prefix` and
       :ref:`ref-bbsetup-setting-top-dir-name` settings.
