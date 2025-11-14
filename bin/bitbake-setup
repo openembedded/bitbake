@@ -17,6 +17,8 @@ import glob
 import subprocess
 import copy
 import textwrap
+import signal
+import functools
 
 default_registry = os.path.normpath(os.path.dirname(__file__) + "/../default-registry")
 
@@ -452,7 +454,15 @@ def obtain_config(top_dir, settings, args, source_overrides, d):
     upstream_config['skip-selection'] = args.skip_selection
     return upstream_config
 
+def init_sigint_handler(sig, frame, top_dir):
+    print(f'\nShutting down...')
+    if isinstance(top_dir, str) and os.path.exists(top_dir):
+        print(f'{top_dir} may contain an incomplete setup!')
+    exit()
+
 def init_config(top_dir, settings, args):
+    _handler = functools.partial(init_sigint_handler, top_dir=top_dir)
+    signal.signal(signal.SIGINT, _handler)
     create_siteconf(top_dir, args.non_interactive, settings)
 
     d = init_bb_cache(top_dir, settings, args)
