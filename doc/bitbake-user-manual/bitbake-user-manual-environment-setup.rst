@@ -25,12 +25,20 @@ the following tasks:
 Quick Start
 ===========
 
-#. ``bitbake-setup`` is part of the BitBake repository under
-   ``./bin/bitbake-setup``. To start, run:
+#. If you haven't already, clone the BitBake repository:
 
    .. code-block:: shell
 
-      $ ./bin/bitbake-setup init
+      $ git clone https://git.openembedded.org/bitbake
+
+#. ``bitbake-setup`` is part of the BitBake source tree under
+   ``./bitbake/bin/bitbake-setup``.
+
+   To start, run:
+
+   .. code-block:: shell
+
+      $ ./bitbake/bin/bitbake-setup init
 
    This command will ask you to choose which configurations to use available as
    part of the default BitBake :term:`generic configurations <generic
