@@ -677,7 +677,7 @@ def create_siteconf(top_dir, non_interactive, settings):
             if y_or_n != 'y':
                 exit()
 
-        os.makedirs(os.path.dirname(top_dir), exist_ok=True)
+        os.makedirs(top_dir, exist_ok=True)
         with open(siteconfpath, 'w') as siteconffile:
             siteconffile.write(
                 textwrap.dedent(
