@@ -17,6 +17,8 @@ import glob
 import subprocess
 import copy
 import textwrap
+import signal
+import functools
 
 default_registry = os.path.normpath(os.path.dirname(__file__) + "/../default-registry")
 
@@ -792,6 +794,15 @@ def merge_settings(builtin_settings, global_settings, topdir_settings, cmdline_s
 
     return all_settings
 
+def sigint_handler(sig, frame, func, top_dir):
+    print(f'\nShutting down...')
+    if isinstance(top_dir, str) and os.path.exists(top_dir):
+        if func in [init_config, build_update]:
+            print(f'{top_dir} may contain an incomplete setup!')
+        elif func == install_buildtools:
+            print(f'{top_dir} may contain an incomplete buildtools installation!')
+    exit()
+
 def main():
     def add_setup_dir_arg(parser):
         setup_dir = get_setup_dir_via_bbpath()
@@ -896,6 +907,12 @@ def main():
 
         global_settings = load_settings(global_settings_path(args))
         top_dir = get_top_dir(args, merge_settings(builtin_settings, global_settings, {}, args.cmdline_settings))
+
+        # register handler now to pass top_dir
+        _handler = functools.partial(sigint_handler,
+                                     func=args.func,
+                                     top_dir=os.path.abspath(top_dir))
+        signal.signal(signal.SIGINT, _handler)
 
         # This cannot be set with the rest of the builtin settings as top_dir needs to be determined first
         builtin_settings['default']['dl-dir'] = os.path.join(top_dir, '.bitbake-setup-downloads')
