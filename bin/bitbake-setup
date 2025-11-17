@@ -452,14 +452,16 @@ def obtain_config(top_dir, settings, args, source_overrides, d):
     upstream_config['skip-selection'] = args.skip_selection
     return upstream_config
 
-def init_config(top_dir, settings, args, d):
+def init_config(top_dir, settings, args):
+    create_siteconf(top_dir, args.non_interactive, settings)
+
+    d = init_bb_cache(top_dir, settings, args)
     stdout = sys.stdout
     def handle_task_progress(event, d):
         rate = event.rate if event.rate else ''
         progress = event.progress if event.progress > 0 else 0
         print("{}% {}                ".format(progress, rate), file=stdout, end='\r')
 
-    create_siteconf(top_dir, args.non_interactive, settings)
     source_overrides = json.load(open(args.source_overrides)) if args.source_overrides else {'sources':{}}
     upstream_config = obtain_config(top_dir, settings, args, source_overrides, d)
     print("\nRun 'bitbake-setup init --non-interactive {}' to select this configuration non-interactively.\n".format(" ".join(upstream_config['non-interactive-cmdline-options'])))
@@ -907,8 +909,12 @@ def main():
 
         print('Bitbake-setup is using {} as top directory ("bitbake-setup settings --help" shows how to change it).\n'.format(top_dir, global_settings_path(args)))
 
-        d = init_bb_cache(top_dir, all_settings, args)
-        args.func(top_dir, all_settings, args, d)
+        if args.func == init_config:
+            init_config(top_dir, all_settings, args)
+        else:
+            d = init_bb_cache(top_dir, all_settings, args)
+            args.func(top_dir, all_settings, args, d)
+
         save_bb_cache()
     else:
         from argparse import Namespace
