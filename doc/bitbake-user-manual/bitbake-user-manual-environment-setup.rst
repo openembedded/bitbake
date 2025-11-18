@@ -401,6 +401,14 @@ status of the :term:`Setup` before updating it.
 
 In addition, the command can take the following arguments:
 
+-  ``--update-bb-conf``: whether to update the :term:`BitBake Build`
+   configuration (``local.conf``, ``bblayers.conf``, etc.). This argument can
+   take up to three values:
+
+   -  ``prompt`` (default): ask the user whether to update.
+   -  ``yes``: update the configuration files.
+   -  ``no``: don't update the configuration files.
+
 -  ``--setup-dir``: path to the :term:`Setup` to update. Not required if the
    command is invoked from an initialized BitBake environment that contains
    :term:`BBPATH`.
