@@ -697,7 +697,16 @@ def create_siteconf(top_dir, non_interactive, settings):
     if os.path.exists(siteconfpath):
         print('A site.conf file already exists. Please remove it if you would like to replace it with a default one')
     else:
-        print('A common site.conf file will be created, please edit or replace before running builds\n    {}\n'.format(siteconfpath))
+        print(f'{top_dir} looks like a new top directory. If you would like to use a different directory, answer "n" below and either:')
+        print('\t1) Change the default bitbake-setup settings:')
+        print('\t\tbitbake-setup settings set default top-level-prefix <PATH>')
+        print('\t\tbitbake-setup settings set default top-level-name <NAME>')
+        print('\t2) Pass one or more options on the command line to change the top level directory in that invocation only:')
+        print('\t\tbitbake-setup --setting default top-dir-prefix <PATH> ...')
+        print('\t\tbitbake-setup --setting default top-dir-name <NAME> ...')
+        print()
+
+        print('A common site.conf file will be created, please check it is correct before running builds\n    {}\n'.format(siteconfpath))
         if not non_interactive:
             y_or_n = input('Proceed? (y/N): ')
             if y_or_n != 'y':
@@ -947,7 +956,7 @@ def main():
             settings_func(top_dir, all_settings, args)
             return
 
-        print('Bitbake-setup is using {} as top directory ("bitbake-setup settings --help" shows how to change it).\n'.format(top_dir, global_settings_path(args)))
+        print('Bitbake-setup is using {} as top directory.\n'.format(top_dir, global_settings_path(args)))
 
         if args.func == init_config:
             init_config(top_dir, all_settings, args)
