@@ -287,23 +287,29 @@ def setup_bitbake_build(bitbake_config, layerdir, setupdir, thisdir, update_bb_c
         print('Applying upstream bitbake configuration changes')
         print(f'Leaving the previous configuration in {backup_bitbake_confdir}')
 
-    print("This bitbake configuration provides:\n    {}\n".format(bitbake_config["description"]))
+    fragment_note = "Run 'bitbake-config-build enable-fragment <fragment-name>' to enable additional fragments or replace built-in ones (e.g. machine/<name> or distro/<name> to change MACHINE or DISTRO)."
+
     readme = """{}\n\nAdditional information is in {} and {}\n
-Source the environment using '. {}' to run builds from the command line.
+Source the environment using '. {}' to run builds from the command line.\n
+{}\n
 The bitbake configuration files (local.conf, bblayers.conf and more) can be found in {}/conf
 """.format(
         bitbake_config["description"],
         os.path.join(bitbake_builddir,'conf/conf-summary.txt'),
         os.path.join(bitbake_builddir,'conf/conf-notes.txt'),
         init_script,
+        fragment_note,
         bitbake_builddir
         )
     readme_file = os.path.join(bitbake_builddir, "README")
     with open(readme_file, 'w') as f:
         f.write(readme)
+
+    print("This bitbake configuration provides:\n    {}\n".format(bitbake_config["description"]))
     print("Usage instructions and additional information are in\n     {}\n".format(readme_file))
+    print("To run builds, source the environment using\n    . {}\n".format(init_script))
+    print("{}\n".format(fragment_note))
     print("The bitbake configuration files (local.conf, bblayers.conf and more) can be found in\n    {}/conf\n".format(bitbake_builddir))
-    print("To run builds, source the environment using\n    . {}".format(init_script))
 
 def get_registry_config(registry_path, id):
     for root, dirs, files in os.walk(registry_path):
