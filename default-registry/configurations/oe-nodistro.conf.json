@@ -40,6 +40,7 @@
         {
             "name": "nodistro",
             "description": "OpenEmbedded 'nodistro'",
+            "setup-dir-name": "oe-nodistro",
             "bb-layers": ["openembedded-core/meta"],
             "oe-fragments-one-of": {
                 "machine": {

@@ -118,7 +118,8 @@ print("BBPATH is {{}}".format(os.environ["BBPATH"]))
                 "name": "gizmo",
                 "description": "Gizmo configuration",
                 "oe-template": "test-configuration-gizmo",
-                "oe-fragments": ["test-fragment-2"]
+                "oe-fragments": ["test-fragment-2"],
+                "setup-dir-name": "this-is-a-custom-gizmo-build"
             },
             {
                 "name": "gizmo-env-passthrough",
@@ -227,6 +228,10 @@ print("BBPATH is {{}}".format(os.environ["BBPATH"]))
             self.assertTrue('BUILD_SERVER' in init_build_env)
             # a more throrough test could be to initialize a bitbake build-env, export FOO to the shell environment, set the env-passthrough on it and finally check against 'bitbake-getvar FOO'
 
+    def get_setup_path(self, cf, c):
+        if c == 'gizmo':
+            return os.path.join(self.tempdir, 'bitbake-builds', 'this-is-a-custom-gizmo-build')
+        return os.path.join(self.tempdir, 'bitbake-builds', '{}-{}'.format(cf, c))
 
     def test_setup(self):
         # unset BBPATH to ensure tests run in isolation from the existing bitbake environment
@@ -307,7 +312,7 @@ print("BBPATH is {{}}".format(os.environ["BBPATH"]))
         for cf, v in test_configurations.items():
             for c in v['buildconfigs']:
                 out = self.runbbsetup("init --non-interactive {} {}".format(v['cmdline'], c))
-                setuppath = os.path.join(self.tempdir, 'bitbake-builds', '{}-{}'.format(cf, c))
+                setuppath = self.get_setup_path(cf, c)
                 self.check_setupdir_files(setuppath, test_file_content)
                 os.environ['BBPATH'] = os.path.join(setuppath, 'build')
                 out = self.runbbsetup("status")
@@ -329,7 +334,7 @@ print("BBPATH is {{}}".format(os.environ["BBPATH"]))
                   'gizmo-env-passthrough',
                   'gizmo-no-fragment',
                   'gadget-notemplate', 'gizmo-notemplate'):
-            setuppath = os.path.join(self.tempdir, 'bitbake-builds', 'test-config-1-{}'.format(c))
+            setuppath = self.get_setup_path('test-config-1', c)
             os.environ['BBPATH'] = os.path.join(setuppath, 'build')
             out = self.runbbsetup("status")
             self.assertIn("Layer repository file://{} checked out into {}/layers/test-repo updated revision master from".format(self.testrepopath, setuppath), out[0])
@@ -352,7 +357,7 @@ print("BBPATH is {{}}".format(os.environ["BBPATH"]))
                   'gizmo-env-passthrough',
                   'gizmo-no-fragment',
                   'gadget-notemplate', 'gizmo-notemplate'):
-            setuppath = os.path.join(self.tempdir, 'bitbake-builds', 'test-config-1-{}'.format(c))
+            setuppath = self.get_setup_path('test-config-1', c)
             os.environ['BBPATH'] = os.path.join(setuppath, 'build')
             out = self.runbbsetup("status")
             self.assertIn("Configuration in {} has changed:".format(setuppath), out[0])
@@ -385,7 +390,7 @@ print("BBPATH is {{}}".format(os.environ["BBPATH"]))
                   'gizmo-env-passthrough',
                   'gizmo-no-fragment',
                   'gadget-notemplate', 'gizmo-notemplate'):
-            setuppath = os.path.join(self.tempdir, 'bitbake-builds', 'test-config-1-{}'.format(c))
+            setuppath = self.get_setup_path('test-config-1', c)
             os.environ['BBPATH'] = os.path.join(setuppath, 'build')
             # write something in local.conf and bblayers.conf
             for f in ["local.conf", "bblayers.conf"]:

@@ -96,6 +96,10 @@
                                 "items": {
                                     "type": "string"
                                 }
+                            },
+                            "setup-dir-name": {
+                                "type": "string",
+                                "description": "A suggestion for the setup directory name, $-prefixed keys from oe-fragments-one-of will be substituted with user selections."
                             }
                         },
                         "additionalProperties": false

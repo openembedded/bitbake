@@ -504,6 +504,7 @@ A valid settings file would for example be:
    top-dir-name = bitbake-builds
    registry = /path/to/bitbake/default-registry
    dl-dir = /path/to/bitbake-setup-downloads
+   use-full-setup-dir-name = yes
 
 Settings and their values can be listed and modified with the ``bitbake-setup
 settings`` command. See the :ref:`ref-bbsetup-command-settings` section for
@@ -596,6 +597,17 @@ The location can be set such that it is shared with :term:`DL_DIR` specified by
 BitBake builds, so that there is a single directory containing a copy of
 everything needed to set up and run a BitBake build offline in a reproducible
 manner.
+
+.. _ref-bbsetup-setting-use-full-setup-dir-name:
+
+``use-full-setup-dir-name``
+---------------------------
+
+The :ref:`ref-bbsetup-setting-use-full-setup-dir-name` setting, if set to ``yes``
+will override the suggestions for the :term:`Setup` directory name made by
+``setup-dir-name`` entries in :term:`Generic Configuration` files. This
+will make the directory names longer, but fully specific: they will contain
+all selections made during initialization.
 
 .. _ref-bbsetup-section-config-reference:
 
@@ -801,6 +813,33 @@ They contain the following sections:
 
       See https://docs.yoctoproject.org/dev/ref-manual/fragments.html for
       more information of OpenEmbedded configuration fragments.
+
+   -  ``setup-dir-name`` (*optional*): a suggestion for the :term:`Setup`
+      directory name. Bitbake-setup will use it, unless it already exists, or
+      the :ref:`ref-bbsetup-setting-use-full-setup-dir-name` setting is set
+      to ``yes`` (in those cases, it will fall back to the built-in full name,
+      containing the full set of choices made during initialization).
+
+      This key can have variable expansions in the same format as python
+      string.Template strings (which matches the shell variable expansion rules):
+      https://docs.python.org/3/library/string.html#template-strings-strings .
+
+      Variables that can be expanded are any fragment configuration prompted
+      by the user (e.g. the keys in "oe-fragments-one-of")::
+
+            {
+                ...
+                "oe-fragments-one-of": {
+                    "machine": {
+                        "description": "Target machines",
+                        "options" : ["machine/gadget", "machine/gizmo"]
+                    }
+                },
+                "setup-dir-name": "somebuild-$machine"
+                ...
+            }
+
+      would expand to ``somebuild-machine_gadget``.
 
 Generic Configuration Examples
 ------------------------------
