@@ -669,10 +669,15 @@ def list_registry(registry_path, with_expired):
                     json_data[config_name] = {"description": config_desc}
     return json_data
 
-def list_configs(top_dir, settings, args, d):
+def list_configs(settings, args):
+    import tempfile
+    top_dir = tempfile.mkdtemp(prefix="bitbake-setup-list-")
+    d = init_bb_cache(top_dir, settings, args)
     registry_path = update_registry(settings["default"]["registry"], cache_dir(top_dir), d)
     json_data = list_registry(registry_path, args.with_expired)
-    print("\nAvailable configurations:")
+    shutil.rmtree(top_dir)
+
+    print("Available configurations:")
     for config_name, config_data in json_data.items():
         expiry_date = config_data.get("expires", None)
         config_desc = config_data["description"]
@@ -970,6 +975,9 @@ def main():
 
         if args.func == settings_func:
             settings_func(top_dir, all_settings, args)
+            return
+        if args.func == list_configs:
+            list_configs(all_settings, args)
             return
 
         print('Bitbake-setup is using {} as top directory.\n'.format(top_dir, global_settings_path(args)))
