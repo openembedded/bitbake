@@ -90,6 +90,11 @@ class CookerFeatures(object):
             return
         self._features.add(f)
 
+    def delFeature(self, f):
+        if f not in self._features:
+            return
+        self._features.remove(f)
+
     def __contains__(self, f):
         return f in self._features
 
@@ -237,7 +242,10 @@ class BBCooker:
         original_featureset = list(self.featureset)
         for feature in features:
             self.featureset.setFeature(feature)
-        bb.debug(1, "Features set %s (was %s)" % (original_featureset, list(self.featureset)))
+        for orig_feature in original_featureset:
+            if orig_feature not in features:
+                self.featureset.delFeature(orig_feature)
+        bb.debug(1, "Features set %s (was %s)" % (list(self.featureset), original_featureset))
         if (original_featureset != list(self.featureset)) and self.state != State.ERROR and hasattr(self, "data"):
             self.reset()
 
