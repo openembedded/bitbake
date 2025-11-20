@@ -501,7 +501,7 @@ def init_config(top_dir, settings, args):
         setup_dir_name = "{}-{}".format(upstream_config['name']," ".join(upstream_config['non-interactive-cmdline-options'][1:]).replace(" ","-").replace("/","_"))
         if 'setup-dir-name' in upstream_config['bitbake-config']:
             mapping = {
-                    k: v.replace(" ", "-").replace("/", "_")
+                    k: v.partition("/")[2].replace(" ", "-").replace("/", "_")
                     for k, v in upstream_config['bitbake-config']['oe-fragment-choices'].items()
             }
             config_setup_dir_name = string.Template(upstream_config['bitbake-config']['setup-dir-name']).substitute(mapping)
