@@ -367,6 +367,12 @@ class AddFragmentsNode(AstNode):
         def check_and_set_builtin_fragment(fragment, data, builtin_fragments):
             prefix, value = fragment.split('/', 1)
             if prefix in builtin_fragments.keys():
+                if data.getVar(builtin_fragments[prefix], noweakdefault=True) != None:
+                    bb.fatal(
+                        ("A builtin fragment '%s' is used while %s has already got an assignment.\n"
+                         "Please either disable the fragment or remove the value assignment.\n"
+                         "To disable the fragment, use 'bitbake-config-build disable-fragment %s'."
+                         ) % (fragment, builtin_fragments[prefix], fragment))
                 fragment_history = data.varhistory.variable(self.fragments_variable)
                 loginfo={}
                 for fh in fragment_history[::-1]:
