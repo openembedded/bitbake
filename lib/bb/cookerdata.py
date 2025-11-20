@@ -137,6 +137,7 @@ class CookerConfiguration(object):
         self.build_verbose_stdout = False
         self.dry_run = False
         self.tracking = False
+        self.skip_fragments = False
         self.writeeventlog = False
         self.limited_deps = False
         self.runall = []
@@ -226,12 +227,15 @@ class CookerDataBuilder(object):
         self.prefiles = cookercfg.prefile
         self.postfiles = cookercfg.postfile
         self.tracking = cookercfg.tracking
+        self.skip_fragments = cookercfg.skip_fragments
 
         bb.utils.set_context(bb.utils.clean_context())
         bb.event.set_class_handlers(bb.event.clean_class_handlers())
         self.basedata = bb.data.init()
         if self.tracking:
             self.basedata.enableTracking()
+        if self.skip_fragments:
+            self.basedata.setVar("_BB_SKIP_FRAGMENTS", "1")
 
         # Keep a datastore of the initial environment variables and their
         # values from when BitBake was launched to enable child processes

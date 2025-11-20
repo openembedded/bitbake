@@ -23,6 +23,7 @@ topdir = os.path.dirname(bindir)
 sys.path[0:0] = [os.path.join(topdir, 'lib')]
 
 import bb.tinfoil
+import bb.cooker
 import bb.msg
 
 logger = bb.msg.logger_create(toolname, sys.stdout)
@@ -64,7 +65,11 @@ def main():
         if global_args.force > 1:
             bbpaths = []
         else:
-            tinfoil.prepare(True)
+            if toolname == "bitbake-config-build":
+                extra_features = [bb.cooker.CookerFeatures.SKIP_FRAGMENTS]
+            else:
+                extra_features = None
+            tinfoil.prepare(True, extra_features=extra_features)
             bbpaths = tinfoil.config_data.getVar('BBPATH').split(':')
 
         for path in ([topdir] + bbpaths):

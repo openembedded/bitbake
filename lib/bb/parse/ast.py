@@ -351,6 +351,9 @@ class AddFragmentsNode(AstNode):
         self.builtin_fragments_variable = builtin_fragments_variable
 
     def eval(self, data):
+        if data.getVar('_BB_SKIP_FRAGMENTS') == '1':
+            return
+
         # No need to use mark_dependency since we would only match a fragment
         # from a specific layer and there can only be a single layer with a
         # given namespace.

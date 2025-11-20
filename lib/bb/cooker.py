@@ -79,7 +79,7 @@ class SkippedPackage:
 
 
 class CookerFeatures(object):
-    _feature_list = [HOB_EXTRA_CACHES, BASEDATASTORE_TRACKING, SEND_SANITYEVENTS, RECIPE_SIGGEN_INFO] = list(range(4))
+    _feature_list = [HOB_EXTRA_CACHES, BASEDATASTORE_TRACKING, SEND_SANITYEVENTS, RECIPE_SIGGEN_INFO, SKIP_FRAGMENTS] = list(range(5))
 
     def __init__(self):
         self._features=set()
@@ -286,6 +286,11 @@ class BBCooker:
                 logger.critical("Unable to import extra RecipeInfo '%s' from '%s': %s" % (cache_name, module_name, exc))
                 raise bb.BBHandledException()
 
+        if CookerFeatures.SKIP_FRAGMENTS in self.featureset:
+            self.enableSkipFragments()
+        else:
+            self.disableSkipFragments()
+
         self.databuilder = bb.cookerdata.CookerDataBuilder(self.configuration, False)
         self.databuilder.parseBaseConfiguration()
         self.data = self.databuilder.data
@@ -362,6 +367,12 @@ You can also remove the BB_HASHSERVE_UPSTREAM setting, but this may result in si
         self.configuration.tracking = False
         if hasattr(self, "data"):
             self.data.disableTracking()
+
+    def enableSkipFragments(self):
+        self.configuration.skip_fragments = True
+
+    def disableSkipFragments(self):
+        self.configuration.skip_fragments = False
 
     def revalidateCaches(self):
         bb.parse.clear_cache()
