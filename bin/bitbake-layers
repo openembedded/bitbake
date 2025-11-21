@@ -30,7 +30,7 @@ logger = bb.msg.logger_create(toolname, sys.stdout)
 
 def main():
     parser = argparse.ArgumentParser(
-        description="BitBake layers utility",
+        description={"bitbake-layers":"BitBake layers utility", "bitbake-config-build":"BitBake build configuration utility"}[toolname],
         epilog="Use %(prog)s <subcommand> --help to get help on a specific command",
         add_help=False)
     parser.add_argument('-d', '--debug', help='Enable debug output', action='store_true')
