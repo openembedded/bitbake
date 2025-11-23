@@ -58,7 +58,7 @@
                                             ],
                                             "properties": {
                                                 "uri": {
-                                                    "description": "The URI for the remote",
+                                                    "description": "The URI for the remote, using git URL syntax",
                                                     "type": "string"
                                                 }
                                             }

@@ -5,7 +5,7 @@
             "git-remote": {
                 "remotes": {
                     "origin": {
-                        "uri": "git://git.openembedded.org/bitbake;protocol=https"
+                        "uri": "https://git.openembedded.org/bitbake"
                     }
                 },
                 "branch": "master",
@@ -16,7 +16,7 @@
             "git-remote": {
                 "remotes": {
                     "origin": {
-                        "uri": "git://git.openembedded.org/openembedded-core;protocol=https"
+                        "uri": "https://git.openembedded.org/openembedded-core"
                     }
                 },
                 "branch": "master",
@@ -27,7 +27,7 @@
             "git-remote": {
                 "remotes": {
                     "origin": {
-                        "uri": "git://git.yoctoproject.org/yocto-docs;protocol=https"
+                        "uri": "https://git.yoctoproject.org/yocto-docs"
                     }
                 },
                 "branch": "master",
