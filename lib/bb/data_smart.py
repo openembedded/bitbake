@@ -781,10 +781,10 @@ class DataSmart(MutableMapping):
                 return None
             cachename = var + "[" + flag + "]"
 
-        if not expand and retparser and cachename in self.expand_cache:
+        if not expand and retparser and cachename in self.expand_cache and not noweakdefault:
             return self.expand_cache[cachename].unexpanded_value, self.expand_cache[cachename]
 
-        if expand and cachename in self.expand_cache:
+        if expand and cachename in self.expand_cache and not noweakdefault:
             return self.expand_cache[cachename].value
 
         local_var = self._findVar(var)
@@ -904,7 +904,7 @@ class DataSmart(MutableMapping):
                 value = bb.filter.apply_filters(value, [self.filters[basevar],])
                 parser.value = value
 
-        if parser:
+        if parser and not noweakdefault:
             self.expand_cache[cachename] = parser
 
         if retparser:
