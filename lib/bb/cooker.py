@@ -391,6 +391,8 @@ You can also remove the BB_HASHSERVE_UPSTREAM setting, but this may result in si
         for f in self.configwatched:
             if not bb.parse.check_mtime(f, self.configwatched[f]):
                 bb.server.process.serverlog("Found %s changed, invalid cache" % f)
+                if self.state not in (State.SHUTDOWN, State.FORCE_SHUTDOWN, State.ERROR):
+                    self.state = State.INITIAL
                 self._baseconfig_set(False)
                 self._parsecache_set(False)
                 clean = False
@@ -411,7 +413,7 @@ You can also remove the BB_HASHSERVE_UPSTREAM setting, but this may result in si
         # If writes were made to any of the data stores, we need to recalculate the data
         # store cache
         if hasattr(self, "databuilder"):
-            self.databuilder.calc_datastore_hashes(clean=clean)
+            self.databuilder.calc_datastore_hashes(clean=True)
 
     def parseConfiguration(self):
         self.updateCacheSync()
