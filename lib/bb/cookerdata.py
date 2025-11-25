@@ -259,7 +259,11 @@ class CookerDataBuilder(object):
         self.data = self.basedata
         self.mcdata = {}
 
-    def calc_datastore_hashes(self):
+    def calc_datastore_hashes(self, clean=True):
+        if not clean:
+            self.data_hash = None
+            return
+
         data_hash = hashlib.sha256()
         data_hash.update(self.data.get_hash().encode('utf-8'))
         multiconfig = (self.data.getVar("BBMULTICONFIG") or "").split()

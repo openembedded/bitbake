@@ -247,6 +247,7 @@ class BBCooker:
                 self.featureset.delFeature(orig_feature)
         bb.debug(1, "Features set %s (was %s)" % (list(self.featureset), original_featureset))
         if (original_featureset != list(self.featureset)) and self.state != State.ERROR and hasattr(self, "data"):
+            bb.server.process.serverlog("Reseting due to feature chanages")
             self.reset()
 
     def initConfigurationData(self):
@@ -258,7 +259,11 @@ class BBCooker:
             if mod not in self.orig_sysmodules:
                 del sys.modules[mod]
 
+        self._baseconfig_set(False)
+        self._parsecache_set(False)
+
         self.configwatched = {}
+        self.revalidateCaches()
 
         # Need to preserve BB_CONSOLELOG over resets
         consolelog = None
@@ -312,7 +317,6 @@ class BBCooker:
             self.add_filewatch(mc.getVar("__base_depends", False), configwatcher=True)
 
         self._baseconfig_set(True)
-        self._parsecache_set(False)
 
     def handlePRServ(self):
         # Setup a PR Server based on the new configuration
@@ -377,6 +381,12 @@ You can also remove the BB_HASHSERVE_UPSTREAM setting, but this may result in si
     def revalidateCaches(self):
         bb.parse.clear_cache()
 
+        if not self.baseconfig_valid:
+            bb.parse.BBHandler.cached_statements = {}
+            if hasattr(self, "databuilder"):
+                self.databuilder.calc_datastore_hashes(clean=False)
+            return
+
         clean = True
         for f in self.configwatched:
             if not bb.parse.check_mtime(f, self.configwatched[f]):
@@ -384,7 +394,10 @@ You can also remove the BB_HASHSERVE_UPSTREAM setting, but this may result in si
                 self._baseconfig_set(False)
                 self._parsecache_set(False)
                 clean = False
-                break
+                bb.parse.BBHandler.cached_statements = {}
+                if hasattr(self, "databuilder"):
+                    self.databuilder.calc_datastore_hashes(clean=False)
+                return
 
         if clean:
             for f in self.parsewatched:
@@ -392,15 +405,13 @@ You can also remove the BB_HASHSERVE_UPSTREAM setting, but this may result in si
                     bb.server.process.serverlog("Found %s changed, invalid cache" % f)
                     self._parsecache_set(False)
                     clean = False
+                    bb.parse.BBHandler.cached_statements = {}
                     break
-
-        if not clean:
-            bb.parse.BBHandler.cached_statements = {}
 
         # If writes were made to any of the data stores, we need to recalculate the data
         # store cache
         if hasattr(self, "databuilder"):
-            self.databuilder.calc_datastore_hashes()
+            self.databuilder.calc_datastore_hashes(clean=clean)
 
     def parseConfiguration(self):
         self.updateCacheSync()
