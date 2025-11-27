@@ -15,6 +15,10 @@
         "sources": {
             "$ref": "layers.schema.json#/properties/sources"
         },
+        "expires": {
+            "type": "string",
+            "description": "End of life date for this configuration, in ISO 8601 format (YYYY-MM-DD)"
+        },
         "bitbake-setup": {
             "type": "object",
             "description": "BitBake-setup configurations",
