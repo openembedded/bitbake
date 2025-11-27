@@ -688,7 +688,9 @@ They contain the following sections:
    -  ``branch`` (**required**): the Git branch, used to check that the
       specified ``rev`` is indeed on that branch.
 
-   -  ``path`` is where the source is extracted.
+   -  ``path`` (*optional*): where the source is extracted, relative to the
+      ``layers/`` directory of a :term:`Setup`. If unspecified, the name of the
+      source is used.
 
 -  ``expires`` (*optional*): Expiration date of the configuration. This date
    should be in :wikipedia:`ISO 8601 <ISO_8601>` format (``YYYY-MM-DDTHH:MM:SS``).
