@@ -334,7 +334,7 @@ In addition, the command can take the following arguments:
 
    .. code-block:: shell
 
-      $ ./bitbake/bin/bitbake-setup init https://git.openembedded.org/bitbake/plain/default-registry/configurations/oe-nodistro.conf.json
+      $ ./bitbake/bin/bitbake-setup init https://git.openembedded.org/bitbake/plain/default-registry/configurations/oe-nodistro-master.conf.json
 
 -  This example initializes a :term:`Setup` with: 
 
@@ -845,7 +845,7 @@ Generic Configuration Examples
 
 OpenEmbedded "nodistro" configuration for master branches:
 
-.. literalinclude:: ../../default-registry/configurations/oe-nodistro.conf.json
+.. literalinclude:: ../../default-registry/configurations/oe-nodistro-master.conf.json
    :language: json
 
 Poky distribution configuration for master branches:
