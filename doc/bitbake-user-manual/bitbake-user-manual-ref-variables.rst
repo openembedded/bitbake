@@ -600,14 +600,18 @@ overview of their function and contents.
 
       .. note::
 
-         You may see numerous messages printed by BitBake in case the
-         :term:`BB_PRESSURE_MAX_CPU` is too low::
+         You can track the pressure information while a build is running with:
 
-            Pressure status changed to CPU: True, IO: False, Mem: False (CPU: 1105.9/2.0, IO: 0.0/2.0, Mem: 0.0/2.0) - using 1/64 bitbake threads
+         .. code-block:: console
 
-         This means that the :term:`BB_PRESSURE_MAX_CPU` should be increased to
-         a reasonable value for limiting the CPU pressure on the system.
-         Monitor the varying value after ``CPU:`` above to set a sensible value.
+            $ tail -F tmp/log/cooker/<machine>/console-latest.log | grep "Pressure status changed"
+            NOTE: Pressure status changed to CPU: True, IO: False, Mem: False (CPU: 1105.9/2.0, IO: 0.0/2.0, Mem: 0.0/2.0) - using 1/64 bitbake threads
+            ...
+
+         If these messages are printed a lot, it means that the :term:`BB_PRESSURE_MAX_CPU`
+         should be increased to a reasonable value for limiting the CPU pressure
+         on the system. Monitor the varying value after ``CPU:`` above to set a
+         sensible value.
 
    :term:`BB_PRESSURE_MAX_IO`
       Specifies a maximum I/O pressure threshold, above which BitBake's
@@ -637,14 +641,18 @@ overview of their function and contents.
 
       .. note::
 
-         You may see numerous messages printed by BitBake in case the
-         :term:`BB_PRESSURE_MAX_IO` is too low::
+         You can track the pressure information while a build is running with:
 
-            Pressure status changed to CPU: None, IO: True, Mem: False (CPU: 2236.0/None, IO: 153.6/2.0, Mem: 0.0/2.0) - using 19/64 bitbake threads
+         .. code-block:: console
 
-         This means that the :term:`BB_PRESSURE_MAX_IO` should be increased to
-         a reasonable value for limiting the I/O pressure on the system.
-         Monitor the varying value after ``IO:`` above to set a sensible value.
+            $ tail -F tmp/log/cooker/<machine>/console-latest.log | grep "Pressure status changed"
+            NOTE: Pressure status changed to CPU: None, IO: True, Mem: False (CPU: 2236.0/None, IO: 153.6/2.0, Mem: 0.0/2.0) - using 19/64 bitbake threads
+            ...
+
+         If these messages are printed a lot, it means that the :term:`BB_PRESSURE_MAX_IO` 
+         should be increased to a reasonable value for limiting the I/O pressure
+         on the system. Monitor the varying value after ``IO:`` above to set a
+         sensible value.
 
    :term:`BB_PRESSURE_MAX_MEMORY`
       Specifies a maximum memory pressure threshold, above which BitBake's
@@ -676,14 +684,18 @@ overview of their function and contents.
 
       .. note::
 
-         You may see numerous messages printed by BitBake in case the
-         :term:`BB_PRESSURE_MAX_MEMORY` is too low::
+         You can track the pressure information while a build is running with:
 
-            Pressure status changed to CPU: None, IO: False, Mem: True (CPU: 29.5/None, IO: 0.0/2.0, Mem: 2553.3/2.0) - using 17/64 bitbake threads
+         .. code-block:: console
 
-         This means that the :term:`BB_PRESSURE_MAX_MEMORY` should be increased to
-         a reasonable value for limiting the memory pressure on the system.
-         Monitor the varying value after ``Mem:`` above to set a sensible value.
+            $ tail -F tmp/log/cooker/<machine>/console-latest.log | grep "Pressure status changed"
+            NOTE: Pressure status changed to CPU: None, IO: False, Mem: True (CPU: 29.5/None, IO: 0.0/2.0, Mem: 2553.3/2.0) - using 17/64 bitbake threads
+            ...
+
+         If these messages are printed a lot, it means that the :term:`BB_PRESSURE_MAX_MEMORY`
+         should be increased to a reasonable value for limiting the memory
+         pressure on the system. Monitor the varying value after ``Mem:`` above
+         to set a sensible value.
 
    :term:`BB_RUNFMT`
       Specifies the name of the executable script files (i.e. run files)
