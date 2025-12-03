@@ -388,8 +388,8 @@ def choose_bitbake_config(configs, parameters, non_interactive):
     print("\nAvailable bitbake configurations:")
     for n, config_data in enumerated_configs:
         print("{}. {}\t{}".format(n, config_data["name"], config_data["description"]))
-    print("\nPlease select one of the above bitbake configurations by its number:")
-    config_n = int_input([i[0] for i in enumerated_configs]) - 1
+    config_n = int_input([i[0] for i in enumerated_configs],
+                         "\nPlease select one of the above bitbake configurations by its number: ") - 1
     return flattened_configs[config_n]
 
 def choose_config(configs, non_interactive):
@@ -412,8 +412,8 @@ def choose_config(configs, non_interactive):
            print("{}. {}\t{} (supported until {})".format(n, config_name, config_desc, expiry_date))
         else:
            print("{}. {}\t{}".format(n, config_name, config_desc))
-    print("\nPlease select one of the above configurations by its number:")
-    config_n = int_input([i[0] for i in config_list]) - 1
+    config_n = int_input([i[0] for i in config_list],
+                         "\nPlease select one of the above configurations by its number: ") - 1
     return config_list[config_n][1]
 
 def choose_fragments(possibilities, parameters, non_interactive, skip_selection):
@@ -436,8 +436,8 @@ def choose_fragments(possibilities, parameters, non_interactive, skip_selection)
         options_enumerated = list(enumerate(v["options"], 1))
         for n,o in options_enumerated:
             print("{}. {}".format(n, o))
-        print("\nPlease select one of the above options by its number:")
-        option_n = int_input([i[0] for i in options_enumerated]) - 1
+        option_n = int_input([i[0] for i in options_enumerated],
+                             "\nPlease select one of the above options by its number: ") - 1
         choices[k] = options_enumerated[option_n][1]
     return choices
 
