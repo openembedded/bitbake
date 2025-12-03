@@ -1054,9 +1054,10 @@ bitbake will treat that as direct value assignment in its configuration::
 Locating Include Files
 ----------------------
 
-BitBake uses the :term:`BBPATH` variable to locate needed include files.
-Additionally, BitBake searches the current directory for :ref:`include
-<ref-include-directive>` and :ref:`require <require-inclusion>` directives.
+BitBake first searches the current directory for needed include files for
+:ref:`include <ref-include-directive>` and :ref:`require <require-inclusion>`
+directives.
+BitBake also uses the :term:`BBPATH` variable.
 
 .. note::
 
