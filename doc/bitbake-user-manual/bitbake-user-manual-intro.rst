@@ -220,9 +220,10 @@ BitBake supports class files installed in three different directories:
       INHERIT += "myclass"
 
 -  ``classes-recipe/``: these classes must be inherited from a recipe using the
-   :ref:`inherit <ref-bitbake-user-manual-metadata-inherit>` directive. They do
-   not support being inherited globally. For example, you would use the recipe
-   class named ``myclass`` like so::
+   :ref:`inherit <ref-bitbake-user-manual-metadata-inherit>` or
+   :ref:`inherit_defer <ref-bitbake-user-manual-metadata-inherit-defer>`
+   directive. They do not support being inherited globally. For example, you
+   would use the recipe class named ``myclass`` like so::
 
       inherit myclass
 
