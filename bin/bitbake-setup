@@ -330,16 +330,16 @@ def update_build(config, confdir, setupdir, layerdir, d, update_bb_conf="prompt"
     setup_bitbake_build(bitbake_config, layerdir, setupdir, thisdir, update_bb_conf)
     write_sources_fixed_revisions(confdir, sources_fixed_revisions)
 
-def int_input(allowed_values):
+def int_input(allowed_values, prompt=''):
     n = None
     while n is None:
         try:
-            n = int(input())
+            n = int(input(prompt))
         except ValueError:
-            print('Not a valid number, please try again:')
+            prompt = 'Not a valid number, please try again: '
             continue
         if n not in allowed_values:
-            print('Number {} not one of {}, please try again:'.format(n, allowed_values))
+            prompt = 'Number {} not one of {}, please try again: '.format(n, allowed_values)
             n = None
     return n
 
