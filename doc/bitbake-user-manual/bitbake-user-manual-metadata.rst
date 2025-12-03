@@ -1060,7 +1060,7 @@ Additionally, BitBake searches the current directory for :ref:`include
 
 .. note::
 
-   The BBPATH variable is analogous to the environment variable PATH .
+   The BBPATH variable is analogous to the environment variable PATH.
 
 For these two directives, BitBake includes the first file it finds.
 
@@ -1135,7 +1135,7 @@ would be searched in this order::
 
 .. note::
 
-   Note that the order of the list above does not depend on where the class in
+   Note that the order of the list above does not depend on where the class is
    inherited from.
 
 Likewise, for classes inherited with the :term:`INHERIT` variable, the

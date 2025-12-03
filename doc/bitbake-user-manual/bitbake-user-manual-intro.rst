@@ -213,7 +213,7 @@ BitBake supports class files installed in three different directories:
 
 -  ``classes-global/``: these classes must be inherited globally through the
    :term:`INHERIT` variable in a :ref:`configuration file
-   <bitbake-user-manual/bitbake-user-manual-intro:Configuration Files>`.  These
+   <bitbake-user-manual/bitbake-user-manual-intro:Configuration Files>`. These
    classes are included for every recipe being built. For example, you would use
    the global class named ``myclass`` like so::
 
@@ -227,7 +227,7 @@ BitBake supports class files installed in three different directories:
       inherit myclass
 
 -  ``classes/``: this final directory is meant for classes that can be used in
-   the two contexts explain above. In other words, they can be inherit either
+   the two contexts explain above. In other words, they can be inherited either
    globally or in a recipe.
 
 For details on how BitBake locates class files, see the
