@@ -514,7 +514,7 @@ def init_config(top_dir, settings, args):
                 setup_dir_name = config_setup_dir_name
 
         if not args.non_interactive:
-            n = input(f"Enter setup directory name: [{setup_dir_name}] ")
+            n = input(f"Enter setup directory name [{setup_dir_name}]: ")
             if n:
                 setup_dir_name = n
 
