@@ -58,7 +58,7 @@ class LayerIndexPlugin(ActionPlugin):
             cmd = base_cmd + ['branch']
             completed_proc = subprocess.run(cmd, text=True, capture_output=True)
             if completed_proc.returncode:
-                logger.error("Unable to validate repo %s (%s)" % (repodir, stderr))
+                logger.error("Unable to validate repo %s (%s)" % (repodir, completed_proc.stderr))
                 return None, None, None
             else:
                 if branch != completed_proc.stdout[2:-1]:
