@@ -323,7 +323,7 @@ def update_build(config, confdir, setupdir, layerdir, d, update_bb_conf="prompt"
     layer_overrides = config["source-overrides"]["sources"]
     for k,v in layer_overrides.items():
         if k in layer_config:
-            layer_config[k]["git-remote"] = v["git-remote"]
+            layer_config[k] = v
     sources_fixed_revisions = checkout_layers(layer_config, layerdir, d)
     bitbake_config = config["bitbake-config"]
     thisdir = os.path.dirname(config["path"]) if config["type"] == 'local' else None
