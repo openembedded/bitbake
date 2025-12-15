@@ -27,44 +27,44 @@
                         "type": "boolean"
                     },
                     "git-remote": {
-                                "description": "A remote git source from which to fetch",
+                        "description": "A remote git source from which to fetch",
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": [
+                            "rev"
+                        ],
+                        "properties": {
+                            "branch": {
+                                "description": "The git branch to fetch (optional)",
+                                "type": "string"
+                            },
+                            "rev": {
+                                "description": "The git revision to checkout",
+                                "type": "string"
+                            },
+                            "describe": {
+                                "description": "The output of 'git describe' (human readable description of the revision using tags in revision history).",
+                                "type": "string"
+                            },
+                            "remotes": {
+                                "description": "The dict of git remotes to add to this repository",
                                 "type": "object",
-                                "additionalProperties": false,
-                                "required": [
-                                    "rev"
-                                ],
-                                "properties": {
-                                    "branch": {
-                                        "description": "The git branch to fetch (optional)",
-                                        "type": "string"
-                                    },
-                                    "rev": {
-                                        "description": "The git revision to checkout",
-                                        "type": "string"
-                                    },
-                                    "describe": {
-                                        "description": "The output of 'git describe' (human readable description of the revision using tags in revision history).",
-                                        "type": "string"
-                                    },
-                                    "remotes": {
-                                        "description": "The dict of git remotes to add to this repository",
-                                        "type": "object",
-                                        "patternProperties": { ".*" : {
-                                            "description": "A git remote",
-                                            "type": "object",
-                                            "addtionalProperties": false,
-                                            "required": [
-                                                "uri"
-                                            ],
-                                            "properties": {
-                                                "uri": {
-                                                    "description": "The URI for the remote, using git URL syntax",
-                                                    "type": "string"
-                                                }
-                                            }
-                                        }}
+                                "patternProperties": { ".*" : {
+                                    "description": "A git remote",
+                                    "type": "object",
+                                    "addtionalProperties": false,
+                                    "required": [
+                                        "uri"
+                                    ],
+                                    "properties": {
+                                        "uri": {
+                                            "description": "The URI for the remote, using git URL syntax",
+                                            "type": "string"
+                                        }
                                     }
-                                }
+                                }}
+                            }
+                        }
                     }
                 }
             }
