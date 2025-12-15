@@ -90,16 +90,7 @@ def _write_layer_list(dest, repodirs):
         json.dump({"version":"1.0","layers":layers}, f, sort_keys=True, indent=4)
 
 def checkout_layers(layers, layerdir, d):
-    layers_fixed_revisions = copy.deepcopy(layers)
-    repodirs = []
-    oesetupbuild = None
-    print("Fetching layer/tool repositories into {}".format(layerdir))
-    for r_name in layers:
-        r_data = layers[r_name]
-        repodir = r_data.get("path", r_name)
-        repodirs.append(repodir)
-
-        r_remote = r_data['git-remote']
+    def _checkout_git_remote(r_remote, repodir, layers_fixed_revisions):
         rev = r_remote['rev']
         branch = r_remote.get('branch', None)
         remotes = r_remote['remotes']
@@ -117,6 +108,19 @@ def checkout_layers(layers, layerdir, d):
             urldata = fetcher.ud[src_uri]
             revision = urldata.revision
             layers_fixed_revisions[r_name]['git-remote']['rev'] = revision
+
+    layers_fixed_revisions = copy.deepcopy(layers)
+    repodirs = []
+    oesetupbuild = None
+    print("Fetching layer/tool repositories into {}".format(layerdir))
+    for r_name in layers:
+        r_data = layers[r_name]
+        repodir = r_data.get("path", r_name)
+        repodirs.append(repodir)
+
+        r_remote = r_data.get('git-remote')
+        if r_remote:
+            _checkout_git_remote(r_remote, repodir, layers_fixed_revisions)
 
         if os.path.exists(os.path.join(layerdir, repodir, 'scripts/oe-setup-build')):
             oesetupbuild = os.path.join(layerdir, repodir, 'scripts/oe-setup-build')
@@ -563,12 +567,8 @@ def get_diff(file1, file2):
     return None
 
 def are_layers_changed(layers, layerdir, d):
-    changed = False
-    for r_name in layers:
-        r_data = layers[r_name]
-        repodir = r_data.get("path", r_name)
-
-        r_remote = r_data['git-remote']
+    def _is_git_remote_changed(r_remote, repodir):
+        changed = False
         rev = r_remote['rev']
         branch = r_remote.get('branch', None)
         remotes = r_remote['remotes']
@@ -586,6 +586,16 @@ def are_layers_changed(layers, layerdir, d):
             if upstream_revision != local_revision:
                 changed = True
                 print('Layer repository {} checked out into {} updated revision {} from {} to {}'.format(remotes[remote]["uri"], os.path.join(layerdir, repodir), rev, local_revision, upstream_revision))
+        return changed
+
+    changed = False
+    for r_name in layers:
+        r_data = layers[r_name]
+        repodir = r_data.get("path", r_name)
+
+        git_remote = r_data.get('git-remote', repodir)
+        if git_remote:
+            changed = changed | _is_git_remote_changed(git_remote, repodir)
 
     return changed
 
