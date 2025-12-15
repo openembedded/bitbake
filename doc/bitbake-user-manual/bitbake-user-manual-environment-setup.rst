@@ -702,8 +702,9 @@ They contain the following sections:
 
       ``git-remote`` entries are specified with the following options:
 
-      -  ``uri`` (**required**): a URI that follows the git URI syntax.
-         See https://git-scm.com/docs/git-clone#_git_urls for more information.
+      -  ``remotes`` (**required**): a dictionary of git remote names, each containing a ``uri`` property
+         with a URI that follows the git URI syntax. See https://git-scm.com/docs/git-clone#_git_urls
+         and https://git-scm.com/docs/git-remote for more information.
 
       -  ``rev`` (**required**): the revision to checkout. Can be the name of the
          branch to checkout on the latest revision of the specified ``branch``.
