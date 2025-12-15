@@ -320,6 +320,34 @@ print("BBPATH is {{}}".format(os.environ["BBPATH"]))
                 out = self.runbbsetup("update --update-bb-conf='yes'")
                 self.assertIn("Configuration in {} has not changed".format(setuppath), out[0])
 
+        # check source overrides, local sources provided with symlinks, and custom setup dir name
+        source_override_content = """
+{
+    "sources": {
+        "test-repo": {
+            "local": {
+                "path": "."
+            }
+        }
+    }
+}"""
+        override_filename = 'source-overrides.json'
+        custom_setup_dir = 'special-setup-dir'
+        self.add_file_to_testrepo(override_filename, source_override_content)
+        out = self.runbbsetup("init --non-interactive --source-overrides {} --setup-dir-name {} test-config-1 gadget".format(os.path.join(self.testrepopath, override_filename), custom_setup_dir))
+        custom_setup_path = os.path.join(self.tempdir, 'bitbake-builds', custom_setup_dir)
+        custom_layer_path = os.path.join(custom_setup_path, 'layers', 'test-repo')
+        self.assertTrue(os.path.islink(custom_layer_path))
+        self.assertEqual(self.testrepopath, os.path.realpath(custom_layer_path))
+
+        # same but use command line options to specify local overrides
+        custom_setup_dir = 'special-setup-dir-with-cmdline-overrides'
+        out = self.runbbsetup("init --non-interactive -L test-repo {} --setup-dir-name {} test-config-1 gadget".format(self.testrepopath, custom_setup_dir))
+        custom_setup_path = os.path.join(self.tempdir, 'bitbake-builds', custom_setup_dir)
+        custom_layer_path = os.path.join(custom_setup_path, 'layers', 'test-repo')
+        self.assertTrue(os.path.islink(custom_layer_path))
+        self.assertEqual(self.testrepopath, os.path.realpath(custom_layer_path))
+
         # install buildtools
         out = self.runbbsetup("install-buildtools")
         self.assertIn("Buildtools installed into", out[0])

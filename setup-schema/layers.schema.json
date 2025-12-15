@@ -65,6 +65,20 @@
                                 }}
                             }
                         }
+                    },
+                    "local": {
+                        "description": "A local directory that should be made available for builds via symlinking",
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": [
+                            "path"
+                        ],
+                        "properties": {
+                            "path": {
+                                "description": "The path to the directory",
+                                "type": "string"
+                            }
+                        }
                     }
                 }
             }

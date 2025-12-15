@@ -317,6 +317,17 @@ In addition, the command can take the following arguments:
 -  ``--skip-selection``: can be used to skip some of the choices
    (which may result in an incomplete :term:`Setup`!)
 
+-  ``-L`` or ``--use-local-source``: instead of getting a source as prescribed in
+   a configuration, symlink it into a :term:`Setup` from a path on local disk. This
+   is useful for local development where that particular source directory is managed
+   separately, and bitbake-setup will include it in a build but will not otherwise
+   touch or modify it. This option can be specified multiple times to specify multiple
+   local sources.
+
+   The option can be seen as a command line shortcut to providing an override file
+   with a ``local`` source in it. See the :ref:`ref-bbsetup-source-overrides` section
+   for more information on source overrides.
+
 ``bitbake-setup init`` Examples
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -339,7 +350,7 @@ In addition, the command can take the following arguments:
 -  This example initializes a :term:`Setup` with: 
 
    -  A custom :ref:`ref-bbsetup-setting-top-dir-prefix` and :ref:`ref-bbsetup-setting-top-dir-name`
-   -  A :term:`source override`.
+   -  A :term:`source override`, and additionally overriding openembedded-core with a locally managed directory.
    -  A standalone :term:`generic configuration` file.
    -  Choices passed on the command-line, applied non-interactively.
 
@@ -351,6 +362,7 @@ In addition, the command can take the following arguments:
           init \
           --non-interactive \
           --source-overrides develop-branch.json \
+          -L openembedded-core ~/development/openembedded-core-gadget \
           ./gadget_master.conf.json \
           gadget distro/gadget machine/gadget
 
@@ -649,7 +661,8 @@ They contain the following sections:
           "description": "OpenEmbedded - 'nodistro' basic configuration"
       }
 
--  ``sources`` (*optional*): Git repositories to fetch.
+-  ``sources`` (*optional*): sources, such as git repositories that should be provided
+   under ``layers/`` directory of a :term:`Setup`.
 
    Example:
 
@@ -669,28 +682,51 @@ They contain the following sections:
                      "rev": "master"
                  },
                  "path": "bitbake"
+             },
+             "openembedded-core": {
+                 "local": {
+                     "path": "~/path/to/local/openembedded-core"
+                 }
              }
          }
       }
 
    Sources can be specified with the following options:
 
-   -  ``uri`` (**required**): a URI that follows the git URI syntax.
-      See https://git-scm.com/docs/git-clone#_git_urls for more information.
-
-   -  ``rev`` (**required**): the revision to checkout. Can be the name of the
-      branch to checkout on the latest revision of the specified ``branch``.
-
-      If the value is the branch name, ``bitbake-setup`` will check out the
-      latest revision on that branch, and keep it updated when using the
-      :ref:`ref-bbsetup-command-update` command.
-
-   -  ``branch`` (**required**): the Git branch, used to check that the
-      specified ``rev`` is indeed on that branch.
-
    -  ``path`` (*optional*): where the source is extracted, relative to the
       ``layers/`` directory of a :term:`Setup`. If unspecified, the name of the
       source is used.
+
+   -  ``git-remote`` (*optional*): specifies URI, branch and revision of a git
+      repository to fetch from.
+
+      ``git-remote`` entries are specified with the following options:
+
+      -  ``uri`` (**required**): a URI that follows the git URI syntax.
+         See https://git-scm.com/docs/git-clone#_git_urls for more information.
+
+      -  ``rev`` (**required**): the revision to checkout. Can be the name of the
+         branch to checkout on the latest revision of the specified ``branch``.
+
+         If the value is the branch name, ``bitbake-setup`` will check out the
+         latest revision on that branch, and keep it updated when using the
+         :ref:`ref-bbsetup-command-update` command.
+
+      -  ``branch`` (**required**): the Git branch, used to check that the
+         specified ``rev`` is indeed on that branch.
+
+   -  ``local`` (*optional*): specifies a path on local disk that should be symlinked
+      to under ``layers/``. This is useful for local development, where some layer
+      or other component used in a build is managed separately, but should still be
+      available for bitbake-setup driven builds.
+
+      ``local`` entries are specified with the following options:
+
+      -  ``path`` (**required**): the path on local disk where the externally
+         managed source tree is. ``~`` and ``~user`` are expanded to that user's home
+         directory. Paths in configuration files must be absolute (after possible
+         ~ expansion), paths in override files can be relative to the directory where
+         the override file is.
 
 -  ``expires`` (*optional*): Expiration date of the configuration. This date
    should be in :wikipedia:`ISO 8601 <ISO_8601>` format (``YYYY-MM-DDTHH:MM:SS``).
@@ -868,7 +904,7 @@ The ``--source-overrides`` option can be passed multiple times, in which case th
 overrides are applied in the order specified in the command-line.
 
 Here is an example file that overrides the branch of the BitBake repository to
-"master-next":
+"master-next", and provides openembedded-core as a symlink to a path on local disk:
 
 .. code-block:: json
 
@@ -884,6 +920,11 @@ Here is an example file that overrides the branch of the BitBake repository to
                        }
                    },
                    "rev": "master-next"
+               }
+           },
+           "openembedded-core": {
+               "local": {
+                   "path": "~/path/to/local/openembedded-core"
                }
            }
        },

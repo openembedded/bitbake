@@ -109,6 +109,10 @@ def checkout_layers(layers, layerdir, d):
             revision = urldata.revision
             layers_fixed_revisions[r_name]['git-remote']['rev'] = revision
 
+    def _symlink_local(src, dst):
+        print("Making a symbolic link {} pointing to {}".format(dst, src))
+        os.symlink(src, dst)
+
     layers_fixed_revisions = copy.deepcopy(layers)
     repodirs = []
     oesetupbuild = None
@@ -119,8 +123,13 @@ def checkout_layers(layers, layerdir, d):
         repodirs.append(repodir)
 
         r_remote = r_data.get('git-remote')
+        r_local = r_data.get('local')
+        if r_remote and r_local:
+            raise Exception("Source {} contains both git-remote and local properties.".format(r_name))
         if r_remote:
             _checkout_git_remote(r_remote, repodir, layers_fixed_revisions)
+        if r_local:
+            _symlink_local(os.path.expanduser(r_local["path"]), os.path.join(layerdir,repodir))
 
         if os.path.exists(os.path.join(layerdir, repodir, 'scripts/oe-setup-build')):
             oesetupbuild = os.path.join(layerdir, repodir, 'scripts/oe-setup-build')
@@ -485,6 +494,24 @@ def obtain_config(top_dir, settings, args, source_overrides, d):
     upstream_config['skip-selection'] = args.skip_selection
     return upstream_config
 
+def obtain_overrides(args):
+    overrides = {'sources':{}}
+    if args.source_overrides:
+        overrides = json.load(open(args.source_overrides))
+        overrides_dir = os.path.dirname(os.path.abspath(args.source_overrides))
+        for s,v in overrides['sources'].items():
+            local = v.get('local')
+            if local:
+                path = os.path.expanduser(local['path'])
+                if not os.path.isabs(path):
+                    overrides['sources'][s]['local']['path'] = os.path.join(overrides_dir, path)
+
+    for local_name, local_path in args.use_local_source:
+        overrides['sources'][local_name] = {'local':{'path':os.path.abspath(os.path.expanduser(local_path))}}
+
+    return overrides
+
+
 def init_config(top_dir, settings, args):
     create_siteconf(top_dir, args.non_interactive, settings)
 
@@ -495,7 +522,7 @@ def init_config(top_dir, settings, args):
         progress = event.progress if event.progress > 0 else 0
         print("{}% {}                ".format(progress, rate), file=stdout, end='\r')
 
-    source_overrides = json.load(open(args.source_overrides)) if args.source_overrides else {'sources':{}}
+    source_overrides = obtain_overrides(args)
     upstream_config = obtain_config(top_dir, settings, args, source_overrides, d)
     print("\nRun 'bitbake-setup init --non-interactive {}' to select this configuration non-interactively.\n".format(" ".join(upstream_config['non-interactive-cmdline-options'])))
 
@@ -904,6 +931,8 @@ def main():
     parser_init.add_argument('--source-overrides', action='store', help='Override sources information (repositories/revisions) with values from a local json file.')
     parser_init.add_argument('--setup-dir-name', action='store', help='A custom setup directory name under the top directory.')
     parser_init.add_argument('--skip-selection', action='append', help='Do not select and set an option/fragment from available choices; the resulting bitbake configuration may be incomplete.')
+    parser_init.add_argument('-L', '--use-local-source', default=[], action='append', nargs=2, metavar=('SOURCE_NAME', 'PATH'),
+                        help='Symlink local source into a build, instead of getting it as prescribed by a configuration (useful for local development).')
     parser_init.set_defaults(func=init_config)
 
     parser_status = subparsers.add_parser('status', help='Check if the setup needs to be synchronized with configuration')
