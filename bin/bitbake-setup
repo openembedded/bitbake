@@ -974,7 +974,6 @@ def main():
 
     args = parser.parse_args()
 
-    logging.basicConfig(stream=sys.stdout)
     if args.debug:
         logger.setLevel(logging.DEBUG)
     elif args.quiet:
