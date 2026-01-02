@@ -89,21 +89,12 @@ print("BBPATH is {{}}".format(os.environ["BBPATH"]))
         bbsetup = os.path.abspath(os.path.dirname(__file__) +  "/../../../bin/bitbake-setup")
         return bb.process.run("{} --global-settings {} {}".format(bbsetup, os.path.join(self.tempdir, 'global-config'), cmd))
 
-    def add_json_config_to_registry(self, name, rev, branch):
+
+    def _add_json_config_to_registry_helper(self, name, sources):
         config = """
 {
     "sources": {
-        "test-repo": {
-            "git-remote": {
-                "remotes": {
-                    "origin": {
-                        "uri": "file://%s"
-                    }
-                },
-                "branch": "%s",
-                "rev": "%s"
-            }
-        }
+%s
     },
     "description": "Test configuration",
     "bitbake-setup": {
@@ -160,13 +151,29 @@ print("BBPATH is {{}}".format(os.environ["BBPATH"]))
     },
     "version": "1.0"
 }
-""" % (self.testrepopath, branch, rev)
+""" % (sources)
         os.makedirs(os.path.join(self.registrypath, os.path.dirname(name)), exist_ok=True)
         with open(os.path.join(self.registrypath, name), 'w') as f:
             f.write(config)
         self.git('add {}'.format(name), cwd=self.registrypath)
         self.git('commit -m "Adding {}"'.format(name), cwd=self.registrypath)
         return json.loads(config)
+
+    def add_json_config_to_registry(self, name, rev, branch):
+        sources = """
+        "test-repo": {
+            "git-remote": {
+                "remotes": {
+                    "origin": {
+                        "uri": "file://%s"
+                    }
+                },
+                "branch": "%s",
+                "rev": "%s"
+            }
+        }
+""" % (self.testrepopath, branch, rev)
+        return self._add_json_config_to_registry_helper(name, sources)
 
     def add_file_to_testrepo(self, name, content, script=False):
         fullname = os.path.join(self.testrepopath, name)
