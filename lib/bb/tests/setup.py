@@ -407,6 +407,13 @@ print("BBPATH is {{}}".format(os.environ["BBPATH"]))
             self.assertEqual(sums_before, sums_after)
 
         # check source overrides, local sources provided with symlinks, and custom setup dir name
+        def _check_local_sources(custom_setup_dir):
+            custom_setup_path = os.path.join(self.tempdir, 'bitbake-builds', custom_setup_dir)
+            custom_layer_path = os.path.join(custom_setup_path, 'layers', 'test-repo')
+            self.assertTrue(os.path.islink(custom_layer_path))
+            self.assertEqual(self.testrepopath, os.path.realpath(custom_layer_path))
+            self.config_is_unchanged(custom_setup_path)
+
         source_override_content = """
 {
     "sources": {
@@ -421,15 +428,9 @@ print("BBPATH is {{}}".format(os.environ["BBPATH"]))
         custom_setup_dir = 'special-setup-dir'
         self.add_file_to_testrepo(override_filename, source_override_content)
         out = self.runbbsetup("init --non-interactive --source-overrides {} --setup-dir-name {} test-config-1 gadget".format(os.path.join(self.testrepopath, override_filename), custom_setup_dir))
-        custom_setup_path = os.path.join(self.tempdir, 'bitbake-builds', custom_setup_dir)
-        custom_layer_path = os.path.join(custom_setup_path, 'layers', 'test-repo')
-        self.assertTrue(os.path.islink(custom_layer_path))
-        self.assertEqual(self.testrepopath, os.path.realpath(custom_layer_path))
+        _check_local_sources(custom_setup_dir)
 
         # same but use command line options to specify local overrides
         custom_setup_dir = 'special-setup-dir-with-cmdline-overrides'
         out = self.runbbsetup("init --non-interactive -L test-repo {} --setup-dir-name {} test-config-1 gadget".format(self.testrepopath, custom_setup_dir))
-        custom_setup_path = os.path.join(self.tempdir, 'bitbake-builds', custom_setup_dir)
-        custom_layer_path = os.path.join(custom_setup_path, 'layers', 'test-repo')
-        self.assertTrue(os.path.islink(custom_layer_path))
-        self.assertEqual(self.testrepopath, os.path.realpath(custom_layer_path))
+        _check_local_sources(custom_setup_dir)
