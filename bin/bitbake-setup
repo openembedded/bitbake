@@ -69,11 +69,15 @@ def write_upstream_config(config_dir, config_data):
     with open(os.path.join(config_dir, "config-upstream.json"),'w') as s:
         json.dump(config_data, s, sort_keys=True, indent=4)
 
-def write_sources_fixed_revisions(config_dir, config_data):
+def write_sources_fixed_revisions(config_dir, layer_dir, config_data):
+    json_path = os.path.join(config_dir, "sources-fixed-revisions.json")
+    json_link = os.path.join(layer_dir, "sources-fixed-revisions.json")
     sources = {}
     sources['sources'] = config_data
     with open(os.path.join(config_dir, "sources-fixed-revisions.json"),'w') as s:
         json.dump(sources, s, sort_keys=True, indent=4)
+    if not os.path.lexists(json_link):
+        os.symlink(os.path.relpath(json_path ,layer_dir), json_link)
 
 def commit_config(config_dir):
     bb.process.run("git -C {} add .".format(config_dir))
@@ -344,7 +348,7 @@ def update_build(config, confdir, setupdir, layerdir, d, update_bb_conf="prompt"
     bitbake_config = config["bitbake-config"]
     thisdir = os.path.dirname(config["path"]) if config["type"] == 'local' else None
     setup_bitbake_build(bitbake_config, layerdir, setupdir, thisdir, update_bb_conf)
-    write_sources_fixed_revisions(confdir, sources_fixed_revisions)
+    write_sources_fixed_revisions(confdir, layerdir, sources_fixed_revisions)
     commit_config(confdir)
 
 def int_input(allowed_values, prompt=''):
