@@ -180,6 +180,14 @@ print("BBPATH is {{}}".format(os.environ["BBPATH"]))
         self.git('add {}'.format(name), cwd=self.testrepopath)
         self.git('commit -m "Adding {}"'.format(name), cwd=self.testrepopath)
 
+    def config_is_unchanged(self, setuppath):
+        os.environ['BBPATH'] = os.path.join(setuppath, 'build')
+        out = self.runbbsetup("status")
+        self.assertIn("Configuration in {} has not changed".format(setuppath), out[0])
+        out = self.runbbsetup("update --update-bb-conf='yes'")
+        self.assertIn("Configuration in {} has not changed".format(setuppath), out[0])
+        del os.environ['BBPATH']
+
     def check_setupdir_files(self, setuppath, test_file_content):
         with open(os.path.join(setuppath, 'config', "config-upstream.json")) as f:
             config_upstream = json.load(f)
@@ -227,6 +235,8 @@ print("BBPATH is {{}}".format(os.environ["BBPATH"]))
             self.assertTrue('BUILD_DATE' in init_build_env)
             self.assertTrue('BUILD_SERVER' in init_build_env)
             # a more throrough test could be to initialize a bitbake build-env, export FOO to the shell environment, set the env-passthrough on it and finally check against 'bitbake-getvar FOO'
+
+        self.config_is_unchanged(setuppath)
 
     def get_setup_path(self, cf, c):
         if c == 'gizmo':
@@ -314,14 +324,9 @@ print("BBPATH is {{}}".format(os.environ["BBPATH"]))
                 out = self.runbbsetup("init --non-interactive {} {}".format(v['cmdline'], c))
                 setuppath = self.get_setup_path(cf, c)
                 self.check_setupdir_files(setuppath, test_file_content)
-                os.environ['BBPATH'] = os.path.join(setuppath, 'build')
-                out = self.runbbsetup("status")
-                self.assertIn("Configuration in {} has not changed".format(setuppath), out[0])
-                out = self.runbbsetup("update --update-bb-conf='yes'")
-                self.assertIn("Configuration in {} has not changed".format(setuppath), out[0])
 
         # install buildtools
-        out = self.runbbsetup("install-buildtools")
+        out = self.runbbsetup("install-buildtools --setup-dir {}".format(setuppath))
         self.assertIn("Buildtools installed into", out[0])
         self.assertTrue(os.path.exists(os.path.join(setuppath, 'buildtools')))
 
