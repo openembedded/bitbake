@@ -625,7 +625,7 @@ def are_layers_changed(layers, layerdir, d):
         r_data = layers[r_name]
         repodir = r_data.get("path", r_name)
 
-        git_remote = r_data.get('git-remote', repodir)
+        git_remote = r_data.get('git-remote')
         if git_remote:
             changed = changed | _is_git_remote_changed(git_remote, repodir)
 
