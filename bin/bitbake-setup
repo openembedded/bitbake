@@ -331,12 +331,15 @@ def get_registry_config(registry_path, id):
                 return os.path.join(root, f)
     raise Exception("Unable to find {} in available configurations; use 'list' sub-command to see what is available".format(id))
 
+def merge_overrides_into_sources(sources, overrides):
+    layers = copy.deepcopy(sources)
+    for k,v in overrides.items():
+        if k in layers:
+            layers[k] = v
+    return layers
+
 def update_build(config, confdir, setupdir, layerdir, d, update_bb_conf="prompt"):
-    layer_config = copy.deepcopy(config["data"]["sources"])
-    layer_overrides = config["source-overrides"]["sources"]
-    for k,v in layer_overrides.items():
-        if k in layer_config:
-            layer_config[k] = v
+    layer_config = merge_overrides_into_sources(config["data"]["sources"], config["source-overrides"]["sources"])
     sources_fixed_revisions = checkout_layers(layer_config, layerdir, d)
     bitbake_config = config["bitbake-config"]
     thisdir = os.path.dirname(config["path"]) if config["type"] == 'local' else None
@@ -654,7 +657,8 @@ def build_status(top_dir, settings, args, d, update=False):
             bb.process.run('git -C {} restore config-upstream.json'.format(confdir))
         return
 
-    if are_layers_changed(current_upstream_config["data"]["sources"], layerdir, d):
+    layer_config = merge_overrides_into_sources(current_upstream_config["data"]["sources"], current_upstream_config["source-overrides"]["sources"])
+    if are_layers_changed(layer_config, layerdir, d):
         if update:
             update_build(current_upstream_config, confdir, setupdir, layerdir,
                          d, update_bb_conf=args.update_bb_conf)
