@@ -3,6 +3,7 @@
 *~
 pyshtables.py
 /doc/manual/html/
+**/bitbake-builds/
 /build/
 /bin/bitbakec
 *.swp
