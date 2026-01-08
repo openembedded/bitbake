@@ -538,7 +538,7 @@ The following command runs the clean task on the ``foo.bb`` recipe file::
 
 .. note::
 
-   The "-b" option explicitly does not handle recipe dependencies. Other
+   The ``-b`` option explicitly does not handle recipe dependencies. Other
    than for debugging purposes, it is instead recommended that you use
    the syntax presented in the next section.
 
@@ -553,7 +553,7 @@ dependencies, both for build-time and runtime. There must be a way for
 you to express recipe preferences when multiple recipes provide the same
 functionality, or when there are multiple versions of a recipe.
 
-The ``bitbake`` command, when not using "--buildfile" or "-b" only
+The ``bitbake`` command, when not using ``--buildfile`` or ``-b`` only
 accepts a "PROVIDES". You cannot provide anything else. By default, a
 recipe file generally "PROVIDES" its "packagename" as shown in the
 following example::
@@ -561,7 +561,7 @@ following example::
   $ bitbake foo
 
 This next example "PROVIDES" the
-package name and also uses the "-c" option to tell BitBake to just
+package name and also uses the ``-c`` option to tell BitBake to just
 execute the ``do_clean`` task::
 
   $ bitbake -c clean foo
