@@ -198,7 +198,7 @@ Class files, which are denoted by the ``.bbclass`` extension, contain
 information that is useful to share between metadata files. The BitBake
 source tree currently comes with one class metadata file called
 ``base.bbclass``. You can find this file in the ``classes`` directory.
-The ``base.bbclass`` class files is special since it is always included
+The ``base.bbclass`` class file is special since it is always included
 automatically for all recipes and classes. This class contains
 definitions for standard basic tasks such as fetching, unpacking,
 configuring (empty by default), compiling (runs any Makefile present),
@@ -228,7 +228,7 @@ BitBake supports class files installed in three different directories:
       inherit myclass
 
 -  ``classes/``: this final directory is meant for classes that can be used in
-   the two contexts explain above. In other words, they can be inherited either
+   the two contexts explained above. In other words, they can be inherited either
    globally or in a recipe.
 
 For details on how BitBake locates class files, see the
