@@ -81,7 +81,7 @@ def write_sources_fixed_revisions(config_dir, layer_dir, config_data):
 
 def commit_config(config_dir):
     bb.process.run("git -C {} add .".format(config_dir))
-    bb.process.run("git -C {} commit --no-verify -a -m 'Configuration at {}'".format(config_dir, time.asctime()))
+    bb.process.run("git -C {} commit --allow-empty --no-verify -a -m 'Configuration at {}'".format(config_dir, time.asctime()))
 
 def _write_layer_list(dest, repodirs):
     layers = []
