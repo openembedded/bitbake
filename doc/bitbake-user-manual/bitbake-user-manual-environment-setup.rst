@@ -938,3 +938,51 @@ Here is an example file that overrides the branch of the BitBake repository to
 -  The ``sources`` section contains the same options as the ``sources`` option
    of a :term:`Generic Configuration` file. See the
    :ref:`ref-bbsetup-section-config-reference` section for more information.
+
+.. _ref-bbsetup-fixed-revisions:
+
+Fixed source revisions
+======================
+
+:term:`Generic Configuration` can set source revisions in ``rev`` to a tag or a branch.
+Bitbake-setup will make sure the actual revision will match the tag or branch when performing
+initializations or updates, and will capture the revisions in a :ref:`_ref-bbsetup-source-overrides`
+file.
+
+This file is named ``sources-fixed-revisions.json`` and is available in ``layers/``
+under the :term:`Setup` directory (as well as under ``config/`` for backwards compatibility).
+It can be used to keep record of what was checked out when using configurations that do not
+specify exact revisions.
+
+Also, as it is an override file, it can be combined with the original configurations
+to initialize a setup in a reproducible way that guarantees an exact, never-changing
+set of revisions, by using the ``--source-overrides`` option of the
+:ref:`ref-bbsetup-command-init` command.
+
+For example if the original configuration had specified only a master branch
+for a source::
+
+     "bitbake": {
+         "git-remote": {
+             "remotes": {
+                 "origin": {
+                     "uri": "https://git.openembedded.org/bitbake"
+                 }
+             },
+             "branch": "master",
+             "rev": "master"
+     }
+
+
+the override will contain the exact revisions::
+
+     "bitbake": {
+         "git-remote": {
+             "remotes": {
+                 "origin": {
+                     "uri": "https://git.openembedded.org/bitbake"
+                 }
+             },
+             "branch": "master",
+             "rev": "720df1a53452983c1c832f624490e255cf389204"
+     }
