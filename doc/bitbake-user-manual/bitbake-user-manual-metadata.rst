@@ -1074,11 +1074,6 @@ BitBake also uses the :term:`BBPATH` variable.
 
 For these two directives, BitBake includes the first file it finds.
 
-.. note::
-
-   It is also possible to include *all* occurences of a file with the same name
-   with the :ref:`include_all <ref-include-all-directive>` directive.
-
 Let's consider the following statement called from a recipe file located in
 ``/layers/meta-custom2/recipes-example/example/example_0.1.bb``::
 
@@ -1128,6 +1123,33 @@ In this case, the following paths would be searched::
 
    In the above examples, the exact same search order applies for the
    :ref:`include <ref-include-directive>` directive.
+
+It is also possible to include *all* occurences of a file with the same name
+with the :ref:`include_all <ref-include-all-directive>` directive.
+
+Let's consider the following statement called from a recipe file located in
+``/layers/meta-custom2/recipes-example/example/exampleall_0.1.bb``::
+
+   include_all all.inc
+
+Where multiple ``all.inc`` are in located in ``/layers/meta-custom2`` and
+``/layers/meta-custom1``.
+
+And let's assume that the value of :term:`BBPATH` is
+``/layers/meta-custom1:/layers/meta-custom2``. Then BitBake will try to include
+all ``all.inc`` in this order::
+
+   /layers/meta-custom1/all.inc
+   /layers/meta-custom2/all.inc
+
+In this case the first ``/layers/meta-custom1/all.inc`` would be included, and
+then ``/layers/meta-custom2/all.inc`` if both are found.
+
+.. note::
+
+   The same logic as for the :ref:`ref-include-directive` applies, except that
+   the path relative to the file where the directive is specified is not
+   searched when using the ``include_all`` directive.
 
 Locating Class Files
 --------------------
