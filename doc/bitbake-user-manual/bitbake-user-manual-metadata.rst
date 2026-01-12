@@ -753,7 +753,12 @@ share the task.
 
 This section presents the mechanisms BitBake provides to allow you to
 share functionality between recipes. Specifically, the mechanisms
-include ``include``, ``inherit``, :term:`INHERIT`, and ``require``
+include :ref:`inherit<ref-bitbake-user-manual-metadata-inherit>`,
+:ref:`inherit_defer<ref-bitbake-user-manual-metadata-inherit-defer>`,
+:ref:`include<ref-include-directive>`,
+:ref:`include_all<ref-include-all-directive>`,
+:ref:`require<require-inclusion>` and
+:ref:`INHERIT<bitbake-user-manual/bitbake-user-manual-metadata:\`\`INHERIT\`\` configuration directive>`
 directives. There is also a higher-level abstraction called
 ``configuration fragments`` that is enabled with ``addfragments``
 directive.
