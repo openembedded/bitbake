@@ -760,7 +760,7 @@ include :ref:`inherit<ref-bitbake-user-manual-metadata-inherit>`,
 :ref:`require<require-inclusion>` and
 :ref:`INHERIT<bitbake-user-manual/bitbake-user-manual-metadata:\`\`INHERIT\`\` configuration directive>`
 directives. There is also a higher-level abstraction called
-``configuration fragments`` that is enabled with ``addfragments``
+`configuration fragments` that is enabled with ``addfragments``
 directive.
 
 .. _ref-bitbake-user-manual-metadata-inherit:
