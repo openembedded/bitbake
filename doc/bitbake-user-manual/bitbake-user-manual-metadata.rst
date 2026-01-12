@@ -910,6 +910,10 @@ The ``include_all`` directive works like the :ref:`include
 directive but will include *all* of the files that match the specified path in
 the enabled layers (layers part of :term:`BBLAYERS`).
 
+Note that only :term:`BBPATH` will be searched, the parent directory of the file
+with the ``include_all`` directive will not be searched (unlike for the
+``include`` directive).
+
 .. note::
 
    This behaviour is rarely what you want in normal operation, and should
