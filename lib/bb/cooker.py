@@ -328,7 +328,16 @@ class BBCooker:
         if self.data.getVar("BB_HASHSERVE") == "auto":
             # Create a new hash server bound to a unix domain socket
             if not self.hashserv:
-                dbfile = (self.data.getVar("PERSISTENT_DIR") or self.data.getVar("CACHE")) + "/hashserv.db"
+                bb_hashserve_db_dir = self.data.getVar("BB_HASHSERVE_DB_DIR")
+                if bb_hashserve_db_dir and utils.is_path_on_nfs(bb_hashserve_db_dir):
+                    bb.fatal("""Hash equivalency database location (set via BB_HASHSERVE_DB_DIR to {})
+cannot be on a NFS mount due to potential NFS locking issues between sqlite clients, per https://sqlite.org/faq.html#q5
+
+If you need to share the database between several computers, set up a permanently running hash equivalency server
+according to https://docs.yoctoproject.org/dev-manual/hashequivserver.html""".format(bb_hashserve_db_dir))
+                dbdir = bb_hashserve_db_dir or self.data.getVar("PERSISTENT_DIR") or self.data.getVar("CACHE")
+                os.makedirs(dbdir, exist_ok=True)
+                dbfile = dbdir + "/hashserv.db"
                 upstream = self.data.getVar("BB_HASHSERVE_UPSTREAM") or None
                 if upstream:
                     try:

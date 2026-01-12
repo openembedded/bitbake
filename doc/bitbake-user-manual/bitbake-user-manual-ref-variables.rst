@@ -475,6 +475,29 @@ overview of their function and contents.
       equivalences that correspond to Share State caches that are
       only available on specific clients.
 
+   :term:`BB_HASHSERVE_DB_DIR`
+      When :term:`BB_HASHSERVE` is set to ``auto``, bitbake will use
+      a private location inside a particular build directory for the sqlite
+      database file that holds hash equivalency data.
+
+      This variable allows using a different path, which can be shared
+      between multiple build directories and bitbake instances
+      that operate on them. This enables using a common ``${SSTATE_DIR}``
+      together with common hash equivalency data for local builds, without having to
+      separately manage a hash equivalency server.
+
+      .. note::
+
+         This variable cannot be set to a NFS mount and bitbake will error out then.
+         The reason is that NFS implementations can have file locking issues, which
+         can cause data loss and corruption when there are multiple writers operating
+         on a file at the same time as explained in https://sqlite.org/faq.html#q5
+
+         If you'd like to share hash equivalency data between multiple computers, you
+         need to set up a hash equivalency server separately and point :term:`BB_HASHSERVE`
+         to it. See https://docs.yoctoproject.org/dev-manual/hashequivserver.html for
+         additional information.
+
    :term:`BB_HASHSERVE_UPSTREAM`
       Specifies an upstream Hash Equivalence server.
 
