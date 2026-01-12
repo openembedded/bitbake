@@ -43,6 +43,7 @@ def cache_dir(top_dir):
 def init_bb_cache(top_dir, settings, args):
     dldir = settings["default"]["dl-dir"]
     bb_cachedir = os.path.join(cache_dir(top_dir), 'bitbake-cache')
+    os.makedirs(bb_cachedir, exist_ok=True)
 
     d = bb.data.init()
     d.setVar("DL_DIR", dldir)
@@ -937,7 +938,7 @@ def get_top_dir(args, settings):
     setup_dir_via_bbpath = get_setup_dir_via_bbpath()
     if setup_dir_via_bbpath:
         top_dir = os.path.dirname(setup_dir_via_bbpath)
-        if os.path.exists(topdir_settings_path(top_dir)):
+        if os.path.exists(cache_dir(top_dir)):
             return top_dir
 
     if hasattr(args, 'setup_dir'):
