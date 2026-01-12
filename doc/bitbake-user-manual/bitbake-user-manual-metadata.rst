@@ -1080,11 +1080,11 @@ For these two directives, BitBake includes the first file it finds.
    with the :ref:`include_all <ref-include-all-directive>` directive.
 
 Let's consider the following statement called from a recipe file located in
-``/layers/meta-custom2/recipes-example/example_0.1.bb``::
+``/layers/meta-custom2/recipes-example/example/example_0.1.bb``::
 
    require myfile.inc
 
-Where ``myfile.inc`` is located in ``/layers/meta-custom2/recipes-example/``.
+Where ``myfile.inc`` is located in ``/layers/meta-custom2/recipes-example/example``.
 
 And let's assume that the value of :term:`BBPATH` is
 ``/layers/meta-custom1:/layers/meta-custom2``. Then BitBake will try to find
