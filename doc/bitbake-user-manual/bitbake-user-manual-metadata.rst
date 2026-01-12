@@ -1070,7 +1070,7 @@ BitBake also uses the :term:`BBPATH` variable.
 
 .. note::
 
-   The BBPATH variable is analogous to the environment variable PATH.
+   The :term:`BBPATH` variable is analogous to the environment variable ``PATH``.
 
 For these two directives, BitBake includes the first file it finds.
 
