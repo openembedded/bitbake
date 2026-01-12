@@ -1112,6 +1112,18 @@ In this case, the following paths would be searched::
 
 This time, the second item of this list would be matched.
 
+Note that the first path is based on the location of the file with the
+``require`` (or ``include``) directive. Imagine there's a
+``/layers/meta-custom2/recipes-bbappend/example/example_0.1.bbappend`` with::
+
+   require myappend.inc
+
+In this case, the following paths would be searched::
+
+   /layers/meta-custom2/recipes-bbappend/example/myappend.inc
+   /layers/meta-custom1/myappend.inc
+   /layers/meta-custom2/myappend.inc
+
 .. note::
 
    In the above examples, the exact same search order applies for the
