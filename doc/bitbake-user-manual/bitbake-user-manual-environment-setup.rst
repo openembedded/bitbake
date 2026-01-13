@@ -687,6 +687,18 @@ They contain the following sections:
                  "local": {
                      "path": "~/path/to/local/openembedded-core"
                  }
+             },
+             "meta-private": {
+                 "git-remote": {
+                     "remotes": {
+                         "origin": {
+                             "uri": "ssh://git@git.example.com/meta-private"
+                         }
+                     },
+                     "branch": "master",
+                     "rev": "master"
+                 },
+                 "path": "meta-private"
              }
          }
       }
