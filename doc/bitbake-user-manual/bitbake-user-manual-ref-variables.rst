@@ -286,8 +286,8 @@ overview of their function and contents.
       Specifies the internal list of variables to allow through from
       the external environment into BitBake's datastore. If the value of
       this variable is not specified (which is the default), the following
-      list is used: :term:`BBPATH`, :term:`BB_PRESERVE_ENV`,
-      :term:`BB_ENV_PASSTHROUGH`, and :term:`BB_ENV_PASSTHROUGH_ADDITIONS`.
+      list is used: :term:`BBPATH`, :term:`BB_PRESERVE_ENV`, and
+      :term:`BB_ENV_PASSTHROUGH_ADDITIONS`.
 
       .. note::
 
