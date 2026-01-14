@@ -21,8 +21,6 @@ import signal
 import functools
 import string
 
-default_registry = os.path.normpath(os.path.dirname(__file__) + "/../default-registry")
-
 bindir = os.path.abspath(os.path.dirname(__file__))
 sys.path[0:0] = [os.path.join(os.path.dirname(bindir), 'lib')]
 
@@ -36,6 +34,17 @@ GLOBAL_ONLY_SETTINGS = (
     "top-dir-prefix",
     "top-dir-name",
 )
+
+# If bitbake is from a release tarball or somewhere like pypi where
+# updates may not be straightforward, prefer to use the git repo as the
+# default registry
+def get_default_registry():
+    internal_registry = os.path.normpath(os.path.dirname(__file__) + "/../default-registry")
+    git_registry = "git://git.openembedded.org/bitbake;protocol=https;branch=master;rev=master"
+    if os.path.exists(os.path.dirname(__file__) + "/../.git"):
+        return internal_registry
+    else:
+        return git_registry
 
 def cache_dir(top_dir):
     return os.path.join(top_dir, '.bitbake-setup-cache')
@@ -1076,7 +1085,7 @@ def main():
         builtin_settings['default'] = {
                          'top-dir-prefix':os.getcwd(),
                          'top-dir-name':'bitbake-builds',
-                         'registry':default_registry,
+                         'registry':get_default_registry(),
                          'use-full-setup-dir-name':'no',
                          }
 
