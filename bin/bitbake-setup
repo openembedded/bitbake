@@ -802,6 +802,7 @@ def list_registry(registry_path, with_expired):
 def list_configs(settings, args):
     import tempfile
     top_dir = tempfile.mkdtemp(prefix="bitbake-setup-list-")
+    settings['default']['dl-dir'] = os.path.join(top_dir, '.bitbake-setup-downloads')
     d = init_bb_cache(top_dir, settings, args)
     registry_path = update_registry(settings["default"]["registry"], cache_dir(top_dir), d)
     json_data = list_registry(registry_path, args.with_expired)
