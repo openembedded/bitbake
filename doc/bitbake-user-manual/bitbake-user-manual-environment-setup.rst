@@ -958,7 +958,7 @@ Fixed source revisions
 
 :term:`Generic Configuration` can set source revisions in ``rev`` to a tag or a branch.
 Bitbake-setup will make sure the actual revision will match the tag or branch when performing
-initializations or updates, and will capture the revisions in a :ref:`_ref-bbsetup-source-overrides`
+initializations or updates, and will capture the revisions in a :ref:`ref-bbsetup-source-overrides`
 file.
 
 This file is named ``sources-fixed-revisions.json`` and is available in ``layers/``
