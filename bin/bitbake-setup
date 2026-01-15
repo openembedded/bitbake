@@ -553,8 +553,12 @@ def obtain_config(top_dir, settings, args, source_overrides, d):
         elif config_id.startswith("http://") or config_id.startswith("https://"):
             logger.info("Reading configuration from network URI\n    {}".format(config_id))
             import urllib.request
-            with urllib.request.urlopen(config_id) as f:
-              upstream_config = {'type':'network','uri':config_id,'name':get_config_name(config_id),'data':json.load(f)}
+            try:
+                with urllib.request.urlopen(config_id) as f:
+                    json_data = json.load(f)
+                upstream_config = {'type':'network','uri':config_id,'name':get_config_name(config_id),'data':json_data}
+            except json.JSONDecodeError as e:
+                raise Exception ("Invalid JSON from {}. Are you pointing to an HTML page? {}".format(config_id, e))
         else:
             logger.info("Looking up config {} in configuration registry".format(config_id))
             registry_path = update_registry(settings["default"]["registry"], cache_dir(top_dir), d)
