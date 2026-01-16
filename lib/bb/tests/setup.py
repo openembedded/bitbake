@@ -326,15 +326,15 @@ print("BBPATH is {{}}".format(os.environ["BBPATH"]))
         # test-config-1 is tested as a registry config, test-config-2 as a local file
         variants = ('gadget','gizmo','gizmo-env-passthrough','gizmo-no-fragment','gadget-notemplate','gizmo-notemplate')
         variants_local = variants + ('gizmo-notemplate-with-filerelative-layers',)
-        test_configurations = {'test-config-1': {'cmdline': 'test-config-1',
+        test_configurations = ({'name':'test-config-1','cmdline': 'test-config-1',
                                                  'buildconfigs': variants},
-                               'test-config-2': {'cmdline': os.path.join(self.registrypath,'config-2/test-config-2.conf.json'),
+                               {'name':'test-config-2','cmdline': os.path.join(self.registrypath,'config-2/test-config-2.conf.json'),
                                                  'buildconfigs': variants_local}
-                               }
-        for cf, v in test_configurations.items():
+                               )
+        for v in test_configurations:
             for c in v['buildconfigs']:
                 out = self.runbbsetup("init --non-interactive {} {}".format(v['cmdline'], c))
-                setuppath = self.get_setup_path(cf, c)
+                setuppath = self.get_setup_path(v['name'], c)
                 self.check_setupdir_files(setuppath, test_file_content)
 
         # install buildtools
