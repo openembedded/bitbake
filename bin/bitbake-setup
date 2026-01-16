@@ -490,7 +490,7 @@ def choose_bitbake_config(configs, parameters, non_interactive):
     return flattened_configs[config_n]
 
 def choose_config(configs, non_interactive):
-    not_expired_configs = [k for k in configs.keys() if not has_expired(configs[k].get("expires", None))]
+    not_expired_configs = [k for k in sorted(configs.keys()) if not has_expired(configs[k].get("expires", None))]
     config_list = list(enumerate(not_expired_configs, 1))
     if len(config_list) == 1:
         only_config = config_list[0][1]
@@ -813,7 +813,7 @@ def list_configs(settings, args):
     shutil.rmtree(top_dir)
 
     logger.plain("Available configurations:")
-    for config_name, config_data in json_data.items():
+    for config_name, config_data in sorted(json_data.items()):
         expiry_date = config_data.get("expires", None)
         config_desc = config_data["description"]
         if expiry_date:
