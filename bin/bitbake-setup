@@ -729,7 +729,8 @@ def build_status(top_dir, settings, args, d, update=False):
     args.non_interactive = True
     args.skip_selection = current_upstream_config['skip-selection']
     source_overrides = current_upstream_config["source-overrides"]
-    new_upstream_config = obtain_config(top_dir, settings["default"]["registry"], args, source_overrides, d)
+    registry = current_upstream_config.get("registry")
+    new_upstream_config = obtain_config(top_dir, registry, args, source_overrides, d)
 
     write_upstream_config(confdir, new_upstream_config)
     config_diff = bb.process.run('git -C {} diff'.format(confdir))[0]
