@@ -362,7 +362,7 @@ print("BBPATH is {{}}".format(os.environ["BBPATH"]))
             self.assertIn("Layer repository file://{} checked out into {}/layers/test-repo updated revision master from".format(self.testrepopath, setuppath), out[0])
             out = self.runbbsetup("update --update-bb-conf='yes'")
             if c in ('gadget', 'gizmo'):
-                self.assertIn("Existing bitbake configuration directory renamed to {}/build/conf-backup.".format(setuppath), out[0])
+                self.assertIn("Leaving the previous configuration in {}/build/conf-backup.".format(setuppath), out[0])
                 self.assertIn('-{}+{}'.format(prev_test_file_content, test_file_content), out[0])
             self.check_setupdir_files(setuppath, test_file_content)
 
@@ -386,7 +386,7 @@ print("BBPATH is {{}}".format(os.environ["BBPATH"]))
             self.assertIn('-                    "rev": "master"\n+                    "rev": "another-branch"', out[0])
             out = self.runbbsetup("update --update-bb-conf='yes'")
             if c in ('gadget', 'gizmo'):
-                self.assertIn("Existing bitbake configuration directory renamed to {}/build/conf-backup.".format(setuppath), out[0])
+                self.assertIn("Leaving the previous configuration in {}/build/conf-backup.".format(setuppath), out[0])
                 self.assertIn('-{}+{}'.format(prev_test_file_content, test_file_content), out[0])
             self.check_setupdir_files(setuppath, test_file_content)
 
