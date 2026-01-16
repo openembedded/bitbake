@@ -324,17 +324,12 @@ print("BBPATH is {{}}".format(os.environ["BBPATH"]))
         self.add_file_to_testrepo('test-file', test_file_content)
 
         # test-config-1 is tested as a registry config, test-config-2 as a local file
+        variants = ('gadget','gizmo','gizmo-env-passthrough','gizmo-no-fragment','gadget-notemplate','gizmo-notemplate')
+        variants_local = variants + ('gizmo-notemplate-with-filerelative-layers',)
         test_configurations = {'test-config-1': {'cmdline': 'test-config-1',
-                                                 'buildconfigs':('gadget','gizmo',
-                                                                 'gizmo-env-passthrough',
-                                                                 'gizmo-no-fragment',
-                                                                 'gadget-notemplate','gizmo-notemplate')},
+                                                 'buildconfigs': variants},
                                'test-config-2': {'cmdline': os.path.join(self.registrypath,'config-2/test-config-2.conf.json'),
-                                                 'buildconfigs': ('gadget','gizmo',
-                                                                  'gizmo-env-passthrough',
-                                                                  'gizmo-no-fragment',
-                                                                  'gadget-notemplate','gizmo-notemplate',
-                                                                  'gizmo-notemplate-with-filerelative-layers')}
+                                                 'buildconfigs': variants_local}
                                }
         for cf, v in test_configurations.items():
             for c in v['buildconfigs']:
@@ -352,10 +347,7 @@ print("BBPATH is {{}}".format(os.environ["BBPATH"]))
         prev_test_file_content = test_file_content
         test_file_content = 'modified\n'
         self.add_file_to_testrepo('test-file', test_file_content)
-        for c in ('gadget', 'gizmo',
-                  'gizmo-env-passthrough',
-                  'gizmo-no-fragment',
-                  'gadget-notemplate', 'gizmo-notemplate'):
+        for c in variants:
             setuppath = self.get_setup_path('test-config-1', c)
             os.environ['BBPATH'] = os.path.join(setuppath, 'build')
             out = self.runbbsetup("status")
@@ -375,10 +367,7 @@ print("BBPATH is {{}}".format(os.environ["BBPATH"]))
         self.git('checkout -b {}'.format(branch), cwd=self.testrepopath)
         self.add_file_to_testrepo('test-file', test_file_content)
         json_1 = self.add_json_config_to_registry('test-config-1.conf.json', branch, branch)
-        for c in ('gadget', 'gizmo',
-                  'gizmo-env-passthrough',
-                  'gizmo-no-fragment',
-                  'gadget-notemplate', 'gizmo-notemplate'):
+        for c in variants:
             setuppath = self.get_setup_path('test-config-1', c)
             os.environ['BBPATH'] = os.path.join(setuppath, 'build')
             out = self.runbbsetup("status")
@@ -408,10 +397,7 @@ print("BBPATH is {{}}".format(os.environ["BBPATH"]))
         self.git('checkout -b {}'.format(branch), cwd=self.testrepopath)
         self.add_file_to_testrepo('test-file', test_file_content)
         json_1 = self.add_json_config_to_registry('test-config-1.conf.json', branch, branch)
-        for c in ('gadget', 'gizmo',
-                  'gizmo-env-passthrough',
-                  'gizmo-no-fragment',
-                  'gadget-notemplate', 'gizmo-notemplate'):
+        for c in variants:
             setuppath = self.get_setup_path('test-config-1', c)
             os.environ['BBPATH'] = os.path.join(setuppath, 'build')
             # write something in local.conf and bblayers.conf
