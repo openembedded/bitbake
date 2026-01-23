@@ -519,23 +519,34 @@ def choose_fragments(possibilities, parameters, non_interactive, skip_selection)
         if skip_selection and k in skip_selection:
             logger.info("Skipping a selection of {}, as requested on command line. The resulting bitbake configuration may require further manual adjustments.".format(k))
             continue
-        choice = [o for o in v["options"] if o in parameters]
+
+        # options can be a list of strings or a list of dicts
+        options = v["options"]
+        if len(options) > 0 and isinstance(v["options"][0], str):
+            options = [{"name": o, "description": ""} for o in v["options"]]
+
+        choice = [o["name"] for o in options if o["name"] in parameters]
         if len(choice) > 1:
-            raise Exception("Options specified on command line do not allow a single selection from possibilities {}, please remove one or more from {}".format(v["options"], parameters))
+            raise Exception("Options specified on command line do not allow a single selection "
+                            f"from possibilities {[o['name'] for o in options]}, please "
+                            f"remove one or more from {parameters}")
         if len(choice) == 1:
             choices[k] = choice[0]
             continue
 
         if non_interactive:
-            raise Exception("Unable to choose from options in non-interactive mode: {}".format(v["options"]))
+            raise Exception(f"Unable to choose from options in non-interactive mode: {[o['name'] for o in options]}")
 
         logger.plain("\n" + v["description"] + ":")
-        options_enumerated = list(enumerate(v["options"], 1))
+        options_enumerated = list(enumerate(options, 1))
         for n,o in options_enumerated:
-            logger.plain("{}. {}".format(n, o))
+            opt_str = f"{n}. {o['name']}"
+            if o["description"]:
+                opt_str += f"\t{o['description']}"
+            logger.plain(opt_str)
         option_n = int_input([i[0] for i in options_enumerated],
                              "\nPlease select one of the above options by its number: ") - 1
-        choices[k] = options_enumerated[option_n][1]
+        choices[k] = options_enumerated[option_n][1]["name"]
     return choices
 
 def obtain_config(top_dir, registry, args, source_overrides, d):

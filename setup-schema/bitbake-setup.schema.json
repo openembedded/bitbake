@@ -64,7 +64,26 @@
                                 "type": "array",
                                 "description": "List of BitBake configuration fragments to enable",
                                 "items": {
-                                    "type": "string"
+                                    "oneOf": [
+                                        {
+                                            "type": "string",
+                                            "description": "Configuration fragment name"
+                                        },
+                                        {
+                                            "type": "object",
+                                            "description": "Dictionary of BitBake configuration fragments to enable (with description)",
+                                            "properties": {
+                                                "name": {
+                                                    "type": "string",
+                                                    "description": "Configuration fragment name"
+                                                },
+                                                "description": {
+                                                    "type": "string",
+                                                    "description": "Human-readable description of the fragment"
+                                                }
+                                            }
+                                        }
+                                    ]
                                 }
                             },
                             "oe-fragments-one-of": {

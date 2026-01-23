@@ -790,11 +790,21 @@ They contain the following sections:
                 "oe-fragments-one-of": {
                     "machine": {
                         "description": "Target machines",
-                        "options" : ["machine/qemux86-64", "machine/qemuarm64", "machine/qemuriscv64", "machine/genericarm64", "machine/genericx86-64"]
+                        "options" : [
+                            { "name": "machine/qemux86-64", "description": "Machine configuration for running an x86-64 system on QEMU" },
+                            { "name": "machine/qemuarm64", "description": "Machine configuration for running an ARMv8 system on QEMU" },
+                            { "name": "machine/qemuriscv64", "description": "Machine configuration for running an RISC-V system on QEMU" },
+                            { "name": "machine/genericarm64", "description": "Machine configuration for Arm64 SystemReady IR/ES platforms" },
+                            { "name": "machine/genericx86-64", "description": "Machine configuration for generic x86_64 (64-bit) PCs and servers" }
+                        ]
                     },
                     "distro": {
                         "description": "Target Distributions",
-                        "options" : ["distro/poky", "distro/poky-altcfg", "distro/poky-tiny"]
+                        "options" : [
+                            { "name": "distro/poky", "description": "Distro configuration for Poky (Yocto Project Reference Distro)" },
+                            { "name": "distro/poky-altcfg", "description": "Distro configuration for Poky (systemd init manager)" },
+                            { "name": "distro/poky-tiny", "description": "Distro configuration for Poky (optimized for size)" }
+                        ]
                     }
                 },
                 "configurations": [
@@ -882,6 +892,18 @@ They contain the following sections:
 
    -  ``oe-fragments-one-of`` (*optional*, OpenEmbedded specific): the OpenEmbedded
       fragments to select as part of the build.
+
+      This can one of two formats:
+
+      -  A list of dictionaries with ``name`` and a ``description``,
+         corresponding to respectively the fragments names and fragment
+         descriptions (like in the example above).
+
+      -  A list of fragment names. For example:
+
+         .. code-block:: json
+
+            "options" : ["machine/qemux86-64", "machine/qemuarm64", "machine/qemuriscv64", "machine/genericarm64", "machine/genericx86-64"]
 
       This will trigger choices to make during the
       :ref:`ref-bbsetup-command-init` command execution.
