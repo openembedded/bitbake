@@ -136,10 +136,26 @@ print("BBPATH is {{}}".format(os.environ["BBPATH"]))
                 "oe-fragments": ["test-fragment-1"]
             },
             {
-                "name": "gizmo-notemplate",
+                "name": "gizmo-notemplate-fragments-one-of",
                 "description": "Gizmo notemplate configuration",
                 "bb-layers": ["layerC","layerD/meta-layer"],
-                "oe-fragments": ["test-fragment-2"]
+                "oe-fragments": ["test-fragment-2"],
+                "oe-fragments-one-of": {
+                    "fragment-desc": {
+                        "description": "Test fragments (with description)",
+                        "options" : [
+                            { "name": "fragment-desc-1", "description": "fragment 1 desc" },
+                            { "name": "fragment-desc-2", "description": "fragment 2 desc" }
+                        ]
+                    },
+                    "fragment-nodesc": {
+                        "description": "Test fragments (no description)",
+                        "options" : [
+                            "fragment-nodesc-1",
+                            "fragment-nodesc-2"
+                        ]
+                    }
+                }
             },
             {
                 "name": "gizmo-notemplate-with-filerelative-layers",
@@ -259,7 +275,7 @@ print("BBPATH is {{}}".format(os.environ["BBPATH"]))
     def get_setup_path(self, cf, c):
         if c == 'gizmo':
             return os.path.join(self.tempdir, 'bitbake-builds', 'this-is-a-custom-gizmo-build')
-        return os.path.join(self.tempdir, 'bitbake-builds', '{}-{}'.format(cf, c))
+        return os.path.join(self.tempdir, 'bitbake-builds', '{}-{}'.format(cf, "-".join(c.split())))
 
     def test_setup(self):
         # unset BBPATH to ensure tests run in isolation from the existing bitbake environment
@@ -327,7 +343,14 @@ print("BBPATH is {{}}".format(os.environ["BBPATH"]))
         # test-config-1 is tested as a registry config and over http, test-config-2 as a local file
         server = HTTPService(self.registrypath, host="127.0.0.1")
         server.start()
-        variants = ('gadget','gizmo','gizmo-env-passthrough','gizmo-no-fragment','gadget-notemplate','gizmo-notemplate')
+        variants = (
+            'gadget',
+            'gizmo',
+            'gizmo-env-passthrough',
+            'gizmo-no-fragment',
+            'gadget-notemplate',
+            'gizmo-notemplate-fragments-one-of fragment-desc-1 fragment-nodesc-1',
+        )
         variants_local = variants + ('gizmo-notemplate-with-filerelative-layers',)
         test_configurations = ({'name':'test-config-1','cmdline': 'test-config-1',
                                                  'buildconfigs': variants},
