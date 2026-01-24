@@ -22,6 +22,7 @@ import bb.progress
 import socket
 import http.client
 import urllib.request, urllib.parse, urllib.error
+import subprocess
 from   bb.fetch2 import FetchMethod
 from   bb.fetch2 import FetchError
 from   bb.fetch2 import logger
@@ -409,7 +410,9 @@ class Wget(FetchMethod):
                     return self.checkstatus(fetch, ud, d, False)
                 else:
                     # debug for now to avoid spamming the logs in e.g. remote sstate searches
-                    logger.debug2("checkstatus() urlopen failed for %s: %s" % (uri,e))
+                    logger.debug2("checkstatus() urlopen failed for %s: %s" % (uri, e))
+                    if "Bad file descriptor" in str(e):
+                        logger.debug2("lsof output: " + subprocess.check_output(["lsof", "-p", str(os.getpid())]))
                     return False
 
         return True
