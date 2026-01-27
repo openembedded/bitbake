@@ -660,8 +660,10 @@ They contain the following sections:
           "description": "OpenEmbedded - 'nodistro' basic configuration"
       }
 
--  ``sources`` (*optional*): sources, such as git repositories that should be provided
-   under ``layers/`` directory of a :term:`Setup`.
+-  ``sources`` (**required**): sources, such as git repositories that should
+   be provided under ``layers/`` directory of a :term:`Setup`. Although the
+   list of sources can be very flexible, at least BitBake should be cloned
+   to generate a :term:`Setup`.
 
    Example:
 
