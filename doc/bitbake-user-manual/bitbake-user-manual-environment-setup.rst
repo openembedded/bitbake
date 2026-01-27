@@ -41,8 +41,8 @@ Quick Start
       $ ./bitbake/bin/bitbake-setup init
 
    This command will ask you to choose which configurations to use available as
-   part of the default BitBake :term:`generic configurations <generic
-   Configuration>`.
+   part of the default BitBake :term:`Configuration Templates <Configuration
+   Template>`.
 
    .. note::
 
@@ -73,8 +73,8 @@ Quick Start
 
       The name of the directory will vary depending on the choices.
 
-   -  ``config/``: holds the :term:`Specific Configuration`, which embeds the
-      :term:`Generic Configuration` (first choice of the :ref:`ref-bbsetup-command-init` command)
+   -  ``config/``: holds the :term:`Configuration Instance`, which embeds the
+      :term:`Configuration Template` (first choice of the :ref:`ref-bbsetup-command-init` command)
       and the choices made during the initialization.
 
    -  ``build/``: the :term:`BitBake Build` directory, where BitBake stores
@@ -145,12 +145,12 @@ The "Top Directory" and "Setup" directories are defined as follows:
    :term:`Setup`
       A Setup is the result of the :ref:`ref-bbsetup-command-init`
       command, which creates a :term:`Setup` directory. It is constructed from a
-      :term:`Generic Configuration` and choices made during the ``init`` command.
+      :term:`Configuration Template` and choices made during the ``init`` command.
 
       It contains at least:
 
       -  A :term:`BitBake Build` (``build/`` directory).
-      -  A :term:`Specific Configuration` (``config/`` directory).
+      -  A :term:`Configuration Instance` (``config/`` directory).
       -  Sources such as :ref:`layers
          <bitbake-user-manual/bitbake-user-manual-intro:Layers>` or other
          repositories managed by ``bitbake-setup`` (``layers/`` directory).
@@ -173,8 +173,8 @@ The following components are involved to create the content of these directories
       Build` constitute the :ref:`BitBake configuration
       <bitbake-user-manual/bitbake-user-manual-intro:Configuration Files>`.
 
-   :term:`Generic Configuration`
-      A Generic Configuration is a file in JSON format containing a template to
+   :term:`Configuration Template`
+      A Configuration Template is a file in JSON format containing a template to
       create a :term:`Setup`. These files are used during the :ref:`ref-bbsetup-command-init`
       command as a starting point to configure the :term:`Setup`. When the
       command runs, the user may be prompted with choices to further specify the
@@ -183,42 +183,42 @@ The following components are involved to create the content of these directories
       It is also possible to specify the choices on the command line for a
       completely non-interactive initialization.
 
-      :term:`Generic Configuration` files are stored in :term:`registries
+      :term:`Configuration Template` files are stored in :term:`registries
       <Registry>`, and can be listed with the :ref:`ref-bbsetup-command-list`
       command.
 
-      :term:`Generic Configuration` files must end with the ``.conf.json``
+      :term:`Configuration Template` files must end with the ``.conf.json``
       suffix for ``bitbake-setup`` to locate them.
 
       .. note::
 
-         The default :term:`Generic Configurations <Generic Configuration>` are
+         The default :term:`Configuration Templates <Configuration Template>` are
          located in the BitBake repository in a local registry. the
          ``default-registry/`` directory. This can be modified with the
          :ref:`ref-bbsetup-setting-registry` setting.
 
       :ref:`ref-bbsetup-command-status` will tell if a :term:`Setup`
-      is in sync with the :term:`Generic Configuration` it was constructed from
+      is in sync with the :term:`Configuration Template` it was constructed from
       (typically: layer updates).
 
       :ref:`ref-bbsetup-command-update` will bring a :term:`Setup`
-      in sync with its :term:`Generic Configuration`.
+      in sync with its :term:`Configuration Template`.
 
-   :term:`Specific Configuration`
-      The :term:`Specific Configuration` is stored in the ``config/`` directory
-      in a :term:`Setup`. It embeds the :term:`Generic Configuration` and the
+   :term:`Configuration Instance`
+      The :term:`Configuration Instance` is stored in the ``config/`` directory
+      in a :term:`Setup`. It embeds the :term:`Configuration Template` and the
       choices made during the initialization.
 
-      It is also a Git repository, that contains a history of the specific
-      configuration and updates made to it via :ref:`ref-bbsetup-command-update`.
+      It is also a Git repository, that contains a history of the configuration
+      instance and updates made to it via :ref:`ref-bbsetup-command-update`.
 
    :term:`Registry`
-      A configuration registry is a place where one or more :term:`Generic
-      Configurations <Generic Configuration>` are stored.
+      A configuration registry is a place where one or more :term:`Configuration
+      Templates <Configuration Template>` are stored.
 
       The directory structure of the registry can be any: ``bitbake-setup``
       recursively find files ending with ``.conf.json`` and consider it a
-      :term:`Generic Configuration`.
+      :term:`Configuration Template`.
 
       The registry location is configured through the
       :ref:`ref-bbsetup-setting-registry` setting. This location can be the URL to
@@ -279,7 +279,7 @@ The ``bitbake-setup init`` sub-command helps initializing a :term:`Setup`.
 
 This command can be run without any arguments to prompt the user with
 configuration options to choose from. These configuration options are taken from
-the input :term:`Generic Configuration` files in the :term:`registry`.
+the input :term:`Configuration Template` files in the :term:`registry`.
 
 .. note::
 
@@ -288,9 +288,9 @@ the input :term:`Generic Configuration` files in the :term:`registry`.
 
 Otherwise, the first argument to :ref:`ref-bbsetup-command-init` can be:
 
--  A generic configuration ID in the registry.
--  A path to a generic configuration file on a local disk.
--  An HTTP URI to the generic configuration file.
+-  A Configuration Template ID in the registry.
+-  A path to a Configuration Template file on a local disk.
+-  An HTTP URI to the Configuration Template file.
 
 The choices made during the bare ``bitbake-setup init`` command can also be
 passed directly on the command-line, for example::
@@ -331,7 +331,7 @@ In addition, the command can take the following arguments:
 ``bitbake-setup init`` Examples
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
--  This example prompts the user to choose a :term:`Generic Configuration` from
+-  This example prompts the user to choose a :term:`Configuration Template` from
    a custom registry:
 
    .. code-block:: shell
@@ -340,18 +340,18 @@ In addition, the command can take the following arguments:
           --setting default registry 'git://example.com/bitbake-setup-configurations.git;protocol=https;branch=main;rev=main' \
           init
 
--  This example takes a :term:`Generic Configuration` from a remote location
+-  This example takes a :term:`Configuration Template` from a remote location
    (here, one of the default configuration in BitBake):
 
    .. code-block:: shell
 
       $ ./bitbake/bin/bitbake-setup init https://git.openembedded.org/bitbake/plain/default-registry/configurations/oe-nodistro-master.conf.json
 
--  This example initializes a :term:`Setup` with: 
+-  This example initializes a :term:`Setup` with:
 
    -  A custom :ref:`ref-bbsetup-setting-top-dir-prefix` and :ref:`ref-bbsetup-setting-top-dir-name`
    -  A :term:`source override`, and additionally overriding openembedded-core with a locally managed directory.
-   -  A standalone :term:`generic configuration` file.
+   -  A standalone :term:`Configuration Template` file.
    -  Choices passed on the command-line, applied non-interactively.
 
    .. code-block:: shell
@@ -371,8 +371,8 @@ In addition, the command can take the following arguments:
 ``bitbake-setup list``
 ----------------------
 
-The ``bitbake-setup list`` sub-command lists the available :term:`generic
-configurations <generic configuration>` in the current :term:`registry`.
+The ``bitbake-setup list`` sub-command lists the available :term:`Configuration
+Templates <Configuration Template>` in the current :term:`registry`.
 
 In addition, the command can take the following arguments:
 
@@ -388,8 +388,8 @@ In addition, the command can take the following arguments:
 ------------------------
 
 The ``bitbake-setup status`` sub-command shows the status of a
-:term:`Setup`. Any differences between the local copy of the :term:`generic
-configuration` and the upstream one are printed on the console.
+:term:`Setup`. Any differences between the local copy of the :term:`Configuration
+Template` and the upstream one are printed on the console.
 
 If the BitBake environment is sourced and ready to build, the ``bitbake-setup
 status`` command (without any arguments) will show the status of the current
@@ -407,7 +407,7 @@ In addition, the command can take the following arguments:
 ------------------------
 
 The ``bitbake-setup update`` sub-command updates a :term:`Setup` to sync with
-the latest changes from a :term:`generic configuration` it was constructed from.
+the latest changes from the :term:`Configuration Template` it was constructed from.
 The :ref:`ref-bbsetup-command-status` command can be used to show the current
 status of the :term:`Setup` before updating it.
 
@@ -617,16 +617,16 @@ manner.
 
 The :ref:`ref-bbsetup-setting-use-full-setup-dir-name` setting, if set to ``yes``
 will override the suggestions for the :term:`Setup` directory name made by
-``setup-dir-name`` entries in :term:`Generic Configuration` files. This
+``setup-dir-name`` entries in :term:`Configuration Template` files. This
 will make the directory names longer, but fully specific: they will contain
 all selections made during initialization.
 
 .. _ref-bbsetup-section-config-reference:
 
-Generic Configuration Files Reference
-=====================================
+Configuration Template Files Reference
+======================================
 
-:term:`Generic Configurations <Generic Configuration>` are the input files given
+:term:`Configuration Templates <Configuration Template>` are the input files given
 to ``bitbake-setup`` to configure :term:`Setups <Setup>`.
 
 These files are written in the JSON file format and are stored in a
@@ -921,8 +921,8 @@ They contain the following sections:
 
       would expand to ``somebuild-machine_gadget``.
 
-Generic Configuration Examples
-------------------------------
+Configuration Template Examples
+-------------------------------
 
 OpenEmbedded "nodistro" configuration for master branches:
 
@@ -975,10 +975,10 @@ Here is an example file that overrides the branch of the BitBake repository to
    }
 
 -  The ``version`` parameter contains the version of the used configuration, and
-   should match the one of the :term:`Generic Configuration` file in use.
+   should match the one of the :term:`Configuration Template` file in use.
 
 -  The ``sources`` section contains the same options as the ``sources`` option
-   of a :term:`Generic Configuration` file. See the
+   of a :term:`Configuration Template` file. See the
    :ref:`ref-bbsetup-section-config-reference` section for more information.
 
 .. _ref-bbsetup-fixed-revisions:
@@ -986,7 +986,7 @@ Here is an example file that overrides the branch of the BitBake repository to
 Fixed source revisions
 ======================
 
-:term:`Generic Configuration` can set source revisions in ``rev`` to a tag or a branch.
+:term:`Configuration Template` can set source revisions in ``rev`` to a tag or a branch.
 Bitbake-setup will make sure the actual revision will match the tag or branch when performing
 initializations or updates, and will capture the revisions in a :ref:`ref-bbsetup-source-overrides`
 file.
