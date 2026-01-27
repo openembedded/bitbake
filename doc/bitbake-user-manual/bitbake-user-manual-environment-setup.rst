@@ -50,8 +50,7 @@ Quick Start
       See the :ref:`ref-bbsetup-section-config-reference` section to learn more
       about ``bitbake-setup`` input configuration files.
 
-#. With the default choices, the ``bitbake-setup init`` command creates the
-   following files and directories::
+#. Here is an example of files and directories structure created by ``bitbake-setup init``::
 
       ./bitbake-builds/
       ├── site.conf
