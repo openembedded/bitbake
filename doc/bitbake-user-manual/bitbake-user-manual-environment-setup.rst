@@ -792,7 +792,7 @@ They contain the following sections:
                         "options" : ["machine/qemux86-64", "machine/qemuarm64", "machine/qemuriscv64", "machine/genericarm64", "machine/genericx86-64"]
                     },
                     "distro": {
-                        "description": "Distribution configuration variants",
+                        "description": "Target Distributions",
                         "options" : ["distro/poky", "distro/poky-altcfg", "distro/poky-tiny"]
                     }
                 },
