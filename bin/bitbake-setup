@@ -926,6 +926,31 @@ def create_siteconf(top_dir, non_interactive, settings):
 
         os.makedirs(top_dir, exist_ok=True)
         with open(siteconfpath, 'w') as siteconffile:
+            sstate_settings = textwrap.dedent(
+                """
+                #
+                # Where to place shared-state files
+                #
+                # BitBake has the capability to accelerate builds based on previously built output.
+                # This is done using "shared state" files which can be thought of as cache objects
+                # and this option determines where those files are placed.
+                #
+                # You can wipe out TMPDIR leaving this directory intact and the build would regenerate
+                # from these files if no changes were made to the configuration. If changes were made
+                # to the configuration, only shared state files where the state was still valid would
+                # be used (done using checksums).
+                SSTATE_DIR ?= "{sstate_dir}"
+                #
+                # Hash Equivalence database location
+                #
+                # Hash equivalence improves reuse of sstate by detecting when a given sstate
+                # artifact can be reused as equivalent, even if the current task hash doesn't
+                # match the one that generated the artifact. This variable controls where the
+                # Hash Equivalence database ("hashserv.db") is stored and can be shared between
+                # concurrent builds.
+                BB_HASHSERVE_DB_DIR ?= "${{SSTATE_DIR}}"
+                """.format(sstate_dir=os.path.join(top_dir, ".sstate-cache"))
+            )
             siteconffile.write(
                 textwrap.dedent(
                     """\
@@ -943,7 +968,7 @@ def create_siteconf(top_dir, non_interactive, settings):
                     """.format(
                         dl_dir=settings["default"]["dl-dir"],
                     )
-                )
+                ) + (sstate_settings if settings["default"]["common-sstate"] == 'yes' else "")
             )
 
 
@@ -1154,6 +1179,7 @@ def main():
                          'top-dir-name':'bitbake-builds',
                          'registry':get_default_registry(),
                          'use-full-setup-dir-name':'no',
+                         'common-sstate':'yes',
                          }
 
         global_settings = load_settings(global_settings_path(args))
