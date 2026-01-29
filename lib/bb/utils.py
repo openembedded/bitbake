@@ -2264,3 +2264,11 @@ def lock_timeout_nocheck(lock):
         if l:
             lock.release()
         sigmask(signal.SIG_SETMASK, s)
+
+def is_path_on_nfs(path):
+    """
+    Returns True if ``path`` argument is on a NFS mount.
+    """
+    import bb.process
+    fstype = bb.process.run("stat -f -c %T {}".format(path))[0].strip()
+    return fstype == "nfs"
