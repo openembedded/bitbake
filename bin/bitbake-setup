@@ -156,6 +156,14 @@ def checkout_layers(layers, confdir, layerdir, d):
 
     def _has_local_modifications(r_name, r_path):
         fixed_revisions = json.load(open(os.path.join(confdir, "sources-fixed-revisions.json")))
+
+        if not r_name in fixed_revisions['sources']:
+            logger.warning("""Source {} is added with path {}.
+This path already exists, but it has no entry in a fixed revisions
+record. To ensure possible local modifications are not lost, it will
+be preserved in a backup directory.""".format(r_name, r_path))
+            return True
+
         rev = fixed_revisions['sources'][r_name]['git-remote']['rev']
         status = bb.process.run('git -C {} status --porcelain'.format(r_path))[0]
         if status:
