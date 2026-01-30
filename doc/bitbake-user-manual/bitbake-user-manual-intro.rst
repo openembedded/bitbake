@@ -271,12 +271,9 @@ same root filename. The filenames can differ only in the file type
 suffix used (e.g. ``formfactor_0.0.bb`` and
 ``formfactor_0.0.bbappend``).
 
-Information in append files extends or overrides the information in the
-underlying, similarly-named recipe files.
-
 When you name an append file, you can use the "``%``" wildcard character
-to allow for matching recipe names. For example, suppose you have an
-append file named as follows::
+to allow for a less strict recipe name matching. For example, suppose you have
+an append file named as follows::
 
   busybox_1.21.%.bbappend
 
@@ -290,18 +287,53 @@ the append file would match the following recipe names::
   busybox_1.21.10.bb
   busybox_1.21.11.bb
 
-.. note::
-
-   The use of the " % " character is limited in that it only works directly in
-   front of the .bbappend portion of the append file's name. You cannot use the
-   wildcard character in any other location of the name.
-
 If the ``busybox`` recipe was updated to ``busybox_1.3.0.bb``, the
 append name would not match. However, if you named the append file
 ``busybox_1.%.bbappend``, then you would have a match.
 
 In the most general case, you could name the append file something as
 simple as ``busybox_%.bbappend`` to be entirely version independent.
+
+A recipe named without a version may only be appended by an append file named
+exactly the same. That is, a recipe named::
+
+   mesa.bb
+
+can only be appended by an append file named::
+
+   mesa.bbappend
+
+That is, ``mesa_%.bbappend`` append file will not match a ``mesa.bb`` recipe.
+
+.. note::
+
+   The "``%``" character is a marker for BitBake, and everything after that
+   marker will not be used for matching recipe names. That is, an append file
+   named::
+
+      busybox_1.%.11.bbappend
+
+   will match recipes named::
+
+      busybox_1.0.11.bb
+      busybox_1.2.bb
+      busybox_1.3.48.bb
+
+   Note that the "``%``" character is not specific to the version part of the
+   recipe name. That is, an append file named::
+
+      linux-yocto%.bbappend
+
+   will match recipes named::
+
+      linux-yocto.bb
+      linux-yocto_6.18.bb
+      linux-yocto-tiny_6.12.bb
+      linux-yocto-rt_6.16.bb
+
+   While it can be useful to append to similar recipes with slightly different
+   names, it is highly discouraged to do so as recipes from other layers may be
+   named similarly enough that the append file would unwittingly match them.
 
 Obtaining BitBake
 =================
