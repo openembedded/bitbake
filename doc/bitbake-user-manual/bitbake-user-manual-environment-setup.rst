@@ -673,11 +673,7 @@ They contain the following sections:
          "sources": {
              "bitbake": {
                  "git-remote": {
-                     "remotes": {
-                         "origin": {
-                             "uri": "https://git.openembedded.org/bitbake"
-                         }
-                     },
+                     "uri": "https://git.openembedded.org/bitbake",
                      "branch": "master",
                      "rev": "master"
                  },
@@ -714,10 +710,38 @@ They contain the following sections:
 
       ``git-remote`` entries are specified with the following options:
 
-      -  ``remotes`` (**required**): a dictionary of git remote names, each containing a ``uri`` property
+      -  ``remotes`` (*optional*): a dictionary of git remote names, each containing a ``uri`` property
          with a URI that follows the git URI syntax. See https://git-scm.com/docs/git-clone#_git_urls
          and https://git-scm.com/docs/git-remote for more information.
 
+         This structure is useful if you want to provide several remotes. Please
+         note that each URI will be cloned, but only the the last treated one
+         will be used in the unpacked source.
+
+         Example:
+
+         .. code-block:: json
+            :force:
+
+            {
+               "sources": {
+                   "bitbake": {
+                       "git-remote": {
+                           "remotes": {
+                               "origin": {
+                                   "uri": "https://git.openembedded.org/bitbake"
+                               },
+                               "contrib": {
+                                   "uri": "https://git.openembedded.org/bitbake-contrib"
+                               }
+                           },
+                           "branch": "master",
+                           "rev": "master"
+                       },
+                       "path": "bitbake"
+                   }
+               }
+            }
       -  ``rev`` (**required**): the revision to checkout. Can be the name of the
          branch to checkout on the latest revision of the specified ``branch``.
 
@@ -727,6 +751,12 @@ They contain the following sections:
 
       -  ``branch`` (**required**): the Git branch, used to check that the
          specified ``rev`` is indeed on that branch.
+
+      -  ``uri`` (*optional*): a URI that follows the git URI syntax. You can replace
+         the ``remotes`` structure if only one URI is provided. Despite this, ``uri``
+         and ``remotes`` can still be used together.
+
+         See https://git-scm.com/docs/git-clone#_git_urls for more information.
 
    -  ``local`` (*optional*): specifies a path on local disk that should be symlinked
       to under ``layers/``. This is useful for local development, where some layer
