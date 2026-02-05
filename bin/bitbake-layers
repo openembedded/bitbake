@@ -16,7 +16,6 @@ import sys
 import argparse
 import warnings
 warnings.simplefilter("default")
-warnings.filterwarnings("ignore", category=DeprecationWarning, message=".*use.of.fork.*may.lead.to.deadlocks.in.the.child.*")
 
 bindir = os.path.dirname(__file__)
 toolname = os.path.basename(__file__).split(".")[0]
