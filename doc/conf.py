@@ -6,20 +6,16 @@
 
 # -- Path setup --------------------------------------------------------------
 
-# If extensions (or modules to document with autodoc) are in another directory,
-# add these directories to sys.path here. If the directory is relative to the
-# documentation root, use os.path.abspath to make it absolute, like shown here.
-#
-# import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
-
-import sys
 import datetime
+import os
+import sys
 
 from pathlib import Path
 
-current_version = "dev"
+sys.path.insert(0, os.path.abspath('.'))
+import setversions
+
+current_version = setversions.get_current_version()
 
 # String used in sidebar
 version = 'Version: ' + current_version
@@ -27,6 +23,10 @@ if current_version == 'dev':
     version = 'Version: Current Development'
 # Version seen in documentation_options.js and hence in js switchers code
 release = current_version
+
+setversions.write_switchers_js("sphinx-static/switchers.js.in",
+                               "sphinx-static/switchers.js",
+                               current_version)
 
 # -- Project information -----------------------------------------------------
 
