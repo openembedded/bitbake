@@ -8,6 +8,7 @@ from bb.tests.fetch import FetcherTest
 import json
 import hashlib
 import glob
+from bb.tests.support.httpserver import HTTPService
 
 class BitbakeSetupTest(FetcherTest):
     def setUp(self):
@@ -323,19 +324,26 @@ print("BBPATH is {{}}".format(os.environ["BBPATH"]))
         test_file_content = 'initial\n'
         self.add_file_to_testrepo('test-file', test_file_content)
 
-        # test-config-1 is tested as a registry config, test-config-2 as a local file
+        # test-config-1 is tested as a registry config and over http, test-config-2 as a local file
+        server = HTTPService(self.registrypath, host="127.0.0.1")
+        server.start()
         variants = ('gadget','gizmo','gizmo-env-passthrough','gizmo-no-fragment','gadget-notemplate','gizmo-notemplate')
         variants_local = variants + ('gizmo-notemplate-with-filerelative-layers',)
         test_configurations = ({'name':'test-config-1','cmdline': 'test-config-1',
                                                  'buildconfigs': variants},
                                {'name':'test-config-2','cmdline': os.path.join(self.registrypath,'config-2/test-config-2.conf.json'),
-                                                 'buildconfigs': variants_local}
+                                                 'buildconfigs': variants_local},
+                               {'name':'test-config-1','cmdline':'http://127.0.0.1:{}/test-config-1.conf.json'.format(server.port),
+                                                 'buildconfigs': variants}
                                )
-        for v in test_configurations:
-            for c in v['buildconfigs']:
-                out = self.runbbsetup("init --non-interactive {} {}".format(v['cmdline'], c))
-                setuppath = self.get_setup_path(v['name'], c)
-                self.check_setupdir_files(setuppath, test_file_content)
+        try:
+            for v in test_configurations:
+                for c in v['buildconfigs']:
+                    out = self.runbbsetup("init --non-interactive {} {}".format(v['cmdline'], c))
+                    setuppath = self.get_setup_path(v['name'], c)
+                    self.check_setupdir_files(setuppath, test_file_content)
+        finally:
+            server.stop()
 
         # install buildtools
         out = self.runbbsetup("install-buildtools --setup-dir {}".format(setuppath))
