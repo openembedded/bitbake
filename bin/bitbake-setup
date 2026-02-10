@@ -920,6 +920,11 @@ def load_settings(settings_path):
     if os.path.exists(settings_path):
         logger.info('Loading settings from {}'.format(settings_path))
         settings.read_file(open(settings_path))
+
+        for section in settings.sections():
+            for key, value in settings[section].items():
+                settings[section][key] = value.strip('\"\'')
+
     return settings
 
 def change_setting(top_dir, args):
