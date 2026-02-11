@@ -656,7 +656,10 @@ class Git(FetchMethod):
         # The url is local ud.clonedir, set it to upstream one
         runfetchcmd("%s remote set-url origin %s" % (ud.basecmd, shlex.quote(repourl)), d, workdir=dest)
 
-    def unpack(self, ud, destdir, d):
+    def unpack_update(self, ud, destdir, d):
+        return self.unpack(ud, destdir, d, update=True)
+
+    def unpack(self, ud, destdir, d, update=False):
         """ unpack the downloaded src to destdir"""
 
         subdir = ud.parm.get("subdir")
@@ -680,7 +683,7 @@ class Git(FetchMethod):
 
         destsuffix = ud.parm.get("destsuffix", def_destsuffix)
         destdir = ud.destdir = os.path.join(destdir, destsuffix)
-        if os.path.exists(destdir):
+        if os.path.exists(destdir) and not update:
             bb.utils.prunedir(destdir)
         if not ud.bareclone:
             ud.unpack_tracer.unpack("git", destdir)
@@ -691,11 +694,15 @@ class Git(FetchMethod):
             ud.basecmd = "GIT_LFS_SKIP_SMUDGE=1 " + ud.basecmd
 
         source_found = False
+        update_mode = False
         source_error = []
 
         clonedir_is_up_to_date = not self.clonedir_need_update(ud, d)
         if clonedir_is_up_to_date:
-            runfetchcmd("%s clone %s %s/ %s" % (ud.basecmd, ud.cloneflags, ud.clonedir, destdir), d)
+            if update and os.path.exists(destdir):
+                update_mode = True
+            else:
+                runfetchcmd("%s clone %s %s/ %s" % (ud.basecmd, ud.cloneflags, ud.clonedir, destdir), d)
             source_found = True
         else:
             source_error.append("clone directory not available or not up to date: " + ud.clonedir)
@@ -703,8 +710,11 @@ class Git(FetchMethod):
         if not source_found:
             if ud.shallow:
                 if os.path.exists(ud.fullshallow):
-                    bb.utils.mkdirhier(destdir)
-                    runfetchcmd("tar -xzf %s" % ud.fullshallow, d, workdir=destdir)
+                    if update and os.path.exists(destdir):
+                        update_mode = True
+                    else:
+                        bb.utils.mkdirhier(destdir)
+                        runfetchcmd("tar -xzf %s" % ud.fullshallow, d, workdir=destdir)
                     source_found = True
                 else:
                     source_error.append("shallow clone not available: " + ud.fullshallow)
@@ -713,6 +723,17 @@ class Git(FetchMethod):
 
         if not source_found:
             raise bb.fetch2.UnpackError("No up to date source found: " + "; ".join(source_error), ud.url)
+
+        if update_mode:
+            if ud.shallow:
+                bb.fetch2.UnpackError("Can't update shallow clones checkouts without network access, not supported.", ud.url)
+            runfetchcmd("%s fetch dldir FIXME" % (ud.basecmd), d, workdir=destdir)
+            try:
+                runfetchcmd("%s rebase FETCHED_HEAD" % (ud.basecmd), d, workdir=destdir)
+            except:
+                runfetchcmd("%s rebase --abort" % (ud.basecmd), d, workdir=destdir)
+                raise Exception
+            return True
 
         # If there is a tag parameter in the url and we also have a fixed srcrev, check the tag
         # matches the revision
@@ -729,6 +750,8 @@ class Git(FetchMethod):
 
         repourl = self._get_repo_url(ud)
         runfetchcmd("%s remote set-url origin %s" % (ud.basecmd, shlex.quote(repourl)), d, workdir=destdir)
+        if ud.clonedir:
+            runfetchcmd("%s remote set-url dldir file://%s" % (ud.basecmd, ud.clonedir), d, workdir=destdir)
 
         if self._contains_lfs(ud, d, destdir):
             if not need_lfs:
