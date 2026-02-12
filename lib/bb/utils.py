@@ -2269,6 +2269,11 @@ def is_path_on_nfs(path):
     """
     Returns True if ``path`` argument is on a NFS mount.
     """
+    # strip not existing path
+    if os.path.isabs(path):
+        while not os.path.exists(path):
+            path = os.path.dirname(path)
+
     import bb.process
     fstype = bb.process.run("stat -f -c %T {}".format(path))[0].strip()
     return fstype == "nfs"
