@@ -87,7 +87,6 @@ Here are some examples that show commonly used mirror definitions::
       cvs://.*/.\*  http://somemirror.org/sources/ \
       git://.*/.\*  http://somemirror.org/sources/ \
       hg://.*/.\*   http://somemirror.org/sources/ \
-      osc://.*/.\*  http://somemirror.org/sources/ \
       p4://.*/.\*   http://somemirror.org/sources/ \
      svn://.*/.\*   http://somemirror.org/sources/"
 
@@ -827,8 +826,6 @@ Other Fetchers
 Fetch submodules also exist for the following:
 
 -  Mercurial (``hg://``)
-
--  OSC (``osc://``)
 
 -  S3 (``s3://``)
 

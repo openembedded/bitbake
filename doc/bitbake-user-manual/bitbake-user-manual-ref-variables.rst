@@ -1672,9 +1672,6 @@ overview of their function and contents.
 
       -  ``npm://``: Fetches JavaScript modules from a registry.
 
-      -  ``osc://``: Fetches files from an OSC (OpenSUSE Build service)
-         revision control repository.
-
       -  ``p4://``: Fetches files from a Perforce (``p4``) revision
          control repository.
 
