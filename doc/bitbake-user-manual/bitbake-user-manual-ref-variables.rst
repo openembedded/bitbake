@@ -1127,10 +1127,6 @@ overview of their function and contents.
       A name assigned to the build. The name defaults to a datetime stamp
       of when the build was started but can be defined by the metadata.
 
-   :term:`BZRDIR`
-      The directory in which files checked out of a Bazaar system are
-      stored.
-
    :term:`CACHE`
       Specifies the directory BitBake uses to store a cache of the metadata
       so it does not need to be parsed every time BitBake is started.
@@ -1637,9 +1633,6 @@ overview of their function and contents.
 
       -  ``az://``: Fetches files from an Azure Storage account using HTTPS.
 
-      -  ``bzr://``: Fetches files from a Bazaar revision control
-         repository.
-
       -  ``ccrc://``: Fetches files from a ClearCase repository.
 
       -  ``cvs://``: Fetches files from a CVS revision control
@@ -1729,8 +1722,8 @@ overview of their function and contents.
 
    :term:`SRCREV`
       The revision of the source code used to build the package. This
-      variable applies only when using Subversion, Git, Mercurial and
-      Bazaar. If you want to build a fixed revision and you want to avoid
+      variable applies only when using Subversion, Git and Mercurial.
+      If you want to build a fixed revision and you want to avoid
       performing a query on the remote repository every time BitBake parses
       your recipe, you should specify a :term:`SRCREV` that is a full revision
       identifier and not just a tag.

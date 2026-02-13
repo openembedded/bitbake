@@ -84,7 +84,6 @@ fetcher does know how to use HTTP as a transport.
 Here are some examples that show commonly used mirror definitions::
 
    PREMIRRORS ?= "\
-      bzr://.*/.\*  http://somemirror.org/sources/ \
       cvs://.*/.\*  http://somemirror.org/sources/ \
       git://.*/.\*  http://somemirror.org/sources/ \
       hg://.*/.\*   http://somemirror.org/sources/ \
@@ -826,8 +825,6 @@ Other Fetchers
 --------------
 
 Fetch submodules also exist for the following:
-
--  Bazaar (``bzr://``)
 
 -  Mercurial (``hg://``)
 
