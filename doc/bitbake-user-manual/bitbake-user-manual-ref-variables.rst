@@ -1131,10 +1131,6 @@ overview of their function and contents.
       Specifies the directory BitBake uses to store a cache of the metadata
       so it does not need to be parsed every time BitBake is started.
 
-   :term:`CVSDIR`
-      The directory in which files checked out under the CVS system are
-      stored.
-
    :term:`DEFAULT_PREFERENCE`
       Specifies a weak bias for recipe selection priority.
 
@@ -1634,9 +1630,6 @@ overview of their function and contents.
       -  ``az://``: Fetches files from an Azure Storage account using HTTPS.
 
       -  ``ccrc://``: Fetches files from a ClearCase repository.
-
-      -  ``cvs://``: Fetches files from a CVS revision control
-         repository.
 
       -  ``file://``: Fetches files, which are usually files shipped
          with the Metadata, from the local machine.

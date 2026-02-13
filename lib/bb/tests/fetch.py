@@ -158,39 +158,6 @@ class URITest(unittest.TestCase):
             'query': {},
             'relative': False
         },
-        "cvs://anoncvs@cvs.handhelds.org/cvs;module=familiar/dist/ipkg" : {
-            'uri': 'cvs://anoncvs@cvs.handhelds.org/cvs;module=familiar/dist/ipkg',
-            'scheme': 'cvs',
-            'hostname': 'cvs.handhelds.org',
-            'port': None,
-            'hostport': 'cvs.handhelds.org',
-            'path': '/cvs',
-            'userinfo': 'anoncvs',
-            'username': 'anoncvs',
-            'password': '',
-            'params': {
-                'module': 'familiar/dist/ipkg'
-            },
-            'query': {},
-            'relative': False
-        },
-        "cvs://anoncvs:anonymous@cvs.handhelds.org/cvs;tag=V0-99-81;module=familiar/dist/ipkg": {
-            'uri': 'cvs://anoncvs:anonymous@cvs.handhelds.org/cvs;tag=V0-99-81;module=familiar/dist/ipkg',
-            'scheme': 'cvs',
-            'hostname': 'cvs.handhelds.org',
-            'port': None,
-            'hostport': 'cvs.handhelds.org',
-            'path': '/cvs',
-            'userinfo': 'anoncvs:anonymous',
-            'username': 'anoncvs',
-            'password': 'anonymous',
-            'params': collections.OrderedDict([
-                ('tag', 'V0-99-81'),
-                ('module', 'familiar/dist/ipkg')
-            ]),
-            'query': {},
-            'relative': False
-        },
         "file://example.diff": { # NOTE: Not RFC compliant!
             'uri': 'file:example.diff',
             'scheme': 'file',
@@ -1417,8 +1384,6 @@ class URLHandle(unittest.TestCase):
     password = urllib.parse.quote(r"!#$%^&*()-_={}[]\|:?,.<>~`", r"!$&'/()*+,;=")
     datatable = {
        "http://www.google.com/index.html" : ('http', 'www.google.com', '/index.html', '', '', {}),
-       "cvs://anoncvs@cvs.handhelds.org/cvs;module=familiar/dist/ipkg" : ('cvs', 'cvs.handhelds.org', '/cvs', 'anoncvs', '', {'module': 'familiar/dist/ipkg'}),
-       "cvs://anoncvs:anonymous@cvs.handhelds.org/cvs;tag=V0-99-81;module=familiar/dist/ipkg" : ('cvs', 'cvs.handhelds.org', '/cvs', 'anoncvs', 'anonymous', collections.OrderedDict([('tag', 'V0-99-81'), ('module', 'familiar/dist/ipkg')])),
        "git://git.openembedded.org/bitbake;branch=@foo;protocol=https" : ('git', 'git.openembedded.org', '/bitbake', '', '', {'branch': '@foo', 'protocol' : 'https'}),
        "file://somelocation;someparam=1": ('file', '', 'somelocation', '', '', {'someparam': '1'}),
        "file://example@.service": ('file', '', 'example@.service', '', '', {}),

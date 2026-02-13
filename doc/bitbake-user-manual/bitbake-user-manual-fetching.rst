@@ -84,7 +84,6 @@ fetcher does know how to use HTTP as a transport.
 Here are some examples that show commonly used mirror definitions::
 
    PREMIRRORS ?= "\
-      cvs://.*/.\*  http://somemirror.org/sources/ \
       git://.*/.\*  http://somemirror.org/sources/ \
       hg://.*/.\*   http://somemirror.org/sources/ \
       p4://.*/.\*   http://somemirror.org/sources/ \
@@ -263,76 +262,6 @@ Some example URLs are as follows::
    specify the name of the downloaded file as well::
 
       SRC_URI = "http://abc123.org/git/?p=gcc/gcc.git&a=snapshot&h=a5dd47;downloadfilename=myfile.bz2"
-
-
-.. _cvs-fetcher:
-
-CVS fetcher (``(cvs://``)
--------------------------
-
-This submodule handles checking out files from the CVS version control
-system. You can configure it using a number of different variables:
-
--  :term:`FETCHCMD_cvs <FETCHCMD>`: The name of the executable to use when running
-   the ``cvs`` command. This name is usually "cvs".
-
--  :term:`SRCDATE`: The date to use when fetching the CVS source code. A
-   special value of "now" causes the checkout to be updated on every
-   build.
-
--  :term:`CVSDIR`: Specifies where a temporary
-   checkout is saved. The location is often ``DL_DIR/cvs``.
-
--  CVS_PROXY_HOST: The name to use as a "proxy=" parameter to the
-   ``cvs`` command.
-
--  CVS_PROXY_PORT: The port number to use as a "proxyport="
-   parameter to the ``cvs`` command.
-
-As well as the standard username and password URL syntax, you can also
-configure the fetcher with various URL parameters:
-
-The supported parameters are as follows:
-
--  *"method":* The protocol over which to communicate with the CVS
-   server. By default, this protocol is "pserver". If "method" is set to
-   "ext", BitBake examines the "rsh" parameter and sets ``CVS_RSH``. You
-   can use "dir" for local directories.
-
--  *"module":* Specifies the module to check out. You must supply this
-   parameter.
-
--  *"tag":* Describes which CVS TAG should be used for the checkout. By
-   default, the TAG is empty.
-
--  *"date":* Specifies a date. If no "date" is specified, the
-   :term:`SRCDATE` of the configuration is used to
-   checkout a specific date. The special value of "now" causes the
-   checkout to be updated on every build.
-
--  *"localdir":* Used to rename the module. Effectively, you are
-   renaming the output directory to which the module is unpacked. You
-   are forcing the module into a special directory relative to
-   :term:`CVSDIR`.
-
--  *"rsh":* Used in conjunction with the "method" parameter.
-
--  *"scmdata":* Causes the CVS metadata to be maintained in the tarball
-   the fetcher creates when set to "keep". The tarball is expanded into
-   the work directory. By default, the CVS metadata is removed.
-
--  *"fullpath":* Controls whether the resulting checkout is at the
-   module level, which is the default, or is at deeper paths.
-
--  *"norecurse":* Causes the fetcher to only checkout the specified
-   directory with no recurse into any subdirectories.
-
--  *"port":* The port to which the CVS server connects.
-
-Some example URLs are as follows::
-
-   SRC_URI = "cvs://CVSROOT;module=mymodule;tag=some-version;method=ext"
-   SRC_URI = "cvs://CVSROOT;module=mymodule;date=20060126;localdir=usethat"
 
 .. _svn-fetcher:
 
