@@ -863,7 +863,10 @@ class Git(FetchMethod):
         # removing the password. ssh keys, ~/.netrc and ~/.ssh/config files can be used as
         # alternatives so we will not take patches adding password support here.
         if ud.user:
-            username = ud.user + '@'
+            if us.pswd:
+                username = ud.user + ':' + us.pswd + '@'
+            else:
+                username = ud.user + '@'
         else:
             username = ""
         return "%s://%s%s%s" % (ud.proto, username, ud.host, urllib.parse.quote(ud.path))
