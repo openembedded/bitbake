@@ -1052,24 +1052,97 @@ overview of their function and contents.
 
       The following example uses a complete regular expression to tell
       BitBake to ignore all recipe and recipe append files in
-      ``meta-ti/recipes-misc/`` directories (and their subdirectories)::
+      ``recipes-bsp`` directory (recursively) of ``meta-ti``::
 
-         BBMASK = "/meta-ti/recipes-misc/"
+         BBMASK = "${BBFILE_PATTERN_meta-ti}/recipes-bsp/"
 
       If you want to mask out multiple directories or recipes, you can
       specify multiple regular expression fragments. This next example
       masks out multiple directories and individual recipes::
 
-         BBMASK += "/meta-ti/recipes-ti/packagegroup/"
-         BBMASK += "/meta-oe/recipes-support/"
-         BBMASK += "/meta-foo/.*/openldap"
-         BBMASK += "opencv.*\.bbappend"
-         BBMASK += "lzma"
+         BBMASK += "${BBFILE_PATTERN_meta-ti}/recipes-graphics/libgal/"
+         BBMASK += "${BBFILE_PATTERN_openembedded-layer}/recipes-support/"
+         BBMASK += "${BBFILE_PATTERN_openembedded-layer}/.*/openldap"
+         BBMASK += "${BBFILE_PATTERN_meta-ti}/.*/optee.*\.bbappend"
+
+      This masks:
+
+      - everything under the ``recipes-graphics/libgal/`` directory from
+        ``meta-ti``,
+      - everything under the ``recipes-support/`` directory in ``meta-oe``,
+      - everything under a directory whose name starts with ``openldap``, and
+        every file with the same naming scheme, in ``meta-oe`` at any directory
+        depth > 1 (e.g. in ``meta-oe``, ``recipes-foo/openldap-stuff/`` or
+        ``recipes-bar/baz/openldap_0.1.bb`` but not ``openldap/``),
+      - every append file whose name starts with ``optee`` in ``meta-ti`` at any
+        directory depth > 1 (e.g. ``optee/optee-examples_%.bbappend`` and
+        ``recipes-security/optee/optee-client_%.bbappend``).
 
       .. note::
 
-         When specifying a directory name, use the trailing slash character
-         to ensure you match just that directory name.
+         Because these are complete regular expressions, if you want to match a
+         directory and not a file, you must end the expression with a trailing
+         slash. That is::
+
+            BBMASK += "${BBFILE_PATTERN_meta-ti}/recipes-graphics/libgal/"
+
+         Will match anything under ``recipes-graphics/ligbal/`` directory of
+         ``meta-ti``. And::
+
+            BBMASK += "${BBFILE_PATTERN_meta-ti}/recipes-graphics/libgal"
+
+         Will match in ``meta-ti`` any file prefixed with ``libgal`` in
+         ``recipes-graphics/`` and any directory (recursively; and its
+         recipes and recipe append files regardless how they are named) prefixed
+         with ``libgal`` in ``recipes-graphics/``. That is, provided your layers
+         are available at ``/bitbake-builds/poky-master/layers/``, it'll match::
+
+            /bitbake-builds/poky-master/layers/meta-ti/recipes-graphics/libgal.bb
+            /bitbake-builds/poky-master/layers/meta-ti/recipes-graphics/libgal_%.bbappend
+            /bitbake-builds/poky-master/layers/meta-ti/recipes-graphics/libgal-foo/foo.bb
+            /bitbake-builds/poky-master/layers/meta-ti/recipes-graphics/libgal-foo/foo/bz.bbappend
+            /bitbake-builds/poky-master/layers/meta-ti/recipes-graphics/libgal/bar.bb
+
+      .. note::
+
+         Because these are complete regular expressions, failing to start the
+         pattern with a ``^`` sign (which is usually the first character in
+         :term:`BBFILE_PATTERN`) means it can match *any* portion of a path.
+         Take the following as an example::
+
+            BBMASK = "recipes-graphics/libgal/"
+
+         This will match subdirectories and files in any path containing
+         ``recipes-graphics/libgal/``, meaning (considering your layers are
+         available at ``/bitbake-builds/poky-master/layers/``)::
+
+            /bitbake-builds/poky-master/layers/meta-ti/recipes-graphics/libgal/
+            /bitbake-builds/poky-master/layers/my-layer/foo-recipes-graphics/libgal/
+
+         will be both matched. This may be a more relaxed way of matching
+         directories, recipes and recipe append files from any third party layer
+         but is generally discouraged as it may be casting too wide of a net.
+
+      .. note::
+
+         Because these are complete regular expressions, a leading slash does
+         not mean the path is absolute. It simply forces the directory to be
+         named exactly that. Take::
+
+            BBMASK = "recipes-graphics/libgal/"
+
+         If you happen to have a directory ``foo-recipes-graphics/libgal/``, it
+         will be matched.
+
+         Leading with a slash::
+
+            BBMASK = "/recipes-graphics/libgal/"
+
+         makes sure that doesn't happen. However, this doesn't prevent matching
+         a directory ``recipes-graphics/libgal/`` from another layer.
+
+         Again, we highly recommend using :term:`BBFILE_PATTERN` in the
+         expressions to specify absolute paths specific to one layer.
 
    :term:`BBMULTICONFIG`
       Enables BitBake to perform multiple configuration builds and lists
