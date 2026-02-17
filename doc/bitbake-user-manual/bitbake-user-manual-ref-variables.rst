@@ -1052,30 +1052,30 @@ overview of their function and contents.
 
       The following example uses a complete regular expression to tell
       BitBake to ignore all recipe and recipe append files in
-      ``recipes-bsp`` directory (recursively) of ``meta-ti``::
+      ``recipes-bsp`` directory (recursively) of ``meta-ti-bsp``::
 
-         BBMASK = "${BBFILE_PATTERN_meta-ti}/recipes-bsp/"
+         BBMASK = "${BBFILE_PATTERN_meta-ti-bsp}/recipes-bsp/"
 
       If you want to mask out multiple directories or recipes, you can
       specify multiple regular expression fragments. This next example
       masks out multiple directories and individual recipes::
 
-         BBMASK += "${BBFILE_PATTERN_meta-ti}/recipes-graphics/libgal/"
+         BBMASK += "${BBFILE_PATTERN_meta-ti-bsp}/recipes-graphics/libgal/"
          BBMASK += "${BBFILE_PATTERN_openembedded-layer}/recipes-support/"
          BBMASK += "${BBFILE_PATTERN_openembedded-layer}/.*/openldap"
-         BBMASK += "${BBFILE_PATTERN_meta-ti}/.*/optee.*\.bbappend"
+         BBMASK += "${BBFILE_PATTERN_meta-ti-bsp}/.*/optee.*\.bbappend"
 
       This masks:
 
       - everything under the ``recipes-graphics/libgal/`` directory from
-        ``meta-ti``,
+        ``meta-ti-bsp``,
       - everything under the ``recipes-support/`` directory in ``meta-oe``,
       - everything under a directory whose name starts with ``openldap``, and
         every file with the same naming scheme, in ``meta-oe`` at any directory
         depth > 1 (e.g. in ``meta-oe``, ``recipes-foo/openldap-stuff/`` or
         ``recipes-bar/baz/openldap_0.1.bb`` but not ``openldap/``),
-      - every append file whose name starts with ``optee`` in ``meta-ti`` at any
-        directory depth > 1 (e.g. ``optee/optee-examples_%.bbappend`` and
+      - every append file whose name starts with ``optee`` in ``meta-ti-bsp`` at
+        any directory depth > 1 (e.g. ``optee/optee-examples_%.bbappend`` and
         ``recipes-security/optee/optee-client_%.bbappend``).
 
       .. note::
@@ -1084,24 +1084,24 @@ overview of their function and contents.
          directory and not a file, you must end the expression with a trailing
          slash. That is::
 
-            BBMASK += "${BBFILE_PATTERN_meta-ti}/recipes-graphics/libgal/"
+            BBMASK += "${BBFILE_PATTERN_meta-ti-bsp}/recipes-graphics/libgal/"
 
          Will match anything under ``recipes-graphics/ligbal/`` directory of
-         ``meta-ti``. And::
+         ``meta-ti-bsp``. And::
 
-            BBMASK += "${BBFILE_PATTERN_meta-ti}/recipes-graphics/libgal"
+            BBMASK += "${BBFILE_PATTERN_meta-ti-bsp}/recipes-graphics/libgal"
 
-         Will match in ``meta-ti`` any file prefixed with ``libgal`` in
+         Will match in ``meta-ti-bsp`` any file prefixed with ``libgal`` in
          ``recipes-graphics/`` and any directory (recursively; and its
          recipes and recipe append files regardless how they are named) prefixed
          with ``libgal`` in ``recipes-graphics/``. That is, provided your layers
          are available at ``/bitbake-builds/poky-master/layers/``, it'll match::
 
-            /bitbake-builds/poky-master/layers/meta-ti/recipes-graphics/libgal.bb
-            /bitbake-builds/poky-master/layers/meta-ti/recipes-graphics/libgal_%.bbappend
-            /bitbake-builds/poky-master/layers/meta-ti/recipes-graphics/libgal-foo/foo.bb
-            /bitbake-builds/poky-master/layers/meta-ti/recipes-graphics/libgal-foo/foo/bz.bbappend
-            /bitbake-builds/poky-master/layers/meta-ti/recipes-graphics/libgal/bar.bb
+            /bitbake-builds/poky-master/layers/meta-ti/meta-ti-bsp/recipes-graphics/libgal.bb
+            /bitbake-builds/poky-master/layers/meta-ti/meta-ti-bsp/recipes-graphics/libgal_%.bbappend
+            /bitbake-builds/poky-master/layers/meta-ti/meta-ti-bsp/recipes-graphics/libgal-foo/foo.bb
+            /bitbake-builds/poky-master/layers/meta-ti/meta-ti-bsp/recipes-graphics/libgal-foo/foo/bz.bbappend
+            /bitbake-builds/poky-master/layers/meta-ti/meta-ti-bsp/recipes-graphics/libgal/bar.bb
 
       .. note::
 
@@ -1116,7 +1116,7 @@ overview of their function and contents.
          ``recipes-graphics/libgal/``, meaning (considering your layers are
          available at ``/bitbake-builds/poky-master/layers/``)::
 
-            /bitbake-builds/poky-master/layers/meta-ti/recipes-graphics/libgal/
+            /bitbake-builds/poky-master/layers/meta-ti/meta-ti-bsp/recipes-graphics/libgal/
             /bitbake-builds/poky-master/layers/my-layer/foo-recipes-graphics/libgal/
 
          will be both matched. This may be a more relaxed way of matching
