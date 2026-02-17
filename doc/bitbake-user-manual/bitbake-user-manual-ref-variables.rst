@@ -1048,7 +1048,7 @@ overview of their function and contents.
       compiler. Consequently, the syntax follows Python's Regular
       Expression (re) syntax. The expressions are compared against the full
       paths to the files. For complete syntax information, see Python's
-      documentation at http://docs.python.org/3/library/re.html.
+      documentation at https://docs.python.org/3/library/re.html.
 
       The following example uses a complete regular expression to tell
       BitBake to ignore all recipe and recipe append files in
