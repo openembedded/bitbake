@@ -1051,8 +1051,8 @@ overview of their function and contents.
       documentation at http://docs.python.org/3/library/re.html.
 
       The following example uses a complete regular expression to tell
-      BitBake to ignore all recipe and recipe append files in the
-      ``meta-ti/recipes-misc/`` directory::
+      BitBake to ignore all recipe and recipe append files in
+      ``meta-ti/recipes-misc/`` directories (and their subdirectories)::
 
          BBMASK = "meta-ti/recipes-misc/"
 
