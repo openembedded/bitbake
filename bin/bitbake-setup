@@ -35,6 +35,13 @@ GLOBAL_ONLY_SETTINGS = (
     "top-dir-name",
 )
 
+def color_enabled() -> bool:
+    """
+    Our logger has a BBLogFormatter formatter which holds whether color is
+    enabled or not. Return this value.
+    """
+    return logger.handlers[0].formatter.color_enabled
+
 # If bitbake is from a release tarball or somewhere like pypi where
 # updates may not be straightforward, prefer to use the git repo as the
 # default registry
