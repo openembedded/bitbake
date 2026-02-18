@@ -42,6 +42,33 @@ def color_enabled() -> bool:
     """
     return logger.handlers[0].formatter.color_enabled
 
+def print_configs(prompt: str, choices: list[str], descriptions: list[str] = []):
+    """
+    Helper function to print a list of choices and align the output.
+    Each option name is made bold to stand out, unless color is not enabled in
+    our logger.
+    """
+    if not prompt.endswith(':'):
+        prompt += ":"
+    logger.plain(prompt)
+
+    if not descriptions:
+        descriptions = ["" for _ in choices]
+
+    # maximum size of all choices, for alignment
+    cmax = max([len(c) for c in choices]) + 1
+
+    for n, c in enumerate(choices):
+        msg = f"{n + 1}. "
+        if color_enabled():
+            # make it bold
+            msg += "\033[1m"
+        msg += f"{c:<{cmax}}"
+        if color_enabled():
+            msg += "\033[0m"
+        msg += f" {descriptions[n]}"
+        logger.plain(msg)
+
 # If bitbake is from a release tarball or somewhere like pypi where
 # updates may not be straightforward, prefer to use the git repo as the
 # default registry
@@ -497,36 +524,39 @@ def choose_bitbake_config(configs, parameters, non_interactive):
     if non_interactive:
         raise Exception("Unable to choose from bitbake configurations in non-interactive mode: {}".format(configs_dict))
 
-    logger.plain("\nAvailable bitbake configurations:")
-    for n, config_data in enumerated_configs:
-        logger.plain("{}. {}\t{}".format(n, config_data["name"], config_data["description"]))
+    logger.plain("")
+    print_configs("Available bitbake configurations",
+                  [c["name"] for c in flattened_configs],
+                  [c["description"] for c in flattened_configs])
     config_n = int_input([i[0] for i in enumerated_configs],
                          "\nPlease select one of the above bitbake configurations by its number: ") - 1
     return flattened_configs[config_n]
 
 def choose_config(configs, non_interactive):
     not_expired_configs = [k for k in sorted(configs.keys()) if not has_expired(configs[k].get("expires", None))]
-    config_list = list(enumerate(not_expired_configs, 1))
-    if len(config_list) == 1:
-        only_config = config_list[0][1]
+    if len(not_expired_configs) == 1:
+        only_config = not_expired_configs[0]
         logger.plain("\nSelecting the only available configuration {}\n".format(only_config))
         return only_config
 
     if non_interactive:
         raise Exception("Unable to choose from configurations in non-interactive mode: {}".format(not_expired_configs))
 
-    logger.plain("\nAvailable Configuration Templates:")
-    for n, config_name in config_list:
-        config_data = configs[config_name]
-        expiry_date = config_data.get("expires", None)
-        config_desc = config_data["description"]
+    descs = []
+    for c in not_expired_configs:
+        d = configs[c]["description"]
+        expiry_date = configs[c].get("expires", None)
         if expiry_date:
-           logger.plain("{}. {}\t{} (supported until {})".format(n, config_name, config_desc, expiry_date))
-        else:
-           logger.plain("{}. {}\t{}".format(n, config_name, config_desc))
-    config_n = int_input([i[0] for i in config_list],
-                         "\nPlease select one of the above Configuration Templates by its number: ") - 1
-    return config_list[config_n][1]
+            d += f" (supported until {expiry_date})"
+        descs.append(d)
+
+    logger.plain("")
+    print_configs("Available Configuration Templates",
+                  [c for c in not_expired_configs],
+                  descs)
+    config_n = int_input([i[0] for i in list(enumerate(not_expired_configs, 1))],
+                         "\nPlease select one of the above configurations by its number: ") - 1
+    return not_expired_configs[config_n]
 
 def choose_fragments(possibilities, parameters, non_interactive, skip_selection):
     choices = {}
@@ -552,13 +582,11 @@ def choose_fragments(possibilities, parameters, non_interactive, skip_selection)
         if non_interactive:
             raise Exception(f"Unable to choose from options in non-interactive mode: {[o['name'] for o in options]}")
 
-        logger.plain("\n" + v["description"] + ":")
+        logger.plain("")
+        print_configs(v["description"],
+                     [o['name'] for o in options],
+                     [o['description'] for o in options])
         options_enumerated = list(enumerate(options, 1))
-        for n,o in options_enumerated:
-            opt_str = f"{n}. {o['name']}"
-            if o["description"]:
-                opt_str += f"\t{o['description']}"
-            logger.plain(opt_str)
         option_n = int_input([i[0] for i in options_enumerated],
                              "\nPlease select one of the above options by its number: ") - 1
         choices[k] = options_enumerated[option_n][1]["name"]
