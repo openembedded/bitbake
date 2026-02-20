@@ -685,7 +685,14 @@ class Tinfoil:
             if skipreasons:
                 raise bb.providers.NoProvider('%s is unavailable:\n  %s' % (pn, '  \n'.join(skipreasons)))
             else:
-                raise bb.providers.NoProvider('Unable to find any recipe file matching "%s"' % pn)
+                msg = f'Unable to find any recipe file matching "{pn}"'
+                import difflib
+                providers = self.get_all_providers()
+                close_matches = difflib.get_close_matches(pn, providers, cutoff=0.7)
+                if close_matches:
+                    close_matches = "\n  ".join(close_matches)
+                    msg += f'. Close matches:\n  {close_matches}'
+                raise bb.providers.NoProvider(msg)
         return best[3]
 
     def get_file_appends(self, fn, mc=''):
