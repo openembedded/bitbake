@@ -42,6 +42,9 @@ def color_enabled() -> bool:
     """
     return logger.handlers[0].formatter.color_enabled
 
+def get_diff_color_param() -> str:
+    return "--color=always" if color_enabled() else "--color=never"
+
 def print_configs(prompt: str, choices: list[str], descriptions: list[str] = []):
     """
     Helper function to print a list of choices and align the output.
@@ -202,7 +205,7 @@ be preserved in a backup directory.""".format(r_name, r_path))
         status = bb.process.run('git -C {} status --porcelain'.format(r_path))[0]
         if status:
             return True
-        diff = bb.process.run('git -C {} diff {}'.format(r_path, rev))[0]
+        diff = bb.process.run('git -C {} diff {} {}'.format(r_path, get_diff_color_param(), rev))[0]
         if diff:
             return True
         return False
@@ -728,7 +731,7 @@ def init_config(top_dir, settings, args):
 
 def get_diff(file1, file2):
     try:
-        bb.process.run('diff -uNr {} {}'.format(file1, file2))
+        bb.process.run('diff {} -uNr {} {}'.format(get_diff_color_param(), file1, file2))
     except bb.process.ExecutionError as e:
         if e.exitcode == 1:
             return e.stdout
@@ -786,7 +789,7 @@ def build_status(top_dir, settings, args, d, update=False):
     new_upstream_config = obtain_config(top_dir, registry, args, source_overrides, d)
 
     write_upstream_config(confdir, new_upstream_config)
-    config_diff = bb.process.run('git -C {} diff'.format(confdir))[0]
+    config_diff = bb.process.run('git -C {} diff {}'.format(confdir, get_diff_color_param()))[0]
 
     if config_diff:
         logger.plain('\nConfiguration in {} has changed:\n{}'.format(setupdir, config_diff))
