@@ -11,6 +11,8 @@ import tempfile
 import logging
 import bb
 import os
+import subprocess
+import textwrap
 
 logger = logging.getLogger('BitBake.TestParse')
 
@@ -210,7 +212,7 @@ python () {
     #
     # Test based upon a real world data corruption issue. One
     # data store changing a variable poked through into a different data
-    # store. This test case replicates that issue where the value 'B' would 
+    # store. This test case replicates that issue where the value 'B' would
     # become unset/disappear.
     #
     def test_parse_classextend_contamination(self):
@@ -508,3 +510,131 @@ EXTRA_OECONF:append = " foobar"
             test_helper("require some3.conf", " foobar")
             test_helper("include_all some.conf", " bar foo")
             test_helper("include_all some3.conf", " foobar")
+
+    def test_file_variables(self):
+        # Tests the values of FILE and __BB_RECIPE_FILE in different
+        # combinations of bbappends, includes, and inherits
+
+        def write_file(path, data):
+            with open(path, "w") as f:
+                f.write(textwrap.dedent(data))
+
+        def run_bitbake(cmd, builddir, extraenv={}):
+            env = os.environ.copy()
+            env["BBPATH"] = os.path.realpath(os.path.join(os.path.dirname(__file__), "parse-tests"))
+            env["BB_ENV_PASSTHROUGH_ADDITIONS"] = "TOPDIR"
+            env["TOPDIR"] = builddir
+            for k, v in extraenv.items():
+                env[k] = v
+                env["BB_ENV_PASSTHROUGH_ADDITIONS"] = env["BB_ENV_PASSTHROUGH_ADDITIONS"] + " " + k
+            try:
+                return subprocess.check_output(cmd, env=env, stderr=subprocess.STDOUT, universal_newlines=True, cwd=builddir)
+            except subprocess.CalledProcessError as e:
+                self.fail("Command %s failed with %s" % (cmd, e.output))
+
+        with tempfile.TemporaryDirectory(prefix="parserecipes") as recipes, tempfile.TemporaryDirectory(prefix="parsetest") as builddir:
+            extraenv = {
+                "EXTRA_BBFILES": f"{recipes}/*.bb {recipes}/*.bbappend",
+            }
+
+            inc_path = f"{recipes}/recipe-file.inc"
+            bbappend_path = f"{recipes}/recipe-%.bbappend"
+            recipe_path = f"{recipes}/recipe-file1.bb"
+
+            # __BB_RECIPE_FILE should always be the name of .bb file, even
+            # when set in a bbappend. FILE is the name of the bbappend
+            write_file(recipe_path, "")
+            write_file(bbappend_path,
+                """\
+                BBAPPEND_RECIPE_FILE := "${@os.path.basename(d.getVar('__BB_RECIPE_FILE'))}"
+                BBAPPEND_FILE := "${@os.path.basename(d.getVar('FILE'))}"
+                """
+            )
+            output = run_bitbake(["bitbake", "-e", "recipe-file1"], builddir, extraenv).splitlines()
+            self.assertIn('BBAPPEND_FILE="recipe-%.bbappend"', output)
+            self.assertIn(f'BBAPPEND_RECIPE_FILE="recipe-file1.bb"', output)
+
+            # __BB_RECIPE_FILE should always be the name of .bb file, even when
+            # set in an include file. FILE is the name of the include
+            write_file(recipe_path,
+                """\
+                require recipe-file.inc
+                """
+            )
+            write_file(inc_path,
+                """\
+                INC_RECIPE_FILE := "${@os.path.basename(d.getVar('__BB_RECIPE_FILE'))}"
+                INC_FILE := "${@os.path.basename(d.getVar('FILE'))}"
+                """
+            )
+            output = run_bitbake(["bitbake", "-e", "recipe-file1"], builddir, extraenv).splitlines()
+            self.assertIn('INC_FILE="recipe-file.inc"', output)
+            self.assertIn(f'INC_RECIPE_FILE="recipe-file1.bb"', output)
+
+            # Test when the include file is included from a bbappend
+            write_file(recipe_path, "")
+            write_file(bbappend_path,
+                """\
+                require recipe-file.inc
+                """
+            )
+            output = run_bitbake(["bitbake", "-e", "recipe-file1"], builddir, extraenv).splitlines()
+            self.assertIn('INC_FILE="recipe-file.inc"', output)
+            self.assertIn(f'INC_RECIPE_FILE="recipe-file1.bb"', output)
+
+            # Test the variables in a bbclass when inherited directly in the
+            # recipe. Note that FILE still refers to the recipe in a bbclass
+            write_file(recipe_path,
+                """\
+                inherit recipe-file-class
+                """
+            )
+            output = run_bitbake(["bitbake", "-e", "recipe-file1"], builddir, extraenv).splitlines()
+            self.assertIn('BBCLASS_FILE="recipe-file1.bb"', output)
+            self.assertIn(f'BBCLASS_RECIPE_FILE="recipe-file1.bb"', output)
+
+            # Test the variables when the inherit is in a bbappend. In this
+            # case, FILE is the bbappend
+            write_file(recipe_path, "")
+            write_file(bbappend_path,
+                """\
+                inherit recipe-file-class
+                """
+            )
+            output = run_bitbake(["bitbake", "-e", "recipe-file1"], builddir, extraenv).splitlines()
+            self.assertIn('BBCLASS_FILE="recipe-%.bbappend"', output)
+            self.assertIn(f'BBCLASS_RECIPE_FILE="recipe-file1.bb"', output)
+
+            # Test the variables when the inherit is in a include. In this
+            # case, FILE is the include file
+            write_file(recipe_path,
+                """\
+                require recipe-file.inc
+                """
+            )
+            write_file(bbappend_path, "")
+            write_file(inc_path,
+                """\
+                inherit recipe-file-class
+                """
+            )
+            output = run_bitbake(["bitbake", "-e", "recipe-file1"], builddir, extraenv).splitlines()
+            self.assertIn('BBCLASS_FILE="recipe-file.inc"', output)
+            self.assertIn(f'BBCLASS_RECIPE_FILE="recipe-file1.bb"', output)
+
+            # Test the variables when the inherit is in a include included from
+            # a bbappend. In this case, FILE is the include file
+            write_file(recipe_path, "")
+            write_file(bbappend_path,
+                """\
+                require recipe-file.inc
+                """
+            )
+            write_file(inc_path,
+                """\
+                inherit recipe-file-class
+                """
+            )
+            output = run_bitbake(["bitbake", "-e", "recipe-file1"], builddir, extraenv).splitlines()
+            self.assertIn('BBCLASS_FILE="recipe-file.inc"', output)
+            self.assertIn(f'BBCLASS_RECIPE_FILE="recipe-file1.bb"', output)

@@ -512,6 +512,8 @@ class CookerDataBuilder(object):
         bb_data.setVar("__BBMULTICONFIG", mc)
         bb_data.setVar("FILE_LAYERNAME", layername)
 
+        bb_data.setVar("__BB_RECIPE_FILE", bbfile)
+
         bbfile_loc = os.path.abspath(os.path.dirname(bbfile))
         bb.parse.cached_mtime_noerror(bbfile_loc)
 
