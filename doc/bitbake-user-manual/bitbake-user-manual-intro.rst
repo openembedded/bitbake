@@ -233,7 +233,7 @@ BitBake supports class files installed in three different directories:
 
 For details on how BitBake locates class files, see the
 :ref:`bitbake-user-manual/bitbake-user-manual-metadata:Locating Class Files`
-section of the Bitbake User Manual.
+section of the BitBake User Manual.
 
 Layers
 ------
@@ -539,7 +539,7 @@ Following is the usage and syntax for BitBake::
                            make dependency graphs more appealing.
 
 ..
-    Bitbake help output generated with "stty columns 80; bin/bitbake -h"
+    BitBake help output generated with "stty columns 80; bin/bitbake -h"
 
 .. _bitbake-examples:
 

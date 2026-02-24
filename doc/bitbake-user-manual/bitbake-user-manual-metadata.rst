@@ -1158,7 +1158,7 @@ Like include files, class files are located using the :term:`BBPATH` variable.
 The classes can be included in the ``classes-recipe``, ``classes-global`` and
 ``classes`` directories, as explained in the
 :ref:`bitbake-user-manual/bitbake-user-manual-intro:Class types` section of the
-Bitbake User Manual. Like for the :ref:`include <ref-include-directive>` and
+BitBake User Manual. Like for the :ref:`include <ref-include-directive>` and
 :ref:`require <require-inclusion>` directives, BitBake stops and inherits the
 first class that it finds.
 

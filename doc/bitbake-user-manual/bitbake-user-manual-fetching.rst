@@ -402,7 +402,7 @@ Here are some example URLs::
    easy to share metadata without removing passwords. SSH keys, ``~/.netrc``
    and ``~/.ssh/config`` files can be used as alternatives.
 
-Using tags with the git fetcher may cause surprising behaviour. Bitbake needs to
+Using tags with the git fetcher may cause surprising behaviour. BitBake needs to
 resolve the tag to a specific revision and to do that, it has to connect to and use
 the upstream repository. This is because the revision the tags point at can change and
 we've seen cases of this happening in well known public repositories. This can mean
