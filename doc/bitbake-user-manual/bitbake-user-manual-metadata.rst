@@ -813,7 +813,7 @@ evaluated at the end of parsing.
 .. _ref-bitbake-user-manual-metadata-inherit-defer:
 
 ``inherit_defer`` Directive
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+---------------------------
 
 The :ref:`inherit_defer <ref-bitbake-user-manual-metadata-inherit-defer>`
 directive works like the :ref:`inherit
