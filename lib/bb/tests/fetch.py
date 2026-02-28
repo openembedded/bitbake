@@ -2089,6 +2089,29 @@ class GitShallowTest(FetcherTest):
         self.fetch_and_unpack()
         self.assertRevCount(1)
 
+    @skipIfNoNetwork()
+    def test_shallow_mirrors_with_multiple_same_urls(self):
+        url = "git://git.openembedded.org/bitbake;branch=master;protocol=https;rev=82ea737a0b42a8b53e11c9cde141e9e9c0bd8c40"
+
+        d = self.d.createCopy()
+        d.delVar('AUTOREV')
+        d.delVar('SRCREV')
+
+        # prepare premirror
+        premirror = os.path.join(self.tempdir, "premirror")
+        os.mkdir(premirror)
+        d.setVar("DL_DIR", premirror)
+        fetcher = bb.fetch.Fetch([url], d)
+        fetcher.download()
+
+        # set PREMIRRORS
+        d.setVar('PREMIRRORS', 'git://.*/.* file://%s/' % premirror)
+
+        # set DL_DIR back and use the same url multiple times to fetch
+        d.setVar("DL_DIR", self.dldir)
+        fetcher2 = bb.fetch.Fetch([url, url], d)
+        fetcher2.download()
+
     def test_shallow_invalid_depth(self):
         self.add_empty_file('a')
         self.add_empty_file('b')
