@@ -356,7 +356,7 @@ class Git(FetchMethod):
         super().update_mirror_links(ud, origud)
         # When using shallow mode, add a symlink to the original fullshallow
         # path to ensure a valid symlink even in the `PREMIRRORS` case
-        if ud.shallow and not os.path.exists(origud.fullshallow):
+        if origud.shallow and not os.path.exists(origud.fullshallow):
             self.ensure_symlink(ud.localpath, origud.fullshallow)
 
     def try_premirror(self, ud, d):
