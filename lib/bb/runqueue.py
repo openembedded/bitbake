@@ -22,10 +22,11 @@ from bb import msg, event
 from bb import monitordisk
 import subprocess
 import pickle
-from multiprocessing import Process
 import shlex
 import pprint
 import time
+
+Process = bb.multiprocessing.Process
 
 bblogger = logging.getLogger("BitBake")
 logger = logging.getLogger("BitBake.RunQueue")
