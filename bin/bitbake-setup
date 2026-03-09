@@ -742,12 +742,14 @@ def get_diff(file1, file2):
 
 def are_layers_changed(layers, layerdir, d):
     def _is_git_remote_changed(r_remote, repodir):
-        changed = False
         rev = r_remote['rev']
         branch = r_remote.get('branch', None)
 
-        remotes = _get_remotes(r_remote)
+        rev_parse_result = bb.process.run('git -C {} rev-parse HEAD'.format(os.path.join(layerdir, repodir)))
+        local_revision = rev_parse_result[0].strip()
 
+        remotes = _get_remotes(r_remote)
+        changed = False
         for remote in remotes:
             type,host,path,user,pswd,params = bb.fetch.decodeurl(remote)
             fetchuri = bb.fetch.encodeurl(('git',host,path,user,pswd,params))
@@ -756,8 +758,6 @@ def are_layers_changed(layers, layerdir, d):
             else:
                 fetcher = bb.fetch.FetchData("{};protocol={};rev={};nobranch=1;destsuffix={}".format(fetchuri,type,rev,repodir), d)
             upstream_revision = fetcher.method.latest_revision(fetcher, d, 'default')
-            rev_parse_result = bb.process.run('git -C {} rev-parse HEAD'.format(os.path.join(layerdir, repodir)))
-            local_revision = rev_parse_result[0].strip()
             if upstream_revision != local_revision:
                 changed = True
                 logger.info('Layer repository {} checked out into {} updated revision {} from {} to {}'.format(remote, os.path.join(layerdir, repodir), rev, local_revision, upstream_revision))
