@@ -600,9 +600,10 @@ def obtain_config(top_dir, registry, args, source_overrides, d):
         config_id = args.config[0]
         config_parameters = args.config[1:]
         if os.path.exists(config_id):
+            config_id = os.path.abspath(config_id)
             logger.info("Reading configuration from local file\n    {}".format(config_id))
             upstream_config = {'type':'local',
-                               'path':os.path.abspath(config_id),
+                               'path':config_id,
                                'name':get_config_name(config_id),
                                'data':json.load(open(config_id))
                                }
