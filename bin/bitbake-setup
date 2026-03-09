@@ -742,11 +742,18 @@ def get_diff(file1, file2):
 
 def are_layers_changed(layers, layerdir, d):
     def _is_git_remote_changed(r_remote, repodir):
+        from bb.fetch2.git import sha1_re
+
         rev = r_remote['rev']
         branch = r_remote.get('branch', None)
 
         rev_parse_result = bb.process.run('git -C {} rev-parse HEAD'.format(os.path.join(layerdir, repodir)))
         local_revision = rev_parse_result[0].strip()
+        if sha1_re.match(rev):
+            if rev != local_revision:
+                logger.info('Layer repository checked out into {} is at revision {} but should be at {}'.format(os.path.join(layerdir, repodir),local_revision, rev))
+                return True
+            return False
 
         remotes = _get_remotes(r_remote)
         changed = False
