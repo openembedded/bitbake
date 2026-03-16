@@ -2129,6 +2129,7 @@ from . import az
 from . import crate
 from . import gcp
 from . import gomod
+from . import codeartifact
 
 methods.append(local.Local())
 methods.append(wget.Wget())
@@ -2150,3 +2151,4 @@ methods.append(crate.Crate())
 methods.append(gcp.GCP())
 methods.append(gomod.GoMod())
 methods.append(gomod.GoModGit())
+methods.append(codeartifact.Codeartifact())
