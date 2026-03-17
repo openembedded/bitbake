@@ -8,9 +8,19 @@
 
 import datetime
 import os
+import subprocess
 import sys
 
 from pathlib import Path
+
+# Test that we are building from a Git repository
+try:
+    subprocess.run(["git", "rev-parse", "--is-inside-work-tree"],
+                   stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
+except subprocess.CalledProcessError:
+    sys.exit("Building bitbake's documentation must be done from its Git repository.\n"
+             "Clone the repository with the following command:\n"
+             "git clone https://git.openembedded.org/bitbake ")
 
 sys.path.insert(0, os.path.abspath('.'))
 import setversions

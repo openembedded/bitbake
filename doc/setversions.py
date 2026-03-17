@@ -43,15 +43,6 @@ BB_RELEASE_TAG_RE = re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+$")
 def get_current_version():
     ourversion = None
 
-    # Test that we are building from a Git repository
-    try:
-        subprocess.run(["git", "rev-parse", "--is-inside-work-tree"],
-                       stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
-    except subprocess.CalledProcessError:
-        sys.exit("Building bitbake's documentation must be done from its Git repository.\n"
-                 "Clone the repository with the following command:\n"
-                 "git clone https://git.openembedded.org/bitbake ")
-
     # Test tags exist and inform the user to fetch if not
     try:
         subprocess.run(["git", "show", f"{LTSSERIES[0]}.0"],
