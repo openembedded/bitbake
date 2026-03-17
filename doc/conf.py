@@ -39,6 +39,8 @@ setversions.write_switchers_js("sphinx-static/switchers.js.in",
                                "sphinx-static/switchers.js",
                                current_version)
 
+setversions.write_releases_rst("releases.rst")
+
 # -- Project information -----------------------------------------------------
 
 project = 'Bitbake'
