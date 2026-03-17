@@ -147,7 +147,7 @@ def write_switchers_js(js_in, js_out, current_version):
         for line in lines:
             if "VERSIONS_PLACEHOLDER" in line:
                 if current_version != "dev":
-                    w.write(f"    'dev': 'Unstable (dev)',\n")
+                    w.write("    'dev': 'Unstable (dev)',\n")
                 for series in ACTIVERELEASES:
                     w.write(f"    '{series}': '{series} ({YOCTO_MAPPING[series]})',\n")
             else:
