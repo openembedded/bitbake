@@ -41,8 +41,6 @@ YOCTO_MAPPING = {
 BB_RELEASE_TAG_RE = re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+$")
 
 def get_current_version():
-    ourversion = None
-
     # Test tags exist and inform the user to fetch if not
     try:
         subprocess.run(["git", "show", f"{LTSSERIES[0]}.0"],
@@ -50,63 +48,57 @@ def get_current_version():
     except subprocess.CalledProcessError:
         sys.exit("Please run 'git fetch --tags' before building the documentation")
 
-
     # Try and figure out what we are
     tags = subprocess.run(["git", "tag", "--points-at", "HEAD"],
                           stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                           universal_newlines=True).stdout
     for t in tags.split():
         if re.match(BB_RELEASE_TAG_RE, t):
-            ourversion = t
-            break
+            return t
 
-    if ourversion:
-        # We're a tagged release
-        components = ourversion.split(".")
-    else:
-        # We're floating on a branch
-        branch = subprocess.run(["git", "branch", "--show-current"],
-                                stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                                universal_newlines=True).stdout.strip()
+    # We're floating on a branch
+    branch = subprocess.run(["git", "branch", "--show-current"],
+                            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                            universal_newlines=True).stdout.strip()
 
-        if branch == "" or branch not in list(YOCTO_MAPPING.keys()) + ["master", "master-next"]:
-            # We're not on a known release branch so we have to guess. Compare the
-            # numbers of commits from each release branch and assume the smallest
-            # number of commits is the one we're based off
-            possible_branch = None
-            branch_count = 0
-            for b in itertools.chain(YOCTO_MAPPING.keys(), ["master"]):
-                result = subprocess.run(["git", "log", "--format=oneline", "HEAD..origin/" + b],
-                                        stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                                        universal_newlines=True)
-                if result.returncode == 0:
-                    count = result.stdout.count('\n')
-                    if not possible_branch or count < branch_count:
-                        print("Branch %s has count %s" % (b, count))
-                        possible_branch = b
-                        branch_count = count
-            if possible_branch:
-                branch = possible_branch
-            else:
-                branch = "master"
-            print("Nearest release branch estimated to be %s" % branch)
-
-        if branch == "master":
-            ourversion = "dev"
-        elif branch == "master-next":
-            ourversion = "next"
+    if branch == "" or branch not in list(YOCTO_MAPPING.keys()) + ["master", "master-next"]:
+        # We're not on a known release branch so we have to guess. Compare the
+        # numbers of commits from each release branch and assume the smallest
+        # number of commits is the one we're based off
+        possible_branch = None
+        branch_count = 0
+        for b in itertools.chain(YOCTO_MAPPING.keys(), ["master"]):
+            result = subprocess.run(["git", "log", "--format=oneline", "HEAD..origin/" + b],
+                                    stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                    universal_newlines=True)
+            if result.returncode == 0:
+                count = result.stdout.count('\n')
+                if not possible_branch or count < branch_count:
+                    print("Branch %s has count %s" % (b, count))
+                    possible_branch = b
+                    branch_count = count
+        if possible_branch:
+            branch = possible_branch
         else:
-            ourversion = branch
-            head_commit = subprocess.run(["git", "rev-parse", "--short", "HEAD"],
-                                         stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                                         universal_newlines=True).stdout.strip()
-            branch_commit = subprocess.run(["git", "rev-parse", "--short", branch],
-                                            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                                            universal_newlines=True).stdout.strip()
-            if head_commit != branch_commit:
-                ourversion += f" ({head_commit})"
+            branch = "master"
+        print("Nearest release branch estimated to be %s" % branch)
 
-    print("Version calculated to be %s" % ourversion)
+    if branch == "master":
+        return "dev"
+
+    if branch == "master-next":
+        return "next"
+
+    ourversion = branch
+    head_commit = subprocess.run(["git", "rev-parse", "--short", "HEAD"],
+                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                 universal_newlines=True).stdout.strip()
+    branch_commit = subprocess.run(["git", "rev-parse", "--short", branch],
+                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                   universal_newlines=True).stdout.strip()
+    if head_commit != branch_commit:
+        ourversion += f" ({head_commit})"
+
     return ourversion
 
 def write_switchers_js(js_in, js_out, current_version):

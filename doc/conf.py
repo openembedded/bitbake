@@ -26,6 +26,7 @@ sys.path.insert(0, os.path.abspath('.'))
 import setversions
 
 current_version = setversions.get_current_version()
+print(f"Version calculated to be {current_version}")
 
 # String used in sidebar
 version = 'Version: ' + current_version
