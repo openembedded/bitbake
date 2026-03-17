@@ -14,29 +14,68 @@
 #
 
 import itertools
+import json
+import os
 import re
 import subprocess
 import sys
 
+from urllib.request import urlopen, URLError
+
+# NOTE: the following variables contain default values in case we are not able to fetch
+# the releases.json file from https://dashboard.yoctoproject.org/releases.json
 DEVBRANCH = "2.18"
 LTSSERIES = ["2.8", "2.0"]
 ACTIVERELEASES = ["2.16"] + LTSSERIES
-
 YOCTO_MAPPING = {
     "2.18": "wrynose",
     "2.16": "whinlatter",
-    "2.12": "walnascar",
-    "2.10": "styhead",
     "2.8": "scarthgap",
-    "2.6": "nanbield",
-    "2.4": "mickledore",
-    "2.2": "langdale",
     "2.0": "kirkstone",
-    "1.52": "honister",
-    "1.50": "hardknott",
-    "1.48": "gatesgarth",
-    "1.46": "dunfell",
 }
+
+RELEASES_FROM_JSON = {}
+
+# Use the local releases.json file if found, fetch it from the dashboard otherwise
+releases_json_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "releases.json")
+try:
+    with open(releases_json_path, "r") as f:
+        RELEASES_FROM_JSON = json.load(f)
+except FileNotFoundError:
+    print("Fetching releases.json from https://dashboard.yoctoproject.org/releases.json...",
+          file=sys.stderr)
+    try:
+        with urlopen("https://dashboard.yoctoproject.org/releases.json") as r, \
+                open(releases_json_path, "w") as f:
+            RELEASES_FROM_JSON = json.load(r)
+            json.dump(RELEASES_FROM_JSON, f)
+    except URLError:
+        print("WARNING: tried to fetch https://dashboard.yoctoproject.org/releases.json "
+              "but failed, using default values for active releases", file=sys.stderr)
+        pass
+
+if RELEASES_FROM_JSON:
+    ACTIVERELEASES = []
+    DEVBRANCH = ""
+    LTSSERIES = []
+    YOCTO_MAPPING = {}
+
+    for release in RELEASES_FROM_JSON:
+        bb_ver = release["bitbake_version"]
+        if release["status"] == "Active Development":
+            DEVBRANCH = bb_ver
+        if release["series"] == "current":
+            ACTIVERELEASES.append(bb_ver)
+        if "LTS until" in release["status"]:
+            LTSSERIES.append(bb_ver)
+        if release["bitbake_version"]:
+            YOCTO_MAPPING[bb_ver] = release["release_codename"]
+
+    ACTIVERELEASES.remove(DEVBRANCH)
+
+print(f"ACTIVERELEASES calculated to be {ACTIVERELEASES}", file=sys.stderr)
+print(f"DEVBRANCH calculated to be {DEVBRANCH}", file=sys.stderr)
+print(f"LTSSERIES calculated to be {LTSSERIES}", file=sys.stderr)
 
 BB_RELEASE_TAG_RE = re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+$")
 

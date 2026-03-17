@@ -1,2 +1,3 @@
 _build/
 sphinx-static/switchers.js
+releases.json
