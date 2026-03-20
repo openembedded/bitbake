@@ -1114,7 +1114,7 @@ def create_siteconf(top_dir, non_interactive, settings):
                     # wiping and rebuilding you can preserve this directory to speed up this part of
                     # subsequent builds. This directory is safe to share between multiple builds on
                     # the same machine too.
-                    DL_DIR = "{dl_dir}"
+                    DL_DIR ?= "{dl_dir}"
                     """.format(
                         dl_dir=settings["default"]["dl-dir"],
                     )
