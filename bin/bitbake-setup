@@ -922,7 +922,7 @@ def are_layers_changed(layers, layerdir, d):
     return changed
 
 def build_status(top_dir, settings, args, d, update=False):
-    setupdir = args.setup_dir
+    setupdir = os.path.abspath(args.setup_dir)
 
     confdir = os.path.join(setupdir, "config")
     layerdir = os.path.join(setupdir, "layers")
