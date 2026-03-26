@@ -1054,11 +1054,11 @@ The variable containing a built-in fragment definitions could look like this::
 and then if 'someprefix/somevalue' is added to the variable that holds the list
 of enabled fragments::
 
-  OE_FRAGMENTS = "... someprefix/somevalue"
+   OE_FRAGMENTS = "... someprefix/somevalue"
 
 bitbake will treat that as direct value assignment in its configuration::
 
-  SOMEVARIABLE = "somevalue"
+   SOMEVARIABLE = "somevalue"
 
 Locating Include Files
 ----------------------
