@@ -1176,7 +1176,7 @@ def main():
             list_configs(all_settings, args)
             return
 
-        logger.info('Bitbake-setup is using {} as top directory.'.format(top_dir, global_settings_path(args)))
+        logger.info('Bitbake-setup is using {} as top directory.'.format(top_dir))
 
         if args.func == init_config:
             init_config(top_dir, all_settings, args)
