@@ -45,7 +45,7 @@ def color_enabled() -> bool:
 def get_diff_color_param() -> str:
     return "--color=always" if color_enabled() else "--color=never"
 
-def print_configs(prompt: str, choices: list[str], descriptions: list[str] = []):
+def print_configs(prompt: str, choices: list[str], descriptions: list[str] = None):
     """
     Helper function to print a list of choices and align the output.
     Each option name is made bold to stand out, unless color is not enabled in
