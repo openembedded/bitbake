@@ -1109,8 +1109,7 @@ def main():
 
     subparser_settings = parser_settings.add_subparsers(dest="subcommand", required=True, help="The action to perform on the settings file")
 
-    parser_settings_list = subparser_settings.add_parser('list',
-                                                         help="List all settings with their values")
+    subparser_settings.add_parser('list', help="List all settings with their values")
 
     parser_settings_set = subparser_settings.add_parser('set', parents=[parser_settings_arg_global],
                                                         help="In a Section, set a setting to a certain value")
