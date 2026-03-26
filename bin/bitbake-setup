@@ -1186,7 +1186,6 @@ def main():
 
         save_bb_cache()
     else:
-        from argparse import Namespace
         parser.print_help()
 
 main()
