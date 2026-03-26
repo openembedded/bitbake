@@ -1040,7 +1040,7 @@ def merge_settings(builtin_settings, global_settings, topdir_settings, cmdline_s
     return all_settings
 
 def sigint_handler(sig, frame, func, top_dir):
-    logger.plain(f'\nShutting down...')
+    logger.plain('\nShutting down...')
     if isinstance(top_dir, str) and os.path.exists(top_dir):
         if func in [init_config, build_update]:
             logger.warning(f'{top_dir} may contain an incomplete setup!')
