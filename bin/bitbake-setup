@@ -231,11 +231,11 @@ bitbake-setup init -L {} /path/to/repo/checkout""".format(
 
     if oesetupbuild:
         links = {'setup-build': oesetupbuild, 'oe-scripts': os.path.dirname(oesetupbuild), 'oe-init-build-env-dir': oeinitbuildenvdir}
-        for l,t in links.items():
-            symlink = os.path.join(layerdir, l)
+        for link,item in links.items():
+            symlink = os.path.join(layerdir, link)
             if os.path.lexists(symlink):
                 os.remove(symlink)
-            os.symlink(os.path.relpath(t,layerdir),symlink)
+            os.symlink(os.path.relpath(item,layerdir),symlink)
 
     return layers_fixed_revisions
 
@@ -244,19 +244,19 @@ def setup_bitbake_build(bitbake_config, layerdir, setupdir, thisdir, update_bb_c
         os.makedirs(build_conf_dir)
         layers_s = []
 
-        for l in layers:
-            l = os.path.join(layerdir, l)
-            layers_s.append("  {} \\".format(l))
+        for layer in layers:
+            layer = os.path.join(layerdir, layer)
+            layers_s.append("  {} \\".format(layer))
 
-        for l in filerelative_layers:
+        for layer in filerelative_layers:
             if thisdir:
-                l = os.path.join(thisdir, l)
+                layer = os.path.join(thisdir, layer)
             else:
                 raise Exception("Configuration is using bb-layers-file-relative to specify " \
                 "a layer path relative to itself. This can be done only " \
                 "when the configuration is specified by its path on local " \
                 "disk, not when it's in a registry or is fetched over http.")
-            layers_s.append("  {} \\".format(l))
+            layers_s.append("  {} \\".format(layer))
 
         layers_s = "\n".join(layers_s)
         bblayers_conf = """BBLAYERS ?= " \\
@@ -415,9 +415,9 @@ The bitbake configuration files (local.conf, bblayers.conf and more) can be foun
 
 def get_registry_config(registry_path, id):
     for root, _dirs, files in os.walk(registry_path):
-        for f in files:
-            if f.endswith('.conf.json') and id == get_config_name(f):
-                return os.path.join(root, f)
+        for file in files:
+            if file.endswith('.conf.json') and id == get_config_name(file):
+                return os.path.join(root, file)
     raise Exception("Unable to find {} in available configurations; use 'list' sub-command to see what is available".format(id))
 
 def merge_overrides_into_sources(sources, overrides):
@@ -819,10 +819,10 @@ def list_registry(registry_path, with_expired):
     json_data = {}
 
     for root, _dirs, files in os.walk(registry_path):
-        for f in files:
-            if f.endswith('.conf.json'):
-                config_name = get_config_name(f)
-                config_data = json.load(open(os.path.join(root, f)))
+        for file in files:
+            if file.endswith('.conf.json'):
+                config_name = get_config_name(file)
+                config_data = json.load(open(os.path.join(root, file)))
                 config_desc = config_data["description"]
                 expiry_date = config_data.get("expires", None)
                 if expiry_date:
