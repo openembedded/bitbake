@@ -1052,7 +1052,7 @@ The variable containing a built-in fragment definitions could look like this::
    OE_FRAGMENTS_BUILTIN = "someprefix:SOMEVARIABLE anotherprefix:ANOTHERVARIABLE"
 
 and then if 'someprefix/somevalue' is added to the variable that holds the list
-of enabled fragments:
+of enabled fragments::
 
   OE_FRAGMENTS = "... someprefix/somevalue"
 
