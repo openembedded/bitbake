@@ -154,7 +154,7 @@ def add_unique_timestamp_to_path(path):
 def _get_remotes(r_remote):
     remotes = []
 
-    if not 'remotes' in r_remote and not 'uri' in r_remote:
+    if 'remotes' not in r_remote and 'uri' not in r_remote:
         raise Exception("Expected key(s): 'remotes', 'uri'")
 
     if 'remotes' in r_remote:
