@@ -626,7 +626,7 @@ def init_config(top_dir, settings, args):
     create_siteconf(top_dir, args.non_interactive, settings)
 
     d = init_bb_cache(top_dir, settings, args)
-    stdout = sys.stdout
+
     def handle_task_progress(event, d):
         rate = event.rate if event.rate else ''
         progress = event.progress if event.progress > 0 else 0
