@@ -680,6 +680,12 @@ Here is an example URL::
 NPM Fetcher (``npm://``)
 ------------------------
 
+.. warning::
+
+   The NPM fetcher is currently disabled due to security concerns. See
+   `355cd226e0720a9ed7683bb01c8c0a58eee03664 <https://git.openembedded.org/bitbake/commit/?id=355cd226e0720a9ed7683bb01c8c0a58eee03664>`__
+   for more information.
+
 This submodule fetches source code from an
 `NPM <https://en.wikipedia.org/wiki/Npm_(software)>`__
 Javascript package registry.
@@ -718,6 +724,12 @@ to automatically create a recipe from an NPM URL.
 
 NPM shrinkwrap Fetcher (``npmsw://``)
 -------------------------------------
+
+.. warning::
+
+   The NPM fetcher is currently disabled due to security concerns. See
+   `355cd226e0720a9ed7683bb01c8c0a58eee03664 <https://git.openembedded.org/bitbake/commit/?id=355cd226e0720a9ed7683bb01c8c0a58eee03664>`__
+   for more information.
 
 This submodule fetches source code from an
 `NPM shrinkwrap <https://docs.npmjs.com/cli/v8/commands/npm-shrinkwrap>`__
