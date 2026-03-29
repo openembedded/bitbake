@@ -260,11 +260,11 @@ print("BBPATH is {{}}".format(os.environ["BBPATH"]))
                         )
                     self.assertIn(filerelative_layer, bblayers)
 
-        if 'oe-fragment' in bitbake_config.keys():
+        if 'oe-fragments' in bitbake_config:
             for f in bitbake_config["oe-fragments"]:
                 self.assertTrue(os.path.exists(os.path.join(bb_conf_path, f)))
 
-        if 'bb-environment-passthrough' in bitbake_config.keys():
+        if 'bb-env-passthrough-additions' in bitbake_config:
             with open(os.path.join(bb_build_path, 'init-build-env'), 'r') as f:
                 init_build_env = f.read()
             self.assertTrue('BB_ENV_PASSTHROUGH_ADDITIONS' in init_build_env)
