@@ -167,7 +167,7 @@ def _get_remotes(r_remote):
 
     return remotes
 
-def checkout_layers(layers, confdir, layerdir, d):
+def checkout_layers(layers, confdir, layerdir, d, rebase_conflicts_strategy='abort'):
     def _checkout_git_remote(r_remote, repodir, layers_fixed_revisions):
         rev = r_remote['rev']
         branch = r_remote.get('branch', None)
@@ -183,7 +183,23 @@ def checkout_layers(layers, confdir, layerdir, d):
             else:
                 src_uri = f"{fetchuri};protocol={prot};rev={rev};nobranch=1;destsuffix={repodir}"
             fetcher = bb.fetch.Fetch([src_uri], d)
-            do_fetch(fetcher, layerdir)
+            repodir_path = os.path.join(layerdir, repodir)
+            try:
+                do_fetch(fetcher, layerdir)
+            except (bb.fetch2.LocalModificationsError, bb.fetch2.RebaseError) as e:
+                if rebase_conflicts_strategy != 'backup':
+                    e.msg += ("\nUse 'bitbake-setup update --rebase-conflicts-strategy=backup'"
+                              " to automatically back up the directory and re-clone from upstream,"
+                              " or use 'bitbake-setup init -L %s /path/to/local/checkout'"
+                              " to work with a local checkout instead." % r_name)
+                    raise
+                backup_path = add_unique_timestamp_to_path(repodir_path + '-backup')
+                logger.warning(
+                    "%s\n"
+                    "Renaming %s to %s to preserve your work, then re-cloning from upstream.",
+                    e, repodir_path, backup_path)
+                os.rename(repodir_path, backup_path)
+                fetcher.unpack(layerdir)
             urldata = fetcher.ud[src_uri]
             revision = urldata.revision
             layers_fixed_revisions[r_name]['git-remote']['rev'] = revision
@@ -442,9 +458,9 @@ def merge_overrides_into_sources(sources, overrides):
             layers[k] = v
     return layers
 
-def update_build(config, confdir, setupdir, layerdir, d, update_bb_conf="prompt", init_vscode=False):
+def update_build(config, confdir, setupdir, layerdir, d, update_bb_conf="prompt", init_vscode=False, rebase_conflicts_strategy='abort'):
     layer_config = merge_overrides_into_sources(config["data"]["sources"], config["source-overrides"]["sources"])
-    sources_fixed_revisions = checkout_layers(layer_config, confdir, layerdir, d)
+    sources_fixed_revisions = checkout_layers(layer_config, confdir, layerdir, d, rebase_conflicts_strategy=rebase_conflicts_strategy)
     bitbake_config = config["bitbake-config"]
     thisdir = os.path.dirname(config["path"]) if config["type"] == 'local' else None
     setup_bitbake_build(bitbake_config, layerdir, setupdir, thisdir, update_bb_conf, init_vscode)
@@ -927,7 +943,7 @@ def build_status(top_dir, settings, args, d, update=False):
         logger.plain('\nConfiguration in {} has changed:\n{}'.format(setupdir, config_diff))
         if update:
             update_build(new_upstream_config, confdir, setupdir, layerdir, d,
-                         update_bb_conf=args.update_bb_conf)
+                         update_bb_conf=args.update_bb_conf, rebase_conflicts_strategy=args.rebase_conflicts_strategy)
         else:
             bb.process.run('git -C {} restore config-upstream.json'.format(confdir))
         return
@@ -936,7 +952,7 @@ def build_status(top_dir, settings, args, d, update=False):
     if are_layers_changed(layer_config, layerdir, d):
         if update:
             update_build(current_upstream_config, confdir, setupdir, layerdir,
-                         d, update_bb_conf=args.update_bb_conf)
+                         d, update_bb_conf=args.update_bb_conf, rebase_conflicts_strategy=args.rebase_conflicts_strategy)
         return
 
     logger.plain("\nConfiguration in {} has not changed.".format(setupdir))
@@ -1257,6 +1273,10 @@ def main():
     parser_update = subparsers.add_parser('update', help='Update a setup to be in sync with configuration')
     add_setup_dir_arg(parser_update)
     parser_update.add_argument('--update-bb-conf', choices=['prompt', 'yes', 'no'], default='prompt', help='Update bitbake configuration files (bblayers.conf, local.conf) (default: prompt)')
+    parser_update.add_argument('--rebase-conflicts-strategy', choices=['abort', 'backup'], default='abort',
+                        help="What to do when a layer repository has local modifications that prevent "
+                             "an in-place update: 'abort' (default) aborts with an error message; "
+                             "'backup' renames the directory to a timestamped backup and re-clones from upstream.")
     parser_update.set_defaults(func=build_update)
 
     parser_install_buildtools = subparsers.add_parser('install-buildtools', help='Install buildtools which can help fulfil missing or incorrect dependencies on the host machine')
