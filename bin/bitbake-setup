@@ -794,9 +794,11 @@ def do_fetch(fetcher, dir):
     with open(fetchlog, 'a') as f:
         oldstdout = sys.stdout
         sys.stdout = f
-        fetcher.download()
-        fetcher.unpack_update(dir)
-        sys.stdout = oldstdout
+        try:
+            fetcher.download()
+            fetcher.unpack_update(dir)
+        finally:
+            sys.stdout = oldstdout
 
 def update_registry(registry, cachedir, d):
     registrydir = 'configurations'
