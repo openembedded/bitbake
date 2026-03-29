@@ -18,7 +18,6 @@ import os
 import signal
 import tarfile
 from bb.fetch2 import URI
-from bb.fetch2 import FetchMethod
 import bb
 import bb.utils
 from bb.tests.support.httpserver import HTTPService
@@ -551,8 +550,8 @@ class MirrorUriTest(FetcherTest):
         fetcher = bb.fetch.FetchData("http://downloads.yoctoproject.org/releases/bitbake/bitbake-1.0.tar.gz", self.d)
         mirrors = bb.fetch2.mirror_from_string(mirrorvar)
         uris, uds = bb.fetch2.build_mirroruris(fetcher, mirrors, self.d)
-        self.assertEqual(uris, ['file:///somepath/downloads/bitbake-1.0.tar.gz', 
-                                'file:///someotherpath/downloads/bitbake-1.0.tar.gz', 
+        self.assertEqual(uris, ['file:///somepath/downloads/bitbake-1.0.tar.gz',
+                                'file:///someotherpath/downloads/bitbake-1.0.tar.gz',
                                 'http://otherdownloads.yoctoproject.org/downloads/bitbake-1.0.tar.gz',
                                 'http://downloads2.yoctoproject.org/downloads/bitbake-1.0.tar.gz'])
 
@@ -1390,7 +1389,7 @@ class URLHandle(unittest.TestCase):
        "https://somesite.com/somerepo.git;user=anyUser:idtoken=1234" : ('https', 'somesite.com', '/somerepo.git', '', '', {'user': 'anyUser:idtoken=1234'}),
        'git://s.o-me_ONE:%s@git.openembedded.org/bitbake;branch=main;protocol=https' % password: ('git', 'git.openembedded.org', '/bitbake', 's.o-me_ONE', password, {'branch': 'main', 'protocol' : 'https'}),
     }
-    # we require a pathname to encodeurl but users can still pass such urls to 
+    # we require a pathname to encodeurl but users can still pass such urls to
     # decodeurl and we need to handle them
     decodedata = datatable.copy()
     decodedata.update({
