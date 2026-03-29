@@ -5,9 +5,13 @@
 #
 
 from bb.tests.fetch import FetcherTest
-import json
-import hashlib
+import bb
+import bb.process
 import glob
+import hashlib
+import json
+import os
+import stat
 from bb.tests.support.httpserver import HTTPService
 
 class BitbakeSetupTest(FetcherTest):
@@ -208,7 +212,6 @@ print("BBPATH is {{}}".format(os.environ["BBPATH"]))
         with open(fullname, 'w') as f:
             f.write(content)
         if script:
-            import stat
             st = os.stat(fullname)
             os.chmod(fullname, st.st_mode | stat.S_IEXEC)
         self.git('add {}'.format(name), cwd=self.testrepopath)
@@ -279,7 +282,6 @@ print("BBPATH is {{}}".format(os.environ["BBPATH"]))
 
     def test_setup(self):
         # unset BBPATH to ensure tests run in isolation from the existing bitbake environment
-        import os
         if 'BBPATH' in os.environ:
             del os.environ['BBPATH']
 
