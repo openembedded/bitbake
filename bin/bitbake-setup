@@ -1361,13 +1361,21 @@ def main():
 
         logger.info('Bitbake-setup is using {} as top directory.'.format(top_dir))
 
-        if args.func == init_config:
-            init_config(top_dir, all_settings, args)
-        else:
-            d = init_bb_cache(top_dir, all_settings, args)
-            args.func(top_dir, all_settings, args, d)
+        try:
+            if args.func == init_config:
+                init_config(top_dir, all_settings, args)
+            else:
+                d = init_bb_cache(top_dir, all_settings, args)
+                args.func(top_dir, all_settings, args, d)
 
-        save_bb_cache()
+            save_bb_cache()
+        except (SystemExit, KeyboardInterrupt):
+            raise
+        except Exception as e:
+            if args.debug:
+                raise
+            logger.error(str(e))
+            sys.exit(1)
     else:
         parser.print_help()
 
