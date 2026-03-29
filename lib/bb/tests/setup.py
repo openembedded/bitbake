@@ -631,3 +631,98 @@ print("BBPATH is {{}}".format(os.environ["BBPATH"]))
             content = f.read()
         self.assertEqual(content, '{invalid json',
                          "Corrupt workspace file should not be modified")
+
+    def _count_layer_backups(self, layers_path):
+        return len([f for f in os.listdir(layers_path) if 'backup' in f])
+
+    def test_update_rebase_conflicts_strategy(self):
+        """Test the --rebase-conflicts-strategy option for the update command.
+
+        Covers three scenarios not exercised by test_setup:
+        1. Uncommitted tracked-file change (LocalModificationsError) + default 'abort'
+           strategy → clean error message containing 'has uncommitted changes' and a
+           hint at --rebase-conflicts-strategy=backup; no backup directory is created.
+        2. Same uncommitted change + 'backup' strategy → directory is renamed to a
+           timestamped backup and the layer is re-cloned cleanly.
+        3. Committed local change that conflicts with an incoming upstream commit
+           (RebaseError):
+           a. Default 'abort' strategy → error containing 'Merge conflict' and the
+              --rebase-conflicts-strategy=backup hint; no backup directory is created.
+           b. 'backup' strategy → backup + re-clone instead of a hard failure.
+        """
+        if 'BBPATH' in os.environ:
+            del os.environ['BBPATH']
+        os.chdir(self.tempdir)
+
+        self.runbbsetup("settings set default registry 'git://{};protocol=file;branch=master;rev=master'".format(self.registrypath))
+        self.add_file_to_testrepo('test-file', 'initial\n')
+        self.add_json_config_to_registry('test-config-1.conf.json', 'master', 'master')
+        self.runbbsetup("init --non-interactive test-config-1 gadget")
+
+        setuppath = self.get_setup_path('test-config-1', 'gadget')
+        layer_path = os.path.join(setuppath, 'layers', 'test-repo')
+        layers_path = os.path.join(setuppath, 'layers')
+
+        # Scenario 1: uncommitted tracked change, default 'abort' strategy
+        # Advance upstream so an update is required.
+        self.add_file_to_testrepo('test-file', 'upstream-v2\n')
+        # Modify the same tracked file in the layer without committing.
+        with open(os.path.join(layer_path, 'test-file'), 'w') as f:
+            f.write('locally-modified\n')
+
+        os.environ['BBPATH'] = os.path.join(setuppath, 'build')
+        with self.assertRaises(bb.process.ExecutionError) as ctx:
+            self.runbbsetup("update --update-bb-conf='no'")
+        self.assertIn('has uncommitted changes', str(ctx.exception))
+        self.assertIn('--rebase-conflicts-strategy=backup', str(ctx.exception))
+        # No backup directory must have been created.
+        self.assertEqual(self._count_layer_backups(layers_path), 0,
+                         "abort strategy must not create any backup")
+
+        # Scenario 2: same uncommitted change, 'backup' strategy
+        out = self.runbbsetup("update --update-bb-conf='no' --rebase-conflicts-strategy=backup")
+        # One backup directory must now exist.
+        self.assertEqual(self._count_layer_backups(layers_path), 1,
+                         "backup strategy must create exactly one backup")
+        # The re-cloned layer must be clean and at the upstream revision.
+        with open(os.path.join(layer_path, 'test-file')) as f:
+            self.assertEqual(f.read(), 'upstream-v2\n',
+                             "re-cloned layer must contain the upstream content")
+        status = self.git('status --porcelain', cwd=layer_path).strip()
+        self.assertEqual(status, '',
+                         "re-cloned layer must have no local modifications")
+        del os.environ['BBPATH']
+
+        # Scenario 3: committed conflicting change, 'backup' strategy
+        # Re-initialise a fresh setup so we start from a clean state.
+        self.runbbsetup("init --non-interactive --setup-dir-name rebase-conflict-setup test-config-1 gadget")
+        conflict_setup = os.path.join(self.tempdir, 'bitbake-builds', 'rebase-conflict-setup')
+        conflict_layer = os.path.join(conflict_setup, 'layers', 'test-repo')
+        conflict_layers = os.path.join(conflict_setup, 'layers')
+
+        # Commit a local change that touches the same file as the next upstream commit.
+        with open(os.path.join(conflict_layer, 'test-file'), 'w') as f:
+            f.write('conflicting-local\n')
+        self.git('add test-file', cwd=conflict_layer)
+        self.git('commit -m "Local conflicting change"', cwd=conflict_layer)
+
+        # Advance upstream with a conflicting edit.
+        self.add_file_to_testrepo('test-file', 'conflicting-upstream\n')
+
+        os.environ['BBPATH'] = os.path.join(conflict_setup, 'build')
+        # Default stop strategy must still fail with a conflict error and include
+        # the --rebase-conflicts-strategy=backup hint (same handler as LocalModificationsError).
+        with self.assertRaises(bb.process.ExecutionError) as ctx:
+            self.runbbsetup("update --update-bb-conf='no'")
+        self.assertIn('Merge conflict in test-file', str(ctx.exception))
+        self.assertIn('--rebase-conflicts-strategy=backup', str(ctx.exception))
+        self.assertEqual(self._count_layer_backups(conflict_layers), 0)
+
+        # Backup strategy must succeed: backup the conflicted dir and re-clone.
+        self.runbbsetup("update --update-bb-conf='no' --rebase-conflicts-strategy=backup")
+        self.assertEqual(self._count_layer_backups(conflict_layers), 1,
+                         "backup strategy must create exactly one backup after a conflict")
+        with open(os.path.join(conflict_layer, 'test-file')) as f:
+            self.assertEqual(f.read(), 'conflicting-upstream\n',
+                             "re-cloned layer must contain the upstream content after conflict backup")
+        del os.environ['BBPATH']
