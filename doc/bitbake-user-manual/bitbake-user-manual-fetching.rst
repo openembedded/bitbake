@@ -186,6 +186,51 @@ cloning the tree into the final directory. The process is completed
 using references so that there is only one central copy of the Git
 metadata needed.
 
+.. _bb-the-unpack-update:
+
+The Non-Destructive Update (``unpack_update``)
+==============================================
+
+.. note::
+
+   This is a specialised method intended for tools that manage persistent
+   layer checkouts on behalf of the user, such as
+   :ref:`bitbake-setup update <ref-bbsetup-command-update>`. It is not part of the
+   normal recipe fetch/unpack flow.
+
+For Git URLs, an alternative ``unpack_update()`` method is available
+that updates an existing checkout *in place* rather than removing and
+re-cloning it. This is useful when the target directory may contain
+local commits that should be preserved across updates.
+
+The code to call the non-destructive update looks like the following::
+
+   rootdir = l.getVar('UNPACKDIR')
+   fetcher.unpack_update(rootdir)
+
+``unpack_update()`` performs the following steps:
+
+1. A ``dldir`` git remote is added (or updated) in the existing
+   checkout, pointing at the local download cache. This remote may
+   also be useful for manually resolving conflicts outside the fetcher.
+2. The new upstream revision is fetched from the ``dldir`` remote into
+   the existing repository.
+3. Any local commits are rebased on top of the new upstream revision,
+   preserving local work.
+
+The method raises an error if:
+
+-  The working tree contains staged or unstaged changes to tracked
+   files (``LocalModificationsError``).
+-  Local commits cannot be cleanly rebased onto the new upstream
+   revision (``RebaseError``). A failed rebase is automatically aborted
+   before the exception is raised.
+-  The download cache does not contain a sufficiently recent clone
+   of the repository, or the checkout is a shallow clone.
+
+Currently only the Git fetcher supports ``unpack_update()``. All other
+fetcher types raise ``RuntimeError`` if it is called.
+
 .. _bb-fetchers:
 
 Fetchers
