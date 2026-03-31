@@ -25,9 +25,9 @@ recipe caches don't trigger "Taskhash mismatch" errors.
 
 import ast
 import sys
-import codegen
 import logging
 import inspect
+import bb.codegen
 import bb.pysh as pysh
 import bb.utils, bb.data
 import hashlib
