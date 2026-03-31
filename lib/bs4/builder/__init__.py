@@ -6,7 +6,7 @@ import itertools
 import re
 import warnings
 import sys
-from ..element import (
+from bs4.element import (
     CharsetMetaAttributeValue,
     ContentMetaAttributeValue,
     RubyParenthesisString,

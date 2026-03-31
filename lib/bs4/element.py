@@ -9,8 +9,8 @@ import re
 import sys
 import warnings
 
-from .css import CSS
-from .formatter import (
+from bs4.css import CSS
+from bs4.formatter import (
     Formatter,
     HTMLFormatter,
     XMLFormatter,
@@ -420,7 +420,7 @@ class PageElement(object):
             and not isinstance(new_child, NavigableString)):
             new_child = NavigableString(new_child)
 
-        from . import BeautifulSoup
+        from bs4 import BeautifulSoup
         if isinstance(new_child, BeautifulSoup):
             # We don't want to end up with a situation where one BeautifulSoup
             # object contains another. Insert the children one at a time.

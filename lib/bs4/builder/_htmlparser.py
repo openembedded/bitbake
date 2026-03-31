@@ -13,16 +13,16 @@ from html.parser import HTMLParser
 import sys
 import warnings
 
-from ..element import (
+from bs4.element import (
     CData,
     Comment,
     Declaration,
     Doctype,
     ProcessingInstruction,
     )
-from ..dammit import EntitySubstitution, UnicodeDammit
+from bs4.dammit import EntitySubstitution, UnicodeDammit
 
-from . import (
+from bs4.builder import (
     DetectsXMLParsedAsHTML,
     ParserRejectedMarkup,
     HTML,
