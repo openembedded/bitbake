@@ -694,14 +694,19 @@ def goh1_file(filename):
     import zipfile
 
     lines = []
+    is_zipfile = False
     if zipfile.is_zipfile(filename):
-        with zipfile.ZipFile(filename) as archive:
-            for fn in sorted(archive.namelist()):
-                method = hashlib.sha256()
-                method.update(archive.read(fn))
-                hash = method.hexdigest()
-                lines.append("%s  %s\n" % (hash, fn))
-    else:
+        try:
+            with zipfile.ZipFile(filename) as archive:
+                for fn in sorted(archive.namelist()):
+                    method = hashlib.sha256()
+                    method.update(archive.read(fn))
+                    hash = method.hexdigest()
+                    lines.append("%s  %s\n" % (hash, fn))
+            is_zipfile = True
+        except zipfile.BadZipFile:
+            is_zipfile = False
+    if not is_zipfile:
         hash = _hasher(hashlib.sha256(), filename)
         lines.append("%s  go.mod\n" % hash)
     method = hashlib.sha256()
