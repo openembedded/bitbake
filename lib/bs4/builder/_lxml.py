@@ -14,14 +14,14 @@ except ImportError as e:
 from io import BytesIO
 from io import StringIO
 from lxml import etree
-from ..element import (
+from bs4.element import (
     Comment,
     Doctype,
     NamespacedAttribute,
     ProcessingInstruction,
     XMLProcessingInstruction,
 )
-from . import (
+from bs4.builder import (
     DetectsXMLParsedAsHTML,
     FAST,
     HTML,
@@ -30,7 +30,7 @@ from . import (
     ParserRejectedMarkup,
     TreeBuilder,
     XML)
-from ..dammit import EncodingDetector
+from bs4.dammit import EncodingDetector
 
 LXML = 'lxml'
 

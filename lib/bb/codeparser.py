@@ -25,9 +25,9 @@ recipe caches don't trigger "Taskhash mismatch" errors.
 
 import ast
 import sys
+import codegen
 import logging
 import inspect
-import bb.codegen
 import bb.pysh as pysh
 import bb.utils, bb.data
 import hashlib
@@ -263,8 +263,8 @@ class PythonParser():
         """
 
         try:
-            funcstr = bb.codegen.to_source(func)
-            argstr = bb.codegen.to_source(arg)
+            funcstr = codegen.to_source(func)
+            argstr = codegen.to_source(arg)
         except TypeError:
             self.log.debug2('Failed to convert function and argument to source form')
         else:
