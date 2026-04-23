@@ -1336,6 +1336,27 @@ def contains_any(variable, checkvalues, truevalue, falsevalue, d):
         return truevalue
     return falsevalue
 
+def filter_string(val, checkvalues):
+    """Return all words in the string that are present in the ``checkvalues``.
+
+    Arguments:
+
+    -  ``val``: the string data to filter after being split into a set().
+    -  ``checkvalues``: if this is a string it is split on whitespace into a set(),
+       otherwise coerced directly into a set().
+    -  ``d``: the data store.
+
+    Returns a list of string.
+    """
+    if not val:
+        return ''
+    val = set(val.split())
+    if isinstance(checkvalues, str):
+        checkvalues = set(checkvalues.split())
+    else:
+        checkvalues = set(checkvalues)
+    return ' '.join(sorted(checkvalues & val))
+
 def filter(variable, checkvalues, d):
     """Return all words in the variable that are present in the ``checkvalues``.
 
@@ -1351,15 +1372,7 @@ def filter(variable, checkvalues, d):
     """
 
     val = d.getVar(variable)
-    if not val:
-        return ''
-    val = set(val.split())
-    if isinstance(checkvalues, str):
-        checkvalues = set(checkvalues.split())
-    else:
-        checkvalues = set(checkvalues)
-    return ' '.join(sorted(checkvalues & val))
-
+    return filter_string(val, checkvalues)
 
 def get_referenced_vars(start_expr, d):
     """
