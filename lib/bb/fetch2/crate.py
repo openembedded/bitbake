@@ -68,8 +68,11 @@ class Crate(Wget):
         # if using upstream just fix it up nicely
         if host == 'crates.io':
             host = 'crates.io/api/v1/crates'
+            cdn_host = 'static.crates.io/crates'
+        else:
+            cdn_host = host
 
-        ud.url = "https://%s/%s/%s/download" % (host, name, version)
+        ud.url = "https://%s/%s/%s/download" % (cdn_host, name, version)
         ud.versionsurl = "https://%s/%s/versions" % (host, name)
         ud.parm['downloadfilename'] = "%s-%s.crate" % (name, version)
         if 'name' not in ud.parm:
