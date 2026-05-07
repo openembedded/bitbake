@@ -178,7 +178,8 @@ class Crate(Wget):
         response = self._fetch_index(ud.versionsurl, ud, d)
         for line in response.splitlines():
             data = json.loads(line)
-            versions.append((0, data["vers"], ""))
+            if not data.get("yanked", False):
+                versions.append((0, data["vers"], ""))
 
         versions = sorted(versions, key=cmp_to_key(bb.utils.vercmp))
         return (versions[-1][1], "")
