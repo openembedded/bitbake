@@ -164,7 +164,7 @@ class Crate(Wget):
         versions = [(0, i["num"], "") for i in json_data["versions"]]
         versions = sorted(versions, key=cmp_to_key(bb.utils.vercmp))
 
-        return (versions[-1][1], "")
+        return (versions[-1][1], "") if versions else ("", "")
 
     def latest_versionstring_from_index(self, ud, d):
         """
@@ -182,4 +182,4 @@ class Crate(Wget):
                 versions.append((0, data["vers"], ""))
 
         versions = sorted(versions, key=cmp_to_key(bb.utils.vercmp))
-        return (versions[-1][1], "")
+        return (versions[-1][1], "") if versions else ("", "")
