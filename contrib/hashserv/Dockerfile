@@ -16,7 +16,6 @@ RUN apk add --no-cache python3 libgcc
 COPY bin/bitbake-hashserv /opt/bbhashserv/bin/
 COPY lib/hashserv /opt/bbhashserv/lib/hashserv/
 COPY lib/bb /opt/bbhashserv/lib/bb/
-COPY lib/codegen.py /opt/bbhashserv/lib/codegen.py
 COPY lib/ply /opt/bbhashserv/lib/ply/
 COPY lib/bs4 /opt/bbhashserv/lib/bs4/
 
