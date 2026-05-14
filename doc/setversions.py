@@ -109,7 +109,7 @@ def main():
 def get_current_version():
     # Test tags exist and inform the user to fetch if not
     try:
-        subprocess.run(["git", "show", f"{LTSSERIES[0]}.0"],
+        subprocess.run(["git", "show", f"{LTSSERIES[-1]}.0"],
                        stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
     except subprocess.CalledProcessError:
         sys.exit("Please run 'git fetch --tags' before building the documentation")
