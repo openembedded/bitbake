@@ -1545,7 +1545,10 @@ class FetchMethod(object):
         if unpack:
             tar_cmd = 'tar --extract --no-same-owner'
             if 'striplevel' in urldata.parm:
-                tar_cmd += ' --strip-components=%s' %  urldata.parm['striplevel']
+                striplevel = urldata.parm['striplevel']
+                if not striplevel.isdigit():
+                    raise UnpackError("Invalid striplevel parameter: %s" % striplevel, urldata.url)
+                tar_cmd += ' --strip-components=%s' % striplevel
             if file.endswith('.tar'):
                 cmd = '%s -f %s' % (tar_cmd, file)
             elif file.endswith('.tgz') or file.endswith('.tar.gz') or file.endswith('.tar.Z'):
