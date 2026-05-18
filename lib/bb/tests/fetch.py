@@ -7,6 +7,7 @@
 #
 
 import contextlib
+import shutil
 import unittest
 import hashlib
 import tempfile
@@ -852,6 +853,16 @@ class FetcherLocalTest(FetcherTest):
             self.fetchUnpack(['file://%s' % package])
 
         self.assertIn("does not contain supported data.tar* file", str(context.exception))
+
+    def assertInvalidStriplevel(self, value):
+        with self.assertRaises(bb.fetch2.UnpackError) as context:
+            self.fetchUnpack(['file://archive.tar;subdir=bar;striplevel=%s' % value])
+        self.assertIn("Invalid striplevel parameter", str(context.exception))
+
+    def test_local_striplevel_rejects_invalid_values(self):
+        for value in ("abc", "", "-1", "1 2"):
+            with self.subTest(striplevel=repr(value)):
+                self.assertInvalidStriplevel(value)
 
     def dummyGitTest(self, suffix):
         # Create dummy local Git repo
