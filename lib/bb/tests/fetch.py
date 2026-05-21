@@ -2204,6 +2204,36 @@ class GitShallowTest(FetcherTest):
         self.assertRefs(['master', 'origin/master', 'v1.0'])
         self.assertRevCount(1)
 
+    def test_shallow_extra_refs_wildcard_shell_quoted(self):
+        self.add_empty_file('a')
+        marker = os.path.join(self.tempdir, 'ref-command-marker')
+        ref = 'refs/tags/poc;touch${IFS}%s' % marker
+        self.git(['update-ref', ref, 'HEAD'], cwd=self.srcdir)
+
+        self.d.setVar('BB_GIT_SHALLOW_EXTRA_REFS', 'refs/tags/*')
+        self.fetch_shallow()
+
+        self.assertFalse(os.path.exists(marker))
+        self.assertRefs(['master', 'origin/master', ref])
+
+    def test_shallow_extra_refs_wildcard_fetch_options(self):
+        self.add_empty_file('a')
+        marker = os.path.join(self.tempdir, 'ref-option-marker')
+        helper = os.path.join(self.tempdir, 'upload-pack-helper')
+        with open(helper, 'w') as f:
+            f.write('#!/bin/sh\n')
+            f.write('touch "%s"\n' % marker)
+            f.write('exec git-upload-pack "$@"\n')
+        os.chmod(helper, 0o755)
+        ref = 'refs/tags/--upload-pack=%s' % helper
+        self.git(['update-ref', ref, 'HEAD'], cwd=self.srcdir)
+
+        self.d.setVar('BB_GIT_SHALLOW_EXTRA_REFS', 'refs/tags/*')
+        self.fetch_shallow()
+
+        self.assertFalse(os.path.exists(marker))
+        self.assertRefs(['master', 'origin/master', ref])
+
     def test_shallow_missing_extra_refs(self):
         self.add_empty_file('a')
         self.add_empty_file('b')
