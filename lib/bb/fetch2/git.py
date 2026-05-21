@@ -602,7 +602,7 @@ class Git(FetchMethod):
         shallow_cmd = [self.make_shallow_path, '-s']
         for b in shallow_branches:
             shallow_cmd.append('-r')
-            shallow_cmd.append(b)
+            shallow_cmd.append(shlex.quote(b))
         shallow_cmd.extend(shallow_revisions)
         runfetchcmd(subprocess.list2cmdline(shallow_cmd), d, workdir=dest)
 
