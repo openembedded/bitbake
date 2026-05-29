@@ -22,12 +22,12 @@ class BitbakeSetupTest(FetcherTest):
 
         os.makedirs(self.registrypath)
         self.git_init(cwd=self.registrypath)
-        self.git('commit --allow-empty -m "Initial commit"', cwd=self.registrypath)
+        self.git(['commit', '--allow-empty', '-m', "Initial commit"], cwd=self.registrypath)
 
         self.testrepopath = os.path.join(self.tempdir, "test-repo")
         os.makedirs(self.testrepopath)
         self.git_init(cwd=self.testrepopath)
-        self.git('commit --allow-empty -m "Initial commit"', cwd=self.testrepopath)
+        self.git(['commit', '--allow-empty', '-m', "Initial commit"], cwd=self.testrepopath)
 
         oeinitbuildenv = """BBPATH=$1
 export BBPATH
@@ -176,8 +176,8 @@ print("BBPATH is {{}}".format(os.environ["BBPATH"]))
         os.makedirs(os.path.join(self.registrypath, os.path.dirname(name)), exist_ok=True)
         with open(os.path.join(self.registrypath, name), 'w') as f:
             f.write(config)
-        self.git('add {}'.format(name), cwd=self.registrypath)
-        self.git('commit -m "Adding {}"'.format(name), cwd=self.registrypath)
+        self.git(['add', name], cwd=self.registrypath)
+        self.git(['commit', '-m', "Adding " + name], cwd=self.registrypath)
         return json.loads(config)
 
     def add_json_config_to_registry(self, name, rev, branch):
@@ -214,8 +214,8 @@ print("BBPATH is {{}}".format(os.environ["BBPATH"]))
         if script:
             st = os.stat(fullname)
             os.chmod(fullname, st.st_mode | stat.S_IEXEC)
-        self.git('add {}'.format(name), cwd=self.testrepopath)
-        self.git('commit -m "Adding {}"'.format(name), cwd=self.testrepopath)
+        self.git(['add', name], cwd=self.testrepopath)
+        self.git(['commit', '-m', "Adding " + name], cwd=self.testrepopath)
 
     def config_is_unchanged(self, setuppath):
         os.environ['BBPATH'] = os.path.join(setuppath, 'build')
@@ -238,7 +238,7 @@ print("BBPATH is {{}}".format(os.environ["BBPATH"]))
         with open(os.path.join(setuppath, 'config', "sources-fixed-revisions.json")) as f:
             sources_fixed_revisions = json.load(f)
         self.assertTrue('test-repo' in sources_fixed_revisions['sources'].keys())
-        revision = self.git('rev-parse HEAD', cwd=self.testrepopath).strip()
+        revision = self.git(['rev-parse', 'HEAD'], cwd=self.testrepopath).strip()
         self.assertEqual(revision, sources_fixed_revisions['sources']['test-repo']['git-remote']['rev'])
 
         if "oe-template" in bitbake_config:
@@ -397,7 +397,7 @@ print("BBPATH is {{}}".format(os.environ["BBPATH"]))
         prev_test_file_content = test_file_content
         test_file_content = 'modified-in-branch\n'
         branch = "another-branch"
-        self.git('checkout -b {}'.format(branch), cwd=self.testrepopath)
+        self.git(['checkout', '-b', branch], cwd=self.testrepopath)
         self.add_file_to_testrepo('test-file', test_file_content)
         json_1 = self.add_json_config_to_registry('test-config-1.conf.json', branch, branch)
         for c in variants:
@@ -427,7 +427,7 @@ print("BBPATH is {{}}".format(os.environ["BBPATH"]))
         prev_test_file_content = test_file_content
         test_file_content = 'modified-in-branch-no-bb-conf-update\n'
         branch = "another-branch-no-bb-conf-update"
-        self.git('checkout -b {}'.format(branch), cwd=self.testrepopath)
+        self.git(['checkout', '-b', branch], cwd=self.testrepopath)
         self.add_file_to_testrepo('test-file', test_file_content)
         json_1 = self.add_json_config_to_registry('test-config-1.conf.json', branch, branch)
         for c in variants:
@@ -473,7 +473,7 @@ print("BBPATH is {{}}".format(os.environ["BBPATH"]))
 
         prev_path = self.testrepopath
         self.testrepopath = prev_path + "-2"
-        self.git("clone {} {}".format(prev_path, self.testrepopath), cwd=self.tempdir)
+        self.git(['clone', prev_path, self.testrepopath], cwd=self.tempdir)
         json_1 = self.add_local_json_config_to_registry('test-config-1.conf.json', self.testrepopath)
         os.environ['BBPATH'] = os.path.join(setuppath, 'build')
         out = self.runbbsetup("update --update-bb-conf='yes'")
@@ -499,8 +499,8 @@ print("BBPATH is {{}}".format(os.environ["BBPATH"]))
         ## edit a file and make a commit such that no rebase conflicts occur
         with open(os.path.join(layer_path, 'local-modification'), 'w') as f:
             f.write('locally-modified-again\n')
-        self.git('add .', cwd=layer_path)
-        self.git('commit -m "Adding a local modification"', cwd=layer_path)
+        self.git(['add', '.'], cwd=layer_path)
+        self.git(['commit', '-m', 'Adding a local modification'], cwd=layer_path)
         test_file_content = "modified-again-and-again\n"
         self.add_file_to_testrepo('test-file', test_file_content)
         out = self.runbbsetup("update --update-bb-conf='yes'")
@@ -509,8 +509,8 @@ print("BBPATH is {{}}".format(os.environ["BBPATH"]))
         ## edit a file and make a commit in a way that causes a rebase conflict
         with open(os.path.join(layer_path, 'test-file'), 'w') as f:
             f.write('locally-modified\n')
-        self.git('add .', cwd=layer_path)
-        self.git('commit -m "Adding a local modification"', cwd=layer_path)
+        self.git(['add', '.'], cwd=layer_path)
+        self.git(['commit', '-m', 'Adding a local modification'], cwd=layer_path)
         test_file_content = "remotely-modified\n"
         self.add_file_to_testrepo('test-file', test_file_content)
         with self.assertRaisesRegex(bb.process.ExecutionError, "Merge conflict in test-file"):
@@ -688,7 +688,7 @@ print("BBPATH is {{}}".format(os.environ["BBPATH"]))
         with open(os.path.join(layer_path, 'test-file')) as f:
             self.assertEqual(f.read(), 'upstream-v2\n',
                              "re-cloned layer must contain the upstream content")
-        status = self.git('status --porcelain', cwd=layer_path).strip()
+        status = self.git(['status', '--porcelain'], cwd=layer_path).strip()
         self.assertEqual(status, '',
                          "re-cloned layer must have no local modifications")
         del os.environ['BBPATH']
@@ -703,8 +703,8 @@ print("BBPATH is {{}}".format(os.environ["BBPATH"]))
         # Commit a local change that touches the same file as the next upstream commit.
         with open(os.path.join(conflict_layer, 'test-file'), 'w') as f:
             f.write('conflicting-local\n')
-        self.git('add test-file', cwd=conflict_layer)
-        self.git('commit -m "Local conflicting change"', cwd=conflict_layer)
+        self.git(['add', 'test-file'], cwd=conflict_layer)
+        self.git(['commit', '-m', 'Local conflicting change'], cwd=conflict_layer)
 
         # Advance upstream with a conflicting edit.
         self.add_file_to_testrepo('test-file', 'conflicting-upstream\n')

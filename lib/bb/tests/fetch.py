@@ -429,16 +429,13 @@ class FetcherTest(unittest.TestCase):
             bb.utils.prunedir(self.tempdir)
 
     def git(self, cmd, cwd=None):
-        if isinstance(cmd, str):
-            cmd = 'git -c safe.bareRepository=all ' + cmd
-        else:
-            cmd = ['git', '-c', 'safe.bareRepository=all'] + cmd
+        cmd = ['git', '-c', 'safe.bareRepository=all'] + cmd
         if cwd is None:
             cwd = self.gitdir
         return bb.process.run(cmd, cwd=cwd)[0]
 
     def git_init(self, cwd=None):
-        self.git('init', cwd=cwd)
+        self.git(['init'], cwd=cwd)
         # Explicitly set initial branch to master as
         # a common setup is to use other default
         # branch than master.
@@ -1884,7 +1881,7 @@ class GitShallowTest(FetcherTest):
         self.add_empty_file('b')
         self.assertRevCount(2, cwd=self.srcdir)
 
-        srcrev = self.git('rev-parse HEAD', cwd=self.srcdir).strip()
+        srcrev = self.git(['rev-parse', 'HEAD'], cwd=self.srcdir).strip()
         self.d.setVar('SRCREV', srcrev)
         uri = self.d.getVar('SRC_URI').split()[0]
         uri = '%s;nobranch=1;bare=1' % uri
@@ -1951,7 +1948,7 @@ class GitShallowTest(FetcherTest):
         fetcher, ud = self.fetch()
 
         # Ensure we have a current mirror tarball, but an out of date clone
-        self.git('update-ref refs/heads/master refs/heads/master~1', cwd=ud.clonedir)
+        self.git(['update-ref', 'refs/heads/master', 'refs/heads/master~1'], cwd=ud.clonedir)
         self.assertRevCount(2, cwd=ud.clonedir)
 
         # Fetch and unpack, from the current tarball, not the out of date clone
@@ -1978,12 +1975,12 @@ class GitShallowTest(FetcherTest):
 
         self.fetch_shallow()
         self.assertRevCount(1)
-        assert not self.git('fsck --dangling')
+        assert not self.git(['fsck', '--dangling'])
 
     def test_shallow_srcrev_branch_truncation(self):
         self.add_empty_file('a')
         self.add_empty_file('b')
-        b_commit = self.git('rev-parse HEAD', cwd=self.srcdir).rstrip()
+        b_commit = self.git(['rev-parse', 'HEAD'], cwd=self.srcdir).rstrip()
         self.add_empty_file('c')
         self.assertRevCount(3, cwd=self.srcdir)
 
@@ -1992,7 +1989,7 @@ class GitShallowTest(FetcherTest):
 
         # The 'c' commit was removed entirely, and 'a' was removed from history
         self.assertRevCount(1, ['--all'])
-        self.assertEqual(self.git('rev-parse HEAD').strip(), b_commit)
+        self.assertEqual(self.git(['rev-parse', 'HEAD']).strip(), b_commit)
         assert os.path.exists(os.path.join(self.gitdir, 'a'))
         assert os.path.exists(os.path.join(self.gitdir, 'b'))
         assert not os.path.exists(os.path.join(self.gitdir, 'c'))
@@ -2000,7 +1997,7 @@ class GitShallowTest(FetcherTest):
     def test_shallow_ref_pruning(self):
         self.add_empty_file('a')
         self.add_empty_file('b')
-        self.git('branch a_branch', cwd=self.srcdir)
+        self.git(['branch', 'a_branch'], cwd=self.srcdir)
         self.assertRefs(['master', 'a_branch'], cwd=self.srcdir)
         self.assertRevCount(2, cwd=self.srcdir)
 
@@ -2017,15 +2014,15 @@ class GitShallowTest(FetcherTest):
         bb.utils.mkdirhier(smdir)
         self.git_init(cwd=smdir)
         # Make this look like it was cloned from a remote...
-        self.git('config --add remote.origin.url "%s"' % smdir, cwd=smdir)
-        self.git('config --add remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"', cwd=smdir)
+        self.git(['config', '--add', 'remote.origin.url', '"%s"' % smdir], cwd=smdir)
+        self.git(['config', '--add', 'remote.origin.fetch', '"+refs/heads/*:refs/remotes/origin/*"'], cwd=smdir)
         self.add_empty_file('asub', cwd=smdir)
         self.add_empty_file('bsub', cwd=smdir)
 
-        self.git('submodule init', cwd=self.srcdir)
-        self.git('-c protocol.file.allow=always submodule add file://%s' % smdir, cwd=self.srcdir)
-        self.git('submodule update', cwd=self.srcdir)
-        self.git('commit -m submodule -a', cwd=self.srcdir)
+        self.git(['submodule', 'init'], cwd=self.srcdir)
+        self.git(['-c', 'protocol.file.allow=always', 'submodule', 'add', 'file://%s' % smdir], cwd=self.srcdir)
+        self.git(['submodule', 'update'], cwd=self.srcdir)
+        self.git(['commit', '-m', 'submodule', '-a'], cwd=self.srcdir)
 
         uri = 'gitsm://%s;protocol=file;subdir=${S};branch=master' % self.srcdir
         fetcher, ud = self.fetch_shallow(uri)
@@ -2047,15 +2044,15 @@ class GitShallowTest(FetcherTest):
         bb.utils.mkdirhier(smdir)
         self.git_init(cwd=smdir)
         # Make this look like it was cloned from a remote...
-        self.git('config --add remote.origin.url "%s"' % smdir, cwd=smdir)
-        self.git('config --add remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"', cwd=smdir)
+        self.git(['config', '--add', 'remote.origin.url', '"%s"' % smdir], cwd=smdir)
+        self.git(['config', '--add', 'remote.origin.fetch', '"+refs/heads/*:refs/remotes/origin/*"'], cwd=smdir)
         self.add_empty_file('asub', cwd=smdir)
         self.add_empty_file('bsub', cwd=smdir)
 
-        self.git('submodule init', cwd=self.srcdir)
-        self.git('-c protocol.file.allow=always submodule add file://%s' % smdir, cwd=self.srcdir)
-        self.git('submodule update', cwd=self.srcdir)
-        self.git('commit -m submodule -a', cwd=self.srcdir)
+        self.git(['submodule', 'init'], cwd=self.srcdir)
+        self.git(['-c', 'protocol.file.allow=always', 'submodule', 'add', 'file://%s' % smdir], cwd=self.srcdir)
+        self.git(['submodule', 'update'], cwd=self.srcdir)
+        self.git(['commit', '-m', 'submodule', '-a'], cwd=self.srcdir)
 
         uri = 'gitsm://%s;protocol=file;subdir=${S};branch=master' % self.srcdir
 
@@ -2085,10 +2082,10 @@ class GitShallowTest(FetcherTest):
         def test_shallow_annex(self):
             self.add_empty_file('a')
             self.add_empty_file('b')
-            self.git('annex init', cwd=self.srcdir)
+            self.git(['annex', 'init'], cwd=self.srcdir)
             open(os.path.join(self.srcdir, 'c'), 'w').close()
-            self.git('annex add c', cwd=self.srcdir)
-            self.git('commit --author "Foo Bar <foo@bar>" -m annex-c -a', cwd=self.srcdir)
+            self.git(['annex', 'add', 'c'], cwd=self.srcdir)
+            self.git(['commit', '--author', '"Foo Bar <foo@bar>"', '-m', 'annex-c', '-a'], cwd=self.srcdir)
             bb.process.run('chmod u+w -R %s' % self.srcdir)
 
             uri = 'gitannex://%s;protocol=file;subdir=${S};branch=master' % self.srcdir
@@ -2180,7 +2177,7 @@ class GitShallowTest(FetcherTest):
     def test_shallow_extra_refs(self):
         self.add_empty_file('a')
         self.add_empty_file('b')
-        self.git('branch a_branch', cwd=self.srcdir)
+        self.git(['branch', 'a_branch'], cwd=self.srcdir)
         self.assertRefs(['master', 'a_branch'], cwd=self.srcdir)
         self.assertRevCount(2, cwd=self.srcdir)
 
@@ -2193,8 +2190,8 @@ class GitShallowTest(FetcherTest):
     def test_shallow_extra_refs_wildcard(self):
         self.add_empty_file('a')
         self.add_empty_file('b')
-        self.git('branch a_branch', cwd=self.srcdir)
-        self.git('tag v1.0', cwd=self.srcdir)
+        self.git(['branch', 'a_branch'], cwd=self.srcdir)
+        self.git(['tag', 'v1.0'], cwd=self.srcdir)
         self.assertRefs(['master', 'a_branch', 'v1.0'], cwd=self.srcdir)
         self.assertRevCount(2, cwd=self.srcdir)
 
@@ -2253,14 +2250,14 @@ class GitShallowTest(FetcherTest):
         # Create initial git repo
         self.add_empty_file('a')
         self.add_empty_file('b')
-        self.git('checkout -b a_branch', cwd=self.srcdir)
+        self.git(['checkout', '-b', 'a_branch'], cwd=self.srcdir)
         self.add_empty_file('c')
         self.add_empty_file('d')
-        self.git('checkout master', cwd=self.srcdir)
-        self.git('tag v0.0 a_branch', cwd=self.srcdir)
+        self.git(['checkout', 'master'], cwd=self.srcdir)
+        self.git(['tag', 'v0.0', 'a_branch'], cwd=self.srcdir)
         self.add_empty_file('e')
-        self.git('merge --no-ff --no-edit a_branch', cwd=self.srcdir)
-        self.git('branch -d a_branch', cwd=self.srcdir)
+        self.git(['merge', '--no-ff', '--no-edit', 'a_branch'], cwd=self.srcdir)
+        self.git(['branch', '-d', 'a_branch'], cwd=self.srcdir)
         self.add_empty_file('f')
         self.assertRevCount(7, cwd=self.srcdir)
 
@@ -2285,7 +2282,7 @@ class GitShallowTest(FetcherTest):
         self.add_empty_file('a')
         self.add_empty_file('b')
         fetcher, ud = self.fetch(self.d.getVar('SRC_URI'))
-        self.git('tag v0.0 master', cwd=self.srcdir)
+        self.git(['tag', 'v0.0', 'master'], cwd=self.srcdir)
         self.d.setVar('BB_GIT_SHALLOW_DEPTH', '0')
         self.d.setVar('BB_GIT_SHALLOW_REVS', 'v0.0')
 
@@ -2333,9 +2330,9 @@ class GitShallowTest(FetcherTest):
 
     @skipIfNoNetwork()
     def test_bitbake(self):
-        self.git('remote add --mirror=fetch origin https://github.com/openembedded/bitbake', cwd=self.srcdir)
-        self.git('config core.bare true', cwd=self.srcdir)
-        self.git('fetch', cwd=self.srcdir)
+        self.git(['remote', 'add', '--mirror=fetch', 'origin', 'https://github.com/openembedded/bitbake'], cwd=self.srcdir)
+        self.git(['config', 'core.bare', 'true'], cwd=self.srcdir)
+        self.git(['fetch'], cwd=self.srcdir)
 
         self.d.setVar('BB_GIT_SHALLOW_DEPTH', '0')
         # Note that the 1.10.0 tag is annotated, so this also tests
@@ -2345,8 +2342,8 @@ class GitShallowTest(FetcherTest):
         self.fetch_shallow()
 
         # Confirm that the history of 1.10.0 was removed
-        orig_revs = len(self.git('rev-list master', cwd=self.srcdir).splitlines())
-        revs = len(self.git('rev-list master').splitlines())
+        orig_revs = len(self.git(['rev-list', 'master'], cwd=self.srcdir).splitlines())
+        revs = len(self.git(['rev-list', 'master']).splitlines())
         self.assertNotEqual(orig_revs, revs)
         self.assertRefs(['master', 'origin/master'])
         self.assertRevCount(orig_revs - 1760)
@@ -2378,10 +2375,10 @@ class GitShallowTest(FetcherTest):
     def test_shallow_succeeds_with_tag_containing_slash(self):
         self.add_empty_file('a')
         self.add_empty_file('b')
-        self.git('tag t1/t2/t3', cwd=self.srcdir)
+        self.git(['tag', 't1/t2/t3'], cwd=self.srcdir)
         self.assertRevCount(2, cwd=self.srcdir)
 
-        srcrev = self.git('rev-parse HEAD', cwd=self.srcdir).strip()
+        srcrev = self.git(['rev-parse', 'HEAD'], cwd=self.srcdir).strip()
         self.d.setVar('SRCREV', srcrev)
         uri = self.d.getVar('SRC_URI').split()[0]
         uri = '%s;tag=t1/t2/t3' % uri
@@ -2743,18 +2740,18 @@ class FetchLocallyMissingTagFromRemote(FetcherTest):
         # then add a tag to this repo, and fetch it again, without
         # changing SRC_REV, but by adding ';tag=tag1` to SRC_URI
         # the new tag should be fetched and unpacked
-        srcrev = self.git('rev-parse HEAD', cwd=self.srcdir).strip()
+        srcrev = self.git(['rev-parse', 'HEAD'], cwd=self.srcdir).strip()
         self.d.setVar('SRCREV', srcrev)
         src_uri = self.d.getVar('SRC_URI')
         self._fetch_and_unpack(src_uri)
 
-        self.git('tag -m -a tag1', cwd=self.srcdir)
+        self.git(['tag', '-m', '-a', 'tag1'], cwd=self.srcdir)
 
         src_uri = '%s;tag=tag1' % self.d.getVar('SRC_URI').split()[0]
         self.d.setVar('SRC_URI', src_uri)
         self._fetch_and_unpack(src_uri)
 
-        output = self.git('log --pretty=oneline -n 1 refs/tags/tag1', cwd=self.gitdir)
+        output = self.git(['log', '--pretty=oneline', '-n', '1', 'refs/tags/tag1'], cwd=self.gitdir)
         assert "fatal: ambiguous argument" not in output
 
 
@@ -3500,20 +3497,20 @@ class FetchPremirroronlyLocalTest(FetcherTest):
     def git_new_commit(self):
         import random
         os.unlink(os.path.join(self.mirrordir, self.mirrorname))
-        branch = self.git("branch --show-current", self.gitdir).split()
+        branch = self.git(["branch", "--show-current"], self.gitdir).split()
         with open(os.path.join(self.gitdir, self.testfilename), "w") as testfile:
             testfile.write("File {} from branch {}; Useless random data {}".format(self.testfilename, branch, random.random()))
-        self.git("add {}".format(self.testfilename), self.gitdir)
-        self.git("commit -a -m \"This random commit {} in branch {}. I'm useless.\"".format(random.random(), branch), self.gitdir)
+        self.git(['add', self.testfilename], self.gitdir)
+        self.git(['commit', '-a', '-m', "\"This random commit {} in branch {}. I'm useless.\"".format(random.random(), branch)], self.gitdir)
         bb.process.run('tar -czvf {} .'.format(os.path.join(self.mirrordir, self.mirrorname)), cwd =  self.gitdir)
-        return self.git("rev-parse HEAD", self.gitdir).strip()
+        return self.git(["rev-parse", "HEAD"], self.gitdir).strip()
 
     def git_new_branch(self, name):
         self.git_new_commit()
-        head = self.git("rev-parse HEAD", self.gitdir).strip()
-        self.git("checkout -b {}".format(name), self.gitdir)
+        head = self.git(["rev-parse", "HEAD"], self.gitdir).strip()
+        self.git(["checkout", "-b", name], self.gitdir)
         newrev = self.git_new_commit()
-        self.git("checkout {}".format(head), self.gitdir)
+        self.git(["checkout", head], self.gitdir)
         return newrev
 
     def test_mirror_multiple_fetches(self):
@@ -3573,8 +3570,8 @@ class FetchPremirroronlyNetworkTest(FetcherTest):
     def make_git_repo(self):
         self.mirrorname = "git2_git.yoctoproject.org.fstests.tar.gz"
         os.makedirs(self.clonedir)
-        self.git("clone --bare {}".format(self.giturl), self.clonedir)
-        self.git("update-ref HEAD 15413486df1f5a5b5af699b6f3ba5f0984e52a9f", self.gitdir)
+        self.git(["clone", "--bare", self.giturl], self.clonedir)
+        self.git(["update-ref", "HEAD", "15413486df1f5a5b5af699b6f3ba5f0984e52a9f"], self.gitdir)
         bb.process.run('tar -czvf {} .'.format(os.path.join(self.mirrordir, self.mirrorname)), cwd =  self.gitdir)
         shutil.rmtree(self.clonedir)
 
