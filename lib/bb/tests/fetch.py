@@ -425,7 +425,7 @@ class FetcherTest(unittest.TestCase):
         if os.environ.get("BB_TMPDIR_NOCLEAN") == "yes":
             print("Not cleaning up %s. Please remove manually." % self.tempdir)
         else:
-            bb.process.run('chmod u+rw -R %s' % self.tempdir)
+            bb.process.run(['chmod', 'u+rw', '-R', self.tempdir])
             bb.utils.prunedir(self.tempdir)
 
     def git(self, cmd, cwd=None):
@@ -698,7 +698,7 @@ class CleanTarballTest(FetcherTest):
         fetcher.download()
 
         fetcher.unpack(self.unpackdir)
-        mtime = bb.process.run('git log --all -1 --format=%ct',
+        mtime = bb.process.run(['git', 'log', '--all', '-1', '--format=%ct'],
                 cwd=os.path.join(self.unpackdir, 'git'))
         self.assertEqual(len(mtime), 2)
         mtime = int(mtime[0])
@@ -733,9 +733,9 @@ class FetcherLocalTest(FetcherTest):
         os.makedirs(os.path.join(self.localsrcdir, 'dir', 'subdir'))
         touch(os.path.join(self.localsrcdir, 'dir', 'subdir', 'e'))
         touch(os.path.join(self.localsrcdir, r'backslash\x2dsystemd-unit.device'))
-        bb.process.run('tar cf archive.tar -C dir .', cwd=self.localsrcdir)
-        bb.process.run('tar czf archive.tar.gz -C dir .', cwd=self.localsrcdir)
-        bb.process.run('tar cjf archive.tar.bz2 -C dir .', cwd=self.localsrcdir)
+        bb.process.run(['tar', 'cf', 'archive.tar', '-C', 'dir', '.'], cwd=self.localsrcdir)
+        bb.process.run(['tar', 'czf', 'archive.tar.gz', '-C', 'dir', '.'], cwd=self.localsrcdir)
+        bb.process.run(['tar', 'cjf', 'archive.tar.bz2', '-C', 'dir', '.'], cwd=self.localsrcdir)
         self.d.setVar("FILESPATH", self.localsrcdir)
 
     def make_ar_package(self, package_name, data_member="data.tar"):
@@ -1341,18 +1341,18 @@ class SVNTest(FetcherTest):
         repo_dir = tempfile.mkdtemp(dir=self.tempdir,
                                    prefix='svnfetch_localrepo_')
         repo_dir = os.path.abspath(repo_dir)
-        bb.process.run("svnadmin create project", cwd=repo_dir)
+        bb.process.run(['svnadmin', 'create', 'project'], cwd=repo_dir)
 
         self.repo_url = "file://%s/project" % repo_dir
-        bb.process.run("svn import --non-interactive -m 'Initial import' %s %s/trunk" % (src_dir, self.repo_url),
+        bb.process.run(['svn', 'import', '--non-interactive', '-m', 'Initial import', src_dir, "%s/trunk" % self.repo_url],
                        cwd=repo_dir)
 
-        bb.process.run("svn co %s svnfetch_co" % self.repo_url, cwd=self.tempdir)
+        bb.process.run(['svn', 'co', self.repo_url, 'svnfetch_co'], cwd=self.tempdir)
         # Github won't emulate SVN anymore (see https://github.blog/2023-01-20-sunsetting-subversion-support/)
         # Use still accessible svn repo (only trunk to avoid longer downloads)
-        bb.process.run("svn propset svn:externals 'bitbake https://svn.apache.org/repos/asf/serf/trunk' .",
+        bb.process.run(['svn', 'propset', 'svn:externals', "'bitbake https://svn.apache.org/repos/asf/serf/trunk'", "."],
                        cwd=os.path.join(self.tempdir, 'svnfetch_co', 'trunk'))
-        bb.process.run("svn commit --non-interactive -m 'Add external'",
+        bb.process.run(['svn', 'commit', '--non-interactive', '-m', 'Add external'],
                        cwd=os.path.join(self.tempdir, 'svnfetch_co', 'trunk'))
 
         self.src_dir = src_dir
@@ -1854,7 +1854,7 @@ class GitShallowTest(FetcherTest):
         # fetch and unpack, from the shallow tarball
         bb.utils.remove(self.gitdir, recurse=True)
         if os.path.exists(ud.clonedir):
-            bb.process.run('chmod u+w -R "%s"' % ud.clonedir)
+            bb.process.run(['chmod', 'u+w', '-R', ud.clonedir])
             bb.utils.remove(ud.clonedir, recurse=True)
             bb.utils.remove(ud.clonedir.replace('gitsource', 'gitsubmodule'), recurse=True)
 
@@ -2086,13 +2086,13 @@ class GitShallowTest(FetcherTest):
             open(os.path.join(self.srcdir, 'c'), 'w').close()
             self.git(['annex', 'add', 'c'], cwd=self.srcdir)
             self.git(['commit', '--author', '"Foo Bar <foo@bar>"', '-m', 'annex-c', '-a'], cwd=self.srcdir)
-            bb.process.run('chmod u+w -R %s' % self.srcdir)
+            bb.process.run(['chmod', 'u+w', '-R', self.srcdir])
 
             uri = 'gitannex://%s;protocol=file;subdir=${S};branch=master' % self.srcdir
             fetcher, ud = self.fetch_shallow(uri)
 
             self.assertRevCount(1)
-            assert './.git/annex/' in bb.process.run('tar -tzf %s' % os.path.join(self.dldir, ud.mirrortarballs[0]))[0]
+            assert './.git/annex/' in bb.process.run(['tar', '-tzf', os.path.join(self.dldir, ud.mirrortarballs[0])])[0]
             assert os.path.exists(os.path.join(self.gitdir, 'c'))
 
     def test_shallow_clone_preferred_over_shallow(self):
@@ -3492,7 +3492,7 @@ class FetchPremirroronlyLocalTest(FetcherTest):
         self.git_init(cwd=self.gitdir)
         for i in range(0):
             self.git_new_commit()
-        bb.process.run('tar -czvf {} .'.format(os.path.join(self.mirrordir, self.mirrorname)), cwd =  self.gitdir)
+        bb.process.run(['tar', '-czvf', os.path.join(self.mirrordir, self.mirrorname), '.'], cwd=self.gitdir)
 
     def git_new_commit(self):
         import random
@@ -3502,7 +3502,7 @@ class FetchPremirroronlyLocalTest(FetcherTest):
             testfile.write("File {} from branch {}; Useless random data {}".format(self.testfilename, branch, random.random()))
         self.git(['add', self.testfilename], self.gitdir)
         self.git(['commit', '-a', '-m', "\"This random commit {} in branch {}. I'm useless.\"".format(random.random(), branch)], self.gitdir)
-        bb.process.run('tar -czvf {} .'.format(os.path.join(self.mirrordir, self.mirrorname)), cwd =  self.gitdir)
+        bb.process.run(['tar', '-czvf', os.path.join(self.mirrordir, self.mirrorname), '.'], cwd=self.gitdir)
         return self.git(["rev-parse", "HEAD"], self.gitdir).strip()
 
     def git_new_branch(self, name):
@@ -3572,7 +3572,7 @@ class FetchPremirroronlyNetworkTest(FetcherTest):
         os.makedirs(self.clonedir)
         self.git(["clone", "--bare", self.giturl], self.clonedir)
         self.git(["update-ref", "HEAD", "15413486df1f5a5b5af699b6f3ba5f0984e52a9f"], self.gitdir)
-        bb.process.run('tar -czvf {} .'.format(os.path.join(self.mirrordir, self.mirrorname)), cwd =  self.gitdir)
+        bb.process.run(['tar', '-czvf', os.path.join(self.mirrordir, self.mirrorname), '.'], cwd=self.gitdir)
         shutil.rmtree(self.clonedir)
 
     @skipIfNoNetwork()
