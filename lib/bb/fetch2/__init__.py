@@ -933,7 +933,7 @@ def get_fetcher_environment(d):
             newenv[name] = value
     return newenv
 
-def runfetchcmd(cmd, d, quiet=False, cleanup=None, log=None, workdir=None):
+def runfetchcmd(cmd, d, quiet=False, cleanup=None, log=None, workdir=None, extraenv=None):
     """
     Run cmd returning the command output
     Raise an error if interrupted or cmd fails
@@ -958,13 +958,17 @@ def runfetchcmd(cmd, d, quiet=False, cleanup=None, log=None, workdir=None):
         d.setVar("PR", "fetcheravoidrecurse")
 
     origenv = d.getVar("BB_ORIGENV", False)
+    env = os.environ.copy()
     for var in exportvars:
         val = d.getVar(var) or (origenv and origenv.getVar(var))
         if val:
-            cmd = 'export ' + var + '=\"%s\"; %s' % (val, cmd)
+            env[var] = val
+
+    for var in (extraenv or []):
+        env[var] = extraenv[var]
 
     # Disable pseudo as it may affect ssh, potentially causing it to hang.
-    cmd = 'export PSEUDO_DISABLED=1; ' + cmd
+    env["PSEUDO_DISABLED"] = "1"
 
     if workdir:
         logger.debug("Running '%s' in %s" % (cmd, workdir))
@@ -975,7 +979,7 @@ def runfetchcmd(cmd, d, quiet=False, cleanup=None, log=None, workdir=None):
     error_message = ""
 
     try:
-        (output, errors) = bb.process.run(cmd, log=log, shell=True, stderr=subprocess.PIPE, cwd=workdir)
+        (output, errors) = bb.process.run(cmd, log=log, shell=True, stderr=subprocess.PIPE, cwd=workdir, env=env)
         success = True
     except bb.process.NotFoundError as e:
         error_message = "Fetch command %s not found" % (e.command)

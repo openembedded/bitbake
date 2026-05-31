@@ -397,8 +397,8 @@ class Git(FetchMethod):
                     if 'mirror' in output:
                         runfetchcmd("%s remote rm mirror" % ud.basecmd, d, workdir=ud.clonedir)
                     runfetchcmd("%s remote add --mirror=fetch mirror %s" % (ud.basecmd, tmpdir), d, workdir=ud.clonedir)
-                    fetch_cmd = "LANG=C %s fetch -f --update-head-ok  --progress mirror " % (ud.basecmd)
-                    runfetchcmd(fetch_cmd, d, workdir=ud.clonedir)
+                    fetch_cmd = "%s fetch -f --update-head-ok  --progress mirror " % (ud.basecmd)
+                    runfetchcmd(fetch_cmd, d, workdir=ud.clonedir, extraenv={'LANG':'C'})
         repourl = self._get_repo_url(ud)
 
         needs_clone = False
@@ -407,7 +407,7 @@ class Git(FetchMethod):
             # repository in which case it needs to be deleted and re-cloned.
             try:
                 # Since clones can be bare, use --absolute-git-dir instead of --show-toplevel
-                output = runfetchcmd("LANG=C %s rev-parse --absolute-git-dir" % ud.basecmd, d, workdir=ud.clonedir)
+                output = runfetchcmd("%s rev-parse --absolute-git-dir" % ud.basecmd, d, workdir=ud.clonedir, extraenv={'LANG':'C'})
                 toplevel = output.rstrip()
 
                 if not bb.utils.path_is_descendant(toplevel, ud.clonedir):
@@ -434,7 +434,7 @@ class Git(FetchMethod):
                 objects = os.path.join(repourl_path, 'objects')
                 if os.path.isdir(objects) and not os.path.islink(objects):
                     repourl = repourl_path
-            clone_cmd = "LANG=C %s clone --bare --mirror %s %s --progress" % (ud.basecmd, shlex.quote(repourl), ud.clonedir)
+            clone_cmd = "%s clone --bare --mirror %s %s --progress" % (ud.basecmd, shlex.quote(repourl), ud.clonedir)
             if ud.proto.lower() != 'file':
                 bb.fetch2.check_network_access(d, clone_cmd, ud.url)
             progresshandler = GitProgressHandler(d)
@@ -456,7 +456,7 @@ class Git(FetchMethod):
 
             # When skipping fast initial shallow or the fast inital shallow clone failed:
             # Try again with an initial regular clone
-            runfetchcmd(clone_cmd, d, log=progresshandler)
+            runfetchcmd(clone_cmd, d, log=progresshandler, extraenv={'LANG':'C'})
 
         # Update the checkout if needed
         if self.clonedir_need_update(ud, d):
@@ -467,13 +467,13 @@ class Git(FetchMethod):
             runfetchcmd("%s remote add --mirror=fetch origin %s" % (ud.basecmd, shlex.quote(repourl)), d, workdir=ud.clonedir)
 
             if ud.nobranch:
-                fetch_cmd = "LANG=C %s fetch -f --progress %s refs/*:refs/*" % (ud.basecmd, shlex.quote(repourl))
+                fetch_cmd = "%s fetch -f --progress %s refs/*:refs/*" % (ud.basecmd, shlex.quote(repourl))
             else:
-                fetch_cmd = "LANG=C %s fetch -f --progress %s refs/heads/*:refs/heads/* refs/tags/*:refs/tags/*" % (ud.basecmd, shlex.quote(repourl))
+                fetch_cmd = "%s fetch -f --progress %s refs/heads/*:refs/heads/* refs/tags/*:refs/tags/*" % (ud.basecmd, shlex.quote(repourl))
             if ud.proto.lower() != 'file':
                 bb.fetch2.check_network_access(d, fetch_cmd, ud.url)
             progresshandler = GitProgressHandler(d)
-            runfetchcmd(fetch_cmd, d, log=progresshandler, workdir=ud.clonedir)
+            runfetchcmd(fetch_cmd, d, log=progresshandler, workdir=ud.clonedir, extraenv={'LANG':'C'})
             runfetchcmd("%s repack -adk" % ud.basecmd, d, workdir=ud.clonedir)
             runfetchcmd("%s pack-refs --all" % ud.basecmd, d, workdir=ud.clonedir)
             runfetchcmd("%s prune-packed" % ud.basecmd, d, workdir=ud.clonedir)

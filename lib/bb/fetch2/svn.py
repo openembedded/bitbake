@@ -193,7 +193,7 @@ class Svn(FetchMethod):
         """
         bb.fetch2.check_network_access(d, self._buildsvncommand(ud, d, "log1"), ud.url)
 
-        output = runfetchcmd("LANG=C LC_ALL=C " + self._buildsvncommand(ud, d, "log1"), d, True)
+        output = runfetchcmd(self._buildsvncommand(ud, d, "log1"), d, True, extraenv={'LANG':'C', 'LC_ALL': 'C'})
 
         # skip the first line, as per output of svn log
         # then we expect the revision on the 2nd line
