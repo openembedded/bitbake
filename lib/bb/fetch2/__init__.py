@@ -1592,11 +1592,11 @@ class FetchMethod(object):
             elif file.endswith('.rpm') or file.endswith('.srpm'):
                 if 'extract' in urldata.parm:
                     unpack_file = urldata.parm.get('extract')
-                    cmd = 'rpm2cpio.sh %s | cpio -id %s' % (file, unpack_file)
+                    cmd = 'rpm2cpio.sh %s | cpio --no-absolute-filenames -id %s' % (file, unpack_file)
                     iterate = True
                     iterate_file = unpack_file
                 else:
-                    cmd = 'rpm2cpio.sh %s | cpio -id' % (file)
+                    cmd = 'rpm2cpio.sh %s | cpio --no-absolute-filenames -id' % (file)
             elif file.endswith('.deb') or file.endswith('.ipk'):
                 output = subprocess.check_output(['ar', '-t', file], preexec_fn=subprocess_setup)
                 datafile = None
