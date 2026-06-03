@@ -979,10 +979,7 @@ def runfetchcmd(cmd, d, quiet=False, cleanup=None, log=None, workdir=None, extra
     error_message = ""
 
     try:
-        if isinstance(cmd, str):
-            (output, errors) = bb.process.run(cmd, log=log, shell=True, stderr=subprocess.PIPE, cwd=workdir, env=env)
-        else:
-            (output, errors) = bb.process.run(cmd, log=log, stderr=subprocess.PIPE, cwd=workdir, env=env)
+        (output, errors) = bb.process.run(cmd, log=log, stderr=subprocess.PIPE, cwd=workdir, env=env)
         success = True
     except bb.process.NotFoundError as e:
         error_message = "Fetch command %s not found" % (e.command)
