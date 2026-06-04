@@ -1539,7 +1539,10 @@ class FetchMethod(object):
             bb.fatal("Invalid value for 'unpack' parameter for %s: %s" %
                      (file, urldata.parm.get('unpack')))
 
+        env = os.environ.copy()
         path = data.getVar('PATH')
+        if path:
+            env['PATH'] = path
 
         # If 'subdir' param exists, create a dir and use it as destination for unpack cmd
         if 'subdir' in urldata.parm:
@@ -1555,7 +1558,7 @@ class FetchMethod(object):
             unpackdir = rootdir
 
         def _run(cmd):
-            ret = subprocess.call(cmd, preexec_fn=subprocess_setup, shell=True, cwd=unpackdir)
+            ret = subprocess.call(cmd, preexec_fn=subprocess_setup, shell=True, cwd=unpackdir, env=env)
             if ret != 0:
                 raise UnpackError("Unpack command %s failed with return value %s" % (cmd, ret), urldata.url)
 
@@ -1618,7 +1621,7 @@ class FetchMethod(object):
                 else:
                     cmd = 'rpm2cpio.sh %s | cpio --no-absolute-filenames -id' % (file)
             elif file.endswith('.deb') or file.endswith('.ipk'):
-                output = subprocess.check_output(['ar', '-t', file], preexec_fn=subprocess_setup)
+                output = subprocess.check_output(['ar', '-t', file], preexec_fn=subprocess_setup, env=env)
                 datafile = None
                 valid_datafiles = ('data.tar', 'data.tar.gz', 'data.tar.xz',
                                    'data.tar.zst', 'data.tar.bz2', 'data.tar.lzma')
@@ -1656,8 +1659,6 @@ class FetchMethod(object):
         if not cmd:
             return
 
-        if path:
-            cmd = "PATH=\"%s\" %s" % (path, cmd)
         bb.note("Unpacking %s to %s/" % (file, unpackdir))
         _run(cmd)
 
