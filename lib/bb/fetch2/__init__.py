@@ -1558,7 +1558,10 @@ class FetchMethod(object):
             unpackdir = rootdir
 
         def _run(cmd):
-            ret = subprocess.call(cmd, preexec_fn=subprocess_setup, shell=True, cwd=unpackdir, env=env)
+            if isinstance(cmd, str):
+                ret = subprocess.call(cmd, preexec_fn=subprocess_setup, shell=True, cwd=unpackdir, env=env)
+            else:
+                ret = subprocess.call(cmd, preexec_fn=subprocess_setup, cwd=unpackdir, env=env)
             if ret != 0:
                 raise UnpackError("Unpack command %s failed with return value %s" % (cmd, ret), urldata.url)
 
@@ -1570,36 +1573,36 @@ class FetchMethod(object):
         cmd = None
 
         if unpack:
-            tar_cmd = 'tar --extract --no-same-owner'
+            tar_cmd = ['tar', '--extract', '--no-same-owner']
             if 'striplevel' in urldata.parm:
                 striplevel = urldata.parm['striplevel']
                 if not striplevel.isdigit():
                     raise UnpackError("Invalid striplevel parameter: %s" % striplevel, urldata.url)
-                tar_cmd += ' --strip-components=%s' % striplevel
+                tar_cmd.append('--strip-components=%s' % striplevel)
             if file.endswith('.tar'):
-                cmd = '%s -f %s' % (tar_cmd, file)
+                cmd = tar_cmd + ['-f', file]
             elif file.endswith('.tgz') or file.endswith('.tar.gz') or file.endswith('.tar.Z'):
-                cmd = '%s -z -f %s' % (tar_cmd, file)
+                cmd = tar_cmd + ['-z', '-f', file]
             elif file.endswith('.tbz') or file.endswith('.tbz2') or file.endswith('.tar.bz2'):
-                cmd = 'bzip2 -dc %s | %s -f -' % (file, tar_cmd)
+                cmd = 'bzip2 -dc %s | %s -f -' % (file, shlex.join(tar_cmd))
             elif file.endswith('.gz') or file.endswith('.Z') or file.endswith('.z'):
                 cmd = 'gzip -dc %s > %s' % (file, efile)
             elif file.endswith('.bz2'):
                 cmd = 'bzip2 -dc %s > %s' % (file, efile)
             elif file.endswith('.txz') or file.endswith('.tar.xz'):
-                cmd = 'xz -dc %s | %s -f -' % (file, tar_cmd)
+                cmd = 'xz -dc %s | %s -f -' % (file, shlex.join(tar_cmd))
             elif file.endswith('.xz'):
                 cmd = 'xz -dc %s > %s' % (file, efile)
             elif file.endswith('.tar.lz'):
-                cmd = 'lzip -dc %s | %s -f -' % (file, tar_cmd)
+                cmd = 'lzip -dc %s | %s -f -' % (file, shlex.join(tar_cmd))
             elif file.endswith('.lz'):
                 cmd = 'lzip -dc %s > %s' % (file, efile)
             elif file.endswith('.tar.7z'):
-                cmd = '7z x -so %s | %s -f -' % (file, tar_cmd)
+                cmd = '7z x -so %s | %s -f -' % (file, shlex.join(tar_cmd))
             elif file.endswith('.7z'):
                 cmd = '7za x -y %s 1>/dev/null' % file
             elif file.endswith('.tzst') or file.endswith('.tar.zst'):
-                cmd = 'zstd --decompress --stdout %s | %s -f -' % (file, tar_cmd)
+                cmd = 'zstd --decompress --stdout %s | %s -f -' % (file, shlex.join(tar_cmd))
             elif file.endswith('.zst'):
                 cmd = 'zstd --decompress --stdout %s > %s' % (file, efile)
             elif file.endswith('.zip') or file.endswith('.jar'):
@@ -1608,10 +1611,10 @@ class FetchMethod(object):
                 except ValueError as exc:
                     bb.fatal("Invalid value for 'dos' parameter for %s: %s" %
                              (file, urldata.parm.get('dos')))
-                cmd = 'unzip -q -o'
+                cmd = ['unzip', '-q', '-o']
                 if dos:
-                    cmd = '%s -a' % cmd
-                cmd = "%s '%s'" % (cmd, file)
+                    cmd.append('-a')
+                cmd.append(file)
             elif file.endswith('.rpm') or file.endswith('.srpm'):
                 if 'extract' in urldata.parm:
                     unpack_file = urldata.parm.get('extract')
@@ -1634,8 +1637,12 @@ class FetchMethod(object):
                         raise UnpackError("Unable to unpack deb/ipk package - does not contain supported data.tar* file", urldata.url)
                 else:
                     raise UnpackError("Unable to unpack deb/ipk package - could not list contents", urldata.url)
-                quoted_datafile = shlex.quote(datafile)
-                cmd = 'ar x %s %s && %s -p -f %s && rm %s' % (shlex.quote(file), quoted_datafile, tar_cmd, quoted_datafile, quoted_datafile)
+                bb.note("Unpacking %s to %s/" % (file, unpackdir))
+                urldata.unpack_tracer.unpack("archive-extract", unpackdir)
+                _run(['ar', 'x', file, datafile])
+                _run(tar_cmd + ['-p' ,'-f', datafile])
+                os.remove(os.path.join(unpackdir, datafile))
+                return
 
         if not unpack or not cmd:
             urldata.unpack_tracer.unpack("file-copy", unpackdir)
@@ -1652,7 +1659,7 @@ class FetchMethod(object):
                     if urlpath.find("/") != -1:
                         destdir = urlpath.rsplit("/", 1)[0] + '/'
                         bb.utils.mkdirhier("%s/%s" % (unpackdir, destdir))
-                cmd = 'cp --force --preserve=timestamps --no-dereference --recursive -H "%s" "%s"' % (file, destdir)
+                cmd = ['cp', '--force', '--preserve=timestamps', '--no-dereference', '--recursive', '-H', file, destdir]
         else:
             urldata.unpack_tracer.unpack("archive-extract", unpackdir)
 
