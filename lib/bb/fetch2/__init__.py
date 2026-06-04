@@ -1539,6 +1539,21 @@ class FetchMethod(object):
             bb.fatal("Invalid value for 'unpack' parameter for %s: %s" %
                      (file, urldata.parm.get('unpack')))
 
+        path = data.getVar('PATH')
+
+        # If 'subdir' param exists, create a dir and use it as destination for unpack cmd
+        if 'subdir' in urldata.parm:
+            subdir = urldata.parm.get('subdir')
+            if os.path.isabs(subdir):
+                if not os.path.realpath(subdir).startswith(os.path.realpath(rootdir)):
+                    raise UnpackError("subdir argument isn't a subdirectory of unpack root %s" % rootdir, urldata.url)
+                unpackdir = subdir
+            else:
+                unpackdir = os.path.join(rootdir, subdir)
+            bb.utils.mkdirhier(unpackdir)
+        else:
+            unpackdir = rootdir
+
         base, ext = os.path.splitext(file)
         if ext in ['.gz', '.bz2', '.Z', '.xz', '.lz', '.zst']:
             efile = os.path.join(rootdir, os.path.basename(base))
@@ -1614,19 +1629,6 @@ class FetchMethod(object):
                 quoted_datafile = shlex.quote(datafile)
                 cmd = 'ar x %s %s && %s -p -f %s && rm %s' % (shlex.quote(file), quoted_datafile, tar_cmd, quoted_datafile, quoted_datafile)
 
-        # If 'subdir' param exists, create a dir and use it as destination for unpack cmd
-        if 'subdir' in urldata.parm:
-            subdir = urldata.parm.get('subdir')
-            if os.path.isabs(subdir):
-                if not os.path.realpath(subdir).startswith(os.path.realpath(rootdir)):
-                    raise UnpackError("subdir argument isn't a subdirectory of unpack root %s" % rootdir, urldata.url)
-                unpackdir = subdir
-            else:
-                unpackdir = os.path.join(rootdir, subdir)
-            bb.utils.mkdirhier(unpackdir)
-        else:
-            unpackdir = rootdir
-
         if not unpack or not cmd:
             urldata.unpack_tracer.unpack("file-copy", unpackdir)
             # If file == dest, then avoid any copies, as we already put the file into dest!
@@ -1649,7 +1651,6 @@ class FetchMethod(object):
         if not cmd:
             return
 
-        path = data.getVar('PATH')
         if path:
             cmd = "PATH=\"%s\" %s" % (path, cmd)
         bb.note("Unpacking %s to %s/" % (file, unpackdir))
