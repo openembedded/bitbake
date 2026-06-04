@@ -1554,6 +1554,11 @@ class FetchMethod(object):
         else:
             unpackdir = rootdir
 
+        def _run(cmd):
+            ret = subprocess.call(cmd, preexec_fn=subprocess_setup, shell=True, cwd=unpackdir)
+            if ret != 0:
+                raise UnpackError("Unpack command %s failed with return value %s" % (cmd, ret), urldata.url)
+
         base, ext = os.path.splitext(file)
         if ext in ['.gz', '.bz2', '.Z', '.xz', '.lz', '.zst']:
             efile = os.path.join(rootdir, os.path.basename(base))
@@ -1654,10 +1659,7 @@ class FetchMethod(object):
         if path:
             cmd = "PATH=\"%s\" %s" % (path, cmd)
         bb.note("Unpacking %s to %s/" % (file, unpackdir))
-        ret = subprocess.call(cmd, preexec_fn=subprocess_setup, shell=True, cwd=unpackdir)
-
-        if ret != 0:
-            raise UnpackError("Unpack command %s failed with return value %s" % (cmd, ret), urldata.url)
+        _run(cmd)
 
         if iterate is True:
             iterate_urldata = urldata
