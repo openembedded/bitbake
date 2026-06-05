@@ -291,6 +291,36 @@ class HashEquivalenceCommonTests(object):
         self.assertEqual(result_outhash['outhash'], outhash)
         self.assertEqual(result_outhash['outhash_siginfo'], siginfo)
 
+    def test_report_rejects_invalid_unihash(self):
+        taskhash = '68a9206490b2321bb033fb3eab013a4ec62c41f9'
+        outhash = 'bf5f2efaf1ca351f3b4c3d079363540ab48f7c58db3d23cfbb069cf4ff1ea8f7'
+        invalid_unihashes = (
+            "${@os.system('true')}",
+            'a' * 63,
+            'a' * 65,
+            'A' * 64,
+            None,
+        )
+
+        for unihash in invalid_unihashes:
+            with self.subTest(unihash=unihash):
+                with self.start_client(self.server_address) as client:
+                    with self.assertRaises(InvokeError) as context:
+                        client.report_unihash(taskhash, self.METHOD, outhash, unihash)
+
+                self.assertEqual(str(context.exception), "Invalid unihash")
+
+        self.assertClientGetHash(self.client, taskhash, None)
+
+    def test_equivreport_rejects_invalid_unihash(self):
+        taskhash = 'ae6339531895ddf5b67e663e6a374ad8ec71d81c'
+
+        with self.assertRaises(InvokeError) as context:
+            self.client.report_unihash_equiv(taskhash, self.METHOD, "${@os.system('true')}")
+
+        self.assertEqual(str(context.exception), "Invalid unihash")
+        self.assertClientGetHash(self.start_client(self.server_address), taskhash, None)
+
     def test_stress(self):
         def query_server(failures):
             client = Client(self.server_address)
