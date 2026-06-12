@@ -2066,6 +2066,32 @@ def disable_network(uid=None, gid=None):
     with open("/proc/self/gid_map", "w") as f:
         f.write("%s %s 1" % (gid, gid))
 
+def landlock_restrict_network():
+    """Block TCP bind/connect using Landlock LSM (ABI v4+, kernel 6.7+).
+    Gracefully skipped on older kernels. Stacks with disable_network()."""
+
+    NR_CREATE = 444  # landlock_create_ruleset
+    NR_SELF   = 446  # landlock_restrict_self
+    NET_TCP   = 0x3  # BIND_TCP | CONNECT_TCP
+
+    libc = ctypes.CDLL('libc.so.6')
+
+    abi = libc.syscall(NR_CREATE, 0, 0, 1)
+    if abi < 4:
+        return False
+
+    attr = struct.pack("QQ", 0, NET_TCP)
+    buf = ctypes.create_string_buffer(attr)
+    fd = libc.syscall(NR_CREATE, buf, len(attr), 0)
+    if fd < 0:
+        return False
+
+    libc.prctl(38, 1, 0, 0, 0)  # PR_SET_NO_NEW_PRIVS
+    r = libc.syscall(NR_SELF, fd, 0)
+    os.close(fd)
+    return r == 0
+
+
 def export_proxies(d):
     from bb.fetch2 import get_fetcher_environment
     """ export common proxies variables from datastore to environment """
