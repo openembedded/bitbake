@@ -82,7 +82,7 @@ from   bb.fetch2 import logger
 from   bb.fetch2 import trusted_network
 
 
-sha1_re = re.compile(r'^[0-9a-f]{40}$')
+git_hash_re = re.compile(r'^[0-9a-f]{40,64}$')
 slash_re = re.compile(r"/+")
 
 class GitProgressHandler(bb.progress.LineFilterProgressHandler):
@@ -257,8 +257,8 @@ class Git(FetchMethod):
 
         ud.setup_revisions(d)
 
-        # Ensure any revision that doesn't look like a SHA-1 is translated into one
-        if not sha1_re.match(ud.revision or ''):
+        # Ensure any revision that doesn't look like a git hash (SHA-1 or SHA-256) is resolved
+        if not git_hash_re.match(ud.revision or ''):
             if ud.revision:
                 ud.unresolvedrev = ud.revision
             ud.revision = self.latest_revision(ud, d, ud.name)
@@ -752,7 +752,7 @@ class Git(FetchMethod):
 
         # If there is a tag parameter in the url and we also have a fixed srcrev, check the tag
         # matches the revision
-        if 'tag' in ud.parm and sha1_re.match(ud.revision):
+        if 'tag' in ud.parm and git_hash_re.match(ud.revision):
             output = runfetchcmd(ud.basecmd + ['rev-list', '-n', '1', ud.parm['tag']], d, workdir=destdir, extraenv=extraenv)
             output = output.strip()
             if output != ud.revision:
@@ -976,7 +976,7 @@ class Git(FetchMethod):
             bb.note("Could not list remote: %s" % str(e))
             return pupver
 
-        rev_tag_re = re.compile(r"([0-9a-f]{40})\s+refs/tags/(.*)")
+        rev_tag_re = re.compile(r"([0-9a-f]{40,64})\s+refs/tags/(.*)")
         pver_re = re.compile(d.getVar('UPSTREAM_CHECK_GITTAGREGEX') or r"(?P<pver>([0-9][\.|_]?)+)")
         nonrel_re = re.compile(r"(alpha|beta|rc|final)+")
 
