@@ -2,6 +2,20 @@
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "description": "A schema for a manifest of layers to setup",
     "title": "OpenEmbedded Layer Setup Schema",
+    "examples" : [
+        {
+            "sources": {
+                "bitbake": {
+                    "git-remote": {
+                        "uri": "https://git.openembedded.org/bitbake",
+                        "rev": "master"
+                    },
+                    "path": "bitbake"
+                }
+            },
+            "version": "1.0"
+        }
+    ],
     "type": "object",
     "additionalProperties": false,
     "required": [
