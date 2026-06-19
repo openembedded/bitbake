@@ -39,7 +39,7 @@
                         "type": "string"
                     },
                     "contains_this_file": {
-                        "description": "Whether the directory with the layer source also contains this json description. Tools may want to skip the checkout of the source then.",
+                        "description": "Whether the directory with the layer source also contains this json description. Tools may want to skip the checkout of the source then",
                         "type": "boolean"
                     },
                     "git-remote": {
@@ -59,7 +59,7 @@
                                 "type": "string"
                             },
                             "describe": {
-                                "description": "The output of 'git describe' (human readable description of the revision using tags in revision history).",
+                                "description": "The output of 'git describe' (human readable description of the revision using tags in revision history)",
                                 "type": "string"
                             },
                             "uri": {
