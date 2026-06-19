@@ -1,6 +1,7 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "description": "Schema for bitbake-setup configuration files",
+    "title": "bitbake-setup configuration file",
     "type": "object",
     "required": [
         "description",
