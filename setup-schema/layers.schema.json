@@ -1,6 +1,7 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "description": "OpenEmbedder Layer Setup Manifest",
+    "description": "A schema for a manifest of layers to setup",
+    "title": "OpenEmbedded Layer Setup Schema",
     "type": "object",
     "additionalProperties": false,
     "required": [
