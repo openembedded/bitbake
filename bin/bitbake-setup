@@ -28,7 +28,7 @@ sys.path[0:0] = [os.path.join(os.path.dirname(bindir), 'lib')]
 
 import bb.msg  # noqa: E402
 import bb.process  # noqa: E402
-from bb import __version__ as libbb_version
+from bb import __version__ as libbb_version # noqa: E402
 
 if __name__ == "__main__":
     if __version__ != libbb_version:
