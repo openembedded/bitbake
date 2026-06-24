@@ -13,7 +13,7 @@
 #   but it's removed in 3.12, so to support the widest possible set of
 #   versions I'm not using it.
 
-from typing_extensions import (
+from bb._vendor.typing_extensions import (
     runtime_checkable,
     Protocol,
     TypeAlias,

@@ -41,7 +41,7 @@ from typing import (
     cast,
     overload,
 )
-from typing_extensions import (
+from bb._vendor.typing_extensions import (
     Self,
     TypeAlias,
 )

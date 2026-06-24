@@ -16,7 +16,7 @@ from typing import (
     Tuple,
     Union,
 )
-from typing_extensions import TypeAlias
+from bb._vendor.typing_extensions import TypeAlias
 from bb._vendor.bs4._typing import (
     _AttributeValue,
     _AttributeValues,

@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import Callable, Dict, Iterable, Optional, Set, Tuple, TYPE_CHECKING, Union
-from typing_extensions import TypeAlias
+from bb._vendor.typing_extensions import TypeAlias
 from bb._vendor.bs4.dammit import EntitySubstitution
 
 if TYPE_CHECKING:

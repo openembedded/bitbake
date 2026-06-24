@@ -31,7 +31,7 @@ from typing import (
     Union,
     cast,
 )
-from typing_extensions import Literal
+from bb._vendor.typing_extensions import Literal
 from bb._vendor.bs4._typing import (
     _Encoding,
     _Encodings,

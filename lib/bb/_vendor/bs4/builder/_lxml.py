@@ -26,7 +26,7 @@ from typing import (
 from io import BytesIO
 from io import StringIO
 
-from typing_extensions import TypeAlias
+from bb._vendor.typing_extensions import TypeAlias
 
 from lxml import etree # type:ignore
 from bb._vendor.bs4.element import (
