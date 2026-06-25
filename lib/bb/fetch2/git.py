@@ -505,7 +505,9 @@ class Git(FetchMethod):
                 # Using worktree with the revision because .lfsconfig may exists
                 worktree_add_cmd = ud.basecmd + ['worktree', 'add', 'wt', revision]
                 runfetchcmd(worktree_add_cmd, d, log=progresshandler, workdir=clonedir)
-                lfs_fetch_cmd = ud.basecmd + ['lfs', 'fetch', "--all" if fetchall else ""]
+                lfs_fetch_cmd = ud.basecmd + ['lfs', 'fetch']
+                if fetchall:
+                    lfs_fetch_cmd.append('--all')
                 runfetchcmd(lfs_fetch_cmd, d, log=progresshandler, workdir=(clonedir + "/wt"))
                 worktree_rem_cmd = ud.basecmd + ['worktree', 'remove', '-f', 'wt']
                 runfetchcmd(worktree_rem_cmd, d, log=progresshandler, workdir=clonedir)
