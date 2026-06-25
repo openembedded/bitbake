@@ -580,7 +580,7 @@ class Git(FetchMethod):
         # Use repourl when creating a fast initial shallow clone
         # Prefer already existing full bare clones if available
         if not ud.shallow_skip_fast and not os.path.exists(ud.clonedir):
-            remote = shlex.quote(repourl)
+            remote = repourl
         else:
             remote = ud.clonedir
         runfetchcmd(ud.basecmd + ['remote', 'add', 'origin', remote], d, workdir=dest)
