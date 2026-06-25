@@ -1031,9 +1031,9 @@ class Git(FetchMethod):
             commits = None
         else:
             if not os.path.exists(rev_file) or not os.path.getsize(rev_file):
-                commits = bb.fetch2.runfetchcmd(['git', 'rev-list', rev, '--'], d).splitlines()
+                commits = len(bb.fetch2.runfetchcmd(['git', 'rev-list', rev, '--'], d).splitlines())
                 if commits:
-                    open(rev_file, "w").write("%d\n" % len(commits))
+                    open(rev_file, "w").write("%d\n" % commits)
             else:
                 commits = open(rev_file, "r").readline(128).strip()
         if commits:
