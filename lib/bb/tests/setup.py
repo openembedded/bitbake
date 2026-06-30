@@ -68,15 +68,30 @@ import getopt
 import sys
 import os
 
-opts, args = getopt.getopt(sys.argv[1:], "d:", ["downloads-directory="])
+opts, args = getopt.getopt(sys.argv[1:], "d:", ["downloads-directory=", "local-file="])
+installdir = None
+local_file = None
 for option, value in opts:
     if option == '-d':
         installdir = value
+    elif option == '--local-file':
+        local_file = value
+        print("install-buildtools local-file={}".format(value))
 
 print("Buildtools installed into {}".format(installdir))
-os.makedirs(installdir)
+os.makedirs(installdir, exist_ok=True)
 """
         self.add_file_to_testrepo('scripts/install-buildtools', installbuildtools, script=True)
+
+        # Dummy buildtools installer for bb.fetch testing
+        self.buildtools_dir = os.path.join(self.tempdir, "buildtools-dl")
+        os.makedirs(self.buildtools_dir)
+        self.buildtools_filename = "x86_64-buildtools-nativesdk-standalone-test.sh"
+        buildtools_filepath = os.path.join(self.buildtools_dir, self.buildtools_filename)
+        with open(buildtools_filepath, 'w') as f:
+            f.write("#!/bin/sh\necho dummy\n")
+        with open(buildtools_filepath, 'rb') as f:
+            self.buildtools_sha256 = hashlib.sha256(f.read()).hexdigest()
 
         bitbakeconfigbuild = """#!/usr/bin/env python3
 import os
@@ -119,7 +134,11 @@ print("BBPATH is {{}}".format(os.environ["BBPATH"]))
                 "name": "gadget",
                 "description": "Gadget configuration",
                 "oe-template": "test-configuration-gadget",
-                "oe-fragments": ["test-fragment-1"]
+                "oe-fragments": ["test-fragment-1"],
+                "install-buildtools": {
+                    "url": "file://%s/%s",
+                    "sha256sum": "%s"
+                }
             },
             {
                 "name": "gizmo",
@@ -187,7 +206,7 @@ print("BBPATH is {{}}".format(os.environ["BBPATH"]))
     },
     "version": "1.0"
 }
-""" % (sources)
+""" % (sources, self.buildtools_dir, self.buildtools_filename, self.buildtools_sha256)
         os.makedirs(os.path.join(self.registrypath, os.path.dirname(name)), exist_ok=True)
         with open(os.path.join(self.registrypath, name), 'w') as f:
             f.write(config)
@@ -654,6 +673,56 @@ print("BBPATH is {{}}".format(os.environ["BBPATH"]))
 
     def _count_layer_backups(self, layers_path):
         return len([f for f in os.listdir(layers_path) if 'backup' in f])
+
+    def test_install_buildtools_fetch(self):
+        """Test that install-buildtools uses bb.fetch with sha256 and passes --local-file"""
+        import shutil
+
+        if 'BBPATH' in os.environ:
+            del os.environ['BBPATH']
+        os.chdir(self.tempdir)
+
+        registry_uri = "git://{};protocol=file;branch=master;rev=master".format(
+            self.registrypath)
+        self.runbbsetup(["settings", "set", "default", "registry", registry_uri])
+        self.add_file_to_testrepo('test-file', 'initial\n')
+        self.add_json_config_to_registry('test-config-bt.conf.json', 'master', 'master')
+        self.runbbsetup(["init", "--non-interactive", "test-config-bt", "gadget"])
+        setuppath = self.get_setup_path('test-config-bt', 'gadget')
+
+        # test config-driven install (url + sha256sum from config)
+        out = self.runbbsetup(["install-buildtools", "--setup-dir", setuppath])
+        self.assertIn("Buildtools installed into", out[0])
+        self.assertIn("install-buildtools local-file=", out[0])
+        self.assertTrue(os.path.exists(os.path.join(setuppath, 'buildtools')))
+
+        # test CLI overrides (use a different file to prove precedence)
+        shutil.rmtree(os.path.join(setuppath, 'buildtools'))
+        alt_filename = "alt-buildtools-test.sh"
+        alt_filepath = os.path.join(self.buildtools_dir, alt_filename)
+        with open(alt_filepath, 'w') as f:
+            f.write("#!/bin/sh\necho alt\n")
+        with open(alt_filepath, 'rb') as f:
+            alt_sha256 = hashlib.sha256(f.read()).hexdigest()
+        alt_url = "file://{}/{}".format(self.buildtools_dir, alt_filename)
+        out = self.runbbsetup(["install-buildtools", "--setup-dir", setuppath,
+                               "--url", alt_url,
+                               "--sha256", alt_sha256])
+        self.assertIn("Buildtools installed into", out[0])
+        self.assertIn("install-buildtools local-file=", out[0])
+        self.assertIn(alt_filename, out[0])
+
+        # test missing sha256sum is a hard error
+        shutil.rmtree(os.path.join(setuppath, 'buildtools'), ignore_errors=True)
+        with open(os.path.join(setuppath, 'config', 'config-upstream.json')) as f:
+            config_upstream = json.load(f)
+        config_upstream['bitbake-config']['install-buildtools'] = {
+            'url': 'file://{}/{}'.format(self.buildtools_dir, self.buildtools_filename)
+        }
+        with open(os.path.join(setuppath, 'config', 'config-upstream.json'), 'w') as f:
+            json.dump(config_upstream, f)
+        with self.assertRaises(bb.process.ExecutionError):
+            self.runbbsetup(["install-buildtools", "--setup-dir", setuppath, "--force"])
 
     def test_update_rebase_conflicts_strategy(self):
         """Test the --rebase-conflicts-strategy option for the update command.
