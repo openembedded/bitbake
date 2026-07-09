@@ -386,7 +386,9 @@ def setup_bitbake_build(bitbake_config, layerdir, setupdir, thisdir, update_bb_c
     init_script = os.path.join(bitbake_builddir, "init-build-env")
     workspace_file = os.path.join(setupdir, "bitbake.code-workspace")
     shell = "bash"
-    fragments = bitbake_config.get("oe-fragments", []) + sorted(bitbake_config.get("oe-fragment-choices",{}).values())
+    # oe-fragments entries can be strings or dicts with 'name'/'description' keys
+    oe_fragments = [f["name"] if isinstance(f, dict) else f for f in bitbake_config.get("oe-fragments", [])]
+    fragments = oe_fragments + sorted(bitbake_config.get("oe-fragment-choices",{}).values())
     if fragments:
         bb.process.run("{} -c '. {} && bitbake-config-build enable-fragment {}'".format(shell, init_script, " ".join(fragments)))
 
