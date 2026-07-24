@@ -424,7 +424,7 @@ class ServerClient(bb.asyncrpc.AsyncServerConnection):
     @permissions(READ_PERM)
     async def handle_get_stream(self, request):
         async def handler(l):
-            (method, taskhash) = l.split()
+            method, taskhash = l.split()
             # self.logger.debug('Looking up %s %s' % (method, taskhash))
             row = await self.db.get_equivalent(method, taskhash)
 
@@ -646,7 +646,7 @@ class ServerClient(bb.asyncrpc.AsyncServerConnection):
 
     @permissions(DB_ADMIN_PERM)
     async def handle_gc_status(self, request):
-        (keep_rows, remove_rows, current_mark) = await self.db.gc_status()
+        keep_rows, remove_rows, current_mark = await self.db.gc_status()
         return {
             "keep": keep_rows,
             "remove": remove_rows,
@@ -903,7 +903,9 @@ class Server(bb.asyncrpc.AsyncServer):
                 d = await client.get_taskhash(method, taskhash)
                 if d is not None:
                     if is_valid_unihash(d.get("unihash")):
-                        await db.insert_unihash(d["method"], d["taskhash"], d["unihash"])
+                        await db.insert_unihash(
+                            d["method"], d["taskhash"], d["unihash"]
+                        )
                     else:
                         self.logger.warning("Upstream server returned invalid unihash")
                 self.backfill_queue.task_done()
