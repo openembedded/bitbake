@@ -608,7 +608,7 @@ variable.
 
       DEPENDS = "glibc ncurses"
       OVERRIDES = "machine:local"
-      DEPENDS:append:machine = "libmad"
+      DEPENDS:append:machine = " libmad"
 
    In this example, :term:`DEPENDS` becomes "glibc ncurses libmad".
 
