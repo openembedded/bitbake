@@ -193,6 +193,12 @@ def exported_keys(d):
                                       not bb.utils.to_boolean(d.getVarFlag(key, 'unexport')))
 
 def exported_vars(d):
+    """Return the exported variables as a list of (key, value) pairs.
+
+    Every value is expanded before returning, so a caller that changes the
+    environment afterwards still gets what the expansion saw.
+    """
+    exported = []
     k = list(exported_keys(d))
     for key in k:
         try:
@@ -202,7 +208,9 @@ def exported_vars(d):
             continue
 
         if value is not None:
-            yield key, str(value)
+            exported.append((key, str(value)))
+
+    return exported
 
 def emit_func(func, o=sys.__stdout__, d = init()):
     """Emits all items in the data store in a format such that it can be sourced by a shell."""
