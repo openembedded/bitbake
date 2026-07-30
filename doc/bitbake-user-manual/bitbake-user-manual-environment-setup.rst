@@ -667,7 +667,7 @@ In addition, the command can take the following arguments:
    value from the configuration file.
 
 When ``url`` and ``sha256sum`` are set in the configuration file,
-the installer is downloaded via ``bb.fetch`` (cached in ``DL_DIR``) and its
+the installer is downloaded via ``bb.fetch`` (cached in :term:`DL_DIR`) and its
 checksum is enforced. If no configuration is present, the script falls back
 to its built-in defaults::
 
