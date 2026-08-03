@@ -467,8 +467,7 @@ def get_registry_config(registry_path, id):
 def merge_overrides_into_sources(sources, overrides):
     layers = copy.deepcopy(sources)
     for k,v in overrides.items():
-        if k in layers:
-            layers[k] = v
+        layers[k] = v
     return layers
 
 def update_build(config, confdir, setupdir, layerdir, d, update_bb_conf="prompt", init_vscode=False, rebase_conflicts_strategy='abort'):
