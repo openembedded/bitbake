@@ -1195,9 +1195,11 @@ def try_mirrors(fetch, d, origud, mirrorvar, check = False):
     uris, uds = build_mirroruris(origud, mirrors, ld)
 
     for index, uri in enumerate(uris):
-        ret = try_mirror_url(fetch, origud, uds[index], ld, check)
+        ud = uds[index]
+        ret = try_mirror_url(fetch, origud, ud, ld, check)
         if ret:
-            return ret
+            if not check and origud.method.verify_donestamp(ud, d):
+                return ret
     return None
 
 def trusted_network(d, url):
@@ -1909,9 +1911,6 @@ class Fetch(object):
                 elif m.try_premirror(ud, self.d):
                     lf = bb.utils.lockfile_to_exclusive(lf)
                     done = m.try_mirrors(self, ud, self.d, 'PREMIRRORS')
-                    if done:
-                        if not m.verify_donestamp(ud, self.d):
-                            done = False
 
                 d = self.d
                 if premirroronly:
