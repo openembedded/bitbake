@@ -424,7 +424,7 @@ class Wget(FetchMethod):
                 with opener.open(r, timeout=100) as response:
                     pass
             except (urllib.error.URLError, OSError, http.client.RemoteDisconnected) as e:
-                if try_again:
+                if try_again and getattr(e, 'code', None) != 404:
                     logger.debug2("checkstatus: trying again after exception %s" % str(e))
                     return self.checkstatus(fetch, ud, d, False)
                 else:
