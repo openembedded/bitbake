@@ -1906,10 +1906,12 @@ class Fetch(object):
                 self.d.setVar("BB_NO_NETWORK", network)
                 if m.verify_donestamp(ud, self.d) and not m.need_update(ud, self.d):
                     done = True
-                if not done:
+                elif m.try_premirror(ud, self.d):
                     lf = bb.utils.lockfile_to_exclusive(lf)
-                    if m.try_premirror(ud, self.d):
-                        done = m.try_mirrors(self, ud, self.d, 'PREMIRRORS')
+                    done = m.try_mirrors(self, ud, self.d, 'PREMIRRORS')
+                    if done:
+                        if not m.verify_donestamp(ud, self.d):
+                            done = False
 
                 d = self.d
                 if premirroronly:
@@ -1918,10 +1920,7 @@ class Fetch(object):
                     d.setVar("BB_NO_NETWORK", "1")
 
                 firsterr = None
-                verified_stamp = False
-                if done:
-                    verified_stamp = m.verify_donestamp(ud, d)
-                if not done and (not verified_stamp or m.need_update(ud, d)):
+                if not done and m.need_update(ud, d):
                     try:
                         if not trusted_network(d, ud.url):
                             raise UntrustedUrl(ud.url)
@@ -1950,7 +1949,7 @@ class Fetch(object):
                             logger.debug(str(e))
                         firsterr = e
                         # Remove any incomplete fetch
-                        if not verified_stamp and m.cleanup_upon_failure():
+                        if m.cleanup_upon_failure():
                             m.clean(ud, d)
                         done = m.try_mirrors(self, ud, d, 'MIRRORS')
 
