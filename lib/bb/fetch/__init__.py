@@ -706,6 +706,8 @@ def verify_donestamp(ud, d, origud=None):
         (origud and not origud.method.supports_checksum(origud))):
         # if done stamp exists and checksums not supported; assume the local
         # file is current
+        if origud and os.path.exists(origud.donestamp):
+            return True
         return os.path.exists(ud.donestamp)
 
     precomputed_checksums = {}
@@ -1095,7 +1097,6 @@ def rename_bad_checksum(ud, suffix):
 def try_mirror_url(fetch, origud, ud, ld, check = False):
     # Return of None or a value means we're finished
     # False means try another url
-
     try:
         lf = None
         if ud.lockfile != origud.lockfile:
@@ -1107,7 +1108,7 @@ def try_mirror_url(fetch, origud, ud, ld, check = False):
                 return found
             return False
 
-        if not verify_donestamp(ud, ld, origud) or ud.method.need_update(ud, ld):
+        if not ud.method.verify_donestamp(ud, ld, origud) or ud.method.need_update(ud, ld):
             ud.method.download(ud, ld)
             if hasattr(ud.method,"build_mirror_data"):
                 ud.method.build_mirror_data(ud, ld)
@@ -1141,7 +1142,7 @@ def try_mirror_url(fetch, origud, ud, ld, check = False):
                     os.symlink(ud.localpath, dest)
                 except FileExistsError:
                     pass
-            if not verify_donestamp(origud, ld) or origud.method.need_update(origud, ld):
+            if not origud.method.verify_donestamp(origud, ld) or origud.method.need_update(origud, ld):
                 origud.method.download(origud, ld)
                 if hasattr(origud.method, "build_mirror_data"):
                     origud.method.build_mirror_data(origud, ld)
@@ -1151,7 +1152,7 @@ def try_mirror_url(fetch, origud, ud, ld, check = False):
         # When using shallow mode, add a symlink to the original fullshallow
         # path to ensure a valid symlink even in the `PREMIRRORS` case
         origud.method.update_mirror_links(ud, origud)
-        update_stamp(origud, ld)
+        origud.method.update_donestamp(origud, ld)
         return ud.localpath
 
     except bb.fetch.NetworkAccess:
@@ -1198,7 +1199,9 @@ def try_mirrors(fetch, d, origud, mirrorvar, check = False):
         ud = uds[index]
         ret = try_mirror_url(fetch, origud, ud, ld, check)
         if ret:
-            if not check and origud.method.verify_donestamp(ud, d):
+            if check:
+                return ret
+            if origud.method.verify_donestamp(ud, d, origud) and not origud.method.need_update(origud, d):
                 return ret
     return None
 
@@ -1480,11 +1483,11 @@ class FetchMethod(object):
         """
         return True
 
-    def verify_donestamp(self, ud, d):
+    def verify_donestamp(self, ud, d, origud=None):
         """
         Verify the donestamp file
         """
-        return verify_donestamp(ud, d)
+        return verify_donestamp(ud, d, origud)
 
     def update_donestamp(self, ud, d):
         """
@@ -1919,7 +1922,7 @@ class Fetch(object):
                     d.setVar("BB_NO_NETWORK", "1")
 
                 firsterr = None
-                if not done and m.need_update(ud, d):
+                if not done:
                     try:
                         if not trusted_network(d, ud.url):
                             raise UntrustedUrl(ud.url)
