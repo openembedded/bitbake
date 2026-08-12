@@ -1781,6 +1781,72 @@ class FetchCheckStatusTest(FetcherTest):
 
         connection_cache.close_connections()
 
+    @unittest.skipUnless(shutil.which("openssl"), "openssl not installed")
+    def test_wget_checkstatus_https_connection_cache(self):
+        import ssl
+        from socketserver import ThreadingMixIn
+        from bb.fetch2 import FetchConnectionCache
+
+        class HTTPSRequestHandler(http.server.BaseHTTPRequestHandler):
+            protocol_version = "HTTP/1.1"
+
+            def do_HEAD(self):
+                self.send_response(200)
+                self.send_header("Content-Length", "0")
+                self.end_headers()
+
+            def log_message(self, format_str, *args):
+                pass
+
+        class HTTPSServer(ThreadingMixIn, http.server.HTTPServer):
+            daemon_threads = True
+
+            def __init__(self, *args, **kwargs):
+                self.connection_count = 0
+                super().__init__(*args, **kwargs)
+
+            def get_request(self):
+                request, client_address = super().get_request()
+                self.connection_count += 1
+                return request, client_address
+
+        certificate = os.path.join(self.tempdir, "certificate.pem")
+        private_key = os.path.join(self.tempdir, "private-key.pem")
+        subprocess.check_call(
+            ["openssl", "req", "-x509", "-newkey", "rsa:2048", "-nodes",
+             "-keyout", private_key, "-out", certificate, "-days", "1",
+             "-subj", "/CN=127.0.0.1"],
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+        server = HTTPSServer(("127.0.0.1", 0), HTTPSRequestHandler)
+        context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+        context.load_cert_chain(certificate, private_key)
+        server.socket = context.wrap_socket(server.socket, server_side=True)
+        server_thread = threading.Thread(target=server.serve_forever)
+        server_thread.daemon = True
+        server_thread.start()
+
+        connection_cache = FetchConnectionCache()
+        try:
+            url = "https://127.0.0.1:%s/test" % server.server_port
+            self.d.setVar("BB_CHECK_SSL_CERTS", "0")
+            fetch = bb.fetch2.Fetch([url], self.d,
+                                    connection_cache=connection_cache)
+            ud = fetch.ud[url]
+            self.assertTrue(ud.method.checkstatus(fetch, ud, self.d))
+            self.assertTrue(ud.method.checkstatus(fetch, ud, self.d))
+            self.assertEqual(server.connection_count, 1)
+
+            # A connection established without certificate checks must not be
+            # reused after certificate checking is enabled.
+            self.d.setVar("BB_CHECK_SSL_CERTS", "1")
+            self.assertFalse(ud.method.checkstatus(fetch, ud, self.d))
+        finally:
+            connection_cache.close_connections()
+            server.shutdown()
+            server_thread.join()
+            server.server_close()
+
     def test_wget_checkstatus_same_origin_redirect_keeps_auth(self):
         server = self._start_checkstatus_server()
         server.redirect_url = "http://127.0.0.1:%s/b" % server.server_port

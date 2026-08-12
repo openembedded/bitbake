@@ -2127,26 +2127,28 @@ class FetchConnectionCache(object):
     def __init__(self):
         self.cache = {}
 
-    def get_connection_name(self, host, port):
-        return host + ':' + str(port)
+    def get_connection_name(self, host, port, connection_id=None):
+        if connection_id is None:
+            return host + ':' + str(port)
+        return (host, port, connection_id)
 
-    def add_connection(self, host, port, connection):
-        cn = self.get_connection_name(host, port)
+    def add_connection(self, host, port, connection, connection_id=None):
+        cn = self.get_connection_name(host, port, connection_id)
 
         if cn not in self.cache:
             self.cache[cn] = connection
 
-    def get_connection(self, host, port):
+    def get_connection(self, host, port, connection_id=None):
         connection = None
 
-        cn = self.get_connection_name(host, port)
+        cn = self.get_connection_name(host, port, connection_id)
         if cn in self.cache:
             connection = self.cache[cn]
 
         return connection
 
-    def remove_connection(self, host, port):
-        cn = self.get_connection_name(host, port)
+    def remove_connection(self, host, port, connection_id=None):
+        cn = self.get_connection_name(host, port, connection_id)
         if cn in self.cache:
             self.cache[cn].close()
             del self.cache[cn]

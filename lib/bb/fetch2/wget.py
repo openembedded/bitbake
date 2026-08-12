@@ -154,27 +154,54 @@ class Wget(FetchMethod):
         return True
 
     def checkstatus(self, fetch, ud, d, try_again=True):
+        check_certs = self.check_certs(d)
+        newenv = bb.fetch2.get_fetcher_environment(d)
+
         class HTTPConnectionCache(http.client.HTTPConnection):
+            def cache_id(self):
+                return None
+
             if fetch.connection_cache:
                 def connect(self):
                     """Connect to the host and port specified in __init__."""
 
-                    sock = fetch.connection_cache.get_connection(self.host, self.port)
+                    sock = fetch.connection_cache.get_connection(
+                        self.host, self.port, self.cache_id())
                     if sock:
                         self.sock = sock
                     else:
                         self.sock = socket.create_connection((self.host, self.port),
                                     self.timeout, self.source_address)
-                        fetch.connection_cache.add_connection(self.host, self.port, self.sock)
+                        fetch.connection_cache.add_connection(
+                            self.host, self.port, self.sock, self.cache_id())
 
                     if self._tunnel_host:
                         self._tunnel()
+
+        class HTTPSConnectionCache(http.client.HTTPSConnection):
+            def cache_id(self):
+                return ("https", check_certs,
+                        newenv.get("SSL_CERT_FILE"),
+                        self._tunnel_host, self._tunnel_port)
+
+            if fetch.connection_cache:
+                def connect(self):
+                    """Reuse an established TLS connection when available."""
+
+                    sock = fetch.connection_cache.get_connection(
+                        self.host, self.port, self.cache_id())
+                    if sock:
+                        self.sock = sock
+                    else:
+                        super().connect()
+                        fetch.connection_cache.add_connection(
+                            self.host, self.port, self.sock, self.cache_id())
 
         class CacheHTTPHandler(urllib.request.HTTPHandler):
             def http_open(self, req):
                 return self.do_open(HTTPConnectionCache, req)
 
-            def do_open(self, http_class, req):
+            def do_open(self, http_class, req, **http_conn_args):
                 """Return an addinfourl object for the request, using http_class.
 
                 http_class must implement the HTTPConnection API from httplib.
@@ -188,7 +215,7 @@ class Wget(FetchMethod):
                 if not host:
                     raise urllib.error.URLError('no host given')
 
-                h = http_class(host, timeout=req.timeout) # will parse host:port
+                h = http_class(host, timeout=req.timeout, **http_conn_args) # will parse host:port
                 h.set_debuglevel(self._debuglevel)
 
                 headers = dict(req.unredirected_hdrs)
@@ -234,7 +261,8 @@ class Wget(FetchMethod):
                     # If it still fails, we give up, which can happen for bad
                     # HTTP proxy settings.
                     if fetch.connection_cache:
-                        fetch.connection_cache.remove_connection(h.host, h.port)
+                        fetch.connection_cache.remove_connection(
+                            h.host, h.port, h.cache_id())
                     h.close()
                     raise
 
@@ -268,9 +296,19 @@ class Wget(FetchMethod):
                 # Close connection when server request it.
                 if fetch.connection_cache is not None:
                     if 'Connection' in r.msg and r.msg['Connection'] == 'close':
-                        fetch.connection_cache.remove_connection(h.host, h.port)
+                        fetch.connection_cache.remove_connection(
+                            h.host, h.port, h.cache_id())
 
                 return resp
+
+        class CacheHTTPSHandler(CacheHTTPHandler, urllib.request.HTTPSHandler):
+            def __init__(self, debuglevel=0, context=None, check_hostname=None):
+                urllib.request.HTTPSHandler.__init__(self, debuglevel, context,
+                                                     check_hostname)
+
+            def https_open(self, req):
+                return self.do_open(HTTPSConnectionCache, req,
+                                    context=self._context)
 
         class HTTPMethodFallback(urllib.request.BaseHandler):
             """
@@ -373,12 +411,10 @@ class Wget(FetchMethod):
         # Avoid tramping the environment too much by using bb.utils.environment
         # to scope the changes to the build_opener request, which is when the
         # environment lookups happen.
-        newenv = bb.fetch2.get_fetcher_environment(d)
-
         with bb.utils.environment(**newenv):
             import ssl
 
-            if self.check_certs(d):
+            if check_certs:
                 context = ssl.create_default_context()
             else:
                 context = ssl._create_unverified_context()
@@ -387,7 +423,7 @@ class Wget(FetchMethod):
                         HTTPMethodFallback,
                         urllib.request.ProxyHandler(),
                         CacheHTTPHandler(),
-                        urllib.request.HTTPSHandler(context=context)]
+                        CacheHTTPSHandler(context=context)]
             opener = urllib.request.build_opener(*handlers)
 
             try:
