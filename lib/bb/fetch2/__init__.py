@@ -1097,7 +1097,8 @@ def try_mirror_url(fetch, origud, ud, ld, check = False):
     # False means try another url
 
     try:
-        if ud.lockfile and ud.lockfile != origud.lockfile:
+        lf = None
+        if ud.lockfile != origud.lockfile:
             lf = bb.utils.lockfile(ud.lockfile)
 
         if check:
@@ -1174,7 +1175,7 @@ def try_mirror_url(fetch, origud, ud, ld, check = False):
             pass
         return False
     finally:
-        if ud.lockfile and ud.lockfile != origud.lockfile:
+        if ud.lockfile != origud.lockfile:
             bb.utils.unlockfile(lf)
 
 def try_mirrors(fetch, d, origud, mirrorvar, check = False):
@@ -1911,14 +1912,15 @@ class Fetch(object):
             done = False
 
             try:
-                if ud.lockfile:
-                    lf = bb.utils.lockfile(ud.lockfile)
+                lf = bb.utils.lockfile(ud.lockfile, shared=True)
 
                 self.d.setVar("BB_NO_NETWORK", network)
                 if m.verify_donestamp(ud, self.d) and not m.need_update(ud, self.d):
                     done = True
-                elif m.try_premirror(ud, self.d):
-                    done = m.try_mirrors(self, ud, self.d, 'PREMIRRORS')
+                if not done:
+                    bb.utils.lockfile_to_exclusive(lf)
+                    if m.try_premirror(ud, self.d):
+                        done = m.try_mirrors(self, ud, self.d, 'PREMIRRORS')
 
                 d = self.d
                 if premirroronly:
@@ -1980,8 +1982,7 @@ class Fetch(object):
                 raise
 
             finally:
-                if ud.lockfile:
-                    bb.utils.unlockfile(lf)
+                bb.utils.unlockfile(lf)
         if checksum_missing_messages:
             logger.error("Missing SRC_URI checksum, please add those to the recipe: \n%s", "\n".join(checksum_missing_messages))
             raise BBFetchException("There was some missing checksums in the recipe")
@@ -2031,8 +2032,7 @@ class Fetch(object):
                 ud = self.ud[u]
                 ud.setup_localpath(self.d)
 
-                if ud.lockfile:
-                    lf = bb.utils.lockfile(ud.lockfile)
+                lf = bb.utils.lockfile(ud.lockfile, shared=True)
 
                 unpack_tracer.start_url(u)
                 if update:
@@ -2042,8 +2042,7 @@ class Fetch(object):
                 unpack_tracer.finish_url(u)
 
             finally:
-                if ud.lockfile:
-                    bb.utils.unlockfile(lf)
+                bb.utils.unlockfile(lf)
 
         unpack_tracer.complete()
 
@@ -2068,16 +2067,14 @@ class Fetch(object):
                 if not ud.localfile and ud.localpath is None:
                     continue
 
-                if ud.lockfile:
-                    lf = bb.utils.lockfile(ud.lockfile)
+                lf = bb.utils.lockfile(ud.lockfile)
 
                 ud.method.clean(ud, self.d)
                 if ud.donestamp:
                     bb.utils.remove(ud.donestamp)
 
             finally:
-                if ud.lockfile:
-                    bb.utils.unlockfile(lf)
+                bb.utils.unlockfile(lf)
 
     def expanded_urldata(self, urls=None):
         """
