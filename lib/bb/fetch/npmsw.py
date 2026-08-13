@@ -220,12 +220,11 @@ class NpmShrinkWrap(FetchMethod):
                 unlockfile(lf)
         return returns
 
-    def verify_donestamp(self, ud, d, origud=None):
+    def verify_donestamp(self, ud, d):
         """Verify the donestamp file"""
         def _handle(m, ud, d):
-            return m.verify_donestamp(ud, d, origud)
-        ret = all(self._foreach_proxy_method(ud, _handle))
-        return ret
+            return m.verify_donestamp(ud, d)
+        return all(self._foreach_proxy_method(ud, _handle))
 
     def update_donestamp(self, ud, d):
         """Update the donestamp file"""

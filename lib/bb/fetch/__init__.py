@@ -706,8 +706,6 @@ def verify_donestamp(ud, d, origud=None):
         (origud and not origud.method.supports_checksum(origud))):
         # if done stamp exists and checksums not supported; assume the local
         # file is current
-        if origud and os.path.exists(origud.donestamp):
-            return True
         return os.path.exists(ud.donestamp)
 
     precomputed_checksums = {}
@@ -1097,6 +1095,7 @@ def rename_bad_checksum(ud, suffix):
 def try_mirror_url(fetch, origud, ud, ld, check = False):
     # Return of None or a value means we're finished
     # False means try another url
+
     try:
         lf = None
         if ud.lockfile != origud.lockfile:
@@ -1108,7 +1107,7 @@ def try_mirror_url(fetch, origud, ud, ld, check = False):
                 return found
             return False
 
-        if not ud.method.verify_donestamp(ud, ld, origud) or ud.method.need_update(ud, ld):
+        if not verify_donestamp(ud, ld, origud) or ud.method.need_update(ud, ld):
             ud.method.download(ud, ld)
             if hasattr(ud.method,"build_mirror_data"):
                 ud.method.build_mirror_data(ud, ld)
@@ -1142,7 +1141,7 @@ def try_mirror_url(fetch, origud, ud, ld, check = False):
                     os.symlink(ud.localpath, dest)
                 except FileExistsError:
                     pass
-            if not origud.method.verify_donestamp(origud, ld) or origud.method.need_update(origud, ld):
+            if not verify_donestamp(origud, ld) or origud.method.need_update(origud, ld):
                 origud.method.download(origud, ld)
                 if hasattr(origud.method, "build_mirror_data"):
                     origud.method.build_mirror_data(origud, ld)
@@ -1152,7 +1151,7 @@ def try_mirror_url(fetch, origud, ud, ld, check = False):
         # When using shallow mode, add a symlink to the original fullshallow
         # path to ensure a valid symlink even in the `PREMIRRORS` case
         origud.method.update_mirror_links(ud, origud)
-        origud.method.update_donestamp(origud, ld)
+        update_stamp(origud, ld)
         return ud.localpath
 
     except bb.fetch.NetworkAccess:
@@ -1196,13 +1195,9 @@ def try_mirrors(fetch, d, origud, mirrorvar, check = False):
     uris, uds = build_mirroruris(origud, mirrors, ld)
 
     for index, uri in enumerate(uris):
-        ud = uds[index]
-        ret = try_mirror_url(fetch, origud, ud, ld, check)
+        ret = try_mirror_url(fetch, origud, uds[index], ld, check)
         if ret:
-            if check:
-                return ret
-            if origud.method.verify_donestamp(ud, d, origud) and not origud.method.need_update(origud, d):
-                return ret
+            return ret
     return None
 
 def trusted_network(d, url):
@@ -1483,11 +1478,11 @@ class FetchMethod(object):
         """
         return True
 
-    def verify_donestamp(self, ud, d, origud=None):
+    def verify_donestamp(self, ud, d):
         """
         Verify the donestamp file
         """
-        return verify_donestamp(ud, d, origud)
+        return verify_donestamp(ud, d)
 
     def update_donestamp(self, ud, d):
         """
@@ -1911,9 +1906,10 @@ class Fetch(object):
                 self.d.setVar("BB_NO_NETWORK", network)
                 if m.verify_donestamp(ud, self.d) and not m.need_update(ud, self.d):
                     done = True
-                elif m.try_premirror(ud, self.d):
+                if not done:
                     lf = bb.utils.lockfile_to_exclusive(lf)
-                    done = m.try_mirrors(self, ud, self.d, 'PREMIRRORS')
+                    if m.try_premirror(ud, self.d):
+                        done = m.try_mirrors(self, ud, self.d, 'PREMIRRORS')
 
                 d = self.d
                 if premirroronly:
@@ -1922,7 +1918,10 @@ class Fetch(object):
                     d.setVar("BB_NO_NETWORK", "1")
 
                 firsterr = None
-                if not done:
+                verified_stamp = False
+                if done:
+                    verified_stamp = m.verify_donestamp(ud, d)
+                if not done and (not verified_stamp or m.need_update(ud, d)):
                     try:
                         if not trusted_network(d, ud.url):
                             raise UntrustedUrl(ud.url)
@@ -1951,7 +1950,7 @@ class Fetch(object):
                             logger.debug(str(e))
                         firsterr = e
                         # Remove any incomplete fetch
-                        if m.cleanup_upon_failure():
+                        if not verified_stamp and m.cleanup_upon_failure():
                             m.clean(ud, d)
                         done = m.try_mirrors(self, ud, d, 'MIRRORS')
 
