@@ -1925,15 +1925,6 @@ class Fetch(object):
                     done = True
                 elif m.try_premirror(ud, self.d):
                     done = m.try_mirrors(self, ud, self.d, 'PREMIRRORS')
-                    if done:
-                        try:
-                            # early checksum verification so that if the checksum of the premirror
-                            # contents mismatch the fetcher can still try upstream and mirrors
-                            m.update_donestamp(ud, self.d)
-                        except ChecksumError as e:
-                            logger.warning("Checksum failure encountered with premirror download of %s - will attempt other sources." % u)
-                            logger.debug(str(e))
-                            done = False
 
                 d = self.d
                 if premirroronly:
