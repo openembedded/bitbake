@@ -587,6 +587,13 @@ def lockfile(name, shared=False, retry=True, block=False):
         if not retry:
             return None
 
+def lockfile_to_exclusive(lf):
+    if not lf:
+        return
+    fileno = lf.fileno()
+    fcntl.flock(fileno, fcntl.LOCK_EX)
+    return
+
 def unlockfile(lf):
     """
     Unlock a file locked using ``bb.utils.lockfile()``.
