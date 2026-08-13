@@ -1183,15 +1183,18 @@ def try_mirror_url(fetch, origud, ud, ld, check = False):
         if ud.lockfile and ud.lockfile != origud.lockfile:
             bb.utils.unlockfile(lf)
 
-def try_mirrors(fetch, d, origud, mirrors, check = False):
+def try_mirrors(fetch, d, origud, mirrorvar, check = False):
     """
     Try to use a mirrored version of the sources.
     This method will be automatically called before the fetchers go.
 
     d Is a bb.data instance
     uri is the original uri we're trying to download
-    mirrors is the list of mirrors we're going to try
+    mirrorvar is variable name that contains the list of mirrors we're going to try
     """
+    logger.debug("Trying mirrors in %s" % mirrorvar)
+    mirrors = mirror_from_string(d.getVar(mirrorvar))
+
     ld = d.createCopy()
 
     uris, uds = build_mirroruris(origud, mirrors, ld)
@@ -1716,11 +1719,11 @@ class FetchMethod(object):
         """
         return True
 
-    def try_mirrors(self, fetch, urldata, d, mirrors, check=False):
+    def try_mirrors(self, fetch, urldata, d, mirrorvar, check=False):
         """
         Try to use a mirror
         """
-        return bool(try_mirrors(fetch, d, urldata, mirrors, check))
+        return bool(try_mirrors(fetch, d, urldata, mirrorvar, check))
 
     def checkstatus(self, fetch, urldata, d):
         """
@@ -1921,9 +1924,7 @@ class Fetch(object):
                 if m.verify_donestamp(ud, self.d) and not m.need_update(ud, self.d):
                     done = True
                 elif m.try_premirror(ud, self.d):
-                    logger.debug("Trying PREMIRRORS")
-                    mirrors = mirror_from_string(self.d.getVar('PREMIRRORS'))
-                    done = m.try_mirrors(self, ud, self.d, mirrors)
+                    done = m.try_mirrors(self, ud, self.d, 'PREMIRRORS')
                     if done:
                         try:
                             # early checksum verification so that if the checksum of the premirror
@@ -1975,9 +1976,7 @@ class Fetch(object):
                         # Remove any incomplete fetch
                         if not verified_stamp and m.cleanup_upon_failure():
                             m.clean(ud, d)
-                        logger.debug("Trying MIRRORS")
-                        mirrors = mirror_from_string(d.getVar('MIRRORS'))
-                        done = m.try_mirrors(self, ud, d, mirrors)
+                        done = m.try_mirrors(self, ud, d, 'MIRRORS')
 
                 if not done or not m.done(ud, d):
                     if firsterr:
@@ -2027,14 +2026,13 @@ class Fetch(object):
             logger.debug("Testing URL %s", u)
             # First try checking uri, u, from PREMIRRORS
             mirrors = mirror_from_string(self.d.getVar('PREMIRRORS'))
-            ret = m.try_mirrors(self, ud, self.d, mirrors, True)
+            ret = m.try_mirrors(self, ud, self.d, 'PREMIRRORS', True)
             if not ret:
                 # Next try checking from the original uri, u
                 ret = m.checkstatus(self, ud, self.d)
                 if not ret:
                     # Finally, try checking uri, u, from MIRRORS
-                    mirrors = mirror_from_string(self.d.getVar('MIRRORS'))
-                    ret = m.try_mirrors(self, ud, self.d, mirrors, True)
+                    ret = m.try_mirrors(self, ud, self.d, 'MIRRORS', True)
 
             if not ret:
                 raise FetchError("URL doesn't work", u)
