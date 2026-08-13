@@ -1156,12 +1156,6 @@ def try_mirror_url(fetch, origud, ud, ld, check = False):
     except bb.fetch2.NetworkAccess:
         raise
 
-    except IOError as e:
-        if e.errno in [errno.ESTALE]:
-            logger.warning("Stale Error Observed %s." % ud.url)
-            return False
-        raise
-
     except bb.fetch2.BBFetchException as e:
         if isinstance(e, ChecksumError):
             logger.warning("Mirror checksum failure for url %s (original url: %s)\nCleaning and trying again." % (ud.url, origud.url))
@@ -1975,12 +1969,6 @@ class Fetch(object):
                     raise FetchError("Unable to fetch URL from any source.", u)
 
                 m.update_donestamp(ud, d)
-
-            except IOError as e:
-                if e.errno in [errno.ESTALE]:
-                    logger.error("Stale Error Observed %s." % u)
-                    raise ChecksumError("Stale Error Detected")
-                raise
 
             except BBFetchException as e:
                 if isinstance(e, NoChecksumError):
