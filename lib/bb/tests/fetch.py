@@ -1812,11 +1812,13 @@ class FetchCheckStatusTest(FetcherTest):
 
         certificate = os.path.join(self.tempdir, "certificate.pem")
         private_key = os.path.join(self.tempdir, "private-key.pem")
-        subprocess.check_call(
+        result = subprocess.run(
             ["openssl", "req", "-x509", "-newkey", "rsa:2048", "-nodes",
              "-keyout", private_key, "-out", certificate, "-days", "1",
              "-subj", "/CN=127.0.0.1"],
-            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+        self.assertEqual(result.returncode, 0,
+                         "openssl certificate generation failed:\n%s" % result.stdout)
 
         server = HTTPSServer(("127.0.0.1", 0), HTTPSRequestHandler)
         context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
