@@ -7,12 +7,62 @@
 #
 
 import unittest
+import contextlib
 import os
+import subprocess
+import sys
+import tempfile
+import time
 import bb, bb.cooker
 import re
 import logging
 
-# Cooker tests
+
+class _BitbakeSubprocessTestCase(unittest.TestCase):
+    """Common helpers for tests that run bitbake/tinfoil in a subprocess.
+
+    Shared because every such subprocess can start a memory-resident bitbake
+    server (and, if BB_HASHSERVE=auto, a hashserv) rooted at TOPDIR, and both
+    must release that directory before the caller's TemporaryDirectory can be
+    safely removed.
+    """
+
+    def _run_subprocess(self, cmd, env, cwd):
+        proc = subprocess.run(
+            cmd,
+            env=env,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            universal_newlines=True,
+            cwd=cwd,
+        )
+        if proc.returncode:
+            self.fail('%s failed: %s' % (cmd, proc.stdout))
+        return proc.stdout
+
+    def _shutdown(self, builddir):
+        """Wait for the bitbake server and hashserv to release builddir.
+
+        Must run before the caller's TemporaryDirectory is removed, so it
+        cannot be a tearDown().
+        """
+        deadline = time.monotonic() + 30
+        while time.monotonic() < deadline:
+            if not any(os.path.exists(os.path.join(builddir, p))
+                       for p in ('hashserve.sock', 'bitbake.lock')):
+                return
+            time.sleep(0.5)
+
+    @contextlib.contextmanager
+    def _build_dir(self, prefix='tinfoiltest'):
+        """TemporaryDirectory that also waits out _shutdown() before removal."""
+        with tempfile.TemporaryDirectory(prefix=prefix) as builddir:
+            try:
+                yield builddir
+            finally:
+                self._shutdown(builddir)
+
+
 class CookerTest(unittest.TestCase):
     def setUp(self):
         # At least one variable needs to be set
