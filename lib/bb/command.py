@@ -228,7 +228,7 @@ class CommandsSync:
         Set the value of variable in configuration
         """
         varname = params[0]
-        value = str(params[1])
+        value = params[1]
         setattr(command.cooker.configuration, varname, value)
 
     def enableDataTracking(self, command, params):
