@@ -622,9 +622,13 @@ class CommandsAsync:
             internal = params[2]
         else:
             internal = False
+        if len(params) > 3:
+            taskonly = params[3]
+        else:
+            taskonly = False
 
         if internal:
-            command.cooker.buildFileInternal(bfile, task, fireevents=False, quietlog=True)
+            command.cooker.buildFileInternal(bfile, task, fireevents=False, quietlog=True, taskonly=taskonly)
         else:
             command.cooker.buildFile(bfile, task)
     buildFile.needcache = False

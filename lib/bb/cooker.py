@@ -1367,7 +1367,7 @@ You can also remove the BB_HASHSERVE_UPSTREAM setting, but this may result in si
 
         self.buildFileInternal(buildfile, task)
 
-    def buildFileInternal(self, buildfile, task, fireevents=True, quietlog=False):
+    def buildFileInternal(self, buildfile, task, fireevents=True, quietlog=False, taskonly=False):
         """
         Build the file matching regexp buildfile
         """
@@ -1416,6 +1416,12 @@ You can also remove the BB_HASHSERVE_UPSTREAM setting, but this may result in si
         self.recipecaches[mc].deps[fn] = []
         self.recipecaches[mc].rundeps[fn] = defaultdict(list)
         self.recipecaches[mc].runrecs[fn] = defaultdict(list)
+
+        if taskonly:
+            # Drop the intra-recipe task ordering too ('addtask X after Y'), so
+            # that task is the only entry left in the runqueue.
+            task_deps = self.recipecaches[mc].task_deps[fn]
+            task_deps['parents'] = {t: [] for t in task_deps['tasks']}
 
         bb.parse.siggen.setup_datacache(self.recipecaches)
 
