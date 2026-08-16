@@ -56,6 +56,10 @@ class IncludeAllNode(AstNode):
         logger.debug2("CONF %s:%s: including %s", self.filename, self.lineno, s)
 
         for path in data.getVar("BBPATH").split(":"):
+            # Skip empty segments (e.g. from a stray "::" if some layer.conf
+            # uses ".= \":${LAYERDIR}\"" instead of "=. \"${LAYERDIR}:\"").
+            if not path:
+                continue
             bb.parse.ConfHandler.include(self.filename, os.path.join(path, s), self.lineno, data, False)
 
 class ExportNode(AstNode):
