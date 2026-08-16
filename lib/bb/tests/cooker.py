@@ -119,3 +119,49 @@ class CookerTest(unittest.TestCase):
         expected = []
 
         self.assertEqual(log_handler.logdata, expected)
+
+
+class BuildFileTest(_BitbakeSubprocessTestCase):
+    """Tests for the buildfile ("bitbake -b") mode."""
+
+    # parse-tests BBPATH: minimal bitbake.conf whose BBFILES honours
+    # EXTRA_BBFILES and already includes *.bbappend
+    _parsetests = os.path.realpath(os.path.join(os.path.dirname(__file__), "parse-tests"))
+
+    recipe = """\
+MARKER ??= "no-bbappend"
+python do_marker() {
+    with open(d.expand("${TOPDIR}/marker.log"), "w") as f:
+        f.write(d.getVar("MARKER"))
+}
+addtask marker
+"""
+
+    bbappend = 'MARKER = "bbappend-applied"\n'
+
+    def test_buildfile_applies_bbappends(self):
+        """bitbake -b must build the recipe with its bbappends applied.
+
+        buildFileInternal() looks the appends up in self.collections[mc], which
+        on the -b path is only ever populated by matchFiles().
+        """
+        with tempfile.TemporaryDirectory(prefix="buildfilerecipes") as recipes, \
+             self._build_dir(prefix="buildfiletest") as builddir:
+            recipe = os.path.join(recipes, "appendtest.bb")
+            with open(recipe, "w") as f:
+                f.write(self.recipe)
+            with open(os.path.join(recipes, "appendtest.bbappend"), "w") as f:
+                f.write(self.bbappend)
+
+            env = os.environ.copy()
+            env["BBPATH"] = self._parsetests
+            env["BB_ENV_PASSTHROUGH_ADDITIONS"] = "TOPDIR EXTRA_BBFILES"
+            env["TOPDIR"] = builddir
+            env["EXTRA_BBFILES"] = "%s/*.bb %s/*.bbappend" % (recipes, recipes)
+
+            cmd = ["bitbake", "-b", recipe, "-c", "marker"]
+            self._run_subprocess(cmd, env, builddir)
+
+            with open(os.path.join(builddir, "marker.log")) as f:
+                self.assertEqual(f.read(), "bbappend-applied",
+                                 "bitbake -b did not apply the recipe's bbappend")
