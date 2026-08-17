@@ -54,11 +54,33 @@ class WgetProgressHandler(bb.progress.LineFilterProgressHandler):
 class Wget(FetchMethod):
     """Class to fetch urls via 'wget'"""
 
+    def __init__(self):
+        super().__init__()
+        self._unverified_ssl_context = None
+        self._verified_ssl_context = None
+
     def check_certs(self, d):
         """
         Should certificates be checked?
         """
         return (d.getVar("BB_CHECK_SSL_CERTS") or "1") != "0"
+
+    def ssl_context(self, d):
+        """
+        Get an SSL context, caching it to avoid creating every time.
+        """
+        if self.check_certs(d):
+            # Cache verified SSL context
+            if self._verified_ssl_context is None:
+                import ssl
+                self._verified_ssl_context = ssl.create_default_context()
+            return self._verified_ssl_context
+
+        # Cache unverified SSL context
+        if self._unverified_ssl_context is None:
+            import ssl
+            self._unverified_ssl_context = ssl._create_unverified_context()
+        return self._unverified_ssl_context
 
     def supports(self, ud, d):
         """
@@ -412,13 +434,7 @@ class Wget(FetchMethod):
         # to scope the changes to the build_opener request, which is when the
         # environment lookups happen.
         with bb.utils.environment(**newenv):
-            import ssl
-
-            if check_certs:
-                context = ssl.create_default_context()
-            else:
-                context = ssl._create_unverified_context()
-
+            context = self.ssl_context(d)
             handlers = [FixedHTTPRedirectHandler,
                         HTTPMethodFallback,
                         urllib.request.ProxyHandler(),
