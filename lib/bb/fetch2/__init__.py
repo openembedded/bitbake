@@ -1438,9 +1438,6 @@ class FetchData(object):
 class FetchMethod(object):
     """Base class for 'fetch'ing data"""
 
-    def __init__(self, urls=None):
-        self.urls = []
-
     def supports(self, urldata, d):
         """
         Check to see if this fetch class supports a given url.
@@ -1500,14 +1497,6 @@ class FetchMethod(object):
         while os.path.isabs(relpath):
             relpath = relpath[1:]
         return relpath
-
-    def setUrls(self, urls):
-        self.__urls = urls
-
-    def getUrls(self):
-        return self.__urls
-
-    urls = property(getUrls, setUrls, None, "Urls property")
 
     def need_update(self, ud, d):
         """
