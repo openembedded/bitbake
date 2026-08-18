@@ -1,7 +1,3 @@
-[build-system]
-requires = []
-build-backend = "setuptools.build_meta"
-
 [project]
 name = "bitbake"
 version = "2.19.0"
