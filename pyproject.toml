@@ -1,6 +1,7 @@
 [project]
 name = "bitbake"
 version = "2.19.0"
+requires-python = ">=3.9"
 
 [tool.vendoring]
 destination = "lib/bb/_vendor"
