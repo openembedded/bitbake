@@ -587,12 +587,13 @@ def lockfile(name, shared=False, retry=True, block=False):
         if not retry:
             return None
 
+# We have to drop the existing lock to avoid deadlocks
 def lockfile_to_exclusive(lf):
     if not lf:
         return
-    fileno = lf.fileno()
-    fcntl.flock(fileno, fcntl.LOCK_EX)
-    return
+    name = lf.name
+    unlockfile(lf)
+    return lockfile(name)
 
 def unlockfile(lf):
     """

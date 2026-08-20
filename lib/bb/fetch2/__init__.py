@@ -1907,7 +1907,7 @@ class Fetch(object):
                 if m.verify_donestamp(ud, self.d) and not m.need_update(ud, self.d):
                     done = True
                 if not done:
-                    bb.utils.lockfile_to_exclusive(lf)
+                    lf = bb.utils.lockfile_to_exclusive(lf)
                     if m.try_premirror(ud, self.d):
                         done = m.try_mirrors(self, ud, self.d, 'PREMIRRORS')
 
