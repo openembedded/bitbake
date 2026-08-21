@@ -84,7 +84,7 @@ def pending_hash_index(tid, rqdata):
     (mc, fn, taskname, taskfn) = split_tid_mcfn(tid)
     pn = rqdata.dataCaches[mc].pkg_fn[taskfn]
     h = rqdata.runtaskentries[tid].unihash
-    return pn + ":" + "taskname" + h
+    return pn + ":" + taskname + h
 
 class RunQueueStats:
     """
