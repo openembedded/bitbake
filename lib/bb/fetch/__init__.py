@@ -1054,12 +1054,12 @@ def build_mirroruris(origud, mirrors, ld):
                 localmirrors.remove(line)
 
                 try:
-                    newud = FetchData(newuri, ld)
+                    newud = FetchData(newuri, ld, origud=origud)
                     newud.ignore_checksums = True
                     newud.setup_localpath(ld)
                     if hasattr(ud, 'unpack_tracer'):
                         newud.unpack_tracer = ud.unpack_tracer
-                    newud.origud = ud
+
                 except bb.fetch.BBFetchException as e:
                     logger.debug("Mirror fetch failure for url %s (original url: %s)" % (newuri, origud.url))
                     logger.debug(str(e))
@@ -1324,7 +1324,7 @@ class FetchData(object):
     """
     A class which represents the fetcher state for a given URI.
     """
-    def __init__(self, url, d, localonly = False):
+    def __init__(self, url, d, localonly=False, origud=None):
         # localpath is the location of a downloaded result. If not set, the file is local.
         self.donestamp = None
         self.needdonestamp = True
@@ -1375,6 +1375,9 @@ class FetchData(object):
 
         if not self.method:
             raise NoMethodError(url)
+
+        if origud:
+            self.origud = origud
 
         if localonly and not isinstance(self.method, local.Local):
             raise NonLocalMethod()

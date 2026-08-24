@@ -277,6 +277,8 @@ class Git(FetchMethod):
         dl_dir = d.getVar("DL_DIR")
         gitdir = d.getVar("GITDIR") or (dl_dir + "/git2")
         ud.clonedir = os.path.join(gitdir, gitsrcname)
+        if hasattr(ud, "origud") and ud.origud.type == "git":
+            ud.clonedir = ud.origud.clonedir
         ud.localfile = ud.clonedir
 
         mirrortarball = 'git2_%s.tar.gz' % gitsrcname
