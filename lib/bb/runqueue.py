@@ -2609,7 +2609,7 @@ class RunQueueExecute:
             next = set()
             ready = {}
             for tid in current:
-                if self.rqdata.runtaskentries[p].depends and not self.rqdata.runtaskentries[tid].depends.isdisjoint(total):
+                if self.rqdata.runtaskentries[tid].depends and not self.rqdata.runtaskentries[tid].depends.isdisjoint(total):
                     continue
                 # get_taskhash for a given tid *must* be called before get_unihash* below
                 ready[tid] = bb.parse.siggen.get_taskhash(tid, self.rqdata.runtaskentries[tid].depends, self.rqdata.dataCaches)
