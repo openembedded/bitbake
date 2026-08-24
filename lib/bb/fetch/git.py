@@ -353,8 +353,12 @@ class Git(FetchMethod):
     def tarball_need_update(self, ud):
         return ud.write_tarballs and not os.path.exists(ud.fullmirror)
 
-    def update_mirror_links(self, ud, origud):
-        super().update_mirror_links(ud, origud)
+    def update_mirror_links(self, ud, origud, d):
+        # Replace a stale clone which would prevent linking the successful mirror.
+        if self.clonedir_need_update(origud, d) and os.path.exists(origud.localpath) \
+                and not os.path.samefile(ud.localpath, origud.localpath):
+            bb.utils.remove(origud.localpath, recurse=True)
+        super().update_mirror_links(ud, origud, d)
         # When using shallow mode, add a symlink to the original fullshallow
         # path to ensure a valid symlink even in the `PREMIRRORS` case
         if origud.shallow and not os.path.exists(origud.fullshallow):

@@ -616,6 +616,48 @@ class GitDownloadDirectoryNamingTest(FetcherTest):
         self.assertIn(self.recipe_dir, dir)
 
 
+class GitPremirrorStaleCloneTest(FetcherTest):
+
+    def test_premirror_replaces_stale_clone(self):
+        source = os.path.join(self.tempdir, "source")
+        os.mkdir(source)
+        self.git_init(cwd=source)
+
+        testfile = os.path.join(source, "testfile")
+        with open(testfile, "w") as f:
+            f.write("first\n")
+        self.git(["add", "testfile"], cwd=source)
+        self.git(["commit", "-m", "first commit"], cwd=source)
+
+        recipe_url = "git://upstream.invalid/project.git;branch=master;protocol=https"
+        self.d.setVar("SRCREV", self.git(["rev-parse", "HEAD"], cwd=source).strip())
+        fetcher = bb.fetch.Fetch([recipe_url], self.d)
+        ud = fetcher.ud[recipe_url]
+        ud.setup_localpath(self.d)
+        os.makedirs(os.path.dirname(ud.clonedir), exist_ok=True)
+        self.git(["clone", "--bare", "--mirror", source, ud.clonedir], cwd=self.tempdir)
+
+        with open(testfile, "a") as f:
+            f.write("second\n")
+        self.git(["commit", "-am", "second commit"], cwd=source)
+        revision = self.git(["rev-parse", "HEAD"], cwd=source).strip()
+
+        self.d.setVar("SRCREV", revision)
+        self.d.setVar("BB_FETCH_PREMIRRORONLY", "1")
+        self.d.setVar("BB_NO_NETWORK", "1")
+        self.d.setVar("PREMIRRORS", "%s git://%s;protocol=file" % (recipe_url, source))
+
+        fetcher = bb.fetch.Fetch([recipe_url], self.d)
+        ud = fetcher.ud[recipe_url]
+        fetcher.download()
+        fetcher.unpack(self.unpackdir)
+
+        self.assertTrue(os.path.islink(ud.clonedir))
+        unpack_revision = self.git(["rev-parse", "HEAD"],
+                                   cwd=os.path.join(self.unpackdir, "git")).strip()
+        self.assertEqual(revision, unpack_revision)
+
+
 class TarballNamingTest(FetcherTest):
     def setUp(self):
         super(TarballNamingTest, self).setUp()

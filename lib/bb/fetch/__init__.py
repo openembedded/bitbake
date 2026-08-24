@@ -1151,7 +1151,7 @@ def try_mirror_url(fetch, origud, ud, ld, check = False):
         # This may also be a link to a shallow archive
         # When using shallow mode, add a symlink to the original fullshallow
         # path to ensure a valid symlink even in the `PREMIRRORS` case
-        origud.method.update_mirror_links(ud, origud)
+        origud.method.update_mirror_links(ud, origud, ld)
         update_stamp(origud, ld)
         return ud.localpath
 
@@ -1693,7 +1693,7 @@ class FetchMethod(object):
             except FileExistsError:
                 pass
 
-    def update_mirror_links(self, ud, origud):
+    def update_mirror_links(self, ud, origud, d):
         # For local file:// results, create a symlink to them
         # This may also be a link to a shallow archive
         self.ensure_symlink(ud.localpath, origud.localpath)
