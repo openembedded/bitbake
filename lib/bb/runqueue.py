@@ -873,8 +873,7 @@ class RunQueueData:
                 for dep in revdeps[tid]:
                     cumulativedeps[dep].add(fn_from_tid(tid))
                     cumulativedeps[dep].update(cumulativedeps[tid])
-                    if tid in deps[dep]:
-                        deps[dep].remove(tid)
+                    deps[dep].discard(tid)
                     if not deps[dep]:
                         next.add(dep)
             endpoints = next
@@ -2687,8 +2686,7 @@ class RunQueueExecute:
             self.pending_migrations.remove(tid)
             changed = True
 
-            if tid in self.tasks_scenequeue_done:
-                self.tasks_scenequeue_done.remove(tid)
+            self.tasks_scenequeue_done.discard(tid)
             for dep in self.sqdata.sq_covered_tasks[tid]:
                 if dep in self.runq_complete and dep not in self.runq_tasksrun:
                     bb.error("Task %s marked as completed but now needing to rerun? Halting build." % dep)
@@ -2700,18 +2698,12 @@ class RunQueueExecute:
                     if dep in self.tasks_scenequeue_done and dep not in self.sqdata.unskippable:
                         self.tasks_scenequeue_done.remove(dep)
 
-            if tid in self.sq_buildable:
-                self.sq_buildable.remove(tid)
-            if tid in self.sq_running:
-                self.sq_running.remove(tid)
-            if tid in self.sqdata.outrightfail:
-                self.sqdata.outrightfail.remove(tid)
-            if tid in self.scenequeue_notcovered:
-                self.scenequeue_notcovered.remove(tid)
-            if tid in self.scenequeue_covered:
-                self.scenequeue_covered.remove(tid)
-            if tid in self.scenequeue_notneeded:
-                self.scenequeue_notneeded.remove(tid)
+            self.sq_buildable.discard(tid)
+            self.sq_running.discard(tid)
+            self.sqdata.outrightfail.discard(tid)
+            self.scenequeue_notcovered.discard(tid)
+            self.scenequeue_covered.discard(tid)
+            self.scenequeue_notneeded.discard(tid)
 
             (mc, fn, taskname, taskfn) = split_tid_mcfn(tid)
             self.sqdata.stamps[tid] = bb.parse.siggen.stampfile_mcfn(taskname, taskfn, extrainfo=False)
@@ -2975,8 +2967,7 @@ def build_scenequeue_data(sqdata, rqdata, sqrq):
         sq_collated_deps[tid] = set()
         #bb.warn("Added endpoint 2 %s" % (tid))
         for dep in rqdata.runtaskentries[tid].depends:
-                if tid in sq_revdeps[dep]:
-                    sq_revdeps[dep].remove(tid)
+                sq_revdeps[dep].discard(tid)
                 if dep not in endpoints:
                     endpoints[dep] = set()
                 #bb.warn("  Added endpoint 3 %s" % (dep))
@@ -3000,8 +2991,7 @@ def build_scenequeue_data(sqdata, rqdata, sqrq):
                 sq_revdeps_squash[point] = tasks
                 continue
             for dep in rqdata.runtaskentries[point].depends:
-                if point in sq_revdeps[dep]:
-                    sq_revdeps[dep].remove(point)
+                sq_revdeps[dep].discard(point)
                 if tasks:
                     sq_revdeps_squash[dep] |= tasks
                 if not sq_revdeps[dep] and dep not in rqdata.runq_setscene_tids:
@@ -3150,12 +3140,9 @@ def update_scenequeue_data(tids, sqdata, rqdata, rq, cooker, stampcache, sqrq, s
     tocheck = set()
 
     for tid in sorted(tids):
-        if tid in sqdata.stamppresent:
-            sqdata.stamppresent.remove(tid)
-        if tid in sqdata.valid:
-            sqdata.valid.remove(tid)
-        if tid in sqdata.outrightfail:
-            sqdata.outrightfail.remove(tid)
+        sqdata.stamppresent.discard(tid)
+        sqdata.valid.discard(tid)
+        sqdata.outrightfail.discard(tid)
 
         noexec, stamppresent = check_setscene_stamps(tid, rqdata, rq, stampcache, noexecstamp=True)
 
