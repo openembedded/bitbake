@@ -126,7 +126,7 @@ class VariableParse:
 
         # Do not run code that contains one or more unexpanded variables
         # instead return the code with the characters we removed put back
-        if __expand_var_regexp__.findall(code):
+        if __expand_var_regexp__.search(code):
             return "${@" + code + "}"
 
         if self.varname:
