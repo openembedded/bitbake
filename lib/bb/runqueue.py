@@ -154,7 +154,7 @@ class RunQueueScheduler(object):
         self.rqdata = rqdata
         self.numTasks = len(self.rqdata.runtaskentries)
 
-        self.prio_map = [self.rqdata.runtaskentries.keys()]
+        self.prio_map = list(self.rqdata.runtaskentries.keys())
 
         self.buildable = set()
         self.skip_maxthread = {}
