@@ -445,6 +445,7 @@ You can also remove the BB_HASHSERVE_UPSTREAM setting, but this may result in si
         self.collections = {}
         for mc in self.multiconfigs:
             self.collections[mc] = CookerCollectFiles(self.bbfile_config_priorities, mc)
+            self.collections[mc].collect_bbfiles(self.databuilder.mcdata[mc], self.databuilder.mcdata[mc])
 
         self._parsecache_set(False)
 
@@ -1322,8 +1323,8 @@ You can also remove the BB_HASHSERVE_UPSTREAM setting, but this may result in si
         if bf.startswith("/") or bf.startswith("../"):
             bf = os.path.abspath(bf)
 
-        collections = {mc: CookerCollectFiles(self.bbfile_config_priorities, mc)}
-        filelist, masked, searchdirs = collections[mc].collect_bbfiles(self.databuilder.mcdata[mc], self.databuilder.mcdata[mc])
+        filelist = self.collections[mc].bbfiles
+
         try:
             os.stat(bf)
             bf = os.path.abspath(bf)
@@ -1662,11 +1663,9 @@ You can also remove the BB_HASHSERVE_UPSTREAM setting, but this may result in si
             total_masked = 0
             searchdirs = set()
             for mc in self.multiconfigs:
-                (filelist, masked, search) = self.collections[mc].collect_bbfiles(self.databuilder.mcdata[mc], self.databuilder.mcdata[mc])
-
-                mcfilelist[mc] = filelist
-                total_masked += masked
-                searchdirs |= set(search)
+                mcfilelist[mc] = self.collections[mc].bbfiles
+                total_masked += self.collections[mc].maskedcount
+                searchdirs |= set(self.collections[mc].searchdirs)
 
             # Add mtimes for directories searched for bb/bbappend files
             for dirent in searchdirs:
@@ -1807,6 +1806,7 @@ class CookerCollectFiles(object):
     def __init__(self, priorities, mc=''):
         self.mc = mc
         self.bbappends = []
+        self.overlayed = None
         # Priorities is a list of tuples, with the second element as the pattern.
         # We need to sort the list with the longest pattern first, and so on to
         # the shortest.  This allows nested layers to be properly evaluated.
@@ -1841,7 +1841,10 @@ class CookerCollectFiles(object):
 
     def collect_bbfiles(self, config, eventdata):
         """Collect all available .bb build files"""
+        bbfiles = []
+        bbappend = []
         masked = 0
+        searchdirs = []
 
         collectlog.debug("collecting .bb files")
 
@@ -1864,7 +1867,6 @@ class CookerCollectFiles(object):
         origlistdir = os.listdir
         if hasattr(os, 'scandir'):
             origscandir = os.scandir
-        searchdirs = []
 
         def ourlistdir(d):
             searchdirs.append(d)
@@ -1926,8 +1928,6 @@ class CookerCollectFiles(object):
                 collectlog.critical("BBMASK is not a valid regular expression, ignoring: %s" % bbmask)
                 bbmask = None
 
-        bbfiles = []
-        bbappend = []
         for f in newfiles:
             if bbmask and bbmask_compiled.search(f):
                 collectlog.debug("skipping masked file %s", f)
@@ -1957,7 +1957,9 @@ class CookerCollectFiles(object):
                 topfile = bbfile_seen[base]
                 self.overlayed[topfile].append(f)
 
-        return (bbfiles, masked, searchdirs)
+        self.searchdirs = searchdirs
+        self.maskedcount = masked
+        self.bbfiles = bbfiles
 
     def get_file_appends(self, fn):
         """

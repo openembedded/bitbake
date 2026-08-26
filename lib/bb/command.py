@@ -257,7 +257,7 @@ class CommandsSync:
         except IndexError:
             mc = ''
         return command.cooker.matchFile(fMatch, mc)
-    matchFile.needconfig = False
+    matchFile.needconfig = True
 
     def getUIHandlerNum(self, command, params):
         return bb.event.get_uihandler()
