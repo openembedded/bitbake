@@ -1931,6 +1931,8 @@ class RunQueueExecute:
         self.tasks_notcovered = set()
         self.scenequeue_notneeded = set()
 
+        self.setscene_tids_generator = None
+
         schedulers = self.get_schedulers()
         for scheduler in schedulers:
             if self.scheduler == scheduler.name:
@@ -2202,9 +2204,7 @@ class RunQueueExecute:
         if self.updated_taskhash_queue or self.pending_migrations:
             self.process_possible_migrations()
 
-        if not hasattr(self, "sorted_setscene_tids"):
-            # Don't want to sort this set every execution
-            self.sorted_setscene_tids = sorted(self.rqdata.runq_setscene_tids)
+        if self.setscene_tids_generator is None:
             # Resume looping where we left off when we returned to feed the mainloop
             self.setscene_tids_generator = itertools.cycle(self.rqdata.runq_setscene_tids)
 
