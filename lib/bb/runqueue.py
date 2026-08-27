@@ -1868,7 +1868,6 @@ class RunQueueExecute:
         self.runq_tasksrun = set()
 
         self.build_stamps = {}
-        self.build_stamps2 = []
         self.failed_tids = []
         self.sq_deferred = {}
         self.sq_needed_harddeps = set()
@@ -1960,7 +1959,6 @@ class RunQueueExecute:
 
         # self.build_stamps[pid] may not exist when use shared work directory.
         if task in self.build_stamps:
-            self.build_stamps2.remove(self.build_stamps[task])
             del self.build_stamps[task]
 
         if task in self.sq_live:
@@ -2310,7 +2308,6 @@ class RunQueueExecute:
                 self.rq.worker[mc].process.stdin.flush()
 
             self.build_stamps[task] = bb.parse.siggen.stampfile_mcfn(taskname, taskfn, extrainfo=False)
-            self.build_stamps2.append(self.build_stamps[task])
             self.sq_running.add(task)
             self.sq_live.add(task)
             self.stats.updateActiveSetscene(len(self.sq_live))
@@ -2411,7 +2408,6 @@ class RunQueueExecute:
                 self.rq.worker[mc].process.stdin.flush()
 
             self.build_stamps[task] = bb.parse.siggen.stampfile_mcfn(taskname, taskfn, extrainfo=False)
-            self.build_stamps2.append(self.build_stamps[task])
             self.runq_running.add(task)
             self.stats.taskActive()
             if self.can_start_task():
