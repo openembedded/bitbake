@@ -2252,9 +2252,8 @@ class RunQueueExecute:
                             return True
                         continue
                     # If covered tasks are running, need to wait for them to complete
-                    for t in self.sqdata.sq_covered_tasks[nexttask]:
-                        if t in self.runq_running and t not in self.runq_complete:
-                            continue
+                    if any(t in self.runq_running and t not in self.runq_complete for t in self.sqdata.sq_covered_tasks[nexttask]):
+                        continue
                     if nexttask in self.sq_deferred:
                         # Deferred tasks that were still deferred were skipped above so we now need to process
                         logger.debug("Task %s no longer deferred" % nexttask)
