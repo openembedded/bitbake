@@ -173,6 +173,13 @@ class RunQueueScheduler(object):
                 self.buildable.add(tid)
 
         self.rev_prio_map = None
+        self.prev_cpu_pressure = 0.0
+        self.prev_io_pressure = 0.0
+        self.prev_memory_pressure = 0.0
+        self.prev_pressure_time = 0.0
+        self.check_pressure = False
+        self.pressure_state = None
+        self.loadfactor_limit = None
         self.is_pressure_usable()
 
     def is_pressure_usable(self):
@@ -187,9 +194,9 @@ class RunQueueScheduler(object):
                     open("/proc/pressure/io") as io_pressure_fds, \
                     open("/proc/pressure/memory") as memory_pressure_fds:
 
-                    self.prev_cpu_pressure = cpu_pressure_fds.readline().split()[4].split("=")[1]
-                    self.prev_io_pressure = io_pressure_fds.readline().split()[4].split("=")[1]
-                    self.prev_memory_pressure = memory_pressure_fds.readline().split()[4].split("=")[1]
+                    self.prev_cpu_pressure = float(cpu_pressure_fds.readline().split()[4].split("=")[1])
+                    self.prev_io_pressure = float(io_pressure_fds.readline().split()[4].split("=")[1])
+                    self.prev_memory_pressure = float(memory_pressure_fds.readline().split()[4].split("=")[1])
                     self.prev_pressure_time = time.time()
                 self.check_pressure = True
             except:
@@ -208,15 +215,15 @@ class RunQueueScheduler(object):
                 open("/proc/pressure/io") as io_pressure_fds, \
                 open("/proc/pressure/memory") as memory_pressure_fds:
                 # extract "total" from /proc/pressure/{cpu|io}
-                curr_cpu_pressure = cpu_pressure_fds.readline().split()[4].split("=")[1]
-                curr_io_pressure = io_pressure_fds.readline().split()[4].split("=")[1]
-                curr_memory_pressure = memory_pressure_fds.readline().split()[4].split("=")[1]
+                curr_cpu_pressure = float(cpu_pressure_fds.readline().split()[4].split("=")[1])
+                curr_io_pressure = float(io_pressure_fds.readline().split()[4].split("=")[1])
+                curr_memory_pressure = float(memory_pressure_fds.readline().split()[4].split("=")[1])
                 now = time.time()
                 tdiff = now - self.prev_pressure_time
                 psi_accumulation_interval = 1.0
-                cpu_pressure = (float(curr_cpu_pressure) - float(self.prev_cpu_pressure)) / tdiff
-                io_pressure = (float(curr_io_pressure) - float(self.prev_io_pressure)) / tdiff
-                memory_pressure = (float(curr_memory_pressure) - float(self.prev_memory_pressure)) / tdiff
+                cpu_pressure = (curr_cpu_pressure - self.prev_cpu_pressure) / tdiff
+                io_pressure = (curr_io_pressure - self.prev_io_pressure) / tdiff
+                memory_pressure = (curr_memory_pressure - self.prev_memory_pressure) / tdiff
                 exceeds_cpu_pressure =  self.rq.max_cpu_pressure and cpu_pressure > self.rq.max_cpu_pressure
                 exceeds_io_pressure =  self.rq.max_io_pressure and io_pressure > self.rq.max_io_pressure
                 exceeds_memory_pressure =  self.rq.max_memory_pressure and memory_pressure > self.rq.max_memory_pressure
@@ -229,7 +236,7 @@ class RunQueueScheduler(object):
 
             pressure_state = (exceeds_cpu_pressure, exceeds_io_pressure, exceeds_memory_pressure)
             pressure_values = (round(cpu_pressure,1), self.rq.max_cpu_pressure, round(io_pressure,1), self.rq.max_io_pressure, round(memory_pressure,1), self.rq.max_memory_pressure)
-            if hasattr(self, "pressure_state") and pressure_state != self.pressure_state:
+            if self.pressure_state is not None and pressure_state != self.pressure_state:
                 psi_logger.verbose("Pressure status changed to CPU: %s, IO: %s, Mem: %s (CPU: %s/%s, IO: %s/%s, Mem: %s/%s) - using %s/%s bitbake threads" % (pressure_state + pressure_values + (len(self.rq.runq_running.difference(self.rq.runq_complete)), self.rq.number_tasks)))
                 bb.event.fire(PSIEvent(pressure_state, pressure_values), self.rq.cfgData)
             self.pressure_state = pressure_state
@@ -240,7 +247,7 @@ class RunQueueScheduler(object):
             # bb.warn("Comparing %s to %s" % (loadfactor, self.rq.max_loadfactor))
             if loadfactor > self.rq.max_loadfactor:
                 limit = True
-            if hasattr(self, "loadfactor_limit") and limit != self.loadfactor_limit:
+            if self.loadfactor_limit is not None and limit != self.loadfactor_limit:
                 bb.note("Load average limiting set to %s as load average: %s - using %s/%s bitbake threads" % (limit, loadfactor, len(self.rq.runq_running.difference(self.rq.runq_complete)), self.rq.number_tasks))
             self.loadfactor_limit = limit
             return limit
