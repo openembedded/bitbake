@@ -18,16 +18,23 @@ import errno
 import itertools
 import logging
 import re
-import bb
-from bb import msg, event
-from bb import monitordisk
 import subprocess
 import pickle
 import shlex
 import pprint
 import time
 
-Process = bb.multiprocessing.Process
+import bb.build
+import bb.cache
+import bb.cooker
+import bb.event
+import bb.monitordisk
+import bb.parse
+import bb.progress
+import bb.utils
+from bb import multiprocessing
+
+Process = multiprocessing.Process
 
 bblogger = logging.getLogger("BitBake")
 logger = logging.getLogger("BitBake.RunQueue")
@@ -498,8 +505,6 @@ class RunQueueData:
         Some tasks aren't buildable, likely due to circular dependency issues.
         Identify the circular dependencies and print them in a user readable format.
         """
-        from copy import deepcopy
-
         valid_chains = []
         explored_deps = {}
         msgs = []
@@ -1335,7 +1340,7 @@ class RunQueue:
         # here, just in case that there ever is more than one RunQueue instance,
         # start the handler when reaching RunQueueState.SCENE_INIT, and stop it when
         # done with the build.
-        self.dm = monitordisk.diskMonitor(cfgData)
+        self.dm = bb.monitordisk.diskMonitor(cfgData)
         self.dm_event_handler_name = '_bb_diskmonitor_' + str(id(self))
         self.dm_event_handler_registered = False
         self.rqexe = None
@@ -1634,7 +1639,7 @@ class RunQueue:
                     logger.info("Tasks Summary: Attempted %d tasks of which %d didn't need to be rerun and all succeeded.", self.rqexe.stats.completed, self.rqexe.stats.skipped)
 
         if self.state == RunQueueState.FAILED:
-            raise bb.runqueue.TaskFailure(self.rqexe.failed_tids)
+            raise TaskFailure(self.rqexe.failed_tids)
 
         if self.state == RunQueueState.COMPLETE:
             # All done
@@ -1647,7 +1652,7 @@ class RunQueue:
         # Catch unexpected exceptions and ensure we exit when an error occurs, not loop.
         try:
             return self._execute_runqueue()
-        except bb.runqueue.TaskFailure:
+        except TaskFailure:
             raise
         except SystemExit:
             raise
@@ -1911,7 +1916,7 @@ class RunQueueExecute:
             self.max_loadfactor = float(self.max_loadfactor)
             if self.max_loadfactor <= 0:
                 bb.fatal("Invalid BB_LOADFACTOR_MAX %s, needs to be greater than zero." % (self.max_loadfactor))
-            
+
         # List of setscene tasks which we've covered
         self.scenequeue_covered = set()
         # List of tasks which are covered (including setscene ones)
