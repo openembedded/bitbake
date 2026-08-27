@@ -493,15 +493,6 @@ class RunQueueData:
     def get_task_unihash(self, tid):
         return self.runtaskentries[tid].unihash
 
-    def get_user_idstring(self, tid, task_name_suffix = ""):
-        return tid + task_name_suffix
-
-    def get_short_user_idstring(self, task, task_name_suffix = ""):
-        (mc, fn, taskname, taskfn) = split_tid_mcfn(task)
-        pn = self.dataCaches[mc].pkg_fn[taskfn]
-        taskname = taskname_from_tid(task) + task_name_suffix
-        return "%s:%s" % (pn, taskname)
-
     def circular_depchains_handler(self, tasks):
         """
         Some tasks aren't buildable, likely due to circular dependency issues.
