@@ -354,7 +354,7 @@ class TerminalFilter(object):
                 msg = "Currently %2s running tasks (%s)" % (len(activetasks), cur_tasks)
             maxtask = self.helper.tasknumber_total
             if not self.main_progress or self.main_progress.maxval != maxtask:
-                widgets = [' ', progressbar.Percentage(), ' ', progressbar.Bar()]
+                widgets = [' ', progressbar.Percentage(), ' ', progressbar.Bar(), ' ', progressbar.Timer()]
                 self.main_progress = BBProgress("Running tasks", maxtask, widgets=widgets, resize_handler=self.sigwinch_handle)
                 self.main_progress.fd = self._footer_buf
                 self.main_progress.start(False)
