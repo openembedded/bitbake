@@ -1905,7 +1905,7 @@ class RunQueueExecute:
             if self.max_memory_pressure < lower_limit:
                 bb.fatal("Invalid BB_PRESSURE_MAX_MEMORY %s, minimum value is %s." % (self.max_memory_pressure, lower_limit))
             if self.max_memory_pressure > upper_limit:
-                bb.warn("Your build will be largely unregulated since BB_PRESSURE_MAX_MEMORY is set to %s. It is very unlikely that such high pressure will be experienced." % (self.max_io_pressure))
+                bb.warn("Your build will be largely unregulated since BB_PRESSURE_MAX_MEMORY is set to %s. It is very unlikely that such high pressure will be experienced." % (self.max_memory_pressure))
 
         if self.max_loadfactor:
             self.max_loadfactor = float(self.max_loadfactor)
