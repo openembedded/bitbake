@@ -287,9 +287,10 @@ class RunQueueScheduler(object):
                 return tid
 
         if not self.rev_prio_map:
-            self.rev_prio_map = {}
-            for tid in self.rqdata.runtaskentries:
-                self.rev_prio_map[tid] = self.prio_map.index(tid)
+            self.rev_prio_map = {
+                tid: priority
+                for priority, tid in enumerate(self.prio_map)
+            }
 
         best = None
         bestprio = None
