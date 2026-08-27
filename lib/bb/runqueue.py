@@ -488,6 +488,8 @@ class RunQueueData:
         self.setscene_ignore_tasks = get_setscene_enforce_ignore_tasks(cfgData, targets)
         self.setscene_enforce = (cfgData.getVar('BB_SETSCENE_ENFORCE') == "1")
         self.init_progress_reporter = bb.progress.DummyMultiStageProcessProgressReporter()
+        self.target_tids = []
+        self.runq_setscene_tids = set()
 
         self.reset()
 
@@ -1354,6 +1356,9 @@ class RunQueue:
         self.rqexe = None
         self.worker = {}
         self.fakeworker = {}
+        self.teardown = False
+        self.invalidtasks_dump = set()
+        self.dumpsigs_launched = None
 
     @staticmethod
     def send_pickled_data(worker, data, name):
@@ -1697,7 +1702,7 @@ class RunQueue:
             bb.parse.siggen.dump_sigtask(taskfn, taskname, dataCaches[mc].stamp[taskfn], True)
 
     def dump_signatures(self, options):
-        if not hasattr(self, "dumpsigs_launched"):
+        if self.dumpsigs_launched is None:
             if bb.cooker.CookerFeatures.RECIPE_SIGGEN_INFO not in self.cooker.featureset:
                 bb.fatal("The dump signatures functionality needs the RECIPE_SIGGEN_INFO feature enabled")
 
@@ -1891,6 +1896,7 @@ class RunQueueExecute:
         self.holdoff_tasks = set()
         self.holdoff_need_update = True
         self.sqdone = False
+        self.taskdepdata_cache = {}
 
         self.stats = RunQueueStats(len(self.rqdata.runtaskentries), len(self.rqdata.runq_setscene_tids))
 
