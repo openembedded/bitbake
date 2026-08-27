@@ -455,7 +455,6 @@ class RunTaskEntry(object):
         self.revdeps = set()
         self.hash = None
         self.unihash = None
-        self.task = None
         self.weight = 1
 
 class RunQueueData:
@@ -472,7 +471,6 @@ class RunQueueData:
 
         self.multi_provider_allowed = (cfgData.getVar("BB_MULTI_PROVIDER_ALLOWED") or "").split()
         self.setscene_ignore_tasks = get_setscene_enforce_ignore_tasks(cfgData, targets)
-        self.setscene_ignore_tasks_checked = False
         self.setscene_enforce = (cfgData.getVar('BB_SETSCENE_ENFORCE') == "1")
         self.init_progress_reporter = bb.progress.DummyMultiStageProcessProgressReporter()
 
@@ -606,7 +604,6 @@ class RunQueueData:
         possible to execute due to circular dependencies.
         """
 
-        numTasks = len(self.runtaskentries)
         weight = {}
         deps_left = {}
         task_done = {}
@@ -654,8 +651,6 @@ class RunQueueData:
             for msg in msgs:
                 message = message + msg
             bb.msg.fatal("RunQueue", message)
-
-        return weight
 
     def prepare(self):
         """
@@ -1129,7 +1124,7 @@ class RunQueueData:
 
         # Calculate task weights
         # Check of higher length circular dependencies
-        self.runq_weight = self.calculate_task_weights(endpoints)
+        self.calculate_task_weights(endpoints)
 
         self.init_progress_reporter.next_stage()
         bb.event.check_for_interrupts()
@@ -1587,10 +1582,10 @@ class RunQueue:
             bb.event.fire(bb.event.DepTreeGenerated(depgraph), self.cooker.data)
 
             if not self.dm_event_handler_registered:
-                 res = bb.event.register(self.dm_event_handler_name,
-                                         lambda x, y: self.dm.check(self) if self.state in [RunQueueState.RUNNING, RunQueueState.CLEAN_UP] else False,
-                                         ('bb.event.HeartbeatEvent',), data=self.cfgData)
-                 self.dm_event_handler_registered = True
+                bb.event.register(self.dm_event_handler_name,
+                                  lambda x, y: self.dm.check(self) if self.state in [RunQueueState.RUNNING, RunQueueState.CLEAN_UP] else False,
+                                  ('bb.event.HeartbeatEvent',), data=self.cfgData)
+                self.dm_event_handler_registered = True
 
             self.rqdata.init_progress_reporter.next_stage()
             self.rqexe = RunQueueExecute(self)
