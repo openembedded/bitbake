@@ -100,7 +100,7 @@ class TestLayerDetailsPage(SeleniumTestCase):
                             (self.initial_values, value))
 
             # Make sure the input visible beofre sending keys
-            self.wait_until_clickable("#layer-git input[type=text]")
+            self.wait_until_element_visible(inputs)
             inputs.send_keys("-edited")
 
         # Save the new values

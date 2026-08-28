@@ -218,6 +218,13 @@ class SeleniumTestCaseBase(unittest.TestCase):
         element = Wait(self.driver, timeout=timeout).until(is_present, msg)
         return element
 
+    def wait_until_element_visible(self, element, timeout=Wait._TIMEOUT):
+        """ Wait until element matching CSS selector is visible on the page """
+        is_visible = lambda driver: element.is_displayed()
+        msg = 'An element should be visible'
+        Wait(self.driver, timeout=timeout).until(is_visible, msg)
+        return
+
     def wait_until_visible(self, selector, timeout=Wait._TIMEOUT):
         """ Wait until element matching CSS selector is visible on the page """
         is_visible = lambda driver: self.find(selector).is_displayed()
