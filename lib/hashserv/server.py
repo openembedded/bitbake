@@ -477,24 +477,48 @@ class ServerClient(bb.asyncrpc.AsyncServerConnection):
 
     @permissions(READ_PERM)
     async def handle_get_stream(self, request):
-        async def handler(l):
-            method, taskhash = l.split()
-            # self.logger.debug('Looking up %s %s' % (method, taskhash))
-            row = await self.db.get_equivalent(method, taskhash)
-
-            if row is not None:
-                # self.logger.debug('Found equivalent task %s -> %s', (row['taskhash'], row['unihash']))
+        async def get_unihash(m):
+            method, taskhash = m.split()
+            if (row := await self.db.get_equivalent(method, taskhash)) is not None:
                 return row["unihash"]
-
-            if self.upstream_client is not None:
-                upstream = await self.upstream_client.get_unihash(method, taskhash)
-                if upstream:
-                    await self.server.backfill_queue.put((method, taskhash))
-                    return upstream
 
             return ""
 
-        return await self._stream_handler(handler)
+        if not self.upstream_client:
+            return await self._stream_handler(get_unihash)
+
+        async with self.upstream_client.get_unihash_stream() as stream:
+
+            async def get_local_result(m):
+                method, taskhash = m.split()
+                if (row := await self.db.get_equivalent(method, taskhash)) is not None:
+                    return row["unihash"]
+                return None
+
+            async def send_upstream(m):
+                method, taskhash = m.split()
+                await stream.send_query(method, taskhash)
+
+            async def get_upstream_result(m):
+                unihash = await stream.get_result()
+                if unihash:
+                    method, taskhash = m.split()
+                    await self.server.backfill_queue.put((method, taskhash))
+                return unihash
+
+            queue = asyncio.Queue()
+            upstream = UpstreamQueue(
+                queue,
+                get_local_result,
+                send_upstream,
+                get_upstream_result,
+            )
+
+            await bb.asyncrpc.TaskGroup.run(
+                self._stream_queue_handler(upstream.handler, queue),
+                upstream.process_results(),
+            )
+        return self.NO_RESPONSE
 
     @permissions(READ_PERM)
     async def handle_exists_stream(self, request):
