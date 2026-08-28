@@ -1057,7 +1057,7 @@ class HashEquivalenceCommonTests(object):
         # First hash is still present
         self.assertClientGetHash(self.client, taskhash, unihash)
 
-    def test_gc_stream(self):
+    def test_gc_batch(self):
         taskhash = '53b8dce672cb6d0c73170be43f540460bfc347b4'
         outhash = '5a9cb1649625f0bf41fc7791b635cd9c2d7118c7f021ba87dcd03f72b67ce7a8'
         unihash = '46edb5140d2613049332d0bf3745d9fafec9c559dac8cc61813739a28007fcdf'
@@ -1080,7 +1080,7 @@ class HashEquivalenceCommonTests(object):
         self.assertClientGetHash(self.client, taskhash3, unihash3)
 
         # Mark the first unihash to be kept
-        ret = self.client.gc_mark_stream("ABC", (f"unihash {h}" for h in [unihash, unihash2]))
+        ret = self.client.gc_mark_batch("ABC", (f"unihash {h}" for h in [unihash, unihash2]))
         self.assertEqual(ret, {"count": 2})
 
         ret = self.client.gc_status()
