@@ -229,6 +229,54 @@ def permissions(*permissions, allow_anon=True, allow_self_service=False):
     return wrapper
 
 
+class UpstreamQueue(object):
+    UPSTREAM_NONCE = object()
+
+    def __init__(self, queue, get_local_result, send_upstream, get_upstream_result):
+        self.queue = queue
+        self.pending = []
+        self.cond = asyncio.Condition()
+        self.done = False
+        self.get_local_result = get_local_result
+        self.send_upstream = send_upstream
+        self.get_upstream_result = get_upstream_result
+
+    async def process_results(self):
+        try:
+            while True:
+                async with self.cond:
+                    await self.cond.wait_for(lambda: self.pending or self.done)
+                    if not self.pending:
+                        if self.done:
+                            return
+                        continue
+
+                    value, m = self.pending.pop(0)
+
+                if value is self.UPSTREAM_NONCE:
+                    value = await self.get_upstream_result(m)
+
+                await self.queue.put(value)
+        finally:
+            await self.queue.put(None)
+
+    async def handler(self, m):
+        if m is None:
+            async with self.cond:
+                self.done = True
+                self.cond.notify_all()
+            return
+
+        value = await self.get_local_result(m)
+        if value is None:
+            await self.send_upstream(m)
+            value = self.UPSTREAM_NONCE
+
+        async with self.cond:
+            self.pending.append((value, m))
+            self.cond.notify_all()
+
+
 class ServerClient(bb.asyncrpc.AsyncServerConnection):
     def __init__(self, socket, server):
         super().__init__(socket, "OEHASHEQUIV", server.logger)
@@ -390,35 +438,41 @@ class ServerClient(bb.asyncrpc.AsyncServerConnection):
         validate_unihash(unihash)
         return await self.db.insert_unihash(method, taskhash, unihash)
 
-    async def _stream_handler(self, handler):
+    async def _stream_queue_handler(self, handler, queue):
         await self.socket.send_message("ok")
 
-        while True:
-            upstream = None
-
-            l = await self.socket.recv()
-            if not l:
-                break
-
+        async def recv():
             try:
-                # This inner loop is very sensitive and must be as fast as
-                # possible (which is why the request sample is handled manually
-                # instead of using 'with', and also why logging statements are
-                # commented out.
-                self.request_sample = self.server.request_stats.start_sample()
-                request_measure = self.request_sample.measure()
-                request_measure.start()
+                while True:
+                    m = await self.socket.recv()
+                    if not m or m == "END":
+                        break
 
-                if l == "END":
+                    await handler(m)
+            finally:
+                await handler(None)
+
+        async def process():
+            while True:
+                m = await queue.get()
+                if m is None:
                     break
 
-                msg = await handler(l)
-                await self.socket.send(msg)
-            finally:
-                request_measure.end()
-                self.request_sample.end()
+                await self.socket.send(m)
 
+        await bb.asyncrpc.TaskGroup.run(recv(), process())
         await self.socket.send("ok")
+
+    async def _stream_handler(self, handler):
+        queue = asyncio.Queue(1000)
+
+        async def h(m):
+            if m is None:
+                await queue.put(None)
+            else:
+                await queue.put(await handler(m))
+
+        await self._stream_queue_handler(h, queue)
         return self.NO_RESPONSE
 
     @permissions(READ_PERM)
