@@ -5,12 +5,13 @@
 # SPDX-License-Identifier: GPL-2.0-only
 #
 
-from . import create_server, create_client
+from . import create_server, create_client, create_async_client
 from .server import DEFAULT_ANON_PERMS, ALL_PERMISSIONS
 from bb.asyncrpc import InvokeError
 import hashlib
 import logging
 from bb import multiprocessing
+import asyncio
 import os
 import sys
 import tempfile
@@ -41,19 +42,15 @@ class HashEquivalenceTestSetup(object):
     server_index = 0
     client_index = 0
 
-    def start_server(self, dbpath=None, upstream=None, read_only=False, prefunc=server_prefunc, anon_perms=DEFAULT_ANON_PERMS, admin_username=None, admin_password=None):
+    def start_server(self, dbpath=None, upstream=None, read_only=False, prefunc=server_prefunc, anon_perms=DEFAULT_ANON_PERMS, admin_username=None, admin_password=None, addr=None):
         self.server_index += 1
+        if addr is None:
+            addr = self.get_server_addr(self.server_index)
+
         if dbpath is None:
             dbpath = self.make_dbpath()
 
-        def cleanup_server(server):
-            if server.process.exitcode is not None:
-                return
-
-            server.process.terminate()
-            server.process.join()
-
-        server = create_server(self.get_server_addr(self.server_index),
+        server = create_server(addr,
                                dbpath,
                                upstream=upstream,
                                read_only=read_only,
@@ -63,7 +60,7 @@ class HashEquivalenceTestSetup(object):
         server.dbpath = dbpath
 
         server.serve_as_process(prefunc=prefunc, args=(self.server_index,))
-        self.addCleanup(cleanup_server, server)
+        self.addCleanup(self.stop_server, server)
 
         return server
 
@@ -82,6 +79,13 @@ class HashEquivalenceTestSetup(object):
     def start_test_server(self):
         self.server = self.start_server()
         return self.server.address
+
+    def stop_server(self, server):
+        if not server or server.process.exitcode is not None:
+            return
+
+        server.process.terminate()
+        server.process.join()
 
     def start_auth_server(self):
         auth_server = self.start_server(self.server.dbpath, anon_perms=[], admin_username="admin", admin_password="password")
@@ -475,6 +479,132 @@ class HashEquivalenceCommonTests(object):
         self.assertEqual(result['unihash'], unihash9, 'Server failed to copy unihash from upstream')
         self.assertEqual(result['taskhash'], taskhash9, 'Server failed to copy unihash from upstream')
         self.assertEqual(result['method'], self.METHOD)
+
+    def test_upstream_batch(self):
+        down_server = self.start_server(upstream=self.server.address)
+        down_client = self.start_client(down_server.address)
+
+        taskhash1 = '8aa96fcffb5831b3c2c0cb75f0431e3f8b20554a'
+        outhash1 = 'afe240a439959ce86f5e322f8c208e1fedefea9e813f2140c81af866cc9edf7e'
+        unihash1 = '5b521d8a12683086cc08bc2c6d94a7a2dcff17eba53b9911e145d51164689380'
+        self.client.report_unihash(taskhash1, self.METHOD, outhash1, unihash1)
+
+        taskhash2 = "e3da00593d6a7fb435c7e2114976c59c5fd6d561"
+        outhash2 = "1cf8713e645f491eb9c959d20b5cae1c47133a292626dda9b10709857cbe688a"
+        unihash2 = "7aebef07d66a8c0f92d0c4f65ec8b1fbb850a3693c53827b8774b64fa9a8a9fe"
+        self.client.report_unihash(taskhash2, self.METHOD, outhash2, unihash2)
+
+        taskhash3 = '35788efcb8dfb0a02659d81cf2bfd695fb30faf9'
+        outhash3 = '2765d4a5884be49b28601445c2760c5f21e7e5c0ee2b7e3fce98fd7e5970796f'
+        unihash3 = 'a69ec97f5af2e21e1a1f9cc8896965515d5559425666f734e245a3d40cee33d9'
+        self.client.report_unihash(taskhash3, self.METHOD, outhash3, unihash3)
+
+        def query_generator():
+            yield unihash1
+            yield unihash2
+            yield unihash3
+            yield "cc74784b2c0ad5b378a6b783c74c518d2c46b8b52fba29cb39a8430d742440d7"
+
+        results = down_client.unihash_exists_batch(query_generator())
+        self.assertEqual(results, [True, True, True, False])
+
+    def test_upstream_interrupted(self):
+        up_server = self.start_server()
+        down_server = self.start_server(upstream=up_server.address)
+
+        def restart_upstream():
+            nonlocal up_server
+
+            self.stop_server(up_server)
+            up_server = self.start_server(addr=up_server.address, dbpath=up_server.dbpath)
+
+        # Report some hashes
+        with self.start_client(up_server.address) as up_client:
+            taskhash1 = '8aa96fcffb5831b3c2c0cb75f0431e3f8b20554a'
+            outhash1 = 'afe240a439959ce86f5e322f8c208e1fedefea9e813f2140c81af866cc9edf7e'
+            unihash1 = '5b521d8a12683086cc08bc2c6d94a7a2dcff17eba53b9911e145d51164689380'
+            up_client.report_unihash(taskhash1, self.METHOD, outhash1, unihash1)
+
+            taskhash2 = "e3da00593d6a7fb435c7e2114976c59c5fd6d561"
+            outhash2 = "1cf8713e645f491eb9c959d20b5cae1c47133a292626dda9b10709857cbe688a"
+            unihash2 = "7aebef07d66a8c0f92d0c4f65ec8b1fbb850a3693c53827b8774b64fa9a8a9fe"
+            up_client.report_unihash(taskhash2, self.METHOD, outhash2, unihash2)
+
+            taskhash3 = '35788efcb8dfb0a02659d81cf2bfd695fb30faf9'
+            outhash3 = '2765d4a5884be49b28601445c2760c5f21e7e5c0ee2b7e3fce98fd7e5970796f'
+            unihash3 = 'a69ec97f5af2e21e1a1f9cc8896965515d5559425666f734e245a3d40cee33d9'
+            up_client.report_unihash(taskhash3, self.METHOD, outhash3, unihash3)
+
+        restart_upstream()
+
+        with self.start_client(up_server.address) as up_client:
+            # Verify that reported hashes are correct after restaring server
+            self.assertTrue(up_client.unihash_exists(unihash1))
+            self.assertClientGetHash(up_client, taskhash1, unihash1)
+
+            self.assertTrue(up_client.unihash_exists(unihash2))
+            self.assertClientGetHash(up_client, taskhash2, unihash2)
+
+        async def check_unihashes():
+            async with await create_async_client(down_server.address) as down_client:
+                async with down_client.unihash_exists_stream() as stream:
+                    await stream.send_query(unihash1)
+                    r = await stream.get_result()
+                    self.assertTrue(r)
+
+                    restart_upstream()
+
+                    await stream.send_query(unihash2)
+                    r = await stream.get_result()
+                    self.assertTrue(r)
+
+                    await stream.send_query(unihash3)
+                    r = await stream.get_result()
+                    self.assertTrue(r)
+
+        asyncio.run(check_unihashes())
+
+    def test_upstream_lost(self):
+        up_server = self.start_server()
+        down_server = self.start_server(upstream=up_server.address)
+
+        def restart_upstream():
+            nonlocal up_server
+
+            self.stop_server(up_server)
+            up_server = self.start_server(addr=up_server.address, dbpath=up_server.dbpath)
+
+        # Report some hashes
+        with self.start_client(up_server.address) as up_client:
+            taskhash1 = '8aa96fcffb5831b3c2c0cb75f0431e3f8b20554a'
+            outhash1 = 'afe240a439959ce86f5e322f8c208e1fedefea9e813f2140c81af866cc9edf7e'
+            unihash1 = '5b521d8a12683086cc08bc2c6d94a7a2dcff17eba53b9911e145d51164689380'
+            up_client.report_unihash(taskhash1, self.METHOD, outhash1, unihash1)
+
+            taskhash2 = "e3da00593d6a7fb435c7e2114976c59c5fd6d561"
+            outhash2 = "1cf8713e645f491eb9c959d20b5cae1c47133a292626dda9b10709857cbe688a"
+            unihash2 = "7aebef07d66a8c0f92d0c4f65ec8b1fbb850a3693c53827b8774b64fa9a8a9fe"
+            up_client.report_unihash(taskhash2, self.METHOD, outhash2, unihash2)
+
+            taskhash3 = '35788efcb8dfb0a02659d81cf2bfd695fb30faf9'
+            outhash3 = '2765d4a5884be49b28601445c2760c5f21e7e5c0ee2b7e3fce98fd7e5970796f'
+            unihash3 = 'a69ec97f5af2e21e1a1f9cc8896965515d5559425666f734e245a3d40cee33d9'
+            up_client.report_unihash(taskhash3, self.METHOD, outhash3, unihash3)
+
+        async def check_unihashes():
+            async with await create_async_client(down_server.address) as down_client:
+                with self.assertRaises(ConnectionError):
+                    async with down_client.unihash_exists_stream() as stream:
+                        await stream.send_query(unihash1)
+                        r = await stream.get_result()
+                        self.assertTrue(r)
+
+                        self.stop_server(up_server)
+
+                        await stream.send_query(unihash2)
+                        r = await stream.get_result()
+
+        asyncio.run(check_unihashes())
 
     def test_unihash_exsits(self):
         taskhash, outhash, unihash = self.create_test_hash(self.client)
