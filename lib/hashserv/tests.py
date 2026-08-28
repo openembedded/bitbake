@@ -30,7 +30,7 @@ BIN_DIR = THIS_DIR.parent.parent / "bin"
 
 def server_prefunc(server, idx):
     logging.basicConfig(level=logging.DEBUG, filename='bbhashserv-%d.log' % idx, filemode='w',
-                        format='%(levelname)s %(filename)s:%(lineno)d %(message)s')
+                        format='%(levelname)s %(filename)s:%(lineno)d %(message)s', force=True)
     server.logger.debug("Running server %d" % idx)
     sys.stdout = open('bbhashserv-stdout-%d.log' % idx, 'w')
     sys.stderr = sys.stdout
@@ -93,6 +93,8 @@ class HashEquivalenceTestSetup(object):
         return self.start_client(self.auth_server_address, user["username"], user["token"])
 
     def setUp(self):
+        logging.basicConfig(level=logging.DEBUG, filename='bbhashtest.log', filemode='w',
+                        format='%(levelname)s %(filename)s:%(lineno)d %(message)s')
         self.temp_dir = tempfile.TemporaryDirectory(prefix='bb-hashserv')
         self.addCleanup(self.temp_dir.cleanup)
 
