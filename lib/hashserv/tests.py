@@ -606,6 +606,43 @@ class HashEquivalenceCommonTests(object):
 
         asyncio.run(check_unihashes())
 
+    def test_upstream_get_stream_miss(self):
+        down_server = self.start_server(upstream=self.server.address)
+        down_client = self.start_client(down_server.address)
+
+        # Two hashes present upstream (hits)
+        taskhash1 = '8aa96fcffb5831b3c2c0cb75f0431e3f8b20554a'
+        outhash1 = 'afe240a439959ce86f5e322f8c208e1fedefea9e813f2140c81af866cc9edf7e'
+        unihash1 = '5b521d8a12683086cc08bc2c6d94a7a2dcff17eba53b9911e145d51164689380'
+        self.client.report_unihash(taskhash1, self.METHOD, outhash1, unihash1)
+
+        taskhash2 = 'e3da00593d6a7fb435c7e2114976c59c5fd6d561'
+        outhash2 = '1cf8713e645f491eb9c959d20b5cae1c47133a292626dda9b10709857cbe688a'
+        unihash2 = '7aebef07d66a8c0f92d0c4f65ec8b1fbb850a3693c53827b8774b64fa9a8a9fe'
+        self.client.report_unihash(taskhash2, self.METHOD, outhash2, unihash2)
+
+        # Two taskhashes present nowhere (upstream misses)
+        miss1 = '0000000000000000000000000000000000000001'
+        miss2 = '0000000000000000000000000000000000000002'
+
+        # Miss interleaved with hits: a miss must not truncate the stream
+        results = down_client.get_unihash_batch([
+            (self.METHOD, miss1),
+            (self.METHOD, taskhash1),
+            (self.METHOD, miss2),
+            (self.METHOD, taskhash2),
+        ])
+        self.assertEqual(results, [None, unihash1, None, unihash2])
+
+        # All-miss batch
+        self.assertEqual(
+            down_client.get_unihash_batch([(self.METHOD, miss1), (self.METHOD, miss2)]),
+            [None, None],
+        )
+
+        # Singular get-unihash miss
+        self.assertClientGetHash(down_client, miss1, None)
+
     def test_unihash_exsits(self):
         taskhash, outhash, unihash = self.create_test_hash(self.client)
         self.assertTrue(self.client.unihash_exists(unihash))

@@ -232,7 +232,15 @@ def permissions(*permissions, allow_anon=True, allow_self_service=False):
 class UpstreamQueue(object):
     UPSTREAM_NONCE = object()
 
-    def __init__(self, queue, get_local_result, send_upstream, get_upstream_result):
+    def __init__(
+        self,
+        logger,
+        queue,
+        get_local_result,
+        send_upstream,
+        get_upstream_result,
+    ):
+        self.logger = logger
         self.queue = queue
         self.pending = []
         self.cond = asyncio.Condition()
@@ -255,6 +263,12 @@ class UpstreamQueue(object):
 
                 if value is self.UPSTREAM_NONCE:
                     value = await self.get_upstream_result(m)
+
+                if value is None:
+                    self.logger.error(
+                        "None is not allowed as a stream value. Terminating stream"
+                    )
+                    return
 
                 await self.queue.put(value)
         finally:
@@ -504,10 +518,11 @@ class ServerClient(bb.asyncrpc.AsyncServerConnection):
                 if unihash:
                     method, taskhash = m.split()
                     await self.server.backfill_queue.put((method, taskhash))
-                return unihash
+                return unihash or ""
 
             queue = asyncio.Queue()
             upstream = UpstreamQueue(
+                self.logger,
                 queue,
                 get_local_result,
                 send_upstream,
@@ -543,6 +558,7 @@ class ServerClient(bb.asyncrpc.AsyncServerConnection):
 
             queue = asyncio.Queue()
             upstream = UpstreamQueue(
+                self.logger,
                 queue,
                 get_local_result,
                 stream.send_query,
