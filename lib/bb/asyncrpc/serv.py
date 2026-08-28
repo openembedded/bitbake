@@ -334,7 +334,7 @@ class AsyncServer(object):
             self.loop.add_signal_handler(signal.SIGQUIT, self.signal_handler)
             signal.pthread_sigmask(signal.SIG_UNBLOCK, [signal.SIGTERM])
 
-            self.loop.run_until_complete(asyncio.gather(*tasks))
+            self.loop.run_until_complete(bb.asyncrpc.TaskGroup.run(*tasks))
 
             self.logger.debug("Server shutting down")
         finally:
