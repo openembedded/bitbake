@@ -522,17 +522,38 @@ class ServerClient(bb.asyncrpc.AsyncServerConnection):
 
     @permissions(READ_PERM)
     async def handle_exists_stream(self, request):
-        async def handler(l):
+        async def exists_handler(l):
             if await self.db.unihash_exists(l):
                 return "true"
-
-            if self.upstream_client is not None:
-                if await self.upstream_client.unihash_exists(l):
-                    return "true"
-
             return "false"
 
-        return await self._stream_handler(handler)
+        if not self.upstream_client:
+            return await self._stream_handler(exists_handler)
+
+        async with self.upstream_client.unihash_exists_stream() as stream:
+
+            async def get_local_result(m):
+                if await self.db.unihash_exists(m):
+                    return "true"
+                return None
+
+            async def get_upstream_result(m):
+                exists = await stream.get_result()
+                return "true" if exists else "false"
+
+            queue = asyncio.Queue()
+            upstream = UpstreamQueue(
+                queue,
+                get_local_result,
+                stream.send_query,
+                get_upstream_result,
+            )
+
+            await bb.asyncrpc.TaskGroup.run(
+                self._stream_queue_handler(upstream.handler, queue),
+                upstream.process_results(),
+            )
+        return self.NO_RESPONSE
 
     async def report_readonly(self, data):
         method = data["method"]
