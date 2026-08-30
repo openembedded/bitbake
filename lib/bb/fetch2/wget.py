@@ -562,7 +562,6 @@ class Wget(FetchMethod):
         """
         Run fetch checkstatus to get directory information
         """
-        f = tempfile.NamedTemporaryFile()
         with tempfile.TemporaryDirectory(prefix="wget-index-") as workdir, tempfile.NamedTemporaryFile(dir=workdir, prefix="wget-listing-") as f:
             fetchcmd = self.basecmd + ["--output-document=%s" % f.name, uri]
             try:
