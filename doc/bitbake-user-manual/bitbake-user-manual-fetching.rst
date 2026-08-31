@@ -124,7 +124,7 @@ in the previous example, or you can name the URLs. The following syntax
 shows how you name the URIs::
 
    SRC_URI = "http://example.com/foobar.tar.bz2;name=foo"
-   SRC_URI[foo.md5sum] = 4a8e0f237e961fd7785d19d07fdb994d
+   SRC_URI[foo.md5sum] = "4a8e0f237e961fd7785d19d07fdb994d"
 
 After a file has been downloaded and
 has had its checksum checked, a ".done" stamp is placed in :term:`DL_DIR`.
