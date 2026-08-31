@@ -1902,8 +1902,9 @@ and the content of the :term:`FILE` variable::
        print("The name of the Event is %s" % getName(e))
        print("The file we run for is %s" % d.getVar('FILE'))
    }
-   myclass_eventhandler[eventmask] = "bb.event.BuildStarted
-   bb.event.BuildCompleted"
+   myclass_eventhandler[eventmask] = "bb.event.BuildStarted \
+                                      bb.event.BuildCompleted \
+                                      "
 
 In the previous example, an eventmask has been
 set so that the handler only sees the "BuildStarted" and
