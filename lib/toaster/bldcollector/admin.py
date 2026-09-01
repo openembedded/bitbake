@@ -8,6 +8,7 @@ from django import forms
 import django.db.models as models
 
 
+@admin.register(BitbakeVersion)
 class BitbakeVersionAdmin(admin.ModelAdmin):
 
     # we override the formfield for db URLField
@@ -20,18 +21,17 @@ class BitbakeVersionAdmin(admin.ModelAdmin):
             db_field, **kwargs)
 
 
+@admin.register(Release)
 class ReleaseAdmin(admin.ModelAdmin):
     pass
 
 
+@admin.register(ToasterSetting)
 class ToasterSettingAdmin(admin.ModelAdmin):
     pass
 
 
+@admin.register(Layer_Version)
 class LayerVersionsAdmin(admin.ModelAdmin):
     pass
 
-admin.site.register(Layer_Version, LayerVersionsAdmin)
-admin.site.register(BitbakeVersion, BitbakeVersionAdmin)
-admin.site.register(Release, ReleaseAdmin)
-admin.site.register(ToasterSetting, ToasterSettingAdmin)
