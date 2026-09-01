@@ -247,7 +247,7 @@ class SeleniumTestCaseBase(unittest.TestCase):
         Wait(self.driver, timeout=timeout).until(is_clickable, msg)
         return self.find(selector)
 
-    def wait_until_element_clickable(self, finder, timeout=Wait._TIMEOUT):
+    def wait_until_finder_clickable(self, finder, timeout=Wait._TIMEOUT):
         """ Wait until element is clickable """
         WebDriverWait(self.driver, timeout=timeout).until(lambda driver: self.driver.execute_script("return jQuery.active == 0"))
         is_clickable = lambda driver: (finder(driver).is_displayed() and finder(driver).is_enabled())
