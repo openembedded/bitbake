@@ -886,8 +886,8 @@ class Git(FetchMethod):
         """
         if shutil.which("git-lfs", path=d.getVar('PATH')) is None:
             raise bb.fetch2.FetchError(
-                "Repository %s has LFS content, install git-lfs on host to download (or set lfs=0 "
-                "to ignore it)" % self._get_repo_url(ud))
+                "Repository %s has LFS content, either install git-lfs on the host to download it, "
+                "or ignore it by adding lfs=0 as a parameter to the URL" % self._get_repo_url(ud))
 
     def _get_repo_url(self, ud):
         """
