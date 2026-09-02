@@ -2807,6 +2807,21 @@ class GitLfsTest(FetcherTest):
             shutil.rmtree(self.gitdir, ignore_errors=True)
             fetcher.unpack(self.d.getVar('WORKDIR'))
 
+    @skipIfNoGitLFS()
+    def test_lfs_fetch_failure_raises(self):
+        self.commit_file("a.mp3", "version 1")
+
+        uri = 'git://%s;protocol=file;lfs=1;branch=master' % self.srcdir
+        self.d.setVar('SRC_URI', uri)
+
+        # Simulate a fetch failure by removing the .git/lfs/objects directory
+        # from the source repository
+        shutil.rmtree(os.path.join(self.srcdir, ".git", "lfs", "objects"))
+
+        # Test than exception is raised when LFS objects could not be fetched
+        with self.assertRaises(bb.fetch2.FetchError):
+            self.fetch()
+
 class GitURLWithSpacesTest(FetcherTest):
     test_git_urls = {
         "git://tfs-example.org:22/tfs/example%20path/example.git;branch=master" : {

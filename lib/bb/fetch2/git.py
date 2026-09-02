@@ -498,21 +498,21 @@ class Git(FetchMethod):
 
     def lfs_fetch(self, ud, d, clonedir, revision, fetchall=False, progresshandler=None):
         """Helper method for fetching Git LFS data"""
-        try:
-            if self._need_lfs(ud) and self._contains_lfs(ud, d, clonedir) and len(revision):
-                self._ensure_git_lfs(d, ud)
+        if self._need_lfs(ud) and self._contains_lfs(ud, d, clonedir) and len(revision):
+            self._ensure_git_lfs(d, ud)
 
-                # Using worktree with the revision because .lfsconfig may exists
-                worktree_add_cmd = ud.basecmd + ['worktree', 'add', 'wt', revision]
-                runfetchcmd(worktree_add_cmd, d, log=progresshandler, workdir=clonedir)
-                lfs_fetch_cmd = ud.basecmd + ['lfs', 'fetch']
-                if fetchall:
-                    lfs_fetch_cmd.append('--all')
-                runfetchcmd(lfs_fetch_cmd, d, log=progresshandler, workdir=(clonedir + "/wt"))
-                worktree_rem_cmd = ud.basecmd + ['worktree', 'remove', '-f', 'wt']
-                runfetchcmd(worktree_rem_cmd, d, log=progresshandler, workdir=clonedir)
-        except:
-            logger.warning("Fetching LFS did not succeed.")
+            # Using worktree with the revision because .lfsconfig may exists
+            worktree_add_cmd = ud.basecmd + ['worktree', 'add', 'wt', revision]
+            # Disable LFS smudging on worktree creation to make it easier
+            # to understand which operation actually failed.
+            runfetchcmd(worktree_add_cmd, d, log=progresshandler, workdir=clonedir, extraenv={'GIT_LFS_SKIP_SMUDGE':'1'})
+            lfs_fetch_cmd = ud.basecmd + ['lfs', 'fetch']
+            if fetchall:
+                lfs_fetch_cmd.append('--all')
+            runfetchcmd(lfs_fetch_cmd, d, log=progresshandler, workdir=(clonedir + "/wt"))
+            worktree_rem_cmd = ud.basecmd + ['worktree', 'remove', '-f', 'wt']
+            runfetchcmd(worktree_rem_cmd, d, log=progresshandler, workdir=clonedir)
+
 
     @contextmanager
     def create_atomic(self, filename):
