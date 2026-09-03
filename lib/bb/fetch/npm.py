@@ -35,15 +35,15 @@ import re
 import shlex
 import tempfile
 import bb
-from bb.fetch2 import Fetch
-from bb.fetch2 import FetchError
-from bb.fetch2 import FetchMethod
-from bb.fetch2 import MalformedUrl
-from bb.fetch2 import MissingParameterError
-from bb.fetch2 import ParameterError
-from bb.fetch2 import URI
-from bb.fetch2 import check_network_access
-from bb.fetch2 import runfetchcmd
+from bb.fetch import Fetch
+from bb.fetch import FetchError
+from bb.fetch import FetchMethod
+from bb.fetch import MalformedUrl
+from bb.fetch import MissingParameterError
+from bb.fetch import ParameterError
+from bb.fetch import URI
+from bb.fetch import check_network_access
+from bb.fetch import runfetchcmd
 from bb.utils import is_semver
 
 # Preference order matches strength; the first one present in SRC_URI wins.

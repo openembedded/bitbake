@@ -52,12 +52,12 @@ import os
 import shlex
 import shutil
 import bb
-from   bb.fetch2 import FetchMethod
-from   bb.fetch2 import FetchError
-from   bb.fetch2 import MissingParameterError
-from   bb.fetch2 import ParameterError
-from   bb.fetch2 import runfetchcmd
-from   bb.fetch2 import logger
+from   bb.fetch import FetchMethod
+from   bb.fetch import FetchError
+from   bb.fetch import MissingParameterError
+from   bb.fetch import ParameterError
+from   bb.fetch import runfetchcmd
+from   bb.fetch import logger
 
 class ClearCase(FetchMethod):
     """Class to fetch urls via 'clearcase'"""
@@ -189,7 +189,7 @@ class ClearCase(FetchMethod):
         if os.path.exists(ud.viewdir):
             cmd = self._build_ccase_command(ud, 'rmview');
             logger.info("cleaning up [VOB=%s label=%s view=%s]", ud.vob, ud.label, ud.viewname)
-            bb.fetch2.check_network_access(d, cmd, ud.url)
+            bb.fetch.check_network_access(d, cmd, ud.url)
             output = runfetchcmd(cmd, d, workdir=ud.ccasedir)
             logger.info("rmview output: %s", output)
 
@@ -215,7 +215,7 @@ class ClearCase(FetchMethod):
         self._write_configspec(ud, d)
         cmd = self._build_ccase_command(ud, 'mkview')
         logger.info("creating view [VOB=%s label=%s view=%s]", ud.vob, ud.label, ud.viewname)
-        bb.fetch2.check_network_access(d, cmd, ud.url)
+        bb.fetch.check_network_access(d, cmd, ud.url)
         try:
             runfetchcmd(cmd, d)
         except FetchError as e:
@@ -227,7 +227,7 @@ class ClearCase(FetchMethod):
         # Set configspec: Setting the configspec effectively fetches the files as defined in the configspec
         cmd = self._build_ccase_command(ud, 'setcs');
         logger.info("fetching data [VOB=%s label=%s view=%s]", ud.vob, ud.label, ud.viewname)
-        bb.fetch2.check_network_access(d, cmd, ud.url)
+        bb.fetch.check_network_access(d, cmd, ud.url)
         output = runfetchcmd(cmd, d, workdir=ud.viewdir)
         logger.info("%s", output)
 

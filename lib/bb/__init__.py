@@ -153,8 +153,17 @@ class PrefixLoggerAdapter(logging.LoggerAdapter):
 # can result in construction of the various loggers.
 import bb.msg
 
-from bb import fetch2 as fetch
-sys.modules['bb.fetch'] = sys.modules['bb.fetch2']
+# There's lots of code (in OE and other layers) that accesses bb.fetch2 without
+# first importing it. It used to work because fetch2 was added to the bb module in
+# bb/__init__.py, as part of installing the fetch = fetch2 shim. But now that
+# the new fetch2 shim is an actual module, this will break. So, provide lazy
+# access to bb.fetch2 via __getattr__ so layers keep working.
+def __getattr__(name):
+    if name == "fetch2":
+        import bb.fetch2 as fetch2
+        return fetch2
+
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 # Messaging convenience functions
 def plain(*args):

@@ -27,10 +27,10 @@ Supported SRC_URI options are:
 import os
 import bb
 import shlex
-from   bb.fetch2 import FetchMethod
-from   bb.fetch2 import FetchError
-from   bb.fetch2 import logger
-from   bb.fetch2 import runfetchcmd
+from   bb.fetch import FetchMethod
+from   bb.fetch import FetchError
+from   bb.fetch import logger
+from   bb.fetch import runfetchcmd
 
 class PerforceProgressHandler (bb.progress.BasicProgressHandler):
     """
@@ -97,7 +97,7 @@ class Perforce(FetchMethod):
             logger.debug('Trying to use P4CONFIG to automatically set P4PORT...')
             ud.usingp4config = True
             p4cmd = ud.basecmd + ['info']
-            bb.fetch2.check_network_access(d, p4cmd, ud.url)
+            bb.fetch.check_network_access(d, p4cmd, ud.url)
             output = runfetchcmd(p4cmd, d, True)
             ud.host = None
             for line in output.splitlines():
@@ -201,7 +201,7 @@ class Perforce(FetchMethod):
         'p4 files' command, including trailing '#rev' file revision indicator
         """
         p4cmd = self._buildp4command(ud, d, 'files')
-        bb.fetch2.check_network_access(d, p4cmd, ud.url)
+        bb.fetch.check_network_access(d, p4cmd, ud.url)
         p4fileslist = runfetchcmd(p4cmd, d, True)
         p4fileslist = [f.rstrip() for f in p4fileslist.splitlines()]
 
@@ -234,7 +234,7 @@ class Perforce(FetchMethod):
 
         for afile in filelist:
             p4fetchcmd = self._buildp4command(ud, d, 'print', afile)
-            bb.fetch2.check_network_access(d, p4fetchcmd, ud.url)
+            bb.fetch.check_network_access(d, p4fetchcmd, ud.url)
             runfetchcmd(p4fetchcmd, d, workdir=ud.pkgdir, log=progresshandler)
 
         runfetchcmd(['tar', '-czf', ud.localpath, 'p4'], d, cleanup=[ud.localpath], workdir=ud.pkgdir)
@@ -254,7 +254,7 @@ class Perforce(FetchMethod):
     def _latest_revision(self, ud, d, name):
         """ Return the latest upstream scm revision number """
         p4cmd = self._buildp4command(ud, d, "changes")
-        bb.fetch2.check_network_access(d, p4cmd, ud.url)
+        bb.fetch.check_network_access(d, p4cmd, ud.url)
         tip = runfetchcmd(p4cmd, d, True)
 
         if not tip:

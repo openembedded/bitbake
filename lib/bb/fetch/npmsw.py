@@ -21,15 +21,15 @@ import json
 import os
 import re
 import bb
-from bb.fetch2 import FetchError
-from bb.fetch2 import Fetch
-from bb.fetch2 import FetchMethod
-from bb.fetch2 import ParameterError
-from bb.fetch2 import runfetchcmd
-from bb.fetch2 import URI
-from bb.fetch2.npm import npm_integrity
-from bb.fetch2.npm import npm_localfile
-from bb.fetch2.npm import npm_unpack
+from bb.fetch import FetchError
+from bb.fetch import Fetch
+from bb.fetch import FetchMethod
+from bb.fetch import ParameterError
+from bb.fetch import runfetchcmd
+from bb.fetch import URI
+from bb.fetch.npm import npm_integrity
+from bb.fetch.npm import npm_localfile
+from bb.fetch.npm import npm_unpack
 from bb.utils import is_semver
 from bb.utils import lockfile
 from bb.utils import unlockfile

@@ -76,10 +76,10 @@ import urllib
 import bb
 import bb.progress
 from contextlib import contextmanager
-from   bb.fetch2 import FetchMethod
-from   bb.fetch2 import runfetchcmd
-from   bb.fetch2 import logger
-from   bb.fetch2 import trusted_network
+from   bb.fetch import FetchMethod
+from   bb.fetch import runfetchcmd
+from   bb.fetch import logger
+from   bb.fetch import trusted_network
 
 
 git_hash_re = re.compile(r'^[0-9a-f]{40,64}$')
@@ -162,7 +162,7 @@ class Git(FetchMethod):
             bb.warn("URL: %s uses git protocol which is no longer supported by github. Please change to ;protocol=https in the url." % ud.url)
 
         if not ud.proto in ('git', 'file', 'ssh', 'http', 'https', 'rsync'):
-            raise bb.fetch2.ParameterError(f"Invalid protocol type: '{ud.proto}'", ud.url)
+            raise bb.fetch.ParameterError(f"Invalid protocol type: '{ud.proto}'", ud.url)
 
         ud.nocheckout = ud.parm.get("nocheckout","0") == "1"
 
@@ -174,7 +174,7 @@ class Git(FetchMethod):
         ud.usehead = ud.parm.get("usehead","0") == "1"
         if ud.usehead:
             if ud.proto != "file":
-                 raise bb.fetch2.ParameterError("The usehead option is only for use with local ('protocol=file') git repositories", ud.url)
+                 raise bb.fetch.ParameterError("The usehead option is only for use with local ('protocol=file') git repositories", ud.url)
             ud.nobranch = 1
 
         # bareclone implies nocheckout
@@ -185,7 +185,7 @@ class Git(FetchMethod):
         ud.unresolvedrev = ""
         ud.branch = ud.parm.get("branch", "")
         if not ud.branch and not ud.nobranch:
-            raise bb.fetch2.ParameterError("The url does not set any branch parameter or set nobranch=1.", ud.url)
+            raise bb.fetch.ParameterError("The url does not set any branch parameter or set nobranch=1.", ud.url)
 
         ud.noshared = d.getVar("BB_GIT_NOSHARED") == "1"
 
@@ -206,10 +206,10 @@ class Git(FetchMethod):
             try:
                 depth_default = int(depth_default or 0)
             except ValueError:
-                raise bb.fetch2.FetchError("Invalid depth for BB_GIT_SHALLOW_DEPTH: %s" % depth_default)
+                raise bb.fetch.FetchError("Invalid depth for BB_GIT_SHALLOW_DEPTH: %s" % depth_default)
             else:
                 if depth_default < 0:
-                    raise bb.fetch2.FetchError("Invalid depth for BB_GIT_SHALLOW_DEPTH: %s" % depth_default)
+                    raise bb.fetch.FetchError("Invalid depth for BB_GIT_SHALLOW_DEPTH: %s" % depth_default)
         else:
             depth_default = 1
         ud.shallow_depths = collections.defaultdict(lambda: depth_default)
@@ -224,10 +224,10 @@ class Git(FetchMethod):
             try:
                 shallow_depth = int(shallow_depth or 0)
             except ValueError:
-                raise bb.fetch2.FetchError("Invalid depth for BB_GIT_SHALLOW_DEPTH_%s: %s" % (ud.name, shallow_depth))
+                raise bb.fetch.FetchError("Invalid depth for BB_GIT_SHALLOW_DEPTH_%s: %s" % (ud.name, shallow_depth))
             else:
                 if shallow_depth < 0:
-                    raise bb.fetch2.FetchError("Invalid depth for BB_GIT_SHALLOW_DEPTH_%s: %s" % (ud.name, shallow_depth))
+                    raise bb.fetch.FetchError("Invalid depth for BB_GIT_SHALLOW_DEPTH_%s: %s" % (ud.name, shallow_depth))
                 ud.shallow_depths[ud.name] = shallow_depth
 
         revs = d.getVar("BB_GIT_SHALLOW_REVS_%s" % ud.name)
@@ -343,7 +343,7 @@ class Git(FetchMethod):
         for rev in ud.shallow_revs:
             try:
                 runfetchcmd(ud.basecmd + ['rev-parse', '-q', '--verify', rev], d, quiet=True, workdir=ud.clonedir)
-            except bb.fetch2.FetchError:
+            except bb.fetch.FetchError:
                 return rev
         return None
 
@@ -415,7 +415,7 @@ class Git(FetchMethod):
                 if not bb.utils.path_is_descendant(toplevel, ud.clonedir):
                     logger.warning("Top level directory '%s' is not a descendant of '%s'. Re-cloning", toplevel, ud.clonedir)
                     needs_clone = True
-            except bb.fetch2.FetchError as e:
+            except bb.fetch.FetchError as e:
                 logger.warning("Unable to get top level for %s (not a git directory?): %s", ud.clonedir, e)
                 needs_clone = True
             except FileNotFoundError as e:
@@ -438,7 +438,7 @@ class Git(FetchMethod):
                     repourl = repourl_path
             clone_cmd = ud.basecmd + ['clone', '--bare', '--mirror', repourl, ud.clonedir, '--progress']
             if ud.proto.lower() != 'file':
-                bb.fetch2.check_network_access(d, clone_cmd, ud.url)
+                bb.fetch.check_network_access(d, clone_cmd, ud.url)
             progresshandler = GitProgressHandler(d)
 
             # Try creating a fast initial shallow clone
@@ -473,7 +473,7 @@ class Git(FetchMethod):
             else:
                 fetch_cmd = ud.basecmd + ['fetch', '-f', '--progress', repourl, 'refs/heads/*:refs/heads/*', 'refs/tags/*:refs/tags/*']
             if ud.proto.lower() != 'file':
-                bb.fetch2.check_network_access(d, fetch_cmd, ud.url)
+                bb.fetch.check_network_access(d, fetch_cmd, ud.url)
             progresshandler = GitProgressHandler(d)
             runfetchcmd(fetch_cmd, d, log=progresshandler, workdir=ud.clonedir, extraenv={'LANG':'C'})
             runfetchcmd(ud.basecmd + ['repack','-adk'], d, workdir=ud.clonedir)
@@ -486,12 +486,12 @@ class Git(FetchMethod):
                     raise
 
         if not self._contains_ref(ud, d, ud.name, ud.clonedir):
-            raise bb.fetch2.FetchError("Unable to find revision %s in branch %s even from upstream" % (ud.revision, ud.branch))
+            raise bb.fetch.FetchError("Unable to find revision %s in branch %s even from upstream" % (ud.revision, ud.branch))
 
         if ud.shallow and ud.write_shallow_tarballs:
             missing_rev = self.clonedir_need_shallow_revs(ud, d)
             if missing_rev:
-                raise bb.fetch2.FetchError("Unable to find revision %s even from upstream" % missing_rev)
+                raise bb.fetch.FetchError("Unable to find revision %s even from upstream" % missing_rev)
 
         if self.lfs_need_update(ud, d):
             self.lfs_fetch(ud, d, ud.clonedir, ud.revision)
@@ -595,7 +595,7 @@ class Git(FetchMethod):
 
         # The --depth and --shallow-exclude can't be used together
         if depth and shallow_exclude:
-            raise bb.fetch2.FetchError("BB_GIT_SHALLOW_REVS is set, but BB_GIT_SHALLOW_DEPTH is not 0.")
+            raise bb.fetch.FetchError("BB_GIT_SHALLOW_REVS is set, but BB_GIT_SHALLOW_DEPTH is not 0.")
 
         # For nobranch, we need a ref, otherwise the commits will be
         # removed, and for non-nobranch, we truncate the branch to our
@@ -673,7 +673,7 @@ class Git(FetchMethod):
             # If 'subdir' param exists, create a dir and use it as destination for unpack cmd
             if os.path.isabs(subdir):
                 if not os.path.realpath(subdir).startswith(os.path.realpath(destdir)):
-                    raise bb.fetch2.UnpackError("subdir argument isn't a subdirectory of unpack root %s" % destdir, ud.url)
+                    raise bb.fetch.UnpackError("subdir argument isn't a subdirectory of unpack root %s" % destdir, ud.url)
                 destdir = subdir
             else:
                 destdir = os.path.join(destdir, subdir)
@@ -721,35 +721,35 @@ class Git(FetchMethod):
                 source_error.append("shallow clone not enabled")
 
         if not source_found:
-            raise bb.fetch2.UnpackError("No up to date source found: " + "; ".join(source_error), ud.url)
+            raise bb.fetch.UnpackError("No up to date source found: " + "; ".join(source_error), ud.url)
 
         if update_mode:
             if ud.shallow:
-                raise bb.fetch2.UnpackError("Can't update shallow clones checkouts without network access, not supported.", ud.url)
+                raise bb.fetch.UnpackError("Can't update shallow clones checkouts without network access, not supported.", ud.url)
 
             output = runfetchcmd(ud.basecmd + ['status', '--untracked-files=no', '--porcelain'], d, workdir=destdir, extraenv=extraenv)
             if output:
-                raise bb.fetch2.LocalModificationsError(destdir, ud.url, output)
+                raise bb.fetch.LocalModificationsError(destdir, ud.url, output)
 
             # Set up remote for the download location if it doesn't exist
             try:
                 runfetchcmd(ud.basecmd + ['remote', 'get-url', 'dldir'], d, workdir=destdir)
-            except bb.fetch2.FetchError:
+            except bb.fetch.FetchError:
                 if ud.clonedir:
                     runfetchcmd(ud.basecmd + ['remote', 'add', 'dldir', 'file://' + ud.clonedir], d, workdir=destdir)
             try:
                 runfetchcmd(ud.basecmd + ['fetch', 'dldir'], d, workdir=destdir, extraenv=extraenv)
-            except bb.fetch2.FetchError as e:
-                raise bb.fetch2.UnpackError("Failed to fetch from dldir remote: %s" % str(e), ud.url)
+            except bb.fetch.FetchError as e:
+                raise bb.fetch.UnpackError("Failed to fetch from dldir remote: %s" % str(e), ud.url)
             try:
                 runfetchcmd(ud.basecmd + ['rebase', '--no-autosquash', '--no-autostash', ud.revision], d, workdir=destdir, extraenv=extraenv)
-            except bb.fetch2.FetchError as e:
+            except bb.fetch.FetchError as e:
                 # If rebase failed, abort it
                 try:
                     runfetchcmd(ud.basecmd + ['rebase', '--abort'], d, workdir=destdir)
                 except Exception:
                     pass
-                raise bb.fetch2.RebaseError(destdir, ud.url, str(e))
+                raise bb.fetch.RebaseError(destdir, ud.url, str(e))
             return True
 
         # If there is a tag parameter in the url and we also have a fixed srcrev, check the tag
@@ -763,14 +763,14 @@ class Git(FetchMethod):
                 output2 = runfetchcmd(ud.basecmd + ['rev-list', '-n', '1', ud.revision], d, workdir=destdir)
                 output2 = output2.strip()
                 if output != output2:
-                    raise bb.fetch2.FetchError("The revision the git tag '%s' resolved to didn't match the SRCREV in use (%s vs %s)" % (ud.parm['tag'], output, ud.revision), ud.url)
+                    raise bb.fetch.FetchError("The revision the git tag '%s' resolved to didn't match the SRCREV in use (%s vs %s)" % (ud.parm['tag'], output, ud.revision), ud.url)
 
         repourl = self._get_repo_url(ud)
         runfetchcmd(ud.basecmd + ['remote', 'set-url', 'origin', repourl], d, workdir=destdir)
         if ud.clonedir:
             try:
                 runfetchcmd(ud.basecmd + ['remote', 'get-url', 'dldir'], d, workdir=destdir)
-            except bb.fetch2.FetchError:
+            except bb.fetch.FetchError:
                 runfetchcmd(ud.basecmd + ['remote', 'add', 'dldir', "file://" + ud.clonedir], d, workdir=destdir)
 
         if self._contains_lfs(ud, d, destdir):
@@ -830,7 +830,7 @@ class Git(FetchMethod):
             cmd = ud.basecmd + ['branch', '--contains', git_ref_name, '--list', ud.branch]
         try:
             output = runfetchcmd(cmd, d, workdir=wd)
-        except (bb.fetch2.FetchError):
+        except (bb.fetch.FetchError):
             return False
         return len(output.splitlines()) > 0
 
@@ -876,7 +876,7 @@ class Git(FetchMethod):
             output = runfetchcmd(cmd, d, quiet=True, workdir=wd)
             if len(output.splitlines()) > 0:
                 return True
-        except (bb.fetch2.FetchError,ValueError):
+        except (bb.fetch.FetchError,ValueError):
             pass
         return False
 
@@ -885,7 +885,7 @@ class Git(FetchMethod):
         Ensures that git-lfs is available, raising a FetchError if it isn't.
         """
         if shutil.which("git-lfs", path=d.getVar('PATH')) is None:
-            raise bb.fetch2.FetchError(
+            raise bb.fetch.FetchError(
                 "Repository %s has LFS content, either install git-lfs on the host to download it, "
                 "or ignore it by adding lfs=0 as a parameter to the URL" % self._get_repo_url(ud))
 
@@ -930,10 +930,10 @@ class Git(FetchMethod):
             if search:
                 cmd.append(search)
             if ud.proto.lower() != 'file':
-                bb.fetch2.check_network_access(d, cmd, repourl)
+                bb.fetch.check_network_access(d, cmd, repourl)
             output = runfetchcmd(cmd, d, True)
             if not output:
-                raise bb.fetch2.FetchError("The command %s gave empty output unexpectedly" % cmd, ud.url)
+                raise bb.fetch.FetchError("The command %s gave empty output unexpectedly" % cmd, ud.url)
         finally:
             d.delVar('_BB_GIT_IN_LSREMOTE')
         return output
@@ -943,10 +943,10 @@ class Git(FetchMethod):
         Compute the HEAD revision for the url
         """
         if not d.getVar("__BBSRCREV_SEEN"):
-            raise bb.fetch2.FetchError("Recipe uses a floating tag/branch '%s' for repo '%s' without a fixed SRCREV yet doesn't call bb.fetch2.get_srcrev() (use SRCPV in PV for OE)." % (ud.unresolvedrev, ud.host+ud.path))
+            raise bb.fetch.FetchError("Recipe uses a floating tag/branch '%s' for repo '%s' without a fixed SRCREV yet doesn't call bb.fetch.get_srcrev() (use SRCPV in PV for OE)." % (ud.unresolvedrev, ud.host+ud.path))
 
         # Ensure we mark as not cached
-        bb.fetch2.mark_recipe_nocache(d)
+        bb.fetch.mark_recipe_nocache(d)
 
         output = self._lsremote(ud, d, "")
         # Tags of the form ^{} may not work, need to fallback to other form
@@ -961,7 +961,7 @@ class Git(FetchMethod):
                 sha1, ref = l.split()
                 if s == ref:
                     return sha1
-        raise bb.fetch2.FetchError("Unable to resolve '%s' in upstream git repository in git ls-remote output for %s" % \
+        raise bb.fetch.FetchError("Unable to resolve '%s' in upstream git repository in git ls-remote output for %s" % \
             (ud.unresolvedrev, ud.host+ud.path))
 
     def latest_versionstring(self, ud, d, filter_regex=None):
@@ -974,7 +974,7 @@ class Git(FetchMethod):
 
         try:
             output = self._lsremote(ud, d, "refs/tags/*")
-        except (bb.fetch2.FetchError, bb.fetch2.NetworkAccess) as e:
+        except (bb.fetch.FetchError, bb.fetch.NetworkAccess) as e:
             bb.note("Could not list remote: %s" % str(e))
             return pupver
 
@@ -1031,7 +1031,7 @@ class Git(FetchMethod):
             commits = None
         else:
             if not os.path.exists(rev_file) or not os.path.getsize(rev_file):
-                commits = len(bb.fetch2.runfetchcmd(['git', 'rev-list', rev, '--'], d).splitlines())
+                commits = len(bb.fetch.runfetchcmd(['git', 'rev-list', rev, '--'], d).splitlines())
                 if commits:
                     open(rev_file, "w").write("%d\n" % commits)
             else:
@@ -1045,5 +1045,5 @@ class Git(FetchMethod):
         try:
             self._lsremote(ud, d, "")
             return True
-        except bb.fetch2.FetchError:
+        except bb.fetch.FetchError:
             return False

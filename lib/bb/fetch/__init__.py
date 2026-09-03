@@ -543,8 +543,8 @@ def fetcher_init(d, servercontext=True):
     try:
         # fetcher_init is called multiple times, so make sure we only save the
         # revs the first time it is called.
-        if not bb.fetch2.saved_headrevs:
-            bb.fetch2.saved_headrevs = _revisions_cache.get_revs()
+        if not bb.fetch.saved_headrevs:
+            bb.fetch.saved_headrevs = _revisions_cache.get_revs()
     except:
         pass
 
@@ -578,7 +578,7 @@ def fetcher_compare_revisions(d):
     """
 
     headrevs = _revisions_cache.get_revs()
-    return headrevs != bb.fetch2.saved_headrevs
+    return headrevs != bb.fetch.saved_headrevs
 
 def mirror_from_string(data):
     mirrors = (data or "").replace('\\n',' ').split()
@@ -885,7 +885,7 @@ def get_srcrev(d, method_name='sortable_revision'):
     return pkgv
 
 def localpath(url, d):
-    fetcher = bb.fetch2.Fetch([url], d)
+    fetcher = bb.fetch.Fetch([url], d)
     return fetcher.localpath(url)
 
 # Need to export PATH as binary could be in metadata paths
@@ -926,7 +926,7 @@ FETCH_EXPORT_VARS = ['HOME', 'PATH',
 def get_fetcher_environment(d):
     newenv = {}
     origenv = d.getVar("BB_ORIGENV")
-    for name in bb.fetch2.FETCH_EXPORT_VARS:
+    for name in bb.fetch.FETCH_EXPORT_VARS:
         value = d.getVar(name)
         if not value and origenv:
             value = origenv.getVar(name)
@@ -1059,7 +1059,7 @@ def build_mirroruris(origud, mirrors, ld):
                     newud.setup_localpath(ld)
                     if hasattr(ud, 'unpack_tracer'):
                         newud.unpack_tracer = ud.unpack_tracer
-                except bb.fetch2.BBFetchException as e:
+                except bb.fetch.BBFetchException as e:
                     logger.debug("Mirror fetch failure for url %s (original url: %s)" % (newuri, origud.url))
                     logger.debug(str(e))
                     try:
@@ -1154,10 +1154,10 @@ def try_mirror_url(fetch, origud, ud, ld, check = False):
         update_stamp(origud, ld)
         return ud.localpath
 
-    except bb.fetch2.NetworkAccess:
+    except bb.fetch.NetworkAccess:
         raise
 
-    except bb.fetch2.BBFetchException as e:
+    except bb.fetch.BBFetchException as e:
         if isinstance(e, ChecksumError):
             logger.warning("Mirror checksum failure for url %s (original url: %s)\nCleaning and trying again." % (ud.url, origud.url))
             logger.warning(str(e))
@@ -1814,7 +1814,7 @@ class DummyUnpackTracer(object):
 class Fetch(object):
     def __init__(self, urls, d, cache = True, localonly = False, connection_cache = None):
         if localonly and cache:
-            raise Exception("bb.fetch2.Fetch.__init__: cannot set cache and localonly at same time")
+            raise Exception("bb.fetch.Fetch.__init__: cannot set cache and localonly at same time")
 
         if not urls:
             urls = d.getVar("SRC_URI").split()
@@ -1934,7 +1934,7 @@ class Fetch(object):
                         # fetcher still have chance to fetch from mirror
                         m.update_donestamp(ud, d)
 
-                    except bb.fetch2.NetworkAccess:
+                    except bb.fetch.NetworkAccess:
                         raise
 
                     except BBFetchException as e:

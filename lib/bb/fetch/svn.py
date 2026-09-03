@@ -14,11 +14,11 @@ import os
 import bb
 import re
 import shlex
-from   bb.fetch2 import FetchMethod
-from   bb.fetch2 import FetchError
-from   bb.fetch2 import MissingParameterError
-from   bb.fetch2 import runfetchcmd
-from   bb.fetch2 import logger
+from   bb.fetch import FetchMethod
+from   bb.fetch import FetchError
+from   bb.fetch import MissingParameterError
+from   bb.fetch import runfetchcmd
+from   bb.fetch import logger
 
 class Svn(FetchMethod):
     """Class to fetch a module or modules from svn repositories"""
@@ -141,7 +141,7 @@ class Svn(FetchMethod):
                 except FetchError:
                     pass
                 logger.debug("Running %s", svncmd)
-                bb.fetch2.check_network_access(d, svncmd, ud.url)
+                bb.fetch.check_network_access(d, svncmd, ud.url)
                 runfetchcmd(svncmd, d, workdir=ud.moddir, extraenv=extraenv)
             else:
                 svncmd, extraenv = self._buildsvncommand(ud, d, "fetch")
@@ -149,7 +149,7 @@ class Svn(FetchMethod):
                 # check out sources there
                 bb.utils.mkdirhier(ud.pkgdir)
                 logger.debug("Running %s", svncmd)
-                bb.fetch2.check_network_access(d, svncmd, ud.url)
+                bb.fetch.check_network_access(d, svncmd, ud.url)
                 runfetchcmd(svncmd, d, workdir=ud.pkgdir, extraenv=extraenv)
 
             if not ("externals" in ud.parm and ud.parm["externals"] == "nowarn"):
@@ -164,7 +164,7 @@ class Svn(FetchMethod):
                             bb.warn("To disable this warning add ';externals=nowarn' to the url.")
                         else:
                             bb.debug(1, "svn repository has externals:\n%s" % output)
-                except bb.fetch2.FetchError:
+                except bb.fetch.FetchError:
                     passs
             scmdata = ud.parm.get("scmdata", "")
             if scmdata == "keep":
@@ -199,7 +199,7 @@ class Svn(FetchMethod):
         Return the latest upstream revision number
         """
         cmd, extraenv = self._buildsvncommand(ud, d, "log1")
-        bb.fetch2.check_network_access(d, cmd, ud.url)
+        bb.fetch.check_network_access(d, cmd, ud.url)
         extraenv['LANG'] = 'C'
         extraenv['LC_ALL'] = 'C'
         output = runfetchcmd(cmd, d, True, extraenv=extraenv)

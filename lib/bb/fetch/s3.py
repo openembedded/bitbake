@@ -8,7 +8,7 @@ The aws tool must be correctly installed and configured prior to use.
 
 # Copyright (C) 2017, Andre McCurdy <armccurdy@gmail.com>
 #
-# Based in part on bb.fetch2.wget:
+# Based in part on bb.fetch.wget:
 #    Copyright (C) 2003, 2004  Chris Larson
 #
 # SPDX-License-Identifier: GPL-2.0-only
@@ -20,9 +20,9 @@ import bb
 import urllib.request, urllib.parse, urllib.error
 import re
 import shlex
-from bb.fetch2 import FetchMethod
-from bb.fetch2 import FetchError
-from bb.fetch2 import runfetchcmd
+from bb.fetch import FetchMethod
+from bb.fetch import FetchError
+from bb.fetch import runfetchcmd
 
 def convertToBytes(value, unit):
     value = float(value)
@@ -89,7 +89,7 @@ class S3(FetchMethod):
         """
 
         cmd = ud.basecmd + ['cp', 's3://%s%s' % (ud.host, ud.path), ud.localpath]
-        bb.fetch2.check_network_access(d, cmd, ud.url)
+        bb.fetch.check_network_access(d, cmd, ud.url)
 
         progresshandler = S3ProgressHandler(d)
         runfetchcmd(cmd, d, False, log=progresshandler)
@@ -113,7 +113,7 @@ class S3(FetchMethod):
         """
 
         cmd = ud.basecmd + ['ls', 's3://%s%s' % (ud.host, ud.path)]
-        bb.fetch2.check_network_access(d, cmd, ud.url)
+        bb.fetch.check_network_access(d, cmd, ud.url)
         output = runfetchcmd(cmd, d)
 
         # "aws s3 ls s3://mybucket/foo" will exit with success even if the file

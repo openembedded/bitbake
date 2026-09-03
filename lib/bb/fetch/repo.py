@@ -14,9 +14,9 @@ BitBake "Fetch" repo (git) implementation
 import os
 import bb
 import shlex
-from   bb.fetch2 import FetchMethod
-from   bb.fetch2 import runfetchcmd
-from   bb.fetch2 import logger
+from   bb.fetch import FetchMethod
+from   bb.fetch import runfetchcmd
+from   bb.fetch import logger
 
 class Repo(FetchMethod):
     """Class to fetch a module or modules from repo (git) repositories"""
@@ -63,10 +63,10 @@ class Repo(FetchMethod):
         repodir = os.path.join(codir, "repo")
         bb.utils.mkdirhier(repodir)
         if not os.path.exists(os.path.join(repodir, ".repo")):
-            bb.fetch2.check_network_access(d, "%s init -m %s -b %s -u %s://%s%s%s" % (ud.basecmd, ud.manifest, ud.branch, ud.proto, username, ud.host, ud.path), ud.url)
+            bb.fetch.check_network_access(d, "%s init -m %s -b %s -u %s://%s%s%s" % (ud.basecmd, ud.manifest, ud.branch, ud.proto, username, ud.host, ud.path), ud.url)
             runfetchcmd(ud.basecmd + ['init', '-m', ud.manifest, '-b', ud.branch, '-u', '%s://%s%s%s' % (ud.proto, username, ud.host, ud.path)], d, workdir=repodir)
 
-        bb.fetch2.check_network_access(d, ud.basecmd + ['sync'], ud.url)
+        bb.fetch.check_network_access(d, ud.basecmd + ['sync'], ud.url)
         runfetchcmd(ud.basecmd + ['sync'], d, workdir=repodir)
 
         scmdata = ud.parm.get("scmdata", "")

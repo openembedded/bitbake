@@ -10,7 +10,7 @@ Additionally, gsutil must also be installed.
 
 # Copyright (C) 2023, Snap Inc.
 #
-# Based in part on bb.fetch2.s3:
+# Based in part on bb.fetch.s3:
 #    Copyright (C) 2017 Andre McCurdy
 #
 # SPDX-License-Identifier: GPL-2.0-only
@@ -20,9 +20,9 @@ Additionally, gsutil must also be installed.
 import os
 import bb
 import urllib.parse, urllib.error
-from bb.fetch2 import FetchMethod
-from bb.fetch2 import FetchError
-from bb.fetch2 import logger
+from bb.fetch import FetchMethod
+from bb.fetch import FetchError
+from bb.fetch import logger
 
 class GCP(FetchMethod):
     """
@@ -62,7 +62,7 @@ class GCP(FetchMethod):
         if self.gcp_client is None:
             self.get_gcp_client()
 
-        bb.fetch2.check_network_access(d, "blob.download_to_filename", f"gs://{ud.host}{ud.path}")
+        bb.fetch.check_network_access(d, "blob.download_to_filename", f"gs://{ud.host}{ud.path}")
 
         # Path sometimes has leading slash, so strip it
         path = ud.path.lstrip("/")
@@ -101,7 +101,7 @@ class GCP(FetchMethod):
         if self.gcp_client is None:
             self.get_gcp_client()
 
-        bb.fetch2.check_network_access(d, "gcp_client.bucket(ud.host).blob(path).exists()", f"gs://{ud.host}{ud.path}")
+        bb.fetch.check_network_access(d, "gcp_client.bucket(ud.host).blob(path).exists()", f"gs://{ud.host}{ud.path}")
 
         # Path sometimes has leading slash, so strip it
         path = ud.path.lstrip("/")

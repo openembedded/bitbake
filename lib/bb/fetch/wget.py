@@ -23,10 +23,10 @@ import socket
 import http.client
 import urllib.request, urllib.parse, urllib.error
 import subprocess
-from   bb.fetch2 import FetchMethod
-from   bb.fetch2 import FetchError
-from   bb.fetch2 import logger
-from   bb.fetch2 import runfetchcmd
+from   bb.fetch import FetchMethod
+from   bb.fetch import FetchError
+from   bb.fetch import logger
+from   bb.fetch import runfetchcmd
 from   bb._vendor.bs4 import BeautifulSoup
 from   bb._vendor.bs4 import SoupStrainer
 
@@ -94,7 +94,7 @@ class Wget(FetchMethod):
     def urldata_init(self, ud, d):
         if 'protocol' in ud.parm:
             if ud.parm['protocol'] == 'git':
-                raise bb.fetch2.ParameterError("Invalid protocol - if you wish to fetch from a git repository using http, you need to instead use the git:// prefix with protocol=http", ud.url)
+                raise bb.fetch.ParameterError("Invalid protocol - if you wish to fetch from a git repository using http, you need to instead use the git:// prefix with protocol=http", ud.url)
 
         if 'downloadfilename' in ud.parm:
             ud.basename = ud.parm['downloadfilename']
@@ -118,7 +118,7 @@ class Wget(FetchMethod):
         progresshandler = WgetProgressHandler(d)
 
         logger.debug2("Fetching %s using command '%s'" % (ud.url, command))
-        bb.fetch2.check_network_access(d, command, ud.url)
+        bb.fetch.check_network_access(d, command, ud.url)
 
         runfetchcmd(command + ['--progress=dot', '--verbose'], d, quiet, log=progresshandler, workdir=workdir)
 
@@ -167,7 +167,7 @@ class Wget(FetchMethod):
         # Try and verify any checksum now, meaning if it isn't correct, we don't remove the
         # original file, which might be a race (imagine two recipes referencing the same
         # source, one with an incorrect checksum)
-        bb.fetch2.verify_checksum(ud, d, localpath=localpath, fatal_nochecksum=False)
+        bb.fetch.verify_checksum(ud, d, localpath=localpath, fatal_nochecksum=False)
 
         # Remove the ".tmp" and move the file into position atomically
         # Our lock prevents multiple writers but mirroring code may grab incomplete files
@@ -177,7 +177,7 @@ class Wget(FetchMethod):
 
     def checkstatus(self, fetch, ud, d, try_again=True):
         check_certs = self.check_certs(d)
-        newenv = bb.fetch2.get_fetcher_environment(d)
+        newenv = bb.fetch.get_fetcher_environment(d)
 
         class HTTPConnectionCache(http.client.HTTPConnection):
             def cache_id(self):
@@ -567,7 +567,7 @@ class Wget(FetchMethod):
             try:
                 self._runwget(ud, d, fetchcmd, True, workdir=workdir)
                 fetchresult = f.read()
-            except bb.fetch2.BBFetchException:
+            except bb.fetch.BBFetchException:
                 fetchresult = ""
 
         return fetchresult

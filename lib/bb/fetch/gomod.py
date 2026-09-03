@@ -67,12 +67,12 @@ import subprocess
 import zipfile
 
 import bb
-from bb.fetch2 import FetchError
-from bb.fetch2 import MissingParameterError
-from bb.fetch2 import runfetchcmd
-from bb.fetch2 import subprocess_setup
-from bb.fetch2.git import Git
-from bb.fetch2.wget import Wget
+from bb.fetch import FetchError
+from bb.fetch import MissingParameterError
+from bb.fetch import runfetchcmd
+from bb.fetch import subprocess_setup
+from bb.fetch.git import Git
+from bb.fetch.wget import Wget
 
 
 def escape(path):
@@ -115,7 +115,7 @@ class GoMod(Wget):
         else:
             ext = '.zip'
         path = escape(f"{module}/@v/{version}{ext}")
-        ud.url = bb.fetch2.encodeurl(
+        ud.url = bb.fetch.encodeurl(
             ('https', proxy, '/' + path, None, None, None))
         ud.parm['downloadfilename'] =  f"{module.replace('/', '.')}@{version}{ext}"
 

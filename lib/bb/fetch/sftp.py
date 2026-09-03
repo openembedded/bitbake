@@ -39,7 +39,7 @@ SRC_URI = "sftp://user@host.example.com/dir/path.file.txt"
 
 # Copyright (C) 2013, Olof Johansson <olof.johansson@axis.com>
 #
-# Based in part on bb.fetch2.wget:
+# Based in part on bb.fetch.wget:
 #    Copyright (C) 2003, 2004  Chris Larson
 #
 # SPDX-License-Identifier: GPL-2.0-only
@@ -49,9 +49,9 @@ SRC_URI = "sftp://user@host.example.com/dir/path.file.txt"
 import os
 import bb
 import urllib.request, urllib.parse, urllib.error
-from bb.fetch2 import URI
-from bb.fetch2 import FetchMethod
-from bb.fetch2 import runfetchcmd
+from bb.fetch import URI
+from bb.fetch import FetchMethod
+from bb.fetch import runfetchcmd
 
 class SFTP(FetchMethod):
     """Class to fetch urls via 'sftp'"""
@@ -67,7 +67,7 @@ class SFTP(FetchMethod):
 
     def urldata_init(self, ud, d):
         if 'protocol' in ud.parm and ud.parm['protocol'] == 'git':
-            raise bb.fetch2.ParameterError(
+            raise bb.fetch.ParameterError(
                 "Invalid protocol - if you wish to fetch from a " +
                 "git repository using ssh, you need to use the " +
                 "git:// prefix with protocol=ssh", ud.url)
@@ -106,6 +106,6 @@ class SFTP(FetchMethod):
 
         cmd = basecmd + [remote, lpath]
 
-        bb.fetch2.check_network_access(d, cmd, ud.url)
+        bb.fetch.check_network_access(d, cmd, ud.url)
         runfetchcmd(cmd, d)
         return True

@@ -26,8 +26,8 @@ import subprocess
 import re
 from functools import cmp_to_key
 import bb
-from   bb.fetch2 import logger, subprocess_setup, UnpackError, runfetchcmd
-from   bb.fetch2.wget import Wget
+from   bb.fetch import logger, subprocess_setup, UnpackError, runfetchcmd
+from   bb.fetch.wget import Wget
 
 
 class Crate(Wget):
@@ -76,7 +76,7 @@ class Crate(Wget):
         # break the URL apart by /
         parts = ud.url.split('/')
         if len(parts) < 5:
-            raise bb.fetch2.ParameterError("Invalid URL: Must be crate://HOST/NAME/VERSION", ud.url)
+            raise bb.fetch.ParameterError("Invalid URL: Must be crate://HOST/NAME/VERSION", ud.url)
 
         # version is expected to be the last token
         # but ignore possible url parameters which will be used

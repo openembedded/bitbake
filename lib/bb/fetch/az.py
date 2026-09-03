@@ -5,7 +5,7 @@ BitBake 'Fetch' Azure Storage implementation
 
 # Copyright (C) 2021 Alejandro Hernandez Samaniego
 #
-# Based on bb.fetch2.wget:
+# Based on bb.fetch.wget:
 # Copyright (C) 2003, 2004  Chris Larson
 #
 # SPDX-License-Identifier: GPL-2.0-only
@@ -15,9 +15,9 @@ BitBake 'Fetch' Azure Storage implementation
 import shlex
 import os
 import bb
-from   bb.fetch2 import FetchError
-from   bb.fetch2 import logger
-from   bb.fetch2.wget import Wget
+from   bb.fetch import FetchError
+from   bb.fetch import logger
+from   bb.fetch.wget import Wget
 
 
 class Az(Wget):

@@ -31,7 +31,7 @@ IETF secsh internet draft:
 #
 
 import re, os
-from bb.fetch2 import check_network_access, FetchMethod, ParameterError, runfetchcmd
+from bb.fetch import check_network_access, FetchMethod, ParameterError, runfetchcmd
 import urllib
 
 

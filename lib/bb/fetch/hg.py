@@ -16,11 +16,11 @@ import os
 import bb
 import errno
 import shlex
-from bb.fetch2 import FetchMethod
-from bb.fetch2 import FetchError
-from bb.fetch2 import MissingParameterError
-from bb.fetch2 import runfetchcmd
-from bb.fetch2 import logger
+from bb.fetch import FetchMethod
+from bb.fetch import FetchError
+from bb.fetch import MissingParameterError
+from bb.fetch import runfetchcmd
+from bb.fetch import logger
 
 class Hg(FetchMethod):
     """Class to fetch from mercurial repositories"""
@@ -159,13 +159,13 @@ class Hg(FetchMethod):
             logger.debug("Running %s", updatecmd)
             try:
                 runfetchcmd(updatecmd, d, workdir=ud.moddir)
-            except bb.fetch2.FetchError:
+            except bb.fetch.FetchError:
                 # Runnning pull in the repo
                 pullcmd = self._buildhgcommand(ud, d, "pull")
                 logger.info("Pulling " + ud.url)
                 # update sources there
                 logger.debug("Running %s", pullcmd)
-                bb.fetch2.check_network_access(d, pullcmd, ud.url)
+                bb.fetch.check_network_access(d, pullcmd, ud.url)
                 runfetchcmd(pullcmd, d, workdir=ud.moddir)
                 try:
                     os.unlink(ud.fullmirror)
@@ -180,7 +180,7 @@ class Hg(FetchMethod):
             # check out sources there
             bb.utils.mkdirhier(ud.pkgdir)
             logger.debug("Running %s", fetchcmd)
-            bb.fetch2.check_network_access(d, fetchcmd, ud.url)
+            bb.fetch.check_network_access(d, fetchcmd, ud.url)
             runfetchcmd(fetchcmd, d, workdir=ud.pkgdir)
 
         # Even when we clone (fetch), we still need to update as hg's clone
@@ -203,7 +203,7 @@ class Hg(FetchMethod):
         """
         Compute tip revision for the url
         """
-        bb.fetch2.check_network_access(d, self._buildhgcommand(ud, d, "info"), ud.url)
+        bb.fetch.check_network_access(d, self._buildhgcommand(ud, d, "info"), ud.url)
         output = runfetchcmd(self._buildhgcommand(ud, d, "info"), d)
         return output.strip()
 

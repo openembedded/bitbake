@@ -17,8 +17,8 @@ import os
 import urllib.request, urllib.parse, urllib.error
 import bb
 import bb.utils
-from   bb.fetch2 import FetchMethod, FetchError, ParameterError
-from   bb.fetch2 import logger
+from   bb.fetch import FetchMethod, FetchError, ParameterError
+from   bb.fetch import logger
 
 class Local(FetchMethod):
     def supports(self, urldata, d):
@@ -33,7 +33,7 @@ class Local(FetchMethod):
         ud.basepath = ud.path
         ud.needdonestamp = False
         if "*" in ud.path:
-            raise bb.fetch2.ParameterError("file:// urls using globbing are no longer supported. Please place the files in a directory and reference that instead.", ud.url)
+            raise bb.fetch.ParameterError("file:// urls using globbing are no longer supported. Please place the files in a directory and reference that instead.", ud.url)
         return
 
     def localpath(self, urldata, d):
