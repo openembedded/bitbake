@@ -12,7 +12,7 @@ import argparse
 import sqlite3
 import warnings
 
-__version__ = "2.19.0"
+__version__ = "2.19.1"
 
 warnings.simplefilter("default")
 

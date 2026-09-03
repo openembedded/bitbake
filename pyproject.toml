@@ -1,6 +1,6 @@
 [project]
 name = "bitbake"
-version = "2.19.0"
+version = "2.19.1"
 requires-python = ">=3.9"
 
 [tool.vendoring]

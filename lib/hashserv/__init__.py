@@ -12,7 +12,7 @@ from collections import namedtuple
 from urllib.parse import urlparse
 from bb.asyncrpc.client import parse_address, ADDR_TYPE_UNIX, ADDR_TYPE_WS
 
-__version__ = "2.19.0"
+__version__ = "2.19.1"
 
 User = namedtuple("User", ("username", "permissions"))
 

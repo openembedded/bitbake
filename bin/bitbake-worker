@@ -25,7 +25,7 @@ import subprocess
 import fcntl
 from threading import Thread
 
-__version__ = "2.19.0"
+__version__ = "2.19.1"
  
 if __name__ == "__main__":
     if __version__ != bb.__version__:
