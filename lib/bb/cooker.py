@@ -18,6 +18,7 @@ from io import StringIO, UnsupportedOperation
 from contextlib import closing
 from collections import defaultdict, namedtuple
 import bb, bb.command
+import bb.fetch
 from bb import utils, data, parse, event, cache, providers, taskdata, runqueue, build
 import queue
 import signal
@@ -1600,8 +1601,8 @@ You can also remove the BB_HASHSERVE_UPSTREAM setting, but this may result in si
 
         dump = {}
         # Horrible but for now we need to avoid any sideeffects of autorev being called
-        saved = bb.fetch2.get_autorev
-        bb.fetch2.get_autorev = dummy_autorev
+        saved = bb.fetch.get_autorev
+        bb.fetch.get_autorev = dummy_autorev
         for k in self.data.keys():
             try:
                 expand = True
@@ -1621,7 +1622,7 @@ You can also remove the BB_HASHSERVE_UPSTREAM setting, but this may result in si
                             dump[k][d] = None
             except Exception as e:
                 print(e)
-        bb.fetch2.get_autorev = saved
+        bb.fetch.get_autorev = saved
         return dump
 
 

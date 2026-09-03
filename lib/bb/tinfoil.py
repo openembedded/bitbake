@@ -25,7 +25,7 @@ import bb.utils
 import bb.command
 import bb.remotedata
 from bb.main import setup_bitbake, BitBakeConfigParameters
-import bb.fetch2
+import bb.fetch
 
 def wait_for(f):
     """

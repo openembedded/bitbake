@@ -22,6 +22,7 @@ from collections import OrderedDict, defaultdict
 
 import io
 import bb.event
+import bb.fetch
 import bb.cooker
 import bb.remotedata
 import bb.parse

@@ -2081,7 +2081,7 @@ def disable_network(uid=None, gid=None):
         f.write("%s %s 1" % (gid, gid))
 
 def export_proxies(d):
-    from bb.fetch2 import get_fetcher_environment
+    from bb.fetch import get_fetcher_environment
     """ export common proxies variables from datastore to environment """
     newenv = get_fetcher_environment(d)
     for v in newenv:

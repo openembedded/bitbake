@@ -27,6 +27,7 @@ bindir = os.path.abspath(os.path.dirname(__file__))
 sys.path[0:0] = [os.path.join(os.path.dirname(bindir), 'lib')]
 
 import bb.msg  # noqa: E402
+import bb.fetch  # noqa: E402
 import bb.process  # noqa: E402
 from bb import __version__ as libbb_version # noqa: E402
 
@@ -108,8 +109,8 @@ def init_bb_cache(top_dir, settings, args):
     return d
 
 def save_bb_cache():
-    bb.fetch2.fetcher_parse_save()
-    bb.fetch2.fetcher_parse_done()
+    bb.fetch.fetcher_parse_save()
+    bb.fetch.fetcher_parse_done()
 
 def get_config_name(config):
     suffix = '.conf.json'
@@ -192,7 +193,7 @@ def checkout_layers(layers, confdir, layerdir, d, rebase_conflicts_strategy='abo
             repodir_path = os.path.join(layerdir, repodir)
             try:
                 do_fetch(fetcher, layerdir)
-            except (bb.fetch2.LocalModificationsError, bb.fetch2.RebaseError) as e:
+            except (bb.fetch.LocalModificationsError, bb.fetch.RebaseError) as e:
                 if rebase_conflicts_strategy != 'backup':
                     e.msg += ("\nUse 'bitbake-setup update --rebase-conflicts-strategy=backup'"
                               " to automatically back up the directory and re-clone from upstream,"
@@ -894,7 +895,7 @@ def get_diff(file1, file2):
 
 def are_layers_changed(layers, layerdir, d):
     def _is_git_remote_changed(r_remote, repodir):
-        from bb.fetch2.git import git_hash_re
+        from bb.fetch.git import git_hash_re
 
         rev = r_remote['rev']
         branch = r_remote.get('branch', None)
@@ -1109,11 +1110,11 @@ def install_buildtools(top_dir, settings, args, d):
     fetcher = bb.fetch.Fetch([src_uri], d)
     try:
         fetcher.download()
-    except bb.fetch2.ChecksumError as e:
+    except bb.fetch.ChecksumError as e:
         logger.error("Checksum mismatch for buildtools installer. "
                      "Verify the URL and downloaded file.\n%s" % str(e))
         sys.exit(1)
-    except bb.fetch2.FetchError as e:
+    except bb.fetch.FetchError as e:
         logger.error("Failed to download buildtools installer: %s" % str(e))
         sys.exit(1)
 

@@ -11,6 +11,7 @@ import re
 import tempfile
 import pickle
 import bb.data
+import bb.fetch
 import difflib
 from bb._vendor import simplediff
 import json
@@ -362,7 +363,7 @@ class SignatureGeneratorBasic(SignatureGenerator):
             if self.checksum_cache:
                 checksums = self.checksum_cache.get_checksums(dataCaches[mc].file_checksums[mcfn][task], recipename, self.localdirsexclude)
             else:
-                checksums = bb.fetch2.get_file_checksums(dataCaches[mc].file_checksums[mcfn][task], recipename, self.localdirsexclude)
+                checksums = bb.fetch.get_file_checksums(dataCaches[mc].file_checksums[mcfn][task], recipename, self.localdirsexclude)
             for (f,cs) in checksums:
                 self.file_checksum_values[tid].append((f,cs))
 
@@ -413,8 +414,8 @@ class SignatureGeneratorBasic(SignatureGenerator):
             self.checksum_cache.save_extras()
             self.checksum_cache.save_merge()
         else:
-            bb.fetch2.fetcher_parse_save()
-            bb.fetch2.fetcher_parse_done()
+            bb.fetch.fetcher_parse_save()
+            bb.fetch.fetcher_parse_done()
 
     def save_unitaskhashes(self):
         self.unihash_cache.save(self.unitaskhashes)

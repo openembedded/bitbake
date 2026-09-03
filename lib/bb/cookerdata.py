@@ -22,7 +22,7 @@ import bb.codeparser
 import bb.data
 import bb.data_smart
 import bb.event
-import bb.fetch2
+import bb.fetch
 import bb.parse
 import bb.utils
 
