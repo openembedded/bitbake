@@ -1197,7 +1197,7 @@ class FetcherNetworkTest(FetcherTest):
     def test_git_submodule_restricted_network_premirrors(self):
         # this test is to ensure that premirrors will be tried in restricted network
         # that is, BB_ALLOWED_NETWORKS does not contain the domain the url uses
-        url = "gitsm://github.com/grpc/grpc.git;protocol=https;name=grpc;branch=v1.60.x;rev=0ef13a7555dbaadd4633399242524129eef5e231"
+        url = "gitsm://git.yoctoproject.org/git-submodule-test;branch=master;rev=38e61644af90dccd73c03ed3acaed98c8dda9294;branch=master;protocol=https"
         # create a download directory to be used as premirror later
         tempdir = tempfile.mkdtemp(prefix="bitbake-fetch-")
         dl_premirror = os.path.join(tempdir, "download-premirror")
