@@ -172,6 +172,26 @@ assignment, ``BAR`` expands to the literal string "${FOO}" as long as
 
    BAR = "${FOO}"
 
+Immediate variable expansion (:=)
+---------------------------------
+
+The ":=" operator results in a variable's contents being expanded
+immediately, rather than when the variable is actually used::
+
+   T = "123"
+   A := "test ${T}"
+   T = "456"
+   B := "${T} ${C}"
+   C = "cval"
+   C := "${C}append"
+
+In this example, ``A`` contains "test 123", even though the final value
+of :term:`T` is "456". The variable :term:`B` will end up containing "456
+cvalappend". This is because references to undefined variables are
+preserved as is during (immediate)expansion. This is in contrast to GNU
+Make, where undefined variables expand to nothing. The variable ``C``
+contains "cvalappend" since ``${C}`` immediately expands to "cval".
+
 Setting a default value (?=)
 ----------------------------
 
@@ -234,26 +254,6 @@ any active weak default value has been substituted::
 After parsing we will have::
 
    W = "xy"
-
-Immediate variable expansion (:=)
----------------------------------
-
-The ":=" operator results in a variable's contents being expanded
-immediately, rather than when the variable is actually used::
-
-   T = "123"
-   A := "test ${T}"
-   T = "456"
-   B := "${T} ${C}"
-   C = "cval"
-   C := "${C}append"
-
-In this example, ``A`` contains "test 123", even though the final value
-of :term:`T` is "456". The variable :term:`B` will end up containing "456
-cvalappend". This is because references to undefined variables are
-preserved as is during (immediate)expansion. This is in contrast to GNU
-Make, where undefined variables expand to nothing. The variable ``C``
-contains "cvalappend" since ``${C}`` immediately expands to "cval".
 
 .. _appending-and-prepending:
 
