@@ -985,6 +985,10 @@ def do_fetch(fetcher, dir):
         try:
             fetcher.download()
             fetcher.unpack_update(dir)
+        except:
+            if os.path.exists(fetchlog) and os.path.getsize(fetchlog) > 0:
+                logger.error("Check {} for additional information that may help diagnoze the issue.".format(fetchlog))
+            raise
         finally:
             sys.stdout = oldstdout
 
