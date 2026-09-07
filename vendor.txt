@@ -3,3 +3,4 @@ ply==3.10
 progressbar==2.5
 simplediff==1.1
 typing_extensions==4.15.0
+tomli==2.4.1
