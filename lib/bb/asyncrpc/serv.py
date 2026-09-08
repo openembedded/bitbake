@@ -11,6 +11,7 @@ import os
 import signal
 import socket
 import sys
+import bb
 from bb import multiprocessing
 import logging
 from .connection import StreamConnection, WebsocketConnection
