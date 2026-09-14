@@ -1780,6 +1780,11 @@ functionality of the task:
    "exists" True or False value after the path allows this to be
    handled.
 
+-  ``[landlock-disable]``: When set to "1", disables Landlock
+   restrictions for the task. This can be used for tasks that need features
+   incompatible with Landlock, such as gaining privileges through file
+   capabilities.
+
 -  ``[lockfiles]``: Specifies one or more lockfiles to lock while the
    task executes. Only one task may hold a lockfile, and any task that
    attempts to lock an already locked file will block until the lock is
@@ -1791,9 +1796,9 @@ functionality of the task:
    shouldn't access the network outside of ``do_fetch`` as it usually
    undermines fetcher source mirroring, image and licence manifests, software
    auditing and supply chain security.
-   Tasks without the network flag will run with PR_SET_NO_NEW_PRIVS,
-   which prevents executables from gaining privileges through
-   file capabilities.
+   Unless the ``landlock-disable`` flag is set, tasks without the network
+   flag run with PR_SET_NO_NEW_PRIVS, which prevents executables from gaining
+   privileges through file capabilities.
 
 -  ``[noexec]``: When set to "1", marks the task as being empty, with
    no execution required. You can use the ``[noexec]`` flag to set up
