@@ -403,8 +403,24 @@ class ScriptTests(unittest.TestCase):
         except subprocess.CalledProcessError as e:
             self.fail("Failed to start bitbake-prserv: %s" % e.returncode)
 
-    def test_2_stop_bitbake_prserv(self):
+    def test_2_status_bitbake_prserv(self):
+        result = subprocess.run([BIN_DIR / "bitbake-prserv", "--status"],
+                                capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0,
+                         "Expected a running PRServer: %s" % result.stdout)
+        self.assertIn(":%s (pid " % self.port, result.stdout)
+
+    def test_3_stop_bitbake_prserv(self):
         try:
             subprocess.check_call([BIN_DIR / "bitbake-prserv", "--stop", "--port", self.port])
         except subprocess.CalledProcessError as e:
             self.fail("Failed to stop bitbake-prserv: %s" % e.returncode)
+
+    def test_4_status_stopped_bitbake_prserv(self):
+        result = subprocess.run([BIN_DIR / "bitbake-prserv", "--status"],
+                                capture_output=True, text=True)
+        self.assertNotIn(":%s (pid " % self.port, result.stdout)
+        # Servers unrelated to this test may be running on the machine
+        if "PRServer running at" not in result.stdout:
+            self.assertEqual(result.returncode, 1,
+                             "Expected no running PRServer: %s" % result.stdout)
