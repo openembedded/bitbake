@@ -205,12 +205,13 @@ class PRServerClient(bb.asyncrpc.AsyncServerConnection):
         return {"readonly": self.server.read_only}
 
 class PRServer(bb.asyncrpc.AsyncServer):
-    def __init__(self, dbfile, read_only=False, upstream=None):
+    def __init__(self, dbfile, read_only=False, upstream=None, on_ready=None):
         super().__init__(logger)
         self.dbfile = dbfile
         self.table = None
         self.read_only = read_only
         self.upstream = upstream
+        self.on_ready = on_ready
 
     def accept_client(self, socket):
         return PRServerClient(socket, self)
@@ -225,6 +226,9 @@ class PRServer(bb.asyncrpc.AsyncServer):
 
         if self.upstream is not None:
             self.logger.info("And upstream PRServer: %s " % (self.upstream))
+
+        if self.on_ready is not None:
+            self.on_ready()
 
         return tasks
 
@@ -253,16 +257,27 @@ class PRServSingleton(object):
 def run_as_daemon(func, pidfile, logfile):
     """
     See Advanced Programming in the UNIX, Sec 13.3
+
+    func runs in the daemon and is passed a callable to invoke once it is
+    ready to serve. Return the daemon's pid when that happens; raise
+    RuntimeError with the daemon's error if it fails first.
     """
+    readfd, writefd = os.pipe()
     try:
         pid = os.fork()
         if pid > 0:
+            os.close(writefd)
             os.waitpid(pid, 0)
+            with os.fdopen(readfd) as f:
+                report = f.read()
+            if report != "ready":
+                raise RuntimeError(report or "daemon exited before it was ready")
             #parent return instead of exit to give control
             return pid
     except OSError as e:
         raise Exception("%s [%d]" % (e.strerror, e.errno))
 
+    os.close(readfd)
     os.setsid()
     """
     fork again to make sure the daemon is not session leader,
@@ -316,9 +331,27 @@ def run_as_daemon(func, pidfile, logfile):
     with open(pidfile, "w") as pf:
         pf.write("%s\n" % pid)
 
-    func()
-    os.remove(pidfile)
-    os._exit(0)
+    def ready():
+        nonlocal writefd
+        os.write(writefd, b"ready")
+        os.close(writefd)
+        writefd = None
+
+    ret = 0
+    try:
+        func(ready)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        if writefd is not None:
+            os.write(writefd, str(e).encode())
+        ret = 1
+    try:
+        os.remove(pidfile)
+    except FileNotFoundError:
+        # --stop may have removed it already
+        pass
+    os._exit(ret)
 
 def start_daemon(dbfile, host, port, logfile, read_only=False, upstream=None):
     ip = socket.gethostbyname(host)
@@ -335,12 +368,18 @@ def start_daemon(dbfile, host, port, logfile, read_only=False, upstream=None):
         return 1
 
     dbfile = os.path.abspath(dbfile)
-    def daemon_main():
-        server = PRServer(dbfile, read_only=read_only, upstream=upstream)
+    logfile = os.path.abspath(logfile)
+    def daemon_main(ready):
+        server = PRServer(dbfile, read_only=read_only, upstream=upstream, on_ready=ready)
         server.start_tcp_server(ip, port)
         server.serve_forever()
 
-    run_as_daemon(daemon_main, pidfile, os.path.abspath(logfile))
+    try:
+        run_as_daemon(daemon_main, pidfile, logfile)
+    except RuntimeError as e:
+        sys.stderr.write("Failed to start PRServer on %s:%s: %s\nSee %s for details.\n"
+                         % (ip, port, e, logfile))
+        return 1
     return 0
 
 def stop_daemon(host, port):
