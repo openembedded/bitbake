@@ -65,6 +65,11 @@ def main():
         help="stop daemon",
     )
     parser.add_argument(
+        "--status",
+        action="store_true",
+        help="list PR servers running on this machine",
+    )
+    parser.add_argument(
         "--host",
         help="ip address to bind",
         default=PRHOST_DEFAULT,
@@ -102,6 +107,8 @@ def main():
         )
     elif args.stop:
         ret=prserv.serv.stop_daemon(args.host, args.port)
+    elif args.status:
+        ret=prserv.serv.status_daemon()
     else:
         ret=parser.print_help()
     return ret
