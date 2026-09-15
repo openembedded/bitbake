@@ -427,6 +427,29 @@ def stop_daemon(host, port):
 
     return 0
 
+def status_daemon():
+    import glob
+    running = 0
+    for pidfile in sorted(glob.glob(PIDPREFIX % ("*", "*"))):
+        root, _ = os.path.splitext(os.path.basename(pidfile))
+        parts = root.split("_")
+        ip, port = "_".join(parts[1:-1]), parts[-1]
+        try:
+            with open(pidfile) as pf:
+                pid = int(pf.readline().strip())
+        except (IOError, ValueError):
+            sys.stderr.write("Ignoring unreadable pidfile %s\n" % pidfile)
+            continue
+        if is_running(pid):
+            print("PRServer running at %s:%s (pid %s)" % (ip, port, pid))
+            running += 1
+        else:
+            print("Stale pidfile %s (pid %s not running)" % (pidfile, pid))
+    if not running:
+        print("No PRServer running.")
+        return 1
+    return 0
+
 def is_running(pid):
     try:
         os.kill(pid, 0)
