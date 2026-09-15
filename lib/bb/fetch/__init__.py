@@ -970,6 +970,8 @@ def runfetchcmd(cmd, d, quiet=False, cleanup=None, log=None, workdir=None, extra
 
     # Disable pseudo as it may affect ssh, potentially causing it to hang.
     env["PSEUDO_DISABLED"] = "1"
+    env["GIT_TRACE_CURL"] = "1"
+    env["GIT_TRACE_CURL_NO_DATA"] = "1"
 
     if workdir:
         logger.debug("Running '%s' in %s" % (cmd, workdir))
