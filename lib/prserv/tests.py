@@ -369,20 +369,28 @@ class PRUpstreamTests(PRTestSetup, unittest.TestCase):
 
 class ScriptTests(unittest.TestCase):
 
-    def setUp(self):
+    @classmethod
+    def setUpClass(cls):
+        cls.temp_dir = tempfile.TemporaryDirectory(prefix='bb-prserv')
+        cls.dbfile = os.path.join(cls.temp_dir.name, "prtest.sqlite3")
+        # The server test_1 starts runs until test_2 stops it, so use a
+        # port nothing else on the machine is listening on
+        with socket.socket() as s:
+            s.bind(("0.0.0.0", 0))
+            cls.port = str(s.getsockname()[1])
 
-        self.temp_dir = tempfile.TemporaryDirectory(prefix='bb-prserv')
-        self.addCleanup(self.temp_dir.cleanup)
-        self.dbfile = os.path.join(self.temp_dir.name, "prtest.sqlite3")
+    @classmethod
+    def tearDownClass(cls):
+        cls.temp_dir.cleanup()
 
     def test_1_start_bitbake_prserv(self):
         try:
-            subprocess.check_call([BIN_DIR / "bitbake-prserv", "--start", "-f", self.dbfile])
+            subprocess.check_call([BIN_DIR / "bitbake-prserv", "--start", "-f", self.dbfile, "--port", self.port])
         except subprocess.CalledProcessError as e:
             self.fail("Failed to start bitbake-prserv: %s" % e.returncode)
 
     def test_2_stop_bitbake_prserv(self):
         try:
-            subprocess.check_call([BIN_DIR / "bitbake-prserv", "--stop"])
+            subprocess.check_call([BIN_DIR / "bitbake-prserv", "--stop", "--port", self.port])
         except subprocess.CalledProcessError as e:
             self.fail("Failed to stop bitbake-prserv: %s" % e.returncode)
