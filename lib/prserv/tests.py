@@ -7,6 +7,7 @@
 
 from . import create_server, create_client, increase_revision, revision_greater, revision_smaller, _revision_greater_or_equal
 import prserv.db as db
+from prserv.serv import PIDPREFIX
 from bb.asyncrpc import InvokeError
 import logging
 import os
@@ -382,6 +383,19 @@ class ScriptTests(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.temp_dir.cleanup()
+
+    def test_0_start_bitbake_prserv_port_in_use(self):
+        with socket.socket() as s:
+            s.bind(("0.0.0.0", 0))
+            s.listen()
+            port = str(s.getsockname()[1])
+            result = subprocess.run([BIN_DIR / "bitbake-prserv", "--start", "-f", self.dbfile, "--port", port],
+                                    capture_output=True, text=True)
+        self.assertNotEqual(result.returncode, 0,
+                            "--start reported success with the port in use")
+        self.assertIn("Failed to start PRServer", result.stderr)
+        self.assertFalse(os.path.exists(PIDPREFIX % ("0.0.0.0", port)),
+                         "pidfile left behind by a server that never came up")
 
     def test_1_start_bitbake_prserv(self):
         try:
