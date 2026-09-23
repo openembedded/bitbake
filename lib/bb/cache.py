@@ -401,6 +401,8 @@ class Cache(object):
         self.clean = set()
         self.checked = set()
         self.depends_cache = {}
+        # os.path.exists() results for this validation pass (see file_exists())
+        self.exists_cache = {}
         self.data_fn = None
         self.cacheclean = True
         self.data_hash = data_hash
@@ -619,7 +621,8 @@ class Cache(object):
                     if not f:
                         continue
                     f, exist = f.rsplit(":", 1)
-                    if (exist == "True" and not os.path.exists(f)) or (exist == "False" and os.path.exists(f)):
+                    file_exists = self.file_exists(f)
+                    if (exist == "True" and not file_exists) or (exist == "False" and file_exists):
                         self.logger.debug2("%s's file checksum list file %s changed",
                                              fn, f)
                         self.remove(fn)
@@ -656,6 +659,11 @@ class Cache(object):
 
         self.clean.add(fn)
         return True
+
+    def file_exists(self, fn):
+        if fn not in self.exists_cache:
+            self.exists_cache[fn] = os.path.exists(fn)
+        return self.exists_cache[fn]
 
     def remove(self, fn):
         """
