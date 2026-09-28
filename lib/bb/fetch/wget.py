@@ -441,13 +441,21 @@ class Wget(FetchMethod):
         # to scope the changes to the build_opener request, which is when the
         # environment lookups happen.
         with bb.utils.environment(**newenv):
-            context = self.ssl_context(d)
-            handlers = [FixedHTTPRedirectHandler,
-                        HTTPMethodFallback,
-                        urllib.request.ProxyHandler(),
-                        CacheHTTPHandler(),
-                        CacheHTTPSHandler(context=context)]
-            opener = urllib.request.build_opener(*handlers)
+            opener = None
+            if connection_cache is not None:
+                opener_key = (check_certs, tuple(sorted(newenv.items())))
+                opener = connection_cache.opener_cache.get(opener_key)
+
+            if opener is None:
+                context = self.ssl_context(d)
+                handlers = [FixedHTTPRedirectHandler,
+                            HTTPMethodFallback,
+                            urllib.request.ProxyHandler(),
+                            CacheHTTPHandler(),
+                            CacheHTTPSHandler(context=context)]
+                opener = urllib.request.build_opener(*handlers)
+                if connection_cache is not None:
+                    connection_cache.opener_cache[opener_key] = opener
 
             try:
                 parts = urllib.parse.urlparse(ud.url.split(";")[0])
