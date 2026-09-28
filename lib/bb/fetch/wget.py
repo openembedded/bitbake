@@ -184,23 +184,24 @@ class Wget(FetchMethod):
     def checkstatus(self, fetch, ud, d, try_again=True):
         check_certs = self.check_certs(d)
         newenv = bb.fetch.get_fetcher_environment(d)
+        connection_cache = fetch.connection_cache
 
         class HTTPConnectionCache(http.client.HTTPConnection):
             def cache_id(self):
                 return None
 
-            if fetch.connection_cache:
+            if connection_cache:
                 def connect(self):
                     """Connect to the host and port specified in __init__."""
 
-                    sock = fetch.connection_cache.get_connection(
+                    sock = connection_cache.get_connection(
                         self.host, self.port, self.cache_id())
                     if sock:
                         self.sock = sock
                     else:
                         self.sock = socket.create_connection((self.host, self.port),
                                     self.timeout, self.source_address)
-                        fetch.connection_cache.add_connection(
+                        connection_cache.add_connection(
                             self.host, self.port, self.sock, self.cache_id())
 
                     if self._tunnel_host:
@@ -212,17 +213,17 @@ class Wget(FetchMethod):
                         newenv.get("SSL_CERT_FILE"),
                         self._tunnel_host, self._tunnel_port)
 
-            if fetch.connection_cache:
+            if connection_cache:
                 def connect(self):
                     """Reuse an established TLS connection when available."""
 
-                    sock = fetch.connection_cache.get_connection(
+                    sock = connection_cache.get_connection(
                         self.host, self.port, self.cache_id())
                     if sock:
                         self.sock = sock
                     else:
                         super().connect()
-                        fetch.connection_cache.add_connection(
+                        connection_cache.add_connection(
                             self.host, self.port, self.sock, self.cache_id())
 
         class CacheHTTPHandler(urllib.request.HTTPHandler):
@@ -258,7 +259,7 @@ class Wget(FetchMethod):
                 # request.
 
                 # Don't close connection when connection_cache is enabled,
-                if fetch.connection_cache is None:
+                if connection_cache is None:
                     headers["Connection"] = "close"
                 else:
                     headers["Connection"] = "Keep-Alive" # Works for HTTP/1.0
@@ -288,8 +289,8 @@ class Wget(FetchMethod):
                     # with the dead connection removed from the cache.
                     # If it still fails, we give up, which can happen for bad
                     # HTTP proxy settings.
-                    if fetch.connection_cache:
-                        fetch.connection_cache.remove_connection(
+                    if connection_cache:
+                        connection_cache.remove_connection(
                             h.host, h.port, h.cache_id())
                     h.close()
                     raise
@@ -322,9 +323,9 @@ class Wget(FetchMethod):
                 resp.msg = r.reason
 
                 # Close connection when server request it.
-                if fetch.connection_cache is not None:
+                if connection_cache is not None:
                     if 'Connection' in r.msg and r.msg['Connection'] == 'close':
-                        fetch.connection_cache.remove_connection(
+                        connection_cache.remove_connection(
                             h.host, h.port, h.cache_id())
 
                 return resp
