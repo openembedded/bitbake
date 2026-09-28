@@ -2094,6 +2094,8 @@ class FetchConnectionCache(object):
     """
     def __init__(self):
         self.cache = {}
+        # urllib openers built by the wget fetcher, see Wget.checkstatus()
+        self.opener_cache = {}
 
     def get_connection_name(self, host, port, connection_id=None):
         if connection_id is None:
