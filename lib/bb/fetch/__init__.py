@@ -1079,7 +1079,7 @@ def build_mirroruris(origud, mirrors, ld):
 
     return uris, uds
 
-def rename_bad_checksum(ud, suffix):
+def rename_bad_checksum(ud, suffix, localpath=None):
     """
     Renames files to have suffix from parameter
     """
@@ -1087,10 +1087,13 @@ def rename_bad_checksum(ud, suffix):
     if ud.localpath is None:
         return
 
+    if localpath is None:
+        localpath = ud.localpath
+
     new_localpath = "%s_bad-checksum_%s" % (ud.localpath, suffix)
-    bb.warn("Renaming %s to %s" % (ud.localpath, new_localpath))
-    if not bb.utils.movefile(ud.localpath, new_localpath):
-        bb.warn("Renaming %s to %s failed, grep movefile in log.do_fetch to see why" % (ud.localpath, new_localpath))
+    bb.warn("Renaming %s to %s" % (localpath, new_localpath))
+    if not bb.utils.movefile(localpath, new_localpath):
+        bb.warn("Renaming %s to %s failed, grep movefile in log.do_fetch to see why" % (localpath, new_localpath))
 
 
 def try_mirror_url(fetch, origud, ud, ld, check = False):
