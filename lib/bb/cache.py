@@ -619,7 +619,8 @@ class Cache(object):
                     if not f:
                         continue
                     f, exist = f.rsplit(":", 1)
-                    if (exist == "True" and not os.path.exists(f)) or (exist == "False" and os.path.exists(f)):
+                    file_exists = bb.parse.cached_mtime_noerror(f) != 0
+                    if (exist == "True" and not file_exists) or (exist == "False" and file_exists):
                         self.logger.debug2("%s's file checksum list file %s changed",
                                              fn, f)
                         self.remove(fn)
