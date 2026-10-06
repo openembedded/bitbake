@@ -1708,8 +1708,6 @@ class FetchLatestVersionTest(FetcherTest):
 
 class WgetChecksumTest(FetcherTest):
     content = b"bitbake wget test data\n" * 64
-    # As large as the real file, so wget --continue has nothing left to fetch
-    # and keeps it as is
     corrupt = b"x" * len(content)
 
     def setUp(self):
@@ -1743,8 +1741,10 @@ class WgetChecksumTest(FetcherTest):
         self.write(os.path.join(self.dldir, "test.bin.tmp"), self.corrupt)
 
         fetcher = bb.fetch.Fetch([self.url], self.d)
-        with self.assertRaises(bb.fetch.FetchError):
-            fetcher.download()
+        # Skip wget, so the fetcher verifies the file seeded above as is
+        with unittest.mock.patch.object(bb.fetch.wget.Wget, "_runwget"):
+            with self.assertRaises(bb.fetch.FetchError):
+                fetcher.download()
         self.assertFalse(os.path.exists(os.path.join(self.dldir, "test.bin.tmp")))
 
         fetcher.download()
