@@ -39,12 +39,12 @@ class PRServerClient(bb.asyncrpc.AsyncServerConnection):
 
     async def dispatch_message(self, msg):
         try:
-            return await super().dispatch_message(msg)
+            response = await super().dispatch_message(msg)
         except:
             self.server.table.sync()
             raise
-        else:
-            self.server.table.sync_if_dirty()
+        self.server.table.sync_if_dirty()
+        return response
 
     async def handle_test_pr(self, request):
         '''Finds the PR value corresponding to the request. If not found, returns None and doesn't insert a new value'''
