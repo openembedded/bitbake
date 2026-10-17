@@ -127,6 +127,11 @@ class Wget(FetchMethod):
 
         fetchcmd = self.basecmd.copy()
 
+        wget2 = False
+        version = subprocess.check_output(fetchcmd + ["--version"], text=True)
+        if "Wget2" in version:
+             wget2 = True
+
         dldir = os.path.realpath(d.getVar("DL_DIR"))
         # Where we ultimately want the file
         finalpath = os.path.join(dldir, ud.localfile)
@@ -150,7 +155,11 @@ class Wget(FetchMethod):
                 fetchcmd.append("--password=" + ud.pswd)
 
         uri = ud.url.split(";")[0]
-        fetchcmd.append("--continue")
+        # wget2 has bugs with --continue and -O with servers that don't support Range: headers
+        # so we skip that for now with wget v2+
+        # https://gitlab.com/gnuwget/wget2/-/work_items/728
+        if not wget2:
+            fetchcmd.append("--continue")
         fetchcmd.append("--directory-prefix=" + dldir)
         fetchcmd.append(uri)
         self._runwget(ud, d, fetchcmd, False)
