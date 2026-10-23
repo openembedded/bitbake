@@ -171,6 +171,10 @@ class RunQueueScheduler(object):
             self.stamps[tid] = bb.parse.siggen.stampfile_mcfn(taskname, taskfn, extrainfo=False)
             if tid in self.rq.runq_buildable:
                 self.buildable.add(tid)
+            if taskname not in self.skip_maxthread:
+                self.skip_maxthread[taskname] = self.rq.cfgData.getVarFlag(taskname, "number_threads")
+        # Only count the running tasks per name if some task has a limit
+        self.has_maxthread = any(self.skip_maxthread.values())
 
         self.rev_prio_map = None
         self.prev_cpu_pressure = 0.0
@@ -259,9 +263,11 @@ class RunQueueScheduler(object):
         """
         # Once tasks are running we don't need to worry about them again
         self.buildable.difference_update(self.rq.runq_running)
-        buildable = set(self.buildable)
-        buildable.difference_update(self.rq.holdoff_tasks)
-        buildable.intersection_update(self.rq.tasks_covered | self.rq.tasks_notcovered)
+        holdoff = self.rq.holdoff_tasks
+        covered = self.rq.tasks_covered
+        notcovered = self.rq.tasks_notcovered
+        buildable = {t for t in self.buildable
+                     if t not in holdoff and (t in covered or t in notcovered)}
         if not buildable:
             return None
 
@@ -273,16 +279,15 @@ class RunQueueScheduler(object):
 
         # Filter out tasks that have a max number of threads that have been exceeded
         skip_buildable = {}
-        for running in self.rq.runq_running.difference(self.rq.runq_complete):
-            rtaskname = taskname_from_tid(running)
-            if rtaskname not in self.skip_maxthread:
-                self.skip_maxthread[rtaskname] = self.rq.cfgData.getVarFlag(rtaskname, "number_threads")
-            if not self.skip_maxthread[rtaskname]:
-                continue
-            if rtaskname in skip_buildable:
-                skip_buildable[rtaskname] += 1
-            else:
-                skip_buildable[rtaskname] = 1
+        if self.has_maxthread:
+            for running in self.rq.runq_running.difference(self.rq.runq_complete):
+                rtaskname = taskname_from_tid(running)
+                if not self.skip_maxthread[rtaskname]:
+                    continue
+                if rtaskname in skip_buildable:
+                    skip_buildable[rtaskname] += 1
+                else:
+                    skip_buildable[rtaskname] = 1
 
         if len(buildable) == 1:
             tid = buildable.pop()

@@ -72,6 +72,21 @@ class RunQueueTests(unittest.TestCase):
 
             self.shutdown(tempdir)
 
+    def test_number_threads(self):
+        with tempfile.TemporaryDirectory(prefix="runqueuetest") as tempdir:
+            postconf = os.path.join(tempdir, "number_threads.conf")
+            with open(postconf, "w") as f:
+                f.write('do_fetch[number_threads] = "1"\n')
+            cmd = ["bitbake", "-R", postconf, "a1", "b1"]
+            # a1:do_fetch is scheduled first, so the quick b1:do_fetch can
+            # only finish after the slow a1:do_fetch if the limit is applied
+            tasks = self.run_bitbakecmd(cmd, tempdir, slowtasks="a1:fetch")
+            expected = ['a1:' + x for x in self.alltasks] + ['b1:' + x for x in self.alltasks]
+            self.assertEqual(set(tasks), set(expected))
+            self.assertLess(tasks.index('a1:fetch'), tasks.index('b1:fetch'))
+
+            self.shutdown(tempdir)
+
     def test_single_setscenevalid(self):
         with tempfile.TemporaryDirectory(prefix="runqueuetest") as tempdir:
             cmd = ["bitbake", "a1"]
