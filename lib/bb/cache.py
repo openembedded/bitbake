@@ -23,7 +23,6 @@ from collections import defaultdict
 from collections.abc import Mapping
 import bb.utils
 from bb import PrefixLoggerAdapter
-import re
 import shutil
 
 logger = logging.getLogger("BitBake.Cache")
@@ -404,7 +403,6 @@ class Cache(object):
         self.data_fn = None
         self.cacheclean = True
         self.data_hash = data_hash
-        self.filelist_regex = re.compile(r'(?:(?<=:True)|(?<=:False))\s+')
 
         if self.cachedir in [None, '']:
             bb.fatal("Please ensure CACHE is set to the cache directory for BitBake to use")
@@ -614,7 +612,7 @@ class Cache(object):
                 if not fl:
                     continue
                 # Have to be careful about spaces and colons in filenames
-                flist = self.filelist_regex.split(fl)
+                flist = bb.utils.split_file_checksums(fl)
                 for f in flist:
                     if not f:
                         continue

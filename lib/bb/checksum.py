@@ -11,12 +11,9 @@ import os
 import stat
 import bb.utils
 import logging
-import re
 from bb.cache import MultiProcessCache
 
 logger = logging.getLogger("BitBake.Cache")
-
-filelist_regex = re.compile(r'(?:(?<=:True)|(?<=:False))\s+')
 
 # mtime cache (non-persistent)
 # based upon the assumption that files do not change during bitbake run
@@ -112,7 +109,7 @@ class FileChecksumCache(MultiProcessCache):
             return dirchecksums
 
         checksums = []
-        for pth in filelist_regex.split(filelist):
+        for pth in bb.utils.split_file_checksums(filelist):
             if not pth:
                 continue
             pth = pth.strip()

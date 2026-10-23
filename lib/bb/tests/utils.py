@@ -703,3 +703,29 @@ class FilemodeTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             bb.utils.to_filemode("999")
 
+
+class SplitFileChecksums(unittest.TestCase):
+    def check(self, filelist, expected):
+        regex = re.compile(r'(?:(?<=:True)|(?<=:False))\s+')
+        self.assertEqual(regex.split(filelist), expected)
+        self.assertEqual(bb.utils.split_file_checksums(filelist), expected)
+
+    def test_simple(self):
+        self.check("/a:True /b:False", ["/a:True", "/b:False"])
+        self.check("/a:True", ["/a:True"])
+        self.check("", [""])
+        self.check("   ", ["   "])
+
+    def test_whitespace(self):
+        self.check("/a:True\t/b:False\n/c:True  /d:False", ["/a:True", "/b:False", "/c:True", "/d:False"])
+        self.check("/a:True\xa0/b:False\u3000/c:True", ["/a:True", "/b:False", "/c:True"])
+        self.check("  /a:True /b:False  ", ["  /a:True", "/b:False", ""])
+
+    def test_spaces_in_paths(self):
+        self.check("/a b/c:True /d e:False", ["/a b/c:True", "/d e:False"])
+        self.check("/a:True /b c:False /d", ["/a:True", "/b c:False", "/d"])
+
+    def test_suffix_lookalikes(self):
+        self.check("/a:Truex /b:False", ["/a:Truex /b:False"])
+        self.check(":True :False", [":True", ":False"])
+        self.check("/a:True:False /b:False", ["/a:True:False", "/b:False"])

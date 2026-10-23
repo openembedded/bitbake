@@ -2334,3 +2334,32 @@ def is_path_on_nfs(path):
     import bb.process
     fstype = bb.process.run(['stat', '-f', '-c', '%T', path])[0].strip()
     return fstype == "nfs"
+
+_file_checksums_regex = re.compile(r'(?:(?<=:True)|(?<=:False))\s+')
+
+def split_file_checksums(filelist):
+    """
+    Split a file-checksums value into its ``path:True`` and ``path:False``
+    entries at the whitespace following ``:True`` or ``:False``, since the
+    paths can contain whitespace.
+
+    Arguments:
+
+    -  ``filelist``: the file-checksums string.
+
+    Returns the list of entries. When every whitespace-separated word ends
+    with ``:True`` or ``:False`` (the usual case), this is the same as
+    splitting on whitespace, which is much faster for long values than the
+    regular expression.
+    """
+    words = filelist.split()
+    if words and all(word.endswith((":True", ":False")) for word in words):
+        # Match the regular expression split exactly: leading whitespace stays
+        # with the first entry and trailing whitespace gives an empty entry
+        leading = len(filelist) - len(filelist.lstrip())
+        if leading:
+            words[0] = filelist[:leading] + words[0]
+        if filelist[-1].isspace():
+            words.append("")
+        return words
+    return _file_checksums_regex.split(filelist)
