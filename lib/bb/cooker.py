@@ -590,7 +590,7 @@ You can also remove the BB_HASHSERVE_UPSTREAM setting, but this may result in si
 
         if fn:
             try:
-                layername = self.collections[mc].calc_bbfile_priority(fn)[2]
+                layername = self.collections[mc].get_layername(fn)
                 envdata = self.databuilder.parseRecipe(fn, self.collections[mc].get_file_appends(fn), layername)
             except Exception as e:
                 parselog.exception("Unable to read %s", fn)
@@ -1391,7 +1391,7 @@ You can also remove the BB_HASHSERVE_UPSTREAM setting, but this may result in si
 
         bb_caches = bb.cache.MulticonfigCache(self.databuilder, self.databuilder.data_hash, self.caches_array)
 
-        layername = self.collections[mc].calc_bbfile_priority(fn)[2]
+        layername = self.collections[mc].get_layername(fn)
         infos = bb_caches[mc].parse(fn, self.collections[mc].get_file_appends(fn), layername)
         infos = dict(infos)
 
@@ -1825,6 +1825,12 @@ class CookerCollectFiles(object):
                 return pri, regex, layername
         return 0, None, None
 
+    def get_layername(self, filename):
+        for layername, _, regex, _ in self.bbfile_config_priorities:
+            if regex.match(filename):
+                return layername
+        return None
+
     def get_bbfiles(self):
         """Get list of default .bb files by reading out the current directory"""
         path = os.getcwd()
@@ -2181,7 +2187,7 @@ class CookerParser(object):
         for mc in self.cooker.multiconfigs:
             for filename in self.mcfilelist[mc]:
                 appends = self.cooker.collections[mc].get_file_appends(filename)
-                layername = self.cooker.collections[mc].calc_bbfile_priority(filename)[2]
+                layername = self.cooker.collections[mc].get_layername(filename)
                 if not self.bb_caches[mc].cacheValid(filename, appends):
                     self.willparse.append((mc, self.bb_caches[mc], filename, appends, layername))
                 else:
@@ -2426,7 +2432,7 @@ class CookerParser(object):
         bb.cache.SiggenRecipeInfo.reset()
         to_reparse = set()
         for mc in self.cooker.multiconfigs:
-            layername = self.cooker.collections[mc].calc_bbfile_priority(filename)[2]
+            layername = self.cooker.collections[mc].get_layername(filename)
             to_reparse.add((mc, filename, self.cooker.collections[mc].get_file_appends(filename), layername))
 
         for mc, filename, appends, layername in to_reparse:

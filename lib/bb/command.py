@@ -583,7 +583,7 @@ class CommandsSync:
                 appendfiles = command.cooker.collections[mc].get_file_appends(fn)
         else:
             appendfiles = []
-        layername = command.cooker.collections[mc].calc_bbfile_priority(fn)[2]
+        layername = command.cooker.collections[mc].get_layername(fn)
         # We are calling bb.cache locally here rather than on the server,
         # but that's OK because it doesn't actually need anything from
         # the server barring the global datastore (which we have a remote
