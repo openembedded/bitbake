@@ -68,24 +68,7 @@ def sortPriorities(pn, dataCache, pkg_pn = None):
     if not pkg_pn:
         pkg_pn = dataCache.pkg_pn
 
-    files = pkg_pn[pn]
-    priorities = {}
-    for f in files:
-        priority = dataCache.bbfile_priority[f]
-        preference = dataCache.pkg_dp[f]
-        if priority not in priorities:
-            priorities[priority] = {}
-        if preference not in priorities[priority]:
-            priorities[priority][preference] = []
-        priorities[priority][preference].append(f)
-    tmp_pn = []
-    for pri in sorted(priorities):
-        tmp_pref = []
-        for pref in sorted(priorities[pri]):
-            tmp_pref.extend(priorities[pri][pref])
-        tmp_pn = [tmp_pref] + tmp_pn
-
-    return tmp_pn
+    return [sorted(pkg_pn[pn], key=dataCache.pkg_dp.__getitem__)]
 
 def versionVariableMatch(cfgData, keyword, pn):
     """
