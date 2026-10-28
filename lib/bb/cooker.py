@@ -1890,19 +1890,20 @@ class CookerCollectFiles(object):
             # Can't use set here as order is important
             newfiles = []
             for f in files:
-                if os.path.isdir(f):
-                    dirfiles = self.find_bbfiles(f)
-                    for g in dirfiles:
-                        if g not in newfiles:
-                            newfiles.append(g)
+                globbed = []
+                if os.path.exists(f):
+                    globbed = [f]
                 else:
-                    globbed = glob.glob(f)
-                    if not globbed and os.path.exists(f):
-                        globbed = [f]
                     # glob gives files in order on disk. Sort to be deterministic.
-                    for g in sorted(globbed):
-                        if g not in newfiles:
-                            newfiles.append(g)
+                    globbed = sorted(glob.glob(f))
+                for g in globbed:
+                    if os.path.isdir(g):
+                        dirfiles = self.find_bbfiles(g)
+                        for g in dirfiles:
+                            if g not in newfiles:
+                                newfiles.append(g)
+                    elif g not in newfiles:
+                        newfiles.append(g)
         finally:
             os.listdir = origlistdir
             if hasattr(os, 'scandir'):
