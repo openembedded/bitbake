@@ -1409,7 +1409,6 @@ You can also remove the BB_HASHSERVE_UPSTREAM setting, but this may result in si
         # Tweak some variables
         item = info_array[0].pn
         self.recipecaches[mc].ignored_dependencies = set()
-        self.recipecaches[mc].bbfile_priority[fn] = 1
         self.configuration.limited_deps = True
 
         # Remove external dependencies
@@ -1690,8 +1689,6 @@ You can also remove the BB_HASHSERVE_UPSTREAM setting, but this may result in si
                 raise bb.BBHandledException()
             self.show_appends_with_no_recipes()
             self.handlePrefProviders()
-            for mc in self.multiconfigs:
-                self.recipecaches[mc].bbfile_priority = self.collections[mc].collection_priorities(self.recipecaches[mc].pkg_fn, self.parser.mcfilelist[mc], self.data)
             self.state = State.RUNNING
 
             # Send an event listing all stamps reachable after parsing
@@ -1862,10 +1859,6 @@ class CookerCollectFiles(object):
         collectlog.debug("collecting .bb files")
 
         files = (config.getVar( "BBFILES") or "").split()
-
-        # Sort files by priority
-        files.sort( key=lambda fileitem: self.calc_bbfile_priority(fileitem)[0] )
-        config.setVar("BBFILES_PRIORITIZED", " ".join(files))
 
         if not files:
             files = self.get_bbfiles()

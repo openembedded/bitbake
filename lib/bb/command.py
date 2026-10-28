@@ -407,11 +407,7 @@ class CommandsSync:
     getRecipeInherits.readonly = True
 
     def getBbFilePriority(self, command, params):
-        try:
-            mc = params[0]
-        except IndexError:
-            mc = ''
-        return command.cooker.recipecaches[mc].bbfile_priority
+        return None
     getBbFilePriority.readonly = True
 
     def getDefaultPreference(self, command, params):
@@ -437,15 +433,7 @@ class CommandsSync:
             mc = params[0]
         except IndexError:
             mc = ''
-
-        # Return list sorted by reverse priority order
-        import bb.cache
-        def sortkey(x):
-            vfn, _ = x
-            realfn, _, item_mc = bb.cache.virtualfn2realfn(vfn)
-            return -command.cooker.collections[item_mc].calc_bbfile_priority(realfn)[0], vfn
-
-        skipdict = OrderedDict(sorted(command.cooker.skiplist_by_mc[mc].items(), key=sortkey))
+        skipdict = OrderedDict(sorted(command.cooker.skiplist_by_mc[mc].items()))
         return list(skipdict.items())
     getSkippedRecipes.readonly = True
 
