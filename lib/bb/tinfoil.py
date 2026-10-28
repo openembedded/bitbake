@@ -12,7 +12,6 @@ import os
 import sys
 import time
 import atexit
-import re
 from collections import OrderedDict, defaultdict
 from functools import partial, wraps
 from contextlib import contextmanager
@@ -300,8 +299,6 @@ class TinfoilCookerAdapter:
                 attrvalue = self.tinfoil.run_command('getRecipeVersions', self.mc) or {}
             elif name == 'inherits':
                 attrvalue = self.tinfoil.run_command('getRecipeInherits', self.mc) or {}
-            elif name == 'bbfile_priority':
-                attrvalue = self.tinfoil.run_command('getBbFilePriority', self.mc) or {}
             elif name == 'pkg_dp':
                 attrvalue = self.tinfoil.run_command('getDefaultPreference', self.mc) or {}
             elif name == 'fn_provides':
@@ -339,13 +336,6 @@ class TinfoilCookerAdapter:
         # Grab these only when they are requested since they aren't always used
         if name in self._cache:
             return self._cache[name]
-        elif name == 'bbfile_config_priorities':
-            ret = self.tinfoil.run_command('getLayerPriorities')
-            bbfile_config_priorities = []
-            for collection, pattern, regex, pri in ret:
-                bbfile_config_priorities.append((collection, pattern, re.compile(regex), pri))
-
-            attrvalue = bbfile_config_priorities
         else:
             raise AttributeError("%s instance has no attribute '%s'" % (self.__class__.__name__, name))
 
