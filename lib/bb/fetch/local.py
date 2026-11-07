@@ -31,9 +31,27 @@ class Local(FetchMethod):
         # We don't set localfile as for this fetcher the file is already local!
         ud.basename = os.path.basename(ud.path)
         ud.basepath = ud.path
-        ud.needdonestamp = False
+        # Only use a donestamp when a checksum is given in the url, so that
+        # verify_checksum() gets called for the file
+        ud.needdonestamp = self.checksum_expected(ud)
         if "*" in ud.path:
             raise bb.fetch.ParameterError("file:// urls using globbing are no longer supported. Please place the files in a directory and reference that instead.", ud.url)
+        return
+
+    def checksum_expected(self, ud):
+        """
+        Is any checksum given in the url parameters?
+        """
+        for checksum_id in bb.fetch.CHECKSUM_LIST:
+            if "%ssum" % checksum_id in ud.parm or \
+               "%s.%ssum" % (ud.name, checksum_id) in ud.parm:
+                return True
+        return False
+
+    def rename_bad_checksum(self, ud, suffix, localpath=None):
+        """
+        A file:// url refers to the user's own file, leave it in place
+        """
         return
 
     def localpath(self, urldata, d):

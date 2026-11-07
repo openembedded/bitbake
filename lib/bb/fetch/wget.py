@@ -181,7 +181,7 @@ class Wget(FetchMethod):
         except bb.fetch.ChecksumError as e:
             # The download is resumed with --continue, so a bad file left in place
             # would be reused by the mirrors and by every later attempt
-            bb.fetch.rename_bad_checksum(ud, e.checksum, localpath=localpath)
+            self.rename_bad_checksum(ud, e.checksum, localpath=localpath)
             raise
 
         # Remove the ".tmp" and move the file into position atomically
