@@ -12,8 +12,9 @@ register = template.Library()
 def project_url(parser, token):
     """
     Create a URL for a project's main page;
-    for non-default projects in build mode, this is the configuration page;
-    for the default project, or without build mode, this is the project
+    for non-default projects with a release in build mode, this is the
+    configuration page; for the default project, projects without a release
+    (e.g. from TOASTER_PROJECT), or without build mode, this is the project
     builds page
     """
     try:
@@ -32,7 +33,7 @@ class ProjectUrlNode(template.Node):
         try:
             project = self.project.resolve(context)
             build_mode = os.environ.get('TOASTER_BUILDSERVER') == '1'
-            if project.is_default or not build_mode:
+            if project.is_default or not build_mode or project.release is None:
                 return reverse('projectbuilds', args=(project.id,))
             else:
                 return reverse('project', args=(project.id,))

@@ -1535,6 +1535,11 @@ if True:
                 return redirect("%s?%s" % (reverse(project_specific, args=(project.pk,)),params))
             else:
                 return redirect(reverse(project_specific, args=(project.pk,)))
+        # projects without a release (e.g. from TOASTER_PROJECT) only
+        # hold command line builds
+        if project.release is None:
+            return redirect('projectbuilds', pid=pid)
+
         context = {"project": project}
         return toaster_render(request, "project.html", context)
 
@@ -1826,6 +1831,8 @@ if True:
             prj = Project.objects.get(id = pid)
         except Project.DoesNotExist:
             return HttpResponseNotFound("<h1>Project id " + pid + " is unavailable</h1>")
+        if prj.release is None:
+            return redirect('projectbuilds', pid=pid)
 
         # remove disallowed and externally managed varaibles from this list
         vars_managed,vars_fstypes,vars_disallowed = get_project_configvars_context()

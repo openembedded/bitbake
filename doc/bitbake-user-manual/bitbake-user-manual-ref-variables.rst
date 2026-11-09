@@ -1922,6 +1922,19 @@ overview of their function and contents.
       consist mostly of task logs and scripts, when building a particular
       recipe.
 
+   :term:`TOASTER_PROJECT`
+      Specifies the name of the Toaster project in which to store a build
+      started from the command line. If the project does not exist, Toaster
+      creates it. If this variable is not set, Toaster stores the build in the
+      default "Command line builds" project. This variable has no effect on
+      builds started from the Toaster web interface.
+
+      Toaster reads this variable from the BitBake datastore, so it is also
+      recorded in event logs. You can set it in a configuration file such as
+      ``local.conf``. To set it from the environment, the variable must be
+      listed in :term:`BB_ENV_PASSTHROUGH_ADDITIONS`, which the ``toaster``
+      start script does for you.
+
    :term:`TOPDIR`
       Points to the build directory. BitBake automatically sets this
       variable.

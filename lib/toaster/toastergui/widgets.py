@@ -544,7 +544,7 @@ class MostRecentBuildsView(View):
             build['rebuild_url'] = rebuild_url
             build['cancel_url'] = cancel_url
 
-            build['is_default_project_build'] = build_obj.project.is_default
+            build['is_cli_build'] = build_obj.get_buildrequest() is None
 
             build['build_targets_json'] = \
                 template_json(get_tasks(build_obj.target_set.all()))

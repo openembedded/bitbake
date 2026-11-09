@@ -15,12 +15,18 @@ from django.urls import reverse
 from django.utils import timezone
 
 from orm.models import Project, Build, Variable, Layer, Layer_Version, Recipe
+from orm.models import BitbakeVersion, Release
 
 
 class ProjectPagesBase(TestCase):
 
     def setUp(self):
-        self.project = Project.objects.create(name="test project")
+        bbv = BitbakeVersion.objects.create(name='bbv', giturl='/tmp/',
+                                            branch='master', dirpath='')
+        release = Release.objects.create(name='release',
+                                         bitbake_version=bbv)
+        self.project = Project.objects.create(name="test project",
+                                              release=release)
         self.builds_url = reverse('projectbuilds', args=(self.project.id,))
         self.config_url = reverse('project', args=(self.project.id,))
 

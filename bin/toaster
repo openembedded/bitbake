@@ -263,7 +263,7 @@ fi
 # 4) pid's we need to clean up on exit/shutdown
 # By default we move this all into the Toaster's parent build directory
 export TOASTER_DIR=$BUILDDIR
-export BB_ENV_PASSTHROUGH_ADDITIONS="$BB_ENV_PASSTHROUGH_ADDITIONS TOASTER_DIR"
+export BB_ENV_PASSTHROUGH_ADDITIONS="$BB_ENV_PASSTHROUGH_ADDITIONS TOASTER_DIR TOASTER_PROJECT"
 
 # Determine the action. If specified by arguments, fine, if not, toggle it
 if [ "$CMD" = "start" ] ; then

@@ -255,7 +255,7 @@
 
 <!-- rebuild button or no rebuild icon -->
 <script id="rebuild-template" type="text/x-jsrender">
-  <%if is_default_project_build%>
+  <%if is_cli_build%>
     <!-- no rebuild info icon -->
     <span class="pull-right glyphicon glyphicon-question-sign get-help <%if state == 'Succeeded'%>get-help-green<%else state == 'Failed'%>get-help-red<%else%>get-help-blue<%/if%>"
     title="Builds in this project cannot be started from Toaster: they are started from the command line">
@@ -272,7 +272,7 @@
 
 <!-- cancel button or no cancel icon -->
 <script id="cancel-template" type="text/x-jsrender">
-  <%if is_default_project_build%>
+  <%if is_cli_build%>
     <!-- no cancel icon -->
     <span class="glyphicon glyphicon-question-sign get-help get-help-blue pull-right" title="Builds in this project cannot be cancelled from Toaster: they can only be cancelled from the command line"></span>
   <%else%>

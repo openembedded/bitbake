@@ -192,6 +192,8 @@ class TestAllBuildsPage(SeleniumTestCase):
         but should be shown for other builds
         """
         build1 = Build.objects.create(**self.project1_build_success)
+        BuildRequest.objects.create(project=self.project1, build=build1,
+                                    state=BuildRequest.REQ_COMPLETED)
         default_build = Build.objects.create(
             **self.default_project_build_success)
 
