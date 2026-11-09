@@ -224,6 +224,7 @@ def main(server, eventHandler, params):
                 continue
 
             helper.eventHandler(event)
+            buildinfohelper.update_event_time(event)
 
             # pylint: disable=protected-access
             # the code will look into the protected variables of the event; no easy way around this

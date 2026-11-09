@@ -43,7 +43,7 @@ from bb.msg import BBLogFormatter as formatter
 from django.db import models
 from pprint import pformat
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone as dt_timezone
 
 from django.db import transaction
 
@@ -143,10 +143,12 @@ class ORMWrapper(object):
     # pylint: disable=bad-continuation
     # we do not follow the python conventions for continuation indentation due to long lines here
 
-    def get_or_create_build_object(self, brbe, project_name=None):
+    def get_or_create_build_object(self, brbe, project_name=None,
+                                   started_on=None):
         """
         project_name: for command line builds, the project to put the build
         into (created if needed); None or empty for the default project
+        started_on: start time of a new Build object; defaults to now
         """
         project_name = project_name.strip() if project_name else None
         prj = None
@@ -175,7 +177,7 @@ class ORMWrapper(object):
             build.save()
         else:
             # create new Build object
-            now = timezone.now()
+            now = started_on or timezone.now()
             build = Build.objects.create(
                 project=prj,
                 started_on=now,
@@ -217,7 +219,8 @@ class ORMWrapper(object):
             result.append(obj)
         return result
 
-    def update_build_stats_and_outcome(self, build, errors, warnings, taskfailures):
+    def update_build_stats_and_outcome(self, build, errors, warnings, taskfailures,
+                                       completed_on=None):
         assert isinstance(build,Build)
         assert isinstance(errors, int)
         assert isinstance(warnings, int)
@@ -235,7 +238,7 @@ class ORMWrapper(object):
         if errors or taskfailures:
             outcome = Build.FAILED
 
-        build.completed_on = timezone.now()
+        build.completed_on = completed_on or timezone.now()
         build.outcome = outcome
         build.save()
 
@@ -922,6 +925,10 @@ class BuildInfoHelper(object):
 
         self.project = None
 
+        # time of the latest event that has one; event logs can be replayed
+        # long after the build, so build times are taken from the events
+        self.event_time = None
+
         logger.debug("buildinfohelper: Build info helper inited %s" % vars(self))
 
 
@@ -940,7 +947,8 @@ class BuildInfoHelper(object):
             if self.brbe is None:
                 project_name, _ = self.server.runCommand(["getVariable", "TOASTER_PROJECT"])
             self.internal_state['build'] = \
-                self.orm_wrapper.get_or_create_build_object(self.brbe, project_name)
+                self.orm_wrapper.get_or_create_build_object(
+                    self.brbe, project_name, self.event_time)
 
         build = self.internal_state['build']
 
@@ -1103,6 +1111,15 @@ class BuildInfoHelper(object):
             except NotExisting as nee:
                 logger.warning("buildinfohelper: cannot identify layer exception:%s ", nee)
 
+    def update_event_time(self, event):
+        """Remember the time of events that carry one"""
+        if isinstance(event, logging.LogRecord):
+            secs = event.created
+        else:
+            secs = getattr(event, 'time', None)
+        if isinstance(secs, (int, float)):
+            self.event_time = datetime.fromtimestamp(secs, dt_timezone.utc)
+
     def store_started_build(self):
         self._ensure_build()
 
@@ -1210,7 +1227,8 @@ class BuildInfoHelper(object):
     def update_build_information(self, event, errors, warnings, taskfailures):
         self._ensure_build()
         self.orm_wrapper.update_build_stats_and_outcome(
-            self.internal_state['build'], errors, warnings, taskfailures)
+            self.internal_state['build'], errors, warnings, taskfailures,
+            self.event_time)
 
     def store_started_task(self, event):
         assert isinstance(event, (bb.runqueue.sceneQueueTaskStarted, bb.runqueue.runQueueTaskStarted, bb.runqueue.runQueueTaskSkipped))
