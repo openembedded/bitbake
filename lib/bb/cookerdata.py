@@ -10,11 +10,14 @@
 # SPDX-License-Identifier: GPL-2.0-only
 #
 
+import dataclasses
 import logging
 import os
 import re
 import sys
 import hashlib
+import graphlib
+import glob
 from functools import wraps
 
 import bb.cache
@@ -226,6 +229,15 @@ def findTopdir():
 
     return os.path.abspath(os.getcwd())
 
+@dataclasses.dataclass
+class Layer:
+    path: str
+    version: str
+    compat: set[str] = dataclasses.field(default_factory=set)
+    depends: dict[dict] = dataclasses.field(default_factory=dict)
+    recommends: dict[dict] = dataclasses.field(default_factory=dict)
+    fragment_recommends_any: set[str] = dataclasses.field(default_factory=set)
+
 class CookerDataBuilder(object):
 
     def __init__(self, cookercfg, worker = False):
@@ -280,7 +292,7 @@ class CookerDataBuilder(object):
     def parseBaseConfiguration(self, worker=False):
         mcdata = {}
         try:
-            self.data = self.parseConfigurationFiles(self.prefiles, self.postfiles)
+            self.data, self.layerdata = self.parseConfigurationFiles(self.prefiles, self.postfiles)
 
             servercontext = self.data.getVar("BB_WORKERCONTEXT", False) is None and not worker
             bb.fetch.fetcher_init(self.data, servercontext)
@@ -296,7 +308,7 @@ class CookerDataBuilder(object):
                     raise Exception("Too deep config re-parse loop. Check locations where "
                                     "BB_INVALIDCONF is being set (ConfigParsed event handlers)")
                 self.data.setVar("BB_INVALIDCONF", False)
-                self.data = self.parseConfigurationFiles(self.prefiles, self.postfiles)
+                self.data, self.layerdata = self.parseConfigurationFiles(self.prefiles, self.postfiles)
                 reparse_cnt += 1
                 bb.event.fire(bb.event.ConfigParsed(), self.data)
 
@@ -307,7 +319,7 @@ class CookerDataBuilder(object):
             for config in multiconfig:
                 if config[0].isdigit():
                     bb.fatal("Multiconfig name '%s' is invalid as multiconfigs cannot start with a digit" % config)
-                parsed_mcdata = self.parseConfigurationFiles(self.prefiles, self.postfiles, config)
+                parsed_mcdata, _ = self.parseConfigurationFiles(self.prefiles, self.postfiles, config)
                 bb.event.fire(bb.event.ConfigParsed(), parsed_mcdata)
                 mcdata[config] = parsed_mcdata
             if multiconfig:
@@ -369,6 +381,7 @@ class CookerDataBuilder(object):
             data = parse_config_file(f, data)
 
         layerconf = self._findLayerConf(data)
+        layerdata = {}
         if layerconf:
             parselog.debug2("Found bblayers.conf (%s)", layerconf)
             # By definition bblayers.conf is in conf/ of TOPDIR.
@@ -402,77 +415,178 @@ class CookerDataBuilder(object):
                 parselog.critical("Please check BBLAYERS in %s" % (layerconf))
                 raise bb.BBHandledException()
 
+            bitbakedir = os.path.realpath(os.path.dirname(__file__) + "/../../")
+            data.setVar("LAYERDIR_bitbake", bitbakedir)
+            data.setVarFlag("LAYERDIR_bitbake", "vardepvalue", "")
+
             layerseries = None
-            compat_entries = {}
+            layer_safevars = tuple()
+            errors = []
             for layer in layers:
-                parselog.debug2("Adding layer %s", layer)
+                parselog.debug2("Adding layer %s" % layer)
                 if 'HOME' in approved and '~' in layer:
                     layer = os.path.expanduser(layer)
                 if layer.endswith('/'):
                     layer = layer.rstrip('/')
-                data.setVar('LAYERDIR', layer)
-                data.setVar('LAYERDIR_RE', re.escape(layer))
-                data = parse_config_file(os.path.join(layer, "conf", "layer.conf"), data)
-                data.expandVarref('LAYERDIR')
-                data.expandVarref('LAYERDIR_RE')
+                layer = os.path.realpath(layer)
 
-                # Sadly we can't have nice things.
-                # Some layers think they're going to be 'clever' and copy the values from
-                # another layer, e.g. using ${LAYERSERIES_COMPAT_core}. The whole point of
-                # this mechanism is to make it clear which releases a layer supports and
-                # show when a layer master branch is bitrotting and is unmaintained.
-                # We therefore avoid people doing this here.
-                collections = (data.getVar('BBFILE_COLLECTIONS') or "").split()
-                for c in collections:
-                    compat_entry = data.getVar("LAYERSERIES_COMPAT_%s" % c)
-                    if compat_entry:
-                        compat_entries[c] = set(compat_entry.split())
-                        data.delVar("LAYERSERIES_COMPAT_%s" % c)
-                if not layerseries:
-                    layerseries = set((data.getVar("LAYERSERIES_CORENAMES") or "").split())
-                    if layerseries:
-                        data.delVar("LAYERSERIES_CORENAMES")
+                ld = data.createCopy()
+                ld.setVar('LAYERDIR', layer)
+                #ld.setVar('LAYERDIR_RE', re.escape(layer))
+                ld = parse_config_file(os.path.join(layer, "conf", "layer.conf"), ld)
 
-            data.delVar('LAYERDIR_RE')
-            data.delVar('LAYERDIR')
-            for c in compat_entries:
-                data.setVar("LAYERSERIES_COMPAT_%s" % c, " ".join(sorted(compat_entries[c])))
-
-            bbfiles_dynamic = (data.getVar('BBFILES_DYNAMIC') or "").split()
-            collections = (data.getVar('BBFILE_COLLECTIONS') or "").split()
-            invalid = []
-            for entry in bbfiles_dynamic:
-                parts = entry.split(":", 1)
-                if len(parts) != 2:
-                    invalid.append(entry)
+                layername = ld.getVar("LAYERNAME")
+                if not layername:
+                    errors.append("Layer %s does not set LAYERNAME" % layer)
                     continue
-                l, f = parts
-                invert = l[0] == "!"
-                if invert:
-                    l = l[1:]
-                if (l in collections and not invert) or (l not in collections and invert):
-                    data.appendVar("BBFILES", " " + f)
-            if invalid:
-                bb.fatal("BBFILES_DYNAMIC entries must be of the form {!}<collection name>:<filename pattern>, not:\n    %s" % "\n    ".join(invalid))
+                if layername in layerdata:
+                    errors.append("LAYERNAME %s is used by both %s and %s" % (layername, layer, layerdata[layername].path))
+                    continue
 
-            collections_tmp = collections[:]
-            for c in collections:
-                collections_tmp.remove(c)
-                if c in collections_tmp:
-                    bb.fatal("Found duplicated BBFILE_COLLECTIONS '%s', check bblayers.conf or layer.conf to fix it." % c)
+                nested = False
+                for pathcheck in layerdata:
+                    otherpath = layerdata[pathcheck].path
+                    if layer.startswith(otherpath + "/") or otherpath.startswith(layer + "/"):
+                        errors.append("Layer path %s (layer %s) conflicts with path %s from layer %s. Layers can't nest." % (layer, layername, otherpath, pathcheck))
+                        nested = True
+                if nested:
+                    continue
 
-                compat = set()
-                if c in compat_entries:
-                    compat = compat_entries[c]
-                if compat and not layerseries:
-                    bb.fatal("No core layer found to work with layer '%s'. Missing entry in bblayers.conf?" % c)
-                if compat and not (compat & layerseries):
-                    bb.fatal("Layer %s is not compatible with the core layer which only supports these series: %s (layer is compatible with %s)"
-                              % (c, " ".join(layerseries), " ".join(compat)))
-                elif not compat and not data.getVar("BB_WORKERCONTEXT"):
-                    bb.warn("Layer %s should set LAYERSERIES_COMPAT_%s in its conf/layer.conf file to list the core layer names it is compatible with." % (c, c))
+                def getVar(var, layername, ld):
+                    value = ld.getVar(var)
+                    if not value:
+                        value = ld.getVar("%s_%s" % (var, layername))
+                    return value
 
+                layerdata[layername] = Layer(
+                    path=layer,
+                    version=getVar("LAYERVERSION", layername, ld) or "1",
+                    compat=set((getVar("LAYERSERIES_COMPAT", layername, ld) or "").split()),
+                    depends=bb.utils.explode_dep_versions2(getVar("LAYERDEPENDS", layername, ld) or ""),
+                    recommends=bb.utils.explode_dep_versions2(getVar("LAYERRECOMMENDS", layername, ld) or ""),
+                    fragment_recommends_any=set((getVar("LAYER_FRAGMENT_RECOMMENDS_ANY", layername, ld) or "").split()),
+                )
+
+                if not layerdata[layername].compat:
+                    errors.append("Layer %s should set LAYERSERIES_COMPAT in its conf/layer.conf file to list the core layer names it is compatible with." % (layername))
+
+                if not layerseries:
+                    layerseries = set((ld.getVar("LAYERSERIES_CORENAMES") or "").split())
+                if not layer_safevars:
+                    layer_safevars = tuple((ld.getVar("LAYER_PASSTHROUGH_VARS_PREFIXES") or "").split())
+
+                for var in ld:
+                    if var.startswith(("LAYERNAME", "LAYERDEPENDS", "LAYERRECOMMENDS", "LAYERVERSION", "LAYERSERIES_COMPAT", "LAYERSERIES_CORENAMES", "LAYERDIR",  "LAYER_FRAGMENT_RECOMMENDS_ANY", "LAYER_PASSTHROUGH_VARS_PREFIXES")):
+                        continue
+                    if var.startswith(("BBFILE_COLLECTIONS", "BBFILE_PRIORITY", "BBFILE_PATTERN")):
+                        bb.warn("Support for %s was removed and the variable is being ignored but is set by layer %s" % (var, layer))
+                        continue
+                    if var in ["BBPATH", "BBFILES", "BBFILES_DYNAMIC"]:
+                        if ld.getVar(var) != data.getVar(var):
+                            bb.warn("%s now set automatically, the variable is being ignored but is set by layer %s" % (var, layer))
+                            bb.warn(str(ld.getVar(var, expand=False)))
+                        continue
+                    if var in data and (ld.getVar(var) == data.getVar(var)):
+                        continue
+                    if var.startswith(layer_safevars):
+                        pass
+                    elif var.startswith(("BBLAYERS_LAYERINDEX_NAME", "BB_GLOBAL_PYMODULES")):
+                        pass
+                    elif var == "__depends":
+                        pass
+                    else:
+                        bb.warn("Variable %s is set by %s and will be ignored" % (var, layer))
+                    data.setVar(var, ld.getVar(var))
+
+            if not layerseries:
+                errors.append("No layer sets LAYERSERIES_CORENAMES")
             data.setVar("LAYERSERIES_CORENAMES", " ".join(sorted(layerseries)))
+            data.setVar("LAYER_PASSTHROUGH_VARS_PREFIXES", " ".join(layer_safevars))
+
+            layers = set(layerdata)
+            for layer in layerdata:
+                data.setVar("LAYERDIR_%s" % layer, layerdata[layer].path)
+                data.setVarFlag("LAYERDIR_%s" % layer, "vardepvalue", "")
+                if not (layerdata[layer].compat & layerseries):
+                    errors.append("Layer %s is not compatible with the core layer which only supports these series: %s (layer is compatible with %s)"
+                              % (layer, " ".join(layerseries), " ".join(layerdata[layer].compat)))
+
+                # Check dependencies
+                if not set(layerdata[layer].depends).issubset(layers):
+                    errors.append("Layer %s depends on %s but that layer isn't configured" % (layer, " ".join(set(layerdata[layer].depends) - layers)))
+                    continue
+
+                # Check dependency versions
+                for dep in layerdata[layer].depends:
+                    for verop in layerdata[layer].depends[dep]:
+                        (op, depver) = verop.split()
+                        layerver = layerdata[dep].version
+                        if not layerver:
+                            errors.append("Layer '%s' depends on version %s of layer '%s', which exists in your configuration but does not specify a version. Check that you are using the correct matching versions/branches of these two layers." % (layer, verop, dep))
+                            continue
+                        try:
+                            res = bb.utils.vercmp_string_op(layerver, depver, op)
+                        except bb.utils.VersionStringException as vse:
+                            bb.fatal('Error parsing LAYERDEPENDS for layer %s: %s' % (layer, str(vse)))
+                        if not res:
+                            errors.append("Layer '%s' depends on version %s of layer '%s', but version %s is currently enabled in your configuration. Check that you are using the correct matching versions/branches of these two layers." % (layer, verop, dep, layerver))
+
+                # Check recommends versions
+                for dep in layerdata[layer].recommends:
+                    for verop in layerdata[layer].recommends[dep]:
+                        if dep not in layerdata:
+                            continue
+                        (op, depver) = verop.split()
+                        layerver = layerdata[dep].version
+                        if not layerver:
+                            errors.append("Layer '%s' recommends version %s of layer '%s', which exists in your configuration but does not specify a version. Check that you are using the correct matching versions/branches of these two layers." % (layer, verop, dep))
+                            continue
+                        try:
+                            res = bb.utils.vercmp_string_op(layerver, depver, op)
+                        except bb.utils.VersionStringException as vse:
+                            bb.fatal('Error parsing LAYERRECOMMENDS for layer %s: %s' % (layer, str(vse)))
+                        if not res:
+                            errors.append("Layer '%s' recommends version %s of layer '%s', but version %s is currently enabled in your configuration. Check that you are using the correct matching versions/branches of these two layers." % (layer, verop, dep, layerver))
+
+            data.setVar("layerdata", layerdata)
+
+            if errors:
+                for error in errors:
+                    bb.error(error)
+                bb.fatal("Layer errors found, parsing stopped")
+
+            # Using the layer dependencies, work out the order layers should be listed
+            # in BBPATH and searched for BBFILES
+            layerorder = graphlib.TopologicalSorter()
+            for layer in sorted(layerdata.keys()):
+                layerorder.add(layer)
+                for dep in layerdata[layer].depends:
+                    layerorder.add(layer, dep)
+
+            try:
+                ordering = list(layerorder.static_order())
+            except graphlib.CycleError as exc:
+                bb.fatal("Circular dependencies found from LAYERDEPENDS, can't continue. (%s)" % str(exc))
+
+            # Construct BBPATH
+            data.setVar("BBPATH", ":".join(["${TOPDIR}"] + [layerdata[layer].path for layer in ordering[::-1]]))
+
+            # Construct BBFILES
+            #  - any recipes subdirs are added through a glob
+            #  - any /dynamic-recipes/<layername>/ are added if the named layer is present
+            bbfiles = []
+            for layer in ordering:
+                recipes = layerdata[layer].path + "/recipes*"
+                if glob.glob(recipes):
+                    bbfiles.append(recipes)
+                dynamic_recipes = layerdata[layer].path + "/dynamic-recipes"
+                if os.path.isdir(dynamic_recipes):
+                    for deplayer in os.listdir(dynamic_recipes):
+                        if not os.path.isdir(dynamic_recipes + "/" + deplayer):
+                            continue
+                        if deplayer in layerdata:
+                            bbfiles.append(dynamic_recipes + "/" + deplayer)
+            data.setVar("BBFILES", " ".join(bbfiles))
 
         if not data.getVar("BBPATH"):
             msg = "The BBPATH variable is not set"
@@ -523,7 +637,7 @@ class CookerDataBuilder(object):
 
         data.setVar('BBINCLUDED',bb.parse.get_file_depends(data))
 
-        return data
+        return data, layerdata
 
     @staticmethod
     def _parse_recipe(bb_data, bbfile, appends, mc, layername):
@@ -537,6 +651,13 @@ class CookerDataBuilder(object):
 
         if appends:
             bb_data.setVar('__BBAPPEND', " ".join(appends))
+
+        layerdir = bb_data.getVar("LAYERDIR_%s" % layername)
+        if layerdir:
+             conffile = layerdir + "/conf/layervars.conf"
+             bb.parse.mark_dependency(bb_data, conffile)
+             if os.path.exists(conffile):
+                 bb.parse.handle(conffile, bb_data, True, baseconfig=True)
 
         return bb.parse.handle(bbfile, bb_data)
 

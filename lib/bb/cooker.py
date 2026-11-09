@@ -442,10 +442,9 @@ You can also remove the BB_HASHSERVE_UPSTREAM setting, but this may result in si
         for mc in self.multiconfigs:
             self.recipecaches[mc] = bb.cache.CacheData(self.caches_array)
 
-        self.handleCollections(self.data.getVar("BBFILE_COLLECTIONS"))
         self.collections = {}
         for mc in self.multiconfigs:
-            self.collections[mc] = CookerCollectFiles(self.bbfile_config_priorities, mc)
+            self.collections[mc] = CookerCollectFiles(self.databuilder.layerdata, mc)
             self.collections[mc].collect_bbfiles(self.databuilder.mcdata[mc], self.databuilder.mcdata[mc])
 
         self._parsecache_set(False)
@@ -779,7 +778,7 @@ You can also remove the BB_HASHSERVE_UPSTREAM setting, but this may result in si
         depend_tree["rdepends-pkg"] = {}
         depend_tree["rrecs-pkg"] = {}
         depend_tree['providermap'] = {}
-        depend_tree["layer-priorities"] = self.bbfile_config_priorities
+        depend_tree["layer-priorities"] = None
 
         for mc in taskdata:
             for name, fn in list(taskdata[mc].get_providermap().items()):
@@ -1169,129 +1168,6 @@ You can also remove the BB_HASHSERVE_UPSTREAM setting, but this may result in si
         else:
             shell.start( self )
 
-
-    def handleCollections(self, collections):
-        """Handle collections"""
-        errors = False
-        self.bbfile_config_priorities = []
-        if collections:
-            collection_priorities = {}
-            collection_depends = {}
-            collection_list = collections.split()
-            min_prio = 0
-            for c in collection_list:
-                bb.debug(1,'Processing %s in collection list' % (c))
-
-                # Get collection priority if defined explicitly
-                priority = self.data.getVar("BBFILE_PRIORITY_%s" % c)
-                if priority:
-                    try:
-                        prio = int(priority)
-                    except ValueError:
-                        parselog.error("invalid value for BBFILE_PRIORITY_%s: \"%s\"", c, priority)
-                        errors = True
-                    if min_prio == 0 or prio < min_prio:
-                        min_prio = prio
-                    collection_priorities[c] = prio
-                else:
-                    collection_priorities[c] = None
-
-                # Check dependencies and store information for priority calculation
-                deps = self.data.getVar("LAYERDEPENDS_%s" % c)
-                if deps:
-                    try:
-                        depDict = bb.utils.explode_dep_versions2(deps)
-                    except bb.utils.VersionStringException as vse:
-                        bb.fatal('Error parsing LAYERDEPENDS_%s: %s' % (c, str(vse)))
-                    for dep, oplist in list(depDict.items()):
-                        if dep in collection_list:
-                            for opstr in oplist:
-                                layerver = self.data.getVar("LAYERVERSION_%s" % dep)
-                                (op, depver) = opstr.split()
-                                if layerver:
-                                    try:
-                                        res = bb.utils.vercmp_string_op(layerver, depver, op)
-                                    except bb.utils.VersionStringException as vse:
-                                        bb.fatal('Error parsing LAYERDEPENDS_%s: %s' % (c, str(vse)))
-                                    if not res:
-                                        parselog.error("Layer '%s' depends on version %s of layer '%s', but version %s is currently enabled in your configuration. Check that you are using the correct matching versions/branches of these two layers.", c, opstr, dep, layerver)
-                                        errors = True
-                                else:
-                                    parselog.error("Layer '%s' depends on version %s of layer '%s', which exists in your configuration but does not specify a version. Check that you are using the correct matching versions/branches of these two layers.", c, opstr, dep)
-                                    errors = True
-                        else:
-                            parselog.error("Layer '%s' depends on layer '%s', but this layer is not enabled in your configuration", c, dep)
-                            errors = True
-                    collection_depends[c] = list(depDict.keys())
-                else:
-                    collection_depends[c] = []
-
-                # Check recommends and store information for priority calculation
-                recs = self.data.getVar("LAYERRECOMMENDS_%s" % c)
-                if recs:
-                    try:
-                        recDict = bb.utils.explode_dep_versions2(recs)
-                    except bb.utils.VersionStringException as vse:
-                        bb.fatal('Error parsing LAYERRECOMMENDS_%s: %s' % (c, str(vse)))
-                    for rec, oplist in list(recDict.items()):
-                        if rec in collection_list:
-                            if oplist:
-                                opstr = oplist[0]
-                                layerver = self.data.getVar("LAYERVERSION_%s" % rec)
-                                if layerver:
-                                    (op, recver) = opstr.split()
-                                    try:
-                                        res = bb.utils.vercmp_string_op(layerver, recver, op)
-                                    except bb.utils.VersionStringException as vse:
-                                        bb.fatal('Error parsing LAYERRECOMMENDS_%s: %s' % (c, str(vse)))
-                                    if not res:
-                                        parselog.debug3("Layer '%s' recommends version %s of layer '%s', but version %s is currently enabled in your configuration. Check that you are using the correct matching versions/branches of these two layers.", c, opstr, rec, layerver)
-                                        continue
-                                else:
-                                    parselog.debug3("Layer '%s' recommends version %s of layer '%s', which exists in your configuration but does not specify a version. Check that you are using the correct matching versions/branches of these two layers.", c, opstr, rec)
-                                    continue
-                            parselog.debug3("Layer '%s' recommends layer '%s', so we are adding it", c, rec)
-                            collection_depends[c].append(rec)
-                        else:
-                            parselog.debug3("Layer '%s' recommends layer '%s', but this layer is not enabled in your configuration", c, rec)
-
-            # Recursively work out collection priorities based on dependencies
-            def calc_layer_priority(collection):
-                if not collection_priorities[collection]:
-                    max_depprio = min_prio
-                    for dep in collection_depends[collection]:
-                        calc_layer_priority(dep)
-                        depprio = collection_priorities[dep]
-                        if depprio > max_depprio:
-                            max_depprio = depprio
-                    max_depprio += 1
-                    parselog.debug("Calculated priority of layer %s as %d", collection, max_depprio)
-                    collection_priorities[collection] = max_depprio
-
-            # Calculate all layer priorities using calc_layer_priority and store in bbfile_config_priorities
-            for c in collection_list:
-                calc_layer_priority(c)
-                regex = self.data.getVar("BBFILE_PATTERN_%s" % c)
-                if regex is None:
-                    parselog.error("BBFILE_PATTERN_%s not defined" % c)
-                    errors = True
-                    continue
-                elif regex == "":
-                    parselog.debug("BBFILE_PATTERN_%s is empty" % c)
-                    cre = re.compile('^NULL$')
-                    errors = False
-                else:
-                    try:
-                        cre = re.compile(regex)
-                    except re.error:
-                        parselog.error("BBFILE_PATTERN_%s \"%s\" is not a valid regular expression", c, regex)
-                        errors = True
-                        continue
-                self.bbfile_config_priorities.append((c, regex, cre, collection_priorities[c]))
-        if errors:
-            # We've already printed the actual error(s)
-            raise CollectionError("Errors during parsing layer configuration")
-
     def buildSetVars(self):
         """
         Setup any variables needed before starting a build
@@ -1609,7 +1485,7 @@ You can also remove the BB_HASHSERVE_UPSTREAM setting, but this may result in si
                 if flags and "func" in flags and "python" in flags:
                     expand = False
                 v = self.data.getVar(k, expand)
-                if not k.startswith("__") and not isinstance(v, bb.data_smart.DataSmart):
+                if not k.startswith("__") and not isinstance(v, bb.data_smart.DataSmart) and not isinstance(v, dict):
                     dump[k] = {
     'v' : str(v) ,
     'history' : self.data.varhistory.variable(k),
@@ -1807,25 +1683,16 @@ class CookerExit(bb.event.Event):
 
 
 class CookerCollectFiles(object):
-    def __init__(self, priorities, mc=''):
+    def __init__(self, layerdata, mc=''):
         self.mc = mc
         self.bbappends = []
         self.overlayed = None
-        # Priorities is a list of tuples, with the second element as the pattern.
-        # We need to sort the list with the longest pattern first, and so on to
-        # the shortest.  This allows nested layers to be properly evaluated.
-        self.bbfile_config_priorities = sorted(priorities, key=lambda tup: tup[1], reverse=True)
-
-    def calc_bbfile_priority(self, filename):
-        for layername, _, regex, pri in self.bbfile_config_priorities:
-            if regex.match(filename):
-                return pri, regex, layername
-        return 0, None, None
+        self.layerdata = layerdata
 
     def get_layername(self, filename):
-        for layername, _, regex, _ in self.bbfile_config_priorities:
-            if regex.match(filename):
-                return layername
+        for layer in self.layerdata:
+            if filename.startswith(self.layerdata[layer].path + "/"):
+                return layer
         return None
 
     def get_bbfiles(self):
@@ -1979,68 +1846,6 @@ class CookerCollectFiles(object):
             if (bbappend == f) or ('%' in bbappend and bbappend.startswith(f[:bbappend.index('%')])):
                 filelist.append(filename)
         return tuple(filelist)
-
-    def collection_priorities(self, pkgfns, fns, d):
-        # Return the priorities of the entries in pkgfns
-        # Also check that all the regexes in self.bbfile_config_priorities are used
-        # (but to do that we need to ensure skipped recipes aren't counted, nor
-        # collections in BBFILE_PATTERN_IGNORE_EMPTY)
-
-        priorities = {}
-        seen = set()
-        matched = set()
-
-        matched_regex = set()
-        unmatched_regex = set()
-        for _, _, regex, _ in self.bbfile_config_priorities:
-            unmatched_regex.add(regex)
-
-        # Calculate priorities for each file
-        for p in pkgfns:
-            realfn, cls, mc = bb.cache.virtualfn2realfn(p)
-            priorities[p], regex, _ = self.calc_bbfile_priority(realfn)
-            if regex in unmatched_regex:
-                matched_regex.add(regex)
-                unmatched_regex.remove(regex)
-            seen.add(realfn)
-            if regex:
-                matched.add(realfn)
-
-        if unmatched_regex:
-            # Account for bbappend files
-            for b in self.bbappends:
-                (bbfile, append) = b
-                seen.add(append)
-
-            # Account for skipped recipes
-            seen.update(fns)
-
-            seen.difference_update(matched)
-
-            def already_matched(fn):
-                for regex in matched_regex:
-                    if regex.match(fn):
-                        return True
-                return False
-
-            for unmatch in unmatched_regex.copy():
-                for fn in seen:
-                    if unmatch.match(fn):
-                        # If the bbappend or file was already matched by another regex, skip it
-                        # e.g. for a layer within a layer, the outer regex could match, the inner
-                        # regex may match nothing and we should warn about that
-                        if already_matched(fn):
-                            continue
-                        unmatched_regex.remove(unmatch)
-                        break
-
-        for collection, pattern, regex, _ in self.bbfile_config_priorities:
-            if regex in unmatched_regex:
-                if d.getVar('BBFILE_PATTERN_IGNORE_EMPTY_%s' % collection) != '1':
-                    collectlog.warning("No bb files in %s matched BBFILE_PATTERN_%s '%s'" % (self.mc if self.mc else 'default',
-                                                                                             collection, pattern))
-
-        return priorities
 
 class ParsingFailure(Exception):
     def __init__(self, realexception, recipe):
