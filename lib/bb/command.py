@@ -300,15 +300,6 @@ class CommandsSync:
         command.cooker.parseConfiguration()
     parseConfiguration.needconfig = False
 
-    def getLayerPriorities(self, command, params):
-        command.cooker.parseConfiguration()
-        ret = []
-        # regex objects cannot be marshalled by xmlrpc
-        for collection, pattern, regex, pri in command.cooker.bbfile_config_priorities:
-            ret.append((collection, pattern, regex.pattern, pri))
-        return ret
-    getLayerPriorities.readonly = True
-
     def revalidateCaches(self, command, params):
         """Called by UI clients when metadata may have changed"""
         command.cooker.revalidateCaches()

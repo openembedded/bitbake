@@ -359,10 +359,11 @@ class AddFragmentsNode(AstNode):
         # No need to use mark_dependency since we would only match a fragment
         # from a specific layer and there can only be a single layer with a
         # given namespace.
-        def find_fragment(layers, layerid, full_fragment_name):
-           for layerpath in layers.split():
+        def find_fragment(layerdata, layerid, full_fragment_name):
+           if layerid in layerdata:
+               layerpath = layerdata[layerid].path
                candidate_fragment_path = os.path.join(layerpath, full_fragment_name)
-               if os.path.exists(candidate_fragment_path) and bb.utils.get_file_layer(candidate_fragment_path, data) == layerid:
+               if os.path.exists(candidate_fragment_path):
                    return candidate_fragment_path
            return None
 
@@ -388,10 +389,16 @@ class AddFragmentsNode(AstNode):
                 return True
             return False
 
-        fragments = data.getVar(self.fragments_variable)
-        layers = data.getVar('BBLAYERS')
+        fragments = (data.getVar(self.fragments_variable) or "").split()
         flagged_variables = data.getVar(self.flagged_variables_list_variable).split()
         builtin_fragments = {f[0]:f[1] for f in [f.split(':') for f in data.getVar(self.builtin_fragments_variable).split()] }
+
+        layerdata = data.getVar("layerdata", expand=False)
+        optedout = set((data.getVar("LAYER_FRAGMENTS_OPTED_OUT") or "").split())
+        for layer in layerdata:
+            wanted = layerdata[layer].fragment_recommends_any - optedout
+            if wanted and not (wanted & set(fragments)):
+                bb.warn("Layer %s recommends one of the fragments %s to be enabled but none are" % (layer, str(wanted)))
 
         if not fragments:
             return
@@ -401,7 +408,7 @@ class AddFragmentsNode(AstNode):
             builtin_fragments_list = list(
                 filter(
                     lambda f: f.startswith(builtin_fragment_key + "/"),
-                    fragments.split(),
+                    fragments,
                 )
             )
             if len(builtin_fragments_list) > 1:
@@ -416,12 +423,12 @@ class AddFragmentsNode(AstNode):
                     )
                 )
 
-        for f in fragments.split():
+        for f in fragments:
             if check_and_set_builtin_fragment(f, data, builtin_fragments):
                 continue
             layerid, fragment_name = f.split('/', 1)
             full_fragment_name = data.expand("{}/{}.conf".format(self.fragments_path_prefix, fragment_name))
-            fragment_path = find_fragment(layers, layerid, full_fragment_name)
+            fragment_path = find_fragment(layerdata, layerid, full_fragment_name)
             if fragment_path:
                 bb.parse.ConfHandler.include(self.filename, fragment_path, self.lineno, data, "include fragment")
                 for flagged_var in flagged_variables:
@@ -429,7 +436,8 @@ class AddFragmentsNode(AstNode):
                     data.setVarFlag(flagged_var, f, val)
                     data.setVar(flagged_var, None)
             else:
-                bb.fatal("Could not find fragment {} in enabled layers:\n\t{}".format(f, "\n\t".join(layers.split())))
+                paths = [layerdata[layer].path for layer in layerdata]
+                bb.fatal("Could not find fragment {} in enabled layers:\n\t{}".format(f, "\n\t".join(paths)))
 
 def handleInclude(statements, filename, lineno, m, force):
     statements.append(IncludeNode(filename, lineno, m.group(1), force))

@@ -922,48 +922,6 @@ overview of their function and contents.
          You must set this variable in the external environment in order
          for it to work.
 
-   :term:`BBFILE_COLLECTIONS`
-      Lists the names of configured layers. These names are used to find
-      the other ``BBFILE_*`` variables. Typically, each layer appends its
-      name to this variable in its ``conf/layer.conf`` file.
-
-   :term:`BBFILE_PATTERN`
-      Variable that expands to match files from
-      :term:`BBFILES` in a particular layer. This
-      variable is used in the ``conf/layer.conf`` file and must be suffixed
-      with the name of the specific layer (e.g.
-      ``BBFILE_PATTERN_emenlow``).
-
-   :term:`BBFILE_PRIORITY`
-      Assigns the priority for recipe files in each layer.
-
-      This variable is used in the ``conf/layer.conf`` file and must be
-      suffixed with a `_` followed by the name of the specific layer (e.g.
-      ``BBFILE_PRIORITY_emenlow``). Colon as separator is not supported.
-
-      This variable is useful in situations where the same recipe appears
-      in more than one layer. Setting this variable allows you to
-      prioritize a layer against other layers that contain the same recipe
-      --- effectively letting you control the precedence for the multiple
-      layers. The precedence established through this variable stands
-      regardless of a recipe's version (:term:`PV` variable).
-      For example, a layer that has a recipe with a higher :term:`PV` value but
-      for which the :term:`BBFILE_PRIORITY` is set to have a lower precedence
-      still has a lower precedence.
-
-      A larger value for the :term:`BBFILE_PRIORITY` variable results in a
-      higher precedence. For example, the value 6 has a higher precedence
-      than the value 5. If not specified, the :term:`BBFILE_PRIORITY` variable
-      is set based on layer dependencies (see the :term:`LAYERDEPENDS` variable
-      for more information). The default priority, if unspecified for a
-      layer with no dependencies, is the lowest defined priority + 1 (or 1
-      if no priorities are defined).
-
-      .. tip::
-
-         You can use the command bitbake-layers show-layers to list all
-         configured layers along with their priorities.
-
    :term:`BBFILES`
       A space-separated list of recipe files BitBake uses to build
       software.
@@ -1198,6 +1156,9 @@ overview of their function and contents.
       Allows you to use a configuration file to add to the list of
       command-line target recipes you want to build.
 
+   :term:`BITBAKEDIR`
+      BitBake sets this to location where bitbake is being run from.
+
    :term:`BITBAKE_UI`
       Used to specify the UI module to use when running BitBake. Using this
       variable is equivalent to using the ``-u`` command-line option.
@@ -1375,12 +1336,13 @@ overview of their function and contents.
       available outside of ``layer.conf`` and references are expanded
       immediately when parsing of the file completes.
 
-   :term:`LAYERDIR_RE`
+   :term:`LAYERDIR_<layername>`
+
+      LAYERDIR_<layername> is defined as the path each named layer is located.
+
+   :term:`LAYERNAME`
       When used inside the ``layer.conf`` configuration file, this variable
-      provides the path of the current layer, escaped for use in a regular
-      expression (:term:`BBFILE_PATTERN`). This
-      variable is not available outside of ``layer.conf`` and references
-      are expanded immediately when parsing of the file completes.
+      provides the name assigned to the current layer.
 
    :term:`LAYERSERIES_COMPAT`
       Lists the versions of the OpenEmbedded-Core (OE-Core) for which
