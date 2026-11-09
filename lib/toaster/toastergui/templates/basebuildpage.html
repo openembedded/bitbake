@@ -148,6 +148,8 @@
             </a>
           </li>
 
+          <!-- custom images can only be built in build mode -->
+          {% if project_enable %}
           {% with build.get_custom_image_recipes as custom_image_recipes %}
             {% if custom_image_recipes.count > 0 %}
               <!-- edit custom image built during this build -->
@@ -215,6 +217,7 @@
                 });
               </script>
             {% endif %}
+          {% endif %}
 
             <li  id="menu-delete-build">
             <a href="#delete-build-modal" id="delete-build" data-toggle="modal" data-target="#delete-build-modal" class="text-danger">

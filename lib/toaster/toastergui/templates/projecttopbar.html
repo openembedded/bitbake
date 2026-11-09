@@ -41,7 +41,7 @@
     </form>
   </div>
 
-  {% if not project.is_default %}
+  {% if project_enable and not project.is_default %}
   <div id="project-topbar">
     <ul class="nav nav-tabs">
       <li id="topbar-configuration-tab">

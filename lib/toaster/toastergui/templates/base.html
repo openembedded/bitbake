@@ -110,7 +110,6 @@
                 All builds
               </a>
               </li>
-              {% if project_enable %}
               <li id="navbar-all-projects"
               {% if request.resolver_match.url_name == 'all-projects'  %}
               class="active"
@@ -120,7 +119,6 @@
                 All projects
               </a>
               </li>
-              {% endif %}
             {% endif %}
               <li id="navbar-docs">
               <a target="_blank" href="http://docs.yoctoproject.org/toaster-manual/index.html#toaster-user-manual">

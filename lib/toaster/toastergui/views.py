@@ -1522,6 +1522,10 @@ if True:
 
     # Shows the edit project page
     def project(request, pid):
+        # without build mode there is nothing to configure
+        if not project_enable:
+            return redirect('projectbuilds', pid=pid)
+
         project = Project.objects.get(pk=pid)
 
         if '1' == os.environ.get('TOASTER_PROJECTSPECIFIC'):
@@ -1815,6 +1819,8 @@ if True:
         return(vars_managed,sorted(vars_fstypes),vars_disallowed)
 
     def projectconf(request, pid):
+        if not project_enable:
+            return redirect('projectbuilds', pid=pid)
 
         try:
             prj = Project.objects.get(id = pid)

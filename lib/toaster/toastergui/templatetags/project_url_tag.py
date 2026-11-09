@@ -2,6 +2,8 @@
 # SPDX-License-Identifier: GPL-2.0-only
 #
 
+import os
+
 from django import template
 from django.urls import reverse
 
@@ -10,8 +12,9 @@ register = template.Library()
 def project_url(parser, token):
     """
     Create a URL for a project's main page;
-    for non-default projects, this is the configuration page;
-    for the default project, this is the project builds page
+    for non-default projects in build mode, this is the configuration page;
+    for the default project, or without build mode, this is the project
+    builds page
     """
     try:
         tag_name, project = token.split_contents()
@@ -28,7 +31,8 @@ class ProjectUrlNode(template.Node):
     def render(self, context):
         try:
             project = self.project.resolve(context)
-            if project.is_default:
+            build_mode = os.environ.get('TOASTER_BUILDSERVER') == '1'
+            if project.is_default or not build_mode:
                 return reverse('projectbuilds', args=(project.id,))
             else:
                 return reverse('project', args=(project.id,))
