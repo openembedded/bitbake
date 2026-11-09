@@ -1021,7 +1021,7 @@ variable like this::
    OE_FRAGMENTS = "core/domain/somefragment core/someotherfragment anotherlayer/anotherdomain/anotherfragment"
 
 Fragment names listed in this variable must be prefixed by the layer name
-where a fragment file is located, defined by :term:`BBFILE_COLLECTIONS` in ``layer.conf``.
+where a fragment file is located, defined by :term:`LAYERNAME` in ``layer.conf``.
 
 The implementation then expands this list into
 :ref:`require <bitbake-user-manual/bitbake-user-manual-metadata:\`\`require\`\` directive>`
