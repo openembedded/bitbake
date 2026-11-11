@@ -1904,6 +1904,7 @@ class Fetch(object):
             m = ud.method
             done = False
 
+            lf = None
             try:
                 lf = bb.utils.lockfile(ud.lockfile, shared=True)
 
