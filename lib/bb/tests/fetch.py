@@ -2891,6 +2891,27 @@ class GitLfsTest(FetcherTest):
         with self.assertRaises(bb.fetch.FetchError):
             self.fetch()
 
+    @skipIfNoGitLFS()
+    def test_lfs_fetch_retry_after_failure(self):
+        """Test that a failed LFS fetch does not break later fetches of the same repository"""
+        self.git(["lfs", "install", "--local"], cwd=self.srcdir)
+        self.commit_file("a.mp3", "version 1")
+
+        uri = 'git://%s;protocol=file;lfs=1;branch=master' % self.srcdir
+        self.d.setVar('SRC_URI', uri)
+
+        lfs_objects = os.path.join(self.srcdir, ".git", "lfs", "objects")
+        with hide_directory(lfs_objects):
+            with self.assertRaises(bb.fetch.FetchError):
+                self.fetch()
+
+        fetcher, ud = self.fetch()
+        with hide_directory(self.srcdir):
+            workdir = self.d.getVar('WORKDIR')
+            fetcher.unpack(workdir)
+            with open(os.path.join(workdir, "git", "a.mp3")) as f:
+                self.assertEqual(f.read(), "version 1")
+
 class GitURLWithSpacesTest(FetcherTest):
     test_git_urls = {
         "git://tfs-example.org:22/tfs/example%20path/example.git;branch=master" : {
