@@ -308,7 +308,7 @@ def build_dependencies(key, keys, mod_funcs, shelldeps, varflagsexcl, ignored_va
         if key[-1] == ']':
             vf = key[:-1].split('[')
             if vf[1] == "vardepvalueexclude":
-                return deps, ""
+                return frozenset(deps), ""
             value, parser = d.getVarFlag(vf[0], vf[1], False, retparser=True)
             deps |= parser.references
             deps = deps | (keys & parser.execs)
