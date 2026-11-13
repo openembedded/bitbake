@@ -112,12 +112,22 @@ class EventWriter:
         self.eventfile = eventfile
         self.event_queue = []
 
+    def _open(self):
+        try:
+            return open(self.eventfile, "a")
+        except FileNotFoundError:
+            # setupEventLog() creates the folder, but will not re-create it if
+            # it is removed between two builds, with the resident process still
+            # in memory. Catch the resulting exception and re-create it.
+            bb.utils.mkdirhier(os.path.dirname(self.eventfile))
+            return open(self.eventfile, "a")
+
     def write_variables(self):
-        with open(self.eventfile, "a") as f:
+        with self._open() as f:
             f.write("%s\n" % json.dumps({ "allvariables" : self.cooker.getAllKeysWithFlags(["doc", "func"])}))
 
     def send(self, event):
-        with open(self.eventfile, "a") as f:
+        with self._open() as f:
             try:
                 str_event = codecs.encode(pickle.dumps(event), 'base64').decode('utf-8')
                 f.write("%s\n" % json.dumps({"class": event.__module__ + "." + event.__class__.__name__,
