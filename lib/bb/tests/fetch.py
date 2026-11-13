@@ -592,18 +592,7 @@ class GitDownloadDirectoryNamingTest(FetcherTest):
         self.assertIn(self.recipe_dir, dir)
 
     @skipIfNoNetwork()
-    def test_that_directory_exists_for_mirrored_url_and_recipe_url_when_mirroring_is_used(self):
-        self.setup_mirror_rewrite()
-        fetcher = bb.fetch.Fetch([self.recipe_url], self.d)
-
-        fetcher.download()
-
-        dir = os.listdir(self.dldir + "/git2")
-        self.assertIn(self.mirror_dir, dir)
-        self.assertIn(self.recipe_dir, dir)
-
-    @skipIfNoNetwork()
-    def test_that_recipe_directory_and_mirrored_directory_exists_when_mirroring_is_used_and_the_mirrored_directory_already_exists(self):
+    def test_that_directory_is_named_after_recipe_url_when_mirroring_is_used(self):
         self.setup_mirror_rewrite()
         fetcher = bb.fetch.Fetch([self.mirror_url], self.d)
         fetcher.download()
