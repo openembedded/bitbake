@@ -8,6 +8,8 @@ import argparse
 import logging
 import os
 
+import bb.utils
+
 logger = logging.getLogger('bitbake-layers')
 
 
@@ -15,12 +17,12 @@ class LayerPlugin():
     def __init__(self):
         self.tinfoil = None
         self.bblayers = []
+        self.layerdata = {}
 
     def tinfoil_init(self, tinfoil):
         self.tinfoil = tinfoil
         self.bblayers = (self.tinfoil.config_data.getVar('BBLAYERS') or "").split()
-        layerconfs = self.tinfoil.config_data.varhistory.get_variable_items_files('BBFILE_COLLECTIONS')
-        self.bbfile_collections = {layer: os.path.dirname(os.path.dirname(path)) for layer, path in layerconfs.items()}
+        self.layerdata = self.tinfoil.config_data.getVar('layerdata', False) or {}
 
     @staticmethod
     def add_command(subparsers, cmdname, function, parserecipes=True, *args, **kwargs):
@@ -37,3 +39,17 @@ class LayerPlugin():
 
     def get_layer_name(self, layerdir):
         return os.path.basename(layerdir.rstrip(os.sep))
+
+    def get_file_layerdir(self, filename):
+        """Return the directory of the configured layer containing filename, or None"""
+        layername = bb.utils.get_file_layer_from_layerdata(filename, self.layerdata)
+        if layername:
+            return self.layerdata[layername].path
+        return None
+
+    def get_file_layer(self, filename):
+        layerdir = self.get_file_layerdir(filename)
+        if layerdir:
+            return self.get_layer_name(layerdir)
+        else:
+            return '?'

@@ -25,16 +25,14 @@ def plugin_init(plugins):
 class QueryPlugin(LayerPlugin):
     def __init__(self):
         super(QueryPlugin, self).__init__()
-        self.collection_res = {}
 
     def do_show_layers(self, args):
         """show current configured layers."""
-        logger.plain("%s  %s  %s" % ("layer".ljust(20), "path".ljust(70), "priority"))
-        logger.plain('=' * 104)
-        for layer, _, regex, pri in self.tinfoil.cooker.bbfile_config_priorities:
-            layerdir = self.bbfile_collections.get(layer, None)
-            layername = layer
-            logger.plain("%s  %s  %s" % (layername.ljust(20), layerdir.ljust(70), pri))
+        logger.plain("%s  %s  %s  %s" % ("layer".ljust(20), "path".ljust(70), "version".ljust(7), "depends"))
+        logger.plain('=' * 113)
+        for layername, layer in self.layerdata.items():
+            depends = bb.utils.join_deps(layer.depends, commasep=False)
+            logger.plain("%s  %s  %s  %s" % (layername.ljust(20), layer.path.ljust(70), str(layer.version).ljust(7), depends))
 
     def version_str(self, pe, pv, pr = None):
         verstr = "%s" % pv
@@ -65,12 +63,9 @@ are overlayed will also be listed, with a " (skipped)" suffix.
                             classes[classfile].append(classdir)
 
         # Locating classes and other files is a bit more complicated than recipes -
-        # layer priority is not a factor; instead BitBake uses the first matching
-        # file in BBPATH, which is manipulated directly by each layer's
-        # conf/layer.conf in turn, thus the order of layers in bblayers.conf is a
-        # factor - however, each layer.conf is free to either prepend or append to
-        # BBPATH (or indeed do crazy stuff with it). Thus the order in BBPATH might
-        # not be exactly the order present in bblayers.conf either.
+        # BitBake uses the first matching file in BBPATH, which is constructed
+        # from the layer dependencies (layers come before the layers they depend
+        # upon) so the order may not match the order present in bblayers.conf.
         bbpath = str(self.tinfoil.config_data.getVar('BBPATH'))
         overlayed_class_found = False
         for (classfile, classdirs) in classes.items():
@@ -254,22 +249,6 @@ skipped recipes will also be listed, with a " (skipped)" suffix.
                         preffiles.append(preffile)
 
         return items_listed
-
-    def get_file_layer(self, filename):
-        layerdir = self.get_file_layerdir(filename)
-        if layerdir:
-            return self.get_layer_name(layerdir)
-        else:
-            return '?'
-
-    def get_collection_res(self):
-        if not self.collection_res:
-            self.collection_res = bb.utils.get_collection_res(self.tinfoil.config_data)
-        return self.collection_res
-
-    def get_file_layerdir(self, filename):
-        layer = bb.utils.get_file_layer(filename, self.tinfoil.config_data, self.get_collection_res())
-        return self.bbfile_collections.get(layer, None)
 
     def remove_layer_prefix(self, f):
         """Remove the layer_dir prefix, e.g., f = /path/to/layer_dir/foo/blah, the
@@ -527,12 +506,12 @@ NOTE: .bbappend files can impact the dependencies.
         self.add_command(sp, 'show-layers', self.do_show_layers, parserecipes=False)
 
         parser_show_overlayed = self.add_command(sp, 'show-overlayed', self.do_show_overlayed)
-        parser_show_overlayed.add_argument('-f', '--filenames', help='instead of the default formatting, list filenames of higher priority recipes with the ones they overlay indented underneath', action='store_true')
+        parser_show_overlayed.add_argument('-f', '--filenames', help='instead of the default formatting, list filenames of preferred recipes with the ones they overlay indented underneath', action='store_true')
         parser_show_overlayed.add_argument('-s', '--same-version', help='only list overlayed recipes where the version is the same', action='store_true')
         parser_show_overlayed.add_argument('--mc', help='use specified multiconfig', default='')
 
         parser_show_recipes = self.add_command(sp, 'show-recipes', self.do_show_recipes)
-        parser_show_recipes.add_argument('-f', '--filenames', help='instead of the default formatting, list filenames of higher priority recipes with the ones they overlay indented underneath', action='store_true')
+        parser_show_recipes.add_argument('-f', '--filenames', help='instead of the default formatting, list filenames of preferred recipes with the ones they overlay indented underneath', action='store_true')
         parser_show_recipes.add_argument('-r', '--recipes-only', help='instead of the default formatting, list recipes only', action='store_true')
         parser_show_recipes.add_argument('-m', '--multiple', help='only list where multiple recipes (in the same layer or different layers) exist for the same recipe name', action='store_true')
         parser_show_recipes.add_argument('-i', '--inherits', help='only list recipes that inherit the named class(es) - separate multiple classes using , (without spaces)', metavar='CLASS', default='')
