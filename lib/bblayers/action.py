@@ -4,7 +4,6 @@
 # SPDX-License-Identifier: GPL-2.0-only
 #
 
-import fnmatch
 import logging
 import os
 import shutil
@@ -103,16 +102,17 @@ cleanup may still be necessary afterwards, in particular:
 * where non-recipe files (such as patches) are overwritten (the flatten
   command will show a warning for these)
 * where anything beyond the normal layer setup has been added to
-  layer.conf (only the lowest priority number layer's layer.conf is used)
+  layer.conf (only the first layer's layer.conf is used, so the
+  flattened layer takes that layer's LAYERNAME and LAYERDEPENDS)
 * overridden/appended items from bbappends will need to be tidied up
 * when the flattened layers do not have the same directory structure (the
   flatten command should show a warning when this will cause a problem)
 
 Warning: if you flatten several layers where another layer is intended to
-be used "inbetween" them (in layer priority order) such that recipes /
-bbappends in the layers interact, and then attempt to use the new output
-layer together with that other layer, you may no longer get the same
-build results (as the layer priority order has effectively changed).
+be used "inbetween" them such that recipes / bbappends in the layers
+interact, and then attempt to use the new output layer together with that
+other layer, you may no longer get the same build results (as the layer
+ordering has effectively changed).
 """
         if len(args.layer) == 1:
             logger.error('If you specify layers to flatten you must specify at least two')
@@ -212,52 +212,19 @@ build results (as the layer priority order has effectively changed).
                         bb.utils.copyfile(appendname, fdest)
                         first_append = fdest
 
-        # Get the regex for the first layer in our list (which is where the conf/layer.conf file will
-        # have come from)
-        first_regex = None
-        layerdir = layers[0]
-        for layername, pattern, regex, _ in self.tinfoil.cooker.bbfile_config_priorities:
-            if regex.match(os.path.join(layerdir, 'test')):
-                first_regex = regex
-                break
-
-        if first_regex:
-            # Find the BBFILES entries that match (which will have come from this conf/layer.conf file)
-            bbfiles = str(self.tinfoil.config_data.getVar('BBFILES')).split()
-            bbfiles_layer = []
-            for item in bbfiles:
-                if first_regex.match(item):
-                    newpath = os.path.join(outputdir, item[len(layerdir)+1:])
-                    bbfiles_layer.append(newpath)
-
-            if bbfiles_layer:
-                # Check that all important layer files match BBFILES
-                for root, dirs, files in os.walk(outputdir):
-                    for f1 in files:
-                        ext = os.path.splitext(f1)[1]
-                        if ext in ['.bb', '.bbappend']:
-                            f1full = os.sep.join([root, f1])
-                            entry_found = False
-                            for item in bbfiles_layer:
-                                if fnmatch.fnmatch(f1full, item):
-                                    entry_found = True
-                                    break
-                            if not entry_found:
-                                logger.warning("File %s does not match the flattened layer's BBFILES setting, you may need to edit conf/layer.conf or move the file elsewhere" % f1full)
+        # Bitbake only looks for recipes and bbappends within a layer's recipes*
+        # directories (and dynamic-recipes/<layername>/), check the flattened
+        # layer's files will still be found
+        for root, dirs, files in os.walk(outputdir):
+            for f1 in files:
+                if f1.endswith(('.bb', '.bbappend')):
+                    f1full = os.path.join(root, f1)
+                    topdir = os.path.relpath(f1full, outputdir).split(os.sep)[0]
+                    if not (topdir.startswith('recipes') or topdir == 'dynamic-recipes'):
+                        logger.warning("File %s is not within a recipes* directory of the flattened layer so will not be found, you may need to move it" % f1full)
 
         self.tinfoil.modified_files()
 
-
-    def get_file_layer(self, filename):
-        layerdir = self.get_file_layerdir(filename)
-        if layerdir:
-            return self.get_layer_name(layerdir)
-        else:
-            return '?'
-
-    def get_file_layerdir(self, filename):
-        layer = bb.utils.get_file_layer(filename, self.tinfoil.config_data)
-        return self.bbfile_collections.get(layer, None)
 
     def apply_append(self, appendname, recipename):
         with open(appendname, 'r') as appendfile:
