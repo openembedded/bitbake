@@ -5,6 +5,7 @@
 
 import os
 import bb
+import bb.cookerdata
 
 import layerindexlib
 from layerindexlib.tests.common import LayersTest
@@ -26,8 +27,20 @@ class LayerIndexCookerTest(LayersTest):
         self.d.setVar('BBPATH', new_bbpath)
 
         self.d = bb.parse.handle("%s/conf/bblayers.conf" % new_bbpath, self.d, True)
+        layerdata = {}
         for layer in self.d.getVar('BBLAYERS').split():
-            self.d = bb.parse.handle("%s/conf/layer.conf" % layer, self.d, True)
+            ld = bb.parse.handle("%s/conf/layer.conf" % layer, self.d.createCopy(), True)
+            layername = ld.getVar('LAYERNAME')
+            layerdata[layername] = bb.cookerdata.Layer(
+                path=layer,
+                version=ld.getVar('LAYERVERSION') or "1",
+                depends=bb.utils.explode_dep_versions2(ld.getVar('LAYERDEPENDS') or ""),
+                recommends=bb.utils.explode_dep_versions2(ld.getVar('LAYERRECOMMENDS') or ""),
+            )
+            indexname = ld.getVar('BBLAYERS_LAYERINDEX_NAME_%s' % layername)
+            if indexname:
+                self.d.setVar('BBLAYERS_LAYERINDEX_NAME_%s' % layername, indexname)
+        self.d.setVar('layerdata', layerdata)
 
         self.layerindex = layerindexlib.LayerIndex(self.d)
         self.layerindex.load_layerindex('cooker://', load=['layerDependencies'])
