@@ -93,9 +93,7 @@ class CookerPlugin(layerindexlib.plugin.IndexPlugin):
             # It's blank!  Nothing to process...
             return index
 
-        collections = d.getVar('BBFILE_COLLECTIONS')
-        layerconfs = d.varhistory.get_variable_items_files('BBFILE_COLLECTIONS')
-        bbfile_collections = {layer: os.path.dirname(os.path.dirname(path)) for layer, path in layerconfs.items()}
+        layerdata = d.getVar('layerdata', False) or {}
 
         (_, bb_branch, _, _) = self._get_bitbake_info()
 
@@ -104,13 +102,11 @@ class CookerPlugin(layerindexlib.plugin.IndexPlugin):
             index.branches[branchId] = layerindexlib.Branch(index, None)
             index.branches[branchId].define_data(branchId, branch, bb_branch)
 
-        for entry in collections.split():
-            layerpath = entry
-            if entry in bbfile_collections:
-                layerpath = bbfile_collections[entry]
+        for entry, layer in layerdata.items():
+            layerpath = layer.path
 
             layername = d.getVar('BBLAYERS_LAYERINDEX_NAME_%s' % entry) or os.path.basename(layerpath)
-            layerversion = d.getVar('LAYERVERSION_%s' % entry) or ""
+            layerversion = layer.version or ""
             layerurl = self._handle_git_remote(layerpath)
 
             layersubdir = ""
@@ -164,6 +160,7 @@ class CookerPlugin(layerindexlib.plugin.IndexPlugin):
             raise layerindexlib.plugin.LayerIndexPluginUrlError(self.type, url)
 
         d = self.layerindex.data
+        layerdata = d.getVar('layerdata', False) or {}
 
         params = self.layerindex._parse_params(up.params)
 
@@ -199,12 +196,7 @@ class CookerPlugin(layerindexlib.plugin.IndexPlugin):
                 branchName = index.layerBranches[layerBranchId].branch.name
                 collection = index.layerBranches[layerBranchId].collection
 
-                def add_dependency(layerDependencyId, index, deps, required):
-                    try:
-                        depDict = bb.utils.explode_dep_versions2(deps)
-                    except bb.utils.VersionStringException as vse:
-                        bb.fatal('Error parsing LAYERDEPENDS_%s: %s' % (collection, str(vse)))
-
+                def add_dependency(layerDependencyId, index, depDict, required):
                     for dep, oplist in list(depDict.items()):
                         # We need to search ourselves, so use the _ version...
                         depLayerBranch = index.find_collection(dep, branches=[branchName])
@@ -225,13 +217,12 @@ class CookerPlugin(layerindexlib.plugin.IndexPlugin):
 
                     return layerDependencyId
 
-                deps = d.getVar("LAYERDEPENDS_%s" % collection)
-                if deps:
-                    layerDependencyId = add_dependency(layerDependencyId, index, deps, True)
+                layer = layerdata.get(collection)
+                if layer and layer.depends:
+                    layerDependencyId = add_dependency(layerDependencyId, index, layer.depends, True)
 
-                deps = d.getVar("LAYERRECOMMENDS_%s" % collection)
-                if deps:
-                    layerDependencyId = add_dependency(layerDependencyId, index, deps, False)
+                if layer and layer.recommends:
+                    layerDependencyId = add_dependency(layerDependencyId, index, layer.recommends, False)
 
         # Need to load recipes here (requires cooker access)
         recipeId = 0
