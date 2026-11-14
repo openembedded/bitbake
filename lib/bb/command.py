@@ -300,11 +300,6 @@ class CommandsSync:
         command.cooker.parseConfiguration()
     parseConfiguration.needconfig = False
 
-    def getLayerPriorities(self, command, params):
-        command.cooker.parseConfiguration()
-        return []
-    getLayerPriorities.readonly = True
-
     def revalidateCaches(self, command, params):
         """Called by UI clients when metadata may have changed"""
         command.cooker.revalidateCaches()
@@ -401,10 +396,6 @@ class CommandsSync:
             mc = ''
         return command.cooker.recipecaches[mc].inherits
     getRecipeInherits.readonly = True
-
-    def getBbFilePriority(self, command, params):
-        return None
-    getBbFilePriority.readonly = True
 
     def getDefaultPreference(self, command, params):
         try:
