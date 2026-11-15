@@ -1868,59 +1868,50 @@ def edit_bblayers_conf(bblayers_conf, add, remove, edit_cb=None):
 
     return (notadded, notremoved)
 
-def get_collection_res(d):
-    collections = (d.getVar('BBFILE_COLLECTIONS') or '').split()
-    collection_res = {}
-    for collection in collections:
-        collection_res[collection] = d.getVar('BBFILE_PATTERN_%s' % collection) or ''
 
-    return collection_res
+def get_file_layer_from_layerdata(filename, layerdata):
+    """Determine the layer containing the specified file from a layerdata
+    dictionary, as set in the ``layerdata`` variable. This is useful where
+    the layerdata has already been obtained, avoiding the variable lookup.
+
+    Arguments:
+
+    -  ``filename``: the filename to look for.
+    -  ``layerdata``: dictionary of layer names to layer information.
+
+    Returns the name of the layer containing the file, or ``None`` if the
+    file isn't within any of the layers.
+    """
+    def find(fn):
+        # Layers can't nest so the first match is the only match
+        for layername, layer in layerdata.items():
+            if fn.startswith(layer.path + "/"):
+                return layername
+        return None
+
+    # The layer paths are canonical. The filename as given usually matches
+    # so only resolve it if it doesn't.
+    layername = find(filename)
+    if layername is None:
+        realfn = os.path.realpath(filename)
+        if realfn != filename:
+            layername = find(realfn)
+    return layername
 
 
-def get_file_layer(filename, d, collection_res={}):
-    """Determine the collection (or layer name, as defined by a layer's
+def get_file_layer(filename, d):
+    """Determine the layer (as named by ``LAYERNAME`` in the layer's
     ``layer.conf`` file) containing the specified file.
 
     Arguments:
 
     -  ``filename``: the filename to look for.
     -  ``d``: the data store.
-    -  ``collection_res``: dictionary with the layer names as keys and file
-       patterns to match as defined with the BBFILE_COLLECTIONS and
-       BBFILE_PATTERN variables respectively. The return value of
-       ``bb.utils.get_collection_res()`` is the default if this variable is
-       not specified.
 
-    Returns the layer name containing the file. If multiple layers contain the
-    file, the last matching layer name from collection_res is returned.
+    Returns the name of the layer containing the file, or ``None`` if the
+    file isn't within any configured layer.
     """
-    if not collection_res:
-        collection_res = get_collection_res(d)
-
-    def path_to_layer(path):
-        # Use longest path so we handle nested layers
-        matchlen = 0
-        match = None
-        for collection, regex in collection_res.items():
-            if len(regex) > matchlen and re.match(regex, path):
-                matchlen = len(regex)
-                match = collection
-        return match
-
-    result = None
-    bbfiles = (d.getVar('BBFILES_PRIORITIZED') or '').split()
-    bbfilesmatch = False
-    for bbfilesentry in bbfiles:
-        if fnmatch.fnmatchcase(filename, bbfilesentry):
-            bbfilesmatch = True
-            result = path_to_layer(bbfilesentry)
-            break
-
-    if not bbfilesmatch:
-        # Probably a bbclass
-        result = path_to_layer(filename)
-
-    return result
+    return get_file_layer_from_layerdata(filename, d.getVar('layerdata', False) or {})
 
 
 # Constant taken from http://linux.die.net/include/linux/prctl.h
