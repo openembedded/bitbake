@@ -52,6 +52,7 @@ def get_context():
 
 
 def set_context(ctx):
+    global _context
     _context = ctx
 
 # Context used in better_exec, eval

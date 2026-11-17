@@ -729,3 +729,26 @@ class SplitFileChecksums(unittest.TestCase):
         self.check("/a:Truex /b:False", ["/a:Truex /b:False"])
         self.check(":True :False", [":True", ":False"])
         self.check("/a:True:False /b:False", ["/a:True:False", "/b:False"])
+
+class ContextTests(unittest.TestCase):
+    def setUp(self):
+        self.d = bb.data.init()
+        # Not set_context(), so a broken setter cannot leak into other tests.
+        self.saved_context = bb.utils._context
+        bb.utils._context = bb.utils.clean_context()
+
+    def tearDown(self):
+        bb.utils._context = self.saved_context
+
+    def test_set_context(self):
+        context = bb.utils.clean_context()
+        bb.utils.set_context(context)
+        self.assertIs(bb.utils.get_context(), context)
+
+    def test_set_context_drops_methods(self):
+        bb.methodpool.insert_method("testfunc", "def testfunc(d):\n    return 'testvalue'\n", "test.bb", 1)
+        self.assertEqual(self.d.expand("${@testfunc(d)}"), "testvalue")
+
+        bb.utils.set_context(bb.utils.clean_context())
+        self.assertNotIn("testfunc", bb.utils.get_context())
+        self.assertRaises(bb.data_smart.ExpansionError, self.d.expand, "${@testfunc(d)}")
