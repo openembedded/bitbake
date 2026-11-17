@@ -2117,7 +2117,11 @@ class RunQueueExecute:
 
         found = None
         for t in sort_tids_by_mc(self.sq_deferred.copy(), self.sqdata.multiconfigs):
-            if self.sq_deferred[t] == task:
+            if t == task:
+                # The deferred task was probably skipped, we can just remove it from the queue
+                del self.sq_deferred[t]
+                update_scenequeue_data([t], self.sqdata, self.rqdata, self.rq, self.cooker, self.stampcache, self, summary=False)
+            elif self.sq_deferred[t] == task:
                 # Allow the next deferred task to run. Any other deferred tasks should be deferred after that task.
                 # We shouldn't allow all to run at once as it is prone to races.
                 if not found:
