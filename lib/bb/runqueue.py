@@ -85,6 +85,13 @@ def build_tid(mc, fn, taskname):
         return "mc:" + mc + ":" + fn + ":" + taskname
     return fn + ":" + taskname
 
+def sort_tids_by_mc(tids, multiconfigs):
+    """
+    Return tids grouped by multiconfig, with the groups in sorted mc order
+    and the tids sorted within each group.
+    """
+    return [tid for _, tid in sorted(((mc_from_tid(tid), tid) for tid in tids))]
+
 # Index used to pair up potentially matching multiconfig tasks
 # We match on PN, taskname and hash being equal
 def pending_hash_index(tid, rqdata):
@@ -2109,7 +2116,7 @@ class RunQueueExecute:
                 logger.debug("Marking task %s as buildable", revdep)
 
         found = None
-        for t in sorted(self.sq_deferred.copy()):
+        for t in sort_tids_by_mc(self.sq_deferred.copy(), self.sqdata.multiconfigs):
             if self.sq_deferred[t] == task:
                 # Allow the next deferred task to run. Any other deferred tasks should be deferred after that task.
                 # We shouldn't allow all to run at once as it is prone to races.
@@ -2738,14 +2745,11 @@ class RunQueueExecute:
 
         if update_tasks2:
             self.sqdone = False
-            for mc in sorted(self.sqdata.multiconfigs):
-                for tid in sorted([t[0] for t in update_tasks2]):
-                    if mc_from_tid(tid) != mc:
-                        continue
-                    h = pending_hash_index(tid, self.rqdata)
-                    if h in self.sqdata.hashes and tid != self.sqdata.hashes[h]:
-                        self.sq_deferred[tid] = self.sqdata.hashes[h]
-                        bb.note("Deferring %s after %s" % (tid, self.sqdata.hashes[h]))
+            for tid in sort_tids_by_mc([t[0] for t in update_tasks2], self.sqdata.multiconfigs):
+                h = pending_hash_index(tid, self.rqdata)
+                if h in self.sqdata.hashes and tid != self.sqdata.hashes[h]:
+                    self.sq_deferred[tid] = self.sqdata.hashes[h]
+                    bb.note("Deferring %s after %s" % (tid, self.sqdata.hashes[h]))
             update_scenequeue_data([t[0] for t in update_tasks2], self.sqdata, self.rqdata, self.rq, self.cooker, self.stampcache, self, summary=False)
 
         for (tid, harddepfail, origvalid) in update_tasks2:
@@ -3101,6 +3105,9 @@ def build_scenequeue_data(sqdata, rqdata, sqrq):
         if not sqdata.sq_revdeps[tid]:
             sqrq.sq_buildable.add(tid)
 
+    # Fix the ordering for determinism, sets are unordered
+    sqdata.multiconfigs = sorted(sqdata.multiconfigs)
+
     rqdata.init_progress_reporter.next_stage()
 
     sqdata.noexec = set()
@@ -3109,16 +3116,13 @@ def build_scenequeue_data(sqdata, rqdata, sqrq):
 
     sqdata.hashes = {}
     sqrq.sq_deferred = {}
-    for mc in sorted(sqdata.multiconfigs):
-        for tid in sorted(sqdata.sq_revdeps):
-            if mc_from_tid(tid) != mc:
-                continue
-            h = pending_hash_index(tid, rqdata)
-            if h not in sqdata.hashes:
-                sqdata.hashes[h] = tid
-            else:
-                sqrq.sq_deferred[tid] = sqdata.hashes[h]
-                bb.debug(1, "Deferring %s after %s" % (tid, sqdata.hashes[h]))
+    for tid in sort_tids_by_mc(sqdata.sq_revdeps, sqdata.multiconfigs):
+        h = pending_hash_index(tid, rqdata)
+        if h not in sqdata.hashes:
+            sqdata.hashes[h] = tid
+        else:
+            sqrq.sq_deferred[tid] = sqdata.hashes[h]
+            bb.debug(1, "Deferring %s after %s" % (tid, sqdata.hashes[h]))
 
 def check_setscene_stamps(tid, rqdata, rq, stampcache, noexecstamp=False):
 
