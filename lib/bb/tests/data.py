@@ -83,6 +83,7 @@ class DataExpansions(unittest.TestCase):
         self.d.setVar("testfunc", 'd.getVar("TESTVAL")')
         context = bb.utils.get_context()
         context["testfunc"] = lambda d: d.getVar("TESTVAL")
+        self.addCleanup(context.pop, "testfunc")
         val = self.d.expand("${@testfunc(d)}")
         self.assertEqual(str(val), "testvalue")
 
