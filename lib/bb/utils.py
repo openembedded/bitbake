@@ -954,7 +954,7 @@ def mkdirhier(directory):
     No return value.
     """
     if '${' in str(directory):
-        bb.fatal("Directory name {} contains unexpanded bitbake variable. This may cause build failures and WORKDIR polution.".format(directory))
+        bb.fatal("Directory name {} contains unexpanded bitbake variable. This may cause build failures and WORKDIR pollution.".format(directory))
     try:
         os.makedirs(directory)
     except OSError as e:
