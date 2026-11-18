@@ -4731,3 +4731,66 @@ class GitUnpackUpdateTest(FetcherTest):
 
         with open(os.path.join(unpack_path, 'testfile.txt')) as f:
             self.assertEqual(f.read(), 'updated content\n')
+
+
+class PackageIdentityTest(FetcherTest):
+    """package_identity() works from the URL alone, without network access."""
+
+    def identity(self, url):
+        fetcher = bb.fetch.Fetch([url], self.d)
+        ud = fetcher.ud[url]
+        return ud.method.package_identity(ud, self.d)
+
+    def test_crate(self):
+        self.assertEqual(self.identity("crate://crates.io/glob/0.2.11"),
+                         {"name": "glob", "version": "0.2.11", "purl": "pkg:cargo/glob@0.2.11"})
+
+    def test_crate_alternate_registry(self):
+        self.assertEqual(self.identity("crate://crates.example.com/glob/0.2.11"),
+                         {"name": "glob", "version": "0.2.11",
+                          "purl": "pkg:cargo/glob@0.2.11?repository_url=https%3A%2F%2Fcrates.example.com"})
+
+    def test_gomod(self):
+        url = ('gomod://github.com/Azure/azure-sdk-for-go/sdk/storage/azblob;version=v1.0.0;'
+               'sha256sum=9bb69aea32f1d59711701f9562d66432c9c0374205e5009d1d1a62f03fb4fdad')
+        self.assertEqual(self.identity(url),
+                         {"name": "github.com/Azure/azure-sdk-for-go/sdk/storage/azblob", "version": "v1.0.0",
+                          "purl": "pkg:golang/github.com/Azure/azure-sdk-for-go/sdk/storage/azblob@v1.0.0"})
+
+    def test_gomod_go_mod_only(self):
+        # A go.mod file alone is not built into anything
+        url = ('gomod://github.com/Azure/azure-sdk-for-go/sdk/storage/azblob;version=v1.0.0;mod=1;'
+               'sha256sum=7873b8544842329b4f385a3aa6cf82cc2bc8defb41a04fa5291c35fd5900e873')
+        self.assertIsNone(self.identity(url))
+
+    def test_gomodgit(self):
+        url = ('gomodgit://golang.org/x/net;version=v0.9.0;repo=go.googlesource.com/net;'
+               'srcrev=694cff8668bac64e0864b552bffc280cd27f21b1')
+        self.assertEqual(self.identity(url),
+                         {"name": "golang.org/x/net", "version": "v0.9.0",
+                          "purl": "pkg:golang/golang.org/x/net@v0.9.0"})
+
+    def test_npm(self):
+        url = ('npm://registry.npmjs.org;package=@savoirfairelinux/node-server-example;version=1.0.0'
+               ';sha512sum=f2dd7d88cb9a129fbb97eb87a8b5103bab24f783420fd7587f8000a355a12bf7'
+               '83f1263230afc588123958b73e36bb241f63eaf08119aac5aa2a870bc4de9223')
+        self.assertEqual(self.identity(url),
+                         {"name": "@savoirfairelinux/node-server-example", "version": "1.0.0",
+                          "purl": "pkg:npm/%40savoirfairelinux/node-server-example@1.0.0"})
+
+    def test_npm_alternate_registry(self):
+        url = ('npm://npm.example.com/registry;package=foo;version=1.2.3'
+               ';sha512sum=f2dd7d88cb9a129fbb97eb87a8b5103bab24f783420fd7587f8000a355a12bf7'
+               '83f1263230afc588123958b73e36bb241f63eaf08119aac5aa2a870bc4de9223')
+        self.assertEqual(self.identity(url),
+                         {"name": "foo", "version": "1.2.3",
+                          "purl": "pkg:npm/foo@1.2.3?repository_url=https%3A%2F%2Fnpm.example.com%2Fregistry"})
+
+    def test_git_has_none(self):
+        url = ("git://git.yoctoproject.org/git-submodule-test;branch=master;protocol=https;"
+               "rev=f280847494763cdcf71197557a81ba7d8a6bce42")
+        self.assertIsNone(self.identity(url))
+
+    def test_package_url_encoding(self):
+        self.assertEqual(bb.fetch.package_url("golang", "example.com/m", "v1.0.0+incompatible"),
+                         "pkg:golang/example.com/m@v1.0.0%2Bincompatible")

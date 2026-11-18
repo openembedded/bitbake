@@ -80,6 +80,13 @@ def escape(path):
     return re.sub(r'([A-Z])', lambda m: '!' + m.group(1).lower(), path)
 
 
+def go_package_identity(ud):
+    module = ud.parm['module']
+    version = ud.parm['version']
+    return {"name": module, "version": version,
+            "purl": bb.fetch.package_url("golang", module, version)}
+
+
 class GoMod(Wget):
     """Class to fetch Go modules from a Go module proxy via wget"""
 
@@ -126,6 +133,12 @@ class GoMod(Wget):
         ud.parm['unpackpath'] = os.path.join(moddir, 'cache/download', path)
 
         super().urldata_init(ud, d)
+
+    def package_identity(self, ud, d):
+        # A go.mod file alone is not built into anything
+        if ud.parm.get('mod', '0') == '1':
+            return None
+        return go_package_identity(ud)
 
     def unpack(self, ud, rootdir, d):
         """Unpack the module in the module cache."""
@@ -217,6 +230,9 @@ class GoModGit(Git):
         ud.parm['bareclone'] = '1'
 
         super().urldata_init(ud, d)
+
+    def package_identity(self, ud, d):
+        return go_package_identity(ud)
 
     def unpack(self, ud, rootdir, d):
         """Unpack the module in the module cache."""
