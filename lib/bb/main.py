@@ -338,6 +338,10 @@ class BitBakeConfigParameters(cookerdata.ConfigParameters):
             eventlog = "bitbake_eventlog_%s.json" % datetime.now().strftime("%Y%m%d%H%M%S")
             options.writeeventlog = eventlog
 
+        # the server may not share our current directory
+        if options.writeeventlog:
+            options.writeeventlog = os.path.abspath(options.writeeventlog)
+
         if options.bind:
             try:
                 #Checking that the port is a number and is a ':' delimited value
