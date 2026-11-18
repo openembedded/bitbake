@@ -314,6 +314,8 @@ class BBCooker:
 
         eventlog = self.data.getVar("BB_DEFAULT_EVENTLOG")
         if not self.configuration.writeeventlog and eventlog:
+            if not os.path.isabs(eventlog):
+                bb.fatal("BB_DEFAULT_EVENTLOG must be an absolute path, not \"%s\"" % eventlog)
             self.setupEventLog(eventlog)
 
         if consolelog:

@@ -350,3 +350,48 @@ addtask marker
             with open(os.path.join(builddir, "marker.log")) as f:
                 self.assertEqual(f.read(), "bbappend-applied",
                                  "bitbake -b did not apply the recipe's bbappend")
+
+
+class EventLogTest(_BitbakeSubprocessTestCase):
+    """Tests for the event log ("bitbake -w" and BB_DEFAULT_EVENTLOG)."""
+
+    _parsetests = os.path.realpath(os.path.join(os.path.dirname(__file__), "parse-tests"))
+
+    def _make_env(self, builddir):
+        env = os.environ.copy()
+        env.pop("BBEVENTLOG", None)
+        env["BBPATH"] = self._parsetests
+        env["BB_ENV_PASSTHROUGH_ADDITIONS"] = "TOPDIR BB_DEFAULT_EVENTLOG"
+        env["TOPDIR"] = builddir
+        return env
+
+    def test_write_log_path_is_absolute(self):
+        """The -w path is resolved against the client's directory, since the
+        server may run in another one."""
+        import bb.main
+        for arg in ("events.json", ""):
+            with self.subTest(arg=arg):
+                params = bb.main.BitBakeConfigParameters(["bitbake", "-w", arg])
+                self.assertTrue(os.path.isabs(params.writeeventlog))
+                self.assertEqual(os.path.dirname(params.writeeventlog), os.getcwd())
+
+    def test_write_log_bare_filename(self):
+        """bitbake -w must accept a file name without a directory."""
+        with self._build_dir(prefix="eventlogtest") as builddir:
+            self._run_subprocess(["bitbake", "-w", "events.json", "-e"],
+                                 self._make_env(builddir), builddir)
+
+            self.assertTrue(os.path.exists(os.path.join(builddir, "events.json")))
+
+    def test_default_eventlog_relative_is_error(self):
+        """A relative BB_DEFAULT_EVENTLOG is refused with an error."""
+        with self._build_dir(prefix="eventlogtest") as builddir:
+            env = self._make_env(builddir)
+            env["BB_DEFAULT_EVENTLOG"] = "events.json"
+            proc = subprocess.run(["bitbake", "-e"], env=env, cwd=builddir,
+                                  stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                                  universal_newlines=True)
+
+            self.assertNotEqual(proc.returncode, 0, proc.stdout)
+            self.assertRegex(proc.stdout, r"ERROR: .*BB_DEFAULT_EVENTLOG")
+            self.assertFalse(os.path.exists(os.path.join(builddir, "events.json")))
