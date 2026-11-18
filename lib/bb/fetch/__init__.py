@@ -1765,6 +1765,33 @@ class FetchMethod(object):
         """
         return []
 
+    def package_identity(self, ud, d):
+        """
+        Return the identity of the package that the URL downloads, for
+        fetchers of package registries that know it, as a dict with the
+        keys "name", "version" and "purl" (Package URL). Return None when
+        the URL does not name a package.
+
+        The result depends only on the URL and the datastore. It is
+        available as soon as the FetchData exists, before the fetch and
+        without network access. It is meant for SBOM generation.
+        """
+        return None
+
+
+def package_url(purl_type, name, version, qualifiers=None):
+    """
+    Return a Package URL (https://github.com/package-url/purl-spec) for a
+    package. name can contain "/": the segments before the last one are
+    the namespace. Each segment, the version and the qualifier values are
+    percent-encoded. qualifiers is a dict, written sorted by key.
+    """
+    quote = lambda s: urllib.parse.quote(s, safe="")
+    purl = "pkg:%s/%s@%s" % (purl_type, "/".join(quote(s) for s in name.split("/")), quote(version))
+    if qualifiers:
+        purl += "?" + "&".join("%s=%s" % (k, quote(v)) for k, v in sorted(qualifiers.items()))
+    return purl
+
 
 class DummyUnpackTracer(object):
     """
