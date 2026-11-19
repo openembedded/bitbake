@@ -20,6 +20,7 @@ if 'git' not in urllib.parse.uses_netloc:
     urllib.parse.uses_netloc.append('git')
 import operator
 import collections
+import dataclasses
 import subprocess
 import pickle
 import errno
@@ -1764,6 +1765,43 @@ class FetchMethod(object):
         be downloaded when we fetch the given URL.
         """
         return []
+
+    def package_identity(self, ud, d):
+        """
+        Return the identity of the package that the URL downloads, for
+        fetchers of package registries that know it, as a PackageIdentity.
+        Return None when the URL does not name a package.
+
+        The result depends only on the URL and the datastore. It is
+        available as soon as the FetchData exists, before the fetch and
+        without network access. It is meant for SBOM generation.
+        """
+        return None
+
+
+@dataclasses.dataclass(frozen=True)
+class PackageIdentity:
+    """
+    The identity of a package that a fetcher downloads from a package
+    registry: its name, its version and its Package URL (purl).
+    """
+    name: str
+    version: str
+    purl: str
+
+
+def package_url(purl_type, name, version, qualifiers=None):
+    """
+    Return a Package URL (https://github.com/package-url/purl-spec) for a
+    package. name can contain "/": the segments before the last one are
+    the namespace. Each segment, the version and the qualifier values are
+    percent-encoded. qualifiers is a dict, written sorted by key.
+    """
+    quote = lambda s: urllib.parse.quote(s, safe="")
+    purl = "pkg:%s/%s@%s" % (purl_type, "/".join(quote(s) for s in name.split("/")), quote(version))
+    if qualifiers:
+        purl += "?" + "&".join("%s=%s" % (k, quote(v)) for k, v in sorted(qualifiers.items()))
+    return purl
 
 
 class DummyUnpackTracer(object):
