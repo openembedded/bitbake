@@ -225,6 +225,13 @@ class Npm(FetchMethod):
         ud.needdonestamp = False
         ud.resolvefile = self.localpath(ud, d) + ".resolved"
 
+    def package_identity(self, ud, d):
+        qualifiers = None
+        if ud.registry.rstrip("/") != "https://registry.npmjs.org":
+            qualifiers = {"repository_url": ud.registry}
+        purl = bb.fetch.package_url("npm", ud.package, ud.version, qualifiers)
+        return bb.fetch.PackageIdentity(ud.package, ud.version, purl)
+
     def _resolve_proxy_url(self, ud, d):
         """Resolve the tarball URL from the registry and cache it without any checksum.
 

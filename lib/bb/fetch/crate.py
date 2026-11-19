@@ -103,10 +103,17 @@ class Crate(Wget):
             ud.versionsurl = "%s://%s/%s/versions" % (proto, host, name)
 
         ud.parm['downloadfilename'] = "%s-%s.crate" % (name, version)
+        ud.crate = (name, version, None if host == 'crates.io' else "%s://%s" % (proto, host))
         if 'name' not in ud.parm:
             ud.parm['name'] = '%s-%s' % (name, version)
 
         logger.debug2("Fetching %s to %s" % (ud.url, ud.parm['downloadfilename']))
+
+    def package_identity(self, ud, d):
+        name, version, registry = ud.crate
+        qualifiers = {"repository_url": registry} if registry else None
+        purl = bb.fetch.package_url("cargo", name, version, qualifiers)
+        return bb.fetch.PackageIdentity(name, version, purl)
 
     def unpack(self, ud, rootdir, d):
         """
