@@ -1913,6 +1913,10 @@ def get_file_layer(filename, d):
     """
     return get_file_layer_from_layerdata(filename, d.getVar('layerdata', False) or {})
 
+def have_layer(layer, d, trueval=True, falseval=False):
+   if layer in d.getVar('layerdata', False):
+       return trueval
+   return falseval
 
 # Constant taken from http://linux.die.net/include/linux/prctl.h
 PR_SET_PDEATHSIG = 1
