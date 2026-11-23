@@ -789,10 +789,11 @@ class Tinfoil:
             self.run_command('enableDataTracking')
 
         # Here goes the operation with the optional data tracking
-        yield
-
-        if self.tracking:
-            self.run_command('disableDataTracking')
+        try:
+            yield
+        finally:
+            if self.tracking:
+                self.run_command('disableDataTracking')
 
     def finalizeData(self):
         """
