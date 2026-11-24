@@ -26,7 +26,7 @@ import subprocess
 import re
 from functools import cmp_to_key
 import bb
-from   bb.fetch import logger, subprocess_setup, UnpackError, runfetchcmd
+from   bb.fetch import logger, UnpackError, runfetchcmd
 from   bb.fetch.wget import Wget
 
 

@@ -70,7 +70,6 @@ import bb
 from bb.fetch import FetchError
 from bb.fetch import MissingParameterError
 from bb.fetch import runfetchcmd
-from bb.fetch import subprocess_setup
 from bb.fetch.git import Git
 from bb.fetch.wget import Wget
 
@@ -267,8 +266,7 @@ class GoModGit(Git):
                 f = os.path.join(ud.parm['subpath'], f)
             if f in files:
                 cmd = ['git', 'cat-file', 'blob', srcrev + ':' + f]
-                subprocess.check_call(cmd, stdout=mf, cwd=repodir,
-                                      preexec_fn=subprocess_setup)
+                subprocess.check_call(cmd, stdout=mf, cwd=repodir)
             else:
                 # If the module does not have a go.mod file, synthesize one
                 # containing only a module statement.
@@ -281,6 +279,5 @@ class GoModGit(Git):
             prefix = module + '@' + version + '/'
             for f in files:
                 cmd = ['git', 'cat-file', 'blob', srcrev + ':' + f]
-                data = subprocess.check_output(cmd, cwd=repodir,
-                                               preexec_fn=subprocess_setup)
+                data = subprocess.check_output(cmd, cwd=repodir)
                 zf.writestr(prefix + f, data)

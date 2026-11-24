@@ -5,18 +5,12 @@
 #
 
 import logging
-import signal
 import subprocess
 import errno
 import select
 import bb
 
 logger = logging.getLogger('BitBake.Process')
-
-def subprocess_setup():
-    # Python installs a SIGPIPE handler by default. This is usually not what
-    # non-Python subprocesses expect.
-    signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 
 class CmdError(RuntimeError):
     def __init__(self, command, msg=None):
@@ -60,7 +54,6 @@ class ExecutionError(CmdError):
 class Popen(subprocess.Popen):
     defaults = {
         "close_fds": True,
-        "preexec_fn": subprocess_setup,
         "stdout": subprocess.PIPE,
         "stderr": subprocess.PIPE,
         "stdin": subprocess.PIPE,

@@ -13,7 +13,6 @@ BitBake build tools.
 # Based on functions from the base bb module, Copyright 2003 Holger Schurig
 
 import os, re
-import signal
 import logging
 import urllib.request, urllib.parse, urllib.error
 if 'git' not in urllib.parse.uses_netloc:
@@ -779,12 +778,6 @@ def update_stamp(ud, d):
                 ud.method.rename_bad_checksum(ud, e.checksum)
             bb.utils.remove(ud.donestamp)
             raise
-
-def subprocess_setup():
-    # Python installs a SIGPIPE handler by default. This is usually not what
-    # non-Python subprocesses expect.
-    # SIGPIPE errors are known issues with gzip/bash
-    signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 
 def mark_recipe_nocache(d):
     if d.getVar('BB_SRCREV_POLICY') != "cache":
@@ -1553,9 +1546,9 @@ class FetchMethod(object):
 
         def _run(cmd):
             if isinstance(cmd, str):
-                ret = subprocess.call(cmd, preexec_fn=subprocess_setup, shell=True, cwd=unpackdir, env=env)
+                ret = subprocess.call(cmd, shell=True, cwd=unpackdir, env=env)
             else:
-                ret = subprocess.call(cmd, preexec_fn=subprocess_setup, cwd=unpackdir, env=env)
+                ret = subprocess.call(cmd, cwd=unpackdir, env=env)
             if ret != 0:
                 raise UnpackError("Unpack command %s failed with return value %s" % (cmd, ret), urldata.url)
 
@@ -1618,7 +1611,7 @@ class FetchMethod(object):
                 else:
                     cmd = 'rpm2cpio.sh %s | cpio --no-absolute-filenames -id' % (file)
             elif file.endswith('.deb') or file.endswith('.ipk'):
-                output = subprocess.check_output(['ar', '-t', file], preexec_fn=subprocess_setup, env=env)
+                output = subprocess.check_output(['ar', '-t', file], env=env)
                 datafile = None
                 valid_datafiles = ('data.tar', 'data.tar.gz', 'data.tar.xz',
                                    'data.tar.zst', 'data.tar.bz2', 'data.tar.lzma')
