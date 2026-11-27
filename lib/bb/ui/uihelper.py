@@ -25,6 +25,9 @@ class BBUIHelper:
         # PIDs are a bad idea as they can be reused before we process all UI events.
         # We maintain a 'fuzzy' match for TaskProgress since there is no other way to match
         def removetid(pid, tid):
+            if tid not in self.running_tasks:
+                # This is possible if you have an exception during a TaskStarted handler
+                return
             del self.running_tasks[tid]
             if self.pidmap[pid] == tid:
                 del self.pidmap[pid]
