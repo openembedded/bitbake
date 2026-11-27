@@ -27,7 +27,7 @@ import shutil
 
 logger = logging.getLogger("BitBake.Cache")
 
-__cache_version__ = "156"
+__cache_version__ = "157"
 
 def getCacheFile(path, filename, mc, data_hash):
     mcspec = ''
@@ -131,6 +131,11 @@ class CoreRecipeInfo(RecipeInfoCommon):
         self.fakerootnoenv    = self.getvar('FAKEROOTNOENV', metadata)
         self.extradepsfunc    = self.getvar('calculate_extra_depends', metadata)
 
+        self.extravars = self.listvar('BB_CACHE_EXTRAVARS', metadata)
+        if self.extravars:
+            for var in self.extravars:
+                setattr(self, var, self.getvar(var, metadata))
+
     @classmethod
     def init_cacheData(cls, cachedata):
         # CacheData in Core RecipeInfo Class
@@ -167,6 +172,8 @@ class CoreRecipeInfo(RecipeInfoCommon):
         cachedata.fakerootdirs = {}
         cachedata.fakerootlogs = {}
         cachedata.extradepsfunc = {}
+
+        cachedata.extravars = {}
 
     def add_cacheData(self, cachedata, fn):
         cachedata.task_deps[fn] = self.task_deps
@@ -237,6 +244,9 @@ class CoreRecipeInfo(RecipeInfoCommon):
         cachedata.fakerootlogs[fn] = self.fakerootlogs
         cachedata.extradepsfunc[fn] = self.extradepsfunc
 
+        cachedata.extravars[fn] = {}
+        for var in self.extravars:
+            cachedata.extravars[fn][var] = getattr(self, var)
 
 class SiggenRecipeInfo(RecipeInfoCommon):
     __slots__ = ()
