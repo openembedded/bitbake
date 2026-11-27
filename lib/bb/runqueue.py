@@ -1608,6 +1608,8 @@ class RunQueue:
                                   ('bb.event.HeartbeatEvent',), data=self.cfgData)
                 self.dm_event_handler_registered = True
 
+            bb.event.fire(RecipeCheckEvent(self.rqdata), self.cooker.data)
+
             self.rqdata.init_progress_reporter.next_stage()
             self.rqexe = RunQueueExecute(self)
 
@@ -3315,6 +3317,15 @@ class PSIEvent(bb.event.Event):
         super().__init__()
         self.pressure_state = pressure_state
         self.pressure_values = pressure_values
+
+class RecipeCheckEvent(bb.event.Event):
+    def __init__(self, rqdata):
+        super().__init__()
+        recipedata = {}
+        for tid in rqdata.runtaskentries:
+            (mc, fn, taskname, taskfn) = split_tid_mcfn(tid)
+            recipedata[taskfn] = rqdata.dataCaches[mc].extravars[taskfn]
+        self.recipedata = recipedata
 
 class runQueuePipe():
     """
